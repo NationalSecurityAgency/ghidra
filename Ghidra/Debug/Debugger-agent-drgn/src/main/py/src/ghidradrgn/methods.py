@@ -19,12 +19,14 @@ from io import StringIO
 import re
 import sys
 import time
+from typing import Annotated, Any, Dict, Optional
 
 import drgn
 import drgn.cli
 
 from ghidratrace import sch
-from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
+from ghidratrace.client import (
+    MethodRegistry, ParamDesc, Address, AddressRange, TraceObject)
 
 from . import util, commands, hooks
 
@@ -133,12 +135,12 @@ def find_frame_by_level(level):
     except Exception as e:
         print(e)
         return
-    
-    for i,f in enumerate(frames):
+
+    for i, f in enumerate(frames):
         if i == level:
             if i != util.selected_frame():
                 util.select_frame(i)
-            return i,f
+            return i, f
 
 
 def find_frame_by_pattern(pattern, object, err_msg):
@@ -185,11 +187,59 @@ def find_module_by_obj(object):
     return find_module_by_pattern(MODULE_PATTERN, object, "a Module")
 
 
-shared_globals = dict()
+shared_globals: Dict[str, Any] = dict()
 
 
-@REGISTRY.method
-def execute(cmd: str, to_string: bool=False):
+class Environment(TraceObject):
+    pass
+
+
+class LocalsContainer(TraceObject):
+    pass
+
+
+class Memory(TraceObject):
+    pass
+
+
+class ModuleContainer(TraceObject):
+    pass
+
+
+class Process(TraceObject):
+    pass
+
+
+class ProcessContainer(TraceObject):
+    pass
+
+
+class Stack(TraceObject):
+    pass
+
+
+class RegisterValueContainer(TraceObject):
+    pass
+
+
+class StackFrame(TraceObject):
+    pass
+
+
+class SymbolContainer(TraceObject):
+    pass
+
+
+class Thread(TraceObject):
+    pass
+
+
+class ThreadContainer(TraceObject):
+    pass
+
+
+@REGISTRY.method()
+def execute(cmd: str, to_string: bool = False) -> Optional[str]:
     """Execute a Python3 command or script."""
     if to_string:
         data = StringIO()
@@ -198,49 +248,48 @@ def execute(cmd: str, to_string: bool=False):
         return data.getvalue()
     else:
         exec(cmd, shared_globals)
+        return None
 
 
 @REGISTRY.method(action='refresh', display='Refresh Processes')
-def refresh_processes(node: sch.Schema('ProcessContainer')):
+def refresh_processes(node: ProcessContainer) -> None:
     """Refresh the list of processes."""
     with commands.open_tracked_tx('Refresh Processes'):
         commands.ghidra_trace_put_processes()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Environment')
-def refresh_environment(node: sch.Schema('Environment')):
+def refresh_environment(node: Environment) -> None:
     """Refresh the environment descriptors (arch, os, endian)."""
     with commands.open_tracked_tx('Refresh Environment'):
         commands.ghidra_trace_put_environment()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Threads')
-def refresh_threads(node: sch.Schema('ThreadContainer')):
+def refresh_threads(node: ThreadContainer) -> None:
     """Refresh the list of threads in the process."""
     with commands.open_tracked_tx('Refresh Threads'):
         commands.ghidra_trace_put_threads()
 
 
 # @REGISTRY.method(action='refresh', display='Refresh Symbols')
-# def refresh_symbols(node: sch.Schema('SymbolContainer')):
-#     """Refresh the list of symbols in the process."""
-#     with commands.open_tracked_tx('Refresh Symbols'):
-#         commands.ghidra_trace_put_symbols()
+# def refresh_symbols(node: SymbolContainer) -> None:
+#    """Refresh the list of symbols in the process."""
+#    with commands.open_tracked_tx('Refresh Symbols'):
+#        commands.ghidra_trace_put_symbols()
 
 
 @REGISTRY.method(action='show_symbol', display='Retrieve Symbols')
 def retrieve_symbols(
-        session: sch.Schema('SymbolContainer'),
-        pattern: ParamDesc(str, display='Pattern')):
-    """
-    Load the symbol set matching the pattern.
-    """
+        conainer: SymbolContainer,
+        pattern: Annotated[str, ParamDesc(display='Pattern')]) -> None:
+    """Load the symbol set matching the pattern."""
     with commands.open_tracked_tx('Retrieve Symbols'):
         commands.put_symbols(pattern)
 
 
 @REGISTRY.method(action='refresh', display='Refresh Stack')
-def refresh_stack(node: sch.Schema('Stack')):
+def refresh_stack(node: Stack) -> None:
     """Refresh the backtrace for the thread."""
     tnum = find_thread_by_stack_obj(node)
     with commands.open_tracked_tx('Refresh Stack'):
@@ -248,55 +297,53 @@ def refresh_stack(node: sch.Schema('Stack')):
 
 
 @REGISTRY.method(action='refresh', display='Refresh Registers')
-def refresh_registers(node: sch.Schema('RegisterValueContainer')):
-    """Refresh the register values for the selected frame"""
+def refresh_registers(node: RegisterValueContainer) -> None:
+    """Refresh the register values for the selected frame."""
     level = find_frame_by_regs_obj(node)
     with commands.open_tracked_tx('Refresh Registers'):
         commands.ghidra_trace_putreg()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Locals')
-def refresh_locals(node: sch.Schema('LocalsContainer')):
-    """Refresh the local values for the selected frame"""
+def refresh_locals(node: LocalsContainer) -> None:
+    """Refresh the local values for the selected frame."""
     level = find_frame_by_locals_obj(node)
     with commands.open_tracked_tx('Refresh Registers'):
         commands.ghidra_trace_put_locals()
 
 
-if hasattr(drgn, 'RelocatableModule'):
-    @REGISTRY.method(action='refresh', display='Refresh Memory')
-    def refresh_mappings(node: sch.Schema('Memory')):
-        """Refresh the list of memory regions for the process."""
-        with commands.open_tracked_tx('Refresh Memory Regions'):
-            commands.ghidra_trace_put_regions()
+@REGISTRY.method(action='refresh', display='Refresh Memory',
+                 condition=hasattr(drgn, 'RelocatableModule'))
+def refresh_mappings(node: Memory) -> None:
+    """Refresh the list of memory regions for the process."""
+    with commands.open_tracked_tx('Refresh Memory Regions'):
+        commands.ghidra_trace_put_regions()
 
 
-if hasattr(drgn, 'RelocatableModule'):
-    @REGISTRY.method(action='refresh', display='Refresh Modules')
-    def refresh_modules(node: sch.Schema('ModuleContainer')):
-        """
-        Refresh the modules list for the process.
-        """
-        with commands.open_tracked_tx('Refresh Modules'):
-            commands.ghidra_trace_put_modules()
+@REGISTRY.method(action='refresh', display='Refresh Modules',
+                 condition=hasattr(drgn, 'RelocatableModule'))
+def refresh_modules(node: ModuleContainer) -> None:
+    """Refresh the modules list for the process."""
+    with commands.open_tracked_tx('Refresh Modules'):
+        commands.ghidra_trace_put_modules()
 
 
 @REGISTRY.method(action='activate')
-def activate_process(process: sch.Schema('Process')):
+def activate_process(process: Process) -> None:
     """Switch to the process."""
     find_proc_by_obj(process)
 
 
 @REGISTRY.method(action='activate')
-def activate_thread(thread: sch.Schema('Thread')):
+def activate_thread(thread: Thread) -> None:
     """Switch to the thread."""
     find_thread_by_obj(thread)
 
 
 @REGISTRY.method(action='activate')
-def activate_frame(frame: sch.Schema('StackFrame')):
+def activate_frame(frame: StackFrame) -> None:
     """Select the frame."""
-    i,f = find_frame_by_obj(frame)
+    i, f = find_frame_by_obj(frame)
     util.select_frame(i)
     with commands.open_tracked_tx('Refresh Stack'):
         commands.ghidra_trace_put_frames()
@@ -304,12 +351,12 @@ def activate_frame(frame: sch.Schema('StackFrame')):
         commands.ghidra_trace_putreg()
 
 
-@REGISTRY.method
-def read_mem(process: sch.Schema('Process'), range: AddressRange):
+@REGISTRY.method()
+def read_mem(process: Process, range: AddressRange) -> None:
     """Read memory."""
     # print("READ_MEM: process={}, range={}".format(process, range))
     nproc = find_proc_by_obj(process)
-    offset_start = process.trace.memory_mapper.map_back(
+    offset_start = process.trace.extra.require_mm().map_back(
         nproc, Address(range.space, range.min))
     with commands.open_tracked_tx('Read Memory'):
         result = commands.put_bytes(
@@ -320,9 +367,8 @@ def read_mem(process: sch.Schema('Process'), range: AddressRange):
 
 
 @REGISTRY.method(action='attach', display='Attach by pid')
-def attach_pid(
-    processes: sch.Schema('ProcessContainer'), 
-    pid: ParamDesc(str, display='PID')):
+def attach_pid(processes: ProcessContainer,
+               pid: Annotated[str, ParamDesc(display='PID')]) -> None:
     """Attach the process to the given target."""
     prog = drgn.Program()
     prog.set_pid(int(pid))
@@ -333,7 +379,7 @@ def attach_pid(
         prog.load_debug_info(None, **default_symbols)
     except drgn.MissingDebugInfoError as e:
         print(e)
-    #commands.ghidra_trace_start(pid)
+    # commands.ghidra_trace_start(pid)
     commands.PROGRAMS[pid] = prog
     commands.prog = prog
     with commands.open_tracked_tx('Refresh Processes'):
@@ -341,9 +387,8 @@ def attach_pid(
 
 
 @REGISTRY.method(action='attach', display='Attach core dump')
-def attach_core(
-    processes: sch.Schema('ProcessContainer'), 
-    core: ParamDesc(str, display='Core dump')):
+def attach_core(processes: ProcessContainer,
+                core: Annotated[str, ParamDesc(display='Core dump')]) -> None:
     """Attach the process to the given target."""
     prog = drgn.Program()
     prog.set_core_dump(core)
@@ -352,7 +397,7 @@ def attach_core(
         prog.load_debug_info(None, **default_symbols)
     except drgn.MissingDebugInfoError as e:
         print(e)
- 
+
     util.selected_pid += 1
     commands.PROGRAMS[util.selected_pid] = prog
     commands.prog = prog
@@ -361,7 +406,8 @@ def attach_core(
 
 
 @REGISTRY.method(action='step_into')
-def step_into(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
+def step_into(thread: Thread,
+              n: Annotated[int, ParamDesc(display='N')] = 1) -> None:
     """Step one instruction exactly."""
     find_thread_by_obj(thread)
     time.sleep(1)
@@ -369,22 +415,20 @@ def step_into(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
 
 
 # @REGISTRY.method
-# def kill(process: sch.Schema('Process')):
+# def kill(process: Process) -> None:
 #     """Kill execution of the process."""
 #     commands.ghidra_trace_kill()
 
 
 # @REGISTRY.method(action='resume')
-# def go(process: sch.Schema('Process')):
+# def go(process: Process) -> None:
 #     """Continue execution of the process."""
 #     util.dbg.run_async(lambda: dbg().go())
 
 
 # @REGISTRY.method
-# def interrupt(process: sch.Schema('Process')):
+# def interrupt(process: Process) -> None:
 #     """Interrupt the execution of the debugged program."""
 #     # SetInterrupt is reentrant, so bypass the thread checks
 #     util.dbg._protected_base._control.SetInterrupt(
 #         DbgEng.DEBUG_INTERRUPT_ACTIVE)
-
-

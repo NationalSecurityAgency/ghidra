@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.debug.gui.time;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +27,7 @@ import javax.swing.table.*;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -112,9 +112,6 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			}
 			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
 			snapshotTableModel.add(row);
-			if (currentSnap == snapshot.getKey()) {
-				snapshotFilterPanel.setSelectedItem(row);
-			}
 		}
 
 		private void snapChanged(TraceSnapshot snapshot) {
@@ -132,7 +129,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 	}
 
-	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
+	final TableCellRenderer styleCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
 		public String getFilterString(Object t, Settings settings) {
 			return t == null ? "<null>" : t.toString();
@@ -142,8 +139,15 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
 			SnapshotRow row = (SnapshotRow) data.getRowObject();
-			if (row != null && currentSnap != null && currentSnap.longValue() == row.getSnap()) {
+			if (row == null || current == DebuggerCoordinates.NOWHERE) {
+				// When used in a dialog, only currentTrace is set
+				return this;
+			}
+			if (current.getViewSnap() == row.getSnap()) {
 				setBold();
+			}
+			else if (current.getSnap() == row.getSnap()) {
+				setItalic();
 			}
 			return this;
 		}
@@ -155,7 +159,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	protected boolean hideScratch = true;
 
 	private Trace currentTrace;
-	private volatile Long currentSnap;
+	private volatile DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
 	protected final SnapshotListener listener = new SnapshotListener();
 
@@ -173,19 +177,19 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		TableColumnModel columnModel = snapshotTable.getColumnModel();
 		TableColumn snapCol = columnModel.getColumn(SnapshotTableColumns.SNAP.ordinal());
 		snapCol.setPreferredWidth(40);
-		snapCol.setCellRenderer(boldCurrentRenderer);
+		snapCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
 		timeCol.setPreferredWidth(200);
-		timeCol.setCellRenderer(boldCurrentRenderer);
+		timeCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
 		etCol.setPreferredWidth(40);
-		etCol.setCellRenderer(boldCurrentRenderer);
+		etCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn schdCol = columnModel.getColumn(SnapshotTableColumns.SCHEDULE.ordinal());
 		schdCol.setPreferredWidth(60);
-		schdCol.setCellRenderer(boldCurrentRenderer);
+		schdCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn descCol = columnModel.getColumn(SnapshotTableColumns.DESCRIPTION.ordinal());
 		descCol.setPreferredWidth(200);
-		descCol.setCellRenderer(boldCurrentRenderer);
+		descCol.setCellRenderer(styleCurrentRenderer);
 	}
 
 	private void addNewListeners() {
@@ -235,14 +239,18 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		Collection<? extends TraceSnapshot> snapshots =
-			hideScratch ? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
-					: manager.getAllSnapshots();
-		// Use .collect instead of .toList to avoid size/sync issues
-		// Even though access is synchronized, size may change during iteration
-		snapshotTableModel.addAll(snapshots.stream()
-				.map(s -> new SnapshotRow(currentTrace, s))
-				.collect(Collectors.toList()));
+
+		List<SnapshotRow> toAdd = new ArrayList<>();
+		for (TraceSnapshot snapshot : hideScratch
+				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
+				: manager.getAllSnapshots()) {
+			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
+			toAdd.add(row);
+			if (current != DebuggerCoordinates.NOWHERE &&
+				snapshot.getKey() == current.getViewSnap()) {
+			}
+		}
+		snapshotTableModel.addAll(toAdd);
 	}
 
 	protected void deleteScratchSnapshots() {
@@ -270,9 +278,12 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		return row == null ? null : row.getSnap();
 	}
 
-	public void setCurrentSnapshot(Long snap) {
-		currentSnap = snap;
-		snapshotTableModel.fireTableDataChanged();
+	public void setCurrent(DebuggerCoordinates coords) {
+		boolean fire = coords.getViewSnap() != current.getViewSnap();
+		current = coords;
+		if (fire) {
+			snapshotTableModel.fireTableDataChanged();
+		}
 	}
 
 	public void setSelectedSnapshot(Long snap) {

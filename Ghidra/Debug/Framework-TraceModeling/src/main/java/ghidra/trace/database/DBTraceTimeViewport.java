@@ -201,6 +201,9 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		while (true) {
 			TraceSnapshot fork = locateMostRecentFork(timeManager, curSnap);
 			long prevSnap = fork == null ? Long.MIN_VALUE : fork.getKey();
+			if (curSnap >= 0 && prevSnap < 0) {
+				prevSnap = 0;
+			}
 			if (!addSnapRange(prevSnap, curSnap, spanSet, ordered)) {
 				return;
 			}

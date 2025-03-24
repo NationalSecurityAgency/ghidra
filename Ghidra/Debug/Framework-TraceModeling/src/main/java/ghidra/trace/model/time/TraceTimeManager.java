@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,9 +52,24 @@ public interface TraceTimeManager {
 	 * at most one snapshot.
 	 * 
 	 * @param schedule the schedule to find
-	 * @return the snapshot, or {@code null} if no such snapshot exists
+	 * @return the snapshots
 	 */
 	Collection<? extends TraceSnapshot> getSnapshotsWithSchedule(TraceSchedule schedule);
+
+	/**
+	 * Find or create a the snapshot with the given schedule
+	 * 
+	 * <p>
+	 * If a snapshot with the given schedule already exists, this returns the first such snapshot
+	 * found. Ideally, there is exactly one. If this method is consistently used for creating
+	 * scratch snapshots, then that should always be the case. If no such snapshot exists, this
+	 * creates a snapshot with the minimum available negative snapshot key, that is starting at
+	 * {@link Long#MIN_VALUE} and increasing from there.
+	 * 
+	 * @param schedule the schedule to find
+	 * @return the snapshot
+	 */
+	TraceSnapshot findScratchSnapshot(TraceSchedule schedule);
 
 	/**
 	 * List all snapshots in the trace

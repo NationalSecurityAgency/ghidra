@@ -61,11 +61,11 @@ import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema.MinimalSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.*;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceRmiTarget extends AbstractTarget {
-
 	class TraceRmiActionEntry implements ActionEntry {
 		private final RemoteMethod method;
 		private final Map<String, Object> args;
@@ -167,6 +167,48 @@ public class TraceRmiTarget extends AbstractTarget {
 		catch (NoSuchElementException e) {
 			return 0;
 		}
+	}
+
+	protected ScheduleForm getSupportedTimeFormByMethod(TraceObject obj) {
+		KeyPath path = obj.getCanonicalPath();
+		MatchedMethod activate = matches.getBest(ActivateMatcher.class, path, ActionName.ACTIVATE,
+			ActivateMatcher.makeBySpecificity(obj.getRoot().getSchema(), path));
+		if (activate == null) {
+			return null;
+		}
+		if (activate.params.get("time") != null) {
+			return ScheduleForm.SNAP_ANY_STEPS_OPS;
+		}
+		if (activate.params.get("snap") != null) {
+			return ScheduleForm.SNAP_ONLY;
+		}
+		return null;
+	}
+
+	protected ScheduleForm getSupportedTimeFormByAttribute(TraceObject obj, long snap) {
+		TraceObject eventScope = obj.findSuitableInterface(TraceObjectEventScope.class);
+		if (eventScope == null) {
+			return null;
+		}
+		TraceObjectValue timeSupportStr =
+			eventScope.getAttribute(snap, TraceObjectEventScope.KEY_TIME_SUPPORT);
+		if (timeSupportStr == null) {
+			return null;
+		}
+		return ScheduleForm.valueOf(timeSupportStr.castValue());
+	}
+
+	@Override
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap) {
+		ScheduleForm byMethod = getSupportedTimeFormByMethod(obj);
+		if (byMethod == null) {
+			return null;
+		}
+		ScheduleForm byAttr = getSupportedTimeFormByAttribute(obj, snap);
+		if (byAttr == null) {
+			return null;
+		}
+		return byMethod.intersect(byAttr);
 	}
 
 	@Override
@@ -385,7 +427,8 @@ public class TraceRmiTarget extends AbstractTarget {
 				.orElse(null);
 	}
 
-	record ParamAndObjectArg(RemoteParameter param, TraceObject obj) {}
+	record ParamAndObjectArg(RemoteParameter param, TraceObject obj) {
+	}
 
 	protected ParamAndObjectArg getFirstObjectArgument(RemoteMethod method,
 			Map<String, Object> args) {
@@ -828,7 +871,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		static final List<ToggleBreakMatcher> SPEC = matchers(HAS_SPEC);
 	}
 
-	record MatchKey(Class<? extends MethodMatcher> cls, ActionName action, TraceObjectSchema sch) {}
+	record MatchKey(Class<? extends MethodMatcher> cls, ActionName action, TraceObjectSchema sch) {
+	}
 
 	protected class Matches {
 		private final Map<MatchKey, MatchedMethod> map = new HashMap<>();
@@ -975,7 +1019,8 @@ public class TraceRmiTarget extends AbstractTarget {
 	@Override
 	public CompletableFuture<Void> activateAsync(DebuggerCoordinates prev,
 			DebuggerCoordinates coords) {
-		if (prev.getSnap() != coords.getSnap()) {
+		boolean timeNeq = !Objects.equals(prev.getTime(), coords.getTime());
+		if (timeNeq) {
 			requestCaches.invalidate();
 		}
 		TraceObject object = coords.getObject();
@@ -983,10 +1028,9 @@ public class TraceRmiTarget extends AbstractTarget {
 			return AsyncUtils.nil();
 		}
 
-		MatchedMethod activate =
-			matches.getBest(ActivateMatcher.class, object.getCanonicalPath(), ActionName.ACTIVATE,
-				() -> ActivateMatcher.makeBySpecificity(trace.getObjectManager().getRootSchema(),
-					object.getCanonicalPath()));
+		KeyPath path = object.getCanonicalPath();
+		MatchedMethod activate = matches.getBest(ActivateMatcher.class, path, ActionName.ACTIVATE,
+			ActivateMatcher.makeBySpecificity(object.getRoot().getSchema(), path));
 		if (activate == null) {
 			return AsyncUtils.nil();
 		}
@@ -996,11 +1040,11 @@ public class TraceRmiTarget extends AbstractTarget {
 		args.put(paramFocus.name(),
 			object.findSuitableSchema(getSchemaContext().getSchema(paramFocus.type())));
 		RemoteParameter paramTime = activate.params.get("time");
-		if (paramTime != null) {
+		if (paramTime != null && (paramTime.required() || timeNeq)) {
 			args.put(paramTime.name(), coords.getTime().toString());
 		}
 		RemoteParameter paramSnap = activate.params.get("snap");
-		if (paramSnap != null) {
+		if (paramSnap != null && (paramSnap.required() || timeNeq)) {
 			args.put(paramSnap.name(), coords.getSnap());
 		}
 		return activate.method.invokeAsync(args).toCompletableFuture().thenApply(__ -> null);

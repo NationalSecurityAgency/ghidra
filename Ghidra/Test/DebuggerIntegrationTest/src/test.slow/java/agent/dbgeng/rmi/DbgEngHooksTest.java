@@ -86,32 +86,33 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		return conn.conn.connection().getLastSnapshot(tb.trace);
 	}
 
+	static final int INIT_NOTEPAD_THREAD_COUNT = 4; // This could be fragile
+
 	@Test
 	public void testOnNewThread() throws Exception {
-		final int INIT_NOTEPAD_THREAD_COUNT = 4; // This could be fragile
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			conn.execute("from ghidradbg.commands import *");
 			txPut(conn, "processes");
 
 			waitForPass(() -> {
-				TraceObject proc = tb.objAny0("Processes[]");
+				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				assertNotNull(proc);
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			txPut(conn, "threads");
 			waitForPass(() -> assertEquals(INIT_NOTEPAD_THREAD_COUNT,
-				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			// Via method, go is asynchronous
 			RemoteMethod go = conn.conn.getMethod("go");
-			TraceObject proc = tb.objAny0("Processes[]");
+			TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 			go.invoke(Map.of("process", proc));
 
-			waitForPass(
-				() -> assertThat(tb.objValues(lastSnap(conn), "Processes[].Threads[]").size(),
-					greaterThan(INIT_NOTEPAD_THREAD_COUNT)),
+			waitForPass(() -> assertThat(
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Threads[]").size(),
+				greaterThan(INIT_NOTEPAD_THREAD_COUNT)),
 				RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -122,14 +123,14 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			waitForPass(() -> {
-				TraceObject proc = tb.obj("Processes[0]");
+				TraceObject proc = tb.obj("Sessions[0].Processes[0]");
 				assertNotNull(proc);
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			txPut(conn, "threads");
 			waitForPass(() -> assertEquals(4,
-				tb.objValues(lastSnap(conn), "Processes[0].Threads[]").size()),
+				tb.objValues(lastSnap(conn), "Sessions[0].Processes[0].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			// Now the real test
@@ -138,7 +139,8 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			waitForPass(() -> {
 				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
 				assertEquals("1", tnum);
-				assertEquals(tb.obj("Processes[0].Threads[1]"), traceManager.getCurrentObject());
+				String threadIndex = threadIndex(traceManager.getCurrentObject());
+				assertEquals("1", threadIndex);
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("util.select_thread(2)");
@@ -182,11 +184,11 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	}
 
 	protected String threadIndex(TraceObject object) {
-		return getIndex(object, "Processes[].Threads[]", 1);
+		return getIndex(object, "Sessions[].Processes[].Threads[]", 2);
 	}
 
 	protected String frameIndex(TraceObject object) {
-		return getIndex(object, "Processes[].Threads[].Stack[]", 2);
+		return getIndex(object, "Sessions[].Processes[].Threads[].Stack.Frames[]", 3);
 	}
 
 	@Test
@@ -247,7 +249,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("ghidra_trace_txcommit()");
 			conn.execute("util.dbg.cmd('r rax=0x1234')");
 
-			String path = "Processes[].Threads[].Registers";
+			String path = "Sessions[].Processes[].Threads[].Registers";
 			TraceObject registers = Objects.requireNonNull(tb.objAny(path, Lifespan.at(0)));
 			AddressSpace space = tb.trace.getBaseAddressFactory()
 					.getAddressSpace(registers.getCanonicalPath().toString());
@@ -272,7 +274,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 					""");
 			waitRunning("Missed running after go");
 
-			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Sessions[].Processes[]"));
 			waitForPass(() -> {
 				assertEquals("RUNNING", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -284,7 +286,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "processes");
 
-			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Sessions[].Processes[]"));
 			waitForPass(() -> {
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -306,7 +308,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 				assertNotNull(snapshot);
 				assertEquals("Exited with code 0", snapshot.getDescription());
 
-				TraceObject proc = tb.objAny0("Processes[]");
+				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				assertNotNull(proc);
 				Object val = tb.objValue(proc, lastSnap(conn), "_exit_code");
 				assertThat(val, instanceOf(Number.class));
@@ -319,13 +321,15 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	public void testOnBreakpointCreated() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "breakpoints");
-			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
+			assertEquals(0,
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]").size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.bp(expr=pc)");
 
 			waitForPass(() -> {
-				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
+				List<Object> brks =
+					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]");
 				assertEquals(1, brks.size());
 			});
 		}
@@ -335,13 +339,15 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	public void testOnBreakpointModified() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "breakpoints");
-			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
+			assertEquals(0,
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]").size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.bp(expr=pc)");
 
 			TraceObject brk = waitForPass(() -> {
-				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
+				List<Object> brks =
+					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
@@ -362,13 +368,15 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	public void testOnBreakpointDeleted() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "breakpoints");
-			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
+			assertEquals(0,
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]").size());
 
 			conn.execute("pc = util.get_pc()");
 			conn.execute("util.dbg.bp(expr=pc)");
 
 			TraceObject brk = waitForPass(() -> {
-				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
+				List<Object> brks =
+					tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
@@ -380,14 +388,14 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("util.dbg.cmd('bc %s')".formatted(id));
 
 			waitForPass(() -> assertEquals(0,
-				tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+				tb.objValues(lastSnap(conn), "Sessions[].Processes[].Debug.Breakpoints[]").size()));
 		}
 	}
 
 	private void start(PythonAndConnection conn, String obj) {
 		conn.execute("from ghidradbg.commands import *");
 		if (obj != null)
-			conn.execute("ghidra_trace_create('" + obj + "')");
+			conn.execute("ghidra_trace_create('" + obj + "', wait=True)");
 		else
 			conn.execute("ghidra_trace_create()");
 		conn.execute("ghidra_trace_sync_enable()");

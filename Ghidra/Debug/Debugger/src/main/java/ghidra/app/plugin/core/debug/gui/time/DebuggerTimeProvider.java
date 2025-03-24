@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
-import java.util.Objects;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -37,6 +36,8 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.HelpLocation;
 
@@ -60,16 +61,6 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 					.keyBinding("CTRL G")
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
-	}
-
-	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
-		if (!Objects.equals(a.getTrace(), b.getTrace())) {
-			return false;
-		}
-		if (!Objects.equals(a.getTime(), b.getTime())) {
-			return false;
-		}
-		return true;
 	}
 
 	protected final DebuggerTimePlugin plugin;
@@ -154,7 +145,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-					activateSelectedSnapshot();
+					activateSelectedSnapshot(e);
 				}
 			}
 		});
@@ -162,18 +153,44 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					activateSelectedSnapshot();
+					activateSelectedSnapshot(e);
 					e.consume(); // lest it select the next row down
 				}
 			}
 		});
 	}
 
-	private void activateSelectedSnapshot() {
-		Long snap = mainPanel.getSelectedSnapshot();
-		if (snap != null && traceManager != null) {
-			traceManager.activateSnap(snap);
+	private TraceSchedule computeSelectedSchedule(InputEvent e, long snap) {
+		if ((e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
+			return TraceSchedule.snap(snap);
 		}
+		if (snap >= 0) {
+			return TraceSchedule.snap(snap);
+		}
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return TraceSchedule.snap(snap);
+		}
+		TraceSnapshot snapshot = trace.getTimeManager().getSnapshot(snap, false);
+		if (snapshot == null) { // Really shouldn't happen, but okay
+			return TraceSchedule.snap(snap);
+		}
+		TraceSchedule schedule = snapshot.getSchedule();
+		if (schedule == null) {
+			return TraceSchedule.snap(snap);
+		}
+		return schedule;
+	}
+
+	private void activateSelectedSnapshot(InputEvent e) {
+		if (traceManager == null) {
+			return;
+		}
+		Long snap = mainPanel.getSelectedSnapshot();
+		if (snap == null) {
+			return;
+		}
+		traceManager.activateTime(computeSelectedSchedule(e, snap));
 	}
 
 	protected void createActions() {
@@ -202,14 +219,9 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
-		if (sameCoordinates(current, coordinates)) {
-			current = coordinates;
-			return;
-		}
 		current = coordinates;
-
 		mainPanel.setTrace(current.getTrace());
-		mainPanel.setCurrentSnapshot(current.getSnap());
+		mainPanel.setCurrent(current);
 	}
 
 	public void writeConfigState(SaveState saveState) {

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidradrgn"
-version = "11.3"
+version = "11.4"
 authors = [
   { name="Ghidra Development Team" },
 ]
@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==11.3",
+    "ghidratrace==11.4",
 ]
 
 [project.urls]

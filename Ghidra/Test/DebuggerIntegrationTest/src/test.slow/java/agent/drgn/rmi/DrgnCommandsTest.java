@@ -407,7 +407,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 				ghidra_trace_txstart('Create Object')
 				ghidra_trace_create_obj('Test.Objects[1]')
 				ghidra_trace_insert_obj('Test.Objects[1]')
-				ghidra_trace_set_snap(1)
+				ghidra_trace_new_snap("Snap 1", time=1)
 				ghidra_trace_remove_obj('Test.Objects[1]')
 				ghidra_trace_txcommit()
 				quit()
@@ -585,7 +585,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 				ghidra_trace_set_value('Test.Objects[1]', '[1]', '"A"', 'STRING')
 				ghidra_trace_set_value('Test.Objects[1]', '[2]', '"B"', 'STRING')
 				ghidra_trace_set_value('Test.Objects[1]', '[3]', '"C"', 'STRING')
-				ghidra_trace_set_snap(10)
+				ghidra_trace_new_snap("Snap 10", time=10)
 				ghidra_trace_retain_values('Test.Objects[1]', '[1] [3]')
 				ghidra_trace_txcommit()
 				quit()
@@ -761,10 +761,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			String extract = extractOutSection(out, "---Disassemble---");
 			String[] split = extract.split("\r\n");
 			// NB: core.12137 has no memory
-			//assertEquals("Disassembled %d bytes".formatted(total),
-			//	split[0]);
-			assertEquals(0, total);
-			assertEquals("", split[0]);
+			assertEquals("Disassembled %d bytes".formatted(total), split[0]);
 		}
 	}
 

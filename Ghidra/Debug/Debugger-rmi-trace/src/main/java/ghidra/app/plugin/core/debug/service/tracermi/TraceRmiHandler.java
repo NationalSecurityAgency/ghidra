@@ -61,12 +61,13 @@ import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler extends AbstractTraceRmiConnection {
-	public static final String VERSION = "11.3";
+	public static final String VERSION = "11.4";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -740,77 +741,43 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	}
 
 	protected static Value makeValue(Object value) {
-		if (value instanceof Void) {
-			return Value.newBuilder().setNullValue(Null.getDefaultInstance()).build();
-		}
-		if (value instanceof Boolean b) {
-			return Value.newBuilder().setBoolValue(b).build();
-		}
-		if (value instanceof Byte b) {
-			return Value.newBuilder().setByteValue(b).build();
-		}
-		if (value instanceof Character c) {
-			return Value.newBuilder().setCharValue(c).build();
-		}
-		if (value instanceof Short s) {
-			return Value.newBuilder().setShortValue(s).build();
-		}
-		if (value instanceof Integer i) {
-			return Value.newBuilder().setIntValue(i).build();
-		}
-		if (value instanceof Long l) {
-			return Value.newBuilder().setLongValue(l).build();
-		}
-		if (value instanceof String s) {
-			return Value.newBuilder().setStringValue(s).build();
-		}
-		if (value instanceof boolean[] ba) {
-			return Value.newBuilder()
+		return switch (value) {
+			case Void v -> Value.newBuilder().setNullValue(Null.getDefaultInstance()).build();
+			case Boolean b -> Value.newBuilder().setBoolValue(b).build();
+			case Byte b -> Value.newBuilder().setByteValue(b).build();
+			case Character c -> Value.newBuilder().setCharValue(c).build();
+			case Short s -> Value.newBuilder().setShortValue(s).build();
+			case Integer i -> Value.newBuilder().setIntValue(i).build();
+			case Long l -> Value.newBuilder().setLongValue(l).build();
+			case String s -> Value.newBuilder().setStringValue(s).build();
+			case boolean[] ba -> Value.newBuilder()
 					.setBoolArrValue(
 						BoolArr.newBuilder().addAllArr(Arrays.asList(ArrayUtils.toObject(ba))))
 					.build();
-		}
-		if (value instanceof byte[] ba) {
-			return Value.newBuilder().setBytesValue(ByteString.copyFrom(ba)).build();
-		}
-		if (value instanceof char[] ca) {
-			return Value.newBuilder().setCharArrValue(new String(ca)).build();
-		}
-		if (value instanceof short[] sa) {
-			return Value.newBuilder()
+			case byte[] ba -> Value.newBuilder().setBytesValue(ByteString.copyFrom(ba)).build();
+			case char[] ca -> Value.newBuilder().setCharArrValue(new String(ca)).build();
+			case short[] sa -> Value.newBuilder()
 					.setShortArrValue(ShortArr.newBuilder()
 							.addAllArr(
 								Stream.of(ArrayUtils.toObject(sa)).map(s -> (int) s).toList()))
 					.build();
-		}
-		if (value instanceof int[] ia) {
-			return Value.newBuilder()
+			case int[] ia -> Value.newBuilder()
 					.setIntArrValue(
 						IntArr.newBuilder().addAllArr(IntStream.of(ia).mapToObj(i -> i).toList()))
 					.build();
-		}
-		if (value instanceof long[] la) {
-			return Value.newBuilder()
+			case long[] la -> Value.newBuilder()
 					.setLongArrValue(
 						LongArr.newBuilder().addAllArr(LongStream.of(la).mapToObj(l -> l).toList()))
 					.build();
-		}
-		if (value instanceof String[] sa) {
-			return Value.newBuilder()
+			case String[] sa -> Value.newBuilder()
 					.setStringArrValue(StringArr.newBuilder().addAllArr(List.of(sa)))
 					.build();
-		}
-		if (value instanceof Address a) {
-			return Value.newBuilder().setAddressValue(makeAddr(a)).build();
-		}
-		if (value instanceof AddressRange r) {
-			return Value.newBuilder().setRangeValue(makeAddrRange(r)).build();
-		}
-		if (value instanceof TraceObject o) {
-			return Value.newBuilder().setChildDesc(makeObjDesc(o)).build();
-		}
-		throw new AssertionError(
-			"Cannot encode value: " + value + "(type=" + value.getClass() + ")");
+			case Address a -> Value.newBuilder().setAddressValue(makeAddr(a)).build();
+			case AddressRange r -> Value.newBuilder().setRangeValue(makeAddrRange(r)).build();
+			case TraceObject o -> Value.newBuilder().setChildDesc(makeObjDesc(o)).build();
+			default -> throw new AssertionError(
+				"Cannot encode value: " + value + "(type=" + value.getClass() + ")");
+		};
 	}
 
 	protected static MethodArgument makeArgument(String name, Object value) {
@@ -958,8 +925,9 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			dis.applyTo(open.trace.getFixedProgramView(snap), monitor);
 		}
 
+		AddressSetView result = dis.getDisassembledAddressSet();
 		return ReplyDisassemble.newBuilder()
-				.setLength(dis.getDisassembledAddressSet().getNumAddresses())
+				.setLength(result == null ? 0 : result.getNumAddresses())
 				.build();
 	}
 
@@ -1180,13 +1148,21 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 	protected ReplySnapshot handleSnapshot(RequestSnapshot req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		TraceSnapshot snapshot = open.createSnapshot(req.getSnap(), req.getDescription());
+		TraceSnapshot snapshot = switch (req.getTimeCase()) {
+			case TIME_NOT_SET -> throw new TraceRmiError("snap or time required");
+			case SNAP -> open.createSnapshot(req.getSnap().getSnap());
+			case SCHEDULE -> open
+					.createSnapshot(TraceSchedule.parse(req.getSchedule().getSchedule()));
+		};
+		snapshot.setDescription(req.getDescription());
 		if (!"".equals(req.getDatetime())) {
 			Instant instant =
 				DateTimeFormatter.ISO_INSTANT.parse(req.getDatetime()).query(Instant::from);
 			snapshot.setRealTime(instant.toEpochMilli());
 		}
-		return ReplySnapshot.getDefaultInstance();
+		return ReplySnapshot.newBuilder()
+				.setSnap(Snap.newBuilder().setSnap(snapshot.getKey()))
+				.build();
 	}
 
 	protected ReplyStartTx handleStartTx(RequestStartTx req) {

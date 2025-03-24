@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from typing import Dict, List, Optional, Tuple
+
 from ghidratrace.client import Address, RegVal
 from pybag import pydbg
 
 from . import util
 
 
-language_map = {
+language_map: Dict[str, List[str]] = {
     'AARCH64': ['AARCH64:LE:64:AppleSilicon'],
     'ARM': ['ARM:LE:32:v8'],
     'Itanium': [],
@@ -31,25 +33,25 @@ language_map = {
     'SH4': ['SuperH4:LE:32:default'],
 }
 
-data64_compiler_map = {
+data64_compiler_map: Dict[Optional[str], str] = {
     None: 'pointer64',
 }
 
-x86_compiler_map = {
+x86_compiler_map: Dict[Optional[str], str] = {
     'windows': 'windows',
     'Cygwin': 'windows',
     'default': 'windows',
 }
 
-default_compiler_map = {
+default_compiler_map: Dict[Optional[str], str] = {
     'windows': 'default',
 }
 
-windows_compiler_map = {
+windows_compiler_map: Dict[Optional[str], str] = {
     'windows': 'windows',
 }
 
-compiler_map = {
+compiler_map : Dict[str, Dict[Optional[str], str]]= {
     'DATA:BE:64:default': data64_compiler_map,
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
@@ -62,11 +64,11 @@ compiler_map = {
 }
 
 
-def get_arch():
+def get_arch() -> str:
     try:
         type = util.dbg.get_actual_processor_type()
-    except Exception:
-        print("Error getting actual processor type.")
+    except Exception as e:
+        print(f"Error getting actual processor type: {e}")
         return "Unknown"
     if type is None:
         return "x86_64"
@@ -76,25 +78,25 @@ def get_arch():
         return "AARCH64"
     if type == 0x014c:
         return "x86"
-    if type == 0x0160: # R3000 BE
+    if type == 0x0160:  # R3000 BE
         return "MIPS-BE"
-    if type == 0x0162: # R3000 LE
+    if type == 0x0162:  # R3000 LE
         return "MIPS"
-    if type == 0x0166: # R4000 LE
+    if type == 0x0166:  # R4000 LE
         return "MIPS"
-    if type == 0x0168: # R10000 LE
+    if type == 0x0168:  # R10000 LE
         return "MIPS"
-    if type == 0x0169: # WCE v2 LE
+    if type == 0x0169:  # WCE v2 LE
         return "MIPS"
-    if type == 0x0266: # MIPS 16
+    if type == 0x0266:  # MIPS 16
         return "MIPS"
-    if type == 0x0366: # MIPS FPU
+    if type == 0x0366:  # MIPS FPU
         return "MIPS"
-    if type == 0x0466: # MIPS FPU16
+    if type == 0x0466:  # MIPS FPU16
         return "MIPS"
-    if type == 0x0184: # Alpha AXP
+    if type == 0x0184:  # Alpha AXP
         return "Alpha"
-    if type == 0x0284: # Aplha 64
+    if type == 0x0284:  # Aplha 64
         return "Alpha"
     if type >= 0x01a2 and type < 0x01a6:
         return "SH"
@@ -102,17 +104,17 @@ def get_arch():
         return "SH4"
     if type == 0x01a6:
         return "SH5"
-    if type == 0x01c0: # ARM LE
+    if type == 0x01c0:  # ARM LE
         return "ARM"
-    if type == 0x01c2: # ARM Thumb/Thumb-2 LE
+    if type == 0x01c2:  # ARM Thumb/Thumb-2 LE
         return "ARM"
-    if type == 0x01c4: # ARM Thumb-2 LE
+    if type == 0x01c4:  # ARM Thumb-2 LE
         return "ARM"
-    if type == 0x01d3: # AM33
+    if type == 0x01d3:  # AM33
         return "ARM"
-    if type == 0x01f0 or type == 0x1f1: # PPC
+    if type == 0x01f0 or type == 0x1f1:  # PPC
         return "PPC"
-    if type == 0x0200: 
+    if type == 0x0200:
         return "Itanium"
     if type == 0x0520:
         return "Infineon"
@@ -120,23 +122,23 @@ def get_arch():
         return "CEF"
     if type == 0x0EBC:
         return "EFI"
-    if type == 0x8664: # AMD64 (K8)
+    if type == 0x8664:  # AMD64 (K8)
         return "x86_64"
-    if type == 0x9041: # M32R
+    if type == 0x9041:  # M32R
         return "M32R"
     if type == 0xC0EE:
         return "CEE"
     return "Unknown"
 
 
-def get_endian():
+def get_endian() -> str:
     parm = util.get_convenience_variable('endian')
     if parm != 'auto':
         return parm
     return 'little'
 
 
-def get_osabi():
+def get_osabi() -> str:
     parm = util.get_convenience_variable('osabi')
     if not parm in ['auto', 'default']:
         return parm
@@ -150,7 +152,7 @@ def get_osabi():
     return "windows"
 
 
-def compute_ghidra_language():
+def compute_ghidra_language() -> str:
     # First, check if the parameter is set
     lang = util.get_convenience_variable('ghidra-language')
     if lang != 'auto':
@@ -175,7 +177,7 @@ def compute_ghidra_language():
     return 'DATA' + lebe + '64:default'
 
 
-def compute_ghidra_compiler(lang):
+def compute_ghidra_compiler(lang: str) -> str:
     # First, check if the parameter is set
     comp = util.get_convenience_variable('ghidra-compiler')
     if comp != 'auto':
@@ -197,7 +199,7 @@ def compute_ghidra_compiler(lang):
     return 'default'
 
 
-def compute_ghidra_lcsp():
+def compute_ghidra_lcsp() -> Tuple[str, str]:
     lang = compute_ghidra_language()
     comp = compute_ghidra_compiler(lang)
     return lang, comp
@@ -205,10 +207,10 @@ def compute_ghidra_lcsp():
 
 class DefaultMemoryMapper(object):
 
-    def __init__(self, defaultSpace):
+    def __init__(self, defaultSpace: str) -> None:
         self.defaultSpace = defaultSpace
 
-    def map(self, proc: int, offset: int):
+    def map(self, proc: int, offset: int) -> Tuple[str, Address]:
         space = self.defaultSpace
         return self.defaultSpace, Address(space, offset)
 
@@ -220,10 +222,10 @@ class DefaultMemoryMapper(object):
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
 
-memory_mappers = {}
+memory_mappers: Dict[str, DefaultMemoryMapper] = {}
 
 
-def compute_memory_mapper(lang):
+def compute_memory_mapper(lang: str) -> DefaultMemoryMapper:
     if not lang in memory_mappers:
         return DEFAULT_MEMORY_MAPPER
     return memory_mappers[lang]
@@ -231,16 +233,15 @@ def compute_memory_mapper(lang):
 
 class DefaultRegisterMapper(object):
 
-    def __init__(self, byte_order):
+    def __init__(self, byte_order: str) -> None:
         if not byte_order in ['big', 'little']:
             raise ValueError("Invalid byte_order: {}".format(byte_order))
         self.byte_order = byte_order
-        self.union_winners = {}
 
-    def map_name(self, proc, name):
+    def map_name(self, proc: int, name: str):
         return name
 
-    def map_value(self, proc, name, value):
+    def map_value(self, proc: int, name: str, value: int):
         try:
             # TODO: this seems half-baked
             av = value.to_bytes(8, "big")
@@ -249,10 +250,10 @@ class DefaultRegisterMapper(object):
                              .format(name, value, type(value)))
         return RegVal(self.map_name(proc, name), av)
 
-    def map_name_back(self, proc, name):
+    def map_name_back(self, proc: int, name: str) -> str:
         return name
 
-    def map_value_back(self, proc, name, value):
+    def map_value_back(self, proc: int, name: str, value: bytes):
         return RegVal(self.map_name_back(proc, name), value)
 
 

@@ -56,6 +56,10 @@ message Snap {
 	int64 snap = 1;
 }
 
+message Schedule {
+	string schedule = 1;
+}
+
 message Span {
 	int64 min = 1;
 	int64 max = 2;
@@ -392,10 +396,14 @@ message RequestSnapshot {
 	DomObjId oid = 1;
 	string description = 2;
 	string datetime = 3;
-	Snap snap = 4;
+	oneof time {
+		Snap snap = 4;
+		Schedule schedule = 5;
+	}
 }
 
 message ReplySnapshot {
+	Snap snap = 1;
 }
 
 // Client commands
