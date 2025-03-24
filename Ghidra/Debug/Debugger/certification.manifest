@@ -56,6 +56,7 @@ src/main/help/help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugi
 src/main/help/help/topics/DebuggerStaticMappingPlugin/images/DebuggerStaticMappingPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/DebuggerThreadsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTimeOverviewPlugin/DebuggerTimeOverviewPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/images/DebuggerTimePlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html||GHIDRA||||END|
