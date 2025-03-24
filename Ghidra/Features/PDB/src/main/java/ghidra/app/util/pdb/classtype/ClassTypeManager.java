@@ -17,6 +17,7 @@ package ghidra.app.util.pdb.classtype;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.data.*;
+import ghidra.program.model.gclass.ClassID;
 
 /**
  * Class Type Manager
@@ -44,10 +45,7 @@ public class ClassTypeManager {
 	}
 
 	public SymbolPath getSymbolPath(ClassID classId) {
-		if (classId instanceof ProgramClassID gId) {
-			return gId.getSymbolPath();
-		}
-		return null;
+		return classId.getSymbolPath();
 	}
 
 	/**

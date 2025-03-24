@@ -16,16 +16,8 @@
 package ghidra.app.util.pdb.classtype;
 
 /**
- * Unique ID of a ClassType.  Not sure if there will be different implementation for definition
- *  vs. compiled vs. program vs. debug.  Need to come to grips with this
+ * Compiler-generated virtual "something" table -- generic v-anything-table from any toolchain
  */
-public interface ClassID extends Comparable<ClassID> {
-
-	// For compareTo() method of classes in this hierarchy (for Comparable<ClassID>)
-	/**
-	 * For internal use
-	 * @return hash of java class in ClassID hierarchy
-	 */
-	public int getClassNameHash();
-
+public interface VXT {
+	// empty for now
 }

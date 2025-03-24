@@ -25,6 +25,9 @@ import ghidra.app.util.demangler.microsoft.MicrosoftMangledContext;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.gclass.ClassID;
+import ghidra.program.model.gclass.ClassUtils;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -121,8 +124,8 @@ public class MsftVxtManager extends VxtManager {
 	//  memory are the same order that their pointers appear in the classes... this is based solely
 	//  on limited experience.  The solution stinks and would benefit from the original direction
 	//  of using the parentage.  We will try to use the parentage as a litmus test on retrieval
-	private Map<ClassID, TreeMap<Address, VBTable>> vbtsByOwner;
-	private Map<ClassID, TreeMap<Address, VFTable>> vftsByOwner;
+	private Map<ClassID, TreeMap<Address, VirtualBaseTable>> vbtsByOwner;
+	private Map<ClassID, TreeMap<Address, VirtualFunctionTable>> vftsByOwner;
 
 	// Used for locating vft and vbt
 	// These are explicitly used for storing/retrieving the "program" versions which result from
@@ -130,6 +133,9 @@ public class MsftVxtManager extends VxtManager {
 	//  could be used for placeholder or other versions... TBD
 	private ParentageNode vbtRoot;
 	private ParentageNode vftRoot;
+
+	private Map<OwnerParentage, VirtualBaseTable> vbtsByOwnerParentage;
+	private Map<OwnerParentage, VirtualFunctionTable> vftsByOwnerParentage;
 
 	/**
 	 * Constructor for this class
@@ -145,15 +151,32 @@ public class MsftVxtManager extends VxtManager {
 		vftsByOwner = new HashMap<>();
 		vbtRoot = new ParentageNode(null);
 		vftRoot = new ParentageNode(null);
+		vbtsByOwnerParentage = new HashMap<>();
+		vftsByOwnerParentage = new HashMap<>();
 	}
 
 	/**
-	 * Finds the putative {@link VBTable} in memory requested for the owning class
+	 * Create the vxtable structures
+	 * @param dtm the data type manager
+	 */
+	public void doTableLayouts(DataTypeManager dtm) {
+		for (VirtualBaseTable vbt : vbtsByOwnerParentage.values()) {
+			ClassID id = vbt.getOwner();
+			vbt.getLayout(dtm, ClassUtils.getClassInternalsPath(id));
+		}
+		for (VirtualFunctionTable vft : vftsByOwnerParentage.values()) {
+			ClassID id = vft.getOwner();
+			vft.getLayout(dtm, ClassUtils.getClassInternalsPath(id));
+		}
+	}
+
+	/**
+	 * Finds the putative {@link VirtualBaseTable} in memory requested for the owning class
 	 * @param owner the owning class of the table
 	 * @return the table
 	 */
-	public VBTable findPrimaryVbt(ClassID owner) {
-		TreeMap<Address, VBTable> map = vbtsByOwner.get(owner);
+	public VirtualBaseTable findPrimaryVbt(ClassID owner) {
+		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
 		if (map == null) {
 			return null;
 		}
@@ -161,12 +184,12 @@ public class MsftVxtManager extends VxtManager {
 	}
 
 	/**
-	 * Finds the putative {@link VFTable} in memory requested for the owning class
+	 * Finds the putative {@link VirtualFunctionTable} in memory requested for the owning class
 	 * @param owner the owning class of the table
 	 * @return the table
 	 */
-	public VFTable findPrimaryVft(ClassID owner) {
-		TreeMap<Address, VFTable> map = vftsByOwner.get(owner);
+	public VirtualFunctionTable findPrimaryVft(ClassID owner) {
+		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
 		if (map == null) {
 			return null;
 		}
@@ -194,35 +217,35 @@ public class MsftVxtManager extends VxtManager {
 	}
 
 	/**
-	 * Returns the ordered in-memory {@link VBTable}s for the owning class
+	 * Returns the ordered in-memory {@link VirtualBaseTable}s for the owning class
 	 * @param owner the owning class of the table
 	 * @return the tables
 	 */
-	public VBTable[] getVbts(ClassID owner) {
-		TreeMap<Address, VBTable> map = vbtsByOwner.get(owner);
+	public VirtualBaseTable[] getVbts(ClassID owner) {
+		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
 		if (map == null) {
 			return null;
 		}
-		Collection<VBTable> values = map.values();
-		return values.toArray(new VBTable[values.size()]);
+		Collection<VirtualBaseTable> values = map.values();
+		return values.toArray(new VirtualBaseTable[values.size()]);
 	}
 
 	/**
-	 * Returns the ordered in-memory {@link VFTable}s for the owning class
+	 * Returns the ordered in-memory {@link VirtualFunctionTable}s for the owning class
 	 * @param owner the owning class of the table
 	 * @return the tables
 	 */
-	public VFTable[] getVfts(ClassID owner) {
-		TreeMap<Address, VFTable> map = vftsByOwner.get(owner);
+	public VirtualFunctionTable[] getVfts(ClassID owner) {
+		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
 		if (map == null) {
 			return null;
 		}
-		Collection<VFTable> values = map.values();
-		return values.toArray(new VFTable[values.size()]);
+		Collection<VirtualFunctionTable> values = map.values();
+		return values.toArray(new VirtualFunctionTable[values.size()]);
 	}
 
 	/**
-	 * Finds the putative {@link VBTable} in memory requested for the owning class and the
+	 * Finds the putative {@link VirtualBaseTable} in memory requested for the owning class and the
 	 * specified parentage
 	 * @param owner the owning class of the table
 	 * @param parentage the parentage for the desired table.  The parentage must start with the
@@ -230,12 +253,26 @@ public class MsftVxtManager extends VxtManager {
 	 * that class through all of its decendents to the owner, excluding the owner
 	 * @return the table
 	 */
-	public VBTable findVbt(ClassID owner, List<ClassID> parentage) {
+	public VirtualBaseTable findVbt(ClassID owner, List<ClassID> parentage) {
+		OwnerParentage op = new OwnerParentage(owner, parentage);
+		VirtualBaseTable vbt = vbtsByOwnerParentage.get(op);
+		if (vbt != null) {
+			return vbt;
+		}
+		vbt = searchVbtTree(owner, parentage);
+		if (vbt == null) {
+			vbt = new PlaceholderVirtualBaseTable(owner, parentage);
+		}
+		vbtsByOwnerParentage.put(op, vbt);
+		return vbt;
+	}
+
+	private VirtualBaseTable searchVbtTree(ClassID owner, List<ClassID> parentage) {
 		ParentageNode node = findNode(owner, parentage, vbtRoot);
 		if (node == null) {
 			return null;
 		}
-		VBTable vbTable = node.getVBTable();
+		VirtualBaseTable vbTable = node.getVBTable();
 		if (vbTable != null || !parentage.isEmpty()) { // see note below
 			return vbTable;
 		}
@@ -253,20 +290,35 @@ public class MsftVxtManager extends VxtManager {
 	}
 
 	/**
-	 * Finds the putative {@link VFTable} in memory requested for the owning class and the
-	 * specified parentage
+	 * Finds the putative {@link VirtualFunctionTable} in memory requested for the owning class
+	 * and the specified parentage
 	 * @param owner the owning class of the table
 	 * @param parentage the parentage for the desired table.  The parentage must start with the
 	 * parent that contains the pointer to the table and should include the ordered lineage from
 	 * that class through all of its decendents to the owner, excluding the owner
 	 * @return the table
 	 */
-	public VFTable findVft(ClassID owner, List<ClassID> parentage) {
+	public VirtualFunctionTable findVft(ClassID owner, List<ClassID> parentage) {
+		OwnerParentage op = new OwnerParentage(owner, parentage);
+		VirtualFunctionTable vft = vftsByOwnerParentage.get(op);
+		if (vft != null) {
+			return vft;
+		}
+		vft = searchVftTree(owner, parentage);
+		if (vft == null) {
+			vft = new PlaceholderVirtualFunctionTable(owner, parentage);
+		}
+		vftsByOwnerParentage.put(op, vft);
+		return vft;
+	}
+
+	private VirtualFunctionTable searchVftTree(ClassID owner, List<ClassID> parentage) {
+
 		ParentageNode node = findNode(owner, parentage, vftRoot);
 		if (node == null) {
 			return null;
 		}
-		VFTable vfTable = node.getVFTable();
+		VirtualFunctionTable vfTable = node.getVFTable();
 		if (vfTable != null || !parentage.isEmpty()) { // see note below
 			return vfTable;
 		}
@@ -357,7 +409,8 @@ public class MsftVxtManager extends VxtManager {
 		switch (demanglerResults.vtType()) {
 			case VBT:
 				ProgramVirtualBaseTable prvbt = new ProgramVirtualBaseTable(owner, parentage,
-					program, address, ctm.getDefaultVbtTableElementSize(), ctm, mangled);
+					program, address, ClassUtils.getVbtEntrySize(ctm.getDataTypeManager()),
+					mangled);
 				if (node.getVBTable() != null) {
 					Msg.warn(this, "VBT already exists at node for " + mangled);
 					return false;
@@ -385,8 +438,8 @@ public class MsftVxtManager extends VxtManager {
 		return true;
 	}
 
-	private void storeVbt(ClassID owner, Address address, VBTable vbt) {
-		TreeMap<Address, VBTable> map = vbtsByOwner.get(owner);
+	private void storeVbt(ClassID owner, Address address, VirtualBaseTable vbt) {
+		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
 		if (map == null) {
 			map = new TreeMap<>();
 			vbtsByOwner.put(owner, map);
@@ -394,8 +447,8 @@ public class MsftVxtManager extends VxtManager {
 		map.put(address, vbt);
 	}
 
-	private void storeVft(ClassID owner, Address address, VFTable vft) {
-		TreeMap<Address, VFTable> map = vftsByOwner.get(owner);
+	private void storeVft(ClassID owner, Address address, VirtualFunctionTable vft) {
+		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
 		if (map == null) {
 			map = new TreeMap<>();
 			vftsByOwner.put(owner, map);
@@ -404,10 +457,7 @@ public class MsftVxtManager extends VxtManager {
 	}
 
 	private ParentageNode findNode(ClassID owner, List<ClassID> parentage, ParentageNode root) {
-		if (!(owner instanceof ProgramClassID ownerGId)) {
-			return null;
-		}
-		SymbolPath ownerSp = ownerGId.getSymbolPath();
+		SymbolPath ownerSp = owner.getSymbolPath();
 		ParentageNode ownerNode = root.getBranch(ownerSp.toString());
 		if (ownerNode == null) {
 			return null;
@@ -415,10 +465,7 @@ public class MsftVxtManager extends VxtManager {
 		ParentageNode resultNode = null;
 		ParentageNode node = ownerNode;
 		for (ClassID id : parentage) {
-			if (!(id instanceof ProgramClassID gId)) {
-				return null;
-			}
-			SymbolPath sp = gId.getSymbolPath();
+			SymbolPath sp = id.getSymbolPath();
 			ParentageNode next = node.getBranch(sp.toString());
 			if (next != null) {
 				node = next;
@@ -445,19 +492,9 @@ public class MsftVxtManager extends VxtManager {
 
 		ClassID owner = ownerAndParentage.owner(); // owner should be same as first on list
 		List<ClassID> parentage = ownerAndParentage.parentage();
-		if (!(owner instanceof ProgramClassID)) {
-			Msg.error(this, "ClassID error for " + ownerAndParentage);
-			return null;
-		}
-		ProgramClassID gId = (ProgramClassID) owner;
-		node = node.getOrAddBranch(gId.getSymbolPath().toString());
+		node = node.getOrAddBranch(owner.getSymbolPath().toString());
 		for (ClassID id : parentage) {
-			if (!(id instanceof ProgramClassID)) {
-				Msg.error(this, "ClassID error for " + ownerAndParentage);
-				return null;
-			}
-			gId = (ProgramClassID) id;
-			node = node.getOrAddBranch(gId.getSymbolPath().toString());
+			node = node.getOrAddBranch(id.getSymbolPath().toString());
 		}
 		return node;
 	}
@@ -511,9 +548,9 @@ public class MsftVxtManager extends VxtManager {
 		List<SymbolPath> parentageSps = getParentageSymbolPaths(vxTable.getNestedQualifications());
 
 		List<ClassID> parentage = new ArrayList<>();
-		ClassID owner = new ProgramClassID(categoryPath, ownerSp);
+		ClassID owner = new ClassID(categoryPath, ownerSp);
 		for (SymbolPath sp : parentageSps) {
-			ClassID user = new ProgramClassID(categoryPath, sp);
+			ClassID user = new ClassID(categoryPath, sp);
 			parentage.add(user); // owner is the parentage if parentageSps was empty
 		}
 
@@ -560,8 +597,8 @@ public class MsftVxtManager extends VxtManager {
 		private String name;
 		// Might want to store more than just one VXT... could store generic, pdb, program
 		//  versions... could mix function and base too (one tree instead of two)?
-		private VFTable vft;
-		private VBTable vbt;
+		private VirtualFunctionTable vft;
+		private VirtualBaseTable vbt;
 
 		private ParentageNode(String name) {
 			this.name = name;
@@ -582,19 +619,19 @@ public class MsftVxtManager extends VxtManager {
 			return branches.get(branchName);
 		}
 
-		private void setVFTable(VFTable vftArg) {
+		private void setVFTable(VirtualFunctionTable vftArg) {
 			vft = vftArg;
 		}
 
-		private void setVBTable(VBTable vbtArg) {
+		private void setVBTable(VirtualBaseTable vbtArg) {
 			vbt = vbtArg;
 		}
 
-		private VFTable getVFTable() {
+		private VirtualFunctionTable getVFTable() {
 			return vft;
 		}
 
-		private VBTable getVBTable() {
+		private VirtualBaseTable getVBTable() {
 			return vbt;
 		}
 

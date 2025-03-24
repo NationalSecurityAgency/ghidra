@@ -25,6 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.pdb.classtype.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -41,7 +42,6 @@ public class CppCompositeType {
 	private static final String VIRTUAL_BASE_COMMENT = "Virtual Base";
 	private static final String VIRTUAL_BASE_SPECULATIVE_COMMENT =
 		"Virtual Base - Speculative Placement";
-	//private static final String INDIRECT_VIRTUAL_BASE_CLASS_COMMENT = "Indirect Virtual Base Class";
 
 	private boolean isFinal;
 	private ClassKey classKey;
@@ -50,8 +50,7 @@ public class CppCompositeType {
 	private int size;
 	private SymbolPath symbolPath;
 	private CategoryPath categoryPath;
-	private DataTypePath selfBaseDataTypePath;
-	private ProgramClassID myId;
+	private ClassID myId;
 
 	private CategoryPath baseCategoryPath;
 	private CategoryPath internalsCategoryPath;
@@ -70,6 +69,13 @@ public class CppCompositeType {
 	private TreeMap<Long, Pointer> vftPtrTypeByOffset;
 	private List<AbstractMember> myMembers;
 	private List<Member> layoutMembers;
+
+	private static record VirtualFunctionInfo(Integer tableOffset, Integer thisAdjuster,
+			SymbolPath name, FunctionDefinition definition) {}
+
+	private List<VirtualFunctionInfo> virtualFunctionInfo;
+
+	//----
 
 	private List<SyntacticBaseClass> syntacticBaseClasses;
 
@@ -100,6 +106,11 @@ public class CppCompositeType {
 	private Long mainVbtPtrOffset;
 
 	/**
+	 * Holds the main Vft for this class
+	 */
+	private VirtualFunctionTable mainVft;
+
+	/**
 	 * Holds the main Vbt for this class
 	 */
 	private VirtualBaseTable mainVbt;
@@ -126,19 +137,6 @@ public class CppCompositeType {
 	private TreeMap<ClassID, Long> baseOffsetById;
 
 	//==============================================================================================
-	// Data used for resolving main vftptr
-
-	/*
-	 * Not certain, but think there should only be one Virtual Base Table for a given
-	 * class (not counting those for its parents).  However, since VirtualBaseClass and
-	 * IndirectVirtualBase class records both have an "offset" for (seemingly) where the
-	 * virtual base table point can be located, then there is a chance that different
-	 * records for a class could have different values.  This HashMap will is keyed by this
-	 * offset, in case we see more than one.  Want to log the fact if more than one value is seen
-	 * for a particular hierarchy level.
-	 */
-	private Map<Long, PlaceholderVirtualBaseTable> placeholderVirtualBaseTables;
-
 	//==============================================================================================
 	// Data used for analyzing Vxts and their parentage
 
@@ -148,8 +146,10 @@ public class CppCompositeType {
 	private TreeSet<VxtPtrInfo> propagatedDirectVirtualBaseVbts;
 	private TreeSet<VxtPtrInfo> propagatededIndirectVirtualBaseVfts;
 	private TreeSet<VxtPtrInfo> propagatedIndirectVirtualBaseVbts;
-	private TreeMap<Long, VxtPtrInfo> finalLayoutVfts;
-	private TreeMap<Long, VxtPtrInfo> finalLayoutVbts;
+	private TreeMap<Long, VxtPtrInfo> finalVftPtrInfoByOffset;
+	private TreeMap<Long, VxtPtrInfo> finalVbtPtrInfoByOffset;
+	private TreeMap<Long, VXT> finalVftByOffset;
+	private TreeMap<Long, VXT> finalVbtByOffset;
 
 	//==============================================================================================
 	//==============================================================================================
@@ -165,13 +165,14 @@ public class CppCompositeType {
 		this.composite = composite;
 		this.mangledName = mangledName;
 		myId = getClassId(this);
+		categoryPath = new CategoryPath(composite.getCategoryPath(), composite.getName());
 		internalsCategoryPath = ClassUtils.getClassInternalsPath(composite);  // eliminate
-		selfBaseDataTypePath = ClassUtils.getBaseClassDataTypePath(composite);
 
 		directLayoutBaseClasses = new ArrayList<>();
 		virtualLayoutBaseClasses = new ArrayList<>();
 		directVirtualLayoutBaseClasses = new ArrayList<>();
 		indirectVirtualLayoutBaseClasses = new ArrayList<>();
+		virtualFunctionInfo = new ArrayList<>();
 
 		vftPtrTypeByOffset = new TreeMap<>();
 		myMembers = new ArrayList<>();
@@ -343,7 +344,7 @@ public class CppCompositeType {
 	}
 
 	/**
-	 * Method for adding a member to this type, to include a attribtues and comment
+	 * Method for adding a member to this type, to include a attributes and comment
 	 * @param memberName member name
 	 * @param dataType data type of member
 	 * @param isFlexibleArray {@code true} if member is a flexible array
@@ -360,6 +361,20 @@ public class CppCompositeType {
 	}
 
 	/**
+	 * Method for adding a virtual method to this type
+	 * @param thisAdjuster the this-adjustor offset
+	 * @param tableOffset virtual function table offset
+	 * @param name function name
+	 * @param definition function definition
+	 */
+	public void addVirtualMethod(int thisAdjuster, int tableOffset, SymbolPath name,
+			FunctionDefinition definition) {
+		VirtualFunctionInfo info =
+			new VirtualFunctionInfo(tableOffset, thisAdjuster, name, definition);
+		virtualFunctionInfo.add(info);
+	}
+
+	/**
 	 * Method to perform class layout from the user specified information.  Note that all
 	 * dependency classes (parents, etc.) must have had their like-processing performed
 	 * @param layoutOptions the options
@@ -368,7 +383,7 @@ public class CppCompositeType {
 	 * @throws PdbException upon issue performing the layout
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void createLayout(ObjectOrientedClassLayout layoutOptions, VxtManager vxtManager,
+	public void createLayout(ObjectOrientedClassLayout layoutOptions, MsftVxtManager vxtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
 		switch (layoutOptions) {
 			case MEMBERS_ONLY:
@@ -425,6 +440,14 @@ public class CppCompositeType {
 	 */
 	public ClassKey getKey() {
 		return classKey;
+	}
+
+	/**
+	 * Returns the default access of the type
+	 * @return the default access
+	 */
+	public Access getDefaultAccess() {
+		return ClassKey.CLASS.equals(classKey) ? Access.PRIVATE : Access.PUBLIC;
 	}
 
 	/**
@@ -518,7 +541,7 @@ public class CppCompositeType {
 	 * Returns the ClassID for this class
 	 * @return the class id
 	 */
-	public ProgramClassID getClassId() {
+	public ClassID getClassId() {
 		return myId;
 	}
 
@@ -538,6 +561,14 @@ public class CppCompositeType {
 	 */
 	public Composite getSelfBaseType() {
 		return selfBaseType;
+	}
+
+	/**
+	 * Returns the CategoryPath of this composite
+	 * @return the CategoryPath
+	 */
+	public CategoryPath getCategoryPath() {
+		return categoryPath;
 	}
 
 	// TODO: move to ClassUtils?
@@ -672,8 +703,8 @@ public class CppCompositeType {
 	 * @param cpp the CPP type
 	 * @return the class id
 	 */
-	private static ProgramClassID getClassId(CppCompositeType cpp) {
-		return new ProgramClassID(cpp.baseCategoryPath, cpp.getSymbolPath());
+	private static ClassID getClassId(CppCompositeType cpp) {
+		return new ClassID(cpp.baseCategoryPath, cpp.getSymbolPath());
 	}
 
 	//==============================================================================================
@@ -769,15 +800,15 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	//==============================================================================================
-	private void createHierarchicalClassLayout(VxtManager vxtManager, TaskMonitor monitor)
+	private void createHierarchicalClassLayout(MsftVxtManager vxtManager, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 
 		initLayoutAlgorithmData();
 
-		findDirectBaseVxtPtrs();
+		findDirectBaseVxtPtrs(vxtManager);
 
-		findOrAllocateMainVftPtr();
-		findOrAllocateMainVbtPtr();
+		findOrAllocateMainVftPtr(vxtManager);
+		findOrAllocateMainVbtPtr(vxtManager);
 
 		createClassLayout(vxtManager, monitor);
 
@@ -804,11 +835,6 @@ public class CppCompositeType {
 		baseOffsetById = new TreeMap<>();
 
 		//======
-		// Data used for resolving main vftptr
-
-		placeholderVirtualBaseTables = new HashMap<>();
-
-		//======
 		// Data used for analyzing Vxts and their parentage
 
 		propagatedSelfBaseVfts = new TreeSet<>();
@@ -817,8 +843,10 @@ public class CppCompositeType {
 		propagatedDirectVirtualBaseVbts = new TreeSet<>();
 		propagatededIndirectVirtualBaseVfts = new TreeSet<>();
 		propagatedIndirectVirtualBaseVbts = new TreeSet<>();
-		finalLayoutVfts = new TreeMap<>();
-		finalLayoutVbts = new TreeMap<>();
+		finalVftPtrInfoByOffset = new TreeMap<>();
+		finalVbtPtrInfoByOffset = new TreeMap<>();
+		finalVftByOffset = new TreeMap<>();
+		finalVbtByOffset = new TreeMap<>();
 	}
 
 	/**
@@ -838,45 +866,45 @@ public class CppCompositeType {
 		PNode childToParentNode;
 		PNode parentToChildNode;
 
-		for (VxtPtrInfo info : finalLayoutVfts.values()) {
+		for (VxtPtrInfo info : finalVftPtrInfoByOffset.values()) {
 			List<ClassID> parentage = info.parentage();
 			childToParentNode = vftChildToParentRoot;
 			parentToChildNode = vftParentToChildRoot;
 			for (ClassID id : parentage) {
-				String name = ((ProgramClassID) id).getSymbolPath().toString();
+				String name = id.getSymbolPath().toString();
 				childToParentNode.incrementPathCount();
 				childToParentNode = childToParentNode.getOrAddBranch(name);
 			}
 			for (ClassID id : parentage.reversed()) {
-				String name = ((ProgramClassID) id).getSymbolPath().toString();
+				String name = id.getSymbolPath().toString();
 				parentToChildNode.incrementPathCount();
 				parentToChildNode = parentToChildNode.getOrAddBranch(name);
 			}
 		}
-		for (VxtPtrInfo info : finalLayoutVbts.values()) {
+		for (VxtPtrInfo info : finalVbtPtrInfoByOffset.values()) {
 			List<ClassID> parentage = info.parentage();
 			childToParentNode = vbtChildToParentRoot;
 			parentToChildNode = vbtParentToChildRoot;
 			for (ClassID id : parentage) {
-				String name = ((ProgramClassID) id).getSymbolPath().toString();
+				String name = id.getSymbolPath().toString();
 				childToParentNode.incrementPathCount();
 				childToParentNode = childToParentNode.getOrAddBranch(name);
 			}
 			for (ClassID id : parentage.reversed()) {
-				String name = ((ProgramClassID) id).getSymbolPath().toString();
+				String name = id.getSymbolPath().toString();
 				parentToChildNode.incrementPathCount();
 				parentToChildNode = parentToChildNode.getOrAddBranch(name);
 			}
 		}
 
 		StringBuilder builder = new StringBuilder();
-		for (VxtPtrInfo info : finalLayoutVfts.values()) {
+		for (VxtPtrInfo info : finalVftPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vftChildToParentRoot, vftParentToChildRoot, info);
 			builder.append(dumpVxtPtrResult("vft", info, altParentage));
 
 		}
-		for (VxtPtrInfo info : finalLayoutVbts.values()) {
+		for (VxtPtrInfo info : finalVbtPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vbtChildToParentRoot, vbtParentToChildRoot, info);
 			builder.append(dumpVxtPtrResult("vbt", info, altParentage));
@@ -901,7 +929,7 @@ public class CppCompositeType {
 		String startNode = null;
 
 		for (ClassID id : parentage) {
-			String name = ((ProgramClassID) id).getSymbolPath().toString();
+			String name = id.getSymbolPath().toString();
 			childToParentNode = childToParentNode.getBranch(name);
 			if (childToParentNode.getPathCount() == 1) {
 				startNode = name;
@@ -913,7 +941,7 @@ public class CppCompositeType {
 		//  (use all nodes)
 		boolean foundStart = (startNode == null);
 		for (ClassID id : parentage.reversed()) {
-			String name = ((ProgramClassID) id).getSymbolPath().toString();
+			String name = id.getSymbolPath().toString();
 			if (name.equals(startNode)) {
 				foundStart = true;
 			}
@@ -940,12 +968,12 @@ public class CppCompositeType {
 	private String dumpVxtPtrResult(String vxt, VxtPtrInfo info, List<ClassID> altParentage) {
 		List<String> r1 = new ArrayList<>();
 		for (ClassID id : altParentage.reversed()) {
-			String name = ((ProgramClassID) id).getSymbolPath().toString();
+			String name = id.getSymbolPath().toString();
 			r1.add(name);
 		}
 		List<String> r2 = new ArrayList<>();
 		for (ClassID id : info.parentage().reversed()) {
-			String name = ((ProgramClassID) id).getSymbolPath().toString();
+			String name = id.getSymbolPath().toString();
 			r2.add(name);
 		}
 		return String.format("  %4d %s %s\t%s\n", info.finalOffset(), vxt, r1.toString(),
@@ -990,9 +1018,17 @@ public class CppCompositeType {
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException up issue with finding the vbt or assigning offsets to virtual bases
 	 */
-	private void createClassLayout(VxtManager vxtManager, TaskMonitor monitor)
+	private void createClassLayout(MsftVxtManager vxtManager, TaskMonitor monitor)
 			throws CancelledException, PdbException {
 		List<ClassPdbMember> selfBaseMembers = getSelfBaseClassMembers();
+		mainVft = getMainVft(vxtManager);
+		if (mainVft != null) {
+			updateMainVft();
+			for (VXT t : finalVftByOffset.values()) {
+				VirtualFunctionTable vft = (VirtualFunctionTable) t;
+				updateVftFromSelf(vft);
+			}
+		}
 		if (getNumLayoutVirtualBaseClasses() == 0) {
 			if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size,
 				selfBaseMembers, msg -> Msg.warn(this, msg), monitor)) {
@@ -1010,13 +1046,22 @@ public class CppCompositeType {
 				new ClassPdbMember("", selfBaseType, false, 0, SELF_BASE_COMMENT);
 
 			mainVbt = getMainVbt(vxtManager);
+			if (mainVbt != null) {
+				updateMainVbt();
+				// If there was any updating to do for secondary tables, we would do it here.
+				//  Something to consider in the future
+//				for (VXT t : finalVbtByOffset.values()) {
+//					VirtualBaseTable vbt = (VirtualBaseTable) t;
+//					updateVbtFromSelf(vbt);
+//				}
+			}
 			assignVirtualBaseOffsets();
 
 			String baseComment = (mainVbt instanceof ProgramVirtualBaseTable) ? VIRTUAL_BASE_COMMENT
 					: VIRTUAL_BASE_SPECULATIVE_COMMENT;
 			TreeMap<Long, ClassPdbMember> virtualBasePdbMembers =
 				getVirtualBaseClassMembers(baseComment);
-			findVirtualBaseVxtPtrs();
+			findVirtualBaseVxtPtrs(vxtManager);
 
 			TreeMap<Long, ClassPdbMember> allMembers = new TreeMap<>();
 			allMembers.put(0L, directClassPdbMember);
@@ -1178,22 +1223,26 @@ public class CppCompositeType {
 	 * Finds all virtual base and virtual function pointers in the hierarchy of this class's
 	 *  self base.
 	 */
-	private void findDirectBaseVxtPtrs() {
+	private void findDirectBaseVxtPtrs(VxtManager vxtManager) {
 		for (DirectLayoutBaseClass base : directLayoutBaseClasses) {
 			CppCompositeType cppBaseType = base.getBaseClassType();
-			ProgramClassID baseId = cppBaseType.getClassId();
+			ClassID baseId = cppBaseType.getClassId();
 			long baseOffset = base.getOffset();
 			// Note that if the parent has already had its layout done, it will not have
 			//  used the vxtManager that we are passing in here; it will have used whatever
 			//  was passed to the layout method for that class
-			for (VxtPtrInfo info : cppBaseType.getPropagatedSelfBaseVfts()) {
-				VxtPtrInfo newInfo = createSelfOwnedDirectVxtPtrInfo(info, baseId, baseOffset);
-				storeVxtInfo(propagatedSelfBaseVfts, finalLayoutVfts, vftTableIdByOffset,
+			for (VxtPtrInfo parentInfo : cppBaseType.getPropagatedSelfBaseVfts()) {
+				VxtPtrInfo newInfo =
+					createSelfOwnedDirectVxtPtrInfo(parentInfo, baseId, baseOffset);
+				updateVft(vxtManager, baseId, newInfo, parentInfo);
+				storeVxtInfo(propagatedSelfBaseVfts, finalVftPtrInfoByOffset, vftTableIdByOffset,
 					vftOffsetByTableId, newInfo);
 			}
-			for (VxtPtrInfo info : cppBaseType.getPropagatedSelfBaseVbts()) {
-				VxtPtrInfo newInfo = createSelfOwnedDirectVxtPtrInfo(info, baseId, baseOffset);
-				storeVxtInfo(propagatedSelfBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
+			for (VxtPtrInfo parentInfo : cppBaseType.getPropagatedSelfBaseVbts()) {
+				VxtPtrInfo newInfo =
+					createSelfOwnedDirectVxtPtrInfo(parentInfo, baseId, baseOffset);
+				updateVbt(vxtManager, baseId, newInfo, parentInfo);
+				storeVxtInfo(propagatedSelfBaseVbts, finalVbtPtrInfoByOffset, vbtTableIdByOffset,
 					vbtOffsetByTableId, newInfo);
 			}
 		}
@@ -1205,32 +1254,36 @@ public class CppCompositeType {
 	 *  we are not relying on the "indirect" virtual base class information from the PDB.  This
 	 *  is done this way so that we can collect parentage information for the pointers.
 	 */
-	private void findVirtualBaseVxtPtrs() {
+	private void findVirtualBaseVxtPtrs(MsftVxtManager vxtManager) {
 		// Walk direct bases to find vxts of virtual bases.  TODO: also notate all rolled up
 		//  virtuals for each direct base.
 		for (DirectLayoutBaseClass base : directLayoutBaseClasses) {
 
 			CppCompositeType cppBaseType = base.getBaseClassType();
-
+			ClassID baseId = cppBaseType.getClassId();
 			for (VxtPtrInfo info : cppBaseType.getPropagatedDirectVirtualBaseVfts()) {
 				VxtPtrInfo newInfo = createSelfOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatedDirectVirtualBaseVfts, finalLayoutVfts, vftTableIdByOffset,
-					vftOffsetByTableId, newInfo);
+				updateVft(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedDirectVirtualBaseVfts, finalVftPtrInfoByOffset,
+					vftTableIdByOffset, vftOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedDirectVirtualBaseVbts()) {
 				VxtPtrInfo newInfo = createSelfOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatedDirectVirtualBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
-					vbtOffsetByTableId, newInfo);
+				updateVbt(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedDirectVirtualBaseVbts, finalVbtPtrInfoByOffset,
+					vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedIndirectVirtualBaseVfts()) {
 				VxtPtrInfo newInfo = createSelfOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalLayoutVfts,
+				updateVft(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalVftPtrInfoByOffset,
 					vftTableIdByOffset, vftOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedIndirectVirtualBaseVbts()) {
 				VxtPtrInfo newInfo = createSelfOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
-					vbtOffsetByTableId, newInfo);
+				updateVbt(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalVbtPtrInfoByOffset,
+					vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 			}
 		}
 
@@ -1240,40 +1293,46 @@ public class CppCompositeType {
 		for (DirectVirtualLayoutBaseClass base : directVirtualLayoutBaseClasses) {
 
 			CppCompositeType cppBaseType = base.getBaseClassType();
-			ProgramClassID baseId = cppBaseType.getClassId();
+			ClassID baseId = cppBaseType.getClassId();
 
 			for (VxtPtrInfo info : cppBaseType.getPropagatedSelfBaseVfts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedSelfVxtPtrInfo(info, baseId);
-				storeVxtInfo(propagatedDirectVirtualBaseVfts, finalLayoutVfts, vftTableIdByOffset,
-					vftOffsetByTableId, newInfo);
+				updateVft(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedDirectVirtualBaseVfts, finalVftPtrInfoByOffset,
+					vftTableIdByOffset, vftOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedSelfBaseVbts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedSelfVxtPtrInfo(info, baseId);
-				storeVxtInfo(propagatedDirectVirtualBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
-					vbtOffsetByTableId, newInfo);
+				updateVbt(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedDirectVirtualBaseVbts, finalVbtPtrInfoByOffset,
+					vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedDirectVirtualBaseVfts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalLayoutVfts,
+				updateVft(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalVftPtrInfoByOffset,
 					vftTableIdByOffset, vftOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedDirectVirtualBaseVbts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
-					vbtOffsetByTableId, newInfo);
+				updateVbt(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalVbtPtrInfoByOffset,
+					vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedIndirectVirtualBaseVfts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalLayoutVfts,
+				updateVft(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatededIndirectVirtualBaseVfts, finalVftPtrInfoByOffset,
 					vftTableIdByOffset, vftOffsetByTableId, newInfo);
 			}
 			for (VxtPtrInfo info : cppBaseType.getPropagatedIndirectVirtualBaseVbts()) {
 				VxtPtrInfo newInfo = createVirtualOwnedVirtualVxtPtrInfo(info);
-				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalLayoutVbts, vbtTableIdByOffset,
-					vbtOffsetByTableId, newInfo);
+				updateVbt(vxtManager, baseId, newInfo, info);
+				storeVxtInfo(propagatedIndirectVirtualBaseVbts, finalVbtPtrInfoByOffset,
+					vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 			}
-
 		}
+
 	}
 
 	// Note sure what the final information will look like when we are done.  For this stopping
@@ -1284,7 +1343,6 @@ public class CppCompositeType {
 	 * @param finalInfo the final info tree
 	 * @param tableIdByOffset the table-id-by-offset map
 	 * @param offsetByTableId the offset-by-table-id map
-	 * @param info the vxt ptr info
 	 */
 	private void storeVxtInfo(TreeSet<VxtPtrInfo> propagate, TreeMap<Long, VxtPtrInfo> finalInfo,
 			Map<Long, OwnerParentage> tableIdByOffset, Map<OwnerParentage, Long> offsetByTableId,
@@ -1364,7 +1422,7 @@ public class CppCompositeType {
 				throw new PdbException("Cannot place base class");
 			}
 			baseOffset += base.getBasePointerOffset();
-			ProgramClassID baseId = cppBaseType.getClassId();
+			ClassID baseId = cppBaseType.getClassId();
 			baseOffsetById.put(baseId, baseOffset);
 		}
 	}
@@ -1373,7 +1431,7 @@ public class CppCompositeType {
 	 * Finds or allocates (if needed) the Virtual Function Table "Pointer" within the class
 	 * structure
 	 */
-	private void findOrAllocateMainVftPtr() {
+	private void findOrAllocateMainVftPtr(MsftVxtManager vxtManager) {
 		if (propagatedSelfBaseVfts.isEmpty()) {
 			if (!vftPtrTypeByOffset.isEmpty()) {
 				if (vftPtrTypeByOffset.size() > 1) {
@@ -1382,8 +1440,21 @@ public class CppCompositeType {
 				myVftPtrOffset = vftPtrTypeByOffset.firstKey();
 				VxtPtrInfo info =
 					new VxtPtrInfo(myVftPtrOffset, myVftPtrOffset, myId, List.of(myId));
-				propagatedSelfBaseVfts.add(info);
-				finalLayoutVfts.put(info.accumOffset(), info);
+				VirtualFunctionTable myVft =
+					vxtManager.findVft(myId, List.of(myId));
+				if (myVft != null) {
+					myVft.setPtrOffsetInClass(info.finalOffset());
+					propagatedSelfBaseVfts.add(info);
+					finalVftByOffset.put(info.finalOffset(), myVft);
+				}
+				else {
+					PlaceholderVirtualFunctionTable t = new PlaceholderVirtualFunctionTable(
+						myId, List.of(myId));
+					t.setPtrOffsetInClass(info.finalOffset());
+					propagatedSelfBaseVfts.add(info);
+					finalVftByOffset.put(info.finalOffset(), t);
+				}
+				finalVftPtrInfoByOffset.put(info.accumOffset(), info);
 				OwnerParentage op = new OwnerParentage(info.baseId(), info.parentage());
 				vftTableIdByOffset.put(info.accumOffset(), op);
 				vftOffsetByTableId.put(op, info.accumOffset());
@@ -1391,17 +1462,17 @@ public class CppCompositeType {
 					ClassFieldAttributes.UNKNOWN, myVftPtrOffset.intValue());
 				layoutVftPtrMembers.add(newMember);
 				myMembers.add(newMember);
-
 			}
 		}
-		mainVftPtrOffset = finalLayoutVfts.isEmpty() ? null : finalLayoutVfts.firstKey();
+		mainVftPtrOffset =
+			finalVftPtrInfoByOffset.isEmpty() ? null : finalVftPtrInfoByOffset.firstKey();
 	}
 
 	/**
 	 * Finds or allocates (if needed) the Virtual Base Table "Pointer" for within the class
 	 * structure
 	 */
-	private void findOrAllocateMainVbtPtr() {
+	private void findOrAllocateMainVbtPtr(MsftVxtManager vxtManager) {
 		if (propagatedSelfBaseVbts.isEmpty()) {
 			if (!virtualLayoutBaseClasses.isEmpty()) {
 				TreeSet<Long> vbtOffsets = new TreeSet<>();
@@ -1416,102 +1487,313 @@ public class CppCompositeType {
 					Msg.warn(this, "Mismatch vbt location for " + myId);
 				}
 				VxtPtrInfo info = new VxtPtrInfo(vbtPtrOffset, vbtPtrOffset, myId, List.of(myId));
-				propagatedSelfBaseVbts.add(info);
-				finalLayoutVbts.put(info.accumOffset(), info);
+				VirtualBaseTable myVbt = vxtManager.findVbt(myId, List.of(myId));
+				if (myVbt != null) {
+					myVbt.setPtrOffsetInClass(info.finalOffset());
+					propagatedSelfBaseVbts.add(info);
+					finalVbtByOffset.put(info.finalOffset(), myVbt);
+				}
+				finalVbtPtrInfoByOffset.put(info.accumOffset(), info);
 				OwnerParentage op = new OwnerParentage(info.baseId(), info.parentage());
 				vbtTableIdByOffset.put(info.accumOffset(), op);
 				vbtOffsetByTableId.put(op, info.accumOffset());
-				myVbtPtrOffset = finalLayoutVbts.firstKey();
+				myVbtPtrOffset = finalVbtPtrInfoByOffset.firstKey();
 				Member newMember = new Member(ClassUtils.VBPTR, ClassUtils.VXPTR_TYPE, false,
 					ClassFieldAttributes.UNKNOWN, myVbtPtrOffset.intValue());
 				layoutVbtPtrMembers.add(newMember);
 				myMembers.add(newMember);
 			}
 		}
-		mainVbtPtrOffset = finalLayoutVbts.isEmpty() ? null : finalLayoutVbts.firstKey();
+		mainVbtPtrOffset =
+			finalVbtPtrInfoByOffset.isEmpty() ? null : finalVbtPtrInfoByOffset.firstKey();
+	}
+
+	/**
+	 * Adds new entries to the main vftable for this class
+	 */
+	private void updateMainVft() {
+		for (VirtualFunctionInfo vfInfo : virtualFunctionInfo) {
+			int tableOffset = vfInfo.tableOffset();
+			// we believe this adjuster of 0 is all we want for first direct base
+			// -1 signifies not intro
+			if (vfInfo.thisAdjuster() == 0 && vfInfo.tableOffset() != -1) {
+				mainVft.addEntry(tableOffset, vfInfo.name(), vfInfo.name(),
+					new PointerDataType(vfInfo.definition()));
+			}
+		}
+	}
+
+	/**
+	 * Updates vftable entries with values from this class that override those of parent classes
+	 */
+	private VirtualFunctionTable updateVft(VxtManager vxtManager, ClassID baseId, VxtPtrInfo info,
+			VxtPtrInfo parentInfo) {
+		if (!(vxtManager instanceof MsftVxtManager mvxtManager)) {
+			// error
+			return null;
+		}
+		ClassID parentId;
+		List<ClassID> parentParentage;
+		if (parentInfo == null) {
+			parentId = info.baseId();
+			List<ClassID> parentage = info.parentage();
+			parentParentage = parentage.subList(0, parentage.size() - 1);
+		}
+		else {
+			parentId = baseId;
+			parentParentage = parentInfo.parentage();
+		}
+
+		Long finalOffset = info.finalOffset();
+		VirtualFunctionTable myVft = (VirtualFunctionTable) finalVftByOffset.get(finalOffset);
+		if (myVft == null) {
+			myVft = mvxtManager.findVft(myId, info.parentage());
+			if (myVft == null) {
+				return null;
+			}
+			finalVftByOffset.put(finalOffset, myVft);
+		}
+
+		myVft.setPtrOffsetInClass(finalOffset);
+		VirtualFunctionTable parentVft =
+			mvxtManager.findVft(parentId, parentParentage);
+
+		if (parentVft == null) {
+			// this is an error
+			return null;
+		}
+
+		for (Map.Entry<Integer, VirtualFunctionTableEntry> mapEntry : parentVft
+				.getEntriesByTableIndex()
+				.entrySet()) {
+			int tableOffset = mapEntry.getKey();
+			VFTableEntry e = mapEntry.getValue();
+			SymbolPath parentOrigPath = e.getOriginalPath();
+			SymbolPath parentPath = e.getOverridePath();
+			VFTableEntry currentEntry = myVft.getEntry(tableOffset);
+			if (currentEntry != null) {
+				SymbolPath currentOrigPath = currentEntry.getOriginalPath();
+				SymbolPath currentPath = currentEntry.getOverridePath();
+				// Note that this check also checks the method name
+				if (!parentOrigPath.equals(currentOrigPath)) {
+					// problem
+				}
+				boolean parentOverride = !parentOrigPath.equals(parentPath);
+				boolean currentOverride = !currentOrigPath.equals(currentPath);
+				if (!currentOverride && parentOverride) {
+					myVft.addEntry(tableOffset, parentOrigPath, parentPath, e.getFunctionPointer());
+				}
+				else if (currentOverride && !parentOverride) {
+					myVft.addEntry(tableOffset, currentOrigPath, currentPath,
+						e.getFunctionPointer());
+				}
+				else {
+					// maybe order matters?
+				}
+			}
+			else {
+				myVft.addEntry(tableOffset, parentOrigPath, parentPath, e.getFunctionPointer());
+			}
+		}
+		return myVft;
+	}
+
+	private void updateVftFromSelf(VirtualFunctionTable vft) {
+		for (Map.Entry<Integer, VirtualFunctionTableEntry> mapEntry : vft.getEntriesByTableIndex()
+				.entrySet()) {
+			int tableOffset = mapEntry.getKey();
+			VFTableEntry e = mapEntry.getValue();
+			SymbolPath origPath = e.getOriginalPath();
+			SymbolPath methodPath = e.getOverridePath();
+			String methodName = methodPath.getName();
+			for (VirtualFunctionInfo vfInfo : virtualFunctionInfo) {
+				SymbolPath selfMethodPath = vfInfo.name();
+				String selfMethodName = selfMethodPath.getName();
+				if (selfMethodName.equals(methodName)) {
+					// potential overridden method; just replace path (could be the same)
+					methodPath = selfMethodPath;
+					break;
+				}
+			}
+			vft.addEntry(tableOffset, origPath, methodPath, e.getFunctionPointer());
+		}
+	}
+
+	private void updateMainVbt() {
+		int numEntries = virtualLayoutBaseClasses.size();
+		Integer existingEntries = mainVbt.getNumEntries();
+		if (numEntries < existingEntries) {
+			// error: silent for now... not sure how we want to deal with this
+			return;
+		}
+		for (VirtualLayoutBaseClass virtualLayoutBaseClass : virtualLayoutBaseClasses) {
+			int tableOffset = virtualLayoutBaseClass.getOffetFromVbt();
+			// Value in base class is more of an index
+			ClassID baseId = virtualLayoutBaseClass.getBaseClassType().getClassId();
+			int vbtPtrOffset = virtualLayoutBaseClass.getBasePointerOffset();
+			if (vbtPtrOffset != mainVbtPtrOffset) {
+				// error
+				// ignoring for now... not sure how we want to deal with this
+				continue;
+			}
+			VBTableEntry e = mainVbt.getEntry(tableOffset);
+			if (e == null) {
+				mainVbt.addEntry(tableOffset, baseId);
+			}
+			// No need to update an existing entry in base table
+		}
+	}
+
+	// TODO: Remove?  Believe that only the main VBT should ever possibly get updated.  The others
+	//  will only get updated in size when they are the main VBT within those respective base
+	//  classes.
+	private VirtualBaseTable updateVbt(VxtManager vxtManager, ClassID baseId, VxtPtrInfo info,
+			VxtPtrInfo parentInfo) {
+		if (!(vxtManager instanceof MsftVxtManager mvxtManager)) {
+			// error
+			return null;
+		}
+		ClassID parentId;
+		List<ClassID> parentParentage;
+		if (parentInfo == null) {
+			parentId = info.baseId();
+			List<ClassID> parentage = info.parentage();
+			parentParentage = parentage.subList(0, parentage.size() - 1);
+		}
+		else {
+			parentId = baseId;
+			parentParentage = parentInfo.parentage();
+		}
+
+		Long finalOffset = info.finalOffset();
+		VirtualBaseTable myVbt = (VirtualBaseTable) finalVbtByOffset.get(finalOffset);
+		if (myVbt == null) {
+			myVbt = mvxtManager.findVbt(myId, info.parentage());
+			if (myVbt == null) {
+				return null;
+			}
+			finalVbtByOffset.put(finalOffset, myVbt);
+		}
+
+		myVbt.setPtrOffsetInClass(finalOffset);
+		VirtualBaseTable parentVbt =
+			mvxtManager.findVbt(parentId, parentParentage);
+		if (parentVbt == null) {
+			// this is an error
+			return null;
+		}
+		for (Map.Entry<Integer, VirtualBaseTableEntry> mapEntry : parentVbt.getEntriesByTableIndex()
+				.entrySet()) {
+			int tableOffset = mapEntry.getKey();
+			VBTableEntry e = mapEntry.getValue();
+			myVbt.addEntry(tableOffset, e.getClassId());
+		}
+
+		return myVbt;
 	}
 
 	/**
 	 * Provides the Virtual Base Table to be used for placing virtual bases of this class
+	 * @throws PdbException upon unrecognized vft type
 	 */
-	private VirtualBaseTable getMainVbt(VxtManager vxtManager) throws PdbException {
-		VirtualBaseTable vbt = null;
-		if (!finalLayoutVbts.isEmpty()) {
-			VxtPtrInfo firstVbtPtrInfo = finalLayoutVbts.firstEntry().getValue();
-			List<VirtualLayoutBaseClass> reorderedVirtualBases = new ArrayList<>();
-			for (ClassID bId : depthFirstVirtualBases().keySet()) {
-				for (VirtualLayoutBaseClass base : virtualLayoutBaseClasses) {
-					CppCompositeType baseType = base.getBaseClassType();
-					ClassID id = baseType.getClassId();
-					if (id.equals(bId)) {
-						reorderedVirtualBases.add(base);
-					}
-				}
-			}
-			long offset = selfBaseType.getAlignedLength();
-			for (VirtualLayoutBaseClass base : reorderedVirtualBases) {
-				CppCompositeType baseType = base.getBaseClassType();
-				addPlaceholderVirtualBaseTableEntry(vxtManager, base, offset);
-				offset += baseType.getSelfBaseType().getAlignedLength();
-			}
-			if (vxtManager instanceof MsftVxtManager mvxtManager) {
-				VBTable table = mvxtManager.findVbt(myId, firstVbtPtrInfo.parentage());
-				if (table instanceof ProgramVirtualBaseTable pvbt) {
-					return pvbt;
-				}
-			}
-			vbt = placeholderVirtualBaseTables.get(mainVbtPtrOffset);
+	private VirtualFunctionTable getMainVft(MsftVxtManager vxtManager) throws PdbException {
+		if (!finalVftPtrInfoByOffset.isEmpty()) {
+			VxtPtrInfo firstVftPtrInfo = finalVftPtrInfoByOffset.firstEntry().getValue();
+			VirtualFunctionTable vft = vxtManager.findVft(myId, firstVftPtrInfo.parentage());
+			return vft;
+			// Following is for consideration for testing without a program:
+//				if (vft instanceof ProgramVirtualFunctionTable pvft) {
+//					return pvft;
+//				}
+//				else if (vft instanceof PlaceholderVirtualFunctionTable plvft) {
+//					return plvft;
+//				}
+//				else {
+//					throw new PdbException(
+//						"VFT type not expected: " + vft.getClass().getSimpleName());
+//				}
 		}
-		return vbt;
+		return null;
 	}
 
-	//----------------------------------------------------------------------------------------------
-	//----------------------------------------------------------------------------------------------
-	// used by find main vbt (probably should evaluate for cleanup)
-	private void addPlaceholderVirtualBaseTableEntry(VxtManager vxtManager,
-			VirtualLayoutBaseClass base, Long baseOffset) throws PdbException {
+	/**
+	 * Provides the Virtual Base Table to be used for placing virtual bases of this class
+	 * @throws PdbException upon unrecognized vbt type
+	 */
+	private VirtualBaseTable getMainVbt(MsftVxtManager vxtManager) throws PdbException {
+		if (!finalVbtPtrInfoByOffset.isEmpty()) {
+			VxtPtrInfo firstVbtPtrInfo = finalVbtPtrInfoByOffset.firstEntry().getValue();
+			VirtualBaseTable vbt = vxtManager.findVbt(myId, firstVbtPtrInfo.parentage());
+			if (vbt instanceof ProgramVirtualBaseTable pvbt) {
+				return pvbt;
+			}
+			else if (vbt instanceof PlaceholderVirtualBaseTable plvbt) {
+				List<VirtualLayoutBaseClass> reorderedVirtualBases = new ArrayList<>();
+				for (ClassID bId : depthFirstVirtualBases().keySet()) {
+					for (VirtualLayoutBaseClass base : virtualLayoutBaseClasses) {
+						CppCompositeType baseType = base.getBaseClassType();
+						ClassID id = baseType.getClassId();
+						if (id.equals(bId)) {
+							reorderedVirtualBases.add(base);
+						}
+					}
+				}
+				long off = selfBaseType.getAlignedLength();
+				for (VirtualLayoutBaseClass base : reorderedVirtualBases) {
+					CppCompositeType baseType = base.getBaseClassType();
+					addPlaceholderVirtualBaseTableEntry(plvbt, vxtManager, base, off);
+					off += baseType.getSelfBaseType().getAlignedLength();
+				}
+				return plvbt;
+			}
+			else {
+				throw new PdbException(
+					"VBT type not expected: " + vbt.getClass().getSimpleName());
+			}
+		}
+		return null;
+	}
 
-		long index = base.getBasePointerOffset();
-		OwnerParentage op = vbtTableIdByOffset.get(index);
-		if (op == null) {
+	private void addPlaceholderVirtualBaseTableEntry(PlaceholderVirtualBaseTable ptable,
+			MsftVxtManager vxtManager, VirtualLayoutBaseClass base, long baseOffset) {
+		long basePtrOffset = base.getBasePointerOffset();
+		if (ptable.getPtrOffsetInClass() != basePtrOffset) {
 			// error
 			return;
 		}
-		if (vxtManager instanceof MsftVxtManager mvxtManager) {
-			VBTable xtable = mvxtManager.findVbt(op.owner(), op.parentage());
-			if (xtable == null) {
-				int entrySize =
-					composite.getDataTypeManager().getDataOrganization().getIntegerSize();
-				PlaceholderVirtualBaseTable newTable =
-					new PlaceholderVirtualBaseTable(op.owner(), op.parentage(), entrySize);
-				xtable = newTable;
-				placeholderVirtualBaseTables.put(index, newTable);
-			}
-			if (xtable instanceof PlaceholderVirtualBaseTable ptable) {
-				VBTableEntry e = ptable.getBase(base.getOffetFromVbt());
-				if (e != null) {
-					return;
-				}
-				ClassID baseId = base.getBaseClassType().getClassId();
-				ptable.setBaseClassOffsetAndId(base.getOffetFromVbt(), baseOffset, baseId);
-			}
+		PlaceholderVirtualBaseTableEntry e = ptable.getEntry(base.getOffetFromVbt());
+		if (e != null) {
+			e.setOffset(baseOffset);
+			return;
 		}
-		else {
-			PlaceholderVirtualBaseTable ptable = placeholderVirtualBaseTables.get(index);
-			if (ptable == null) {
-				int entrySize =
-					composite.getDataTypeManager().getDataOrganization().getIntegerSize();
-				ptable = new PlaceholderVirtualBaseTable(op.owner(), op.parentage(), entrySize);
-				placeholderVirtualBaseTables.put(index, ptable);
-			}
-			VBTableEntry e = ptable.getBase(base.getOffetFromVbt());
-			if (e != null) {
-				return;
-			}
-			ClassID baseId = base.getBaseClassType().getClassId();
-			ptable.setBaseClassOffsetAndId(base.getOffetFromVbt(), baseOffset, baseId);
-		}
+		ClassID baseId = base.getBaseClassType().getClassId();
+		ptable.setBaseClassOffsetAndId(base.getOffetFromVbt(), baseOffset, baseId);
 	}
+
+//	private void addVirtualFunctionTableEntry(MsftVxtManager vxtManager, int offsetInTable,
+//			SymbolPath methodPath, FunctionDefinition functionDefinition) throws PdbException {
+//		OwnerParentage op = vftTableIdByOffset.get(mainVftPtrOffset);
+//		if (op == null) {
+//			// error
+//			return;
+//		}
+//		if (vxtManager instanceof MsftVxtManager mvxtManager) {
+//			VFTable xtable = mvxtManager.findVft(op.owner(), op.parentage());
+//			VirtualFunctionTable vft;
+//			if (xtable != null) {
+//				if (!(xtable instanceof VirtualFunctionTable myvft)) {
+//					// error
+//					return;
+//				}
+//				vft = myvft;
+//			}
+//			else {
+//				vft = new PlaceholderVirtualFunctionTable((ProgramClassID) op.owner(),
+//					op.parentage(), mainVftPtrOffset.intValue());
+//			}
+//			vft.addEntry(offsetInTable, methodPath, new PointerDataType(functionDefinition));
+//		}
+//	}
 
 	/**
 	 * Returns depth-first occurrences of ClassIDs along with their parentage with the assumption
@@ -1634,12 +1916,6 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	//==============================================================================================
-
-	/**
-	 * Record holding owner and parentage using ClassIDs.  These can be used for vxtptrs and
-	 * (possibly) also for base class info
-	 */
-	private record OwnerParentage(ClassID owner, List<ClassID> parentage) {}
 
 	/**
 	 * We understand the shallow immutability of records and that the contents of the List are
