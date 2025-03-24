@@ -7,11 +7,16 @@ import ghidra.program.model.symbol.SymbolTable;
 
 public class RustUtilities {
 
+    private static final int MAX_SCAN_SIZE = 1024 * 1024; // 1MB
+
     public static boolean isRust(MemoryBlock rodataBlock, SymbolTable symbolTable) {
-        // Check .rodata section for known Rust string
+        //Safe .rodata scan
         if (rodataBlock != null) {
             try {
-                byte[] bytes = new byte[(int) rodataBlock.getSize()];
+                long size = rodataBlock.getSize();
+                int readSize = (int) Math.min(size, MAX_SCAN_SIZE);
+
+                byte[] bytes = new byte[readSize];
                 rodataBlock.getBytes(rodataBlock.getStart(), bytes);
                 String content = new String(bytes);
                 if (content.contains("rust_eh_personality")) {
@@ -22,7 +27,7 @@ public class RustUtilities {
             }
         }
 
-        // Check symbol names for Rust-specific patterns
+        //Symbol-based detection
         if (symbolTable != null) {
             SymbolIterator symbols = symbolTable.getAllSymbols(true);
             while (symbols.hasNext()) {
