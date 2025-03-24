@@ -314,7 +314,9 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	/**
-	 * Creates a new segment command byte array
+	 * Creates a new segment command byte array.
+	 * <p>
+	 * NOTE: The new segment will have 0 sections.
 	 * 
 	 * @param magic The magic
 	 * @param name The name of the segment (must be less than or equal to 16 bytes)
@@ -324,15 +326,13 @@ public class SegmentCommand extends LoadCommand {
 	 * @param fileSize The size of the segment on disk
 	 * @param maxProt The maximum protections of the segment
 	 * @param initProt The initial protection of the segment
-	 * @param numSections The number of sections in the segment
 	 * @param flags The segment flags
 	 * @return The new segment in byte array form
 	 * @throws MachException if an invalid magic value was passed in (see {@link MachConstants}), or
 	 *   if the desired segment name exceeds 16 bytes
 	 */
 	public static byte[] create(int magic, String name, long vmAddr, long vmSize, long fileOffset,
-			long fileSize, int maxProt, int initProt, int numSections, int flags)
-			throws MachException {
+			long fileSize, int maxProt, int initProt, int flags) throws MachException {
 
 		if (name.length() > 16) {
 			throw new MachException("Segment name cannot exceed 16 bytes: " + name);
@@ -355,7 +355,7 @@ public class SegmentCommand extends LoadCommand {
 			conv.putLong(bytes, 0x30, fileSize);
 			conv.putInt(bytes, 0x38, maxProt);
 			conv.putInt(bytes, 0x3c, initProt);
-			conv.putInt(bytes, 0x40, numSections);
+			conv.putInt(bytes, 0x40, 0);
 			conv.putInt(bytes, 0x44, flags);
 		}
 		else {
@@ -365,7 +365,7 @@ public class SegmentCommand extends LoadCommand {
 			conv.putInt(bytes, 0x24, (int) fileSize);
 			conv.putInt(bytes, 0x28, maxProt);
 			conv.putInt(bytes, 0x2c, initProt);
-			conv.putInt(bytes, 0x30, numSections);
+			conv.putInt(bytes, 0x30, 0);
 			conv.putInt(bytes, 0x34, flags);
 		}
 

@@ -114,7 +114,7 @@ public class DyldCacheExtractor {
 					SegmentCommand.create(magic,
 						"%s.%d.%d".formatted(segmentName, entry.splitCacheIndex(), i),
 						range.lowerEndpoint(), dataSize, current, dataSize,
-						mappingInfo.getMaxProtection(), mappingInfo.getMaxProtection(), 0, 0));
+						mappingInfo.getMaxProtection(), mappingInfo.getMaxProtection(), 0));
 
 				// Data
 				data.add(slidProvider.readBytes(
