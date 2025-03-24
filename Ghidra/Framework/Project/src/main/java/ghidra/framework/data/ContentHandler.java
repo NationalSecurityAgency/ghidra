@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FolderItem;
+import ghidra.framework.store.local.UnknownFolderItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
@@ -42,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public interface ContentHandler<T extends DomainObjectAdapter> extends ExtensionPoint {
 
-	public static final String UNKNOWN_CONTENT = "Unknown-File";
+	public static final String UNKNOWN_CONTENT = UnknownFolderItem.UNKNOWN_CONTENT_TYPE;
 	public static final String MISSING_CONTENT = "Missing-File";
 
 	/**

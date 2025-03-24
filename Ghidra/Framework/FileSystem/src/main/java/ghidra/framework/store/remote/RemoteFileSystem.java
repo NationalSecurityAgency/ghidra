@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.framework.remote.RepositoryItem;
 import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -111,12 +112,19 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	@Override
 	public FolderItem[] getItems(String folderPath) throws IOException {
 		RepositoryItem[] items = repository.getItemList(folderPath);
+		if (!folderPath.endsWith(FileSystem.SEPARATOR)) {
+			folderPath += FileSystem.SEPARATOR;
+		}
 		FolderItem[] folderItems = new FolderItem[items.length];
 		for (int i = 0; i < items.length; i++) {
-			if (items[i].getItemType() != RepositoryItem.DATABASE) {
-				throw new IOException("Unsupported file type");
+			if (items[i].getItemType() == RepositoryItem.DATABASE) {
+				folderItems[i] = new RemoteDatabaseItem(repository, items[i]);
 			}
-			folderItems[i] = new RemoteDatabaseItem(repository, items[i]);
+			else {
+				Msg.error(this,
+					"Unsupported respository item encountered (" + items[i].getItemType() + "): " +
+						folderPath + items[i].getName());
+			}
 		}
 		return folderItems;
 	}
@@ -130,7 +138,7 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported file type");
+		throw new IOException("Unsupported repository item type (" + item.getItemType() + ")");
 	}
 
 	@Override
@@ -142,7 +150,7 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported file type");
+		throw new IOException("Unsupported repository item type (" + item.getItemType() + ")");
 	}
 
 	@Override
