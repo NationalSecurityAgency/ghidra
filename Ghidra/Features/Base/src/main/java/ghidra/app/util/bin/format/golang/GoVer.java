@@ -21,7 +21,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 
 /**
- * Represents a Golang version number (major.minor.patch), with some special sentinel values
+ * Represents a Go version number (major.minor.patch), with some special sentinel values
  * for wildcarding.
  * 
  * @param major currently just 1
@@ -111,27 +111,21 @@ public record GoVer(int major, int minor, int patch) implements Comparable<GoVer
 	}
 
 	/**
-	 * Major value
-	 * 
-	 * @return major
+	 * {@return major value}
 	 */
 	public int getMajor() {
 		return major;
 	}
 
 	/**
-	 * Minor value
-	 * 
-	 * @return minor
+	 * {@return minor value}
 	 */
 	public int getMinor() {
 		return minor;
 	}
 
 	/**
-	 * Patch value
-	 * 
-	 * @return patch
+	 * {@return patch value}
 	 */
 	public int getPatch() {
 		return patch;

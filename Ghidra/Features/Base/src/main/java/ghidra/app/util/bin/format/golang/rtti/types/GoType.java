@@ -45,11 +45,11 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	//@formatter:on
 
 	/**
-	 * Returns the specific GoType derived class that will handle the go type located at the
+	 * Returns the specific GoType derived class that will handle the Go type located at the
 	 * specified offset.
 	 * 
 	 * @param programContext program-level mapper context
-	 * @param offset absolute location of go type struct
+	 * @param offset absolute location of Go type struct
 	 * @return GoType class that will best handle the type struct
 	 * @throws IOException if error reading
 	 */
@@ -90,9 +90,7 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	}
 
 	/**
-	 * Returns the name of this type.
-	 * 
-	 * @return name of this type
+	 * {@return the name of this type}
 	 */
 	public String getName() {
 		return typ.getName();
@@ -107,9 +105,7 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	}
 
 	/**
-	 * Returns the package path of this type.
-	 * 
-	 * @return package path of this type
+	 * {@return the package path of this type}
 	 */
 	public String getPackagePathString() {
 		try {
@@ -303,15 +299,16 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	}
 
 	/**
-	 * Converts a golang RTTI type structure into a Ghidra data type.
+	 * Converts a Go RTTI type structure into a Ghidra data type.
 	 * <p>
 	 * This default implementation just creates an opaque blob of the appropriate size
 	 * 
 	 * @param goTypes {@link GoTypeManager} 
-	 * @return {@link DataType} that represents the golang type
+	 * @return {@link DataType} that represents the Go type
 	 * @throws IOException if error getting name of the type
 	 */
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		DataType dt = Undefined.getUndefinedDataType((int) typ.getSize());
 		return new TypedefDataType(goTypes.getCP(this), goTypes.getTypeName(this), dt,
 			goTypes.getDTM());

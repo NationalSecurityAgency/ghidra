@@ -1,63 +1,74 @@
-@ ["all","Types","func(error)","Params",0,"Name"]
-- "err"
-+ ""
-@ ["all","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
+@ ["all","Funcs","encoding/xml.Escape","Position"]
+- "$GOROOT/encoding/xml/xml.go:1988:6"
++ "$GOROOT/encoding/xml/xml.go:1989:6"
+@ ["all","Funcs","encoding/xml.EscapeText","Position"]
+- "$GOROOT/encoding/xml/xml.go:1894:6"
++ "$GOROOT/encoding/xml/xml.go:1895:6"
+@ ["all","Funcs","encoding/xml.emitCDATA","Position"]
+- "$GOROOT/encoding/xml/xml.go:2000:6"
++ "$GOROOT/encoding/xml/xml.go:2001:6"
+@ ["all","Funcs","encoding/xml.escapeText","Position"]
+- "$GOROOT/encoding/xml/xml.go:1901:6"
++ "$GOROOT/encoding/xml/xml.go:1902:6"
+@ ["all","Funcs","encoding/xml.isInCharacterRange","Position"]
+- "$GOROOT/encoding/xml/xml.go:1142:6"
++ "$GOROOT/encoding/xml/xml.go:1143:6"
+@ ["all","Funcs","encoding/xml.isName","Position"]
+- "$GOROOT/encoding/xml/xml.go:1220:6"
++ "$GOROOT/encoding/xml/xml.go:1221:6"
+@ ["all","Funcs","encoding/xml.isNameByte","Position"]
+- "$GOROOT/encoding/xml/xml.go:1213:6"
++ "$GOROOT/encoding/xml/xml.go:1214:6"
+@ ["all","Funcs","encoding/xml.isNameString","Position"]
+- "$GOROOT/encoding/xml/xml.go:1244:6"
++ "$GOROOT/encoding/xml/xml.go:1245:6"
+@ ["all","Funcs","encoding/xml.procInst","Position"]
+- "$GOROOT/encoding/xml/xml.go:2032:6"
++ "$GOROOT/encoding/xml/xml.go:2033:6"
+@ ["all","Funcs","time.LoadLocation","Position"]
+- "$GOROOT/time/zoneinfo.go:629:6"
++ "$GOROOT/time/zoneinfo.go:631:6"
+@ ["all","Funcs","time.containsDotDot","Position"]
+- "$GOROOT/time/zoneinfo.go:665:6"
++ "$GOROOT/time/zoneinfo.go:667:6"
+@ ["all","Funcs","time.tzruleTime","Position"]
+- "$GOROOT/time/zoneinfo.go:528:6"
++ "$GOROOT/time/zoneinfo.go:530:6"
+@ ["all","Funcs","time.tzsetNum","Position"]
+- "$GOROOT/time/zoneinfo.go:501:6"
++ "$GOROOT/time/zoneinfo.go:503:6"
+@ ["all","Funcs","time.tzsetRule","Position"]
+- "$GOROOT/time/zoneinfo.go:439:6"
++ "$GOROOT/time/zoneinfo.go:441:6"
+@ ["all","Types","encoding/xml.stack","Position"]
+- "$GOROOT/encoding/xml/xml.go:384:6"
++ "$GOROOT/encoding/xml/xml.go:385:6"
+@ ["all","Types","time.rule","Position"]
+- "$GOROOT/time/zoneinfo.go:429:6"
++ "$GOROOT/time/zoneinfo.go:431:6"
+@ ["all","Types","time.ruleKind","Position"]
+- "$GOROOT/time/zoneinfo.go:420:6"
++ "$GOROOT/time/zoneinfo.go:422:6"
+@ ["windows","Funcs","syscall.CreateIoCompletionPort","Position"]
+- "$GOROOT/syscall/zsyscall_windows.go:518:6"
++ "$GOROOT/syscall/syscall_windows.go:1214:6"
 @ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",0,"Name"]
 - "handle"
-+ ""
 @ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",1,"Name"]
 - "err"
-+ ""
+@ ["windows","Funcs","syscall.GetQueuedCompletionStatus","Position"]
+- "$GOROOT/syscall/zsyscall_windows.go:825:6"
++ "$GOROOT/syscall/syscall_windows.go:1219:6"
 @ ["windows","Funcs","syscall.GetQueuedCompletionStatus","Results",0,"Name"]
 - "err"
-+ ""
+@ ["windows","Funcs","syscall.PostQueuedCompletionStatus","Position"]
+- "$GOROOT/syscall/zsyscall_windows.go:957:6"
++ "$GOROOT/syscall/syscall_windows.go:1237:6"
 @ ["windows","Funcs","syscall.PostQueuedCompletionStatus","Results",0,"Name"]
 - "err"
-+ ""
 @ ["windows","Funcs","syscall.createIoCompletionPort"]
-+ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"filehandle"},{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uintptr","Name":"key"},{"DataType":"uint32","Name":"threadcnt"}],"Results":[{"DataType":"syscall.Handle","Name":"handle"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
++ {"Params":[{"DataType":"syscall.Handle","Name":"filehandle"},{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uintptr","Name":"key"},{"DataType":"uint32","Name":"threadcnt"}],"Position":"$GOROOT/syscall/zsyscall_windows.go:518:6","Results":[{"DataType":"syscall.Handle","Name":"handle"},{"DataType":"error","Name":"err"}]}
 @ ["windows","Funcs","syscall.getQueuedCompletionStatus"]
-+ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"*uint32","Name":"qty"},{"DataType":"*uintptr","Name":"key"},{"DataType":"**syscall.Overlapped","Name":"overlapped"},{"DataType":"uint32","Name":"timeout"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
++ {"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"*uint32","Name":"qty"},{"DataType":"*uintptr","Name":"key"},{"DataType":"**syscall.Overlapped","Name":"overlapped"},{"DataType":"uint32","Name":"timeout"}],"Position":"$GOROOT/syscall/zsyscall_windows.go:825:6","Results":[{"DataType":"error","Name":"err"}]}
 @ ["windows","Funcs","syscall.postQueuedCompletionStatus"]
-+ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uint32","Name":"qty"},{"DataType":"uintptr","Name":"key"},{"DataType":"*syscall.Overlapped","Name":"overlapped"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
-@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
++ {"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uint32","Name":"qty"},{"DataType":"uintptr","Name":"key"},{"DataType":"*syscall.Overlapped","Name":"overlapped"}],"Position":"$GOROOT/syscall/zsyscall_windows.go:957:6","Results":[{"DataType":"error","Name":"err"}]}

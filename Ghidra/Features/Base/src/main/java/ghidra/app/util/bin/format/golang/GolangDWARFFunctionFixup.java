@@ -32,12 +32,12 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Fixups for golang functions found during DWARF processing.
+ * Fixups for Go functions found during DWARF processing.
  * <p>
- * Fixes storage of parameters to match the go callspec and modifies parameter lists to match
+ * Fixes storage of parameters to match the Go callspec and modifies parameter lists to match
  * Ghidra's capabilities.
  * <p>
- * Special characters used by golang in symbol names (middle dot \u00B7, weird slash \u2215) are 
+ * Special characters used by Go in symbol names (middle dot \u00B7, weird slash \u2215) are 
  * fixed up in DWARFProgram.getDWARFNameInfo() by calling 
  * GoSymbolName.fixGolangSpecialSymbolnameChars().
  * <p>
@@ -152,7 +152,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		}
 		dfunc.retval = DWARFVariable.fromDataType(dfunc, returnType);
 		dfunc.params = realParams;
-		dfunc.varArg = false;	// golang varargs are implemented via slice parameter, so this is always false
+		dfunc.varArg = false;	// Go varargs are implemented via slice parameter, so this is always false
 
 		return multiReturn;
 	}
@@ -179,7 +179,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 					dvar.getStorageSize() != dvar.type.getLength()) {
 					dfunc.getProgram()
 							.logWarningAt(dfunc.address, dfunc.name.getName(),
-								"Golang known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
+								"Go known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
 										.formatted(dvar.name.getName()));
 				}
 			}
@@ -237,7 +237,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		}
 		storageAllocator.alignStack();
 
-		// For any parameters that were passed as registers, the golang caller pre-allocates
+		// For any parameters that were passed as registers, the Go caller pre-allocates
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.

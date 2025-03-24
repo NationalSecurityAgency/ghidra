@@ -37,8 +37,8 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
 
 /**
- * A program section that contains Go build information strings, namely go module package names,
- * go module dependencies, and build/compiler flags, as well as the golang version itself.
+ * A program section that contains Go build information strings, namely Go module package names,
+ * Go module dependencies, and build/compiler flags, as well as the Go version itself.
  */
 public class GoBuildInfo implements ElfInfoItem {
 
@@ -46,12 +46,12 @@ public class GoBuildInfo implements ElfInfoItem {
 	public static final String ELF_SECTION_NAME = ".go.buildinfo";
 	public static final String MACHO_SECTION_NAME = "go_buildinfo";
 
-	// Defined in golang src/debug/buildinfo/buildinfo.go
+	// Defined in Go's src/debug/buildinfo/buildinfo.go
 	// NOTE: ISO_8859_1 charset is required to not mangle the \u00ff when converting to bytes
 	private static final byte[] GO_BUILDINF_MAGIC =
 		"\u00ff Go buildinf:".getBytes(StandardCharsets.ISO_8859_1);
 
-	// Defined in golang src/cmd/go/internal/modload/build.go
+	// Defined in Go's src/cmd/go/internal/modload/build.go
 	private static final byte[] INFOSTART_SENTINEL =
 		NumericUtilities.convertStringToBytes("3077af0c9274080241e1c107e6d618e6");
 	private static final byte[] INFOEND_SENTINEL =
@@ -60,7 +60,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	private static final int FLAG_ENDIAN = (1 << 0);
 	private static final int FLAG_INLINE_STRING = (1 << 1);
 
-	// map from ghidra arch string to golang arch name
+	// map from ghidra arch string to Go arch name
 	private static final Map<String, String> GHIDRA_GOARCH_MAP = Map.of(
 		"aarch64_64", "arm64",
 		"arm_32", "arm",
@@ -148,7 +148,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Probes the specified InputStream and returns true if it starts with a go buildinfo magic
+	 * Probes the specified InputStream and returns true if it starts with a Go buildinfo magic
 	 * signature.
 	 * 
 	 * @param is InputStream
@@ -169,7 +169,7 @@ public class GoBuildInfo implements ElfInfoItem {
 
 	private final int pointerSize;
 	private final Endian endian;
-	private final String version;	// golang compiler version 
+	private final String version;	// Go compiler version 
 	private final String path;
 	private final GoModuleInfo moduleInfo;	// info about the module that contains the main package.  version typically will be "(devel)" 
 	private final List<GoModuleInfo> dependencies;
@@ -230,11 +230,11 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Returns the Golang OS string for the specified program, either from previously parsed
-	 * metadata value, or from a static Ghidra-loader to golang mapping.
+	 * Returns the Go OS string ("GOOS") for the specified program, either from previously parsed
+	 * metadata value, or from a static Ghidra-loader to Go mapping.
 	 *  
 	 * @param program {@link Program}
-	 * @return golang GOOS string, see https://go.dev/doc/install/source#environment
+	 * @return Go "GOOS" string, see https://go.dev/doc/install/source#environment
 	 */
 	public String getGOOS(Program program) {
 		GoBuildSettings goos = getBuildSetting("GOOS");
@@ -242,16 +242,16 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Returns a Golang "GOOS" string created by a mapping from the Ghidra program's loader type.
+	 * Returns a Go "GOOS" string created by a mapping from the Ghidra program's loader type.
 	 * 
 	 * @param program {@link Program}
-	 * @return Golang "GOOS" string
+	 * @return Go "GOOS" string
 	 */
 	public static String getProgramGOOS(Program program) {
 		// TODO: this mapping needs more logic
 		String loaderName = program.getExecutableFormat();
 		if (ElfLoader.ELF_NAME.equals(loaderName)) {
-			// TODO: this will require additional work to map all Golang OSs to Ghidra loader info
+			// TODO: this will require additional work to map all Go OSs to Ghidra loader info
 			return "linux";
 		}
 		else if (PeLoader.PE_NAME.equals(loaderName)) {
@@ -264,11 +264,11 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Returns the Golang Arch string for the specified program, either from previously parsed
-	 * metadata value, or from a static Ghidra language to golang mapping.
+	 * Returns the Go Arch string for the specified program, either from previously parsed
+	 * metadata value, or from a static Ghidra language to Go mapping.
 	 * 
 	 * @param program {@link Program}
-	 * @return golang GOARCH string, see https://go.dev/doc/install/source#environment
+	 * @return Go "GOARCH" string, see https://go.dev/doc/install/source#environment
 	 */
 	public String getGOARCH(Program program) {
 		GoBuildSettings goos = getBuildSetting("GOARCH");
@@ -276,10 +276,10 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Returns a Golang "GOARCH" string created by a mapping from the Ghidra program's language (arch).
+	 * Returns a Go "GOARCH" string created by a mapping from the Ghidra program's language (arch).
 	 * 
 	 * @param program {@link Program}
-	 * @return Golang "GOARCH" string
+	 * @return Go "GOARCH" string
 	 */
 	public static String getProgramGOARCH(Program program) {
 		String langArch =
@@ -289,7 +289,7 @@ public class GoBuildInfo implements ElfInfoItem {
 
 		String goarch = GHIDRA_GOARCH_MAP.getOrDefault(langArch, "unknown");
 		if (GOLANG_DUALENDIAN_ARCH.contains(goarch) && !program.getMemory().isBigEndian()) {
-			// golang seems to mark the LE variant and assumes BE as the default if not marked
+			// Go seems to mark the LE variant and assumes BE as the default if not marked
 			goarch += "le";
 		}
 		return goarch;
@@ -492,10 +492,10 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	/**
-	 * Low-level reading a golang string structure (without using rtti info).
+	 * Low-level reading a Go string structure (without using RTTI info).
 	 * 
 	 * @param reader BinaryReader that has access to the program's entire address space  
-	 * @param ptrSize size of golang pointers
+	 * @param ptrSize size of Go pointers
 	 * @return bytes of the string
 	 * @throws IOException if error reading the bytes
 	 */
