@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,7 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
-import ghidra.framework.data.FolderLinkContentHandler;
-import ghidra.framework.data.LinkedGhidraFolder;
+import ghidra.framework.data.*;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
@@ -1082,8 +1081,17 @@ public class FrontEndPlugin extends Plugin
 	}
 
 	public void openDomainFile(DomainFile domainFile) {
+		
+		String contentType = domainFile.getContentType();
+		if (ContentHandler.UNKNOWN_CONTENT.equals(contentType)) {
+			Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
+				"<html>File type is unrecognized: <b>" +
+					HTMLUtilities.escapeHTML(domainFile.getName()) +
+					"</b>.<br><br>File may have been created with a neer version of Ghidra.");
+			return;
+		}
 
-		if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(domainFile.getContentType())) {
+		if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(contentType)) {
 			showLinkedFolderInViewedProject(domainFile);
 			return;
 		}
