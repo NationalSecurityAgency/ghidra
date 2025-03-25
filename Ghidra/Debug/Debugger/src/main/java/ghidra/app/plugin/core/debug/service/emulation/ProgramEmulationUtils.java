@@ -109,7 +109,15 @@ public class ProgramEmulationUtils {
 			        <interface name='Thread' />
 			        <interface name='Activatable' />
 			        <interface name='Aggregate' />
+			        <attribute name='Stack' schema='Stack' />
 			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='Stack' canonical='yes'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame'>
+			        <interface name='StackFrame' />
 			    </schema>
 			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
