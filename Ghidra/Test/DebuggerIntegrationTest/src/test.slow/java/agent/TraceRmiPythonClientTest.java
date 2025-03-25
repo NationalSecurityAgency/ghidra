@@ -106,7 +106,12 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	protected Path getPathToPython() {
-		return Paths.get(DummyProc.which("python"));
+		try {
+			return Paths.get(DummyProc.which("python3"));
+		}
+		catch (RuntimeException e) {
+			return Paths.get(DummyProc.which("python"));
+		}
 	}
 
 	@Before
@@ -169,8 +174,7 @@ public class TraceRmiPythonClientTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	protected record ExecInPy(PtySession session, PrintWriter stdin,
-			CompletableFuture<PyResult> future) {
-	}
+			CompletableFuture<PyResult> future) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInPy execInPy(String script) throws IOException {
