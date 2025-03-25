@@ -474,7 +474,7 @@ public class PcodeExecutor<T> {
 		}
 		else {
 			branchToOffset(op, target.getOffset(), frame);
-			branchToAddress(op, target);
+			branchToAddress(op, checkInjectedTarget(target));
 		}
 	}
 
@@ -531,6 +531,28 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Check and correct the given target address, if it resides in "NO ADDRESS" space.
+	 * 
+	 * <p>
+	 * At some point, we made a change to set the "target address" of compiled p-code userops to
+	 * {@link Address#NO_ADDRESS} instead of pretending its at {@code ram:00000000}. This is
+	 * philosophically cleaner, but leads to a practical issue in that the p-code compiler sets the
+	 * target address of any branch to be in the same space, which for injects, will wind up in "NO
+	 * ADDRESS." I don't know the use case for having target addresses anywhere but default space,
+	 * so I'll maintain that behavior, but if it ever lands in "NO ADDRESS," we're going to assume
+	 * it was an inject, and that the intended target was the default space.
+	 * 
+	 * @param target the proposed target address
+	 * @return the same or corrected target address
+	 */
+	protected Address checkInjectedTarget(Address target) {
+		if (target.getAddressSpace() != Address.NO_ADDRESS.getAddressSpace()) {
+			return target;
+		}
+		return language.getDefaultSpace().getAddress(target.getOffset());
+	}
+
+	/**
 	 * Perform the actual logic of an indirect branch p-code op
 	 * 
 	 * <p>
@@ -548,7 +570,7 @@ public class PcodeExecutor<T> {
 
 		long concrete = arithmetic.toLong(offset, Purpose.BRANCH);
 		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
-		branchToAddress(op, target);
+		branchToAddress(op, checkInjectedTarget(target));
 	}
 
 	/**
@@ -576,7 +598,7 @@ public class PcodeExecutor<T> {
 	public void executeCall(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		Address target = getBranchTarget(op);
 		branchToOffset(op, target.getOffset(), frame);
-		branchToAddress(op, target);
+		branchToAddress(op, checkInjectedTarget(target));
 	}
 
 	/**

@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -358,5 +357,76 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 			arithmetic.toLong(thread.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
 		assertEquals(1,
 			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+	}
+
+	@Test
+	public void testInjectedBranch() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_TOY_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()),
+			space.getAddress(0x00400000));
+
+		asm.assemble("imm r1, #1");
+		Address inject = asm.getNext();
+		asm.assemble("add r1, #1");
+		Address target = asm.getNext();
+
+		byte[] bytes = asm.getBytes();
+		emu.getSharedState().setVar(asm.getEntry(), bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(asm.getEntry());
+
+		emu.inject(inject, "goto 0x%08x;".formatted(target.getOffset()));
+
+		try {
+			thread.run();
+			fail("Should have crashed on decode error");
+		}
+		catch (DecodePcodeExecutionException e) {
+			// Space assertion is subsumed by counter assertion
+		}
+
+		Register r1 = emu.getLanguage().getRegister("r1");
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(target, thread.getCounter());
+	}
+
+	@Test
+	public void testInjectedIndirectBranch() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_TOY_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()),
+			space.getAddress(0x00400000));
+
+		asm.assemble("imm r1, #1");
+		Address inject = asm.getNext();
+		asm.assemble("add r1, #1");
+		Address target = asm.getNext();
+
+		byte[] bytes = asm.getBytes();
+		emu.getSharedState().setVar(asm.getEntry(), bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(asm.getEntry());
+
+		emu.inject(inject, """
+				r2 = 0x%08x;
+				goto [r2];
+				""".formatted(target.getOffset()));
+
+		try {
+			thread.run();
+			fail("Should have crashed on decode error");
+		}
+		catch (DecodePcodeExecutionException e) {
+			// Space assertion is subsumed by counter assertion
+		}
+
+		Register r1 = emu.getLanguage().getRegister("r1");
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(target, thread.getCounter());
 	}
 }
