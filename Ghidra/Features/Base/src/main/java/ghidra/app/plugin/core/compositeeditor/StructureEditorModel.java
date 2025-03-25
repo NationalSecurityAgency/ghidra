@@ -629,7 +629,10 @@ class StructureEditorModel extends CompEditorModel {
 			// Can only unpackage components that aren't broken.
 			// (i.e. component and data type are same size.)
 			if (comp.getLength() == dt.getLength()) {
-				// Array or structure can be unpackaged.
+				// Array or structure can be unpackaged even if in the form of a typedef
+				if (dt instanceof TypeDef td) {
+					dt = td.getBaseDataType();
+				}
 				if (dt instanceof Array || (dt instanceof Structure)) {
 					unpackageAllowed = true;
 				}
@@ -860,8 +863,7 @@ class StructureEditorModel extends CompEditorModel {
 			return viewDTM.withTransaction("Insert Component", () -> {
 				DataTypeComponent dtc;
 				if (isPackingEnabled() || !(dataType instanceof BitFieldDataType)) {
-					dtc = viewComposite.insert(rowIndex, dataType, length, name,
-						comment);
+					dtc = viewComposite.insert(rowIndex, dataType, length, name, comment);
 				}
 				else {
 					BitFieldDataType bitfield = (BitFieldDataType) dataType;
@@ -1320,14 +1322,18 @@ class StructureEditorModel extends CompEditorModel {
 		if (currentComp == null) {
 			throw new UsrException("Can only unpackage an array or structure.");
 		}
-		DataType currentDataType = currentComp.getDataType();
-		if (!((currentDataType instanceof Array) || (currentDataType instanceof Structure))) {
+		DataType dt = currentComp.getDataType();
+		if (dt instanceof TypeDef td) {
+			dt = td.getBaseDataType();
+		}
+		if (!((dt instanceof Array) || (dt instanceof Structure))) {
 			throw new UsrException("Can only unpackage an array or structure.");
 		}
 		if (isEditingField()) {
 			endFieldEditing();
 		}
 
+		DataType currentDataType = dt;
 		viewDTM.withTransaction("Unpack Component", () -> {
 			Structure viewStruct = (Structure) viewComposite;
 
@@ -1336,8 +1342,7 @@ class StructureEditorModel extends CompEditorModel {
 			String comment = currentComp.getComment();
 			int numComps = 0;
 			// This component is an array so unpackage it.
-			if (currentDataType instanceof Array) {
-				Array array = (Array) currentDataType;
+			if (currentDataType instanceof Array array) {
 				int elementLen = array.getElementLength();
 				numComps = array.getNumElements();
 				// Remove the array.
@@ -1345,8 +1350,8 @@ class StructureEditorModel extends CompEditorModel {
 				if (numComps > 0) {
 					// Add the array's elements
 					try {
-						DataType dt = array.getDataType();
-						insertMultiple(rowIndex, dt, elementLen, numComps, monitor);
+						DataType arrayBaseDt = array.getDataType();
+						insertMultiple(rowIndex, arrayBaseDt, elementLen, numComps, monitor);
 					}
 					catch (InvalidDataTypeException ie) {
 						// Do nothing.
@@ -1357,36 +1362,64 @@ class StructureEditorModel extends CompEditorModel {
 				}
 			}
 			// This component is a structure so unpackage it.
-			else if (currentDataType instanceof Structure) {
-				Structure struct = (Structure) currentDataType;
+			else if (currentDataType instanceof Structure struct) {
 				numComps = struct.getNumComponents();
 				if (numComps > 0) {
 					// Remove the structure.
 					int currentOffset = currentComp.getOffset();
-					deleteComponent(rowIndex);
+					deleteComponent(rowIndex); // TODO: Should clear for non-packed
 
 					// Add the structure's elements
-					for (int i = 0; i < numComps; i++) {
-						DataTypeComponent dtc = struct.getComponent(i);
-						DataType dt = dtc.getDataType();
+					Stack<DataTypeComponent> zeroDtcStack = new Stack<>();
+					int zeroStackOffset = -1;
+					int zeroStackOrdinal = -1;
+					int packedOrdinal = 0;
+					for (DataTypeComponent dtc : struct.getDefinedComponents()) {
+
+						DataType compDt = dtc.getDataType();
 						int compLength = dtc.getLength();
+						int compOffset = dtc.getOffset();
+
+						if (compOffset != zeroStackOffset && !zeroDtcStack.isEmpty()) {
+							applyZeroDtcStack(viewStruct, currentOffset, componentOrdinal,
+								zeroDtcStack, zeroStackOffset, zeroStackOrdinal);
+						}
+
+						if (compLength == 0) {
+							// Defer adding zero-length component until after non-zero-length
+							// has been added
+							if (zeroStackOffset != compOffset) {
+								zeroStackOffset = compOffset;
+								zeroStackOrdinal = packedOrdinal;
+							}
+							zeroDtcStack.push(dtc);
+							continue;
+						}
+
 						if (!isPackingEnabled()) {
 							if (dtc.isBitFieldComponent()) {
-								BitFieldDataType bitfield = (BitFieldDataType) dt;
-								viewStruct.insertBitFieldAt(currentOffset + dtc.getOffset(),
-									compLength, bitfield.getBitOffset(), bitfield.getBaseDataType(),
+								BitFieldDataType bitfield = (BitFieldDataType) compDt;
+								viewStruct.insertBitFieldAt(currentOffset + compOffset, compLength,
+									bitfield.getBitOffset(), bitfield.getBaseDataType(),
 									bitfield.getDeclaredBitSize(), dtc.getFieldName(),
 									dtc.getComment());
 							}
 							else {
-								viewStruct.insertAtOffset(currentOffset + dtc.getOffset(), dt,
+								viewStruct.insertAtOffset(currentOffset + compOffset, compDt,
 									compLength, dtc.getFieldName(), dtc.getComment());
 							}
 						}
 						else {
-							insert(rowIndex + i, dt, compLength, dtc.getFieldName(),
-								dtc.getComment());
+							viewStruct.insert(componentOrdinal + packedOrdinal, compDt, compLength,
+								dtc.getFieldName(), dtc.getComment());
 						}
+
+						++packedOrdinal;
+					}
+
+					if (!zeroDtcStack.isEmpty()) {
+						applyZeroDtcStack(viewStruct, currentOffset, componentOrdinal, zeroDtcStack,
+							zeroStackOffset, zeroStackOrdinal);
 					}
 				}
 			}
@@ -1408,5 +1441,20 @@ class StructureEditorModel extends CompEditorModel {
 		fixSelection();
 		componentEdited();
 		selectionChanged();
+	}
+
+	private void applyZeroDtcStack(Structure viewStruct, int unpackOffset, int unpackOrdinal,
+			Stack<DataTypeComponent> zeroDtcStack, int zeroStackOffset, int zeroStackOrdinal) {
+		zeroDtcStack.forEach(zeroDtc -> {
+			if (!isPackingEnabled()) {
+				viewStruct.insertAtOffset(unpackOffset + zeroStackOffset, zeroDtc.getDataType(), 0,
+					zeroDtc.getFieldName(), zeroDtc.getComment());
+			}
+			else {
+				viewStruct.insert(unpackOrdinal + zeroStackOrdinal, zeroDtc.getDataType(), 0,
+					zeroDtc.getFieldName(), zeroDtc.getComment());
+			}
+		});
+		zeroDtcStack.clear();
 	}
 }
