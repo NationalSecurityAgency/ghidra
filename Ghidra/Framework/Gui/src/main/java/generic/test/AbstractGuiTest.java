@@ -34,6 +34,7 @@ import javax.swing.tree.*;
 
 import org.junit.Assert;
 
+import generic.timer.ExpiringSwingTimer;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
@@ -1148,6 +1149,39 @@ public class AbstractGuiTest extends AbstractGenericTest {
 //==================================================================================================
 // Swing Methods
 //==================================================================================================
+
+	public static boolean waitForExpiringSwingTimers() {
+		if (SwingUtilities.isEventDispatchThread()) {
+			throw new AssertException("Can't wait for swing from within the swing thread!");
+		}
+
+		// Note: this is based on the waitForSwing() timeout; this can be adjusted
+		boolean waited = false;
+		int MAX_SWING_TIMEOUT = 15000;
+		int totalTime = 0;
+		while (totalTime < MAX_SWING_TIMEOUT) {
+
+			@SuppressWarnings("unchecked")
+			Set<ExpiringSwingTimer> timers = runSwing(() -> {
+				return (Set<ExpiringSwingTimer>) getInstanceField("instances",
+					ExpiringSwingTimer.class);
+			});
+			if (timers.isEmpty()) {
+				return waited;
+			}
+
+			waited = true;
+			totalTime += sleep(DEFAULT_WAIT_DELAY);
+		}
+
+		if (totalTime >= MAX_SWING_TIMEOUT) {
+			Msg.debug(AbstractGenericTest.class,
+				"Timed-out waitinig for ExpiringSwingTimerc after " + totalTime + " ms.  ");
+			return true;
+		}
+
+		return true;
+	}
 
 	/**
 	 * Waits for the Swing thread to process any pending events. This method

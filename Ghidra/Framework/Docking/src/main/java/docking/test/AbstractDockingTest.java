@@ -2144,6 +2144,11 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 				TimeUnit.NANOSECONDS));
 		*/
 		doWaitForTree(gTree);
+
+		// some client tree operations will launch tasks that wait for the tree and then call a 
+		// Swing task to run at some point after that.  waitForSwing() is not good enough for these,
+		// since the tree may be using a timer that has not yet expired.
+		waitForExpiringSwingTimers();
 	}
 
 	private static void doWaitForTree(GTree gTree) {
