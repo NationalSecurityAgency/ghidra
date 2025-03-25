@@ -105,7 +105,8 @@ def open_program(
         analyze=True,
         language: str = None,
         compiler: str = None,
-        loader: Union[str, JClass] = None
+        loader: Union[str, JClass] = None,
+        program_name: str = None
 ) -> ContextManager["FlatProgramAPI"]: # type: ignore
     """
     Opens given binary path in Ghidra and returns FlatProgramAPI object.
@@ -122,6 +123,8 @@ def open_program(
         (Defaults to the Language's default compiler)
     :param loader: The `ghidra.app.util.opinion.Loader` class to use when importing the program.
         This may be either a Java class or its path. (Defaults to None)
+    :param program_name: The name to of the program to open in Ghidra.
+        (Defaults to None, which results in the name being derived from "binary_path")
     :return: A Ghidra FlatProgramAPI object.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
@@ -306,7 +309,9 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
-__2.0.2:__
+__2.1.0:__
+* [`pyghidra.open_program()`](#pyghidraopen_program) now accepts a `program_name` parameter, which
+  can be used to override the program name derived from the `binary_path` parameter.
 * [`pyghidra.open_program()`](#pyghidraopen_program) now properly throws an exception if the project
   exists and is locked.
   
