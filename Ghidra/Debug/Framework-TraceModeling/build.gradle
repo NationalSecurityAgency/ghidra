@@ -26,7 +26,6 @@ dependencies {
 	api project(':SoftwareModeling')
 	api project(':Emulation')
 	api project(':ProposedUtils')
-	api project(':Framework-AsyncComm') // for AsyncReference
 	annotationProcessor project(':AnnotationValidator')
 
 	testImplementation project(':Base')

@@ -26,13 +26,15 @@ import java.util.stream.Collectors;
 /**
  * A fence that completes when all participating futures complete
  * 
+ * <p>
  * This provides an alternative shorthand for Java's
  * {@link CompletableFuture#thenAcceptBoth(CompletionStage, BiConsumer)} or
  * {@link CompletableFuture#allOf(CompletableFuture...)}.
  * 
+ * <p>
  * Example:
  * 
- * <pre>
+ * <pre>{@code
  * public CompletableFuture<Void> processAll(List<Integer> list) {
  * 	AsyncFence fence = new AsyncFence();
  * 	for (int entry : list) {
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
  * 	}
  * 	return fence.ready();
  * }
- * </pre>
+ * }</pre>
  */
 public class AsyncFence {
 	private final ArrayList<CompletableFuture<?>> participants = new ArrayList<>();
