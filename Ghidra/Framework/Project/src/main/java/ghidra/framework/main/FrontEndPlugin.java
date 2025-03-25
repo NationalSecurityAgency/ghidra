@@ -1087,7 +1087,7 @@ public class FrontEndPlugin extends Plugin
 			Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
 				"<html>File type is unrecognized: <b>" +
 					HTMLUtilities.escapeHTML(domainFile.getName()) +
-					"</b>.<br><br>File may have been created with a neer version of Ghidra.");
+					"</b>.<br><br>File may have been created with a newer version of Ghidra.");
 			return;
 		}
 
