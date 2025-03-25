@@ -1210,7 +1210,7 @@ public class StringUtilities {
 
 	/**
 	 * Removes any whitespace from start or end of string, then replaces any non-printable
-	 * character (< 32) or spaces (32) with an underscore.
+	 * character (&lt; 32) or spaces (32) with an underscore.
 	 * @param s the string to adjust
 	 * @return a new trimmed string with underscores replacing any non-printable characters.
 	 */
