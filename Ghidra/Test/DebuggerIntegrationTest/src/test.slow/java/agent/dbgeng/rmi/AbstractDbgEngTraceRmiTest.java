@@ -106,11 +106,6 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	private Path outFile;
 	private Path errFile;
 
-	@Before
-	public void assertOS() {
-		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
-	}
-
 	@BeforeClass
 	public static void setupPython() throws Throwable {
 		if (didSetupPython) {
@@ -143,6 +138,12 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 
 	protected void setWindbgPath(ProcessBuilder pb) throws IOException {
 		pb.environment().put("WINDBG_DIR", "C:\\Program Files\\Amazon Corretto\\jdk21.0.3_9\\bin");
+	}
+
+	@BeforeClass
+	public static void assertOS() {
+		assumeTrue("Not on Windows",
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
 	}
 
 	@Before
