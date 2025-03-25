@@ -21,9 +21,7 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import docking.widgets.OptionDialog;
 import ghidra.program.database.DatabaseObject;
-import ghidra.program.database.data.StructureDBTest;
 import ghidra.program.model.data.*;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {

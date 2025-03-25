@@ -344,16 +344,14 @@ class StructureEditorModel extends CompEditorModel {
 			throw new IllegalArgumentException("Invalid component index specified");
 		}
 		DataType dt = originalComp.getDataType();
-		int len = dt.getLength();
-		if (len < 0) {
-			len = originalComp.getLength();
-		}
+		int dtcLen = originalComp.getLength();
+
 		checkIsAllowableDataType(dt);
 
-		int dtcLen = len;
 		viewDTM.withTransaction("Duplicate Components", () -> {
 			int startIndex = index + 1;
-			if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(index)) {
+			if (dtcLen > 0 && dt != DataType.DEFAULT && isShowingUndefinedBytes() &&
+				!isAtEnd(index)) {
 				int endIndex = startIndex + (dtcLen * multiple) - 1;
 				if (startIndex < getNumComponents()) {
 					deleteComponentRange(startIndex, endIndex, monitor);
@@ -585,7 +583,7 @@ class StructureEditorModel extends CompEditorModel {
 			return true;
 		}
 		DataType dt = comp.getDataType();
-		if (dt.equals(DataType.DEFAULT)) {
+		if (dt.equals(DataType.DEFAULT) || dt.isZeroLength()) {
 			return true; // Insert an undefined and push everything down.
 		}
 		if (comp.isBitFieldComponent()) {
@@ -860,8 +858,7 @@ class StructureEditorModel extends CompEditorModel {
 			return viewDTM.withTransaction("Insert Component", () -> {
 				DataTypeComponent dtc;
 				if (isPackingEnabled() || !(dataType instanceof BitFieldDataType)) {
-					dtc = viewComposite.insert(rowIndex, dataType, length, name,
-						comment);
+					dtc = viewComposite.insert(rowIndex, dataType, length, name, comment);
 				}
 				else {
 					BitFieldDataType bitfield = (BitFieldDataType) dataType;
