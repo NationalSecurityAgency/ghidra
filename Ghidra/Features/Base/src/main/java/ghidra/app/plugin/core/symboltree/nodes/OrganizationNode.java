@@ -243,19 +243,24 @@ public class OrganizationNode extends SymbolTreeNode {
 	}
 
 	private void checkForTooManyNodes() {
-		if (getChildCount() > SymbolCategoryNode.MAX_NODES_BEFORE_CLOSING) {
-			// If we have too many nodes, find the root category node and close it
-			GTreeNode parent = getParent();
-			while (parent != null) {
-				if (parent instanceof SymbolCategoryNode) {
-					GTree tree = getTree();
-					// also clear the selection so that it doesn't reopen the category needlessly
-					tree.clearSelectionPaths();
-					tree.runTask(new GTreeCollapseAllTask(tree, parent));
-					return;
-				}
-				parent = parent.getParent();
+
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		int reOrgLimit = root.getReorganizeLimit();
+		if (getChildCount() < reOrgLimit) {
+			return;
+		}
+
+		// If we have too many nodes, find the root category node and close it
+		GTreeNode parent = getParent();
+		while (parent != null) {
+			if (parent instanceof SymbolCategoryNode) {
+				GTree tree = getTree();
+				// also clear the selection so that it doesn't reopen the category needlessly
+				tree.clearSelectionPaths();
+				tree.runTask(new GTreeCollapseAllTask(tree, parent));
+				return;
 			}
+			parent = parent.getParent();
 		}
 	}
 

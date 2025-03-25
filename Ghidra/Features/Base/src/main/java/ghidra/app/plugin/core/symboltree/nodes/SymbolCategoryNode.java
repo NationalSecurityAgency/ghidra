@@ -29,8 +29,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
-	public static final int MAX_NODES_BEFORE_ORGANIZING = 100;
-	public static final int MAX_NODES_BEFORE_CLOSING = 200;
 
 	protected SymbolCategory symbolCategory;
 	protected SymbolTable symbolTable;
@@ -76,7 +74,9 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
 		monitor.checkCancelled();
-		return OrganizationNode.organize(list, MAX_NODES_BEFORE_ORGANIZING, monitor);
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		int groupThreshold = root.getNodeGroupThreshold();
+		return OrganizationNode.organize(list, groupThreshold, monitor);
 	}
 
 	public Program getProgram() {
@@ -173,7 +173,9 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 			dataFlavor == ClassSymbolNode.LOCAL_DATA_FLAVOR;
 	}
 
-	public SymbolNode symbolAdded(Symbol symbol) {
+	protected abstract boolean supportsSymbol(Symbol symbol);
+
+	public SymbolNode symbolAdded(Symbol symbol, TaskMonitor monitor) {
 
 		if (!isLoaded()) {
 			return null;
@@ -191,7 +193,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
+		parentNode = findSymbolTreeNode(key, false, monitor);
 		if (parentNode == null) {
 			return null;
 		}
@@ -230,11 +232,17 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		}
 
 		parentNode.addNode(index, newNode);
-		if (parentNode.isLoaded() && parentNode.getChildCount() > MAX_NODES_BEFORE_CLOSING) {
+		if (!parentNode.isLoaded()) {
+			return;
+		}
+
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		int reOrgLimit = root.getReorganizeLimit();
+		if (parentNode.getChildCount() > reOrgLimit) {
 			GTree tree = parentNode.getTree();
-			// tree needs to be reorganized, close this category node to clear its children
-			// and force a reorganization next time it is opened
-			// also need to clear the selection so that it doesn't re-open the category
+			// The tree needs to be reorganized, close this category node to clear its children
+			// and force a reorganization next time it is opened. Also need to clear the selection 
+			// so that it doesn't re-open the category.
 			tree.clearSelectionPaths();
 			tree.runTask(new GTreeCollapseAllTask(tree, parentNode));
 		}
@@ -249,6 +257,10 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 			return;
 		}
 
+		if (!supportsSymbol(symbol)) {
+			return;
+		}
+
 		SymbolNode key = SymbolNode.createKeyNode(symbol, oldName, program);
 		GTreeNode foundNode = findSymbolTreeNode(key, false, monitor);
 		if (foundNode == null) {
@@ -259,12 +271,45 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		foundParent.removeNode(foundNode);
 	}
 
-	protected boolean supportsSymbol(Symbol symbol) {
-		if (!symbol.isGlobal() || symbol.isExternal()) {
-			return false;
+	public void symbolRemoved(Symbol symbol, Namespace oldNamespace, TaskMonitor monitor) {
+		// Most categories will treat a symbol moved as a remove; symbolAdded() will get called 
+		// after this to restore the symbol.  Subclasses that depend on scope will override this 
+		// method.
+		symbolRemoved(symbol, monitor);
+	}
+
+	/**
+	 * Returns the last Namespace tree node in the given path of namespaces.  Each Namespace in the
+	 * list from 0 to n will be used to find the last tree node, starting at the given parent
+	 * node. 
+	 * 
+	 * @param parentNode the node at which to start the search
+	 * @param namespaces the list of namespaces to traverse.
+	 * @param loadChildren true to load children if they have not been loaded
+	 * @param monitor the task monitor
+	 * @return the namespace node or null if it is not open in the tree
+	 */
+	protected GTreeNode getNamespaceNode(GTreeNode parentNode, List<Namespace> namespaces,
+			boolean loadChildren, TaskMonitor monitor) {
+
+		if (!loadChildren && !parentNode.isLoaded() || monitor.isCancelled()) {
+			return null;
 		}
-		SymbolType symbolType = symbol.getSymbolType();
-		return symbolType == symbolCategory.getSymbolType();
+
+		if (namespaces.isEmpty()) {
+			return null;
+		}
+
+		Namespace namespace = namespaces.remove(0);
+		Symbol nsSymbol = namespace.getSymbol();
+		SymbolNode key = SymbolNode.createKeyNode(nsSymbol, nsSymbol.getName(), program);
+		GTreeNode namespaceNode = findNode(parentNode, key, loadChildren, monitor);
+		if (namespaceNode == null || namespaces.isEmpty()) {
+			return namespaceNode; // we hit the last namespace
+		}
+
+		// move to the next namespace
+		return getNamespaceNode(namespaceNode, namespaces, loadChildren, monitor);
 	}
 
 	@Override
