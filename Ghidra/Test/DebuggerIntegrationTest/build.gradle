@@ -67,7 +67,6 @@ dependencies {
 
 	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger-rmi-trace', configuration: 'testArtifacts')
 }

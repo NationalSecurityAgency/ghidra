@@ -26,13 +26,13 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-rmi-trace'
 
 dependencies {
+	api project(':ProposedUtils')
 	api project(':Pty')
 	api project(':Debugger')
 	api project(':Debugger-api')
 	
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 }
 
