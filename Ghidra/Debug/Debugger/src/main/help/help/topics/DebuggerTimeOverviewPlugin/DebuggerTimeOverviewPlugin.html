@@ -1,0 +1,44 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Time Overview</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Time Overview</H1>
+
+    <P>Patterned on the Program Overview, this plugin provides a pair of sidebars for the 
+	Dynamic Listing that indicate the history of the current trace, similar to those in the 
+	<A href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A>
+	and <A href="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html">Memview</A> plugins.  
+	The Trace Overview bar gives a compressed view of various events
+	(thread creation/destruction, module loads/unloads, et cetera). Events are added in time
+	snap order <em>without</em> spaces between consecutive events, as in the Memview display. The Trace 
+	Selection sidebar allows the user to click &amp; drag over a section of either sidebar and zooms 
+	in on that time span. In the zoomed version, events are in snap order <em>with</em> intervening space
+	to indicate the actual time delays (although these are dictated, in part, by the numbering
+	schema for events).
+	</P>
+
+
+    <H2>Navigation</H2>
+
+    <H3><A name="zoom"></A><IMG alt="" src="icon.widget.imagepanel.zoom.in">Zoom</H3>
+
+    <P>Clicking and dragging over a region of the Trace Overview causes that
+	span to be displayed uncompressed in the Trace Selection. The same action can also
+	be applied to the Trace Selection itself, resulting in a more detailed zoom.</P>
+	
+	<H3><A name="move"></A><IMG alt="" src="icon.widget.imagepanel.zoom.in">Move</H3>
+	
+	<P>Shift click &amp; drag on the Trace Selection allows the user to move forward and
+	backward in the view without rescaling.
+	</P>
+  </BODY>
+</HTML>
