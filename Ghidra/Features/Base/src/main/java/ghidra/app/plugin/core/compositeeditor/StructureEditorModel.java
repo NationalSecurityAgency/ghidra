@@ -20,6 +20,8 @@ import java.util.*;
 
 import javax.swing.table.TableColumn;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
@@ -1458,7 +1460,7 @@ class StructureEditorModel extends CompEditorModel {
 			selection.addRange(rowIndex, rowIndex + numComps);
 
 			DataTypeComponent comp = getComponent(rowIndex);
-			// Set the field name and comment the same as before
+			// Set the field name and comment the same as before if unspecified
 			try {
 				if (comp.getFieldName() == null) {
 					comp.setFieldName(fieldName);
@@ -1467,7 +1469,9 @@ class StructureEditorModel extends CompEditorModel {
 			catch (DuplicateNameException exc) {
 				Msg.showError(this, null, null, null);
 			}
-			comp.setComment(comment);
+			if (StringUtils.isBlank(comp.getComment())) {
+				comp.setComment(comment);
+			}
 		});
 		fixSelection();
 		componentEdited();
@@ -1488,6 +1492,5 @@ class StructureEditorModel extends CompEditorModel {
 					zeroDtc.getFieldName(), zeroDtc.getComment());
 			}
 		}
-		zeroDtcStack.clear();
 	}
 }

@@ -692,7 +692,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		if (!isArrayAllowed()) {
 			throw new UsrException("Array not permitted in current context");
 		}
-		int min = 0;
+		int min = allowsZeroLengthComponents() ? 0 : 1;
 		int max = getMaxElements();
 		if (isSingleRowSelection()) {
 			if (max != 0) {
