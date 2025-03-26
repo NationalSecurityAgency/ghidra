@@ -60,18 +60,6 @@ public class UnpackageAction extends CompositeEditorTableAction {
 		int currentRowIndex =
 			model.getSelection().getFieldRange(0).getStart().getIndex().intValue();
 
-		// Check for unsupported unpack case.
-		StructureEditorModel structModel = (StructureEditorModel) model;
-		if (!structModel.isPackingEnabled()) {
-			DataTypeComponent dtc = structModel.getComponent(currentRowIndex);
-			if (dtc != null && dtc.getOrdinal() != 0 &&
-				structModel.getComponent(currentRowIndex - 1).getOffset() == dtc.getOffset()) {
-				Msg.showInfo(this, model.getProvider().getComponent(), "Unsupported Unpack",
-					"Unpack is not supported when component offset is shared with a zero-length component.");
-				return;
-			}
-		}
-
 		int subComps = model.getNumSubComponents(currentRowIndex);
 		if (subComps > 1000) {
 			String question = "Are you sure you want to unpackage " + subComps + " components?";
