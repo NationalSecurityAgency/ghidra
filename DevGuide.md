@@ -204,6 +204,24 @@ the [ghidra-data][ghidra-data] repository.
 
 If you'd like some details of our fine tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
 
+Alternatively, you can create and populate FID databases in headless mode:
+
+1. Organize your binaries in the following structure: `<path/compiler/project/version/options/file(s)>` (e.g. `<path>/gcc/libcrypt/14.2.1/debug/crypt.o`). This structure is required by `CreateMultipleLibraries.java`.
+2. Create a project, import the binaries and analyze them using the proper FID scripts: `$(ROOT)/support/analyzeHeadless <project_location> <project_name> -import <path/compiler> -recursive -preScript FunctionIDHeadlessPrescript.java -postScript FunctionIDHeadlessPostscript.java`
+3. Create and add an empty FID database, then populate it: `$(ROOT)/support/analyzeHeadless <project_location> <project_name> -propertiesPath <path> -postScript CreateEmptyFidDatabase.java <name>.fidb -postScript CreateMultipleLibraries.java`
+
+`CreateMultipleLibraries.java` requires multiple options which can be provided through a properties file (`CreateMultipleLibraries.properties`):
+
+```
+Duplicate Results File OK = <path>/duplicates.txt
+Do Duplication Detection Do you want to detect duplicates = true
+Choose destination FidDB Please choose the destination FidDB for population = <name>.fidb
+Select root folder containing all libraries (at a depth of 3): = /<compiler>
+Common symbols file (optional): OK = <path>/common_symbols.txt
+Enter LanguageID To Process Language ID: = <language_ID>
+```
+An example for language ID is `x86:LE:64:default`.
+
 ## Debugger Development
 
 We have recently changed the Debugger's back-end architecture.
