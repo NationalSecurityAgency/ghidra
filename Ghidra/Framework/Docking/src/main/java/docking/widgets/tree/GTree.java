@@ -597,7 +597,6 @@ public class GTree extends JPanel implements BusyListener {
 	 * @param origin the event type; use {@link EventOrigin#API_GENERATED} if unsure
 	 */
 	public void setSelectionPaths(List<TreePath> paths, boolean expandPaths, EventOrigin origin) {
-
 		if (expandPaths) {
 			expandPaths(paths);
 		}
@@ -1432,7 +1431,7 @@ public class GTree extends JPanel implements BusyListener {
 	 */
 	public void refilterLater() {
 		if (isFilteringEnabled && filter != null) {
-			filterUpdateManager.update();
+			filterUpdateManager.updateLater();
 		}
 	}
 

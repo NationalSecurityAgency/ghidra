@@ -22,12 +22,14 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.GoToService;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 
 //@formatter:off
 @PluginInfo(
@@ -36,8 +38,8 @@ import ghidra.program.util.ProgramLocation;
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Symbol Tree",
 	description = "This plugin shows the symbols from the program " +
-			"in a tree hierarchy.  All symbols (except for the global namespace symbol)" +
-			" have a parent symbol.  From the tree, symbols can be renamed, deleted, or " +
+			"in a tree hierarchy.  All symbols (except for the global namespace symbol) " +
+			"have a parent symbol.  From the tree, symbols can be renamed, deleted, or " +
 			"reorganized.",
 	eventsConsumed = { ProgramActivatedPluginEvent.class, ProgramLocationPluginEvent.class, ProgramClosedPluginEvent.class },
 	servicesProvided = { SymbolTreeService.class }
@@ -45,7 +47,8 @@ import ghidra.program.util.ProgramLocation;
 //@formatter:on
 public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 
-	public static final String PLUGIN_NAME = "SymbolTreePlugin";
+	private static final String OPTIONS_CATEGORY = "Symbol Tree";
+	private static final String OPTION_NAME_GROUP_THRESHOLD = "Group Threshold";
 
 	private SymbolTreeProvider connectedProvider;
 	private List<SymbolTreeProvider> disconnectedProviders = new ArrayList<>();
@@ -53,8 +56,12 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 	private GoToService goToService;
 	private boolean processingGoTo;
 
+	private OptionsChangeListener optionsListener = new SymbolTreeOptionsListener();
+	private int nodeGroupThreshold = 200;
+
 	public SymbolTreePlugin(PluginTool tool) {
 		super(tool);
+
 		connectedProvider = new SymbolTreeProvider(tool, this);
 	}
 
@@ -108,6 +115,20 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 	@Override
 	protected void init() {
 		goToService = tool.getService(GoToService.class);
+
+		initializeOptions();
+	}
+
+	private void initializeOptions() {
+
+		ToolOptions options = tool.getOptions(OPTIONS_CATEGORY);
+		options.addOptionsChangeListener(optionsListener);
+
+		HelpLocation help = new HelpLocation("SymbolTreePlugin", "GroupNode");
+		options.registerOption(OPTION_NAME_GROUP_THRESHOLD, nodeGroupThreshold, help,
+			"The max number of children before nodes are organized by name");
+
+		nodeGroupThreshold = options.getInt(OPTION_NAME_GROUP_THRESHOLD, nodeGroupThreshold);
 	}
 
 	@Override
@@ -190,6 +211,27 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 	@Override
 	public void selectSymbol(Symbol symbol) {
 		connectedProvider.selectSymbol(symbol);
+
+	}
+
+	int getNodeGroupThreshold() {
+		return nodeGroupThreshold;
+	}
+
+	private class SymbolTreeOptionsListener implements OptionsChangeListener {
+
+		@Override
+		public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+				Object newValue) throws OptionsVetoException {
+
+			if (OPTION_NAME_GROUP_THRESHOLD.equals(optionName)) {
+				nodeGroupThreshold = (int) newValue;
+				connectedProvider.rebuildTree();
+				for (SymbolTreeProvider provider : disconnectedProviders) {
+					provider.rebuildTree();
+				}
+			}
+		}
 
 	}
 }
