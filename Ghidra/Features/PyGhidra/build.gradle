@@ -56,17 +56,17 @@ distributePyDep("jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aar
 distributePyDep("jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl")
 distributePyDep("jpype1-1.5.2.tar.gz")
 distributePyDep("packaging-23.2-py3-none-any.whl")
-distributePyDep("setuptools-68.0.0-py3-none-any.whl")
-distributePyDep("wheel-0.37.1-py2.py3-none-any.whl")
+distributePyDep("setuptools-75.8.0-py3-none-any.whl")
+distributePyDep("wheel-0.45.1-py3-none-any.whl")
 
 // Install JPype into the development virtual environment
 task installJPype(type: Exec) {
 	dependsOn(":createPythonVirtualEnvironment")
-	
+
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
-	
+
 	doFirst {
 		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
 	}
@@ -76,13 +76,13 @@ task installJPype(type: Exec) {
 task installGhidraStubs(type: Exec) {
 	dependsOn(":createGhidraStubsWheel")
 	dependsOn(":createPythonVirtualEnvironment")
-	
+
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 
 	doFirst {
-		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "${ROOT_PROJECT_DIR}/build/typestubs/dist", "ghidra-stubs" 
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "${ROOT_PROJECT_DIR}/build/typestubs/dist", "ghidra-stubs"
 	}
 }
 
@@ -91,7 +91,7 @@ task installGhidraStubs(type: Exec) {
 task prepPyGhidra(type: Exec) {
 	dependsOn("installJPype")
 	dependsOn("installGhidraStubs")
-	
+
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
@@ -104,7 +104,7 @@ task prepPyGhidra(type: Exec) {
 rootProject.assembleMarkdownToHtml {
 	def p = this.project
 	def zipPath = getZipPath(p)
-	
+
 	from ("${p.projectDir}/src/main/py/README.md") {
 		into { "${zipPath}/pypkg" }
 	}

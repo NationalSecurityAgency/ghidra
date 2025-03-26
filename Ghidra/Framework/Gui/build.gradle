@@ -27,13 +27,12 @@ eclipse.project.name = 'Framework Gui'
 dependencies {
 	api project(':Generic')
 	api 'com.formdev:flatlaf:3.5.4'
-	
-	compileOnly "junit:junit:4.12"
-	
+
+	compileOnly "junit:junit:4.13.1"
+
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 }
 
 ext.addExports([
 	'java.desktop/sun.awt=ALL-UNNAMED'
 ])
-

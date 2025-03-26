@@ -21,5 +21,5 @@ MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.ma
 MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl Apache License 2.0
 MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2.tar.gz Apache License 2.0
 MODULE FILE LICENSE: pypkg/dist/packaging-23.2-py3-none-any.whl Apache License 2.0
-MODULE FILE LICENSE: pypkg/dist/setuptools-68.0.0-py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/wheel-0.37.1-py2.py3-none-any.whl MIT
+MODULE FILE LICENSE: pypkg/dist/setuptools-75.8.0-py3-none-any.whl MIT
+MODULE FILE LICENSE: pypkg/dist/wheel-0.45.1-py3-none-any.whl MIT
