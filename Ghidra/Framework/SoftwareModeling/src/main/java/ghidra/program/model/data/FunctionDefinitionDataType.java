@@ -141,7 +141,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	}
 
 	@Override
-	public void setArguments(ParameterDefinition[] args) {
+	public void setArguments(ParameterDefinition... args) {
 		params = new ParameterDefinition[args.length];
 		for (int i = 0; i < args.length; i++) {
 			DataType dt = args[i].getDataType();

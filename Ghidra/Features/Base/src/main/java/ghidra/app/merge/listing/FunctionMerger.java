@@ -26,6 +26,7 @@ import javax.swing.event.ChangeListener;
 
 import generic.stl.Pair;
 import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.app.merge.util.MergeUtilities;
@@ -700,17 +701,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 					f.setParentNamespace(ns);
 				}
 			}
-			catch (DuplicateNameException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
-			}
-			catch (InvalidInputException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
-			}
-			catch (CircularDependencyException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
+			catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+				MergeManager.showBlockingError("Error Setting Function Namespace", e.getMessage());
 			}
 		}
 	}
@@ -762,17 +754,10 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 						listingMergeManager.resolveNamespace(origP, origF.getParentNamespace());
 					resultF.setParentNamespace(ns);
 				}
-				catch (DuplicateNameException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
-				}
-				catch (InvalidInputException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
-				}
-				catch (CircularDependencyException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
+				catch (DuplicateNameException | InvalidInputException
+						| CircularDependencyException e) {
+					MergeManager.showBlockingError("Error Setting Function Namespace",
+						e.getMessage());
 				}
 			}
 		}
@@ -1453,8 +1438,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	private void showOverlapException(final Address entryPt, Exception e) {
 		String message = "Couldn't display body address set conflict for function at " +
 			entryPt.toString(true) + ".\n " + e.getMessage();
-		Msg.showError(this, mergeManager.getMergeTool().getToolFrame(), "Function Merge Error",
-			message, e);
+		MergeManager.showBlockingError("Function Merge Error", message, e);
 		// Should this just put a message on errorBuf instead?
 	}
 
@@ -1738,7 +1722,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				thunkChoice = choiceForFunctionConflict;
 				break;
 			default:
-				Msg.showError(this, listingMergePanel, "Unrecognized Function Conflict Type",
+				MergeManager.showBlockingError("Unrecognized Function Conflict Type",
 					"Unrecognized indicator (" + functionConflictType +
 						") for function conflict type to merge.");
 		}
