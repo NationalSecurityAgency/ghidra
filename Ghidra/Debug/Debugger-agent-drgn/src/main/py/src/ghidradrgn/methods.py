@@ -19,10 +19,11 @@ from io import StringIO
 import re
 import sys
 import time
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Any, Dict, Optional, Tuple
 
 import drgn
 import drgn.cli
+from drgn import Module, StackFrame  # type: ignore
 
 from ghidratrace import sch
 from ghidratrace.client import (
@@ -35,159 +36,22 @@ REGISTRY = MethodRegistry(ThreadPoolExecutor(
     max_workers=1, thread_name_prefix='MethodRegistry'))
 
 
-def extre(base, ext):
+def extre(base, ext) -> re.Pattern:
     return re.compile(base.pattern + ext)
 
 
 PROCESSES_PATTERN = re.compile('Processes')
-PROCESS_PATTERN = extre(PROCESSES_PATTERN, '\[(?P<procnum>\\d*)\]')
-ENV_PATTERN = extre(PROCESS_PATTERN, '\.Environment')
-THREADS_PATTERN = extre(PROCESS_PATTERN, '\.Threads')
-THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
-STACK_PATTERN = extre(THREAD_PATTERN, '\.Stack')
-FRAME_PATTERN = extre(STACK_PATTERN, '\[(?P<level>\\d*)\]')
+PROCESS_PATTERN = extre(PROCESSES_PATTERN, '\\[(?P<procnum>\\d*)\\]')
+ENV_PATTERN = extre(PROCESS_PATTERN, '\\.Environment')
+THREADS_PATTERN = extre(PROCESS_PATTERN, '\\.Threads')
+THREAD_PATTERN = extre(THREADS_PATTERN, '\\[(?P<tnum>\\d*)\\]')
+STACK_PATTERN = extre(THREAD_PATTERN, '\\.Stack')
+FRAME_PATTERN = extre(STACK_PATTERN, '\\[(?P<level>\\d*)\\]')
 REGS_PATTERN = extre(FRAME_PATTERN, '.Registers')
 LOCALS_PATTERN = extre(FRAME_PATTERN, '.Locals')
-MEMORY_PATTERN = extre(PROCESS_PATTERN, '\.Memory')
-MODULES_PATTERN = extre(PROCESS_PATTERN, '\.Modules')
-MODULE_PATTERN = extre(MODULES_PATTERN, '\[(?P<modbase>.*)\]')
-
-
-def find_availpid_by_pattern(pattern, object, err_msg):
-    mat = pattern.fullmatch(object.path)
-    if mat is None:
-        raise TypeError(f"{object} is not {err_msg}")
-    pid = int(mat['pid'])
-    return pid
-
-
-def find_availpid_by_obj(object):
-    return find_availpid_by_pattern(AVAILABLE_PATTERN, object, "an Available")
-
-
-def find_proc_by_num(id):
-    if id != util.selected_process():
-        util.select_process(id)
-    return util.selected_process()
-
-
-def find_proc_by_pattern(object, pattern, err_msg):
-    mat = pattern.fullmatch(object.path)
-    if mat is None:
-        raise TypeError(f"{object} is not {err_msg}")
-    procnum = int(mat['procnum'])
-    return find_proc_by_num(procnum)
-
-
-def find_proc_by_obj(object):
-    return find_proc_by_pattern(object, PROCESS_PATTERN, "an Process")
-
-
-def find_proc_by_env_obj(object):
-    return find_proc_by_pattern(object, ENV_PATTERN, "an Environment")
-
-
-def find_proc_by_threads_obj(object):
-    return find_proc_by_pattern(object, THREADS_PATTERN, "a ThreadContainer")
-
-
-def find_proc_by_mem_obj(object):
-    return find_proc_by_pattern(object, MEMORY_PATTERN, "a Memory")
-
-
-def find_proc_by_modules_obj(object):
-    return find_proc_by_pattern(object, MODULES_PATTERN, "a ModuleContainer")
-
-
-def find_thread_by_num(id):
-    if id != util.selected_thread():
-        util.select_thread(id)
-    return util.selected_thread()
-
-
-def find_thread_by_pattern(pattern, object, err_msg):
-    mat = pattern.fullmatch(object.path)
-    if mat is None:
-        raise TypeError(f"{object} is not {err_msg}")
-    pnum = int(mat['procnum'])
-    tnum = int(mat['tnum'])
-    find_proc_by_num(pnum)
-    return find_thread_by_num(tnum)
-
-
-def find_thread_by_obj(object):
-    return find_thread_by_pattern(THREAD_PATTERN, object, "a Thread")
-
-
-def find_thread_by_stack_obj(object):
-    return find_thread_by_pattern(STACK_PATTERN, object, "a Stack")
-
-
-def find_thread_by_regs_obj(object):
-    return find_thread_by_pattern(REGS_PATTERN, object, "a RegisterValueContainer")
-
-
-def find_frame_by_level(level):
-    tnum = util.selected_thread()
-    thread = commands.prog.thread(tnum)
-    try:
-        frames = thread.stack_trace()
-    except Exception as e:
-        print(e)
-        return
-
-    for i, f in enumerate(frames):
-        if i == level:
-            if i != util.selected_frame():
-                util.select_frame(i)
-            return i, f
-
-
-def find_frame_by_pattern(pattern, object, err_msg):
-    mat = pattern.fullmatch(object.path)
-    if mat is None:
-        raise TypeError(f"{object} is not {err_msg}")
-    pnum = int(mat['procnum'])
-    tnum = int(mat['tnum'])
-    level = int(mat['level'])
-    find_proc_by_num(pnum)
-    find_thread_by_num(tnum)
-    return find_frame_by_level(level)
-
-
-def find_frame_by_obj(object):
-    return find_frame_by_pattern(FRAME_PATTERN, object, "a StackFrame")
-
-
-def find_frame_by_regs_obj(object):
-    return find_frame_by_pattern(REGS_PATTERN, object, "a RegisterValueContainer")
-
-
-def find_frame_by_locals_obj(object):
-    return find_frame_by_pattern(LOCALS_PATTERN, object, "a LocalsContainer")
-
-
-def find_module_by_base(modbase):
-    for m in commands.prog.modules():
-        if modbase == str(hex(m.address_range[0])):
-            return m
-
-
-def find_module_by_pattern(pattern, object, err_msg):
-    mat = pattern.fullmatch(object.path)
-    if mat is None:
-        raise TypeError(f"{object} is not {err_msg}")
-    pnum = int(mat['procnum'])
-    modbase = mat['modbase']
-    find_proc_by_num(pnum)
-    return find_module_by_base(modbase)
-
-
-def find_module_by_obj(object):
-    return find_module_by_pattern(MODULE_PATTERN, object, "a Module")
-
-
-shared_globals: Dict[str, Any] = dict()
+MEMORY_PATTERN = extre(PROCESS_PATTERN, '\\.Memory')
+MODULES_PATTERN = extre(PROCESS_PATTERN, '\\.Modules')
+MODULE_PATTERN = extre(MODULES_PATTERN, '\\[(?P<modbase>.*)\\]')
 
 
 class Environment(TraceObject):
@@ -222,10 +86,6 @@ class RegisterValueContainer(TraceObject):
     pass
 
 
-class StackFrame(TraceObject):
-    pass
-
-
 class SymbolContainer(TraceObject):
     pass
 
@@ -236,6 +96,136 @@ class Thread(TraceObject):
 
 class ThreadContainer(TraceObject):
     pass
+
+
+def find_proc_by_num(id: int) -> int:
+    if id != util.selected_process():
+        util.select_process(id)
+    return util.selected_process()
+
+
+def find_proc_by_pattern(object: TraceObject, pattern: re.Pattern,
+                         err_msg: str) -> int:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    procnum = int(mat['procnum'])
+    return find_proc_by_num(procnum)
+
+
+def find_proc_by_obj(object: TraceObject) -> int:
+    return find_proc_by_pattern(object, PROCESS_PATTERN, "an Process")
+
+
+def find_proc_by_env_obj(object: TraceObject) -> int:
+    return find_proc_by_pattern(object, ENV_PATTERN, "an Environment")
+
+
+def find_proc_by_threads_obj(object: TraceObject) -> int:
+    return find_proc_by_pattern(object, THREADS_PATTERN, "a ThreadContainer")
+
+
+def find_proc_by_mem_obj(object: TraceObject) -> int:
+    return find_proc_by_pattern(object, MEMORY_PATTERN, "a Memory")
+
+
+def find_proc_by_modules_obj(object: TraceObject) -> int:
+    return find_proc_by_pattern(object, MODULES_PATTERN, "a ModuleContainer")
+
+
+def find_thread_by_num(id: int) -> Optional[int]:
+    if id != util.selected_thread():
+        util.select_thread(id)
+    return util.selected_thread()
+
+
+def find_thread_by_pattern(pattern: re.Pattern, object: TraceObject,
+                           err_msg: str) -> Optional[int]:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    pnum = int(mat['procnum'])
+    tnum = int(mat['tnum'])
+    find_proc_by_num(pnum)
+    return find_thread_by_num(tnum)
+
+
+def find_thread_by_obj(object: TraceObject) -> Optional[int]:
+    return find_thread_by_pattern(THREAD_PATTERN, object, "a Thread")
+
+
+def find_thread_by_stack_obj(object: TraceObject) -> Optional[int]:
+    return find_thread_by_pattern(STACK_PATTERN, object, "a Stack")
+
+
+def find_thread_by_regs_obj(object: TraceObject) -> Optional[int]:
+    return find_thread_by_pattern(REGS_PATTERN, object, "a RegisterValueContainer")
+
+
+def find_frame_by_level(level: int) -> Optional[Tuple[int, StackFrame]]:
+    tnum = util.selected_thread()
+    thread = commands.prog.thread(tnum)
+    try:
+        frames = thread.stack_trace()
+    except Exception as e:
+        print(e)
+        return None
+
+    for i, f in enumerate(frames):
+        if i == level:
+            if i != util.selected_frame():
+                util.select_frame(i)
+            return i, f
+    return None
+
+
+def find_frame_by_pattern(pattern: re.Pattern, object: TraceObject,
+                          err_msg: str) -> Optional[Tuple[int, StackFrame]]:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    pnum = int(mat['procnum'])
+    tnum = int(mat['tnum'])
+    level = int(mat['level'])
+    find_proc_by_num(pnum)
+    find_thread_by_num(tnum)
+    return find_frame_by_level(level)
+
+
+def find_frame_by_obj(object: TraceObject) -> Optional[Tuple[int, StackFrame]]:
+    return find_frame_by_pattern(FRAME_PATTERN, object, "a StackFrame")
+
+
+def find_frame_by_regs_obj(object: TraceObject) -> Optional[Tuple[int, StackFrame]]:
+    return find_frame_by_pattern(REGS_PATTERN, object, "a RegisterValueContainer")
+
+
+def find_frame_by_locals_obj(object: TraceObject) -> Optional[Tuple[int, StackFrame]]:
+    return find_frame_by_pattern(LOCALS_PATTERN, object, "a LocalsContainer")
+
+
+def find_module_by_base(modbase: TraceObject) -> Module:
+    for m in commands.prog.modules():  # type: ignore
+        if modbase == str(hex(m.address_range[0])):
+            return m
+
+
+def find_module_by_pattern(pattern: re.Pattern, object: TraceObject,
+                           err_msg: str) -> int:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    pnum = int(mat['procnum'])
+    modbase = mat['modbase']
+    find_proc_by_num(pnum)
+    return find_module_by_base(modbase)
+
+
+def find_module_by_obj(object: TraceObject) -> int:
+    return find_module_by_pattern(MODULE_PATTERN, object, "a Module")
+
+
+shared_globals: Dict[str, Any] = dict()
 
 
 @REGISTRY.method()
@@ -341,9 +331,12 @@ def activate_thread(thread: Thread) -> None:
 
 
 @REGISTRY.method(action='activate')
-def activate_frame(frame: StackFrame) -> None:
+def activate_frame(frame: TraceObject) -> None:
     """Select the frame."""
-    i, f = find_frame_by_obj(frame)
+    res = find_frame_by_obj(frame)
+    if res is None:
+        return
+    i, f = res
     util.select_frame(i)
     with commands.open_tracked_tx('Refresh Stack'):
         commands.ghidra_trace_put_frames()
@@ -411,7 +404,7 @@ def step_into(thread: Thread,
     """Step one instruction exactly."""
     find_thread_by_obj(thread)
     time.sleep(1)
-    hooks.on_stop(None)
+    hooks.on_stop()
 
 
 # @REGISTRY.method
