@@ -1345,6 +1345,9 @@ class StructureEditorModel extends CompEditorModel {
 				numComps = array.getNumElements();
 				// Remove the array.
 				delete(componentOrdinal);
+				if (array.isZeroLength()) {
+					return;
+				}
 				if (numComps > 0) {
 					// Add the array's elements
 					try {
@@ -1366,18 +1369,41 @@ class StructureEditorModel extends CompEditorModel {
 					// Remove the structure.
 					int currentOffset = currentComp.getOffset();
 
-					// NOTE: There is still a case which is unhandled: if there is a zero-length
-					// component at the same offset as the component to be unpacked, the unpacking
-					// will be inserted before the zero-length component.  More work is needed to
-					// handle this case.
+					// TODO: may want to add this functionality into the API
 
-					deleteComponent(rowIndex);
-
-					// Add the structure's elements
 					Stack<DataTypeComponent> zeroDtcStack = new Stack<>();
 					int zeroStackOffset = -1;
 					int zeroStackOrdinal = -1;
 					int packedOrdinal = 0;
+
+					deleteComponent(rowIndex);
+
+					if (struct.isZeroLength()) {
+						return;
+					}
+
+					if (rowIndex != 0 && !viewStruct.isPackingEnabled()) {
+						// Must consume any preceeding zero-length components at the same offset
+						// into the zeroDtcStack to prevent their movement on subsequent component
+						// inserts at the same offset
+						DataTypeComponent dtc =
+							viewStruct.getDefinedComponentAtOrAfterOffset(currentOffset);
+						if (dtc != null && dtc.getOffset() == currentOffset) {
+							// zero-length is assumed if offset matches
+							zeroStackOffset = 0;
+							int componentCount = viewStruct.getNumComponents();
+							while (dtc != null && dtc.getOffset() == currentOffset) {
+								int ordinal = dtc.getOrdinal();
+								zeroDtcStack.push(dtc);
+								viewStruct.delete(ordinal);
+								--componentCount;
+								dtc = ordinal < componentCount ? viewStruct.getComponent(ordinal)
+										: null;
+							}
+						}
+					}
+
+					// Add the structure's elements
 					for (DataTypeComponent dtc : struct.getDefinedComponents()) {
 
 						DataType compDt = dtc.getDataType();
