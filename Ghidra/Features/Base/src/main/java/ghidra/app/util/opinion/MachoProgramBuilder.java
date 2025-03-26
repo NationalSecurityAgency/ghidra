@@ -226,14 +226,19 @@ public class MachoProgramBuilder {
 		for (SegmentCommand segment : segments) {
 			monitor.increment();
 
-			if (segment.getFileSize() > 0 && segment.getVMsize() > 0 &&
-				(allowZeroAddr || segment.getVMaddress() != 0)) {
-				if (createMemoryBlock(segment.getSegmentName(),
-					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
-					segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
-					segment.isWrite(), segment.isExecute(), false, false) == null) {
-					log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
-						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
+			if (segment.getSegmentName().equals(SegmentNames.SEG_PAGEZERO)) {
+				continue;
+			}
+
+			if (segment.getVMsize() > 0 && (allowZeroAddr || segment.getVMaddress() != 0)) {
+				if (segment.getFileSize() > 0) {
+					if (createMemoryBlock(segment.getSegmentName(),
+						space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
+						segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
+						segment.isWrite(), segment.isExecute(), false, false) == null) {
+						log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
+							segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
+					}
 				}
 				if (segment.getVMsize() > segment.getFileSize()) {
 					// Pad the remaining address range with uninitialized data
@@ -274,7 +279,8 @@ public class MachoProgramBuilder {
 				AddressSpace sectionSpace = overlaySections.contains(section)
 						? segmentOverlayMap.get(section.getSegmentName())
 						: space;
-				if (section.getSize() > 0 && section.getOffset() > 0 &&
+				if (section.getSize() > 0 &&
+					(section.getOffset() > 0 || section.getType() == SectionTypes.S_ZEROFILL) &&
 					(allowZeroAddr || section.getAddress() != 0)) {
 					if (createMemoryBlock(section.getSectionName(),
 						sectionSpace.getAddress(section.getAddress()), section.getOffset(),
