@@ -1,4 +1,4 @@
-package ghidra.app.util.bin.format.elf;
+package ghidra.app.util.bin;
 
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
