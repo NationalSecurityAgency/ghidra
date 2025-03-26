@@ -35,6 +35,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
@@ -43,28 +44,32 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	protected enum SnapshotTableColumns
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
-		SNAP("Snap", Long.class, SnapshotRow::getSnap),
-		TIMESTAMP("Timestamp", String.class, SnapshotRow::getTimeStamp), // TODO: Use Date type here
-		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName),
-		SCHEDULE("Schedule", String.class, SnapshotRow::getSchedule),
-		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, SnapshotRow::setDescription);
+		SNAP("Snap", Long.class, SnapshotRow::getSnap, false),
+		TIME("Time", TraceSchedule.class, SnapshotRow::getTime, true),
+		TIMESTAMP("Timestamp", String.class, SnapshotRow::getTimeStamp, true), // TODO: Use Date type here
+		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName, true),
+		SCHEDULE("Schedule", String.class, SnapshotRow::getSchedule, false),
+		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, SnapshotRow::setDescription, true);
 
 		private final String header;
 		private final Function<SnapshotRow, ?> getter;
 		private final BiConsumer<SnapshotRow, Object> setter;
 		private final Class<?> cls;
+		private final boolean visible;
 
-		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter) {
-			this(header, cls, getter, null);
+		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter,
+				boolean visible) {
+			this(header, cls, getter, null, visible);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter,
-				BiConsumer<SnapshotRow, T> setter) {
+				BiConsumer<SnapshotRow, T> setter, boolean visible) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<SnapshotRow, Object>) setter;
+			this.visible = visible;
 		}
 
 		@Override
@@ -88,8 +93,25 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 
 		@Override
+		public boolean isVisible() {
+			return visible;
+		}
+
+		@Override
 		public void setValueOf(SnapshotRow row, Object value) {
 			setter.accept(row, value);
+		}
+	}
+
+	protected static class SnapshotTableModel
+			extends DefaultEnumeratedColumnTableModel<SnapshotTableColumns, SnapshotRow> {
+		public SnapshotTableModel(PluginTool tool) {
+			super(tool, "Snapshots", SnapshotTableColumns.class);
+		}
+
+		@Override
+		public List<SnapshotTableColumns> defaultSortOrder() {
+			return List.of(SnapshotTableColumns.TIME);
 		}
 	}
 
@@ -153,7 +175,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 	};
 
-	protected final EnumeratedColumnTableModel<SnapshotRow> snapshotTableModel;
+	protected final SnapshotTableModel snapshotTableModel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
 	protected boolean hideScratch = true;
@@ -165,8 +187,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	public DebuggerSnapshotTablePanel(PluginTool tool) {
 		super(new BorderLayout());
-		snapshotTableModel =
-			new DefaultEnumeratedColumnTableModel<>(tool, "Snapshots", SnapshotTableColumns.class);
+		snapshotTableModel = new SnapshotTableModel(tool);
 		snapshotTable = new GTable(snapshotTableModel);
 		snapshotTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(new JScrollPane(snapshotTable));
@@ -178,9 +199,12 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		TableColumn snapCol = columnModel.getColumn(SnapshotTableColumns.SNAP.ordinal());
 		snapCol.setPreferredWidth(40);
 		snapCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
-		timeCol.setPreferredWidth(200);
+		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIME.ordinal());
+		timeCol.setPreferredWidth(40);
 		timeCol.setCellRenderer(styleCurrentRenderer);
+		TableColumn timeStampCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
+		timeStampCol.setPreferredWidth(200);
+		timeStampCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
 		etCol.setPreferredWidth(40);
 		etCol.setCellRenderer(styleCurrentRenderer);

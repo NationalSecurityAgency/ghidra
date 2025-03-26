@@ -663,6 +663,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerTimeSelectionDialog timeDialog =
 			waitForDialogComponent(DebuggerTimeSelectionDialog.class);
 		timeDialog.setScheduleText(TraceSchedule.snap(snapA).toString());
+		timeDialog.getComponent().requestFocus();
 		captureDialog(timeDialog);
 	}
 

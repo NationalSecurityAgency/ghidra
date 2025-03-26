@@ -82,7 +82,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	private DebuggerSnapActionContext myActionContext;
 
 	@AutoConfigStateField
-	/*testing*/ boolean hideScratch = true;
+	/*testing*/ boolean hideScratch = false;
 
 	public DebuggerTimeProvider(DebuggerTimePlugin plugin) {
 		super(plugin.getTool(), TITLE_PROVIDER_TIME, plugin.getName());

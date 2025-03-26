@@ -25,14 +25,18 @@
     snapshot <EM>activates</EM> the selected point in time, i.e., the entire Debugger UI will
     navigate to the selected snapshot. <B>NOTE:</B> Navigating through time is not permitted while
     in <B>Control Target</B> <A href=
-    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>.</P>
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>, unless
+    the back end supports time travel.</P>
 
     <H2>Table Columns</H2>
 
     <P>The table has the following columns:</P>
 
     <UL>
-      <LI>Snap - the 0-up index of the snapshot (event) recorded.</LI>
+      <LI>Snap - the 0-up index of the snapshot (event) recorded. <EM>(hidden by default)</EM></LI>
+
+      <LI>Time - the "time" coordinate for the snapshot. This is the same as the Snap column for
+      most snapshots. For <EM>scratch</EM> snapshots, this is the same as the Schedule column.</LI>
 
       <LI>Timestamp - the "wall-clock" time of the event. If the debugger doesn't give an event
       time, or the snapshot does not correspond to an event, then it is the snapshot creation
@@ -44,7 +48,8 @@
       <LI>Schedule - if applicable, a source snap and the stepping schedule which produces this
       snapshot. This always applies to <EM>scratch</EM> snapshots produced by emulation, but may
       (rarely) apply to recorded events if the stepping schedule between them is somehow known. See
-      the <A href="#goto_time">Go To Time</A> action for a description of the notation.</LI>
+      the <A href="#goto_time">Go To Time</A> action for a description of the notation. <EM>(hidden
+      by default)</EM></LI>
 
       <LI>Description - a user-modifiable description of the snapshot or event. This defaults to
       the debugger's description of the event.</LI>
@@ -91,11 +96,10 @@
 
     <H3><A name="hide_scratch"></A>Hide Scratch</H3>
 
-    <P>This toggle action is always available in the drop-down actions of the Time window. It is
-    enabled by default. The emulation service, which enables trace extrapolation and interpolation,
-    writes emulated state into the trace's <EM>scratch space</EM>, which comprises all negative
-    snaps. When this toggle is enabled, those snapshots are hidden. They can be displayed by
-    disabling this toggle. Note that navigating into scratch space may cause temporary undefined
-    behavior in some windows, and may prevent interaction with the target.</P>
+    <P>This toggle action is always available in the toolbar of the Time window. It is disabled by
+    default. The emulation service, which enables trace extrapolation and interpolation, writes
+    emulated state into the trace's <EM>scratch space</EM>, which comprises all negative snaps.
+    Some time-travel capable back ends may also write into scratch space. When this toggle is
+    enabled, those scratch snapshots are hidden.</P>
   </BODY>
 </HTML>
