@@ -24,6 +24,8 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
@@ -53,9 +55,23 @@ public class UnpackageAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
+
 		// If lots of components, verify the user really wants to unpackage.
 		int currentRowIndex =
 			model.getSelection().getFieldRange(0).getStart().getIndex().intValue();
+
+		// Check for unsupported unpack case.
+		StructureEditorModel structModel = (StructureEditorModel) model;
+		if (!structModel.isPackingEnabled()) {
+			DataTypeComponent dtc = structModel.getComponent(currentRowIndex);
+			if (dtc != null && dtc.getOrdinal() != 0 &&
+				structModel.getComponent(currentRowIndex - 1).getOffset() == dtc.getOffset()) {
+				Msg.showInfo(this, model.getProvider().getComponent(), "Unsupported Unpack",
+					"Unpack is not supported when component offset is shared with a zero-length component.");
+				return;
+			}
+		}
+
 		int subComps = model.getNumSubComponents(currentRowIndex);
 		if (subComps > 1000) {
 			String question = "Are you sure you want to unpackage " + subComps + " components?";
