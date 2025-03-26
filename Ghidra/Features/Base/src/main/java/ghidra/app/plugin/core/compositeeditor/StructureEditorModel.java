@@ -1365,7 +1365,13 @@ class StructureEditorModel extends CompEditorModel {
 				if (numComps > 0) {
 					// Remove the structure.
 					int currentOffset = currentComp.getOffset();
-					deleteComponent(rowIndex); // TODO: Should clear for non-packed
+
+					// NOTE: There is still a case which is unhandled: if there is a zero-length
+					// component at the same offset as the component to be unpacked, the unpacking
+					// will be inserted before the zero-length component.  More work is needed to
+					// handle this case.
+
+					deleteComponent(rowIndex);
 
 					// Add the structure's elements
 					Stack<DataTypeComponent> zeroDtcStack = new Stack<>();
@@ -1379,6 +1385,7 @@ class StructureEditorModel extends CompEditorModel {
 						int compOffset = dtc.getOffset();
 
 						if (compOffset != zeroStackOffset && !zeroDtcStack.isEmpty()) {
+							packedOrdinal += zeroDtcStack.size();
 							applyZeroDtcStack(viewStruct, currentOffset, componentOrdinal,
 								zeroDtcStack, zeroStackOffset, zeroStackOrdinal);
 						}
@@ -1443,7 +1450,9 @@ class StructureEditorModel extends CompEditorModel {
 
 	private void applyZeroDtcStack(Structure viewStruct, int unpackOffset, int unpackOrdinal,
 			Stack<DataTypeComponent> zeroDtcStack, int zeroStackOffset, int zeroStackOrdinal) {
-		zeroDtcStack.forEach(zeroDtc -> {
+
+		while (!zeroDtcStack.isEmpty()) {
+			DataTypeComponent zeroDtc = zeroDtcStack.pop();
 			if (!isPackingEnabled()) {
 				viewStruct.insertAtOffset(unpackOffset + zeroStackOffset, zeroDtc.getDataType(), 0,
 					zeroDtc.getFieldName(), zeroDtc.getComment());
@@ -1452,7 +1461,7 @@ class StructureEditorModel extends CompEditorModel {
 				viewStruct.insert(unpackOrdinal + zeroStackOrdinal, zeroDtc.getDataType(), 0,
 					zeroDtc.getFieldName(), zeroDtc.getComment());
 			}
-		});
+		}
 		zeroDtcStack.clear();
 	}
 }
