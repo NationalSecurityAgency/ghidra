@@ -25,24 +25,25 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Omf51FixupRecord extends OmfRecord {
-	private boolean largeSegmentId;
+	private boolean largeBlockId;
 	private List<Omf51Fixup> fixups = new ArrayList<>();
 
 	/**
-	 * Creates a new {@link Omf51FixupRecord} record
+	 * Creates a new {@link Omf51FixupRecord}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @param largeBlockId True if the block ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51FixupRecord(BinaryReader reader, boolean largeSegmentId) throws IOException {
+	public Omf51FixupRecord(BinaryReader reader, boolean largeBlockId) throws IOException {
 		super(reader);
-		this.largeSegmentId = largeSegmentId;
+		this.largeBlockId = largeBlockId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
 		while (dataReader.getPointerIndex() < dataEnd) {
-			fixups.add(new Omf51Fixup(dataReader, largeSegmentId));
+			fixups.add(new Omf51Fixup(dataReader, largeBlockId));
 		}
 	}
 
@@ -57,7 +58,7 @@ public class Omf51FixupRecord extends OmfRecord {
 		fixupStruct.add(WORD, "refLoc", null);
 		fixupStruct.add(BYTE, "refType", null);
 		fixupStruct.add(BYTE, "blockType", null);
-		fixupStruct.add(largeSegmentId ? WORD : BYTE, "blockId", null);
+		fixupStruct.add(largeBlockId ? WORD : BYTE, "blockId", null);
 		fixupStruct.add(WORD, "offset", null);
 		
 		struct.add(new ArrayDataType(fixupStruct, fixups.size()), "fixups", null);

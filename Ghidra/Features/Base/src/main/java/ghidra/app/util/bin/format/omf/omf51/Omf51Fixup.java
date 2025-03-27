@@ -43,17 +43,17 @@ public class Omf51Fixup {
 	private int offset;
 
 	/**
-	 * Creates a new {@link Omf51PublicDef}
+	 * Creates a new {@link Omf51Fixup}
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the segment definition
-	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
+	 * @param reader A {@link BinaryReader} positioned at the start of the fixup
+	 * @param largeBlockId True if the block ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51Fixup(BinaryReader reader, boolean largeSegmentId) throws IOException {
+	public Omf51Fixup(BinaryReader reader, boolean largeBlockId) throws IOException {
 		refLoc = reader.readNextUnsignedShort();
 		refType = reader.readNextByte();
 		blockType = reader.readNextByte();
-		blockId = largeSegmentId ? reader.readNextUnsignedShort() : reader.readNextUnsignedByte();
+		blockId = largeBlockId ? reader.readNextUnsignedShort() : reader.readNextUnsignedByte();
 		offset = reader.readNextUnsignedShort();
 	}
 
