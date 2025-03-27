@@ -1674,7 +1674,7 @@ def ghidra_trace_put_environment(debugger: lldb.SBDebugger, command: str,
         put_environment()
 
 
-def should_update_regions() -> bool:
+def should_query_regions() -> bool:
     """It's possible some targets don't support regions.
 
     There is also a bug in LLDB that can cause its gdb-remote client to
@@ -1697,13 +1697,13 @@ def should_update_regions() -> bool:
 
 
 def put_regions() -> None:
-    if not should_update_regions():
-        return
-    proc = util.get_process()
-    try:
-        regions = util.REGION_INFO_READER.get_regions()
-    except Exception:
-        regions = []
+    regions = []
+    if should_query_regions():
+        proc = util.get_process()
+        try:
+            regions = util.REGION_INFO_READER.get_regions()
+        except Exception:
+            pass
     if len(regions) == 0 and util.selected_thread() is not None:
         regions = [util.REGION_INFO_READER.full_mem()]
     trace = STATE.require_trace()
