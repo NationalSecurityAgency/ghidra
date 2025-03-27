@@ -1726,8 +1726,7 @@ public interface DebuggerResources {
 			String ownerName = owner.getName();
 			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
-					.menuGroup(GROUP_GENERAL)
-					.menuPath(NAME)
+					.toolBarIcon(ICON_FILTER)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

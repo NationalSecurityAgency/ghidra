@@ -122,13 +122,12 @@ In general, every pause generates a snapshot.
 By default, the most recent snapshot is at the bottom.
 The columns are:
 
-* The **Snap** column numbers each snapshot.
+* The **Time** column numbers each snapshot.
   Other windows that indicate life spans refer to these numbers.
+  If emulating (covered later in this course), this column may display the schedule.
 * The **Timestamp** column gives the time when the snapshot was created, i.e., the time when the event occurred.
 * The **Event Thread** column indicates which thread caused the target to break.
   This only applies to snapshots that were created because of an event, which is most.
-* The **Schedule** column describes the snapshot in relation to another.
-  It typically only applies to emulator / scratch snapshots, which are covered later in this course.
 * The **Description** column describes the event that generated the snapshot.
   This can be edited in the table, or by pressing **`CTRL`-`SHIFT`-`N`** to mark interesting snapshots.
 
