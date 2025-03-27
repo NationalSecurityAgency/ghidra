@@ -2464,19 +2464,21 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void setCompiler(TaskMonitor monitor) throws CancelledException {
-		// Check for Rust
-		try {
-			if (RustUtilities.isRust(program, memory.getBlock(ElfSectionHeaderConstants.dot_rodata),
-				monitor)) {
-				program.setCompiler(RustConstants.RUST_COMPILER);
-				int extensionCount = RustUtilities.addExtensions(program, monitor,
-					RustConstants.RUST_EXTENSIONS_UNIX);
-				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-			}
+private void setCompiler(TaskMonitor monitor) throws CancelledException {
+	// Check for Rust
+	try {
+		MemoryBlock rodataBlock = memory.getBlock(ElfSectionHeaderConstants.dot_rodata);
+
+		if (RustUtilities.isRust(program, rodataBlock, monitor)) {
+			program.setCompiler(RustConstants.RUST_COMPILER);
+			int extensionCount = RustUtilities.addExtensions(program, monitor,
+				RustConstants.RUST_EXTENSIONS_UNIX);
+			log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
 		}
-		catch (IOException e) {
-			log.appendMsg("Rust error: " + e.getMessage());
+	}
+	catch (IOException e) {
+		log.appendMsg("Rust error: " + e.getMessage());
+
 		}
 	}
 
