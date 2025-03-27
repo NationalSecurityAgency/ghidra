@@ -978,17 +978,19 @@ public class PeLoader extends AbstractPeDebugLoader {
 			try {
 				if (program != null && RustUtilities.isRust(program,
 					program.getMemory().getBlock(".rdata"), monitor)) {
-					int extensionCount = RustUtilities.addExtensions(program, monitor,
-						RustConstants.RUST_EXTENSIONS_WINDOWS);
-					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+					try {
+						int extensionCount = RustUtilities.addExtensions(program, monitor,
+							RustConstants.RUST_EXTENSIONS_WINDOWS);
+						log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+					}
+					catch (IOException e) {
+						log.appendMsg("Rust error: " + e.getMessage());
+					}
+					return CompilerEnum.Rustc;
 				}
-				return CompilerEnum.Rustc;
 			}
 			catch (CancelledException e) {
 				// Move on
-			}
-			catch (IOException e) {
-				log.appendMsg("Rust error: " + e.getMessage());
 			}
 			
 			// Check for Swift
