@@ -291,7 +291,7 @@ register_mappers = {
 }
 
 
-def compute_register_mapper(lang):
+def compute_register_mapper(lang: str)-> DefaultRegisterMapper:
     if not lang in register_mappers:
         if ':BE:' in lang:
             return DEFAULT_BE_REGISTER_MAPPER
