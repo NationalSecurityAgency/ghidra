@@ -455,7 +455,7 @@ def on_breakpoint_deleted(b: gdb.Breakpoint) -> None:
 
 
 @log_errors
-def on_before_prompt(n: None) -> object:
+def on_before_prompt() -> object:
     HOOK_STATE.end_batch()
     return None
 
