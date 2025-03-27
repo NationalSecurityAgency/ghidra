@@ -245,6 +245,9 @@ public class OrganizationNode extends SymbolTreeNode {
 	private void checkForTooManyNodes() {
 
 		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		if (root == null) {
+			return;
+		}
 		int reOrgLimit = root.getReorganizeLimit();
 		if (getChildCount() < reOrgLimit) {
 			return;
