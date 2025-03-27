@@ -24,26 +24,27 @@ import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class Omf51FixupRecord extends OmfRecord {
-	private boolean largeBlockId;
-	private List<Omf51Fixup> fixups = new ArrayList<>();
+public class Omf51PublicDefsRecord extends OmfRecord {
 
+	private boolean largeSegmentId;
+	private List<Omf51PublicDef> defs = new ArrayList<>();
+	
 	/**
-	 * Creates a new {@link Omf51FixupRecord}
+	 * Creates a new {@link Omf51PublicDefsRecord} record
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
-	 * @param largeBlockId True if the block ID is 2 bytes; false if 1 byte
+	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51FixupRecord(BinaryReader reader, boolean largeBlockId) throws IOException {
+	public Omf51PublicDefsRecord(BinaryReader reader, boolean largeSegmentId) throws IOException {
 		super(reader);
-		this.largeBlockId = largeBlockId;
+		this.largeSegmentId = largeSegmentId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
 		while (dataReader.getPointerIndex() < dataEnd) {
-			fixups.add(new Omf51Fixup(dataReader, largeBlockId));
+			defs.add(new Omf51PublicDef(dataReader, largeSegmentId));
 		}
 	}
 
@@ -52,16 +53,13 @@ public class Omf51FixupRecord extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		
-		StructureDataType fixupStruct = new StructureDataType("Omf51Fixup", 0);
-		fixupStruct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
-		fixupStruct.add(WORD, "refLoc", null);
-		fixupStruct.add(BYTE, "refType", null);
-		fixupStruct.add(BYTE, "blockType", null);
-		fixupStruct.add(largeBlockId ? WORD : BYTE, "blockId", null);
-		fixupStruct.add(WORD, "offset", null);
-		
-		struct.add(new ArrayDataType(fixupStruct, fixups.size()), "fixups", null);
+		for (Omf51PublicDef def : defs) {
+			struct.add(largeSegmentId ? WORD : BYTE, "seg id", null);
+			struct.add(BYTE, "info", null);
+			struct.add(WORD, "offset", null);
+			struct.add(BYTE, "unused", null);
+			struct.add(def.getName().toDataType(), def.getName().getDataTypeSize(), "name", null);
+		}
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
@@ -69,11 +67,9 @@ public class Omf51FixupRecord extends OmfRecord {
 	}
 
 	/**
-	 * Gets a {@link List} of fixups
-	 * 
-	 * @return A {@link List} of fixups
+	 * {@return the list of public definitions}
 	 */
-	public List<Omf51Fixup> getFixups() {
-		return fixups;
+	public List<Omf51PublicDef> getDefinitions() {
+		return defs;
 	}
 }

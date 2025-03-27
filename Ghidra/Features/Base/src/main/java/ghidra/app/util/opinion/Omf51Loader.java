@@ -25,15 +25,16 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.omf51.*;
-import ghidra.app.util.bin.format.omf.omf51.Omf51FixupRecord.Omf51Fixup;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataUtilities;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.symbol.ExternalLocation;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -83,7 +84,10 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			List<OmfRecord> records = OmfUtils.readRecords(factory);
 			Map<Integer, Address> segmentToAddr =
 				processMemoryBlocks(program, fileBytes, records, log, monitor);
-			performFixups(program, fileBytes, records, segmentToAddr, log, monitor);
+			Map<Integer, Address> extIdToAddr =
+				processExternalDefs(program, records, log, monitor);
+			performFixups(program, fileBytes, records, segmentToAddr, extIdToAddr, log, monitor);
+			markupPublicDefs(program, records, segmentToAddr, log, monitor);
 			markupRecords(program, fileBytes, records, log, monitor);
 		}
 		catch (Exception e) {
@@ -106,7 +110,7 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		Map<Integer, List<Omf51Content>> contentMap =
 			OmfUtils.filterRecords(records, Omf51Content.class)
 					.collect(Collectors.groupingBy(Omf51Content::getSegId));
-		
+
 		// Create some data structures that will aid in segment relocation:
 		//   - A set of addresses currently in use, so we can find holes for new segments in the
 		//     address space
@@ -164,8 +168,75 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		return segmentToAddr;
 	}
 
+	private Map<Integer, Address> processExternalDefs(Program program, List<OmfRecord> records,
+			MessageLog log, TaskMonitor monitor)
+			throws Exception {
+
+		Map<Integer, Address> map = new HashMap<>();
+		List<Omf51ExternalDef> defs = OmfUtils.filterRecords(records, Omf51ExternalDefsRecord.class)
+				.map(Omf51ExternalDefsRecord::getDefinitions)
+				.flatMap(List::stream)
+				.filter(def -> !def.isVariable())
+				.sorted((a, b) -> Integer.compare(a.getExtId(), b.getExtId()))
+				.toList();
+
+		int externalSize = defs.size();
+
+		if (externalSize == 0) {
+			return map;
+		}
+
+		Address codeEndAddr = Arrays.stream(program.getMemory().getBlocks())
+				.filter(block -> block.getSourceName().equals("CODE"))
+				.map(block -> block.getEnd())
+				.sorted((a, b) -> b.compareTo(a))
+				.findFirst()
+				.get();
+
+		int availableSize = (int) (program.getAddressFactory()
+				.getAddressSpace("CODE")
+				.getMaxAddress()
+				.getOffset() -
+			codeEndAddr.getOffset());
+
+		if (availableSize < externalSize) {
+			throw new Exception("Not enough CODE space for externals");
+		}
+
+		// Create an artificial 'EXTERNAL' block in CODE space.
+		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false, "EXTERNAL",
+			codeEndAddr.add(1), externalSize, "", "CODE", false, false, true, log);
+
+		if (block == null) {
+			throw new Exception("Couldn't create EXTERNAL block");
+		}
+
+		block.setArtificial(true);
+		block.setComment(
+			"NOTE: This block is artificial and allows external fixups to work correctly");
+
+		// Create thunks for each external procedure def.
+		Address addr = codeEndAddr;
+		for (Omf51ExternalDef def : defs) {
+			addr = addr.add(1);
+
+			Function f = program.getFunctionManager()
+					.createFunction(def.getName().str(), addr, new AddressSet(addr),
+						SourceType.IMPORTED);
+			ExternalLocation extLoc = program.getExternalManager()
+					.addExtFunction(Library.UNKNOWN, def.getName().str(), null,
+						SourceType.IMPORTED);
+			f.setThunkedFunction(extLoc.getFunction());
+
+			map.put(def.getExtId(), addr);
+		}
+
+		return map;
+	}
+
 	private void performFixups(Program program, FileBytes fileBytes, List<OmfRecord> records,
-			Map<Integer, Address> segmentToAddr, MessageLog log, TaskMonitor monitor)
+			Map<Integer, Address> segmentToAddr, Map<Integer, Address> extIdToAddr,
+			MessageLog log, TaskMonitor monitor)
 			throws Exception {
 		OmfRecord previous = null;
 		for (OmfRecord record : records) {
@@ -174,18 +245,128 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 					throw new Exception("Record prior to fixup is not content!");
 				}
 				Address segmentAddr = segmentToAddr.get(content.getSegId());
+
 				if (segmentAddr == null) {
-					throw new Exception("Failed to get lookup segment ID 0x%x for content fixup!"
+					throw new Exception("Failed to lookup segment ID 0x%x for content fixup!"
 							.formatted(content.getSegId()));
 				}
+
+				Address contentAddr = segmentAddr.add(content.getOffset());
+
 				for (Omf51Fixup fixup : fixupRec.getFixups()) {
-					Address fixupAddr = segmentAddr.add(fixup.refLoc());
+					Address refLocAddr = contentAddr.add(fixup.getRefLoc());
+					Address baseAddr = null;
+					Address addr = null;
+					Status status = Status.UNSUPPORTED;
+
+					switch (fixup.getBlockType()) {
+						case Omf51Fixup.ID_BLOCK_SEGMENT:
+						case Omf51Fixup.ID_BLOCK_RELOCATABLE:
+							baseAddr = segmentToAddr.get(fixup.getBlockId());
+							addr = fixup.getRefType() == Omf51Fixup.REF_TYPE_CONV
+									? baseAddr.getNewAddress(
+										((baseAddr.getOffset() - 0x20) * 8) + fixup.getOffset())
+									: baseAddr.add(fixup.getOffset());
+							break;
+						case Omf51Fixup.ID_BLOCK_EXTERNAL:
+							addr = extIdToAddr.get(fixup.getBlockId());
+							break;
+					}
+
+					if (addr != null) {
+						applyFixup(program, refLocAddr, addr, fixup.getRefType());
+						status = Status.APPLIED;
+					}
+
 					program.getRelocationTable()
-							.add(fixupAddr, Status.UNSUPPORTED, fixup.refType(),
-								new long[] { fixup.operand() }, 0, null);
+							.add(refLocAddr, status, fixup.getRefType(),
+								new long[] {
+									fixup.getRefLoc(), fixup.getRefType(), fixup.getBlockType(),
+									fixup.getBlockId(), fixup.getOffset()
+								}, 0, null);
 				}
 			}
 			previous = record;
+		}
+	}
+
+	private void applyFixup(Program program, Address refLocAddr, Address addr, int refType)
+			throws MemoryAccessException, Exception {
+		int normAddr = (int) addr.getOffset() & 0xFFFF;
+
+		// Validation
+		switch (refType) {
+			case Omf51Fixup.REF_TYPE_BIT:
+			case Omf51Fixup.REF_TYPE_CONV:
+				if (normAddr > 127) {
+					throw new Exception("Bad address 0x%04x for BIT fixup!"
+							.formatted(normAddr));
+				}
+				break;
+			case Omf51Fixup.REF_TYPE_BYTE:
+				if (normAddr > 255) {
+					throw new Exception("Bad address 0x%04x for BYTE fixup!"
+							.formatted(normAddr));
+				}
+				break;
+		}
+
+		// Patching
+		switch (refType) {
+			case Omf51Fixup.REF_TYPE_LOW:
+			case Omf51Fixup.REF_TYPE_BYTE:
+			case Omf51Fixup.REF_TYPE_BIT:
+			case Omf51Fixup.REF_TYPE_CONV:
+				program.getMemory().setByte(refLocAddr, (byte) (normAddr & 0xFF));
+				break;
+			case Omf51Fixup.REF_TYPE_HIGH:
+				program.getMemory().setByte(refLocAddr, (byte) ((normAddr >> 7) & 0xFF));
+				break;
+			case Omf51Fixup.REF_TYPE_WORD:
+				program.getMemory().setShort(refLocAddr, (short) (normAddr & 0xFFFF));
+				break;
+			default:
+				throw new Exception("Unhandled ref type");
+		}
+	}
+
+	private void markupPublicDefs(Program program, List<OmfRecord> records,
+			Map<Integer, Address> segmentToAddr, MessageLog log, TaskMonitor monitor)
+			throws Exception {
+		monitor.setMessage("Marking up public defs...");
+		for (OmfRecord record : records) {
+			if (record instanceof Omf51PublicDefsRecord publicDefRec) {
+				for (Omf51PublicDef def : publicDefRec.getDefinitions()) {
+					if (def.getUsageType() == Omf51PublicDef.NUMBER) {
+						log.appendMsg("Skipping NUMBER public def");
+						continue;
+					}
+					Address segmentAddr = segmentToAddr.get(def.getSegId());
+					if (segmentAddr == null) {
+						throw new Exception("Failed to get lookup segment ID 0x%x for public def!"
+								.formatted(def.getSegId()));
+					}
+
+					Address defAddress = segmentAddr.add(def.getOffset());
+
+					if (!def.isVariable()) {
+						FunctionManager functionMgr = program.getFunctionManager();
+						Function function = functionMgr.getFunctionAt(defAddress);
+						if (function == null) {
+							function = functionMgr.createFunction(def.getName().str(), defAddress,
+								new AddressSet(defAddress),
+								SourceType.IMPORTED);
+						}
+					}
+
+					program.getSymbolTable()
+							.createLabel(defAddress, def.getName().str(), null,
+								SourceType.IMPORTED);
+
+					program.getSymbolTable()
+							.addExternalEntryPoint(defAddress);
+				}
+			}
 		}
 	}
 
@@ -233,7 +414,11 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 				usedAddresses.add(start, end);
 				yield start;
 			}
-			case Omf51Segment.UNIT: {
+			case Omf51Segment.UNIT:
+			case Omf51Segment.BITADDRESSABLE:
+			case Omf51Segment.INPAGE:
+			case Omf51Segment.INBLOCK:
+			case Omf51Segment.PAGE: {
 				Address lastEnd = segmentEnds.get(key(segment));
 				if (lastEnd != null) {
 					Address start = lastEnd.add(1);
@@ -255,10 +440,7 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 				segmentEnds.put(key(segment), end);
 				yield start;
 			}
-			case Omf51Segment.BITADDRESSABLE:
-			case Omf51Segment.INPAGE:
-			case Omf51Segment.INBLOCK:
-			case Omf51Segment.PAGE:
+
 			default:
 				throw new Exception(
 					"Skipping segment '%s'. Relocation type 0x%x is not yet supported"
