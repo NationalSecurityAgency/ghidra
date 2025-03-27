@@ -26,25 +26,25 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Omf51ExternalDefsRecord extends OmfRecord {
 
-	private boolean largeSegmentId;
+	private boolean largeExtId;
 	private List<Omf51ExternalDef> defs = new ArrayList<>();
 	
 	/**
 	 * Creates a new {@link Omf51ExternalDefsRecord} record
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
-	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
+	 * @param largeExtId True if the external ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51ExternalDefsRecord(BinaryReader reader, boolean largeSegmentId) throws IOException {
+	public Omf51ExternalDefsRecord(BinaryReader reader, boolean largeExtId) throws IOException {
 		super(reader);
-		this.largeSegmentId = largeSegmentId;
+		this.largeExtId = largeExtId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
 		while (dataReader.getPointerIndex() < dataEnd) {
-			defs.add(new Omf51ExternalDef(dataReader, largeSegmentId));
+			defs.add(new Omf51ExternalDef(dataReader, largeExtId));
 		}
 	}
 
@@ -56,7 +56,7 @@ public class Omf51ExternalDefsRecord extends OmfRecord {
 		
 		for (Omf51ExternalDef def : defs) {
 			struct.add(BYTE, "blockType", null);
-			struct.add(largeSegmentId ? WORD : BYTE, "extId", null);
+			struct.add(largeExtId ? WORD : BYTE, "extId", null);
 			struct.add(BYTE, "info", null);
 			struct.add(BYTE, "unused", null);
 			struct.add(def.getName().toDataType(), def.getName().getDataTypeSize(), "name", null);
@@ -69,9 +69,9 @@ public class Omf51ExternalDefsRecord extends OmfRecord {
 	}
 
 	/**
-	 * {@return the list of segments}
+	 * {@return the list of external definitions}
 	 */
-	public List<Omf51ExternalDef> getDefs() {
+	public List<Omf51ExternalDef> getDefinitions() {
 		return defs;
 	}
 }

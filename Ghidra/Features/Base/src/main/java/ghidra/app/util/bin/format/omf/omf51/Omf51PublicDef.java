@@ -45,7 +45,7 @@ public class Omf51PublicDef {
 	/**
 	 * Creates a new {@link Omf51PublicDef}
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the segment definition
+	 * @param reader A {@link BinaryReader} positioned at the start of the public definition
 	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */

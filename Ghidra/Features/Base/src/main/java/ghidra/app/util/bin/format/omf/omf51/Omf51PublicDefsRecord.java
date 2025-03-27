@@ -67,9 +67,9 @@ public class Omf51PublicDefsRecord extends OmfRecord {
 	}
 
 	/**
-	 * {@return the list of segments}
+	 * {@return the list of public definitions}
 	 */
-	public List<Omf51PublicDef> getDefs() {
+	public List<Omf51PublicDef> getDefinitions() {
 		return defs;
 	}
 }

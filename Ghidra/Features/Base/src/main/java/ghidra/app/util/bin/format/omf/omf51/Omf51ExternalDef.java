@@ -36,8 +36,8 @@ public class Omf51ExternalDef {
 	/**
 	 * Creates a new {@link Omf51ExternalDef}
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the segment definition
-	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
+	 * @param reader A {@link BinaryReader} positioned at the start of the external definition
+	 * @param largeSegmentId True if the external ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
 	public Omf51ExternalDef(BinaryReader reader, boolean largeSegmentId) throws IOException {
