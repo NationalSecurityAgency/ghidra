@@ -234,7 +234,7 @@ def start_trace(name: str) -> None:
     util.set_convenience_variable('_ghidra_tracing', "true")
 
 
-def ghidra_trace_start(name: str) -> None:
+def ghidra_trace_start(name: str = "drgn/noname") -> None:
     """Start a Trace in Ghidra"""
 
     STATE.require_client()
@@ -267,10 +267,10 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
     global prog
     prog = Program()
     kind = os.getenv('OPT_TARGET_KIND')
-    img = os.getenv('OPT_TARGET_IMG')
     if kind == "kernel":
         prog.set_kernel()
     elif kind == "coredump":
+        img = os.getenv('OPT_TARGET_IMG')
         if img is not None:
             prog.set_core_dump(img)
             if '/' in img:
