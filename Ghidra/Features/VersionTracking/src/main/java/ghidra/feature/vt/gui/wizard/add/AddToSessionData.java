@@ -144,14 +144,20 @@ public class AddToSessionData {
 	public void setCorrelators(List<VTProgramCorrelatorFactory> correlators) {
 		if (!correlators.equals(this.correlators)) {
 			this.correlators = correlators;
-			// whenever the set of correlators changes, reset the options to force options panel
-			// to show
-			optionsMap = null;
+			updateOptionsMap();
 		}
 	}
 
-	public void setOptions(Map<VTProgramCorrelatorFactory, VTOptions> optionsMap) {
-		this.optionsMap = optionsMap;
+	private void updateOptionsMap() {
+		optionsMap.keySet().retainAll(correlators);
+		for (VTProgramCorrelatorFactory correlator : correlators) {
+			if (!optionsMap.containsKey(correlator)) {
+				VTOptions defaultOptions = correlator.createDefaultOptions();
+				if (defaultOptions != null) {
+					optionsMap.put(correlator, defaultOptions);
+				}
+			}
+		}
 	}
 
 	public Map<VTProgramCorrelatorFactory, VTOptions> getOptions() {
