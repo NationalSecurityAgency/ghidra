@@ -23,7 +23,12 @@ from typing import Annotated, Any, Dict, Optional, Tuple
 
 import drgn
 import drgn.cli
-from drgn import Module, StackFrame  # type: ignore
+from drgn import StackFrame
+try:
+    from drgn import Module  # type: ignore
+except Exception as e:
+    class Module:
+        pass  # not supported on older versions
 
 from ghidratrace import sch
 from ghidratrace.client import (

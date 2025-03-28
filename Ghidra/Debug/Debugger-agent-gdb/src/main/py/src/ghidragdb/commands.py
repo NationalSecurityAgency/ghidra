@@ -628,8 +628,6 @@ def putreg(frame: gdb.Frame, reg_descs: Sequence[
     cobj.insert()
     mapper = trace.extra.require_rm()
 
-    gdb.write(f"---Register Mapper: {mapper}---\n")
-
     keys = []
     values = []
     # NB: This command will fail if the process is running
