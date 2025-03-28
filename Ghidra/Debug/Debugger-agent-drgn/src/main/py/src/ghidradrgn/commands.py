@@ -267,10 +267,10 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
     global prog
     prog = Program()
     kind = os.getenv('OPT_TARGET_KIND')
+    img = os.getenv('OPT_TARGET_IMG')
     if kind == "kernel":
         prog.set_kernel()
     elif kind == "coredump":
-        img = os.getenv('OPT_TARGET_IMG')
         if img is not None:
             prog.set_core_dump(img)
             if '/' in img:
@@ -287,14 +287,15 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
     except drgn.MissingDebugInfoError as e:
         print(e)
 
-    if kind == "kernel":
-        img = prog.main_module().name  # type: ignore
-        util.selected_tid = next(prog.threads()).tid
-    elif kind == "coredump":
-        util.selected_tid = prog.crashed_thread().tid
-    else:
-        img = prog.main_module().name  # type: ignore
-        util.selected_tid = prog.main_thread().tid
+    if hasattr(drgn, 'Module') or kind == "coredump":
+        if kind == "kernel":
+            img = prog.main_module().name  # type: ignore
+            util.selected_tid = next(prog.threads()).tid
+        elif kind == "coredump":
+            util.selected_tid = prog.crashed_thread().tid
+        else:
+            img = prog.main_module().name  # type: ignore
+            util.selected_tid = prog.main_thread().tid
 
     if start_trace and img is not None:
         ghidra_trace_start(img)
