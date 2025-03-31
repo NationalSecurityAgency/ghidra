@@ -66,4 +66,6 @@ private:
 	CComPtr<IDiaDataSource>   pSource;
 };
 
+void handleFindChildrenError(HRESULT res);
+
 #endif
