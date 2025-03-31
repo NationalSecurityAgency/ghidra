@@ -34,37 +34,23 @@ model {
 		}
 	}	
 
-	// The toolChains block is needed because Gradle doesn't find gcc/clang on ARM-based Linux
-	// and macOS platforms without explicitly declaring their targets.  Might be a bug in the 
-	// native Gradle plugin. 
+	// The toolChains block is needed because Gradle doesn't find the native toolchain in various
+	// scenarios. These checks, can be removed when Gradle fixes them, and we advertise a
+	// minimum Gradle version that includes the fix.
 	toolChains {
-		if (isCurrentLinux()) {
-			gcc(Gcc) {
-				if (isCurrentArm_64()) {
-					target("linux_arm_64")
-				}
-			}
+		def current = getCurrentPlatformName()
+		if (isLinux(current)) {
+			// https://github.com/gradle/gradle/issues/17660 (fixed in Gradle 8.11)
+			gcc(Gcc).target(current)
+			clang(Clang).target(current)
 		}
-		if (isCurrentMac()) {
-			clang(Clang) {
-				if (isCurrentArm_64()) {
-					target("mac_arm_64")
-				}
-			}
+		if (isFreeBSD(current)) {
+			// https://github.com/gradle/gradle/issues/32895
+			gcc(Gcc).target(current)
+			clang(Clang).target(current)
 		}
-		if (isCurrentFreeBSD()) {
-			gcc(Gcc) {
-				if (isCurrentArm_64()) {
-					target("freebsd_arm_64")
-				} 
-				else {
-					target("freebsd_x86_64")
-				}
-			}
-		}
-		if (isCurrentWindows() && VISUAL_STUDIO_INSTALL_DIR) {
-			// specify installDir because Gradle doesn't find VS Build Tools.
-			// See https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
+		if (isWindows(current) && VISUAL_STUDIO_INSTALL_DIR) {
+			// https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
 			visualCpp(VisualCpp) {
 				installDir = VISUAL_STUDIO_INSTALL_DIR
 			}

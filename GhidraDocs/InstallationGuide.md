@@ -211,8 +211,7 @@ binaries for your platform, you will need the following installed on your system
     App Store while _Command Line Tools for Xcode_ may be installed using the command:
     `xcode-select --install`.
   * __Linux/FreeBSD:__ the 64-bit versions of the following packages should installed:
-    * gcc 8.5 or later
-    * gcc-c++ / g++ 8.5 or later
+    * gcc/g++ or clang
     * make
   * __Windows:__
       [Microsoft Visual Studio](https://visualstudio.microsoft.com/vs/community) 2017 or later, or 
