@@ -24,15 +24,16 @@ import sys
 import time
 from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence, Tuple, Union
 
-from comtypes import c_ulong
+# from ctypes import *
+from comtypes import c_ulong  # type: ignore
 from ghidratrace import sch
 from ghidratrace.client import (Client, Address, AddressRange, Lifespan, RegVal,
                                 Schedule, Trace, TraceObject, TraceObjectValue,
                                 Transaction)
 from ghidratrace.display import print_tabular_values, wait
-from pybag import pydbg, userdbg, kerneldbg
-from pybag.dbgeng import core as DbgEng
-from pybag.dbgeng import exception
+from pybag import pydbg, userdbg, kerneldbg  # type: ignore
+from pybag.dbgeng import core as DbgEng  # type: ignore
+from pybag.dbgeng import exception  # type: ignore
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObject, ModelObjectKind
@@ -50,9 +51,16 @@ AVAILABLE_PATTERN = AVAILABLES_PATH + AVAILABLE_KEY_PATTERN
 PROCESSES_PATH = SESSION_PATH + '.Processes'
 PROCESS_KEY_PATTERN = '[{procnum}]'
 PROCESS_PATTERN = PROCESSES_PATH + PROCESS_KEY_PATTERN
-PROC_BREAKS_PATTERN = PROCESS_PATTERN + '.Debug.Breakpoints'
+PROC_DEBUG_PATTERN = PROCESS_PATTERN + '.Debug'
+PROC_BREAKS_PATTERN = PROC_DEBUG_PATTERN + '.Breakpoints'
 PROC_BREAK_KEY_PATTERN = '[{breaknum}]'
 PROC_BREAK_PATTERN = PROC_BREAKS_PATTERN + PROC_BREAK_KEY_PATTERN
+PROC_EVENTS_PATTERN = PROC_DEBUG_PATTERN + '.Events'
+PROC_EVENT_KEY_PATTERN = '[{eventnum}]'
+PROC_EVENT_PATTERN = PROC_EVENTS_PATTERN + PROC_EVENT_KEY_PATTERN
+PROC_EXCS_PATTERN = PROC_DEBUG_PATTERN + '.Exceptions'
+PROC_EXC_KEY_PATTERN = '[{eventnum}]'
+PROC_EXC_PATTERN = PROC_EXCS_PATTERN + PROC_EXC_KEY_PATTERN
 ENV_PATTERN = PROCESS_PATTERN + '.Environment'
 THREADS_PATTERN = PROCESS_PATTERN + '.Threads'
 THREAD_KEY_PATTERN = '[{tnum}]'
@@ -1439,6 +1447,168 @@ def ghidra_trace_put_frames() -> None:
         put_frames()
 
 
+@util.dbg.eng_thread
+def put_events() -> None:
+    nproc = util.selected_process()
+    if nproc < 0:
+        return
+
+    trace = STATE.require_trace()
+    evtspath = PROC_EVENTS_PATTERN.format(procnum=nproc)
+    keys = []
+    (n_events, n_spec_exc, n_arb_exc) = util.GetNumberEventFilters()
+    params = util.GetSpecificFilterParameters(0, n_events)
+    for i in range(0, n_events):
+        epath = PROC_EVENT_PATTERN.format(procnum=nproc, eventnum=i)
+        eobj = trace.create_object(epath)
+        keys.append(PROC_EVENT_KEY_PATTERN.format(eventnum=i))
+        p = params[i]
+        event_name = util.GetEventFilterText(i, p.TextSize)
+        event_cmd = util.GetEventFilterCommand(i, p.CommandSize)
+        event_arg = util.GetSpecificFilterArgument(i, p.ArgumentSize)
+        eobj.set_value('Name', event_name)
+        contobj = trace.create_object(epath+".Cont")
+        contobj.set_value('_display', "Cont: {}".format(
+            util.continue_options[p.ContinueOption]))
+        contobj.insert()
+        execobj = trace.create_object(epath+".Exec")
+        execobj.set_value('_display', "Exec: {}".format(
+            util.execution_options[p.ExecutionOption]))
+        execobj.insert()
+        if event_cmd is not None:
+            eobj.set_value('Cmd', event_cmd)
+        if event_arg is not None and event_arg != "":
+            eobj.set_value('Arg', event_arg)
+        eobj.set_value('_display', "{} {}".format(i, event_name))
+        eobj.insert()
+    trace.proxy_object_path(
+        PROC_EVENTS_PATTERN.format(procnum=nproc)).retain_values(keys)
+
+
+def ghidra_trace_put_events() -> None:
+    """
+    Put the event set into the Ghidra trace
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        put_events()
+
+
+@util.dbg.eng_thread
+def put_exceptions() -> None:
+    nproc = util.selected_process()
+    if nproc < 0:
+        return
+
+    trace = STATE.require_trace()
+    evtspath = PROC_EXCS_PATTERN.format(procnum=nproc)
+    keys = []
+    (n_events, n_spec_exc, n_arb_exc) = util.GetNumberEventFilters()
+    params = util.GetExceptionFilterParameters(
+        n_events, None, n_spec_exc+n_arb_exc)
+    for i in range(0, n_spec_exc+n_arb_exc):
+        epath = PROC_EXC_PATTERN.format(procnum=nproc, eventnum=i)
+        eobj = trace.create_object(epath)
+        keys.append(PROC_EXC_KEY_PATTERN.format(eventnum=i))
+        p = params[i]
+        put_single_exception(eobj, epath, p, n_events, i, i < n_spec_exc)
+    trace.proxy_object_path(
+        PROC_EXCS_PATTERN.format(procnum=nproc)).retain_values(keys)
+
+
+@util.dbg.eng_thread
+def put_single_exception(obj: TraceObject, objpath: str, 
+                         p: DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS, 
+                         offset: int, index: int, specific: bool) -> None:
+    exc_name = "None"
+    if specific is True:
+        exc_name = util.GetEventFilterText(offset + index, p.TextSize)
+        obj.set_value('Name', exc_name)
+    exc_cmd = util.GetEventFilterCommand(offset + index, p.CommandSize)
+    exc_cmd2 = util.GetExceptionFilterSecondCommand(
+        offset + index, p.SecondCommandSize)
+    exc_code = hex(p.ExceptionCode)
+    obj.set_value('Code', exc_code)
+    trace = STATE.require_trace()
+    contobj = trace.create_object(objpath+".Cont")
+    contobj.set_value('_display', "Cont: {}".format(
+        util.continue_options[p.ContinueOption]))
+    contobj.insert()
+    execobj = trace.create_object(objpath+".Exec")
+    execobj.set_value('_display', "Exec: {}".format(
+        util.execution_options[p.ExecutionOption]))
+    execobj.insert()
+    if exc_cmd is not None:
+        obj.set_value('Cmd', exc_cmd)
+    if exc_cmd2 is not None:
+        obj.set_value('Cmd2', exc_cmd2)
+    obj.set_value('_display', "{} {} [{}]".format(index, exc_name, exc_code))
+    obj.insert()
+
+
+def ghidra_trace_put_exceptions() -> None:
+    """
+    Put the event set into the Ghidra trace
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        put_exceptions()
+
+
+def toggle_evt_cont_option(n: int, events: List[DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS]) -> None:
+    """
+    Toggle the event continue option
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        option = events[0].ContinueOption
+        option = (option+1) % 2
+        events[0].ContinueOption = option
+        util.SetSpecificFilterParameters(n, 1, events)
+
+
+def toggle_evt_exec_option(n: int, events: List[DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS]) -> None:
+    """
+    Toggle the event execution option
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        option = events[0].ExecutionOption
+        option = (option+1) % 4
+        events[0].ExecutionOption = option
+        util.SetSpecificFilterParameters(n, 1, events)
+
+
+def toggle_exc_cont_option(n: int, events: List[DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS]) -> None:
+    """
+    Toggle the event continue option
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        option = events[0].ContinueOption
+        option = (option+1) % 2
+        events[0].ContinueOption = option
+        util.SetExceptionFilterParameters(1, events)
+
+
+def toggle_exc_exec_option(n: int, events: List[DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS]) -> None:
+    """
+    Toggle the event execution option
+    """
+
+    client = STATE.require_client()
+    with client.batch() as b:
+        option = events[0].ExecutionOption
+        option = (option+1) % 4
+        events[0].ExecutionOption = option
+        util.SetExceptionFilterParameters(1, events)
+
+
 def update_key(np: str, keyval: Tuple[int, ModelObject]) -> Union[int, str]:
     """This should set the modified key."""
     key: Union[int, str] = keyval[0]
@@ -1641,7 +1811,7 @@ def ghidra_trace_put_generic(node: TraceObject) -> None:
 def init_ttd() -> None:
     # print(f"put_events: {node}")
     trace = STATE.require_trace()
-    with trace.open_tx('Init TTDState'):
+    with open_tracked_tx('Init TTDState'):
         ttd = util.ttd
         nproc = util.selected_process()
         path = TTD_PATTERN.format(var="curprocess") + ".Lifetime"
@@ -1661,7 +1831,7 @@ def init_ttd() -> None:
         trace.snapshot(description, time=time)
 
 
-def put_events() -> None:
+def put_trace_events() -> None:
     trace = STATE.require_trace()
     ttd = util.ttd
     nproc = util.selected_process()
@@ -1700,15 +1870,14 @@ def put_events() -> None:
     hooks.on_stop()
 
 
-def ghidra_trace_put_events() -> None:
+def ghidra_trace_put_trace_events() -> None:
     """Put the event set the Ghidra trace."""
-
     trace, tx = STATE.require_tx()
     with trace.client.batch() as b:
-        put_events()
+        put_trace_events()
 
 
-def put_events_custom(prefix: str, cmd: str):
+def put_trace_events_custom(prefix: str, cmd: str) -> None:
     result = util.dbg.cmd("{prefix}.{cmd}".format(prefix=prefix, cmd=cmd))
     if result.startswith("Error"):
         print(result)
@@ -1766,12 +1935,12 @@ def put_events_custom(prefix: str, cmd: str):
     hooks.on_stop()
 
 
-def ghidra_trace_put_events_custom(prefix: str, cmd: str) -> None:
+def ghidra_trace_put_trace_events_custom(prefix: str, cmd: str) -> None:
     """Generate events by cmd and put them into the Ghidra trace."""
 
     trace, tx = STATE.require_tx()
     with trace.client.batch() as b:
-        put_events_custom(prefix, cmd)
+        put_trace_events_custom(prefix, cmd)
 
 
 def ghidra_trace_put_all() -> None:
