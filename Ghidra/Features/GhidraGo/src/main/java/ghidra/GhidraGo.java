@@ -49,8 +49,8 @@ public class GhidraGo implements GhidraLaunchable {
 	 */
 	@Override
 	public void launch(GhidraApplicationLayout layout, String[] args) throws Exception {
+		ApplicationConfiguration configuration = null;
 		try {
-			ApplicationConfiguration configuration = null;
 			if (!Application.isInitialized()) {
 				System.setProperty(ApplicationProperties.APPLICATION_NAME_PROPERTY, "GhidraGo");
 				configuration = new DockingApplicationConfiguration();
@@ -92,7 +92,12 @@ public class GhidraGo implements GhidraLaunchable {
 		catch (Exception e) {
 			logOrShowError("GhidraGo Exception", "An unexpected exception occurred in GhidraGo", e);
 		}
-		System.exit(-1);
+		// if configuration is null, probably running inside a test
+		if (configuration != null) {
+			// calling System.exit explicitly is necessary, otherwise the Loading... screen
+			// persists instead of closing when complete.
+			System.exit(-1);
+		}
 	}
 
 	private void logOrShowError(String errorTitle, String errorMessage, Exception e) {
