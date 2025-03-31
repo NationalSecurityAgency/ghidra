@@ -46,7 +46,7 @@ task ip {
 		checkExternalLibsInMap(moduleManifestIpMap, p)
 		
 		// gets the declared external python wheels and verifies they are accounted for in the Module.manifest file
-		checkExternalPythonWheelsInMap(moduleManifestIpMap, project)
+		checkExternalPythonWheelsInMap(moduleManifestIpMap, p)
 		
 		// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
 		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
