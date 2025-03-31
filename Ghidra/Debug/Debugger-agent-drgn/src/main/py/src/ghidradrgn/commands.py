@@ -234,7 +234,7 @@ def start_trace(name: str) -> None:
     util.set_convenience_variable('_ghidra_tracing', "true")
 
 
-def ghidra_trace_start(name: str) -> None:
+def ghidra_trace_start(name: str = "drgn/noname") -> None:
     """Start a Trace in Ghidra"""
 
     STATE.require_client()
@@ -287,14 +287,15 @@ def ghidra_trace_create(start_trace: bool = True) -> None:
     except drgn.MissingDebugInfoError as e:
         print(e)
 
-    if kind == "kernel":
-        img = prog.main_module().name  # type: ignore
-        util.selected_tid = next(prog.threads()).tid
-    elif kind == "coredump":
-        util.selected_tid = prog.crashed_thread().tid
-    else:
-        img = prog.main_module().name  # type: ignore
-        util.selected_tid = prog.main_thread().tid
+    if hasattr(drgn, 'Module') or kind == "coredump":
+        if kind == "kernel":
+            img = prog.main_module().name  # type: ignore
+            util.selected_tid = next(prog.threads()).tid
+        elif kind == "coredump":
+            util.selected_tid = prog.crashed_thread().tid
+        else:
+            img = prog.main_module().name  # type: ignore
+            util.selected_tid = prog.main_thread().tid
 
     if start_trace and img is not None:
         ghidra_trace_start(img)

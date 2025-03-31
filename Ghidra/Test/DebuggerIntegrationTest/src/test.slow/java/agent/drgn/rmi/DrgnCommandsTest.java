@@ -303,7 +303,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
 
 			RegisterValue rip = regs.getValue(snap, tb.reg("rip"));
-			assertEquals("3a40cdf7ff7f0000", rip.getUnsignedValue().toString(16));
+			assertEquals("7ffff7cd403a", rip.getUnsignedValue().toString(16));
 
 			try (Transaction tx = tb.trace.openTransaction("Float80 unit")) {
 				TraceCodeSpace code = tb.trace.getCodeManager().getCodeSpace(t1f0, true);
