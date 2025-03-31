@@ -16,7 +16,7 @@
 from typing import Dict, List, Optional, Tuple
 
 from ghidratrace.client import Address, RegVal
-from pybag import pydbg
+from pybag import pydbg # type: ignore
 
 from . import util
 

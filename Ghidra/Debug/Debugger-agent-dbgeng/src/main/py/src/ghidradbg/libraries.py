@@ -17,8 +17,8 @@ import ctypes
 import os
 import platform
 
-import comtypes
-import comtypes.client
+import comtypes  # type: ignore
+import comtypes.client  # type: ignore
 from ghidradbg import dbgmodel
 
 
@@ -26,9 +26,9 @@ ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
 
 
 try:
-    from comtypes.gen import DbgMod
+    from comtypes.gen import DbgMod  # type: ignore
 except:
     tlb = os.path.join(dbgmodel.module_locator(), 'tlb', 'dbgmodel.tlb')
     print(f"Loading TLB: {tlb}")
     comtypes.client.GetModule(tlb)
-    from comtypes.gen import DbgMod
+    from comtypes.gen import DbgMod  # type: ignore

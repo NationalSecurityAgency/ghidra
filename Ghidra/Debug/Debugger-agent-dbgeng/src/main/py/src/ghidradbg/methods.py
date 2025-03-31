@@ -23,8 +23,8 @@ from typing import Annotated, Any, Dict, Optional
 from ghidratrace import sch
 from ghidratrace.client import (MethodRegistry, ParamDesc, Address,
                                 AddressRange, Schedule, TraceObject)
-from pybag import pydbg
-from pybag.dbgeng import core as DbgEng, exception
+from pybag import pydbg  # type: ignore
+from pybag.dbgeng import core as DbgEng, exception  # type: ignore
 
 from . import util, commands
 
@@ -45,7 +45,8 @@ SESSION_PATTERN = extre(SESSIONS_PATTERN, '\\[(?P<snum>\\d*)\\]')
 AVAILABLE_PATTERN = extre(SESSION_PATTERN, '\\.Available\\[(?P<pid>\\d*)\\]')
 PROCESSES_PATTERN = extre(SESSION_PATTERN, '\\.Processes')
 PROCESS_PATTERN = extre(PROCESSES_PATTERN, '\\[(?P<procnum>\\d*)\\]')
-PROC_BREAKS_PATTERN = extre(PROCESS_PATTERN, '\\.Debug.Breakpoints')
+PROC_DEBUG_PATTERN = extre(PROCESS_PATTERN, '.Debug')
+PROC_BREAKS_PATTERN = extre(PROC_DEBUG_PATTERN, '\\.Breakpoints')
 PROC_BREAKBPT_PATTERN = extre(PROC_BREAKS_PATTERN, '\\[(?P<breaknum>\\d*)\\]')
 ENV_PATTERN = extre(PROCESS_PATTERN, '\\.Environment')
 THREADS_PATTERN = extre(PROCESS_PATTERN, '\\.Threads')
@@ -56,6 +57,15 @@ REGS_PATTERN0 = extre(THREAD_PATTERN, '\\.Registers')
 REGS_PATTERN = extre(FRAME_PATTERN, '\\.Registers')
 MEMORY_PATTERN = extre(PROCESS_PATTERN, '\\.Memory')
 MODULES_PATTERN = extre(PROCESS_PATTERN, '\\.Modules')
+PROC_EVENTS_PATTERN = extre(PROC_DEBUG_PATTERN, '\\.Events')
+PROC_EVENT_PATTERN = extre(PROC_EVENTS_PATTERN, '\\[(?P<eventnum>\\d*)\\]')
+PROC_EVENT_CONT_PATTERN = extre(PROC_EVENT_PATTERN, '.Cont')
+PROC_EVENT_EXEC_PATTERN = extre(PROC_EVENT_PATTERN, '.Exec')
+PROC_EXCEPTIONS_PATTERN = extre(PROC_DEBUG_PATTERN, '\\.Exceptions')
+PROC_EXCEPTION_PATTERN = extre(
+    PROC_EXCEPTIONS_PATTERN, '\\[(?P<excnum>\\d*)\\]')
+PROC_EXCEPTION_CONT_PATTERN = extre(PROC_EXCEPTION_PATTERN, '.Cont')
+PROC_EXCEPTION_EXEC_PATTERN = extre(PROC_EXCEPTION_PATTERN, '.Exec')
 
 
 def find_availpid_by_pattern(pattern: re.Pattern, object: TraceObject,
@@ -187,6 +197,55 @@ def find_bpt_by_obj(object: TraceObject) -> DbgEng.IDebugBreakpoint:
     return find_bpt_by_pattern(PROC_BREAKBPT_PATTERN, object, "a BreakpointSpec")
 
 
+def find_evt_by_number(eventnum: int) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    try:
+        return util.GetSpecificFilterParameters(eventnum, 1)
+    except exception.E_NOINTERFACE_Error:
+        raise KeyError(f"Events[{eventnum}] does not exist")
+
+
+def find_evt_by_pattern(pattern: re.Pattern, object: TraceObject,
+                        err_msg: str) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    eventnum = int(mat['eventnum'])
+    return (eventnum, find_evt_by_number(eventnum))
+
+
+def find_evt_cont_by_obj(object: TraceObject) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    return find_evt_by_pattern(PROC_EVENT_CONT_PATTERN, object, "as Event")
+
+
+def find_evt_exec_by_obj(object: TraceObject) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    return find_evt_by_pattern(PROC_EVENT_EXEC_PATTERN, object, "as Event")
+
+
+def find_exc_by_number(excnum: int) -> DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS:
+    try:
+        (n_events, n_spec_exc, n_arb_exc) = util.GetNumberEventFilters()
+        return util.GetExceptionFilterParameters(n_events + excnum, None, 1)
+    except exception.E_NOINTERFACE_Error:
+        raise KeyError(f"Events[{excnum}] does not exist")
+
+
+def find_exc_by_pattern(pattern: re.Pattern, object: TraceObject,
+                        err_msg: str) -> DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS:
+    mat = pattern.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not {err_msg}")
+    excnum = int(mat['excnum'])
+    return (excnum, find_exc_by_number(excnum))
+
+
+def find_exc_cont_by_obj(object: TraceObject) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    return find_exc_by_pattern(PROC_EXCEPTION_CONT_PATTERN, object, "as Exception")
+
+
+def find_exc_exec_by_obj(object: TraceObject) -> DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS:
+    return find_exc_by_pattern(PROC_EXCEPTION_EXEC_PATTERN, object, "as Exception")
+
+
 shared_globals: Dict[str, Any] = dict()
 
 
@@ -254,6 +313,22 @@ class BreakpointSpec(TraceObject):
     pass
 
 
+class EventContainer(TraceObject):
+    pass
+
+
+class ExceptionContainer(TraceObject):
+    pass
+
+
+class ContinueOption(TraceObject):
+    pass
+
+
+class ExecutionOption(TraceObject):
+    pass
+
+
 @REGISTRY.method()
 # @util.dbg.eng_thread
 def execute(cmd: str, to_string: bool = False):
@@ -300,6 +375,58 @@ def refresh_breakpoints(node: BreakpointContainer) -> None:
     process)."""
     with commands.open_tracked_tx('Refresh Breakpoints'):
         commands.ghidra_trace_put_breakpoints()
+
+
+@REGISTRY.method(action='refresh', display='Refresh Events')
+def refresh_events(node: EventContainer) -> None:
+    """
+    Refresh the list of control events.
+    """
+    with commands.open_tracked_tx('Refresh Events'):
+        commands.ghidra_trace_put_events()
+
+
+@REGISTRY.method(action='refresh', display='Refresh Exceptions')
+def refresh_exceptions(node: ExceptionContainer) -> None:
+    """
+    Refresh the list of exceptions.
+    """
+    with commands.open_tracked_tx('Refresh Exceptions'):
+        commands.ghidra_trace_put_exceptions()
+
+
+@REGISTRY.method(action='toggle', display='Toggle Execution Option')
+def toggle_exec(node: ExecutionOption, enabled: bool) -> None:
+    """
+    Toggle the execution option
+    """
+    if "Events" in str(node):
+        (n, events) = find_evt_exec_by_obj(node)
+        with commands.open_tracked_tx('Toggle Execution Option'):
+            commands.toggle_evt_exec_option(n, events)
+            commands.ghidra_trace_put_events()
+    elif "Exceptions" in str(node):
+        (n, events) = find_exc_exec_by_obj(node)
+        with commands.open_tracked_tx('Toggle Execution Option'):
+            commands.toggle_exc_exec_option(n, events)
+            commands.ghidra_trace_put_exceptions()
+
+
+@REGISTRY.method(action='toggle', display='Toggle Continue Option')
+def toggle_cont(node: ContinueOption, enabled: bool) -> None:
+    """
+    Toggle the execution option
+    """
+    if "Events" in str(node):
+        (n, events) = find_evt_cont_by_obj(node)
+        with commands.open_tracked_tx('Toggle Execution Option'):
+            commands.toggle_evt_cont_option(n, events)
+            commands.ghidra_trace_put_events()
+    elif "Exceptions" in str(node):
+        (n, events) = find_exc_cont_by_obj(node)
+        with commands.open_tracked_tx('Toggle Execution Option'):
+            commands.toggle_exc_cont_option(n, events)
+            commands.ghidra_trace_put_exceptions()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Processes')
@@ -361,10 +488,12 @@ def refresh_modules(node: ModuleContainer) -> None:
 
 
 @REGISTRY.method(action='refresh', display='Refresh Events')
-def refresh_events(node: State) -> None:
-    """Refresh the events list for a trace."""
+def refresh_trace_events(node: State) -> None:
+    """
+    Refresh the events list for a trace.
+    """
     with commands.open_tracked_tx('Refresh Events'):
-        commands.ghidra_trace_put_events()
+        commands.ghidra_trace_put_trace_events()
 
 
 @util.dbg.eng_thread
@@ -723,12 +852,12 @@ def write_reg(frame: StackFrame, name: str, value: bytes) -> None:
 
 @REGISTRY.method(display='Refresh Events (custom)', condition=util.dbg.IS_TRACE)
 @util.dbg.eng_thread
-def refresh_events_custom(node: State,
-                          cmd: Annotated[str, ParamDesc(display='Cmd')],
-                          prefix: Annotated[str, ParamDesc(display='Prefix')] = "dx -r2 @$cursession.TTD") -> None:
+def refresh_trace_events_custom(node: State,
+                                cmd: Annotated[str, ParamDesc(display='Cmd')],
+                                prefix: Annotated[str, ParamDesc(display='Prefix')] = "dx -r2 @$cursession.TTD") -> None:
     """Parse TTD objects generated from a LINQ command."""
     with commands.open_tracked_tx('Put Events (custom)'):
-        commands.ghidra_trace_put_events_custom(prefix, cmd)
+        commands.ghidra_trace_put_trace_events_custom(prefix, cmd)
 
 
 def dbg():

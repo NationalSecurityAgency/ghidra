@@ -22,12 +22,12 @@ import time
 import traceback
 from typing import Any, Callable, Collection, Dict, Optional, TypeVar, cast
 
-from comtypes.hresult import S_OK
-from pybag import pydbg
-from pybag.dbgeng import core as DbgEng
-from pybag.dbgeng import exception
-from pybag.dbgeng.callbacks import EventHandler
-from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint
+from comtypes.hresult import S_OK  # type: ignore
+from pybag import pydbg  # type: ignore
+from pybag.dbgeng import core as DbgEng  # type: ignore
+from pybag.dbgeng import exception  # type: ignore
+from pybag.dbgeng.callbacks import EventHandler  # type: ignore
+from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint  # type: ignore
 
 from ghidratrace.client import Schedule
 
@@ -105,6 +105,8 @@ class ProcessState:
             self.modules = False
         if first or self.breaks:
             commands.put_breakpoints()
+            commands.put_events()
+            commands.put_exceptions()
             self.breaks = False
 
     def record_continued(self) -> None:
