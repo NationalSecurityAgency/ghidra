@@ -143,9 +143,20 @@ public class VTPlugin extends Plugin {
 
 	@Override
 	protected void init() {
+
+		removeUnwantedPlugins();
+
 		addCustomPlugins();
 
 		maybeShowHelp();
+	}
+
+	private void removeUnwantedPlugins() {
+
+		List<Plugin> allPlugins = tool.getManagedPlugins();
+		List<Plugin> toRemove = new ArrayList<>(allPlugins);
+		toRemove.remove(this);
+		tool.removePlugins(toRemove);
 	}
 
 	private void addCustomPlugins() {
