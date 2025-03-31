@@ -741,9 +741,112 @@ def break_access_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_ext', display='Catch Event')
-def break_event(inferior: Inferior, spec: str) -> None:
-    """Set a catchpoint (catch)."""
+def break_ext_event(inferior: Inferior, spec: Annotated[str, ParamDesc(display='Type')]) -> None:
+    """Set a generic catchpoint (catch)."""
     gdb.execute(f'catch {spec}')
+
+
+@REGISTRY.method(display='Catch Event')
+def break_event(container: BreakpointContainer, spec: Annotated[str, ParamDesc(display='Type')], desc: Annotated[str, ParamDesc(display='Desc')]):
+    """Set a generic catchpoint (catch)."""
+    gdb.execute(f'catch {spec} {desc}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Signal')
+def break_ext_signal(inferior: Inferior, signal: Annotated[str, ParamDesc(display='Signal (opt)')]):
+    """Set a signal catchpoint (catch signal)."""
+    gdb.execute(f'catch signal {signal}')
+
+
+@REGISTRY.method(display='Catch Signal')
+def break_signal(container: BreakpointContainer, signal: Annotated[str, ParamDesc(display='Signal (opt)')]):
+    """Set a signal catchpoint (catch signal))."""
+    gdb.execute(f'catch signal {signal}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Syscall')
+def break_ext_syscall(inferior: Inferior, syscall: Annotated[str, ParamDesc(display='Syscall (opt)')]):
+    """Set a syscall catchpoint (catch syscall))."""
+    gdb.execute(f'catch syscall {syscall}')
+
+
+@REGISTRY.method(display='Catch Syscall')
+def break_syscall(container: BreakpointContainer, syscall: Annotated[str, ParamDesc(display='Syscall (opt)')]):
+    """Set a syscall catchpoint (catch syscall)."""
+    gdb.execute(f'catch syscall {syscall}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Load')
+def break_ext_load(inferior: Inferior, library: Annotated[str, ParamDesc(display='Library (opt)')]):
+    """Set a load catchpoint (catch load))."""
+    gdb.execute(f'catch load {library}')
+
+
+@REGISTRY.method(display='Catch Load')
+def break_load(container: BreakpointContainer, library: Annotated[str, ParamDesc(display='Library (opt)')]):
+    """Set a load catchpoint (catch load)."""
+    gdb.execute(f'catch load {library}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Unload')
+def break_ext_unload(inferior: Inferior, library: Annotated[str, ParamDesc(display='Library (opt)')]):
+    """Set a unload catchpoint (catch unload))."""
+    gdb.execute(f'catch unload {library}')
+
+
+@REGISTRY.method(display='Catch Unload')
+def break_unload(container: BreakpointContainer, library: Annotated[str, ParamDesc(display='Library (opt)')]):
+    """Set a unload catchpoint (catch unload)."""
+    gdb.execute(f'catch unload {library}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Catch')
+def break_ext_catch(inferior: Inferior, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a catch catchpoint (catch catch))."""
+    gdb.execute(f'catch catch {exception}')
+
+
+@REGISTRY.method(display='Catch Catch')
+def break_catch(container: BreakpointContainer, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a catch catchpoint (catch catch)."""
+    gdb.execute(f'catch catch {exception}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Throw')
+def break_ext_throw(inferior: Inferior, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a throw catchpoint (catch throw))."""
+    gdb.execute(f'catch throw {exception}')
+
+
+@REGISTRY.method(display='Catch Throw')
+def break_throw(container: BreakpointContainer, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a throw catchpoint (catch throw)."""
+    gdb.execute(f'catch throw {exception}')
+
+
+@REGISTRY.method(action='break_ext', display='Catch Rethrow')
+def break_ext_rethrow(inferior: Inferior, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a rethrow catchpoint (catch rethrow))."""
+    gdb.execute(f'catch rethrow {exception}')
+
+
+@REGISTRY.method(display='Catch Rethrow')
+def break_rethrow(container: BreakpointContainer, exception: Annotated[str, ParamDesc(display='Exception (opt)')]):
+    """Set a rethrow catchpoint (catch rethrow)."""
+    gdb.execute(f'catch rethrow {exception}')
+
+
+@REGISTRY.method(display='Describe')
+def break_describe(breakpoint: BreakpointSpec):
+    """Add a description"""
+    bpt = find_bpt_by_obj(breakpoint)
+    desc = gdb.execute(f'info break {bpt.number}', to_string=True)
+    lines = desc.split('\n')
+    index = lines[0].index('What')
+    if index is not None:
+        breakpoint.set_value('_display', "[{key}] {desc}".format(key=bpt.number, desc=lines[1][index:]))
+    with commands.open_tracked_tx('Refresh Breakpoints'):
+        gdb.execute('ghidra trace put-breakpoints')
 
 
 @REGISTRY.method(action='toggle', display="Toggle Breakpoint")
