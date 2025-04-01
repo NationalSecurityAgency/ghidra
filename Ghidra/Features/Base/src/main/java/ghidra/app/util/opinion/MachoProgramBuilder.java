@@ -743,7 +743,7 @@ public class MachoProgramBuilder {
 					if (name != null && name.length() > 0) {
 						program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
 						program.getExternalManager()
-								.addExtLocation(Library.UNKNOWN, name, addr, SourceType.IMPORTED);
+								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
 					}
 				}
 				catch (Exception e) {
