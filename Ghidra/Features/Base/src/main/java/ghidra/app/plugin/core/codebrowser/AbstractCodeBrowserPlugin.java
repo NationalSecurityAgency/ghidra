@@ -767,7 +767,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
-
 		return Swing
 				.runNow(() -> connectedProvider.getListingPanel().goTo(location, centerOnScreen));
 	}

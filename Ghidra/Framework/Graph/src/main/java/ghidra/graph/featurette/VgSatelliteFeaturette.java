@@ -172,11 +172,10 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 					return false;
 				}
 
-				if (!(context instanceof VisualGraphActionContext)) {
+				if (!(context instanceof VisualGraphActionContext vgContext)) {
 					return false;
 				}
 
-				VisualGraphActionContext vgContext = (VisualGraphActionContext) context;
 				return vgContext.shouldShowSatelliteActions();
 			}
 		};
@@ -200,11 +199,10 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 					return false;
 				}
 
-				if (!(context instanceof VisualGraphActionContext)) {
+				if (!(context instanceof VisualGraphActionContext vgContext)) {
 					return false;
 				}
 
-				VisualGraphActionContext vgContext = (VisualGraphActionContext) context;
 				return vgContext.shouldShowSatelliteActions();
 			}
 		};

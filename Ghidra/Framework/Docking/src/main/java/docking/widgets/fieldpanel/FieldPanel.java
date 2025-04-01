@@ -15,7 +15,8 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.*;
+import static docking.widgets.EventTrigger.API_CALL;
+import static docking.widgets.EventTrigger.INTERNAL_ONLY;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -347,6 +348,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
+	 * 
 	 * @param location the location
 	 * @return true if the location is on the screen
 	 */
@@ -689,8 +691,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the Field at the given x,y coordinates. Note the x,y must currently be visible on the
-	 * screen or else this method will return null.
+	 * Returns the Field at the given x,y coordinates.
+	 * <p>
+	 * Note the x,y must currently be visible on the screen or else this method will return null.
 	 *
 	 * @param x the x mouse coordinate in the component.
 	 * @param y the y mouse coordinate in the component.
@@ -841,8 +844,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Sets the cursor on or off. When the cursor is turned off, there is no visible cursor
-	 * displayed on the screen.
+	 * Sets the cursor on or off.
+	 * <p>
+	 * When the cursor is turned off, there is no visible cursor displayed on the screen.
 	 *
 	 * @param cursorOn true turns the cursor on, false turns it off.
 	 */
@@ -871,6 +875,7 @@ public class FieldPanel extends JPanel
 	 * @param fieldNum the field on the line to go to.
 	 * @param row the row in the field to go to.
 	 * @param col the column in the field to go to.
+	 * @param trigger the cause of the go to
 	 * @param alwaysCenterCursor if true, centers cursor on screen. Otherwise, only centers cursor
 	 *            if cursor is offscreen.
 	 */
@@ -945,8 +950,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns a ViewerPosition object which contains the top of screen information. The
-	 * ViewerPosition will have the index of the layout at the top of the screen and the yPos of
+	 * Returns a ViewerPosition object which contains the top of screen information.
+	 * <p>
+	 * The ViewerPosition will have the index of the layout at the top of the screen and the yPos of
 	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
 	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
 	 * that it begins above the displayable part of the screen.
@@ -962,8 +968,10 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Scrolls the display to show the layout specified by index at the vertical position specified
-	 * by yPos. Generally, the index will be layout at the top of the screen and the yPos will be
-	 * &lt;= 0, meaning the layout may be partially off the top of the screen.
+	 * by yPos.
+	 * <p>
+	 * Generally, the index will be layout at the top of the screen and the yPos will be &lt;= 0,
+	 * meaning the layout may be partially off the top of the screen.
 	 *
 	 * @param index the index of the layout to show at the top of the screen.
 	 * @param xPos the x position to set.
@@ -1329,6 +1337,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Finds the layout containing the given y position.
+	 * 
 	 * @param y the y location
 	 * @return the layout.
 	 */
