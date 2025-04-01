@@ -943,14 +943,14 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	public void selectAll() {
 		listingPanel.getFieldPanel().requestFocus();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(),
+		ProgramSelection sel = new ProgramSelection(
 			listingPanel.getAddressIndexMap().getOriginalAddressSet());
 		doSetSelection(sel);
 	}
 
 	public void selectComplement() {
 		AddressSet complement = listingPanel.selectComplement();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(), complement);
+		ProgramSelection sel = new ProgramSelection(complement);
 		doSetSelection(sel);
 	}
 

@@ -408,7 +408,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected MarkerMarginProvider markerMarginProvider;
 	protected MarkerOverviewProvider markerOverviewProvider;
 
-	private SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
+	private final SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
 
 	protected final ForStaticSyncMappingChangeListener mappingChangeListener =
 		new ForStaticSyncMappingChangeListener();

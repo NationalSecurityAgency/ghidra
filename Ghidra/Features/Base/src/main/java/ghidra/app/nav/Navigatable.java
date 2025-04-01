@@ -39,7 +39,6 @@ public interface Navigatable {
 	 * Commands this navigatable to goto (display) the given program and location
 	 *
 	 * @param program the program
-	 *
 	 * @param location the location in that program to display
 	 * @return true if the goto was successful
 	 */
@@ -81,8 +80,9 @@ public interface Navigatable {
 	public Icon getNavigatableIcon();
 
 	/**
-	 * Returns true if this Navigatable is "connected". Navigatables are connected if they produce
-	 * and consume location and selection events.
+	 * Returns true if this Navigatable is "connected".
+	 * <p>
+	 * Navigatables are connected if they produce and consume location and selection events.
 	 *
 	 * @return true if this Navigatable is "connected"
 	 */
@@ -199,9 +199,11 @@ public interface Navigatable {
 			Program program);
 
 	/**
-	 * Returns a source for providing byte values of the program associated with this
-	 * navigatable. For a static program, this is just a wrapper for a program's memory. But 
-	 * dynamic programs require special handling for reading bytes.
+	 * Returns a source for providing byte values of the program associated with this navigatable.
+	 * <p>
+	 * For a static program, this is just a wrapper for a program's memory. But dynamic programs
+	 * require special handling for reading bytes.
+	 * 
 	 * @return a source of bytes for the navigatable's program
 	 */
 	public default AddressableByteSource getByteSource() {
