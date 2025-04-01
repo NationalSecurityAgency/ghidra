@@ -1145,7 +1145,8 @@ public class GhidraFileData {
 						}
 					}
 					else {
-						throw new AssertException("Unknown folder item type");
+						throw new IOException(
+							"Unable to add unsupported content to version control");
 					}
 				}
 				catch (InvalidNameException e) {
@@ -1291,7 +1292,7 @@ public class GhidraFileData {
 					}
 				}
 				else {
-					throw new AssertException("Can't checkout - unknown file type");
+					throw new IOException("Unable to Check Out unsupported content");
 				}
 			}
 			catch (InvalidNameException e) {
@@ -2233,7 +2234,7 @@ public class GhidraFileData {
 					}
 				}
 				else {
-					throw new AssertException("Unknown Item in copyTo");
+					throw new IOException("Unable to copy unsupported content");
 				}
 			}
 			catch (InvalidNameException e) {
