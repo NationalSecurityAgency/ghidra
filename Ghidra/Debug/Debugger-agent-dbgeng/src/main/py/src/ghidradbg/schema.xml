@@ -42,11 +42,49 @@
 		<interface name="Aggregate" />
 		<element schema="VOID" />
 		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" />
+		<attribute name="Events" schema="EventContainer" required="yes" />
+		<attribute name="Exceptions" schema="ExceptionContainer" required="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="BreakpointSpec" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="EventContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="Event" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="Event" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="ANY" />
+		<attribute name="Cont" schema="ContinueOption" />
+		<attribute name="Exec" schema="ExecutionOption" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="ExceptionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="Exception" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="Exception" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="ANY" />
+		<attribute name="Cont" schema="ContinueOption" />
+		<attribute name="Exec" schema="ExecutionOption" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="ContinueOption" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Togglable" />
+		<element schema="VOID" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="ExecutionOption" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Togglable" />
+		<element schema="VOID" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="ANY" />
 	</schema>
