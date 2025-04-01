@@ -178,7 +178,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	protected final SnapshotTableModel snapshotTableModel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
-	protected boolean hideScratch = true;
+	protected boolean hideScratch = false;
 
 	private Trace currentTrace;
 	private volatile DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
