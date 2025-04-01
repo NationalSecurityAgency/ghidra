@@ -16,6 +16,7 @@
 package docking.widgets.tree.tasks;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
@@ -68,10 +69,16 @@ public class GTreeStartEditingTask extends GTreeTask {
 				String newName = Objects.toString(cellEditor.getCellEditorValue());
 				cellEditor.removeCellEditorListener(this);
 
-				// note: this call only works when the parent cannot have duplicate named nodes
-				tree.whenNodeIsReady(modelParent, newName, newNode -> {
+				// NOTE: there may be cases where this node search fails to correctly
+				// identify the renamed node when name and node class is insufficient to match.
+				Class<?> nodeClass = editNode.getClass();
+				Predicate<GTreeNode> nodeMatches = n -> {
+					return nodeClass == n.getClass() && n.getName().equals(newName);
+				};
+				tree.whenNodeIsReady(modelParent, nodeMatches, newNode -> {
 					tree.setSelectedNode(newNode);
 				});
+
 			}
 		});
 
