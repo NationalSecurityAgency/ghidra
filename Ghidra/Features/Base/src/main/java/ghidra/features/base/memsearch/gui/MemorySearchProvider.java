@@ -275,7 +275,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	 * Performs a scan on the current results, keeping only the results that match the type of scan.
 	 * Note: this method is public to facilitate testing.
 	 * 
-	 * @param scanner the scanner to use to reduce the results. 
+	 * @param scanner the scanner to use to reduce the results.
 	 */
 	public void scan(Scanner scanner) {
 		setBusy(true);

@@ -33,7 +33,6 @@ import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -45,9 +44,8 @@ import ghidra.util.SystemUtilities;
 import help.Help;
 import help.HelpService;
 
-/** 
- * Top level object that manages each step of the merge/resolve conflicts
- * process.
+/**
+ * Top level object that manages each step of the merge/resolve conflicts process.
  */
 public class ProgramMultiUserMergeManager extends MergeManager {
 
@@ -113,6 +111,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Returns one of the four programs involved in the merge as indicated by the version.
+	 * 
 	 * @param version the program version to return. (LATEST, MY, ORIGINAL, or RESULT).
 	 * @return the indicated program version or null if a valid version isn't specified.
 	 * @see MergeConstants
@@ -165,9 +164,12 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	}
 
 	/**
-	 * Show the default merge panel. The default merge panel now shows the status of each phase
-	 * of the merge and also the progress in the current phase.
-	 *@param description description of current merge process near the top of the merge tool.
+	 * Show the default merge panel.
+	 * <p>
+	 * The default merge panel now shows the status of each phase of the merge and also the progress
+	 * in the current phase.
+	 * 
+	 * @param description description of current merge process near the top of the merge tool.
 	 */
 	@Override
 	public void showDefaultMergePanel(final String description) {
@@ -179,14 +181,15 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	}
 
 	/**
-	 * Show the component that is used to resolve conflicts. This method
-	 * is called by the MergeResolvers when user input is required. If the
-	 * component is not null, this method blocks until the user either 
-	 * cancels the merge process or resolves a conflict. If comp is null,
-	 * then the default component is displayed, and the method does not
+	 * Show the component that is used to resolve conflicts.
+	 * <p>
+	 * This method is called by the MergeResolvers when user input is required. If the component is
+	 * not null, this method blocks until the user either cancels the merge process or resolves a
+	 * conflict. If comp is null, then the default component is displayed, and the method does not
 	 * wait for user input.
-	 * @param comp component to show; if component is null, show the 
-	 * default component and do not block
+	 * 
+	 * @param comp component to show; if component is null, show the default component and do not
+	 *            block
 	 * @param componentID id or name for the component
 	 */
 	@Override
@@ -202,7 +205,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 			showMergeTool();
 			Dimension oldSize = mergeTool.getSize();
 			if (listingPlugin != null) {
-				mergeTool.removePlugins(new Plugin[] { listingPlugin, goToPlugin });
+				mergeTool.removePlugins(java.util.List.of(listingPlugin, goToPlugin));
 				listingPlugin = null;
 				goToPlugin = null;
 			}
@@ -227,6 +230,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Show the listing merge panel.
+	 * 
 	 * @param goToAddress the address to goto.
 	 */
 	public void showListingMergePanel(final Address goToAddress) {
@@ -265,7 +269,9 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Show the listing merge panel with each listing positioned to the indicated address.
+	 * <p>
 	 * A null can be passed for any address to indicate that listing should be empty.
+	 * 
 	 * @param resultAddress the address for positioning the Result program's listing.
 	 * @param latestAddress the address for positioning the Latest program's listing.
 	 * @param myAddress the address for positioning the My program's listing.
@@ -291,7 +297,9 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Show the listing merge panel with each listing positioned to the indicated address.
+	 * <p>
 	 * A null can be passed for any address to indicate that listing should be empty.
+	 * 
 	 * @param resultAddress the address for positioning the Result program's listing.
 	 * @param latestAddress the address for positioning the Latest program's listing.
 	 * @param myAddress the address for positioning the My program's listing.
@@ -368,16 +376,19 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 				return;
 			}
 			mergePanel.removeDomainObjectListener();
-			mergeTool.removePlugins(new Plugin[] { listingPlugin, goToPlugin });
+			mergeTool.removePlugins(java.util.List.of(listingPlugin, goToPlugin));
 			isShowingListingMergePanel = false;
 			mergePlugin.showDefaultComponent();
 		});
 	}
 
 	/**
-	 * Returns the listing merge panel. This is the panel containing the four
-	 * listing windows: result, latest, my, and original. The four listings are
-	 * the center component of JPanel with a BorderLayout.
+	 * Returns the listing merge panel.
+	 * <p>
+	 * This is the panel containing the four listing windows: result, latest, my, and original. The
+	 * four listings are the center component of {@link JPanel} with a {@link BorderLayout}.
+	 * 
+	 * @return the merge panel
 	 */
 	public ListingMergePanel getListingMergePanel() {
 		return mergePanel;
@@ -385,6 +396,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Determines if the modal merge tool is currently displayed on the screen.
+	 * 
 	 * @return true if the merge tool is displayed.
 	 */
 	@Override
@@ -394,6 +406,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Determines if the four program Listing merge panel is currently displayed in the merge tool.
+	 * 
 	 * @return true if the Listing merge panel is displayed.
 	 */
 	public boolean isShowingListingMergePanel() {
@@ -402,7 +415,9 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	/**
 	 * Determine if the listing panels should be rendered.
+	 * <p>
 	 * NOTE: This is provided for testing performance reasons only.
+	 * 
 	 * @return true if listing panels should be rendered
 	 */
 	public boolean isShowListingPanel() {

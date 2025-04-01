@@ -252,7 +252,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public boolean goTo(Program gotoProgram, ProgramLocation location) {
-
 		if (!isConnected()) {
 			if (program == null) {
 				// Special Case: this 'disconnected' provider is waiting to be initialized

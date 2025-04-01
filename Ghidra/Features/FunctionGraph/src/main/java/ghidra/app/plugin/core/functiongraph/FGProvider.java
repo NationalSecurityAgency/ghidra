@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.framework.model.DomainObjectEvent.RESTORED;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.MouseEvent;
@@ -243,8 +243,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Gives to the clipboard of this provider the given string.  This will prime the clipboard
-	 * such that a copy action will copy the given string.
+	 * Gives to the clipboard of this provider the given string.
+	 * <p>
+	 * This will prime the clipboard such that a copy action will copy the given string.
 	 *
 	 * @param string the string to set
 	 */
@@ -354,9 +355,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Called to signal to this provider that it should update its state due to a new function
-	 * being graphed.  The UI is updated by the controller without this provider's knowledge.
-	 * This call here is to signal that the provider needs to update its metadata.
+	 * Called to signal to this provider that it should update its state due to a new function being
+	 * graphed.
+	 * <p>
+	 * The UI is updated by the controller without this provider's knowledge. This call here is to
+	 * signal that the provider needs to update its metadata.
 	 */
 	public void functionGraphDataChanged() {
 		updateTitle();
@@ -480,8 +483,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Called when for location changes that are <b>external</b> to the function graph (e.g.,
-	 * when the user clicks in Ghidra's Listing window)
+	 * Called when for location changes that are <b>external</b> to the function graph (e.g., when
+	 * the user clicks in Ghidra's Listing window)
 	 *
 	 * @param newLocation the new location
 	 */
@@ -533,8 +536,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Tells this provider to refresh, which means to rebuild the graph and relayout the
-	 * vertices.
+	 * Tells this provider to refresh, which means to rebuild the graph and relayout the vertices.
 	 */
 	private void refresh(boolean keepPerspective) {
 		FGData functionGraphData = controller.getFunctionGraphData();
@@ -563,16 +565,16 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Rebuilds the graph and restores the zoom and location of the graph to the values prior
-	 * to rebuilding.
+	 * Rebuilds the graph and restores the zoom and location of the graph to the values prior to
+	 * rebuilding.
 	 */
 	public void refreshAndKeepPerspective() {
 		refresh(true);
 	}
 
 	/**
-	 * Rebuilds the graph <b>and</b> will zoom the graph such that it fits on the screen and
-	 * is centered.
+	 * Rebuilds the graph <b>and</b> will zoom the graph such that it fits on the screen and is
+	 * centered.
 	 */
 	public void refreshAndResetPerspective() {
 		refresh(false);
@@ -643,8 +645,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Returns true when something destructive has happened to the data upon which the graph
-	 * has created, like a memory block move.
+	 * Returns true when something destructive has happened to the data upon which the graph has
+	 * created, like a memory block move.
 	 */
 	private boolean graphDataMissing() {
 		FGData data = controller.getFunctionGraphData();

@@ -299,6 +299,7 @@ public class ListingMergePanel extends JPanel
 
 	/**
 	 * Color the background of all 4 listings to the indicated color for the indicated addresses.
+	 * 
 	 * @param addrSet the addresses
 	 */
 	public void paintAllBackgrounds(AddressSetView addrSet) {
@@ -365,6 +366,7 @@ public class ListingMergePanel extends JPanel
 
 	/**
 	 * Adds a button press listener.
+	 * 
 	 * @param listener the listener to add.
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener) {
@@ -375,6 +377,7 @@ public class ListingMergePanel extends JPanel
 
 	/**
 	 * Get the indicated program version.
+	 * 
 	 * @param version LATEST, CHECKED_OUT, ORIGINAL, RESULT from MergeConstants
 	 * @return the program
 	 */
@@ -383,8 +386,8 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Add the result program's listing model as a listener to the result program
-	 * for domain object events.
+	 * Add the result program's listing model as a listener to the result program for domain object
+	 * events.
 	 */
 	public void addDomainObjectListener() {
 		DomainObjectListener listingModel = (DomainObjectListener) multiModel.getModel(RESULT);
@@ -392,8 +395,8 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Remove the result program's listing model as a listener to the result program
-	 * for domain object events.
+	 * Remove the result program's listing model as a listener to the result program for domain
+	 * object events.
 	 */
 	public void removeDomainObjectListener() {
 		DomainObjectListener listingModel = (DomainObjectListener) multiModel.getModel(RESULT);
