@@ -16,8 +16,8 @@
 package ghidra.app.util.bin.format.omf.omf51;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.omf.*;
@@ -27,9 +27,9 @@ import ghidra.util.exception.DuplicateNameException;
 public class Omf51LibraryDictionaryRecord extends OmfRecord {
 
 	private List<List<OmfString>> moduleSymbolMap = new ArrayList<>();
-	
+
 	/**
-	 * Creates a new {@link Omf51LibraryDictionaryRecord} record
+	 * Creates a new {@link Omf51LibraryDictionaryRecord}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
 	 * @throws IOException if an IO-related error occurred
@@ -48,10 +48,10 @@ public class Omf51LibraryDictionaryRecord extends OmfRecord {
 				dataReader.readNextByte();
 				moduleSymbolMap.add(symbols);
 				symbols = new ArrayList<>();
-				continue;
 			}
-
-			symbols.add(OmfUtils.readString(dataReader));
+			else {
+				symbols.add(OmfUtils.readString(dataReader));
+			}
 		}
 	}
 
@@ -63,7 +63,8 @@ public class Omf51LibraryDictionaryRecord extends OmfRecord {
 		Integer moduleIndex = 0;
 		for (List<OmfString> symbols : moduleSymbolMap) {
 			for (OmfString symbol : symbols) {
-				struct.add(symbol.toDataType(), symbol.getDataTypeSize(), "symbol%d".formatted(moduleIndex), null);
+				struct.add(symbol.toDataType(), symbol.getDataTypeSize(),
+					"symbol%d".formatted(moduleIndex), null);
 			}
 
 			struct.add(BYTE, "terminator%d".formatted(moduleIndex), null);

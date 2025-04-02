@@ -16,11 +16,9 @@
 package ghidra.app.util.bin.format.omf.omf51;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.omf.*;
-import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord.MemberHeader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -31,7 +29,7 @@ public class Omf51LibraryHeaderRecord extends OmfRecord {
 	private short moduleCount;
 	private short blockNumber;
 	private short byteNumber;
-	
+
 	/**
 	 * Creates a new {@link Omf51LibraryHeaderRecord} record
 	 * 

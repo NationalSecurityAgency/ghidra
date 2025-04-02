@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 public class Omf51LibraryModuleLocationsRecord extends OmfRecord {
 
 	private List<Omf51LibraryModuleLocation> locations = new ArrayList<>();
-	
+
 	/**
 	 * Creates a new {@link Omf51LibraryModuleLocationsRecord} record
 	 * 
@@ -50,8 +50,7 @@ public class Omf51LibraryModuleLocationsRecord extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-
-		struct.add(new ArrayDataType(Omf51LibraryModuleLocation.toDataType(), locations.size()), 
+		struct.add(new ArrayDataType(Omf51LibraryModuleLocation.toDataType(), locations.size()),
 			"locations", null);
 		struct.add(BYTE, "checksum", null);
 

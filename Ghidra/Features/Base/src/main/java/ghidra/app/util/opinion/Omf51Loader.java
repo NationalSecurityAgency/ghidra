@@ -338,7 +338,6 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			if (record instanceof Omf51PublicDefsRecord publicDefRec) {
 				for (Omf51PublicDef def : publicDefRec.getDefinitions()) {
 					if (def.getUsageType() == Omf51PublicDef.NUMBER) {
-						log.appendMsg("Skipping NUMBER public def");
 						continue;
 					}
 					Address segmentAddr = segmentToAddr.get(def.getSegId());

@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 public class Omf51LibraryModuleNamesRecord extends OmfRecord {
 
 	private List<OmfString> names = new ArrayList<>();
-	
+
 	/**
 	 * Creates a new {@link Omf51LibraryModuleNamesRecord} record
 	 * 

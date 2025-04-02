@@ -20,15 +20,13 @@ import java.io.IOException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.AbstractOmfRecordFactory;
 import ghidra.app.util.bin.format.omf.OmfException;
-import ghidra.app.util.bin.format.omf.OmfRecord;
 import ghidra.app.util.bin.format.omf.omf51.Omf51LibraryHeaderRecord;
 import ghidra.app.util.bin.format.omf.omf51.Omf51RecordFactory;
-import ghidra.app.util.opinion.OmfLoader;
+import ghidra.app.util.opinion.Omf51Loader;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeByteProvider;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -54,19 +52,15 @@ public class Omf51ArchiveFileSystemFactory implements
 	public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
-		if (byteProvider.length() < OmfLoader.MIN_BYTE_LENGTH) {
+		if (byteProvider.length() < Omf51Loader.MIN_BYTE_LENGTH) {
 			return false;
 		}
 
 		try {
 			AbstractOmfRecordFactory factory = new Omf51RecordFactory(byteProvider);
-			OmfRecord record = factory.readNextRecord();
-			return (record != null && record instanceof Omf51LibraryHeaderRecord);
+			return factory.readNextRecord() instanceof Omf51LibraryHeaderRecord;
 		}
-		catch (OmfException e) {
-			return false;
-		}
-		catch (IOException e) {
+		catch (OmfException | IOException e) {
 			return false;
 		}
 	}

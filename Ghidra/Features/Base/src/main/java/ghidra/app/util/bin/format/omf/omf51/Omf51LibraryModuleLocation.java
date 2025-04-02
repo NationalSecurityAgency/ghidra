@@ -19,9 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.omf.*;
+import ghidra.app.util.bin.format.omf.OmfUtils;
 import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
 
 public class Omf51LibraryModuleLocation {
 
@@ -62,7 +61,7 @@ public class Omf51LibraryModuleLocation {
 		return (blockNumber * BLOCK_SIZE) + byteNumber;
 	}
 
-	public static DataType toDataType() throws DuplicateNameException, IOException {
+	public static DataType toDataType() {
 		StructureDataType struct = new StructureDataType("Omf51LibraryModuleLocation", 0);
 		struct.add(StructConverter.WORD, "blockNumber", null);
 		struct.add(StructConverter.WORD, "byteNumber", null);

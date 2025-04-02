@@ -19,92 +19,54 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.*;
-import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord.MemberHeader;
-import ghidra.program.model.data.*;
-import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.app.util.bin.format.omf.OmfException;
+import ghidra.app.util.bin.format.omf.OmfString;
 
 public class Omf51Library {
 
-	private Omf51RecordFactory factory;
-	private ArrayList<MemberHeader> members = new ArrayList<>();
+	private List<MemberHeader> members = new ArrayList<>();
 
-	public static class MemberHeader {
-		public long offset;
-		public long size;
-		public String name;
-	}
-	
+	public record MemberHeader(long offset, long size, String name) {}
+
 	/**
 	 * Creates a new {@link Omf51Library}
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the record
-	 */
-	public Omf51Library(Omf51RecordFactory factory) {
-		this.factory = factory;
-	}
-
-	/**
-	 * Attempts to parse OMF-51 library members
-	 * 
+	 * @param factory A {@link Omf51RecordFactory}
 	 * @throws IOException if an IO-related error occurred
 	 * @throws OmfException if the required OMF-51 records could not be read
 	 */
-	public void parseMembers() throws IOException, OmfException {
-		OmfRecord record = factory.readNextRecord();
-
-		if (record == null || !(record instanceof Omf51LibraryHeaderRecord)) {
+	public Omf51Library(Omf51RecordFactory factory) throws OmfException, IOException {
+		if (!(factory.readNextRecord() instanceof Omf51LibraryHeaderRecord libraryHeader)) {
 			throw new OmfException("Unable to read library header record");
 		}
 
-		Omf51LibraryHeaderRecord libraryHeader = (Omf51LibraryHeaderRecord)record;
-
 		factory.getReader().setPointerIndex(libraryHeader.getModNamesOffset());
 
-		record = factory.readNextRecord();
-
-		if (record == null || !(record instanceof Omf51LibraryModuleNamesRecord)) {
+		if (!(factory.readNextRecord() instanceof Omf51LibraryModuleNamesRecord modNamesRecord)) {
 			throw new OmfException("Unable to read library module names record");
 		}
 
-		Omf51LibraryModuleNamesRecord modNamesRecord = (Omf51LibraryModuleNamesRecord)record;
-
-		record = factory.readNextRecord();
-
-		if (record == null || !(record instanceof Omf51LibraryModuleLocationsRecord)) {
+		if (!(factory.readNextRecord() instanceof Omf51LibraryModuleLocationsRecord modLocations)) {
 			throw new OmfException("Unable to read library module locations record");
 		}
 
-		Omf51LibraryModuleLocationsRecord modLocations = (Omf51LibraryModuleLocationsRecord)record;
 		List<Omf51LibraryModuleLocation> locations = modLocations.getLocations();
 
 		int index = 0;
-		Msg.info(this, "Iterating mod names");
 		for (OmfString moduleName : modNamesRecord.getNames()) {
-			int size = 0;
-			if (index + 1 < locations.size()) {
-				size = locations.get(index + 1).getOffset() - locations.get(index).getOffset();
-			} else {
-				size = libraryHeader.getModNamesOffset() - locations.get(index).getOffset();
-			}
-			
-			MemberHeader header = new MemberHeader();
-			header.name = moduleName.str();
-			header.size = size;
-			header.offset = locations.get(index).getOffset();
-			
-			members.add(header);
-
+			int currentOffset = locations.get(index).getOffset();
+			int nextOffset = index + 1 < locations.size() ? locations.get(index + 1).getOffset()
+					: libraryHeader.getModNamesOffset();
+			int size = nextOffset - currentOffset;
+			members.add(new MemberHeader(currentOffset, size, moduleName.str()));
 			index++;
 		}
 	}
-	
+
 	/**
 	 * {@return the list of members}
 	 */
-	public ArrayList<MemberHeader> getMembers() {
+	public List<MemberHeader> getMembers() {
 		return members;
 	}
 }
