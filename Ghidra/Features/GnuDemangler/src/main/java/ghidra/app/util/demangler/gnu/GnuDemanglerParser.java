@@ -1550,17 +1550,16 @@ public class GnuDemanglerParser {
 		for (ResourceFile file : files) {
 			List<String> lines = getReplacementLines(file);
 			for (String line : lines) {
-				GnuDemanglerReplacement replacement = parseReplacement(line, file);
-				if (replacement != null) {
-					results.add(replacement);
-				}
+				parseReplacement(line, file, results);
 			}
 		}
 
 		return results;
 	}
 
-	private static GnuDemanglerReplacement parseReplacement(String line, ResourceFile file) {
+	private static void parseReplacement(String line, ResourceFile file,
+			List<GnuDemanglerReplacement> results) {
+
 		for (int i = 0; i < line.length(); i++) {
 			char c = line.charAt(i);
 			if (Character.isWhitespace(c)) {
@@ -1572,13 +1571,35 @@ public class GnuDemanglerParser {
 				}
 
 				String find = line.substring(i).trim();
-				return new GnuDemanglerReplacement(find, replace, file);
+				results.add(new GnuDemanglerReplacement(find, replace, file));
+
+				// 
+				// We have disabled some global text replacements.  Instead of globally replacing
+				// them, we will update each replacement to handle the special case when it starts
+				// at the beginning of the replacement.
+				//
+				createAlternateReplacement("std::__cxx11::", find, replace, file, results);
+				createAlternateReplacement("__gnu_cxx::", find, replace, file, results);
+
+				return;
 			}
 		}
 
 		Msg.warn(GnuDemanglerParser.class,
 			"Malformed replacement line.  No spaces found: " + line + ". In file: " + file);
-		return null;
+	}
+
+	private static void createAlternateReplacement(String alternate, String find, String replace,
+			ResourceFile file, List<GnuDemanglerReplacement> results) {
+
+		if (!(find.startsWith("std::") && replace.startsWith("std::"))) {
+			return;
+		}
+
+		String altFind = find.replaceFirst("std::", alternate);
+		String altReplace = replace.replaceFirst("std::", alternate);
+		results.add(new GnuDemanglerReplacement(altFind, altReplace, file));
+
 	}
 
 	private static List<String> getReplacementLines(ResourceFile file) {
