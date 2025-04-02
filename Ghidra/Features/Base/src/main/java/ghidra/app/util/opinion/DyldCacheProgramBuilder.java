@@ -482,7 +482,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			DyldCacheProgramBuilder.this.markupHeaders(header, headerAddr);
 
 			if (!name.isEmpty()) {
-				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, path);
+				listing.setComment(headerAddr, CommentType.PLATE, path);
 			}
 		}
 
