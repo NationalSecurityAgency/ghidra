@@ -394,7 +394,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 				throw re;
 			}
 		}
-		if (ndata++ == numberOfRvaAndSizes) {
+		if (++ndata == numberOfRvaAndSizes) {
 			return;
 		}
 
