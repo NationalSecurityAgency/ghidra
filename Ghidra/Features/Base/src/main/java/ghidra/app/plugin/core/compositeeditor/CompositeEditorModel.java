@@ -211,7 +211,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		cloneAllComponentSettings(original, viewComposite);
+		viewDTM.withTransaction("Apply Settings",
+			() -> cloneAllComponentSettings(original, viewComposite));
+		viewDTM.clearUndo();
 	}
 
 	String getOriginType() {
