@@ -70,12 +70,16 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 				yield new Omf51ExternalDefsRecord(reader, false);
 			case KeilExternalDEF:
 				yield new Omf51ExternalDefsRecord(reader, true);
+			case LibModLocs:
+				yield new Omf51LibraryModuleLocationsRecord(reader);
+			case LibModNames:
+				yield new Omf51LibraryModuleNamesRecord(reader);
+			case LibDictionary:
+				yield new Omf51LibraryDictionaryRecord(reader);
+			case LibHeader:
+				yield new Omf51LibraryHeaderRecord(reader);
 			case ScopeDEF:
 			case DebugItem:
-			case LibModLocs:
-			case LibModNames:
-			case LibDictionary:
-			case LibHeader:
 				yield new OmfUnsupportedRecord(reader, Omf51RecordTypes.class);
 			default:
 				yield new OmfUnknownRecord(reader);
