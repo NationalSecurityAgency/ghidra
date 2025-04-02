@@ -124,8 +124,8 @@ public class MsftVxtManager extends VxtManager {
 	//  memory are the same order that their pointers appear in the classes... this is based solely
 	//  on limited experience.  The solution stinks and would benefit from the original direction
 	//  of using the parentage.  We will try to use the parentage as a litmus test on retrieval
-	private Map<ClassID, TreeMap<Address, VirtualBaseTable>> vbtsByOwner;
-	private Map<ClassID, TreeMap<Address, VirtualFunctionTable>> vftsByOwner;
+	private Map<ClassID, List<VirtualBaseTable>> vbtsByOwner;
+	private Map<ClassID, List<VirtualFunctionTable>> vftsByOwner;
 
 	// Used for locating vft and vbt
 	// These are explicitly used for storing/retrieving the "program" versions which result from
@@ -173,27 +173,73 @@ public class MsftVxtManager extends VxtManager {
 	/**
 	 * Finds the putative {@link VirtualBaseTable} in memory requested for the owning class
 	 * @param owner the owning class of the table
+	 * @param parentage the primary parentage (only used if creating placeholder)
 	 * @return the table
 	 */
-	public VirtualBaseTable findPrimaryVbt(ClassID owner) {
-		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
-		if (map == null) {
+	public VirtualBaseTable findPrimaryVbt(ClassID owner, List<ClassID> parentage) {
+		List<VirtualBaseTable> list = vbtsByOwner.get(owner);
+		if (list == null) {
 			return null;
 		}
-		return map.firstEntry().getValue();
+		VirtualBaseTable result = null;
+		VirtualBaseTable firstPlaceholder = null;
+		Address addrResult = null;
+		for (VirtualBaseTable table : list) {
+			if (table instanceof ProgramVirtualBaseTable pvbt) {
+				Address addr = pvbt.getAddress();
+				if (addrResult == null || addr.compareTo(addrResult) < 0) {
+					addrResult = addr;
+					result = table;
+				}
+			}
+			else if (firstPlaceholder == null) {
+				firstPlaceholder = table;
+			}
+		}
+		if (result == null) {
+			if (firstPlaceholder != null) {
+				return firstPlaceholder;
+			}
+			result = new PlaceholderVirtualBaseTable(owner, parentage);
+			list.add(result);
+		}
+		return result;
 	}
 
 	/**
 	 * Finds the putative {@link VirtualFunctionTable} in memory requested for the owning class
 	 * @param owner the owning class of the table
+	 * @param parentage the primary parentage (only used if creating placeholder)
 	 * @return the table
 	 */
-	public VirtualFunctionTable findPrimaryVft(ClassID owner) {
-		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
-		if (map == null) {
+	public VirtualFunctionTable findPrimaryVft(ClassID owner, List<ClassID> parentage) {
+		List<VirtualFunctionTable> list = vftsByOwner.get(owner);
+		if (list == null) {
 			return null;
 		}
-		return map.firstEntry().getValue();
+		VirtualFunctionTable result = null;
+		VirtualFunctionTable firstPlaceholder = null;
+		Address addrResult = null;
+		for (VirtualFunctionTable table : list) {
+			if (table instanceof ProgramVirtualFunctionTable pvft) {
+				Address addr = pvft.getAddress();
+				if (addrResult == null || addr.compareTo(addrResult) < 0) {
+					addrResult = addr;
+					result = table;
+				}
+			}
+			else if (firstPlaceholder == null) {
+				firstPlaceholder = table;
+			}
+		}
+		if (result == null) {
+			if (firstPlaceholder != null) {
+				return firstPlaceholder;
+			}
+			result = new PlaceholderVirtualFunctionTable(owner, parentage);
+			list.add(result);
+		}
+		return result;
 	}
 
 	/**
@@ -211,7 +257,7 @@ public class MsftVxtManager extends VxtManager {
 	 * @return the IDs
 	 */
 	public ClassID[] getAllVftOwners() {
-		ClassID ids[] = new ClassID[vbtsByOwner.size()];
+		ClassID ids[] = new ClassID[vftsByOwner.size()];
 		Set<ClassID> set = vftsByOwner.keySet();
 		return set.toArray(ids);
 	}
@@ -222,12 +268,11 @@ public class MsftVxtManager extends VxtManager {
 	 * @return the tables
 	 */
 	public VirtualBaseTable[] getVbts(ClassID owner) {
-		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
-		if (map == null) {
+		List<VirtualBaseTable> list = vbtsByOwner.get(owner);
+		if (list == null) {
 			return null;
 		}
-		Collection<VirtualBaseTable> values = map.values();
-		return values.toArray(new VirtualBaseTable[values.size()]);
+		return list.toArray(new VirtualBaseTable[list.size()]);
 	}
 
 	/**
@@ -236,12 +281,11 @@ public class MsftVxtManager extends VxtManager {
 	 * @return the tables
 	 */
 	public VirtualFunctionTable[] getVfts(ClassID owner) {
-		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
-		if (map == null) {
+		List<VirtualFunctionTable> list = vftsByOwner.get(owner);
+		if (list == null) {
 			return null;
 		}
-		Collection<VirtualFunctionTable> values = map.values();
-		return values.toArray(new VirtualFunctionTable[values.size()]);
+		return list.toArray(new VirtualFunctionTable[list.size()]);
 	}
 
 	/**
@@ -264,6 +308,7 @@ public class MsftVxtManager extends VxtManager {
 			vbt = new PlaceholderVirtualBaseTable(owner, parentage);
 		}
 		vbtsByOwnerParentage.put(op, vbt);
+		storeVbt(owner, vbt);
 		return vbt;
 	}
 
@@ -309,6 +354,7 @@ public class MsftVxtManager extends VxtManager {
 			vft = new PlaceholderVirtualFunctionTable(owner, parentage);
 		}
 		vftsByOwnerParentage.put(op, vft);
+		storeVft(owner, vft);
 		return vft;
 	}
 
@@ -417,7 +463,7 @@ public class MsftVxtManager extends VxtManager {
 				}
 				node.setVBTable(prvbt);
 				vbtByAddress.put(address, prvbt);
-				storeVbt(owner, address, prvbt); // temp solution?
+				storeVbt(owner, prvbt); // temp solution?
 				break;
 
 			case VFT:
@@ -429,7 +475,7 @@ public class MsftVxtManager extends VxtManager {
 				}
 				node.setVFTable(vft);
 				vftByAddress.put(address, vft);
-				storeVft(owner, address, vft); // temp solution?
+				storeVft(owner, vft); // temp solution?
 				break;
 
 			default:
@@ -438,22 +484,49 @@ public class MsftVxtManager extends VxtManager {
 		return true;
 	}
 
-	private void storeVbt(ClassID owner, Address address, VirtualBaseTable vbt) {
-		TreeMap<Address, VirtualBaseTable> map = vbtsByOwner.get(owner);
-		if (map == null) {
-			map = new TreeMap<>();
-			vbtsByOwner.put(owner, map);
+	private void storeVbt(ClassID owner, VirtualBaseTable vbt) {
+		ClassID own = vbt.getOwner();
+		List<VirtualBaseTable> list = vbtsByOwner.get(own);
+		if (list == null) {
+			list = new ArrayList<>();
+			vbtsByOwner.put(owner, list);
 		}
-		map.put(address, vbt);
+		List<ClassID> parentage = vbt.getParentage();
+		for (VirtualBaseTable table : list) {
+			if (isEqual(table.getParentage(), parentage)) {
+				return; // return without saving
+			}
+		}
+		list.add(vbt);
 	}
 
-	private void storeVft(ClassID owner, Address address, VirtualFunctionTable vft) {
-		TreeMap<Address, VirtualFunctionTable> map = vftsByOwner.get(owner);
-		if (map == null) {
-			map = new TreeMap<>();
-			vftsByOwner.put(owner, map);
+	private void storeVft(ClassID owner, VirtualFunctionTable vft) {
+		List<VirtualFunctionTable> list = vftsByOwner.get(owner);
+		if (list == null) {
+			list = new ArrayList<>();
+			vftsByOwner.put(owner, list);
 		}
-		map.put(address, vft);
+		List<ClassID> parentage = vft.getParentage();
+		for (VirtualFunctionTable table : list) {
+			if (isEqual(table.getParentage(), parentage)) {
+				return; // return without saving
+			}
+		}
+		list.add(vft);
+	}
+
+	private boolean isEqual(List<ClassID> parentage1, List<ClassID> parentage2) {
+		int diff = parentage1.size() - parentage2.size();
+		if (diff != 0) {
+			return false;
+		}
+		Iterator<ClassID> iter2 = parentage2.iterator();
+		for (ClassID element : parentage1) {
+			if (!element.equals(iter2.next())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private ParentageNode findNode(ClassID owner, List<ClassID> parentage, ParentageNode root) {
