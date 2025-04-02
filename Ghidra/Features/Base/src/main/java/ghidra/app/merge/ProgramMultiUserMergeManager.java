@@ -16,6 +16,8 @@
 package ghidra.app.merge;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -33,6 +35,7 @@ import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -375,8 +378,12 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 			if (!isShowingListingMergePanel) {
 				return;
 			}
+
 			mergePanel.removeDomainObjectListener();
-			mergeTool.removePlugins(java.util.List.of(listingPlugin, goToPlugin));
+			List<Plugin> list = new ArrayList<>();
+			list.add(listingPlugin);
+			list.add(goToPlugin);
+			mergeTool.removePlugins(list);
 			isShowingListingMergePanel = false;
 			mergePlugin.showDefaultComponent();
 		});
