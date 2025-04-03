@@ -1102,14 +1102,14 @@ Expansion Daemon) which will satisfy the entropy demand needed by /dev/random.
 </P>
 
 <br>
-<a name="macDiskAccess"><h3><u>macOS - Service fails to start</u></h3></a>
+<a name="macDiskAccess"><h3><u>macOS - Service fails to start (macOS 10.14 Mojave and later)</u></h3></a>
 <P>
-The installed service may fail to start with macOS Mojave (10.14) to macOS Monterey (12.0) due
-to changes in the macOS system protection feature.  When the service fails to start it does not
+The installed service may fail to start with macOS Mojave (10.14) and later due
+to changes in the Mac OS system protection feature.  When the service fails to start it does not
 provide any error or logging to help determine the cause.  Although granting <i>Full Disk Access</i> 
 to <i>Java</i> can be a workaround, this is rather drastic and is not considered desirable 
-since it will allow any Java application to run as root.  Newer versions of macOS (Ventura 13.0 and
-later) do not exhibit this issue.
+since it will allow any Java application to run as root.  For this reason, installation
+of the Ghidra Server as a service on macOS is discouraged.
 </P>
 
 (<a href="#top">Back to Top</a>)
