@@ -15,8 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.API_CALL;
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -875,7 +874,6 @@ public class FieldPanel extends JPanel
 	 * @param fieldNum the field on the line to go to.
 	 * @param row the row in the field to go to.
 	 * @param col the column in the field to go to.
-	 * @param trigger the cause of the go to
 	 * @param alwaysCenterCursor if true, centers cursor on screen. Otherwise, only centers cursor
 	 *            if cursor is offscreen.
 	 */
