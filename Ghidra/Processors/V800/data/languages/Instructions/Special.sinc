@@ -1,0 +1,377 @@
+# V830 Family:
+# (5) Branch instructions
+# (11) Special instructions
+
+# V810 Family:
+# (12) Bit String Instructions
+# (4) Branch instructions
+# (7) Special instructions
+
+
+@if defined(V810)
+#####################################################
+#####		       Bit String		#####
+#####################################################
+
+# SCH0BSU [reg2] - 011111rrrrr00000
+:sch0bsu is op1015=0x1f & R0509 & op0004=0x0
+{
+	r29 = 0;
+	<loop0>
+	local bitvar = (*:4 r30) & (0x00000001 << r27);
+	<loop1>
+	if (bitvar == 0)
+		goto <found>;
+	r29 = r29 + 1;
+	if (r29 >= r28) 
+		goto <notfound>;
+	r27 = r27 + 1;
+	if (r27 > 0x1f)
+		goto <incadr>;
+	goto <loop1>;
+	<incadr>
+	r30 = r30 + 1;
+	r27 = 0;
+	goto <loop0>;
+	
+	<notfound>
+	$(Z)=1;
+	call [PC];
+	<found>
+	$(Z)=0;
+	call [PC];
+}
+
+
+# SCH0BSD [reg2] - 011111rrrrr00001
+:sch0bsd is op1015=0x1f & R0509 & op0004=0x1
+{
+	r29 = 0;
+	<loop0>
+	local bitvar = (*:4 r30) & (0x00000001 << r27);
+	<loop1>
+	if (bitvar == 0)
+		goto <found>;
+	r29 = r29 + 1;
+	if (r29 >= r28) 
+		goto <notfound>;
+	r27 = r27 - 1;
+	if (r27 s< 0x0)
+		goto <decadr>;
+	goto <loop1>;
+	<decadr>
+	r30 = r30 - 1;
+	r27 = 0;
+	goto <loop0>;
+	
+	<notfound>
+	$(Z)=1;
+	call [PC];
+	<found>
+	$(Z)=0;
+	call [PC];
+}
+
+
+# SCH1BSU [reg2] - 011111rrrrr00010
+:sch1bsu is op1015=0x1f & R0509 & op0004=0x2
+{
+	r29 = 0;
+	<loop0>
+	local bitvar = (*:4 r30) & (0x00000001 << r27);
+	<loop1>
+	if (bitvar != 0)
+		goto <found>;
+	r29 = r29 + 1;
+	if (r29 >= r28) 
+		goto <notfound>;
+	r27 = r27 + 1;
+	if (r27 > 0x1f)
+		goto <incadr>;
+	goto <loop1>;
+	<incadr>
+	r30 = r30 + 1;
+	r27 = 0;
+	goto <loop0>;
+	
+	<notfound>
+	$(Z)=1;
+	call [PC];
+	<found>
+	$(Z)=0;
+	call [PC];
+}
+
+
+# SCH1BSD [reg2] - 011111rrrrr00011
+:sch1bsd is op1015=0x1f & R0509 & op0004=0x3
+{
+	r29 = 0;
+	<loop0>
+	local bitvar = (*:4 r30) & (0x00000001 << r27);
+	<loop1>
+	if (bitvar != 0)
+		goto <found>;
+	r29 = r29 + 1;
+	if (r29 >= r28) 
+		goto <notfound>;
+	r27 = r27 - 1;
+	if (r27 s< 0x0)
+		goto <decadr>;
+	goto <loop1>;
+	<decadr>
+	r30 = r30 - 1;
+	r27 = 0;
+	goto <loop0>;
+	
+	<notfound>
+	$(Z)=1;
+	call [PC];
+	<found>
+	$(Z)=0;
+	call [PC];
+}
+
+# MOVBSU [reg2] - 011111rrrrr01011
+:movbsu is op1015=0x1f & R0509 & op0004=0xb
+{
+	var:4 = 0xb;
+	bitsop (var, 0x7fffffff);
+}
+
+# NOTBSU [reg2] - 011111rrrrr01111
+:notbsu is op1015=0x1f & R0509 & op0004=0xf
+{
+	var:4 = 0xf;
+	bitsop (var, 0x7fffffff);
+}
+
+# ANDBSU [reg2] - 011111rrrrr01001
+:andbsu is op1015=0x1f & R0509 & op0004=0x9
+{
+	var:4 = 0x9;
+	bitsop (var, 0xffffffff);
+}
+
+# ANDNBSU [reg2] - 011111rrrrr01101
+:andnbsu is op1015=0x1f & R0509 & op0004=0xd
+{
+	var:4 = 0xd;
+	bitsop (var, 0xffffffff);
+}
+
+# ORBSU [reg2] - 011111rrrrr01000
+:orbsu is op1015=0x1f & R0509 & op0004=0x8
+{
+	var:4 = 0x8;
+	bitsop (var, 0xffffffff);
+}
+
+# ORNBSU [reg2] - 011111rrrrr01100
+:ornbsu is op1015=0x1f & R0509 & op0004=0xc
+{
+	var:4 = 0xc;
+	bitsop (var, 0xffffffff);
+}
+
+define pcodeop __xorbsu;
+# XORBSU [reg2] - 011111rrrrr01010
+:xorbsu is op1015=0x1f & R0509 & op0004=0xa
+{
+	var:4 = 0xa;
+	bitsop (var, 0xffffffff);
+}
+
+# XORNBSU [reg2] - 011111rrrrr01110
+:xornbsu is op1015=0x1f & R0509 & op0004=0xe
+{
+	var:4 = 0xe;
+	bitsop (var, 0xffffffff);
+}
+@endif
+
+
+
+
+#####################################################
+#####		       Branch			#####
+#####################################################
+
+
+#Bcond adr9 - 100ccccdddddddd0
+:b^c0912 adr9 is op1315=0x4 & c0912 & adr9 & op0000=0x0
+{
+	if (c0912) 
+		goto adr9;
+}
+:br adr9 is op1315=0x4 & op0912=0x5  & adr9 & op0000=0x0
+{
+	goto adr9;
+}
+:nop adr9 is op1315=0x4 & op0912=0xd & adr9
+{
+	PC = inst_next;
+}
+
+@if defined(V830)
+#ABcond adr9 - 100ccccdddddddd1
+:ab^c0912 adr9 is op1315=0x4 & c0912 & adr9 & op0000=0x1 
+{
+	if (c0912) 
+		goto adr9;
+}
+:abr adr9 is op1315=0x4 & op0912=0x5 & adr9 & op0000=0x1
+{
+	goto adr9;
+}
+@endif
+
+# JAL disp26 - 101011dddddddddd|ddddddddddddddd0
+:jal adr26 is op1015=0x2B ... & adr26
+{
+	lp = inst_next;
+	call adr26;
+}
+
+# JMP [reg1] - 000110-----RRRRR
+:jmp [R0004] is op1015=0x06 & R0004 & op0004=0x1F
+{
+	return [R0004];
+}
+:jmp [R0004] is op1015=0x06 & R0004 & op0004!=0x1F
+{
+	call [R0004];
+}
+
+# JR disp26 - 101010dddddddddd|ddddddddddddddd0
+:jr adr26 is op1015=0x2A ... & adr26
+{
+	goto adr26;
+}
+
+
+
+#####################################################
+#####		       Special			#####
+#####################################################
+
+@if defined(V830)
+# BRKRET - 011001uuuuuuuu1
+:BRKRET is op1015=0x19 & op0005 & op0000=1 
+{
+	PC = DPC;
+	PSW = DPSW;
+	call [PC];
+}
+@endif
+
+# CAXI disp16[reg1], reg2 - 111010rrrrrRRRRR|dddddddddddddddd
+:caxi s1631[R0004], R0509 is op1015=0x3A & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tkn = *:4 (adr & ~(0x3));
+	local result = R0509 - tkn;
+	*:4 R0004 = tkn * zext(result != 0) + R0509 * zext(result == 0);
+	R0509 = tkn;
+	set_general_flags_neg(R0509, tkn);
+}
+
+@if defined(V830)
+# DI - 011110uuuuuuuuuu
+define pcodeop __disable_irq;
+:di is op1015=0x1E
+{
+	$(ID) = 1;
+	__disable_irq();
+}
+
+# EI - 010110uuuuuuuuuu
+define pcodeop __enable_irq;
+:ei is op1015=0x16
+{
+	$(ID) = 0;
+	__enable_irq();
+}
+@endif
+
+# HALT - 011010uuuuuuuu0
+define pcodeop __halt;
+:halt is op1015=0x1A
+{
+	__halt();
+}
+
+# LDSR reg2, regID - 011100rrrrrIIIII
+:ldsr R0509, SR0004 is op1015=0x1C & SR0004 & R0509
+{
+	SR0004 = R0509;
+}
+
+# STSR regID, reg2 - 011101rrrrrIIIII
+:stsr SR0004, R0509 is op1015=0x1D & R0509 & SR0004
+{
+	R0509 = SR0004;
+}
+
+# NOP - 0000000000000000
+:nop is op0015=0x0
+{
+	PC = inst_next;
+}
+
+# RETI - 011001uuuuuuuu0
+:reti is op1015=0x19 & op0000=0
+{
+	if($(NP)!=1)
+		goto <false>;
+
+	PC = FEPC;
+	PSW = FEPSW;
+	goto <end>;
+
+	<false>
+	PC = EIPC;
+	PSW = EIPSW;
+
+	<end>
+	return[PC];
+}
+
+@if defined(V830)
+# STBY - 011010uuuuuuuuu1
+define pcodeop __stop;
+:stby is op1015=0x1A & op0000=1
+{
+	__stop();
+}
+@endif
+
+# TRAP imm10 - 011000vvvvvvvvvv
+define pcodeop __machinefault;
+:trap op0009 is op1015=0x18 & op0009
+{
+	if($(NP)!=1)
+		goto <np0>;
+	__machinefault();
+	goto <end>;
+	<np0>
+	if($(NP)!=1)
+		goto <ep0>;
+	local vector10:4 = op0009;
+	FEPC = inst_next;
+	FEPSW = PSW;
+	$(FECC) = vector10:2;					# exception code 
+	$(NP) = 1;
+	$(ID) = 1;
+	either_or(PC, (HCCW == 1), 0xFE000000, 0xFFFFFE00);
+	goto <end>;
+	<ep0>
+	EIPC = inst_next;
+	EIPSW = PSW;
+	$(EICC) = vector10:2;					# exception code 
+	$(EP) = 1;
+	$(ID) = 1;
+	PC = vector10;
+	<end>
+	call [PC];
+}
