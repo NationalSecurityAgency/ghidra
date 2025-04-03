@@ -197,15 +197,15 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		List<DemangledParameter> parameters = function.getParameters();
 
 		assertEquals(
-			"__insertion_sort<__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
+			"__insertion_sort<__gnu_cxx::__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
 			function.getName());
 		assertEquals("std", function.getNamespace().getName());
 
 		assertEquals(
-			"__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
+			"__gnu_cxx::__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
 			parameters.get(0).toString());
 		assertEquals(
-			"__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
+			"__gnu_cxx::__normal_iterator<std::pair<unsigned long,PcodeOp *> *,std::vector<std::pair<unsigned long,PcodeOp *>,std::allocator<std::pair<unsigned long,PcodeOp *>>>>",
 			parameters.get(1).toString());
 		assertEquals(
 			"bool (*)(std::pair<unsigned long,PcodeOp *> const &,std::pair<unsigned long,PcodeOp *> const &)",
@@ -1112,7 +1112,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::string std::_Bind<std::string(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::string>(void)",
+			"std::__cxx11::string std::_Bind<std::__cxx11::string(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::__cxx11::string>(void)",
 			signature);
 	}
 
@@ -1145,7 +1145,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::string gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
+			"std::__cxx11::string gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
 			signature);
 	}
 
@@ -1630,7 +1630,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"vector<boost::function<void()>,std::allocator<boost::function<void()>>>");
 
 		assertEquals(
-			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
+			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
 			object.getSignature(false));
 	}
 
@@ -1770,7 +1770,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals("undefined " +
-			"__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
+			"__gnu_cxx::__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
 			"::_Save_errno::_Save_errno(void)", signature);
 	}
 
