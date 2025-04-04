@@ -53,7 +53,7 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		program = buildProgram();
 		env.open(program);
 		env.showTool();
-		editFieldAction = getAction(plugin, "Edit Field");
+		editFieldAction = getAction(plugin, "Quick Edit Field");
 		Data dataAt = program.getListing().getDataAt(addr(0x100));
 		structure = (Structure) dataAt.getDataType();
 		codeBrowser.toggleOpen(dataAt);
@@ -119,6 +119,29 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(isDialogVisible());
 
 		assertEquals("char", structure.getComponent(4).getDataType().getDisplayName());
+	}
+
+	@Test
+	public void testEditDefinedFieldDataTypeAndNameAndComment() {
+		goTo(0x104);
+		showFieldEditDialog();
+		DataTypeComponent dtc = structure.getComponent(4);
+		assertEquals("word", dtc.getDataType().getDisplayName());
+		assertEquals("word", getDataTypeText());
+
+		setDataType(new CharDataType());
+		setNameText("TestName");
+		setCommentText("Flux capacitor relay");
+
+		pressOk();
+
+		waitForTasks();
+		assertFalse(isDialogVisible());
+
+		dtc = structure.getComponent(4);
+		assertEquals("char", dtc.getDataType().getDisplayName());
+		assertEquals("TestName", dtc.getFieldName());
+		assertEquals("Flux capacitor relay", dtc.getComment());
 	}
 
 	@Test
@@ -228,7 +251,7 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void pressOk() {
-		runSwing(() -> dialog.okCallback());
+		pressButtonByText(dialog, "OK");
 	}
 
 	private String getNameText() {
@@ -253,9 +276,5 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setDataType(DataType dataType) {
 		runSwing(() -> dialog.setDataType(dataType));
-	}
-
-	private String getDialogStatusText() {
-		return runSwing(() -> dialog.getStatusText());
 	}
 }
