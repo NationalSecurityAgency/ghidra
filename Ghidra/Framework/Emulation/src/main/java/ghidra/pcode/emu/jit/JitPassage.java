@@ -31,6 +31,7 @@ import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.OpGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
@@ -253,6 +254,122 @@ public class JitPassage extends PcodeProgram {
 	}
 
 	/**
+	 * A branch as analyzed within an instruction step
+	 * 
+	 * <p>
+	 * After intra-instruction reachability is determined and this branch is to be added to the
+	 * whole passage, it will be "upgraded" to a {@link PBranch}.
+	 */
+	public interface SBranch extends Branch {
+	}
+
+	/**
+	 * A branch as analyzed within a passage
+	 * 
+	 * <p>
+	 * Many implement this via {@link RBranch}.
+	 */
+	public interface PBranch extends Branch {
+	}
+
+	/**
+	 * A branch with known intra-instruction reachability
+	 */
+	public interface RBranch extends PBranch {
+		/**
+		 * The intra-instruction reachability
+		 * 
+		 * @return the reachability
+		 */
+		Reachability reach();
+	}
+
+	/**
+	 * Describes the manner in which something is reachable, wrt. dynamic context changes <em>within
+	 * an instruction step</em>.
+	 * 
+	 * <p>
+	 * At the moment, the only way context can be changed dynamically is via a p-code userop. Such
+	 * ops must have the {@link PcodeUserop#modifiesContext()} attribute set. If such an op is known
+	 * to have been executed when finishing an instruction (either by branch or fall-through), we
+	 * must exit the compiled passage.
+	 */
+	public enum Reachability {
+		/**
+		 * There is at least one path to reach it. None of them modify the context dynamically.
+		 */
+		WITHOUT_CTXMOD {
+			@Override
+			public Reachability combine(Reachability that) {
+				return switch (that) {
+					case null -> this;
+					case WITHOUT_CTXMOD -> WITHOUT_CTXMOD;
+					case MAYBE_CTXMOD -> MAYBE_CTXMOD;
+					case WITH_CTXMOD -> MAYBE_CTXMOD;
+				};
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return true;
+			}
+		},
+		/**
+		 * There are at least two paths to reach it. Some modify the context dynamically, and some
+		 * do not.
+		 */
+		MAYBE_CTXMOD {
+			@Override
+			public Reachability combine(Reachability that) {
+				return MAYBE_CTXMOD;
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return true;
+			}
+		},
+		/**
+		 * There is at least one path to reach it. All of them modify the context dynamically.
+		 */
+		WITH_CTXMOD {
+			@Override
+			public Reachability combine(Reachability that) {
+				return switch (that) {
+					case null -> this;
+					case WITHOUT_CTXMOD -> MAYBE_CTXMOD;
+					case MAYBE_CTXMOD -> MAYBE_CTXMOD;
+					case WITH_CTXMOD -> WITH_CTXMOD;
+				};
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return false;
+			}
+		};
+
+		/**
+		 * Consider this and another reachability as "or"
+		 * 
+		 * @param that the other reachability
+		 * @return the "or" of both
+		 */
+		public abstract Reachability combine(Reachability that);
+
+		/**
+		 * Check if it is possible for this block to be reached without a context modification.
+		 * 
+		 * <p>
+		 * This is true if there exists <em>any</em> path to this block that doesn't include a
+		 * possible context modification.
+		 * 
+		 * @return true if reachable without context modification, false otherwise.
+		 */
+		public abstract boolean canReachWithoutCtxMod();
+	}
+
+	/**
 	 * A branch to another p-code op in the same passage
 	 * 
 	 * <p>
@@ -260,12 +377,46 @@ public class JitPassage extends PcodeProgram {
 	 * equivalent branch to the translation of the target p-code op. Thus, we remain executing
 	 * inside the {@link JitCompiledPassage#run(int) run} method. This branch type incurs the least
 	 * run-time cost.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param to the target p-code op
-	 * @param isFall see {@link #isFall()}
 	 */
-	public record IntBranch(PcodeOp from, PcodeOp to, boolean isFall) implements Branch {}
+	public interface IntBranch extends Branch {
+		/**
+		 * The target pcode op
+		 * 
+		 * @return the op
+		 */
+		PcodeOp to();
+	}
+
+	/**
+	 * An {@link IntBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link IntBranch#from()}
+	 * @param to see {@link IntBranch#to()}
+	 * @param isFall see {@link IntBranch#isFall()}
+	 */
+	public record SIntBranch(PcodeOp from, PcodeOp to, boolean isFall)
+			implements IntBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RIntBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RIntBranch withReach(Reachability reach) {
+			return new RIntBranch(from, to, isFall, reach);
+		}
+	}
+
+	/**
+	 * A {@link IntBranch} as added to the passage
+	 * 
+	 * @param from see {@link IntBranch#from()}
+	 * @param to see {@link IntBranch#to()}
+	 * @param isFall see {@link IntBranch#isFall()}
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RIntBranch(PcodeOp from, PcodeOp to, boolean isFall, Reachability reach)
+			implements IntBranch, RBranch {}
 
 	/**
 	 * A branch to an address (and context value) not in the same passage
@@ -275,13 +426,62 @@ public class JitPassage extends PcodeProgram {
 	 * sets the emulator's program counter and context to the {@link #to() branch target} and
 	 * returns the appropriate entry point for further execution.
 	 * 
+	 * <p>
 	 * Note that this branch type is used by the decoder to track queued decode seeds as well.
 	 * External branches that get decoded are changed into internal branches.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param to the target address-context pair
 	 */
-	public record ExtBranch(PcodeOp from, AddrCtx to) implements Branch {}
+	public interface ExtBranch extends Branch {
+		/**
+		 * The target address-context pair
+		 * 
+		 * @return the target
+		 */
+		AddrCtx to();
+	}
+
+	/**
+	 * An {@link ExtBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link ExtBranch#from()}
+	 * @param to see {@link ExtBranch#to()}
+	 */
+	public record SExtBranch(PcodeOp from, AddrCtx to) implements ExtBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RExtBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RExtBranch withReach(Reachability reach) {
+			return new RExtBranch(from, to, reach);
+		}
+	}
+
+	/**
+	 * A {@link ExtBranch} as added to the passage
+	 * 
+	 * @param from see {@link ExtBranch#from()}
+	 * @param to see {@link ExtBranch#to()}
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RExtBranch(PcodeOp from, AddrCtx to, Reachability reach)
+			implements ExtBranch, RBranch {
+		/**
+		 * Convert this external branch into an internal one
+		 * 
+		 * <p>
+		 * This is called whenever it becomes the case that an external target is decoded an added
+		 * to the passage, making it an internal branch. Notably, this happens when selecting a seed
+		 * from the queue of externals, when flowing to a target that is already decoded, and when
+		 * finishing up a passage where all remaining seeds must be examined.
+		 * 
+		 * @param to the target p-code op
+		 * @return the resulting internal branch
+		 */
+		public RIntBranch toIntBranch(PcodeOp to) {
+			return new RIntBranch(from, to, false, reach);
+		}
+	}
 
 	/**
 	 * A branch to a dynamic address
@@ -295,11 +495,43 @@ public class JitPassage extends PcodeProgram {
 	 * TODO: Some analysis may be possible to narrow the possible addresses to a known few and then
 	 * treat this as several {@link IntBranch}es; however, I worry this is too expensive for what it
 	 * gets us. This will be necessary if we are to JIT, e.g., a switch table.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param flowCtx the decode context after the branch is taken
 	 */
-	public record IndBranch(PcodeOp from, RegisterValue flowCtx) implements Branch {}
+	public interface IndBranch extends Branch {
+		/**
+		 * The decode context after the branch is taken
+		 * 
+		 * @return the context
+		 */
+		RegisterValue flowCtx();
+	}
+
+	/**
+	 * An {@link IndBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link IndBranch#from()}
+	 * @param flowCtx see {@link IndBranch#flowCtx()}
+	 */
+	public record SIndBranch(PcodeOp from, RegisterValue flowCtx) implements IndBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RIndBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RIndBranch withReach(Reachability reach) {
+			return new RIndBranch(from, flowCtx, reach);
+		}
+	}
+
+	/**
+	 * A {@link IndBranch} as added to the passage
+	 * 
+	 * @param from see {@link IndBranch#from()}
+	 * @param flowCtx see {@link IndBranch#flowCtx()}
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RIndBranch(PcodeOp from, RegisterValue flowCtx, Reachability reach)
+			implements IndBranch, RBranch {}
 
 	/**
 	 * A "branch" representing an error
@@ -327,7 +559,7 @@ public class JitPassage extends PcodeProgram {
 	 * @param from see {@link #from()}
 	 * @param message the error message for the exception
 	 */
-	public record ErrBranch(PcodeOp from, String message) implements Branch {}
+	public record ErrBranch(PcodeOp from, String message) implements SBranch, PBranch {}
 
 	/**
 	 * An extension of {@link PcodeOp} that carries along with it the address and decode context
@@ -462,10 +694,26 @@ public class JitPassage extends PcodeProgram {
 		 * 
 		 * @param at the address and context value to set on the emulator when exiting the
 		 *            {@link JitCompiledPassage#run(int)} method
+		 * @return the op
 		 */
-		public ExitPcodeOp(AddrCtx at) {
-			super(new SequenceNumber(at.address, 0), PcodeOp.BRANCH, new Varnode[] {
-				new Varnode(at.address, 0) }, null);
+		public static ExitPcodeOp exit(AddrCtx at) {
+			return new ExitPcodeOp(PcodeOp.BRANCH, at);
+		}
+
+		/**
+		 * Construct a synthetic conditional exit op
+		 * 
+		 * @param at the address and context value to set on the emulator when exiting the
+		 *            {@link JitCompiledPassage#run(int)} method
+		 * @return the op
+		 */
+		public static ExitPcodeOp cond(AddrCtx at) {
+			return new ExitPcodeOp(PcodeOp.CBRANCH, at);
+		}
+
+		private ExitPcodeOp(int opcode, AddrCtx at) {
+			super(new SequenceNumber(at.address, 0), opcode,
+				new Varnode[] { new Varnode(at.address, 0) }, null);
 		}
 	}
 
@@ -703,7 +951,7 @@ public class JitPassage extends PcodeProgram {
 	private final List<Instruction> instructions;
 	private final AddrCtx entry;
 	private final PcodeUseropLibrary<Object> decodeLibrary;
-	private final Map<PcodeOp, Branch> branches;
+	private final Map<PcodeOp, PBranch> branches;
 	private final Map<PcodeOp, AddrCtx> entries;
 	private final Register contextreg;
 	private final ProgramContextImpl defaultContext;
@@ -725,7 +973,7 @@ public class JitPassage extends PcodeProgram {
 	 */
 	public JitPassage(SleighLanguage language, AddrCtx entry, List<PcodeOp> code,
 			PcodeUseropLibrary<Object> decodeLibrary, List<Instruction> instructions,
-			Map<PcodeOp, Branch> branches, Map<PcodeOp, AddrCtx> entries) {
+			Map<PcodeOp, PBranch> branches, Map<PcodeOp, AddrCtx> entries) {
 		super(language, code, decodeLibrary.getSymbols(language));
 		this.entry = entry;
 		this.decodeLibrary = decodeLibrary;
@@ -804,7 +1052,7 @@ public class JitPassage extends PcodeProgram {
 	 * 
 	 * @return the branches, keyed by {@link Branch#from()}.
 	 */
-	public Map<PcodeOp, Branch> getBranches() {
+	public Map<PcodeOp, PBranch> getBranches() {
 		return branches;
 	}
 

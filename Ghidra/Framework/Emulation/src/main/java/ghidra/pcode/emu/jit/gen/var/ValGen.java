@@ -118,6 +118,7 @@ public interface ValGen<V extends JitVal> {
 	static <V extends JitVal> ValGen<V> lookup(V v) {
 		return (ValGen<V>) switch (v) {
 			case JitConstVal c -> ConstValGen.GEN;
+			case JitFailVal m -> FailValGen.GEN;
 			case JitVar vv -> VarGen.lookup(vv);
 			default -> throw new AssertionError();
 		};

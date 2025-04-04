@@ -42,9 +42,10 @@ class DecoderForOnePassage {
 	private final int maxInstrs;
 	private final int maxStrides;
 
-	final Map<PcodeOp, IntBranch> internalBranches = new HashMap<>();
-	final SequencedMap<PcodeOp, ExtBranch> externalBranches = new LinkedHashMap<>();
-	final Map<PcodeOp, Branch> otherBranches = new HashMap<>();
+	final Map<PcodeOp, RIntBranch> internalBranches = new HashMap<>();
+	// Sequenced, because this is also the seed queue
+	final SequencedMap<PcodeOp, RExtBranch> externalBranches = new LinkedHashMap<>();
+	final Map<PcodeOp, PBranch> otherBranches = new HashMap<>();
 	final Map<AddrCtx, PcodeOp> firstOps = new HashMap<>();
 	final List<DecodedStride> strides = new ArrayList<>();
 
@@ -66,7 +67,7 @@ class DecoderForOnePassage {
 		this.maxInstrs = config.maxPassageInstructions();
 		this.maxStrides = config.maxPassageStrides();
 		EntryPcodeOp entryOp = new EntryPcodeOp(seed);
-		externalBranches.put(entryOp, new ExtBranch(entryOp, seed));
+		externalBranches.put(entryOp, new RExtBranch(entryOp, seed, Reachability.WITHOUT_CTXMOD));
 	}
 
 	/**
@@ -75,20 +76,23 @@ class DecoderForOnePassage {
 	void decodePassage() {
 		while (opCount < maxOps && instructionCount < maxInstrs &&
 			strides.size() < maxStrides) {
-			Entry<PcodeOp, ExtBranch> nextEnt = externalBranches.pollFirstEntry();
+			Entry<PcodeOp, RExtBranch> nextEnt = externalBranches.pollFirstEntry();
 			if (nextEnt == null) {
 				break;
 			}
-			ExtBranch next = nextEnt.getValue();
+			RExtBranch next = nextEnt.getValue();
 			AddrCtx start = next.to();
 
 			if (decoder.thread.hasEntry(start)) {
 				otherBranches.put(next.from(), next);
 			}
+			else if (!next.reach().canReachWithoutCtxMod()) {
+				otherBranches.put(next.from(), next);
+			}
 			else {
 				decodeStride(start);
 				PcodeOp to = Objects.requireNonNull(firstOps.get(start));
-				internalBranches.put(next.from(), new IntBranch(next.from(), to, false));
+				internalBranches.put(next.from(), next.toIntBranch(to));
 			}
 		}
 	}
@@ -107,10 +111,14 @@ class DecoderForOnePassage {
 	 * @param from the op representing or causing the control flow
 	 * @param to the target of the branch
 	 */
-	void flowTo(ExtBranch eb) {
-		if (firstOps.containsKey(eb.to())) {
-			IntBranch ib = new IntBranch(eb.from(), firstOps.get(eb.to()), false);
-			internalBranches.put(ib.from(), ib);
+	void flowTo(RExtBranch eb) {
+		if (!eb.reach().canReachWithoutCtxMod()) {
+			otherBranches.put(eb.from(), eb);
+			return;
+		}
+		PcodeOp to = firstOps.get(eb.to());
+		if (to != null) {
+			internalBranches.put(eb.from(), eb.toIntBranch(to));
 			return;
 		}
 		externalBranches.put(eb.from(), eb);
@@ -144,11 +152,15 @@ class DecoderForOnePassage {
 		List<PcodeOp> code = strides.stream().flatMap(b -> b.ops().stream()).toList();
 		List<Instruction> instructions =
 			strides.stream().flatMap(b -> b.instructions().stream()).toList();
-		Map<PcodeOp, Branch> branches = otherBranches;
+		Map<PcodeOp, PBranch> branches = otherBranches;
 		branches.putAll(internalBranches);
-		for (ExtBranch eb : externalBranches.values()) {
-			if (firstOps.containsKey(eb.to())) {
-				branches.put(eb.from(), new IntBranch(eb.from(), firstOps.get(eb.to()), false));
+		for (RExtBranch eb : externalBranches.values()) {
+			if (!eb.reach().canReachWithoutCtxMod()) {
+				branches.put(eb.from(), eb);
+			}
+			PcodeOp to = firstOps.get(eb.to());
+			if (to != null) {
+				branches.put(eb.from(), eb.toIntBranch(to));
 			}
 			else {
 				branches.put(eb.from(), eb);

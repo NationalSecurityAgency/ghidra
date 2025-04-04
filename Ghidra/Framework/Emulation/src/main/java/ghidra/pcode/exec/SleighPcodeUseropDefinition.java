@@ -203,6 +203,19 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote We could scan the p-code ops for any that write to the contextreg; however, at the
+	 *           moment, that is highly unconventional and perhaps even considered an error. If that
+	 *           becomes more common, or even recommended, then we can detect it and behave
+	 *           accordingly during interpretation (whether for execution or translation).
+	 */
+	@Override
+	public boolean modifiesContext() {
+		return false;
+	}
+
 	@Override
 	public boolean canInlinePcode() {
 		return true;

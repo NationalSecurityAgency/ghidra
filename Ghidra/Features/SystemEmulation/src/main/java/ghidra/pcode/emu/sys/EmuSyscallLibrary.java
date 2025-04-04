@@ -182,6 +182,11 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 		}
 
 		@Override
+		public boolean modifiesContext() {
+			return false;
+		}
+
+		@Override
 		public boolean canInlinePcode() {
 			return false;
 		}

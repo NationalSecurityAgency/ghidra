@@ -16,18 +16,22 @@
 package ghidra.pcode.emu;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.app.emulator.AdaptedMemoryState;
 import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emulate.*;
-import ghidra.pcode.exec.ConcretionError;
+import ghidra.pcode.emulate.callother.OpBehaviorOther;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.memstate.MemoryBank;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
 /**
@@ -85,6 +89,93 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 		@Override
 		public RegisterValue getContextRegisterValue() {
 			return getContext();
+		}
+	}
+
+	/**
+	 * For incorporating the state modifier's userop behaviors
+	 */
+	protected class ModifierUseropLibrary implements PcodeUseropLibrary<T> {
+
+		/**
+		 * A wrapper around {@link OpBehaviorOther}
+		 */
+		protected class ModifierUseropDefinition implements PcodeUseropDefinition<T> {
+			private final String name;
+			private final OpBehaviorOther behavior;
+
+			public ModifierUseropDefinition(String name, OpBehaviorOther behavior) {
+				this.name = name;
+				this.behavior = behavior;
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public int getInputCount() {
+				return -1;
+			}
+
+			@Override
+			public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
+					Varnode outVar, List<Varnode> inVars) {
+				behavior.evaluate(emulate, outVar, inVars.toArray(Varnode[]::new));
+			}
+
+			@Override
+			public boolean isFunctional() {
+				return false;
+			}
+
+			@Override
+			public boolean hasSideEffects() {
+				return true;
+			}
+
+			@Override
+			public boolean modifiesContext() {
+				return true;
+			}
+
+			@Override
+			public boolean canInlinePcode() {
+				return false;
+			}
+
+			@Override
+			public Method getJavaMethod() {
+				return null;
+			}
+
+			@Override
+			public PcodeUseropLibrary<?> getDefiningLibrary() {
+				return ModifierUseropLibrary.this;
+			}
+		}
+
+		Map<String, PcodeUseropDefinition<T>> userops;
+
+		private Map<String, PcodeUseropDefinition<T>> computeUserops() {
+			if (modifier == null) {
+				return Map.of();
+			}
+			Map<String, PcodeUseropDefinition<T>> userops = new HashMap<>();
+			for (Entry<Integer, OpBehaviorOther> entry : modifier.getPcodeOpMap().entrySet()) {
+				String name = language.getUserDefinedOpName(entry.getKey());
+				userops.put(name, new ModifierUseropDefinition(name, entry.getValue()));
+			}
+			return userops;
+		}
+
+		@Override
+		public Map<String, PcodeUseropDefinition<T>> getUserops() {
+			if (userops == null) {
+				userops = computeUserops();
+			}
+			return userops;
 		}
 	}
 
@@ -156,6 +247,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 	}
 
 	@Override
+	protected PcodeUseropLibrary<T> createUseropLibrary() {
+		return super.createUseropLibrary().compose(new ModifierUseropLibrary());
+	}
+
+	@Override
 	public void overrideCounter(Address counter) {
 		super.overrideCounter(counter);
 		if (modifier != null) {
@@ -170,13 +266,5 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 				instruction == null ? null : instruction.getAddress(), frame.copyCode(),
 				frame.getBranched(), getCounter());
 		}
-	}
-
-	@Override
-	protected boolean onMissingUseropDef(PcodeOp op, String opName) {
-		if (modifier != null) {
-			return modifier.executeCallOther(op);
-		}
-		return super.onMissingUseropDef(op, opName);
 	}
 }
