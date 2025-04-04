@@ -20,6 +20,8 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.util.SymbolPath;
@@ -218,6 +220,11 @@ public class SymbolNode extends SymbolTreeNode {
 	public void valueChanged(Object newValue) {
 		// since we allow a symbol rename to optionally include full namespace path
 		if (symbol.getName().equals(newValue) || symbol.getName(true).equals(newValue)) {
+			return;
+		}
+		
+		// Empty names are not allowed, do not change value.
+		if (StringUtils.isBlank((String) newValue)) {
 			return;
 		}
 
