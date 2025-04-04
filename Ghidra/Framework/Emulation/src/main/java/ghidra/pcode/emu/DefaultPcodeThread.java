@@ -171,9 +171,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		@Override
 		public void executeSleigh(String source) {
+			PcodeUseropLibrary<T> library = thread.getUseropLibrary();
 			PcodeProgram program =
-				SleighProgramCompiler.compileProgram(language, "exec", source, thread.library);
-			execute(program, thread.library);
+				SleighProgramCompiler.compileProgram(language, "exec", source, library);
+			execute(program, library);
 		}
 
 		@Override
@@ -224,7 +225,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final ThreadPcodeExecutorState<T> state;
 	protected final InstructionDecoder decoder;
-	protected final PcodeUseropLibrary<T> library;
+
+	// Delay, and compute lazily
+	private PcodeUseropLibrary<T> library;
 
 	protected final PcodeThreadExecutor<T> executor;
 	protected final Register pc;
@@ -255,7 +258,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		PcodeExecutorState<T> localState = machine.createLocalState(this);
 		this.state = createThreadState(sharedState, localState);
 		this.decoder = createInstructionDecoder(sharedState);
-		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
 		this.pc =
@@ -342,7 +344,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		decoder.branched(counter);
 	}
 
-	protected void writeCounter(Address counter) {
+	protected final void writeCounter(Address counter) {
 		setCounter(counter);
 		state.setVar(pc,
 			arithmetic.fromConst(counter.getAddressableWordOffset(), pc.getMinimumByteSize()));
@@ -366,12 +368,16 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		return context;
 	}
 
-	@Override
-	public void overrideContext(RegisterValue context) {
+	protected final void writeContext(RegisterValue context) {
 		assignContext(context);
 		state.setVar(contextreg, arithmetic.fromConst(
 			this.context.getUnsignedValueIgnoreMask(),
 			contextreg.getMinimumByteSize(), true));
+	}
+
+	@Override
+	public void overrideContext(RegisterValue context) {
+		writeContext(context);
 	}
 
 	@Override
@@ -421,7 +427,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		if (inj != null) {
 			instruction = null;
 			try {
-				executor.execute(inj, library);
+				executor.execute(inj, getUseropLibrary());
 			}
 			catch (PcodeExecutionException e) {
 				frame = e.getFrame();
@@ -439,7 +445,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			beginInstructionOrInject();
 		}
 		else if (!frame.isFinished()) {
-			executor.step(frame, library);
+			executor.step(frame, getUseropLibrary());
 		}
 		else {
 			advanceAfterFinished();
@@ -462,7 +468,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void stepPatch(String sleigh) {
 		PcodeProgram prog = getMachine().compileSleigh("patch", sleigh + ";");
-		executor.execute(prog, library);
+		executor.execute(prog, getUseropLibrary());
 	}
 
 	/**
@@ -523,14 +529,14 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			return;
 		}
 		if (frame.isFallThrough()) {
-			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
+			writeCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
 			RegisterValue ctx = new RegisterValue(contextreg, BigInteger.ZERO)
 					.combineValues(defaultContext.getDefaultValue(contextreg, counter))
 					.combineValues(defaultContext.getFlowValue(context))
 					.combineValues(getContextAfterCommits());
-			overrideContext(ctx);
+			writeContext(ctx);
 		}
 		postExecuteInstruction();
 		frame = null;
@@ -603,7 +609,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		PcodeProgram insProg = PcodeProgram.fromInstruction(instruction);
 		preExecuteInstruction();
 		try {
-			frame = executor.execute(insProg, library);
+			frame = executor.execute(insProg, getUseropLibrary());
 		}
 		catch (PcodeExecutionException e) {
 			frame = e.getFrame();
@@ -615,7 +621,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void finishInstruction() {
 		assertMidInstruction();
-		executor.finish(frame, library);
+		executor.finish(frame, getUseropLibrary());
 		advanceAfterFinished();
 	}
 
@@ -669,6 +675,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public PcodeUseropLibrary<T> getUseropLibrary() {
+		if (library == null) {
+			library = createUseropLibrary();
+		}
 		return library;
 	}
 
@@ -697,7 +706,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void inject(Address address, String source) {
 		PcodeProgram pcode = SleighProgramCompiler.compileProgram(
-			language, "thread_inject:" + address, source, library);
+			language, "thread_inject:" + address, source, getUseropLibrary());
 		injects.put(address, pcode);
 	}
 

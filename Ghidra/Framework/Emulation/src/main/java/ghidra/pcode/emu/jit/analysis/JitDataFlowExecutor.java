@@ -18,9 +18,9 @@ package ghidra.pcode.emu.jit.analysis;
 import java.util.Map;
 import java.util.Objects;
 
-import ghidra.pcode.emu.jit.JitPassage.Branch;
-import ghidra.pcode.emu.jit.JitPassage.IndBranch;
+import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.op.*;
+import ghidra.pcode.emu.jit.var.JitFailVal;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -55,7 +55,7 @@ import ghidra.program.model.pcode.Varnode;
  */
 class JitDataFlowExecutor extends PcodeExecutor<JitVal> {
 	private final JitDataFlowModel dfm;
-	private final Map<PcodeOp, Branch> branches;
+	private final Map<PcodeOp, PBranch> branches;
 
 	/**
 	 * Construct an executor from the given context
@@ -85,7 +85,7 @@ class JitDataFlowExecutor extends PcodeExecutor<JitVal> {
 	 * @param op the op
 	 */
 	protected void recordBranch(PcodeOp op) {
-		Branch branch = Objects.requireNonNull(branches.get(op));
+		RBranch branch = (RBranch) Objects.requireNonNull(branches.get(op));
 		dfm.notifyOp(new JitBranchOp(op, branch));
 	}
 
@@ -100,9 +100,17 @@ class JitDataFlowExecutor extends PcodeExecutor<JitVal> {
 	 * @param op the op
 	 */
 	protected void recordConditionalBranch(PcodeOp op) {
-		Branch branch = Objects.requireNonNull(branches.get(op));
-		Varnode condVar = getConditionalBranchPredicate(op);
-		JitVal cond = state.getVar(condVar, reason);
+		RBranch branch = (RBranch) Objects.requireNonNull(branches.get(op));
+
+		final JitVal cond;
+		if (op instanceof ExitPcodeOp) {
+			cond = JitFailVal.INSTANCE;
+		}
+		else {
+			Varnode condVar = getConditionalBranchPredicate(op);
+			cond = state.getVar(condVar, reason);
+		}
+
 		dfm.notifyOp(new JitCBranchOp(op, branch, cond));
 	}
 
@@ -118,7 +126,7 @@ class JitDataFlowExecutor extends PcodeExecutor<JitVal> {
 	protected void recordIndirectBranch(PcodeOp op) {
 		Varnode offVar = getIndirectBranchTarget(op);
 		JitVal offset = state.getVar(offVar, reason);
-		IndBranch branch = (IndBranch) Objects.requireNonNull(branches.get(op));
+		RIndBranch branch = (RIndBranch) Objects.requireNonNull(branches.get(op));
 		dfm.notifyOp(new JitBranchIndOp(op, offset, branch));
 	}
 

@@ -13,45 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.emu.jit.op;
+package ghidra.pcode.emu.jit.gen.var;
 
-import java.util.List;
+import org.objectweb.asm.MethodVisitor;
 
-import ghidra.pcode.emu.jit.JitPassage.RBranch;
+import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
-import ghidra.pcode.emu.jit.var.JitVal;
-import ghidra.program.model.pcode.PcodeOp;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.var.JitFailVal;
 
 /**
- * The use-def node for a {@link PcodeOp#BRANCH}.
- * 
- * @param op the p-code op
- * @param branch the branch record created for the p-code op
+ * The generator that is forbidden from actually generating.
  */
-public record JitBranchOp(PcodeOp op, RBranch branch) implements JitOp {
+public enum FailValGen implements ValGen<JitFailVal> {
+	/** Singleton */
+	GEN;
 
 	@Override
-	public boolean canBeRemoved() {
-		return false;
+	public void generateValInitCode(JitCodeGenerator gen, JitFailVal v, MethodVisitor iv) {
 	}
 
 	@Override
-	public void link() {
-		// Nothing
-	}
-
-	@Override
-	public void unlink() {
-		// Nothing
-	}
-
-	@Override
-	public List<JitVal> inputs() {
-		return List.of();
-	}
-
-	@Override
-	public JitTypeBehavior typeFor(int position) {
+	public JitType generateValReadCode(JitCodeGenerator gen, JitFailVal v,
+			JitTypeBehavior typeReq, MethodVisitor rv) {
 		throw new AssertionError();
 	}
 }

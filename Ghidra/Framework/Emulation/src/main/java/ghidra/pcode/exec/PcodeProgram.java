@@ -247,4 +247,11 @@ public class PcodeProgram {
 	public String format() {
 		return format(false);
 	}
+
+	public String getUseropName(int opNo) {
+		if (opNo < language.getNumberOfUserDefinedOpNames()) {
+			return language.getUserDefinedOpName(opNo);
+		}
+		return useropNames.get(opNo);
+	}
 }

@@ -139,7 +139,9 @@ public interface GenConsts {
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(byte[].class), Type.INT_TYPE);
 	public static final String MDESC_JIT_COMPILED_PASSAGE__READ_LONGX =
 		Type.getMethodDescriptor(Type.LONG_TYPE, Type.getType(byte[].class), Type.INT_TYPE);
-	public static final String MDESC_JIT_COMPILED_PASSAGE__RETIRE_COUNTER_AND_CONTEXT =
+	public static final String MDESC_JIT_COMPILED_PASSAGE__WRITE_COUNTER_AND_CONTEXT =
+		Type.getMethodDescriptor(Type.VOID_TYPE, Type.LONG_TYPE, Type.getType(RegisterValue.class));
+	public static final String MDESC_JIT_COMPILED_PASSAGE__SET_COUNTER_AND_CONTEXT =
 		Type.getMethodDescriptor(Type.VOID_TYPE, Type.LONG_TYPE, Type.getType(RegisterValue.class));
 	public static final String MDESC_JIT_COMPILED_PASSAGE__S_CARRY_INT_RAW =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE);

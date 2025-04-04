@@ -27,6 +27,7 @@ import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.*;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowState;
 import ghidra.pcode.emu.jit.op.JitNopOp;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -79,7 +80,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	private final Map<Address, RegisterValue> futCtx = new HashMap<>();
 
 	final List<PcodeOp> opsForThisStep = new ArrayList<>();
-	private final List<Branch> branchesForThisStep = new ArrayList<>();
+	private final List<SBranch> branchesForThisStep = new ArrayList<>();
 
 	private final Map<PcodeOp, DecodedPcodeOp> rewrites = new HashMap<>();
 
@@ -311,7 +312,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 */
 	@Override
 	protected void branchToAddress(PcodeOp op, Address target) {
-		branchesForThisStep.add(new ExtBranch(op, takeTargetContext(target)));
+		branchesForThisStep.add(new SExtBranch(op, takeTargetContext(target)));
 	}
 
 	/**
@@ -331,11 +332,11 @@ class DecoderExecutor extends PcodeExecutor<Object>
 			if (termNop == null) {
 				termNop = new NopPcodeOp(at, tgtSeq);
 			}
-			branchesForThisStep.add(new IntBranch(op, termNop, false));
+			branchesForThisStep.add(new SIntBranch(op, termNop, false));
 		}
 		else {
 			PcodeOp to = frame.getCode().get(op.getSeqnum().getTime() + relative);
-			branchesForThisStep.add(new IntBranch(op, rewrite(to), false));
+			branchesForThisStep.add(new SIntBranch(op, rewrite(to), false));
 		}
 	}
 
@@ -351,7 +352,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 */
 	@Override
 	protected void doExecuteIndirectBranch(PcodeOp op, PcodeFrame frame) {
-		branchesForThisStep.add(new IndBranch(op, flow));
+		branchesForThisStep.add(new SIndBranch(op, flow));
 	}
 
 	/**
@@ -450,9 +451,9 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * reachability test between the two. The step has fall through if and only if a path is found.
 	 * 
 	 * @param from the instruction's or inject's p-code
-	 * @return true if the step falls through.
+	 * @return the reachability of the fall-through flow
 	 */
-	public boolean checkFallthroughAndAccumulate(PcodeProgram from) {
+	public Reachability checkFallthroughAndAccumulate(PcodeProgram from) {
 		if (instruction instanceof DecodeErrorInstruction) {
 			stride.opsForStride.addAll(opsForThisStep);
 			for (Branch branch : branchesForThisStep) {
@@ -461,28 +462,37 @@ class DecoderExecutor extends PcodeExecutor<Object>
 					default -> throw new AssertionError();
 				}
 			}
-			return false;
+			return null;
 		}
 		if (opsForThisStep.isEmpty()) {
-			return true;
+			return Reachability.WITHOUT_CTXMOD;
 		}
 
-		ExitPcodeOp probeOp = new ExitPcodeOp(AddrCtx.NOWHERE);
+		ExitPcodeOp probeOp = ExitPcodeOp.exit(AddrCtx.NOWHERE);
 		opsForThisStep.add(probeOp);
-		ExtBranch probeBranch = new ExtBranch(probeOp, AddrCtx.NOWHERE);
+		SExtBranch probeBranch = new SExtBranch(probeOp, AddrCtx.NOWHERE);
 		branchesForThisStep.add(probeBranch);
 
 		PcodeProgram program = new PcodeProgram(from, opsForThisStep);
-		BlockSplitter splitter = new BlockSplitter(program);
+		BlockSplitter splitter = new BlockSplitter(program) {
+			@Override
+			protected IntBranch newFallthroughIntBranch(PcodeOp from, PcodeOp to) {
+				return new SIntBranch(from, to, true);
+			}
+		};
 		splitter.addBranches(branchesForThisStep);
 		SequencedMap<PcodeOp, JitBlock> blocks = splitter.splitBlocks();
 		JitBlock entry = blocks.firstEntry().getValue();
 		JitBlock exit = blocks.lastEntry().getValue();
 
-		Set<JitBlock> reachable = new HashSet<>();
-		collectReachable(reachable, entry);
+		Map<JitBlock, Reachability> reachable = new HashMap<>();
+		collectReachable(reachable, entry, Reachability.WITHOUT_CTXMOD);
 
 		for (JitBlock block : blocks.values()) {
+			Reachability reach = reachable.get(block);
+			if (reach == null) {
+				continue;
+			}
 			for (PcodeOp op : block.getCode()) {
 				if (op != probeOp) {
 					stride.opsForStride.add(op);
@@ -490,37 +500,95 @@ class DecoderExecutor extends PcodeExecutor<Object>
 			}
 			for (IntBranch branch : block.branchesFrom()) {
 				if (!branch.isFall()) {
-					stride.passage.internalBranches.put(branch.from(), branch);
+					switch (branch) {
+						case SIntBranch ib -> stride.passage.internalBranches.put(ib.from(),
+							ib.withReach(reach));
+						default -> throw new AssertionError();
+					}
 				}
 			}
 			for (Branch branch : block.branchesOut()) {
 				if (branch != probeBranch) {
 					switch (branch) {
-						case ExtBranch eb -> stride.passage.flowTo(eb);
-						default -> stride.passage.otherBranches.put(branch.from(), branch);
+						case SExtBranch eb -> stride.passage.flowTo(eb.withReach(reach));
+						case SIndBranch ib -> stride.passage.otherBranches.put(ib.from(),
+							ib.withReach(reach));
+						case PBranch pb -> stride.passage.otherBranches.put(pb.from(), pb);
+						default -> throw new AssertionError();
 					}
 				}
 			}
 		}
 
-		return reachable.contains(exit);
+		return reachable.get(exit);
+	}
+
+	private boolean blockModifiesContext(JitBlock block) {
+		for (PcodeOp op : block.getCode()) {
+			if (op.getOpcode() != PcodeOp.CALLOTHER) {
+				continue;
+			}
+			String name = block.getUseropName(getCallotherOpNumber(op));
+			if (name == null) {
+				continue;
+			}
+			PcodeUseropDefinition<Object> userop = stride.passage.library().getUserops().get(name);
+			if (userop == null) {
+				continue;
+			}
+			if (userop.modifiesContext()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
 	 * The reachability test mentioned in {@link #checkFallthroughAndAccumulate(PcodeProgram)}
 	 * 
 	 * <p>
-	 * Collects the set of blocks reachable from {@code cur} into the given mutable set.
+	 * Collects the reachability of blocks reachable from {@code cur} into the given mutable map.
+	 * The value indicates whether or not context modifications can occur along the paths to the
+	 * block (key). If a block is not in the map, it is not reachable.
 	 * 
-	 * @param into a mutable set for collecting reachable blocks
+	 * @param into a mutable map for collecting reachable blocks
 	 * @param cur the source block, or an intermediate during recursion
+	 * @param the computed reachability of the source block. Use {@link Reachability#WITHOUT_CTXMOD}
+	 *            for the seed.
 	 */
-	private void collectReachable(Set<JitBlock> into, JitBlock cur) {
-		if (!into.add(cur)) {
+	private void collectReachable(Map<JitBlock, Reachability> into, JitBlock cur,
+			Reachability how) {
+		Reachability curHow = into.get(cur);
+
+		/**
+		 * Context-modifying userops are all considered hazards, but we shouldn't abort until after
+		 * the instruction. If the exit is reachable without passing through a context modification,
+		 * then we're good to proceed. Otherwise, no. Additionally, we're going to check all
+		 * branches, direct or indirect, to see if they are reachable without context modification.
+		 * If they are, then we treat them as usual. If not, then they will be treated as indirect,
+		 * and we'll neglect to "retire" the context, because presumably, the userop will already
+		 * have caused that retirement and modified it in place.
+		 * 
+		 * If one branch is reachable by multiple paths where some require context modification and
+		 * some do not, we'll keep a local variable at runtime to track whether a context-modifying
+		 * userop has actually been executed. We'll generate code to check this variable at the
+		 * branch site and treat it as a hazard if it is set.
+		 */
+		if (blockModifiesContext(cur)) {
+			// Not combine. If we're MAYBE here, we still become WITH_CTX.
+			how = Reachability.WITH_CTXMOD;
+		}
+		else {
+			how = how.combine(curHow);
+		}
+
+		if (how == curHow) {
 			return;
 		}
+		into.put(cur, how);
+
 		for (BlockFlow flow : cur.flowsFrom().values()) {
-			collectReachable(into, flow.to());
+			collectReachable(into, flow.to(), how);
 		}
 	}
 

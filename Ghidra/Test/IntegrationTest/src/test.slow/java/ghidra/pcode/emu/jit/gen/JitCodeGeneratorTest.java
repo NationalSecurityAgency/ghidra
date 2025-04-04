@@ -2213,12 +2213,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_TOYBE64, 0x00400000, """
 				imm r0,#123
 				add r0,#7
-				""",
-			Map.ofEntries(
-				Map.entry(0x00400002L, """
-						r1 = sleigh_userop(r0, 4:8);
-						emu_exec_decoded();
-						""")));
+				""", Map.ofEntries(
+			Map.entry(0x00400002L, """
+					r1 = sleigh_userop(r0, 4:8);
+					emu_exec_decoded();
+					""")));
 
 		tr.runDecodeErr(0x00400004);
 		assertEquals(123 + 7, tr.getLongRegVal("r0"));
@@ -2230,12 +2229,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_TOYBE64, 0x00400000, """
 				imm r0,#123
 				add r0,#7
-				""",
-			Map.ofEntries(
-				Map.entry(0x00400002L, """
-						r1 = sleigh_userop(r0, 4:8);
-						emu_skip_decoded();
-						""")));
+				""", Map.ofEntries(
+			Map.entry(0x00400002L, """
+					r1 = sleigh_userop(r0, 4:8);
+					emu_skip_decoded();
+					""")));
 
 		tr.runDecodeErr(0x00400004);
 		assertEquals(123, tr.getLongRegVal("r0"));
@@ -2259,5 +2257,58 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 			return "sCarryLongRaw".equals(mi.name);
 		}).count();
 		assertEquals(1, countSCarrys);
+	}
+
+	@Test
+	public void testCtxHazardousFallthrough() throws Exception {
+		Translation tr = translateLang(ID_ARMv8LE, 0x00400000, """
+				mov r0,#6
+				mov r1,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					setISAMode(1:1);
+					emu_exec_decoded();
+					""")));
+
+		tr.runClean();
+		assertEquals(6, tr.getLongRegVal("r0"));
+		// Should not execute second instruction, because of injected ctx change
+		assertEquals(0, tr.getLongRegVal("r1"));
+	}
+
+	@Test
+	public void testCtxMaybeHazardousFallthrough() throws Exception {
+		/**
+		 * For this test to produce the "MAYBE" case, the multiple paths have to be
+		 * <em>internal</em> to an instruction (or inject). All that logic is only applied on an
+		 * instruction-by-instruction basis.
+		 */
+		Translation tr = translateLang(ID_ARMv8LE, 0x00400000, """
+				mov r0,#6
+				mov r1,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					if (!ZR) goto <skip>;
+					  ISAModeSwitch = 1;
+					  setISAMode(ISAModeSwitch);
+					<skip>
+					emu_exec_decoded();
+					""")));
+
+		tr.setLongRegVal("r1", 0); // Reset
+		tr.setLongRegVal("ZR", 0);
+		// Since ctx wasn't touched at runtime, we fall out of program
+		tr.runDecodeErr(0x00400008);
+		assertEquals(6, tr.getLongRegVal("r0"));
+		assertEquals(7, tr.getLongRegVal("r1"));
+		assertEquals(0, tr.getLongRegVal("ISAModeSwitch"));
+
+		tr.setLongRegVal("r1", 0); // Reset
+		tr.setLongRegVal("ZR", 1);
+		// Hazard causes exit before 2nd instruction
+		tr.runClean();
+		assertEquals(6, tr.getLongRegVal("r0"));
+		assertEquals(0, tr.getLongRegVal("r1"));
+		assertEquals(1, tr.getLongRegVal("ISAModeSwitch"));
 	}
 }

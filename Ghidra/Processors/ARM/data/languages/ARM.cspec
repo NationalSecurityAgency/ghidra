@@ -136,6 +136,15 @@
       </unaffected>
     </prototype>
   
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <!-- NOP -->
+      <body><![CDATA[
+        r0 = r0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
+  
   <callfixup name="switch8_r3">
     <target name="switch8_r3"/>
     <target name="__ARM_common_switch8"/>

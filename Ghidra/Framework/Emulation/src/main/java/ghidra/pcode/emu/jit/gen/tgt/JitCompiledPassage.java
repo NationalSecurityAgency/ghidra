@@ -20,7 +20,6 @@ import java.util.*;
 
 import org.objectweb.asm.Opcodes;
 
-import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.jit.JitCompiler;
 import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.JitPcodeThread;
@@ -1380,21 +1379,34 @@ public interface JitCompiledPassage {
 	 * Set the bound thread's program counter and decode context.
 	 * 
 	 * <p>
-	 * This is called during retirement, i.e., upon exiting a passage or entering a hazard. This
-	 * just converts things to the right type and invokes
-	 * {@link PcodeThread#overrideCounter(Address)} and
-	 * {@link PcodeThread#overrideContext(RegisterValue)}.
+	 * This is called during retirement, i.e., upon exiting a passage. This just converts things to
+	 * the right type and invokes
+	 * {@link JitPcodeThread#writeCounterAndContext(Address, RegisterValue)}.
 	 * 
 	 * @param counter the offset of the next instruction to execute
 	 * @param context the decode context for the next instruction
 	 */
-	default void retireCounterAndContext(long counter, RegisterValue context) {
+	default void writeCounterAndContext(long counter, RegisterValue context) {
 		JitPcodeThread thread = thread();
 		Address pc = thread.getLanguage().getDefaultSpace().getAddress(counter);
-		thread.overrideCounter(pc);
-		if (context != null) {
-			thread.overrideContext(context);
-		}
+		thread.writeCounterAndContext(pc, context);
+	}
+
+	/**
+	 * Set the bound thread's program counter and decode context, without writing it to the machine
+	 * state.
+	 * 
+	 * <p>
+	 * This is called during retirement upon entering a hazard. This just converts things to the
+	 * right type and invokes {@link JitPcodeThread#setCounterAndContext(Address, RegisterValue)}.
+	 * 
+	 * @param counter the offset of the next instruction to execute
+	 * @param context the decode context for the next instruction
+	 */
+	default void setCounterAndContext(long counter, RegisterValue context) {
+		JitPcodeThread thread = thread();
+		Address pc = thread.getLanguage().getDefaultSpace().getAddress(counter);
+		thread.setCounterAndContext(pc, context);
 	}
 
 	/**
