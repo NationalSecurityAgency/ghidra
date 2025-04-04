@@ -188,6 +188,19 @@ public interface PcodeUseropLibrary<T> {
 		boolean hasSideEffects();
 
 		/**
+		 * Indicates that this userop may modify the decode context.
+		 * 
+		 * <p>
+		 * This means that the userop may set a field in {@code contextreg}, which could thus affect
+		 * how subsequent instructions are decoded. Executors which decode ahead will have to
+		 * consider this effect.
+		 * 
+		 * @return true if this can modify the context.
+		 * @see PcodeUserop#modifiesContext()
+		 */
+		boolean modifiesContext();
+
+		/**
 		 * Indicates whether or not this userop definition produces p-code suitable for inlining in
 		 * place of its invocation.
 		 * 

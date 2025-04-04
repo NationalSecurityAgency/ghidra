@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,12 @@ import java.math.BigInteger;
 
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
+import ghidra.pcode.emulate.callother.OpBehaviorOther;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
@@ -45,74 +46,77 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 			aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
 		}
 
+		registerPcodeOpBehavior("setISAMode", new SetISAModeOpBehavior());
+
 		/**
 		 * We could registerPcodeOpBehavior for one or more of the following pcodeop's:
-		 *  
-		  Absolute
-		  ClearExclusiveLocal
-		  DataMemoryBarrier
-		  DataSynchronizationBarrier
-		  ExclusiveAccess
-		  HintDebug
-		  HintPreloadData
-		  HintPreloadDataForWrite
-		  HintPreloadInstruction
-		  HintYield
-		  IndexCheck
-		  InstructionSynchronizationBarrier
-		  ReverseBitOrder
-		  SendEvent
-		  SignedDoesSaturate
-		  SignedSaturate
-		  UnsignedDoesSaturate
-		  UnsignedSaturate
-		  WaitForEvent
-		  WaitForInterrupt
-		  coprocessor_function
-		  coprocessor_function2
-		  coprocessor_load
-		  coprocessor_load2
-		  coprocessor_loadlong
-		  coprocessor_loadlong2
-		  coprocessor_movefrom
-		  coprocessor_movefrom2
-		  coprocessor_moveto
-		  coprocessor_moveto2
-		  coprocessor_store
-		  coprocessor_store2
-		  coprocessor_storelong
-		  coprocessor_storelong2
-		  disableDataAbortInterrupts
-		  disableFIQinterrupts
-		  disableIRQinterrupts
-		  enableDataAbortInterrupts
-		  enableFIQinterrupts
-		  enableIRQinterrupts
-		  hasExclusiveAccess
-		  isCurrentModePrivileged
-		  isFIQinterruptsEnabled
-		  isIRQinterruptsEnabled
-		  isThreadMode
-		  jazelle_branch
-		  setAbortMode
-		  setFIQMode
-		  setIRQMode
-		  setSupervisorMode
-		  setSystemMode
-		  setThreadModePrivileged
-		  setUndefinedMode
-		  setUserMode
-		  software_breakpoint
-		  software_interrupt
-		 *
+		 * <p>
+		 * Absolute<br/>
+		 * ClearExclusiveLocal<br/>
+		 * DataMemoryBarrier<br/>
+		 * DataSynchronizationBarrier<br/>
+		 * ExclusiveAccess<br/>
+		 * HintDebug<br/>
+		 * HintPreloadData<br/>
+		 * HintPreloadDataForWrite<br/>
+		 * HintPreloadInstruction<br/>
+		 * HintYield <br/>
+		 * IndexCheck<br/>
+		 * InstructionSynchronizationBarrier<br/>
+		 * ReverseBitOrder<br/>
+		 * SendEvent<br/>
+		 * SignedDoesSaturate<br/>
+		 * SignedSaturate<br/>
+		 * UnsignedDoesSaturate<br/>
+		 * UnsignedSaturate<br/>
+		 * WaitForEvent<br/>
+		 * WaitForInterrupt<br/>
+		 * coprocessor_function<br/>
+		 * coprocessor_function2<br/>
+		 * coprocessor_load<br/>
+		 * coprocessor_load2<br/>
+		 * coprocessor_loadlong<br/>
+		 * coprocessor_loadlong2<br/>
+		 * coprocessor_movefrom<br/>
+		 * coprocessor_movefrom2<br/>
+		 * coprocessor_moveto<br/>
+		 * coprocessor_moveto2<br/>
+		 * coprocessor_store<br/>
+		 * coprocessor_store2<br/>
+		 * coprocessor_storelong<br/>
+		 * coprocessor_storelong2<br/>
+		 * disableDataAbortInterrupts<br/>
+		 * disableFIQinterrupts<br/>
+		 * disableIRQinterrupts<br/>
+		 * enableDataAbortInterrupts<br/>
+		 * enableFIQinterrupts<br/>
+		 * enableIRQinterrupts<br/>
+		 * hasExclusiveAccess<br/>
+		 * isCurrentModePrivileged<br/>
+		 * isFIQinterruptsEnabled<br/>
+		 * isIRQinterruptsEnabled<br/>
+		 * isThreadMode<br/>
+		 * jazelle_branch<br/>
+		 * setAbortMode<br/>
+		 * setFIQMode<br/>
+		 * setIRQMode<br/>
+		 * setSupervisorMode<br/>
+		 * setSystemMode<br/>
+		 * setThreadModePrivileged<br/>
+		 * setUndefinedMode<br/>
+		 * setUserMode<br/>
+		 * software_breakpoint<br/>
+		 * software_interrupt<br/>
 		 */
 	}
 
 	/**
-	 * Initialize TB register based upon context-register state before first instruction is executed.
+	 * Initialize TB register based upon context-register state before first instruction is
+	 * executed.
 	 */
 	@Override
-	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
+	public void initialExecuteCallback(Emulate emulate, Address current_address,
+			RegisterValue contextRegisterValue) throws LowlevelError {
 		if (TModeReg == null) {
 			return; // Thumb mode not supported
 		}
@@ -127,46 +131,28 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 		emu.getMemoryState().setValue(TBreg, tModeValue);
 	}
 
-	/**
-	 * Handle odd addresses which may occur when jumping/returning indirectly
-	 * to Thumb mode.  It is assumed that language will properly handle
-	 * context changes during the flow of execution, we need only fix
-	 * the current program counter.
-	 */
-	@Override
-	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress,
-			PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress)
-			throws LowlevelError {
-		if (TModeReg == null) {
-			return; // Thumb mode not supported
-		}
-		if (lastPcodeIndex < 0) {
-			// ignore fall-through condition
-			return;
-		}
-		int lastOp = lastExecutePcode[lastPcodeIndex].getOpcode();
-		if (lastOp != PcodeOp.BRANCH && lastOp != PcodeOp.CBRANCH && lastOp != PcodeOp.BRANCHIND &&
-			lastOp != PcodeOp.CALL && lastOp != PcodeOp.CALLIND && lastOp != PcodeOp.RETURN) {
-			// only concerned with Branch, Call or Return ops
-			return;
-		}
-		long tbValue = emu.getMemoryState().getValue(TBreg);
-		if (tbValue == 1) {
-			// Thumb mode
-			emu.setContextRegisterValue(tMode); // change context to be consistent with TB value
-			if ((currentAddress.getOffset() & 0x1) == 1) {
-				emulate.setExecuteAddress(currentAddress.previous());
+	class SetISAModeOpBehavior implements OpBehaviorOther {
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			Address currentAddress = emu.getExecuteAddress();
+			long tbValue = emu.getMemoryState().getValue(TBreg);
+			if (tbValue == 1) {
+				// Thumb mode
+				emu.setContextRegisterValue(tMode); // change context to be consistent with TB value
+				if ((currentAddress.getOffset() & 0x1) == 1) {
+					emu.setExecuteAddress(currentAddress.previous());
+				}
 			}
-		}
-		else if (tbValue == 0) {
+			else if (tbValue == 0) {
 
-			if ((currentAddress.getOffset() & 0x1) == 1) {
-				throw new LowlevelError(
-					"Flow to odd address occurred without setting TB register (Thumb mode)");
+				if ((currentAddress.getOffset() & 0x1) == 1) {
+					throw new LowlevelError(
+						"Flow to odd address occurred without setting TB register (Thumb mode)");
+				}
+
+				// ARM mode
+				emu.setContextRegisterValue(aMode); // change context to be consistent with TB value
 			}
-
-			// ARM mode
-			emu.setContextRegisterValue(aMode); // change context to be consistent with TB value
 		}
 	}
 }

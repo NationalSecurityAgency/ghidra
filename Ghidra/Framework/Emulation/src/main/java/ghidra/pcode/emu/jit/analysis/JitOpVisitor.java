@@ -190,6 +190,7 @@ public interface JitOpVisitor {
 	default void visitVal(JitVal v) {
 		switch (v) {
 			case JitConstVal constVal -> visitConstVal(constVal);
+			case JitFailVal failVal -> visitFailVal(failVal);
 			case JitVar jVar -> visitVar(jVar);
 			default -> throw new AssertionError();
 		}
@@ -217,9 +218,17 @@ public interface JitOpVisitor {
 	/**
 	 * Visit a {@link JitConstVal}
 	 * 
-	 * @param constVal the variable visited
+	 * @param constVal the value visited
 	 */
 	default void visitConstVal(JitConstVal constVal) {
+	}
+
+	/**
+	 * Visit a {@link JitFailVal}
+	 * 
+	 * @param failVal the value visited
+	 */
+	default void visitFailVal(JitFailVal failVal) {
 	}
 
 	/**

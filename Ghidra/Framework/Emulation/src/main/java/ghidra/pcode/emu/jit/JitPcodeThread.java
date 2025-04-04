@@ -27,6 +27,7 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.ProgramContext;
 
 /**
@@ -273,6 +274,42 @@ public class JitPcodeThread extends BytesPcodeThread {
 	public void count(int instructions, int trailingOps) {
 		if (isSuspended()) {
 			throw new SuspendedPcodeExecutionException(null, null);
+		}
+	}
+
+	/**
+	 * Write the given counter and context to the emulator and its machine state
+	 * 
+	 * @param counter the counter
+	 * @param context the context
+	 */
+	public void writeCounterAndContext(Address counter, RegisterValue context) {
+		// Not overrideCounter/Context. Things can override those.
+		writeCounter(counter);
+		if (context != null) {
+			writeContext(context);
+		}
+	}
+
+	/**
+	 * Set the emulator's counter and context without affecting its machine state
+	 * 
+	 * @param counter the counter
+	 * @param context the context
+	 * @implNote the reasons for doing this are a bit nuanced and they deal in the setting of the pc
+	 *           by p-code ops whilst it also makes hazardous userop invocations. The intended value
+	 *           of the pc may not survive if it gets clobbered with the current counter before
+	 *           execution reaches the "goto pc".
+	 */
+	public void setCounterAndContext(Address counter, RegisterValue context) {
+		setCounter(counter);
+		if (context != null) {
+			/**
+			 * TODO: Later this might become assignContext, but only after we establish conventions
+			 * for accessing context in userops. For now, state modifiers expect the contextreg to
+			 * be in the machine state.
+			 */
+			writeContext(context);
 		}
 	}
 }
