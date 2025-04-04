@@ -45,6 +45,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -861,8 +862,20 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		return ReplyCreateTrace.getDefaultInstance();
 	}
 
+	protected static String sanitizeName(String name) {
+		StringBuffer buf = new StringBuffer(name.length());
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			buf.append(LocalFileSystem.isValidNameCharacter(c) ? c : '_');
+		}
+		return buf.toString();
+	}
+
 	protected static List<String> sanitizePath(String path) {
-		return Stream.of(path.split("\\\\|/")).filter(p -> !p.isBlank()).toList();
+		return Stream.of(path.split("\\\\|/"))
+				.filter(n -> !n.isBlank())
+				.map(n -> sanitizeName(n))
+				.toList();
 	}
 
 	protected ReplyDeleteBytes handleDeleteBytes(RequestDeleteBytes req)

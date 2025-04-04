@@ -1698,8 +1698,8 @@ def should_query_regions() -> bool:
 
 def put_regions() -> None:
     regions = []
+    proc = util.get_process()
     if should_query_regions():
-        proc = util.get_process()
         try:
             regions = util.REGION_INFO_READER.get_regions()
         except Exception:
