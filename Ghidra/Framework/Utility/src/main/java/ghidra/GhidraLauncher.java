@@ -404,11 +404,8 @@ public class GhidraLauncher {
 			if (external1 && external2) {
 				return nameComparison;
 			}
-			if (external1) {
-				return -1;
-			}
-			if (external2) {
-				return 1;
+			if (external1 || external2) {
+				return Boolean.compare(external1, external2);
 			}
 
 			// Now handle modules that are internal to the Ghidra installation.
