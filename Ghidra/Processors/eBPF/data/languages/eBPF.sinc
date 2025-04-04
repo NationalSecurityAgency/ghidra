@@ -12,6 +12,9 @@ define space syscall type=ram_space size=4;
 
 define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  PC ];
 
+# Special internal register for byte swap instructions which depend on host CPU endianness: 0 when Little Endian, 1 when Big Endian
+define register offset=0x100 size=1 [ big_endian_host ];
+
 # Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
 define token instr(64)
     imm=(32, 63) signed
@@ -105,31 +108,63 @@ DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
 #Bytewasp instructions
 ###############################################################################
 # BPF_ALU   | BPF_K   | BPF_END
-:LE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 { dst=((dst) >> 8) | ((dst) << 8); }
-:LE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 { dst=((dst) >> 24) | (((dst) & 0x00FF0000) >> 8)  | (((dst) & 0x0000FF00) << 8) | ((dst) << 24); }
+:LE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 {
+    if (big_endian_host) goto <swap>;
+        dst = zext(dst:2);
+        goto <next>;
+    <swap>
+        dst = ((dst & 0xff00) >> 8) | ((dst & 0x00ff) << 8);
+    <next>
+}
+:LE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 {
+    if (big_endian_host) goto <swap>;
+        dst = zext(dst:4);
+        goto <next>;
+    <swap>
+        dst = ((dst & 0xff000000) >> 24) | (((dst) & 0x00ff0000) >> 8) | (((dst) & 0x0000ff00) << 8) | ((dst & 0x000000ff) << 24);
+    <next>
+}
 :LE64 dst  is imm=0x40 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 {
-    dst=( (dst << 56) & 0xff00000000000000 ) |
-    ( (dst << 40) & 0x00ff000000000000 ) |
-    ( (dst << 24) & 0x0000ff0000000000 ) |
-    ( (dst <<  8) & 0x000000ff00000000 ) |
-    ( (dst >>  8) & 0x00000000ff000000 ) |
-    ( (dst >> 24) & 0x0000000000ff0000 ) |
-    ( (dst >> 40) & 0x000000000000ff00 ) |
-    ( (dst >> 56) & 0x00000000000000ff );
+    if (!big_endian_host) goto <next>;
+    dst = ((dst << 56) & 0xff00000000000000) |
+        ((dst << 40) & 0x00ff000000000000) |
+        ((dst << 24) & 0x0000ff0000000000) |
+        ((dst <<  8) & 0x000000ff00000000) |
+        ((dst >>  8) & 0x00000000ff000000) |
+        ((dst >> 24) & 0x0000000000ff0000) |
+        ((dst >> 40) & 0x000000000000ff00) |
+        ((dst >> 56) & 0x00000000000000ff);
+    <next>
 }
 
 # BPF_ALU   | BPF_X   | BPF_END
-:BE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 { dst=((dst) >> 8) | ((dst) << 8); }
-:BE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 { dst=((dst) >> 24) | (((dst) & 0x00FF0000) >> 8)  | (((dst) & 0x0000FF00) << 8) | ((dst) << 24); }
+:BE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 {
+    if (!big_endian_host) goto <swap>;
+        dst = zext(dst:2);
+        goto <next>;
+    <swap>
+        dst = ((dst & 0xff00) >> 8) | ((dst & 0x00ff) << 8);
+    <next>
+}
+:BE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 {
+    if (!big_endian_host) goto <swap>;
+        dst = zext(dst:4);
+        goto <next>;
+    <swap>
+        dst = ((dst & 0xff000000) >> 24) | (((dst) & 0x00ff0000) >> 8) | (((dst) & 0x0000ff00) << 8) | ((dst & 0x000000ff) << 24);
+    <next>
+}
 :BE64 dst  is imm=0x40 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 {
-    dst=( (dst << 56) & 0xff00000000000000 ) |
-    ( (dst << 40) & 0x00ff000000000000 ) |
-    ( (dst << 24) & 0x0000ff0000000000 ) |
-    ( (dst <<  8) & 0x000000ff00000000 ) |
-    ( (dst >>  8) & 0x00000000ff000000 ) |
-    ( (dst >> 24) & 0x0000000000ff0000 ) |
-    ( (dst >> 40) & 0x000000000000ff00 ) |
-    ( (dst >> 56) & 0x00000000000000ff );
+    if (big_endian_host) goto <next>;
+    dst = ((dst << 56) & 0xff00000000000000) |
+        ((dst << 40) & 0x00ff000000000000) |
+        ((dst << 24) & 0x0000ff0000000000) |
+        ((dst <<  8) & 0x000000ff00000000) |
+        ((dst >>  8) & 0x00000000ff000000) |
+        ((dst >> 24) & 0x0000000000ff0000) |
+        ((dst >> 40) & 0x000000000000ff00) |
+        ((dst >> 56) & 0x00000000000000ff);
+    <next>
 }
     
 #Memory instructions - Load and Store
