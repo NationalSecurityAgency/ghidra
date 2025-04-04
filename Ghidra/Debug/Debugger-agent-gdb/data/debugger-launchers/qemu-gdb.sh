@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 ## ###
 # IP: GHIDRA
 #
@@ -66,32 +66,27 @@ fi
 # Give QEMU a moment to open the socket
 sleep 0.1
 
-gdb_args=(
-    -q
-    -ex "set pagination off"
-    -ex "set confirm off"
-    -ex "show version"
-    -ex "python import ghidragdb"
-    -ex "set architecture $OPT_ARCH"
-    -ex "set endian $OPT_ENDIAN"
-    -ex "file \"$target_image\""
-    -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\""
-    -ex "ghidra trace start"
-    -ex "ghidra trace sync-enable"
-    -ex "target remote localhost:$QEMU_GDB"
-    -ex "set confirm on"
-    -ex "set pagination on"
-)
+declare -a args
 
-# If using OPT_PULL_ALL_SECTIONS, append instructions to push all sections from qemu
+args+=(-q)
+args+=(-ex "set pagination off")
+args+=(-ex "set confirm off")
+args+=(-ex "show version")
+args+=(-ex "python import ghidragdb")
+args+=(-ex "set architecture $OPT_ARCH")
+args+=(-ex "set endian $OPT_ENDIAN")
+args+=(-ex "file '$target_image'")
+args+=(-ex "ghidra trace connect '$GHIDRA_TRACE_RMI_ADDR'")
+args+=(-ex "ghidra trace start")
+args+=(-ex "ghidra trace sync-enable")
+args+=(-ex "target remote localhost:$QEMU_GDB")
 if [ "$OPT_PULL_ALL_SECTIONS" = "true" ]
 then
-  gdb_args+=(
-    -ex "ghidra trace tx-start put-all-sections"
-    -ex "ghidra trace put-sections -all-objects"
-    -ex "ghidra trace tx-commit"
-  )
+  args+=(-ex "ghidra trace tx-start put-all-sections")
+  args+=(-ex "ghidra trace put-sections -all-objects")
+  args+=(-ex "ghidra trace tx-commit")
 fi
+args+=(-ex "set confirm on")
+args+=(-ex "set pagination on")
 
-IFS=""
-"$OPT_GDB_PATH" ${gdb_args[*]}
+"$OPT_GDB_PATH" "${args[@]}"

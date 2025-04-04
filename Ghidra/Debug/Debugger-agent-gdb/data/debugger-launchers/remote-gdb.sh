@@ -15,6 +15,7 @@
 # limitations under the License.
 ##
 #@title remote gdb
+#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
 #@desc   <p>
@@ -27,6 +28,7 @@
 #@help gdb#remote
 #@enum TargetType:str remote extended-remote
 #@enum Endian:str auto big little
+#@arg :file "Image" "The target binary executable image (a copy on the local system)"
 #@env OPT_TARGET_TYPE:TargetType="remote" "Target" "The type of remote target"
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:int=9999 "Port" "The host's listening port"
@@ -47,19 +49,26 @@ else
   export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
 fi
 
-"$OPT_GDB_PATH" \
-  -q \
-  -ex "set pagination off" \
-  -ex "set confirm off" \
-  -ex "show version" \
-  -ex "python import ghidragdb" \
-  -ex "set architecture $OPT_ARCH" \
-  -ex "set endian $OPT_ENDIAN" \
-  -ex "echo Connecting to $OPT_HOST:$OPT_PORT... " \
-  -ex "target $OPT_TARGET_TYPE $OPT_HOST:$OPT_PORT" \
-  -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -ex "ghidra trace start" \
-  -ex "ghidra trace sync-enable" \
-  -ex "ghidra trace sync-synth-stopped" \
-  -ex "set confirm on" \
-  -ex "set pagination on"
+declare -a args
+
+args+=(-q)
+args+=(-ex "set pagination off")
+args+=(-ex "set confirmation off")
+args+=(-ex "show version")
+args+=(-ex "python import ghidragdb")
+args+=(-ex "set architecture $OPT_ARCH")
+args+=(-ex "set endian $OPT_ENDIAN")
+if [ -n "$1" ]
+then
+  args+=(-ex "file '$1'")
+fi
+args+=(-ex "echo Connecting to $OPT_HOST:$OPT_PORT...")
+args+=(-ex "target $OPT_TARGET_TYPE $OPT_HOST:$OPT_PORT")
+args+=(-ex "ghidra trace connect '$GHIDRA_TRACE_RMI_ADDR'")
+args+=(-ex "ghidra trace start")
+args+=(-ex "ghidra trace sync-enable")
+args+=(-ex "ghidra trace sync-synth-stopped")
+args+=(-ex "set confirm on")
+args+=(-ex "set pagination on")
+
+"$OPT_GDB_PATH" "${args[@]}"
