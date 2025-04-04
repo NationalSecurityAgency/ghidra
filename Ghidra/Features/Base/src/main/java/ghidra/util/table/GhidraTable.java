@@ -35,12 +35,11 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
 
 /**
- * Navigation is only supported if the underlying table model
- * implements <code>ProgramTableModel</code> and the <code>setGoToService()</code> method
- * has been called with a valid reference.  When both of these conditions are met, then the
- * table will navigate on a user's double-click or on an <code>Enter</code> key press.  Also, if
- * selection navigation is enabled, then this table will navigate <b>any time the selection of
- * the table changes</b>.  To prevent this feature call
+ * Navigation is only supported if the underlying table model implements {@link ProgramTableModel}
+ * and the <code>setGoToService()</code> method has been called with a valid reference. When both of
+ * these conditions are met, then the table will navigate on a user's double-click or on an
+ * <code>Enter</code> key press. Also, if selection navigation is enabled, then this table will
+ * navigate <b>any time the selection of the table changes</b>. To prevent this feature call
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
  */
 public class GhidraTable extends GTable {
@@ -61,6 +60,7 @@ public class GhidraTable extends GTable {
 
 	/**
 	 * Installs the default {@link TableCellRenderer}s for known Ghidra table cell data classes.
+	 * <p>
 	 * Subclasses can override this method to add additional types or to change the default
 	 * associations.
 	 */
@@ -79,10 +79,11 @@ public class GhidraTable extends GTable {
 
 	/**
 	 * Sets the GoTo service to use when navigation is enabled on this table.
+	 * 
 	 * @param goToService the GoTo service
 	 * @param nav the navigable
 	 * @deprecated use {@link #installNavigation(ServiceProvider)} or
-	 * 		{@link #installNavigation(ServiceProvider,Navigatable)}
+	 *             {@link #installNavigation(ServiceProvider,Navigatable)}
 	 */
 	@Deprecated
 	public void installNavigation(GoToService goToService, Navigatable nav) {
@@ -90,9 +91,10 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Sets the service provider to use when navigation is enabled on this table.  The service
-	 * provider will be used to retrieve the {@link GoToService}, as needed after the system has
-	 * been initialized.   If you do not have a {@link Navigatable} preferences, then call
+	 * Sets the service provider to use when navigation is enabled on this table.
+	 * <p>
+	 * The service provider will be used to retrieve the {@link GoToService}, as needed after the
+	 * system has been initialized. If you do not have a {@link Navigatable} preferences, then call
 	 * {@link #installNavigation(ServiceProvider)} instead.
 	 *
 	 * @param sp the service provider
@@ -112,9 +114,10 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Sets the service provider to use when navigation is enabled on this table.  The service
-	 * provider will be used to retrieve the {@link GoToService}, as needed after the system has
-	 * been initialized.
+	 * Sets the service provider to use when navigation is enabled on this table.
+	 * <p>
+	 * The service provider will be used to retrieve the {@link GoToService}, as needed after the
+	 * system has been initialized.
 	 *
 	 * @param sp the service provider
 	 */
@@ -164,8 +167,8 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Removes any installed navigation components, such as listeners, a navigatable and the
-	 * service provider.
+	 * Removes any installed navigation components, such as listeners, a navigatable and the service
+	 * provider.
 	 */
 	public void removeNavigation() {
 		removeKeyListener(navigationKeyListener);
@@ -178,11 +181,13 @@ public class GhidraTable extends GTable {
 
 	/**
 	 * Returns the program selection equivalent to the rows currently selected in the table.
+	 * <p>
 	 * This method is only valid when the underlying table model implements
 	 * {@link ProgramTableModel}.
 	 * <P>
-	 * Returns null if no rows are selected or
-	 * the underlying model does not implement <code>ProgramTableModel</code>.
+	 * Returns null if no rows are selected or the underlying model does not implement
+	 * <code>ProgramTableModel</code>.
+	 * 
 	 * @return the program selection or null.
 	 */
 	public ProgramSelection getProgramSelection() {
@@ -200,8 +205,8 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Returns the program being used by this table; null if the underlying model does not
-	 * implement {@link ProgramTableModel}
+	 * Returns the program being used by this table; null if the underlying model does not implement
+	 * {@link ProgramTableModel}
 	 *
 	 * @return the table's program
 	 */
@@ -222,11 +227,11 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
+	 * Navigate to the program location denoted by the given row and column
+	 * <p>
 	 * Does nothing if no {@link GoToService} has been installed from
-	 * {@link #installNavigation(GoToService, Navigatable)}.  Also, this method will do
-	 * nothing if this table's <code>TableModel</code> is not an instance of {@link ProgramTableModel}.
-	 * Otherwise, this method will attempt to go to the program location denoted by the
-	 * given row and column.
+	 * {@link #installNavigation(GoToService, Navigatable)}. Also, this method will do nothing if
+	 * this table's <code>TableModel</code> is not an instance of {@link ProgramTableModel}.
 	 *
 	 * @param row the row
 	 * @param column the column
@@ -269,12 +274,13 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Does nothing if no {@link GoToService} has been installed from
-	 * {@link #installNavigation(GoToService, Navigatable)}.  Otherwise, this method will attempt
-	 * to go to the program location denoted by the given row and column.
+	 * Navigate to the program location denoted by the given row and column
 	 * <p>
-	 * This method differs from {@link #navigate(int, int)} in that this method will not
-	 * navigate if {@link #navigateOnSelection} is <code>false</code>.
+	 * Does nothing if no {@link GoToService} has been installed from
+	 * {@link #installNavigation(GoToService, Navigatable)}.
+	 * <p>
+	 * This method differs from {@link #navigate(int, int)} in that this method will not navigate if
+	 * {@link #navigateOnSelection} is <code>false</code>.
 	 */
 	protected void navigateOnCurrentSelection(int row, int column) {
 		if (!navigateOnSelection) {
@@ -289,8 +295,9 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Allows the user to enable and disable the table's feature that triggers navigation on
-	 * certain selection events, like mouse clicking and pressing the 'Enter' key.
+	 * Allows the user to enable and disable the table's feature that triggers navigation on certain
+	 * selection events, like mouse clicking and pressing the 'Enter' key.
+	 * 
 	 * @param enabled true enables the navigation on selection feature.
 	 */
 	public void setNavigateOnSelectionEnabled(boolean enabled) {
@@ -328,6 +335,7 @@ public class GhidraTable extends GTable {
 
 	/**
 	 * Selects the given row and performs a goto, if applicable.
+	 * 
 	 * @param row The row to select
 	 */
 	@Override

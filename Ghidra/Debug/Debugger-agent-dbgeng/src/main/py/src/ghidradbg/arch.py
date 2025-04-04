@@ -16,7 +16,7 @@
 from typing import Dict, List, Optional, Tuple
 
 from ghidratrace.client import Address, RegVal
-from pybag import pydbg
+from pybag import pydbg # type: ignore
 
 from . import util
 
@@ -291,7 +291,7 @@ register_mappers = {
 }
 
 
-def compute_register_mapper(lang):
+def compute_register_mapper(lang: str)-> DefaultRegisterMapper:
     if not lang in register_mappers:
         if ':BE:' in lang:
             return DEFAULT_BE_REGISTER_MAPPER

@@ -743,7 +743,7 @@ public class MachoProgramBuilder {
 					if (name != null && name.length() > 0) {
 						program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
 						program.getExternalManager()
-								.addExtLocation(Library.UNKNOWN, name, addr, SourceType.IMPORTED);
+								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
 					}
 				}
 				catch (Exception e) {
@@ -1463,7 +1463,7 @@ public class MachoProgramBuilder {
 	}
 
 	private void addLibrary(String library) {
-		library = library.replaceAll(" ", "_");
+		library = SymbolUtilities.replaceInvalidChars(library, true);
 		try {
 			program.getExternalManager().addExternalLibraryName(library, SourceType.IMPORTED);
 		}
@@ -1867,7 +1867,8 @@ public class MachoProgramBuilder {
 			throw new Exception(
 				"Library ordinal '%d' outside of expected range".formatted(libraryOrdinal));
 		}
-		String libraryName = libraryPaths.get(libraryIndex).replaceAll(" ", "_");
+		String libraryName =
+			SymbolUtilities.replaceInvalidChars(libraryPaths.get(libraryIndex), true);
 		Library library = extManager.getExternalLibrary(libraryName);
 		if (library == null) {
 			throw new Exception(
@@ -1880,7 +1881,7 @@ public class MachoProgramBuilder {
 				loc.setName(library, symbol, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				throw new Exception("Symbol name contains illegal characters");
+				throw new Exception(e.getMessage());
 			}
 		}
 	}

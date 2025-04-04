@@ -332,6 +332,9 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
 			return 0;
 		}
+		if ((dataType instanceof Dynamic dynamic) && dynamic.canSpecifyLength()) {
+			return length;
+		}
 		int dtLength = dataType.getLength();
 		if (length <= 0) {
 			length = dtLength;

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ public abstract class AbstractClassicProcessor {
 			return;
 		}
 
-		listing.setComment(symbol.getAddress(), CodeUnit.PLATE_COMMENT, fromDylib);
+		listing.setComment(symbol.getAddress(), CommentType.PLATE, fromDylib);
 
 		long offset = symbol.getAddress().getOffset();
 
@@ -156,8 +156,9 @@ public abstract class AbstractClassicProcessor {
 	}
 
 	/**
-	 * Return the Symbol for the specified NList.
-	 * Looks in the global namespace first.
+	 * {@return the Symbol for the specified NList. Looks in the global namespace first.}
+	 * 
+	 * @param nList The NList
 	 */
 	protected Symbol getSymbol(NList nList) {
 		SymbolTable symbolTable = program.getSymbolTable();
@@ -204,10 +205,8 @@ public abstract class AbstractClassicProcessor {
 	}
 
 	/**
-	 * Returns the relocation base.
-	 * If the program is 64-bit (x86 or PowerPC), then
-	 * return the VM address of the first segment with W bit.
-	 * Otherwise, just return first segment VM address.
+	 * {@return the relocation base. If the program is 64-bit (x86 or PowerPC), then return the VM 
+	 * address of the first segment with W bit. Otherwise, just return first segment VM address.}
 	 */
 	protected long getRelocationBase() {
 		List<SegmentCommand> segments = header.getLoadCommands(SegmentCommand.class);

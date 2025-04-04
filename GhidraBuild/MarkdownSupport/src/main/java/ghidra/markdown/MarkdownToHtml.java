@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.footnotes.FootnotesExtension;
+import org.commonmark.ext.gfm.tables.*;
 import org.commonmark.ext.heading.anchor.HeadingAnchorExtension;
 import org.commonmark.node.Link;
 import org.commonmark.node.Node;
@@ -51,11 +52,12 @@ public class MarkdownToHtml {
 		}
 
 		// Setup the CommonMark Library with the needed extension libraries
-		List<Extension> extensions =
-			List.of(HeadingAnchorExtension.create(), FootnotesExtension.create());
+		List<Extension> extensions = List.of(HeadingAnchorExtension.create(),
+			FootnotesExtension.create(), TablesExtension.create());
 		Parser parser = Parser.builder().extensions(extensions).build();
 		HtmlRenderer renderer = HtmlRenderer.builder()
 				.extensions(extensions)
+				.attributeProviderFactory(new TableAttributeProvider())
 				.attributeProviderFactory(new LinkAttributeProvider())
 				.build();
 
@@ -70,6 +72,25 @@ public class MarkdownToHtml {
 		String html = renderer.render(parser.parseReader(new FileReader(inFile)));
 		try (PrintWriter out = new PrintWriter(outFile)) {
 			out.write(html);
+		}
+	}
+
+	/**
+	 * Class to add custom style to tables
+	 */
+	private static class TableAttributeProvider
+			implements AttributeProvider, AttributeProviderFactory {
+		@Override
+		public AttributeProvider create(AttributeProviderContext attributeProviderContext) {
+			return new TableAttributeProvider();
+		}
+
+		@Override
+		public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+			if (node instanceof TableBlock || node instanceof TableCell) {
+				attributes.put("style",
+					"border: 1px solid black; border-collapse: collapse; padding: 5px;");
+			}
 		}
 	}
 

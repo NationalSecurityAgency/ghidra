@@ -44,10 +44,11 @@ public class Omf51RecordTypes {
 	public final static int KeilFixup = Fixup + 1;
 	public final static int KeilSegmentDEF = SegmentDEF + 1;
 	public final static int KeilScopeDEF = ScopeDEF + 1;
+	public final static int KeilPublicDEF = PublicDEF + 1;
+	public final static int KeilExternalDEF = ExternalDEF + 1;
 	public final static int KeilDebugItemOBJ = 0x22;         // Keil debug items, in linker output format
 	public final static int KeilDebugItemSRC = 0x23;         // Keil debug item, in compiler output format
 	public final static int KeilModuleSourceName = 0x24;     // Name of the current module's source file
-	public final static int KeilPublicDEF = PublicDEF + 1;
 	public final static int KeilSourceBrowserFiles = 0x61;   // Sequence of source filenames, for Keil debugger's source browser
 
 	// The three type values 0x62, 0x63, and 0x64, which are produced by ARM Keil's 8051 toolchain,

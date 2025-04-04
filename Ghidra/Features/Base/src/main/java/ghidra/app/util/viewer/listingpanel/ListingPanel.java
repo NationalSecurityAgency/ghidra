@@ -106,7 +106,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private String currentTextSelection;
 
 	/**
-	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
+	 * Constructs a new ListingPanel using the given FormatManager
 	 *
 	 * @param manager the FormatManager to use.
 	 */
@@ -152,10 +152,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Constructs a new ListingPanel with the given FormatManager and ListingLayoutModel
+	 * Constructs a new ListingPanel with the given FormatManager and ListingModel
 	 *
 	 * @param mgr the FormatManager to use
-	 * @param model the ListingLayoutModel to use.
+	 * @param model the ListingModel to use.
 	 */
 	public ListingPanel(FormatManager mgr, ListingModel model) {
 		this(mgr);
@@ -171,8 +171,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return preferredSize;
 	}
 
-	/** 
+	/**
 	 * A width for new windows that shows a reasonable amount of the Listing
+	 * 
 	 * @return the width
 	 */
 	protected int getNewWindowDefaultWidth() {
@@ -203,7 +204,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramLocationListener. Only one listener is supported
+	 * Sets the ProgramLocationListener.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramLocationListener to use.
 	 */
@@ -212,7 +215,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramSelectionListener. Only one listener is supported
+	 * Sets the ProgramSelectionListener.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
@@ -221,8 +226,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ProgramSelectionListener for selection changes while dragging. Only one listener is 
-	 * supported
+	 * Sets the ProgramSelectionListener for selection changes while dragging.
+	 * <p>
+	 * Only one listener is supported
 	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
@@ -235,7 +241,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the ListingLayoutModel to use.
+	 * Sets the ListingModel to use.
 	 *
 	 * @param newModel the model to use.
 	 */
@@ -249,6 +255,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current ListingModel used by this panel.
+	 * 
 	 * @return the model
 	 */
 	public ListingModel getListingModel() {
@@ -285,6 +292,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if the field header component is showing.
+	 * 
 	 * @return true if showing
 	 */
 	public boolean isHeaderShowing() {
@@ -493,8 +501,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Adds a {@link ListingHighlightProvider} to this listing. This highlight provider will be used with
-	 * any other registered providers to paint all the highlights for this listing.
+	 * Adds a {@link ListingHighlightProvider} to this listing.
+	 * <p>
+	 * This highlight provider will be used with any other registered providers to paint all the
+	 * highlights for this listing.
 	 *
 	 * @param highlightProvider The provider to add
 	 */
@@ -504,6 +514,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FieldPanel used by this ListingPanel.
+	 * 
 	 * @return the field panel
 	 */
 	public FieldPanel getFieldPanel() {
@@ -536,6 +547,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the divider location between the left margin areas and the main display.
+	 * 
 	 * @return the location
 	 */
 	public int getDividerLocation() {
@@ -604,8 +616,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Moves the cursor to the given program location. Also, repositions the scrollbar to show that
-	 * location, if the location is not on the screen.
+	 * Moves the cursor to the given program location.
+	 * <p>
+	 * Also, repositions the scrollbar to show that location, if the location is not on the screen.
 	 *
 	 * @param loc the location to move to.
 	 * @param centerWhenNotVisible this variable only has an effect if the given location is not on
@@ -615,7 +628,6 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @return true if successful
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
-
 		Swing.assertSwingThread("goTo() must be called on the Swing thread");
 
 		final FieldLocation floc = getFieldLocation(loc);
@@ -635,11 +647,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return true;
 	}
 
-	/** 
+	/**
 	 * Scroll the view of the listing to the given location.
 	 * 
 	 * <p>
 	 * If the given location is not displayed, this has no effect.
+	 * 
 	 * @param location the location
 	 */
 	public void scrollTo(ProgramLocation location) {
@@ -650,8 +663,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		fieldPanel.scrollTo(fieldLocation);
 	}
 
-	/** 
+	/**
 	 * Center the view of the listing around the given location.
+	 * 
 	 * @param location the location
 	 */
 	public void center(ProgramLocation location) {
@@ -866,6 +880,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Gets the view of this listing panel (meant to be used in conjunction with
 	 * {@link #setView(AddressSetView)}.
+	 * 
 	 * @return the addresses
 	 */
 	public AddressSetView getView() {
@@ -893,8 +908,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets the background color for the listing panel. This will set the background for the main
-	 * listing display.
+	 * Sets the background color for the listing panel.
+	 * <p>
+	 * This will set the background for the main listing display.
+	 * 
 	 * @param c the color
 	 */
 	public void setTextBackgroundColor(Color c) {
@@ -912,6 +929,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if this component has focus.
+	 * 
 	 * @return true if this component has focus.
 	 */
 	public boolean isActive() {
@@ -920,6 +938,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program location of the cursor.
+	 * 
 	 * @return the location
 	 */
 	public ProgramLocation getProgramLocation() {
@@ -933,6 +952,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get a program location for the given point.
+	 * 
 	 * @param point the point
 	 * @return program location, or null if point does not correspond to a program location
 	 */
@@ -947,6 +967,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get the margin providers in this ListingPanel.
+	 * 
 	 * @return the providers
 	 */
 	public List<MarginProvider> getMarginProviders() {
@@ -955,6 +976,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get the overview providers in this ListingPanel.
+	 * 
 	 * @return the providers
 	 */
 	public List<OverviewProvider> getOverviewProviders() {
@@ -963,6 +985,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if the mouse is at a location that can be dragged.
+	 * 
 	 * @return true if the mouse is at a location that can be dragged.
 	 */
 	public boolean isStartDragOk() {
@@ -980,7 +1003,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location with a given trigger
-	 *
+	 * <p>
 	 * This method should only be used in automated testing to programmatically simulate a user
 	 * navigating within the listing panel.
 	 *
@@ -1013,6 +1036,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the AddressIndexMap currently used by this listing panel.
+	 * 
 	 * @return the map
 	 */
 	public AddressIndexMap getAddressIndexMap() {
@@ -1021,6 +1045,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the vertical scrollbar used by this panel.
+	 * 
 	 * @return the scroll bar
 	 */
 	public JScrollBar getVerticalScrollBar() {
@@ -1029,6 +1054,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FormatManager used by this listing panel.
+	 * 
 	 * @return the format manager
 	 */
 	public FormatManager getFormatManager() {
@@ -1070,6 +1096,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program selection.
+	 * 
 	 * @return the selection
 	 */
 	public ProgramSelection getProgramSelection() {
@@ -1091,6 +1118,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the selection to the complement of the current selection in the listing view.
+	 * 
 	 * @return the addresses
 	 */
 	public AddressSet selectComplement() {
@@ -1196,8 +1224,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Returns the currently selected text. The value will only be non-null for selections within a
-	 * single field.
+	 * Returns the currently selected text.
+	 * <p>
+	 * The value will only be non-null for selections within a single field.
 	 * 
 	 * @return the selected text or null
 	 */
@@ -1210,8 +1239,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Sets listing panel to never show scroll bars. This is useful when you want this listing's
-	 * parent to always be as big as this listing.
+	 * Sets listing panel to never show scroll bars.
+	 * <p>
+	 * This is useful when you want this listing's parent to always be as big as this listing.
 	 */
 	public void setNeverSroll() {
 		scroller.setNeverScroll(true);

@@ -76,17 +76,19 @@ public class SourceFileTest extends AbstractSourceFileTest {
 	public void testFixDwarfRelativePath() {
 		String baseDirName = "root_dir";
 		assertEquals("/src/file.c",
-			SourceFileUtils.fixDwarfRelativePath("/src/file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("/src/file.c", baseDirName));
 		assertEquals("/file.c",
-			SourceFileUtils.fixDwarfRelativePath("/src/../file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("/src/../file.c", baseDirName));
 		assertEquals("/root_dir/file.c",
-			SourceFileUtils.fixDwarfRelativePath("./file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("./file.c", baseDirName));
 		assertEquals("/root_dir_1/file.c",
-			SourceFileUtils.fixDwarfRelativePath("/../file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("/../file.c", baseDirName));
 		assertEquals("/root_dir_2/file.c",
-			SourceFileUtils.fixDwarfRelativePath("/.././../file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("/.././../file.c", baseDirName));
 		assertEquals("/root_dir_1/file.c",
-			SourceFileUtils.fixDwarfRelativePath("./../file.c", baseDirName));
+			SourceFileUtils.normalizeDwarfPath("./../file.c", baseDirName));
+		assertEquals("/C:/Users/test/src/dir1/file.c",
+			SourceFileUtils.normalizeDwarfPath("C:\\Users\\test/src/dir1/file.c", baseDirName));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

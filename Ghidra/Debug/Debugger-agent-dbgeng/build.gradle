@@ -41,7 +41,7 @@ if ("win_x86_64".equals(getCurrentPlatformName())) {
 
 		doFirst {
 			file(tlb).parentFile.mkdirs()
-			def midlCmd = "midl /tlb ${tlb} ${idl}"
+			def midlCmd = "midl /tlb \"${tlb}\" \"${idl}\""
 			println "Executing: " + midlCmd
 
 			tmpBatch.withWriter { out ->

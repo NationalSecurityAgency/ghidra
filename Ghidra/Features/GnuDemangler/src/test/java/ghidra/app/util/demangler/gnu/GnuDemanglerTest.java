@@ -154,14 +154,14 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertNotNull(dobj);
 
 		String signature = dobj.getSignature();
-		assertEquals("undefined Greeter::greet(std::string)", signature);
+		assertEquals("undefined Greeter::greet(std::__cxx11::string)", signature);
 
 		DemangledParameter demangledParameter = dobj.getParameters().get(0);
 		DemangledDataType type = demangledParameter.getType();
 		DataType dt = type.getDataType(program.getDataTypeManager());
 		assertTrue(dt.isNotYetDefined());
 		//@formatter:off
-		assertEquals("/Demangler/std/string\n" + 
+		assertEquals("/Demangler/std/__cxx11/string\n" + 
 			"pack(disabled)\n" + 
 			"Structure string {\n" + 
 			"}\n" + 

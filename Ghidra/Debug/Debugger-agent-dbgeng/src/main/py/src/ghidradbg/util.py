@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-from comtypes.automation import VARIANT
+from comtypes.automation import VARIANT  # type: ignore
 
 from ghidratrace.client import Schedule
 from .dbgmodel.imodelobject import ModelObject
-from capstone import CsInsn
+from capstone import CsInsn  # type: ignore
 from _winapi import STILL_ACTIVE
 from collections import namedtuple
 from concurrent.futures import Future
@@ -33,18 +33,18 @@ import threading
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
-from comtypes import CoClass, GUID
-import comtypes
-from comtypes.gen import DbgMod
-from comtypes.hresult import S_OK, S_FALSE
+from comtypes import CoClass, GUID  # type: ignore
+import comtypes  # type: ignore
+from comtypes.gen import DbgMod  # type: ignore
+from comtypes.hresult import S_OK, S_FALSE  # type: ignore
 from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
 from ghidradbg.dbgmodel.imodelmethod import ModelMethod
-from pybag import pydbg, userdbg, kerneldbg, crashdbg
-from pybag.dbgeng import core as DbgEng
-from pybag.dbgeng import exception
-from pybag.dbgeng import util as DbgUtil
-from pybag.dbgeng.callbacks import DbgEngCallbacks
-from pybag.dbgeng.idebugclient import DebugClient
+from pybag import pydbg, userdbg, kerneldbg, crashdbg  # type: ignore
+from pybag.dbgeng import core as DbgEng  # type: ignore
+from pybag.dbgeng import exception  # type: ignore
+from pybag.dbgeng import util as DbgUtil  # type: ignore
+from pybag.dbgeng.callbacks import DbgEngCallbacks  # type: ignore
+from pybag.dbgeng.idebugclient import DebugClient  # type: ignore
 
 DESCRIPTION_PATTERN = '[{major:X}:{minor:X}] {type}'
 
@@ -715,6 +715,104 @@ def GetExitCode() -> int:
     if hr != S_OK and hr != S_FALSE:
         return STILL_ACTIVE
     return exit_code.value
+
+
+@dbg.eng_thread
+def GetNumberEventFilters() -> Tuple[int, int, int]:
+    n_events = c_ulong()
+    n_spec_exc = c_ulong()
+    n_arb_exc = c_ulong()
+    hr = dbg._base._control._ctrl.GetNumberEventFilters(
+        byref(n_events), byref(n_spec_exc), byref(n_arb_exc))
+    exception.check_err(hr)
+    return (n_events.value, n_spec_exc.value, n_arb_exc.value)
+
+
+@dbg.eng_thread
+def GetEventFilterText(index: int, sz: int) -> str:
+    if sz == 0:
+        return "Unknown"
+    len = c_ulong()
+    val = create_string_buffer(sz)
+    hr = dbg._base._control._ctrl.GetEventFilterText(
+        index, val, sz, byref(len))
+    # exception.check_err(hr)
+    if hr != 0:
+        return "Unknown"
+    return val.value[:len.value].decode()
+
+
+@dbg.eng_thread
+def GetEventFilterCommand(index: int, sz: int) -> Union[str, None]:
+    if sz == 0:
+        return None
+    len = c_ulong()
+    val = create_string_buffer(sz)
+    hr = dbg._base._control._ctrl.GetEventFilterCommand(
+        index, val, sz, byref(len))
+    exception.check_err(hr)
+    return val.value[:len.value].decode()
+
+
+@dbg.eng_thread
+def GetExceptionFilterSecondCommand(index: int, sz: int) -> Union[str, None]:
+    if sz == 0:
+        return None
+    len = c_ulong()
+    val = create_string_buffer(sz)
+    hr = dbg._base._control._ctrl.GetExceptionFilterSecondCommand(
+        index, val, sz, byref(len))
+    exception.check_err(hr)
+    return val.value[:len.value].decode()
+
+
+@dbg.eng_thread
+def GetSpecificFilterArgument(index: int, sz: int) -> Union[str, None]:
+    if sz == 0:
+        return None
+    len = c_ulong()
+    val = create_string_buffer(sz)
+    hr = dbg._base._control._ctrl.GetSpecificFilterArgument(
+        index, val, sz, byref(len))
+    exception.check_err(hr)
+    return val.value[:len.value].decode()
+
+
+execution_options = ['enabled', 'disabled', 'output', 'ignore']
+continue_options = ['handled', 'not handled', 'unknown']
+
+
+@dbg.eng_thread
+def GetSpecificFilterParameters(start: int, count: int) -> List[DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS]:
+    # For reference, this is how you pass an array of structures!
+    params = (DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS * count)()
+    hr = dbg._base._control._ctrl.GetSpecificFilterParameters(
+        start, count, params)
+    exception.check_err(hr)
+    return params
+
+
+@dbg.eng_thread
+def SetSpecificFilterParameters(start: int, count: int, parray: List[DbgEng._DEBUG_SPECIFIC_FILTER_PARAMETERS]) -> None:
+    hr = dbg._base._control._ctrl.SetSpecificFilterParameters(
+        start, count, parray)
+    exception.check_err(hr)
+
+
+@dbg.eng_thread
+def GetExceptionFilterParameters(start: int, codes, count: int) -> List[DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS]:
+    # For reference, this is how you pass an array of structures!
+    params = (DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS * count)()
+    hr = dbg._base._control._ctrl.GetExceptionFilterParameters(
+        count, codes, start, params)
+    exception.check_err(hr)
+    return params
+
+
+@dbg.eng_thread
+def SetExceptionFilterParameters(count: int, parray: List[DbgEng._DEBUG_EXCEPTION_FILTER_PARAMETERS]) -> None:
+    hr = dbg._base._control._ctrl.SetExceptionFilterParameters(count, parray)
+    exception.check_err(hr)
 
 
 @dbg.eng_thread

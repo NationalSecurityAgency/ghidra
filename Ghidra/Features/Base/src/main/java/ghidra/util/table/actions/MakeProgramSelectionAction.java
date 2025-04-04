@@ -34,10 +34,10 @@ import ghidra.util.table.GhidraTable;
 import resources.Icons;
 
 /**
- * An action to make a program selection based on the given table's selection.  For the context to
- * work, the provider using this action must create an {@link ActionContext} that returns a 
- * context object that is the table passed to this action's constructor; otherwise, this action 
- * will not be enabled correctly.
+ * An action to make a program selection based on the given table's selection. For the context to
+ * work, the provider using this action must create an {@link ActionContext} that returns a context
+ * object that is the table passed to this action's constructor; otherwise, this action will not be
+ * enabled correctly.
  */
 public class MakeProgramSelectionAction extends DockingAction {
 
@@ -48,10 +48,13 @@ public class MakeProgramSelectionAction extends DockingAction {
 	private GhidraTable table;
 
 	/**
-	 * Special constructor for clients that do not have a plugin.  Clients using this 
-	 * constructor must override {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
+	 * Special constructor for clients that do not have a plugin.
+	 * <p>
+	 * Clients using this constructor must override
+	 * {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
 	 * 
-	 * <p>Update: the preferred constructor for clients without a plugin is
+	 * <p>
+	 * Update: the preferred constructor for clients without a plugin is
 	 * {@link #MakeProgramSelectionAction(Navigatable, String, GhidraTable)}.
 	 * 
 	 * @param owner the action's owner
@@ -66,8 +69,10 @@ public class MakeProgramSelectionAction extends DockingAction {
 	}
 
 	/**
-	 * Special constructor for clients that do not have a plugin.  Clients using this 
-	 * constructor must override {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
+	 * Special constructor for clients that do not have a plugin.
+	 * <p>
+	 * Clients using this constructor must override
+	 * {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
 	 * 
 	 * @param navigatable the navigatable that will be used to make selections; may not be null
 	 * @param owner the action's owner
@@ -78,8 +83,10 @@ public class MakeProgramSelectionAction extends DockingAction {
 	}
 
 	/**
-	 * Special constructor for clients that do not have a plugin.  Clients using this 
-	 * constructor must override {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
+	 * Special constructor for clients that do not have a plugin.
+	 * <p>
+	 * Clients using this constructor must override
+	 * {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
 	 * 
 	 * @param navigatable the navigatable that will be used to make selections; may not be null
 	 * @param owner the action's owner
@@ -95,8 +102,10 @@ public class MakeProgramSelectionAction extends DockingAction {
 	}
 
 	/**
-	 * This normal constructor for this action.  The given plugin will be used along with the
-	 * given table to fire program selection events as the action is executed.
+	 * The normal constructor for this action.
+	 * <p>
+	 * The given plugin will be used along with the given table to fire program selection events as
+	 * the action is executed.
 	 * 
 	 * @param plugin the plugin
 	 * @param table the table

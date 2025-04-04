@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -55,8 +56,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.setToMachineAligned();
 
 				// Offsets change to 0,2,4,8.
@@ -72,8 +74,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.setExplicitMinimumAlignment(4);
 
 				// Offsets change to 0,2,4,8.
@@ -168,8 +171,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -187,8 +191,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.pack(1);
 
 				// Offsets change to 0,2,4,8.
@@ -204,8 +209,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.pack(2);
 
 				// Offsets change to 0,2,4,8.
@@ -230,9 +236,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasExplicitPackingValue());
 		assertEquals(1, s.getExplicitPackingValue());
 		assertTrue(s.isDefaultAligned());
@@ -256,9 +261,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasExplicitPackingValue());
 		assertEquals(2, s.getExplicitPackingValue());
 		assertTrue(s.isDefaultAligned());
@@ -303,8 +307,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -322,8 +327,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.setToMachineAligned();
 
 				// Offsets change to 0,2,4,8.
@@ -339,8 +345,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.pack(1);
 
 				assertEquals(0, s.getComponent(0).getOffset());
@@ -364,9 +371,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasDefaultPacking());
 		assertTrue(s.isMachineAligned());
 
@@ -389,9 +395,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasExplicitPackingValue());
 		assertEquals(1, s.getExplicitPackingValue());
 		assertTrue(s.isDefaultAligned());
@@ -412,8 +417,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.add(new IntegerDataType());
@@ -433,8 +439,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -461,9 +468,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertFalse(s.isPackingEnabled());
 		assertTrue(s.isDefaultAligned());
 
@@ -487,9 +493,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasDefaultPacking());
 		assertTrue(s.isDefaultAligned());
 
@@ -509,8 +514,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -528,8 +534,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(16, s.getLength());
 				assertEquals(4, s.getAlignment());
 				s.getComponent(1).setFieldName("MyComponentOne");
@@ -550,8 +557,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(16, s.getLength());
 				assertEquals(4, s.getAlignment());
 				s.pack(1);
@@ -577,9 +585,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasDefaultPacking());
 		assertTrue(s.isDefaultAligned());
 
@@ -602,9 +609,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasExplicitPackingValue());
 		assertEquals(1, s.getExplicitPackingValue());
 		assertTrue(s.isDefaultAligned());
@@ -625,8 +631,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(15, s.getLength());
 				assertEquals(1, s.getAlignment());
 				s.setToDefaultPacking();
@@ -644,13 +651,15 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				dtm.remove(s, TaskMonitor.DUMMY);
 
 				// Offsets change to 0,2,4,8.
-				Structure intStruct = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure intStruct =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertNull(intStruct);
 			}
 
@@ -658,8 +667,9 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.pack(1);
 
 				assertEquals(0, s.getComponent(0).getOffset());
@@ -683,9 +693,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure intStruct =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure intStruct = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertNull(intStruct);
 	}
 
@@ -700,9 +709,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		assertTrue(s.hasExplicitPackingValue());
 		assertEquals(1, s.getExplicitPackingValue());
 		assertTrue(s.isDefaultAligned());
@@ -723,26 +731,28 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure s = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure s =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				s.setPackingEnabled(true);
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				union.setPackingEnabled(true);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
-				Structure structure = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+
+				Structure structure =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(16, structure.getLength());
 				assertEquals(4, structure.getAlignment());
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				assertEquals(96, union.getLength());
 				assertEquals(4, union.getAlignment());
 
@@ -753,13 +763,14 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Structure structure = (Structure) dtm.getDataType(
-					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				Structure structure =
+					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
+						"IntStruct");
 				assertEquals(16, structure.getLength());
 				assertEquals(4, structure.getAlignment());
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				assertEquals(96, union.getLength());
 				assertEquals(4, union.getAlignment());
 
@@ -774,44 +785,43 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		setupStructureInUnionAndViceVersa();
 		executeMerge();
 
-		close(waitForWindow("Union Update Failed")); // expected dependency error on CoolUnion
+		pressButtonByName(waitForWindow("Union Update Failed"), "OK"); // expected dependency error on CoolUnion
 
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure intStruct =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
-		assertTrue(intStruct.hasDefaultPacking());
-		assertTrue(intStruct.isDefaultAligned());
-
-		assertEquals(5, intStruct.getNumComponents());
-		assertEquals(0, intStruct.getComponent(0).getOffset());
-		assertEquals(2, intStruct.getComponent(1).getOffset());
-		assertEquals(4, intStruct.getComponent(2).getOffset());
-		assertEquals(8, intStruct.getComponent(3).getOffset());
-		assertEquals(16, intStruct.getComponent(4).getOffset());
-		assertEquals("CoolUnion", intStruct.getComponent(4).getDataType().getDisplayName());
-		assertEquals(112, intStruct.getLength());
-		assertEquals(4, intStruct.getAlignment());
+		Structure intStruct = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+		assertNotNull(intStruct);
+		//@formatter:off
+		assertEquals("/Category1/Category2/Category3/IntStruct\n" + 
+			"pack()\n" + 
+			"Structure IntStruct {\n" + 
+			"   0   byte   1   field0   \"\"\n" + 
+			"   2   word   2      \"\"\n" + 
+			"   4   dword   4      \"\"\n" + 
+			"   8   qword   8      \"\"\n" + 
+			"   16   CoolUnion   112      \"\"\n" + 
+			"}\n" + 
+			"Length: 128 Alignment: 4\n", intStruct.toString());
+		//@formatter:on
 
 		Union coolUnion =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-		assertTrue(coolUnion.hasDefaultPacking());
-		assertTrue(coolUnion.isDefaultAligned());
-
-		assertEquals(6, coolUnion.getNumComponents());
-		assertEquals("qword", coolUnion.getComponent(0).getDataType().getDisplayName());
-		assertEquals("word", coolUnion.getComponent(1).getDataType().getDisplayName());
-		assertEquals("undefined * * * * *",
-			coolUnion.getComponent(2).getDataType().getDisplayName());
-		assertEquals("DLL_Table", coolUnion.getComponent(3).getDataType().getDisplayName());
-		assertEquals("DLL_Table *", coolUnion.getComponent(4).getDataType().getDisplayName());
-		assertTrue(coolUnion.getComponent(5).getDataType() instanceof BadDataType);
-		String comment5 = coolUnion.getComponent(5).getComment();
-		assertTrue(comment5.startsWith("Couldn't add IntStruct here."));
-		assertEquals(96, coolUnion.getLength());
-		assertEquals(4, coolUnion.getAlignment());
+		assertNotNull(coolUnion);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack()\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   DLL_Table   96      \"\"\n" + 
+			"   0   DLL_Table *32   4      \"\"\n" + 
+			"   0   -BAD-   112      \"Failed to apply 'IntStruct', Data type IntStruct has CoolUnion within it.\"\n" + 
+			"}\n" + 
+			"Length: 112 Alignment: 4\n", coolUnion.toString());
+		//@formatter:on
 
 	}
 
@@ -825,8 +835,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				assertEquals(96, union.getLength());
 				assertEquals(1, union.getAlignment());
 				union.setPackingEnabled(true);
@@ -844,8 +854,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				union.setToMachineAligned();
 
 				assertEquals(8, union.getComponent(0).getLength());
@@ -861,8 +871,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				union.setExplicitMinimumAlignment(4);
 
 				assertEquals(8, union.getComponent(0).getLength());
@@ -960,8 +970,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				assertEquals(96, union.getLength());
 				assertEquals(1, union.getAlignment());
 				union.setPackingEnabled(true);
@@ -979,8 +989,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				union.pack(1);
 
 				assertEquals(8, union.getComponent(0).getLength());
@@ -996,8 +1006,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"CoolUnion");
+				Union union =
+					(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				union.pack(2);
 
 				assertEquals(8, union.getComponent(0).getLength());
@@ -1116,8 +1126,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				assertEquals(4, s.getComponent(1).getOffset());
 				assertEquals(4, s.getComponent(0).getLength());
 				assertEquals(4, s.getComponent(1).getLength());
-				assertTrue(new PointerDataType(new FloatDataType()).isEquivalent(
-					s.getComponent(0).getDataType()));
+				assertTrue(new PointerDataType(new FloatDataType())
+						.isEquivalent(s.getComponent(0).getDataType()));
 				assertTrue(new FloatDataType().isEquivalent(s.getComponent(1).getDataType()));
 
 			}
@@ -1154,8 +1164,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 		assertEquals(4, s1.getComponent(1).getOffset());
 		assertEquals(4, s1.getComponent(0).getLength());
 		assertEquals(4, s1.getComponent(1).getLength());
-		assertTrue(new PointerDataType(new FloatDataType()).isEquivalent(
-			s1.getComponent(0).getDataType()));
+		assertTrue(new PointerDataType(new FloatDataType())
+				.isEquivalent(s1.getComponent(0).getDataType()));
 		assertTrue(new FloatDataType().isEquivalent(s1.getComponent(1).getDataType()));
 
 		Structure s2 =

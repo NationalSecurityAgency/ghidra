@@ -283,9 +283,9 @@ public class DWARFImporter {
 
 			SourceFile source = sfasToSourceFiles.get(sfa);
 			if (source == null) {
-				String path = SourceFileUtils.fixDwarfRelativePath(sfa.fileName(),
-					DEFAULT_COMPILATION_DIR);
 				try {
+					String path = SourceFileUtils.normalizeDwarfPath(sfa.fileName(),
+						DEFAULT_COMPILATION_DIR);
 					SourceFileIdType type =
 						sfa.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
 					source = new SourceFile(path, type, sfa.md5());
