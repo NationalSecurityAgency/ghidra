@@ -57,6 +57,7 @@ public class MarkdownToHtml {
 		HtmlRenderer renderer = HtmlRenderer.builder()
 				.extensions(extensions)
 				.attributeProviderFactory(new TableAttributeProvider())
+				.attributeProviderFactory(new HeadingAttributeProvider())
 				.attributeProviderFactory(new CodeAttributeProvider())
 				.attributeProviderFactory(new LinkAttributeProvider())
 				.build();
@@ -90,6 +91,25 @@ public class MarkdownToHtml {
 			if (node instanceof TableBlock || node instanceof TableCell) {
 				attributes.put("style",
 					"border: 1px solid black; border-collapse: collapse; padding: 5px;");
+			}
+		}
+	}
+
+	/**
+	 * Class to add custom style to headings
+	 */
+	private static class HeadingAttributeProvider
+			implements AttributeProvider, AttributeProviderFactory {
+		@Override
+		public AttributeProvider create(AttributeProviderContext attributeProviderContext) {
+			return new HeadingAttributeProvider();
+		}
+
+		@Override
+		public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+			if (node instanceof Heading heading && heading.getLevel() <= 2) {
+				attributes.put("style",
+					"border-bottom: solid 1px; border-bottom-color: #cccccc; padding-bottom: 8px;");
 			}
 		}
 	}
