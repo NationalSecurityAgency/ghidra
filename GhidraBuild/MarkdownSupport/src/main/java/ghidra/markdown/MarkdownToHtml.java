@@ -23,8 +23,7 @@ import org.commonmark.Extension;
 import org.commonmark.ext.footnotes.FootnotesExtension;
 import org.commonmark.ext.gfm.tables.*;
 import org.commonmark.ext.heading.anchor.HeadingAnchorExtension;
-import org.commonmark.node.Link;
-import org.commonmark.node.Node;
+import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.*;
 
@@ -58,6 +57,7 @@ public class MarkdownToHtml {
 		HtmlRenderer renderer = HtmlRenderer.builder()
 				.extensions(extensions)
 				.attributeProviderFactory(new TableAttributeProvider())
+				.attributeProviderFactory(new CodeAttributeProvider())
 				.attributeProviderFactory(new LinkAttributeProvider())
 				.build();
 
@@ -90,6 +90,26 @@ public class MarkdownToHtml {
 			if (node instanceof TableBlock || node instanceof TableCell) {
 				attributes.put("style",
 					"border: 1px solid black; border-collapse: collapse; padding: 5px;");
+			}
+		}
+	}
+
+	/**
+	 * Class to add custom style to code tags and code blocks
+	 */
+	private static class CodeAttributeProvider
+			implements AttributeProvider, AttributeProviderFactory {
+
+		@Override
+		public AttributeProvider create(AttributeProviderContext attributeProviderContext) {
+			return new CodeAttributeProvider();
+		}
+
+		@Override
+		public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+			if (node instanceof Code || node instanceof IndentedCodeBlock ||
+				node instanceof FencedCodeBlock) {
+				attributes.put("style", "background-color: #eef;");
 			}
 		}
 	}
