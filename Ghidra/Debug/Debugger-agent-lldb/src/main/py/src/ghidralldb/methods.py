@@ -522,7 +522,7 @@ def interrupt(process: Process):
 @REGISTRY.method(action='step_into')
 def step_into(thread: Thread,
               n: Annotated[int, ParamDesc(display='N')] = 1) -> None:
-    """Step on instruction exactly."""
+    """Step one instruction exactly."""
     t = find_thread_by_obj(thread)
     t.process.SetSelectedThread(t)
     exec_convert_errors('thread step-inst')
