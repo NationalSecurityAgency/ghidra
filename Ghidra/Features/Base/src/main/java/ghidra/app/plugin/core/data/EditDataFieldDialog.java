@@ -16,24 +16,24 @@
 package ghidra.app.plugin.core.data;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.util.Date;
 
 import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
-import docking.widgets.button.BrowseButton;
-import ghidra.app.cmd.data.CreateDataInStructureCmd;
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.util.HelpLocation;
-import ghidra.util.MessageType;
+import ghidra.util.*;
+import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.layout.PairLayout;
 
@@ -42,30 +42,49 @@ import ghidra.util.layout.PairLayout;
  */
 public class EditDataFieldDialog extends DialogComponentProvider {
 
+	// These two fields are static so that the user's last choice is remembered across dialog uses.
+	// The preferred way to do this would be to have a plugin manage this state and have that plugin
+	// make the dialog available as a service.  At the time of writing, this solution seemed good
+	// enough.  The downside of this is that these values are not saved across uses of Ghidra.
+	private static boolean addAddress;
+	private static boolean addDate;
+
 	private JTextField nameField;
 	private JTextField commentField;
-	private JTextField dataTypeTextField;
+	private DataTypeSelectionEditor dataTypeEditor;
+	private JCheckBox addressCheckBox;
+	private JCheckBox dateCheckBox;
 
-	private DataTypeComponent component;
 	private PluginTool tool;
 	private DataType newDataType;
-	private ProgramLocation programLocation;
 	private DataTypeManagerService dtmService;
 
+	private Composite composite;
+	private Address address;
+	private int ordinal;
+	private Program program;
+
 	/**
-	 * Constructor
+	 * Constructor 
 	 * @param tool The tool hosting this dialog
 	 * @param dtmService the DataTypeManagerService used for choosing datatypes
-	 * @param location the location of the field being edited
-	 * @param dataTypeComponent the component of the field being edited
+	 * @param composite the composite being edited
+	 * @param program the program
+	 * @param address the address of the data type component
+	 * @param ordinal the ordinal of the data type component inside of the composite
 	 */
 	public EditDataFieldDialog(PluginTool tool, DataTypeManagerService dtmService,
-			ProgramLocation location, DataTypeComponent dataTypeComponent) {
+			Composite composite, Program program, Address address, int ordinal) {
+
 		super("Edit Field Dialog", true, true, true, false);
+
 		this.tool = tool;
 		this.dtmService = dtmService;
-		this.programLocation = location;
-		this.component = dataTypeComponent;
+		this.composite = composite;
+		this.program = program;
+		this.address = address;
+		this.ordinal = ordinal;
+
 		setTitle(generateTitle());
 
 		addWorkPanel(buildMainPanel());
@@ -80,9 +99,8 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	@Override
 	public void dispose() {
 		super.dispose();
-		programLocation = null;
-		component = null;
 		tool = null;
+		program = null;
 	}
 
 	/**
@@ -111,7 +129,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 
 	/**
 	 * Returns the text currently in the text field for the field comment.
-	 * @return the text currently in the text field  for the field commment
+	 * @return the text currently in the text field  for the field comment
 	 */
 	public String getCommentText() {
 		return commentField.getText();
@@ -136,20 +154,60 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	}
 
 	private void initializeFields() {
-		String name = component.getFieldName();
-		if (StringUtils.isBlank(name)) {
-			name = "";
-		}
+
+		String name = getFieldName();
 		nameField.setText(name);
-		commentField.setText(component.getComment());
-		dataTypeTextField.setText(component.getDataType().getDisplayName());
+
+		String comment = getComment();
+		commentField.setText(comment);
+
+		DataType dt = getComponentDataType();
+		dataTypeEditor.setCellEditorValue(dt);
+
+		if (addAddress) {
+			addressCheckBox.setSelected(true);
+			addTextToComment(getCurrentAddressString());
+		}
+		if (addDate) {
+			dateCheckBox.setSelected(true);
+			addTextToComment(getTodaysDate());
+		}
+	}
+
+	private String getComment() {
+		if (hasNoDataTypeComponent()) {
+			return "";
+		}
+
+		DataTypeComponent dtc = composite.getComponent(ordinal);
+		String comment = dtc.getComment();
+		if (StringUtils.isBlank(comment)) {
+			return "";
+		}
+		return comment;
+	}
+
+	private String getFieldName() {
+		if (hasNoDataTypeComponent()) {
+			return "";
+		}
+
+		DataTypeComponent dtc = composite.getComponent(ordinal);
+		String fieldName = dtc.getFieldName();
+		if (StringUtils.isBlank(fieldName)) {
+			return "";
+		}
+		return fieldName;
+	}
+
+	private boolean hasNoDataTypeComponent() {
+		return ordinal >= composite.getNumComponents();
 	}
 
 	@Override
 	protected void okCallback() {
 		if (updateComponent()) {
 			close();
-			programLocation = null;
 		}
 	}
 
@@ -158,7 +216,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 			return true;
 		}
 		Command<Program> cmd = new UpdateDataComponentCommand();
-		if (!tool.execute(cmd, programLocation.getProgram())) {
+		if (!tool.execute(cmd, program)) {
 			setStatusText(cmd.getStatusMsg(), MessageType.ERROR);
 			return false;
 		}
@@ -170,23 +228,31 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	}
 
 	private boolean hasCommentChange() {
+		String oldComment = getComment();
 		String newComment = getNewFieldComment();
-		if (StringUtils.isBlank(newComment) && StringUtils.isBlank(component.getComment())) {
+		if (StringUtils.isBlank(newComment) && StringUtils.isBlank(oldComment)) {
 			return false;
 		}
-		return !newComment.equals(component.getComment());
+		return !newComment.equals(oldComment);
+	}
+
+	private DataType getComponentDataType() {
+		if (hasNoDataTypeComponent()) {
+			return DataType.DEFAULT;
+		}
+
+		DataTypeComponent dtc = composite.getComponent(ordinal);
+		return dtc.getDataType();
 	}
 
 	boolean hasDataTypeChange() {
-		return newDataType != null && !newDataType.equals(component.getDataType());
+		DataType oldDt = getComponentDataType();
+		return newDataType != null && !newDataType.equals(oldDt);
 	}
 
 	boolean hasNameChange() {
 		String newName = getNewFieldName();
-		String currentName = component.getFieldName();
-		if (currentName == null) {
-			currentName = component.getDefaultFieldName();
-		}
+		String currentName = getFieldName();
 		if (newName.equals(currentName)) {
 			return false;
 		}
@@ -202,6 +268,27 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	}
 
 	private JPanel buildMainPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(buildNameValuePanel(), BorderLayout.NORTH);
+		panel.add(buildCheckboxPanel(), BorderLayout.SOUTH);
+		return panel;
+	}
+
+	private JPanel buildCheckboxPanel() {
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
+
+		addressCheckBox = new JCheckBox("Add Current Address");
+		addressCheckBox.addActionListener(this::addressCheckBoxChanged);
+
+		dateCheckBox = new JCheckBox("Add Today's Date");
+		dateCheckBox.addActionListener(this::dateCheckBoxChanged);
+
+		panel.add(addressCheckBox);
+		panel.add(dateCheckBox);
+		return panel;
+	}
+
+	private JPanel buildNameValuePanel() {
 		JPanel panel = new JPanel(new PairLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -214,10 +301,10 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 
 		panel.add(new JLabel("Field Name:", SwingConstants.LEFT));
 		panel.add(nameField);
-		panel.add(new JLabel("Comment:", SwingConstants.LEFT));
-		panel.add(commentField);
 		panel.add(new JLabel("Datatype:", SwingConstants.LEFT));
 		panel.add(buildDataTypeChooserPanel());
+		panel.add(new JLabel("Comment:", SwingConstants.LEFT));
+		panel.add(commentField);
 
 		return panel;
 	}
@@ -225,70 +312,204 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	private JPanel buildDataTypeChooserPanel() {
 		JPanel panel = new JPanel(new BorderLayout(10, 0));
 
-		dataTypeTextField = new JTextField();
-		dataTypeTextField.setEditable(false);
-		BrowseButton browseButton = new BrowseButton();
-		browseButton.setToolTipText("Browse the Data Manager");
-		browseButton.addActionListener(e -> showDataTypeBrowser());
+		DataTypeManager dtm = composite.getDataTypeManager();
+		dataTypeEditor = new DataTypeSelectionEditor(dtm, dtmService, AllowedDataTypes.ALL);
 
-		panel.add(dataTypeTextField, BorderLayout.CENTER);
-		panel.add(browseButton, BorderLayout.EAST);
+		JComponent editorComponent = dataTypeEditor.getEditorComponent();
+		panel.add(editorComponent, BorderLayout.CENTER);
+
 		return panel;
-	}
-
-	private void showDataTypeBrowser() {
-		newDataType = dtmService.getDataType("");
-		updateDataTypeTextField();
 	}
 
 	private void updateDataTypeTextField() {
 		if (newDataType != null) {
-			dataTypeTextField.setText(newDataType.getDisplayName());
+			dataTypeEditor.setCellEditorValue(newDataType);
 		}
 		else {
-			dataTypeTextField.setText(component.getDataType().getDisplayName());
+			DataType dt = getComponentDataType();
+			dataTypeEditor.setCellEditorValue(dt);
 		}
 	}
 
 	private String generateTitle() {
-		DataType parent = component.getParent();
-		String compositeName = parent.getName();
-		return "Edit " + compositeName + ", Field " + component.getOrdinal();
+		String compositeName = composite.getName();
+		return "Edit " + compositeName + ", Field " + ordinal;
+	}
+
+	private void dateCheckBoxChanged(ActionEvent e) {
+		String today = getTodaysDate();
+		addDate = dateCheckBox.isSelected();
+		if (addDate) {
+			addTextToComment(today);
+		}
+		else {
+			removeTextFromComment(today);
+		}
+	}
+
+	private void addressCheckBoxChanged(ActionEvent e) {
+		String addressString = getCurrentAddressString();
+		addAddress = addressCheckBox.isSelected();
+		if (addAddress) {
+			addTextToComment(addressString);
+		}
+		else {
+			removeTextFromComment(addressString);
+		}
+	}
+
+	private void removeTextFromComment(String text) {
+		String comment = commentField.getText().trim();
+		int index = comment.indexOf(text);
+		if (index < 0) {
+			return;
+		}
+
+		// remove the given text and any spaces that follow it.
+		comment = comment.replaceAll(text + "\\s*", "");
+		commentField.setText(comment.trim());
+	}
+
+	private String getTodaysDate() {
+		return DateUtils.formatCompactDate(new Date());
+	}
+
+	private String getCurrentAddressString() {
+		return address.toString();
+	}
+
+	private void addTextToComment(String text) {
+		String comment = commentField.getText().trim();
+		if (comment.contains(text)) {
+			return;
+		}
+		if (!comment.isBlank()) {
+			comment += " ";
+		}
+		comment += text;
+		commentField.setText(comment.trim());
 	}
 
 	public String getDataTypeText() {
-		return dataTypeTextField.getText();
+		return dataTypeEditor.getCellEditorValueAsText();
 	}
 
 	private class UpdateDataComponentCommand implements Command<Program> {
 		private String statusMessage = null;
 
 		@Override
-		public boolean applyTo(Program program) {
-			if (component.isUndefined() || hasDataTypeChange()) {
-				DataType dt = getNewDataType();
-				Address address = programLocation.getAddress();
-				int[] path = programLocation.getComponentPath();
-				Command<Program> cmd = new CreateDataInStructureCmd(address, path, dt, false);
-				if (!cmd.applyTo(program)) {
-					statusMessage = cmd.getStatusMsg();
-					return false;
-				}
-				component = DataTypeUtils.getDataTypeComponent(program, address, path);
+		public boolean applyTo(Program p) {
+
+			maybeAdjustStructure();
+
+			if (!updateDataType()) {
+				return false;
 			}
-			if (hasNameChange()) {
-				try {
-					component.setFieldName(getNewFieldName());
-				}
-				catch (DuplicateNameException e) {
-					statusMessage = "Duplicate field name";
-					return false;
-				}
+			if (!updateName()) {
+				return false;
 			}
-			if (hasCommentChange()) {
-				component.setComment(getNewFieldComment());
+			if (!updateComment()) {
+				return false;
 			}
 			return true;
+		}
+
+		private void maybeAdjustStructure() {
+
+			if (!(composite instanceof Structure struct)) {
+				return;
+			}
+
+			int n = composite.getNumComponents();
+			if (ordinal >= n) {
+				int amount = ordinal - n;
+				struct.growStructure(amount);
+			}
+
+			DataTypeComponent dtc = composite.getComponent(ordinal);
+			if (dtc.getDataType() == DataType.DEFAULT) { // remove placeholder type
+				DataType newtype = new Undefined1DataType();
+				struct.replaceAtOffset(dtc.getOffset(), newtype, 1, "tempName",
+					"Created by Edit Data Field action");
+			}
+		}
+
+		private boolean updateName() {
+			if (!hasNameChange()) {
+				return true;
+			}
+
+			DataTypeComponent dtc = composite.getComponent(ordinal);
+			try {
+				dtc.setFieldName(getNewFieldName());
+				return true;
+			}
+			catch (DuplicateNameException e) {
+				statusMessage = "Duplicate field name";
+				return false;
+			}
+		}
+
+		private boolean updateComment() {
+			DataTypeComponent dtc = composite.getComponent(ordinal);
+			if (hasCommentChange()) {
+				dtc.setComment(getNewFieldComment());
+			}
+			return true;
+		}
+
+		private boolean updateDataType() {
+
+			if (!hasDataTypeChange()) {
+				return true;
+			}
+
+			try {
+				if (composite instanceof Structure struct) {
+					updateStructure(struct);
+				}
+				else if (composite instanceof Union union) {
+					updateUnion(union);
+				}
+				return true;
+			}
+			catch (DuplicateNameException e) {
+				statusMessage = "Duplicate field name";
+				return false;
+			}
+			catch (Exception e) {
+				statusMessage = e.getMessage();
+				return false;
+			}
+		}
+
+		private void updateStructure(Structure struct) {
+			DataTypeComponent dtc = composite.getComponent(ordinal);
+			DataType resolvedDt = program.getDataTypeManager().resolve(newDataType, null);
+			if (resolvedDt == DataType.DEFAULT) {
+				struct.clearComponent(ordinal);
+				return;
+			}
+
+			DataTypeInstance dti =
+				DataTypeInstance.getDataTypeInstance(resolvedDt, -1, false);
+			DataType dataType = dti.getDataType();
+			int length = dti.getLength();
+			String fieldName = dtc.getFieldName();
+			String comment = dtc.getComment();
+			dtc = struct.replace(ordinal, dataType, length, fieldName, comment);
+		}
+
+		private void updateUnion(Union union) throws DuplicateNameException {
+			DataTypeComponent dtc = composite.getComponent(ordinal);
+			DataType resolvedDt = program.getDataTypeManager().resolve(newDataType, null);
+			String comment = dtc.getComment();
+			String fieldName = dtc.getFieldName();
+			union.insert(ordinal, resolvedDt);
+			union.delete(ordinal + 1);
+			dtc = union.getComponent(ordinal);
+			dtc.setComment(comment);
+			dtc.setFieldName(fieldName);
 		}
 
 		@Override

@@ -85,7 +85,7 @@ public class DataPlugin extends Plugin implements DataService {
 	private static final String BASIC_DATA_GROUP = "BasicData";
 	private static final String DATA_MENU_POPUP_PATH = "Data";
 	private static final String[] EDIT_DATA_TYPE_POPUP_PATH =
-		{ DATA_MENU_POPUP_PATH, "Edit Data Type..." };
+		{ DATA_MENU_POPUP_PATH, "Edit Data Type" };
 	private static final String[] DATA_SETTINGS_POPUP_PATH =
 		{ DATA_MENU_POPUP_PATH, "Settings..." };
 	private static final String[] DEFAULT_SETTINGS_POPUP_PATH =
@@ -95,19 +95,15 @@ public class DataPlugin extends Plugin implements DataService {
 		{ DATA_MENU_POPUP_PATH, "Choose Data Type..." };
 
 	private DataTypeManagerService dtmService;
+	private DataTypeManagerChangeListenerAdapter adapter;
 
 	private DataAction pointerAction;
 	private DataAction recentlyUsedAction;
 	private DockingAction editDataTypeAction;
 	private CreateStructureAction createStructureAction;
 	private CreateArrayAction createArrayAction;
-
-	private List<DataAction> favoriteActions = new ArrayList<>();
-
 	private ChooseDataTypeAction chooseDataTypeAction;
-
-	private DataTypeManagerChangeListenerAdapter adapter;
-
+	private List<DataAction> favoriteActions = new ArrayList<>();
 	private SwingUpdateManager favoritesUpdateManager;
 
 	public DataPlugin(PluginTool tool) {
@@ -150,16 +146,20 @@ public class DataPlugin extends Plugin implements DataService {
 		pointerAction = new PointerDataAction(this);
 		tool.addAction(pointerAction);
 
-		new ActionBuilder("Edit Field", getName())
-				.popupMenuPath("Data", "Edit Field")
+		new ActionBuilder("Quick Edit Field", getName())
+				.helpLocation(new HelpLocation("DataPlugin", "Quick_Edit_Field"))
+				.popupMenuPath("Data", "Quick Edit Field...")
+				.popupMenuGroup("BasicData")
 				.keyBinding("ctrl shift E")
+				.sharedKeyBinding()
 				.withContext(ListingActionContext.class)
 				.enabledWhen(this::canEditField)
 				.onAction(this::editField)
 				.buildAndInstall(tool);
 
 		// Data instance settings action based upon data selection in listing
-		new ActionBuilder("Data Settings", getName()).sharedKeyBinding()
+		new ActionBuilder("Data Settings", getName())
+				.sharedKeyBinding()
 				.popupMenuPath(DATA_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -168,7 +168,8 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action based upon data selection in listing
-		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
 				.popupMenuPath(DEFAULT_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -177,7 +178,8 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for selected datatypes from datatype manager
-		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(DataTypesActionContext.class)
@@ -195,7 +197,8 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for composite editor components (stand-alone archive)
-		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ComponentStandAloneActionContext.class)
@@ -204,14 +207,15 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		editDataTypeAction =
-			new ActionBuilder("Edit Data Type", getName()).popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
+			new ActionBuilder("Edit Data Type", getName())
+					.popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
 					.popupMenuGroup("BasicData")
 					.withContext(ListingActionContext.class)
 					.enabledWhen(c -> {
 						DataType editableDt = getEditableDataTypeFromContext(c);
 						if (editableDt != null) {
-							editDataTypeAction
-									.setHelpLocation(dtmService.getEditorHelpLocation(editableDt));
+							HelpLocation helps = dtmService.getEditorHelpLocation(editableDt);
+							editDataTypeAction.setHelpLocation(helps);
 							return true;
 						}
 						return false;
@@ -293,7 +297,6 @@ public class DataPlugin extends Plugin implements DataService {
 	@Override
 	public boolean createData(DataType dt, ListingActionContext context, boolean stackPointers,
 			boolean enableConflictHandling) {
-// TODO: conflict handler (i.e., removal of other conflicting data not yet supported)
 		ProgramLocation location = context.getLocation();
 		if (!(location instanceof CodeUnitLocation)) {
 			return false;
@@ -327,7 +330,7 @@ public class DataPlugin extends Plugin implements DataService {
 			ProgramLocation location) {
 		Address start = location.getAddress();
 		int[] startPath = location.getComponentPath();
-		Command cmd;
+		Command<Program> cmd;
 		if (startPath != null && startPath.length != 0) {
 			cmd = new CreateDataInStructureCmd(start, startPath, dt, stackPointers);
 		}
@@ -342,7 +345,7 @@ public class DataPlugin extends Plugin implements DataService {
 
 	private boolean createDataForSelection(Program program, DataType dt, boolean stackPointers,
 			ProgramSelection selection) {
-		BackgroundCommand cmd;
+		BackgroundCommand<Program> cmd;
 		Address start = selection.getMinAddress();
 		InteriorSelection interSel = selection.getInteriorSelection();
 		if (interSel != null) {
@@ -837,10 +840,6 @@ public class DataPlugin extends Plugin implements DataService {
 		return true;
 	}
 
-	public DataType pickDataType() {
-		return dtmService.getDataType("");
-	}
-
 	private boolean canEditField(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
 		int[] componentPath = location.getComponentPath();
@@ -848,16 +847,23 @@ public class DataPlugin extends Plugin implements DataService {
 	}
 
 	private void editField(ListingActionContext context) {
+
 		Program program = context.getProgram();
 		ProgramLocation location = context.getLocation();
 		Address address = location.getAddress();
 		int[] path = location.getComponentPath();
-		DataTypeComponent component = DataTypeUtils.getDataTypeComponent(program, address, path);
-		if (component != null) {
-			EditDataFieldDialog dialog =
-				new EditDataFieldDialog(tool, dtmService, location, component);
-			tool.showDialog(dialog);
+
+		DataTypeComponent dtc = DataTypeUtils.getDataTypeComponent(program, address, path);
+		if (dtc == null) {
+			return;
 		}
+
+		DataType parent = dtc.getParent();
+		Composite composite = (Composite) parent;
+		int ordinal = dtc.getOrdinal();
+		EditDataFieldDialog dialog =
+			new EditDataFieldDialog(tool, dtmService, composite, program, address, ordinal);
+		tool.showDialog(dialog);
 	}
 
 }

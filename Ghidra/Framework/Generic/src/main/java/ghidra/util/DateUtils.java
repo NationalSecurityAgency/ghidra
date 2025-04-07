@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ public class DateUtils {
 	/** Example: Oct 31, 2019 03:24 PM */
 	private static final String DATE_TIME_FORMAT_STRING = "MMM dd, yyyy hh:mm a";
 	private static final String DATE_FORMAT_STRING = "MM/dd/yyyy";
+	private static final String COMPACT_DATE_FORMAT_STRING = "MM/dd/yy";
 	private static final String TIME_FORMAT_STRING = "h:mm";
 
 	private static final DateTimeFormatter DATE_TIME_FORMATTER =
@@ -39,6 +40,8 @@ public class DateUtils {
 		DateTimeFormatter.ofPattern(DATE_FORMAT_STRING);
 	private static final DateTimeFormatter TIME_FORMATTER =
 		DateTimeFormatter.ofPattern(TIME_FORMAT_STRING);
+	private static final DateTimeFormatter COMPACT_DATE_FORMATTER =
+		DateTimeFormatter.ofPattern(COMPACT_DATE_FORMAT_STRING);
 
 	public static final long MS_PER_SEC = 1000;
 	public static final long MS_PER_MIN = MS_PER_SEC * 60;
@@ -225,6 +228,16 @@ public class DateUtils {
 	 */
 	public static String formatDate(Date date) {
 		return DATE_FORMATTER.format(toLocalDate(date));
+	}
+
+	/**
+	 * Formats the given date into a compact date string (mm/dd/yy).
+	 *
+	 * @param date the date to format
+	 * @return the date string
+	 */
+	public static String formatCompactDate(Date date) {
+		return COMPACT_DATE_FORMATTER.format(toLocalDate(date));
 	}
 
 	/**

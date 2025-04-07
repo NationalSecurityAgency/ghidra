@@ -166,6 +166,18 @@ public abstract class DecompilerReference {
 				}
 			}
 		}
+		else if (fieldDt instanceof Union union) {
+
+			String fieldName = field.getText();
+			int n = union.getNumComponents();
+			for (int i = 0; i < n; i++) {
+				DataTypeComponent unionDtc = union.getComponent(i);
+				String dtcName = unionDtc.getFieldName();
+				if (fieldName.equals(dtcName)) {
+					return unionDtc.getDataType();
+				}
+			}
+		}
 
 		return fieldDt;
 	}

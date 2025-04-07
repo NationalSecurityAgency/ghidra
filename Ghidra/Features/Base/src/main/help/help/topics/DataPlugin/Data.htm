@@ -972,19 +972,21 @@
         <OL>
           <LI>Right mouse click on a structure member in the Listing</LI>
 
-          <LI>Choose the <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Edit Field</B>
+          <LI>Choose the <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Quick Edit Field</B>
           action to bring the up the <A href=
           "#Edit_Field_Dialog">Edit Field Dialog</A> </LI>
 
         </OL>
 
-        <P>The second way is more useful for changing the names of multiple members:</P>
+        <P>The second way is more useful for changing the names of multiple members.  This method
+			will show the full Structure Editor:
+		</P>
 
         <OL>
           <LI>Place the cursor on the first line of the structure</LI>
 
           <LI>Press mouse-right over the structure and choose <B>Data</B><IMG src=
-          "help/shared/arrow.gif"> <B>Edit Data Type...</B></LI>
+          "help/shared/arrow.gif"> <B>Edit Data Type</B></LI>
 
           <LI>Edit the field name for the structure member</LI>
         </OL>
@@ -1369,13 +1371,17 @@
     bringing up the entire structure or union editor. To edit a field, click anywhere on the line
     displaying that field in the listing and then right click and select <B>Data</B><IMG 
     src="help/shared/arrow.gif"> <B>Edit Field</B> from the popup context menu.</P>
-    <H3><A name="Edit_Field_Dialog"></A>Edit Field Dialog</H3>
+    <H3><A name="Edit_Field_Dialog"></A><A name="Quick_Edit_Field"></A>Edit Field Dialog</H3>
           <P align="center"><IMG src="images/EditFieldDialog.png" alt=""> &nbsp;</P>
     <UL>
     	<LI><B>Field Name</B>: The name of the structure or union field can be changed here.</LI>
     	<LI><B>Comment</B>: The comment for the field can be entered or changed here.</LI>
     	<LI><B>DataType</B>: The data can be changed here. The text field is read only so you must
     	press the ... button to bring up the datatype chooser to change the datatype.</LI>
+    	<LI><B>Add Current Address</B>: If selected, the current address where this field is edited
+    	will be added to the datatype's field comment if not already there.</LI>
+    	<LI><B>Add Today's Date</B>: If selected, the current date will be added to the datatype's
+    	 field comment if not already there.</LI>
          <P><IMG src="help/shared/note.png"> If a default field (a field with an undefined
          datatype (??)) is named or given a comment, the datatype will be set to <B>undefined1</B> if
          no specific datatype is set. This is because undefined fields are not stored and therefore
