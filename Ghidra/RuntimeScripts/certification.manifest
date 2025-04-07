@@ -4,7 +4,7 @@
 ##MODULE IP: Public Domain
 Common/server/jaas.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
-Common/server/svrREADME.html||GHIDRA||||END|
+Common/server/svrREADME.md||GHIDRA||||END|
 Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.md||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
