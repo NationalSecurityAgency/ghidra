@@ -17,5 +17,6 @@ src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
 src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl||GHIDRA||||END|
+src/main/py/src/ghidradbg/py.typed||GHIDRA||||END|
 src/main/py/src/ghidradbg/schema.xml||GHIDRA||||END|
 src/main/py/src/ghidradbg/schema_exdi.xml||GHIDRA||||END|

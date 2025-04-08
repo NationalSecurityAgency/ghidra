@@ -24,7 +24,7 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -88,7 +88,7 @@ public class CodeSignatureGenericBlob implements StructConverter {
 			Address hashAddr = address.add(toDataType().getLength());
 			DataUtilities.createData(program, hashAddr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-			program.getListing().setComment(hashAddr, CodeUnit.PRE_COMMENT, "CS_GenericBlob hash");
+			program.getListing().setComment(hashAddr, CommentType.PRE, "CS_GenericBlob hash");
 		}
 		catch (Exception e) {
 			log.appendMsg(CodeSignatureGenericBlob.class.getSimpleName(),

@@ -83,11 +83,12 @@ task zipSource (type: Zip) {
 	it.archiveBaseName = project.name + "-src"
 	it.archiveExtension = 'zip'
 	it.destinationDirectory = file(project.projectDir.path + "/build/tmp/src")
+	it.includeEmptyDirs = false
 		
 	// We MUST copy from a directory, and not just grab a list of source files.  
 	// This is the only way to preserve the directory structure.
 	it.from project.projectDir
-	it.include 'src/**/*'
+	it.include 'src/main/java/'
 }
 
 task buildExtension (type: Zip) {
@@ -125,6 +126,7 @@ task buildExtension (type: Zip) {
 		exclude 'bin/**'
 		exclude 'src/**'
 		exclude '.gradle/**'
+		exclude '.vscode/**'
 		exclude '.classpath'
 		exclude '.project'
 		exclude '.pydevproject'

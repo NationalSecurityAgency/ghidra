@@ -24,6 +24,8 @@ import org.objectweb.asm.MethodVisitor;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.ExtBranch;
 import ghidra.pcode.emu.jit.JitPcodeThread;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.ExitSlot;
@@ -75,7 +77,7 @@ public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq {
 		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(), TDESC_EXIT_SLOT, null, null);
 
 		// []
-		iv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(iv);
 		// [this]
 		iv.visitInsn(DUP);
 		// [this,this]
@@ -93,7 +95,7 @@ public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq {
 	@Override
 	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
 		// []
-		rv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(rv);
 		// [this]
 		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(), TDESC_EXIT_SLOT);
 		// [slot]

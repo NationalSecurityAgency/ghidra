@@ -153,17 +153,17 @@ public class GoFunctionMultiReturn {
 
 	private record StackComponentInfo(DataTypeComponent dtc, int ordinal, String comment) {}
 
-	private void regenerateMultireturnStruct(Structure struct, DataTypeManager dtm,
+	private void regenerateMultireturnStruct(Structure newStruct, DataTypeManager dtm,
 			GoParamStorageAllocator storageAllocator) {
 
-		String name = getComponentsInOriginalOrder(struct).stream()
+		String name = getComponentsInOriginalOrder(newStruct).stream()
 				.map(dtc -> dtc.getDataType().getName())
 				.collect(Collectors.joining(";", SHORT_MULTIVALUE_RETURNTYPE_PREFIX,
 					SHORT_MULTIVALUE_RETURNTYPE_SUFFIX));
 
-		if (struct.getName().equals(TMP_NAME)) {
+		if (newStruct.getName().equals(TMP_NAME)) {
 			try {
-				struct.setName(name);
+				newStruct.setName(name);
 			}
 			catch (InvalidNameException | DuplicateNameException e) {
 				// should not happen
@@ -171,15 +171,15 @@ public class GoFunctionMultiReturn {
 		}
 
 		if (storageAllocator == null) {
-			this.struct = struct;
-			for (DataTypeComponent dtc : getComponentsInOriginalOrder(struct)) {
+			this.struct = newStruct;
+			for (DataTypeComponent dtc : getComponentsInOriginalOrder(newStruct)) {
 				stackStorageComponents.add(dtc);
 			}
 			return;
 		}
 
 
-		Structure adjustedStruct = new StructureDataType(struct.getCategoryPath(),
+		Structure adjustedStruct = new StructureDataType(newStruct.getCategoryPath(),
 			name + "_" + storageAllocator.getArchDescription(), 0, dtm);
 		adjustedStruct.setPackingEnabled(true);
 		adjustedStruct.setExplicitPackingValue(1);
@@ -187,7 +187,7 @@ public class GoFunctionMultiReturn {
 		storageAllocator = storageAllocator.clone();
 		List<StackComponentInfo> stackResults = new ArrayList<>();
 		int compNum = 0;
-		for (DataTypeComponent dtc : getComponentsInOriginalOrder(struct)) {
+		for (DataTypeComponent dtc : getComponentsInOriginalOrder(newStruct)) {
 			List<Register> regs = storageAllocator.getRegistersFor(dtc.getDataType());
 			if (regs == null || regs.isEmpty()) {
 				long stackOffset = storageAllocator.getStackAllocation(dtc.getDataType());
@@ -215,8 +215,8 @@ public class GoFunctionMultiReturn {
 		}
 
 		boolean isEquiv = DWARFDataTypeConflictHandler.INSTANCE.resolveConflict(adjustedStruct,
-			struct) == ConflictResult.USE_EXISTING;
-		this.struct = isEquiv ? struct : adjustedStruct;
+			newStruct) == ConflictResult.USE_EXISTING;
+		this.struct = isEquiv ? newStruct : adjustedStruct;
 	}
 
 	private static int getOrdinalNumber(DataTypeComponent dtc) {

@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
-import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.target.Target;
@@ -51,6 +50,7 @@ import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.AutoConfigState.BooleanAsyncConfigFieldCodec;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -726,10 +726,42 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+		return materialize(DebuggerCoordinates.NOWHERE, coordinates, ActivationCause.USER);
+	}
+
+	protected CompletableFuture<Long> materialize(DebuggerCoordinates previous,
+			DebuggerCoordinates coordinates, ActivationCause cause) {
+		/**
+		 * NOTE: If we're requested the snapshot, we don't care if we can find the snapshot already
+		 * materialized. We're going to let the back end actually materialize and activate. When it
+		 * activates (check the cause), we'll look for the materialized snapshot.
+		 * 
+		 * If we go to a found snapshot on our request, the back-end may intermittently revert to
+		 * the another snapshot, because it may not realize what we've done at the front end, or it
+		 * may re-validate the request and go elsewhere, resulting in abrasive navigation. While we
+		 * could attempt some bookkeeping on the back-end, we don't control how the native debugger
+		 * issues events, so it's easier to just give it our request and then let it drive.
+		 */
+		ControlMode mode = getEffectiveControlMode(coordinates.getTrace());
+		Target target = coordinates.getTarget();
+		// NOTE: We've already validated at this point
+		if (mode.isTarget() && cause == ActivationCause.USER && target != null) {
+			// Yes, use getSnap for the materialized (view) snapshot
+			return target.activateAsync(previous, coordinates).thenApply(__ -> target.getSnap());
+		}
+
 		Long found = findSnapshot(coordinates);
 		if (found != null) {
 			return CompletableFuture.completedFuture(found);
 		}
+
+		/**
+		 * NOTE: We can actually reach this point in RO_TARGET mode, though ordinarily, it should
+		 * only reach here in RW_EMULATOR mode. The reason is because during many automated tests,
+		 * the "default" mode of RO_TARGET is taken as the effective mode, and the tests still
+		 * expect emulation behavior. So do it.
+		 */
+
 		if (emulationService == null) {
 			Msg.warn(this, "Cannot navigate to coordinates with execution schedules, " +
 				"because the emulation service is not available.");
@@ -738,16 +770,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
 
-	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates,
-			ActivationCause cause) {
+	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates previous,
+			DebuggerCoordinates coordinates, ActivationCause cause) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates, cause);
 			return AsyncUtils.nil();
 		}
-		return materialize(coordinates).thenAcceptAsync(snap -> {
+		return materialize(previous, coordinates, cause).thenAcceptAsync(snap -> {
 			if (snap == null) {
-				return; // The tool is probably closing
+				/**
+				 * Either the tool is closing, or we're going to let the target materialize and
+				 * activate the actual snap.
+				 */
+				return;
 			}
 			if (!coordinates.equals(current)) {
 				return; // We navigated elsewhere before emulation completed
@@ -1150,21 +1186,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return AsyncUtils.nil();
 		}
 		CompletableFuture<Void> future =
-			prepareViewAndFireEvent(resolved, cause).exceptionally(ex -> {
+			prepareViewAndFireEvent(prev, resolved, cause).exceptionally(ex -> {
 				// Emulation service will already display error
 				doSetCurrent(prev);
 				return null;
 			});
-
-		if (cause != ActivationCause.USER) {
-			return future;
-		}
-		Target target = resolved.getTarget();
-		if (target == null) {
-			return future;
-		}
-
-		return future.thenCompose(__ -> target.activateAsync(prev, resolved));
+		return future;
 	}
 
 	@Override

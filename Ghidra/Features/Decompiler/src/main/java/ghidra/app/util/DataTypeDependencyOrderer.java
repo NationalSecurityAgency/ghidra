@@ -22,7 +22,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
-/// Creates an acyclic dependency list of data types.
+/**
+ * Creates an acyclic dependency list of data types.
+ */
 public class DataTypeDependencyOrderer {
 
 	public static class Entry {

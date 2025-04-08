@@ -27,7 +27,7 @@ import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
@@ -63,7 +63,7 @@ public class DWARFLineInfoCommentScript extends GhidraScript {
 				List<SourceFileAddr> allSFA = cu.getLine().getAllSourceFileAddrInfo(cu, reader);
 				for (SourceFileAddr sfa : allSFA) {
 					Address addr = dprog.getCodeAddress(sfa.address());
-					DWARFUtil.appendComment(currentProgram, addr, CodeUnit.EOL_COMMENT, "",
+					DWARFUtil.appendComment(currentProgram, addr, CommentType.EOL, "",
 						"%s:%d".formatted(sfa.fileName(), sfa.lineNum()), ";");
 					count++;
 				}

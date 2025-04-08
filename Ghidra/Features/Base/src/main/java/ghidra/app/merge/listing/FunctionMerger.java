@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.swing.event.ChangeListener;
 
 import generic.stl.Pair;
 import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.app.merge.util.MergeUtilities;
@@ -212,12 +213,12 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	public void autoMerge(int progressMin, int progressMax, TaskMonitor monitor)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 
-		latestResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_LATEST_DTS);
-		myResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_MY_DTS);
-		origResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_ORIGINAL_DTS);
+		latestResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_LATEST_DTS);
+		myResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_MY_DTS);
+		origResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_DTS);
 
 		initializeAutoMerge("Auto-merging Functions and determining conflicts.", progressMin,
 			progressMax, monitor);
@@ -450,8 +451,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 						conflictingMyEntries.add(latestOnly.intersect(changeMy));
 						if (!conflictingMyEntries.isEmpty()) {
 							entryConflictSet.add(latestBody); // Add Latest function's body.
-							entryConflictSet.add(
-								getBodies(functionManagers[MY], conflictingMyEntries)); // Add My conflicting function bodies.
+							entryConflictSet
+									.add(getBodies(functionManagers[MY], conflictingMyEntries)); // Add My conflicting function bodies.
 						}
 						newEntries.add(conflictingMyEntries);
 					}
@@ -613,7 +614,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		Function myThunkedFunction = functions[MY].getThunkedFunction(false);
 		Address myThunkedEntry = myThunkedFunction.getEntryPoint();
 		Address myThunkedEntryAsLatest = SimpleDiffUtility.getCompatibleAddress(
-			functions[MY].getProgram(), myThunkedEntry, functions[LATEST].getProgram());
+			functions[MY].getProgram(), myThunkedEntry, functions[RESULT].getProgram());
 		if (!latestThunkedEntry.equals(myThunkedEntryAsLatest)) {
 			// Save the thunk conflict
 			saveThunkConflict(functions[RESULT]);
@@ -700,17 +701,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 					f.setParentNamespace(ns);
 				}
 			}
-			catch (DuplicateNameException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
-			}
-			catch (InvalidInputException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
-			}
-			catch (CircularDependencyException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
+			catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+				MergeManager.showBlockingError("Error Setting Function Namespace", e.getMessage());
 			}
 		}
 	}
@@ -762,17 +754,10 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 						listingMergeManager.resolveNamespace(origP, origF.getParentNamespace());
 					resultF.setParentNamespace(ns);
 				}
-				catch (DuplicateNameException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
-				}
-				catch (InvalidInputException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
-				}
-				catch (CircularDependencyException e) {
-					Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-						"Error Setting Function Namespace", e.getMessage());
+				catch (DuplicateNameException | InvalidInputException
+						| CircularDependencyException e) {
+					MergeManager.showBlockingError("Error Setting Function Namespace",
+						e.getMessage());
 				}
 			}
 		}
@@ -1065,10 +1050,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				mergeParamInfo(addr, paramInfoConflicts, parameterInfoChoice, monitor);
 			}
 			else if (askUser && mergeManager != null) {
-				Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
-				while (iter.hasNext()) {
+				for (ParamInfoConflict pc : paramInfoConflicts) {
 					monitor.checkCancelled();
-					ParamInfoConflict pc = iter.next();
 					boolean useForAll = (parameterInfoChoice != ASK_USER);
 					if (useForAll) {
 						mergeParamInfo(addr, pc, parameterInfoChoice, monitor);
@@ -1356,11 +1339,9 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	protected void mergeParameters(Address entryPtAddress, int chosenConflictOption,
 			TaskMonitor monitor) {
-		Function resultFunction =
-			listingMergeManager.mergeLatest.getResultProgram()
-					.getFunctionManager()
-					.getFunctionAt(
-						entryPtAddress);
+		Function resultFunction = listingMergeManager.mergeLatest.getResultProgram()
+				.getFunctionManager()
+				.getFunctionAt(entryPtAddress);
 		if (resultFunction == null) {
 			return;
 		}
@@ -1457,8 +1438,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	private void showOverlapException(final Address entryPt, Exception e) {
 		String message = "Couldn't display body address set conflict for function at " +
 			entryPt.toString(true) + ".\n " + e.getMessage();
-		Msg.showError(this, mergeManager.getMergeTool().getToolFrame(), "Function Merge Error",
-			message, e);
+		MergeManager.showBlockingError("Function Merge Error", message, e);
 		// Should this just put a message on errorBuf instead?
 	}
 
@@ -1742,7 +1722,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				thunkChoice = choiceForFunctionConflict;
 				break;
 			default:
-				Msg.showError(this, listingMergePanel, "Unrecognized Function Conflict Type",
+				MergeManager.showBlockingError("Unrecognized Function Conflict Type",
 					"Unrecognized indicator (" + functionConflictType +
 						") for function conflict type to merge.");
 		}

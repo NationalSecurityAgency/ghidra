@@ -51,23 +51,35 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 			case Omf166RecordTypes.DEPLST:
 				yield new Omf166DepList(reader);
 			case Content:
+				yield new Omf51Content(reader, false);
 			case KeilContent:
 				yield new Omf51Content(reader, true);
 			case SegmentDEF:
 				yield new Omf51SegmentDefs(reader, false);
 			case KeilSegmentDEF:
 				yield new Omf51SegmentDefs(reader, true);
-			case KeilFixup:
-				yield new Omf51FixupRecord(reader);
 			case Fixup:
+				yield new Omf51FixupRecord(reader, false);
+			case KeilFixup:
+				yield new Omf51FixupRecord(reader, true);
+			case PublicDEF:
+				yield new Omf51PublicDefsRecord(reader, false);
+			case KeilPublicDEF:
+				yield new Omf51PublicDefsRecord(reader, true);
+			case ExternalDEF:
+				yield new Omf51ExternalDefsRecord(reader, false);
+			case KeilExternalDEF:
+				yield new Omf51ExternalDefsRecord(reader, true);
+			case LibModLocs:
+				yield new Omf51LibraryModuleLocationsRecord(reader);
+			case LibModNames:
+				yield new Omf51LibraryModuleNamesRecord(reader);
+			case LibDictionary:
+				yield new Omf51LibraryDictionaryRecord(reader);
+			case LibHeader:
+				yield new Omf51LibraryHeaderRecord(reader);
 			case ScopeDEF:
 			case DebugItem:
-			case PublicDEF:
-			case ExternalDEF:
-			case LibModLocs:
-			case LibModNames:
-			case LibDictionary:
-			case LibHeader:
 				yield new OmfUnsupportedRecord(reader, Omf51RecordTypes.class);
 			default:
 				yield new OmfUnknownRecord(reader);

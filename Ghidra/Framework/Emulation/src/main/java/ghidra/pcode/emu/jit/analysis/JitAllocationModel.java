@@ -29,14 +29,14 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.JitCompiler;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.var.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.lang.Endian;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -615,16 +615,17 @@ public class JitAllocationModel {
 	 * <p>
 	 * This is just a logical grouping of a varnode and its assigned p-code type.
 	 */
-	private record VarDesc(int spaceId, long offset, int size, JitType type) {
+	private record VarDesc(int spaceId, long offset, int size, JitType type, Language language) {
 		/**
 		 * Create a descriptor from the given varnode and type
 		 * 
 		 * @param vn the varnode
 		 * @param type the p-code type
+		 * @param langauge the language
 		 * @return the descriptor
 		 */
-		static VarDesc fromVarnode(Varnode vn, JitType type) {
-			return new VarDesc(vn.getSpace(), vn.getOffset(), vn.getSize(), type);
+		static VarDesc fromVarnode(Varnode vn, JitType type, Language language) {
+			return new VarDesc(vn.getSpace(), vn.getOffset(), vn.getSize(), type, language);
 		}
 
 		/**
@@ -633,17 +634,229 @@ public class JitAllocationModel {
 		 * @return the name
 		 */
 		public String name() {
+			AddressFactory factory = language.getAddressFactory();
+			AddressSpace space = factory.getAddressSpace(spaceId);
+			Register reg = language.getRegister(space, offset, size);
+			if (reg != null) {
+				return "%s_%d_%s".formatted(reg.getName(), size, type.nm());
+			}
 			return "s%d_%x_%d_%s".formatted(spaceId, offset, size, type.nm());
 		}
 
 		/**
 		 * Convert this descriptor back to a varnode
 		 * 
-		 * @param factory the address factory for the emulation target language
 		 * @return the varnode
 		 */
-		public Varnode toVarnode(AddressFactory factory) {
+		public Varnode toVarnode() {
+			AddressFactory factory = language.getAddressFactory();
 			return new Varnode(factory.getAddressSpace(spaceId).getAddress(offset), size);
+		}
+	}
+
+	/**
+	 * A local that is always allocated in its respective method
+	 */
+	public interface FixedLocal {
+		/**
+		 * The JVM index of the local
+		 * 
+		 * @return the index
+		 */
+		int index();
+
+		/**
+		 * The name of the local
+		 * 
+		 * @return the name
+		 */
+		String varName();
+
+		/**
+		 * A JVM type descriptor for the local
+		 * 
+		 * @param nameThis the name of this class, in case it's the this pointer.
+		 * @return the type descriptor
+		 */
+		String typeDesc(String nameThis);
+
+		/**
+		 * The JVM opcode used to load the variable
+		 * 
+		 * @return the load opcode
+		 */
+		int opcodeLoad();
+
+		/**
+		 * The JVM opcode used to store the variable
+		 * 
+		 * @return the store opcode
+		 */
+		int opcodeStore();
+
+		/**
+		 * Generate the declaration of this variable.
+		 * 
+		 * <p>
+		 * This is not required, but is nice to have when debugging generated code.
+		 * 
+		 * @param mv the method visitor
+		 * @param nameThis the name of the class defining the containing method
+		 * @param startLocals the start label which should be placed at the top of the method
+		 * @param endLocals the end label which should be placed at the bottom of the method
+		 */
+		default void generateDeclCode(MethodVisitor mv, String nameThis, Label startLocals,
+				Label endLocals) {
+			mv.visitLocalVariable(varName(), typeDesc(nameThis), null, startLocals, endLocals,
+				index());
+		}
+
+		/**
+		 * Generate a load of this variable onto the JVM stack.
+		 * 
+		 * @param mv the method visitor
+		 */
+		default void generateLoadCode(MethodVisitor mv) {
+			mv.visitVarInsn(opcodeLoad(), index());
+		}
+
+		/**
+		 * Generate a store to this variable from the JVM stack.
+		 * 
+		 * @param mv the method visitor
+		 */
+		default void generateStoreCode(MethodVisitor mv) {
+			mv.visitVarInsn(opcodeStore(), index());
+		}
+	}
+
+	/**
+	 * Locals that exist in every compiled passage's constructor.
+	 */
+	public enum InitFixedLocal implements FixedLocal {
+		/**
+		 * Because we're compiling a non-static method, the JVM reserves index 0 for {@code this}.
+		 */
+		THIS("this", ALOAD, ASTORE) {
+			@Override
+			public String typeDesc(String nameThis) {
+				return "L" + nameThis + ";";
+			}
+		},
+		/**
+		 * The parameter {@code thread} is reserved by the JVM into index 1.
+		 */
+		THREAD("thread", ALOAD, ASTORE) {
+			@Override
+			public String typeDesc(String nameThis) {
+				return GenConsts.TDESC_JIT_PCODE_THREAD;
+			}
+		};
+
+		private final String varName;
+		private final int opcodeLoad;
+		private final int opcodeStore;
+
+		private InitFixedLocal(String varName, int opcodeLoad, int opcodeStore) {
+			this.varName = varName;
+			this.opcodeLoad = opcodeLoad;
+			this.opcodeStore = opcodeStore;
+		}
+
+		@Override
+		public int index() {
+			return ordinal();
+		}
+
+		@Override
+		public String varName() {
+			return varName;
+		}
+
+		@Override
+		public int opcodeLoad() {
+			return opcodeLoad;
+		}
+
+		@Override
+		public int opcodeStore() {
+			return opcodeStore;
+		}
+	}
+
+	/**
+	 * Locals that exist in every compiled passage's {@link JitCompiledPassage#run(int) run} method.
+	 */
+	public enum RunFixedLocal implements FixedLocal {
+		/**
+		 * Because we're compiling a non-static method, the JVM reserves index 0 for {@code this}.
+		 */
+		THIS("this", ALOAD, ASTORE) {
+			@Override
+			public String typeDesc(String nameThis) {
+				return "L" + nameThis + ";";
+			}
+		},
+		/**
+		 * The parameter {@code blockId} is reserved by the JVM into index 1.
+		 */
+		BLOCK_ID("blockId", ILOAD, ISTORE) {
+			@Override
+			public String typeDesc(String nameThis) {
+				return Type.getDescriptor(int.class);
+			}
+		},
+		/**
+		 * We declare a local variable to indicate that a context-modifying userop has been invoked.
+		 */
+		CTXMOD("ctxmod", ILOAD, ISTORE) {
+			@Override
+			public String typeDesc(String nameThis) {
+				return Type.getDescriptor(boolean.class);
+			}
+
+			@Override
+			public void generateDeclCode(MethodVisitor mv, String nameThis, Label startLocals,
+					Label endLocals) {
+				super.generateDeclCode(mv, nameThis, startLocals, endLocals);
+				mv.visitLdcInsn(0);
+				mv.visitVarInsn(ISTORE, index());
+			}
+		};
+
+		private final String varName;
+		private final int opcodeLoad;
+		private final int opcodeStore;
+
+		private RunFixedLocal(String varName, int opcodeLoad, int opcodeStore) {
+			this.varName = varName;
+			this.opcodeLoad = opcodeLoad;
+			this.opcodeStore = opcodeStore;
+		}
+
+		/**
+		 * All of the runtime locals
+		 */
+		public static final List<FixedLocal> ALL = List.of(values());
+
+		@Override
+		public int index() {
+			return ordinal();
+		}
+
+		@Override
+		public String varName() {
+			return varName;
+		}
+
+		@Override
+		public int opcodeLoad() {
+			return opcodeLoad;
+		}
+
+		@Override
+		public int opcodeStore() {
+			return opcodeStore;
 		}
 	}
 
@@ -654,7 +867,7 @@ public class JitAllocationModel {
 	private final SleighLanguage language;
 	private final Endian endian;
 
-	private int nextLocal = 2; // 0:this, 1:blockId in run(int blockId)
+	private int nextLocal = RunFixedLocal.ALL.size();
 	private final Map<JitVal, VarHandler> handlers = new HashMap<>();
 	private final Map<Varnode, VarHandler> handlersPerVarnode = new HashMap<>();
 	private final NavigableMap<Address, JvmLocal> locals = new TreeMap<>();
@@ -695,7 +908,7 @@ public class JitAllocationModel {
 		else {
 			nextLocal += 1;
 		}
-		return new JvmLocal(i, name, type, desc.toVarnode(language.getAddressFactory()));
+		return new JvmLocal(i, name, type, desc.toVarnode());
 	}
 
 	/**
@@ -730,7 +943,7 @@ public class JitAllocationModel {
 		long offset = desc.offset;
 		int i = 0;
 		for (SimpleJitType t : it) {
-			VarDesc d = new VarDesc(desc.spaceId, offset, t.size(), t);
+			VarDesc d = new VarDesc(desc.spaceId, offset, t.size(), t, language);
 			result[i] = genFreeLocal(name + "_" + i, t, d);
 			offset += t.size();
 			i++;
@@ -852,6 +1065,9 @@ public class JitAllocationModel {
 		if (v instanceof JitConstVal) {
 			return NoHandler.INSTANCE;
 		}
+		if (v instanceof JitFailVal) {
+			return NoHandler.INSTANCE;
+		}
 		if (v instanceof JitMemoryVar) {
 			return NoHandler.INSTANCE;
 		}
@@ -883,7 +1099,7 @@ public class JitAllocationModel {
 				.stream()
 				.sorted(Comparator.comparing(e -> e.getKey().getAddress()))
 				.toList()) {
-			VarDesc desc = VarDesc.fromVarnode(entry.getKey(), entry.getValue().winner());
+			VarDesc desc = VarDesc.fromVarnode(entry.getKey(), entry.getValue().winner(), language);
 			switch (desc.type()) {
 				case SimpleJitType t -> {
 					locals.put(entry.getKey().getAddress(), genFreeLocal(desc.name(), t, desc));

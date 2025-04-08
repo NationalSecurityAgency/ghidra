@@ -46,7 +46,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 /**
- * Plugin for searching program memory. 
+ * Plugin for searching program memory.
  */
 //@formatter:off
 @PluginInfo(

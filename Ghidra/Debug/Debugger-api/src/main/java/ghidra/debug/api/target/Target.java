@@ -34,8 +34,12 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -278,12 +282,50 @@ public interface Target {
 	 * Get the current snapshot key for the target
 	 * 
 	 * <p>
-	 * For most targets, this is the most recently created snapshot.
+	 * For most targets, this is the most recently created snapshot. For time-traveling targets, if
+	 * may not be. If this returns a negative number, then it refers to a scratch snapshot and
+	 * almost certainly indicates time travel with instruction steps. Use {@link #getTime()} in that
+	 * case to get a more precise schedule.
 	 * 
 	 * @return the snapshot
 	 */
-	// TODO: Should this be TraceSchedule getTime()?
 	long getSnap();
+
+	/**
+	 * Get the current time
+	 * 
+	 * @return the current time
+	 */
+	default TraceSchedule getTime() {
+		long snap = getSnap();
+		if (snap >= 0) {
+			return TraceSchedule.snap(snap);
+		}
+		TraceSnapshot snapshot = getTrace().getTimeManager().getSnapshot(snap, false);
+		if (snapshot == null) {
+			return null;
+		}
+		return snapshot.getSchedule();
+	}
+
+	/**
+	 * Get the form of schedules supported by "activate" on the back end
+	 * 
+	 * <p>
+	 * A non-null return value indicates the back end supports time travel. If it does, the return
+	 * value indicates the form of schedules that can be activated, (i.e., via some "go to time"
+	 * command). NOTE: Switching threads is considered an event by every time-traveling back end
+	 * that we know of. Events are usually mapped to a Ghidra trace's snapshots, and so most back
+	 * ends are constrained to schedules of the form {@link ScheduleForm#SNAP_EVT_STEPS}. A back-end
+	 * based on emulation may support thread switching. To support p-code op stepping, the back-end
+	 * will certainly have to be based on p-code emulation, and it must be using the same Sleigh
+	 * language as Ghidra.
+	 * 
+	 * @param obj the object (or an ancestor) that may support time travel
+	 * @param snap the <em>destination</em> snapshot
+	 * @return the form
+	 */
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap);
 
 	/**
 	 * Collect all actions that implement the given common debugger command

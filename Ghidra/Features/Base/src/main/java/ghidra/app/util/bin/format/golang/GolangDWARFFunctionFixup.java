@@ -15,32 +15,17 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf.DWARFException;
-import ghidra.app.util.bin.format.dwarf.DWARFFunction;
+import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
-import ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage;
-import ghidra.app.util.bin.format.dwarf.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf.DWARFVariable;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.golang.rtti.GoFuncData;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.classfinder.ExtensionPointProperties;
@@ -301,7 +286,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 	}
 
 	private void appendComment(Function func, String prefix, String comment) {
-		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CommentType.PLATE,
 			prefix, comment, "\n");
 	}
 }

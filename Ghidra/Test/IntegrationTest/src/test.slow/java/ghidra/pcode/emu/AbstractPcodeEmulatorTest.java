@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,8 +26,7 @@ import org.junit.Test;
 
 import generic.test.AbstractGTest;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.assembler.AssemblyBuffer;
+import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
@@ -304,11 +302,11 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	public void testSkipThumbStaysThumb() throws Exception {
 		PcodeEmulator emu = createEmulator(getLanguage(LANGID_ARMV8));
 		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
-		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		Language language = emu.getLanguage();
+		AddressSpace space = language.getDefaultSpace();
 		Address entry = space.getAddress(0x00400000);
 		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()), entry);
 
-		Language language = asm.getAssembler().getLanguage();
 		Register regCtx = language.getContextBaseRegister();
 		Register regT = language.getRegister("T");
 		RegisterValue rvDefault = new RegisterValue(regCtx,
@@ -358,5 +356,132 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 			arithmetic.toLong(thread.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
 		assertEquals(1,
 			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+	}
+
+	@Test
+	public void testInjectedBranch() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_TOY_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()),
+			space.getAddress(0x00400000));
+
+		asm.assemble("imm r1, #1");
+		Address inject = asm.getNext();
+		asm.assemble("add r1, #1");
+		Address target = asm.getNext();
+
+		byte[] bytes = asm.getBytes();
+		emu.getSharedState().setVar(asm.getEntry(), bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(asm.getEntry());
+
+		emu.inject(inject, "goto 0x%08x;".formatted(target.getOffset()));
+
+		try {
+			thread.run();
+			fail("Should have crashed on decode error");
+		}
+		catch (DecodePcodeExecutionException e) {
+			// Space assertion is subsumed by counter assertion
+		}
+
+		Register r1 = emu.getLanguage().getRegister("r1");
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(target, thread.getCounter());
+	}
+
+	@Test
+	public void testInjectedIndirectBranch() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_TOY_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()),
+			space.getAddress(0x00400000));
+
+		asm.assemble("imm r1, #1");
+		Address inject = asm.getNext();
+		asm.assemble("add r1, #1");
+		Address target = asm.getNext();
+
+		byte[] bytes = asm.getBytes();
+		emu.getSharedState().setVar(asm.getEntry(), bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(asm.getEntry());
+
+		emu.inject(inject, """
+				r2 = 0x%08x;
+				goto [r2];
+				""".formatted(target.getOffset()));
+
+		try {
+			thread.run();
+			fail("Should have crashed on decode error");
+		}
+		catch (DecodePcodeExecutionException e) {
+			// Space assertion is subsumed by counter assertion
+		}
+
+		Register r1 = emu.getLanguage().getRegister("r1");
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(target, thread.getCounter());
+	}
+
+	public void testArmPltIntoThumbFunction() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_ARMV8));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		Language language = emu.getLanguage();
+		AddressSpace space = language.getDefaultSpace();
+		Address pltEntry = space.getAddress(0x00500000);
+		Assembler asm = Assemblers.getAssembler(language);
+		AssemblyBuffer pltAsm = new AssemblyBuffer(asm, pltEntry);
+
+		Register regCtx = language.getContextBaseRegister();
+		Register regT = language.getRegister("T");
+		RegisterValue rvDefault = new RegisterValue(regCtx, pltAsm.getAssembler()
+				.getContextAt(pltAsm.getNext())
+				.toBigInteger(regCtx.getNumBytes()));
+		RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
+		AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
+
+		Address gotThumbFunc = space.getAddress(0x00510234);
+
+		long gotOffset = gotThumbFunc.getOffset() - pltEntry.getOffset() - 0x10000 - 8;
+
+		pltAsm.assemble("adr r12, 0x%s".formatted(pltEntry.add(8))); //("add r12, pc, #0, 12"); ?
+		pltAsm.assemble("add r12, r12, #0x10000"); // #16, 20");
+		// Assembler bug doesn't allow space in , # in this case
+		pltAsm.assemble("ldr pc, [r12,#0x%x]!".formatted(gotOffset));
+
+		Address funcEntry = space.getAddress(0x00400000);
+		AssemblyBuffer funcAsm = new AssemblyBuffer(asm, funcEntry);
+
+		funcAsm.assemble("adds r0, #1", ctxThumb);
+		Address funcEnd = funcAsm.getNext();
+
+		byte[] pltBytes = pltAsm.getBytes();
+		emu.getSharedState().setVar(pltEntry, pltBytes.length, false, pltBytes);
+		byte[] funcBytes = funcAsm.getBytes();
+		emu.getSharedState().setVar(funcEntry, funcBytes.length, false, funcBytes);
+		// +1 for THUMB mode
+		byte[] gotBytes = arithmetic.fromConst(funcEntry.getOffset() + 1, 4);
+		emu.getSharedState().setVar(gotThumbFunc, gotBytes.length, false, gotBytes);
+
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(pltEntry);
+		thread.overrideContextWithDefault();
+
+		try {
+			thread.run();
+		}
+		catch (DecodePcodeExecutionException e) {
+			assertEquals(funcEnd, e.getProgramCounter());
+		}
+
+		Register r0 = emu.getLanguage().getRegister("r0");
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
 	}
 }

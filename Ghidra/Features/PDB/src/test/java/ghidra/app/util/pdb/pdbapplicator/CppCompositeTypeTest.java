@@ -65,10 +65,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static DataType vftptr64;
 	private static DataType vbtptr32;
 	private static DataType vbtptr64;
-	private static MsftVxtManager msftVxtManager32;
-	private static MsftVxtManager msftVxtManager64;
-	private static VxtManager vxtManager32;
-	private static VxtManager vxtManager64;
+	private static MsftVxtManager vxtManager32;
+	private static MsftVxtManager vxtManager64;
+	private static MsftVxtManager vxtManagerNoProgram32;
+	private static MsftVxtManager vxtManagerNoProgram64;
 	// Note: Currently all test have expected results based on up the CLASS_HIERARCHY layout.
 	private static ObjectOrientedClassLayout classLayoutChoice =
 		ObjectOrientedClassLayout.CLASS_HIERARCHY;
@@ -116,19 +116,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 		createVbTables();
 
-		msftVxtManager32 = new MsftVxtManager(ctm32, program32);
-		msftVxtManager64 = new MsftVxtManager(ctm64, program64);
+		vxtManager32 = new MsftVxtManager(ctm32, program32);
+		vxtManager64 = new MsftVxtManager(ctm64, program64);
 		try {
-			msftVxtManager32.createVirtualTables(CategoryPath.ROOT, addressByMangledName32, log,
+			vxtManager32.createVirtualTables(CategoryPath.ROOT, addressByMangledName32, log,
 				monitor);
-			msftVxtManager64.createVirtualTables(CategoryPath.ROOT, addressByMangledName64, log,
+			vxtManager64.createVirtualTables(CategoryPath.ROOT, addressByMangledName64, log,
 				monitor);
 		}
 		catch (CancelledException e) {
 			// do nothing
 		}
-		vxtManager32 = new VxtManager(ctm32);
-		vxtManager64 = new VxtManager(ctm64);
+		vxtManagerNoProgram32 = new MsftVxtManager(ctm32, null);
+		vxtManagerNoProgram64 = new MsftVxtManager(ctm64, null);
 
 	}
 
@@ -227,8 +227,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		private FunctionManager myFunctionManager;
 
 		private MyStubProgram(Memory mem, FunctionManager fm) {
-			this.myMemory = mem;
-			this.myFunctionManager = fm;
+			myMemory = mem;
+			myFunctionManager = fm;
 		}
 
 		@Override
@@ -6994,7 +6994,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	public void test_32bit_vbt() throws Exception {
 		boolean is64Bit = false;
 		MyTestDummyDataTypeManager dtm = dtm32;
-		VxtManager vxtManager = msftVxtManager32;
+		MsftVxtManager vxtManager = vxtManager32;
 		List<String> expectedResults = new ArrayList<>();
 		expectedResults.add(getExpectedA_32());
 		expectedResults.add(getExpectedC_32());
@@ -7037,7 +7037,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	public void test_32bit_speculative() throws Exception {
 		boolean is64Bit = false;
 		MyTestDummyDataTypeManager dtm = dtm32;
-		VxtManager vxtManager = vxtManager32;
+		MsftVxtManager vxtManager = vxtManagerNoProgram32;
 		List<String> expectedResults = new ArrayList<>();
 		expectedResults.add(getSpeculatedA_32());
 		expectedResults.add(getSpeculatedC_32());
@@ -7080,7 +7080,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	public void test_64bit_vbt() throws Exception {
 		boolean is64Bit = true;
 		MyTestDummyDataTypeManager dtm = dtm64;
-		VxtManager vxtManager = msftVxtManager64;
+		MsftVxtManager vxtManager = vxtManager64;
 		List<String> expectedResults = new ArrayList<>();
 		expectedResults.add(getExpectedA_64());
 		expectedResults.add(getExpectedC_64());
@@ -7123,7 +7123,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	public void test_64bit_speculative() throws Exception {
 		boolean is64Bit = true;
 		MyTestDummyDataTypeManager dtm = dtm64;
-		VxtManager vxtManager = vxtManager64;
+		MsftVxtManager vxtManager = vxtManagerNoProgram64;
 		List<String> expectedResults = new ArrayList<>();
 		expectedResults.add(getSpeculatedA_64());
 		expectedResults.add(getSpeculatedC_64());
@@ -7159,7 +7159,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	private void createAndTestStructures(boolean is64Bit, DataTypeManager dtm,
-			VxtManager vxtManager, List<String> expectedResults) throws Exception {
+			MsftVxtManager vxtManager, List<String> expectedResults) throws Exception {
 
 		Iterator<String> iter = expectedResults.iterator();
 		String expected;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -227,26 +227,32 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	/**
+	 * Display a blocking error popup.  When used from a {@link MergeResolver} task it will 
+	 * prevent that task from exiting/progressing until the error popup is dismissed.
+	 * @param title popup title
+	 * @param msg error message
+	 */
+	public static void showBlockingError(String title, String msg) {
+		Swing.runNow(() -> Msg.showError(MergeManager.class, null, title, msg));
+	}
+
+	/**
+	 * Display a blocking error popup.  When used from a {@link MergeResolver} task it will 
+	 * prevent that task from exiting/progressing until the error popup is dismissed.
+	 * @param title popup title
+	 * @param msg error message
+	 * @param e exception
+	 */
+	public static void showBlockingError(String title, String msg, Exception e) {
+		Swing.runNow(() -> Msg.showError(MergeManager.class, null, title, msg, e));
+	}
+
+	/**
 	 * Enable the apply button according to the "enabled" parameter.
 	 */
 	@Override
 	public void setApplyEnabled(final boolean enabled) {
-		Runnable r = () -> mergePlugin.setApplyEnabled(enabled);
-
-		if (SwingUtilities.isEventDispatchThread()) {
-			r.run();
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(r);
-			}
-			catch (InterruptedException e) {
-			}
-			catch (InvocationTargetException e) {
-				Msg.showError(this, null, "Error in Merge Dialog",
-					"Error setting enablement for Apply button", e);
-			}
-		}
+		Swing.runNow(() -> mergePlugin.setApplyEnabled(enabled));
 	}
 
 	/**
@@ -440,13 +446,8 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 			}
 			catch (final Exception e) {
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						Msg.showError(this, null, "Error During Merge",
-							"Error occurred in " + mergeResolvers[currentIndex].getName(), e);
-					}
-				});
+				MergeManager.showBlockingError("Error During Merge",
+					"Error occurred in " + mergeResolvers[currentIndex].getName(), e);
 				mergeStatus = false;
 				conflictsResolveCompleted();
 			}
@@ -455,16 +456,6 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 		if (currentIndex < mergeResolvers.length && !isCancelled) {
 			runManager.runLater(r, mergeResolvers[currentIndex].getName(), 250);
 		}
-	}
-
-	/**
-	 * Display error message dialog in a blocking fashion.
-	 * @param originator message originator
-	 * @param title dialog title
-	 * @param msg dialog message
-	 */
-	public static void displayErrorAndWait(Object originator, String title, String msg) {
-		Swing.runNow(() -> Msg.showError(originator, null, title, msg));
 	}
 
 	/**

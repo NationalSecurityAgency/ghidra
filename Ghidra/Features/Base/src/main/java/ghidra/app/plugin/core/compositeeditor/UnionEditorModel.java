@@ -16,11 +16,14 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
+import javax.swing.table.TableColumn;
 
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.table.GTableHeaderRenderer;
 
 /**
  * Data union editor model for maintaining information about the edits being
@@ -53,6 +56,9 @@ class UnionEditorModel extends CompEditorModel {
 	private static final int DATATYPE = 2;
 	private static final int FIELDNAME = 3;
 	private static final int COMMENT = 4;
+	private static final int ORDINAL = 5;
+
+	private List<TableColumn> hiddenColumns;
 
 	UnionEditorModel(UnionEditorProvider provider, boolean showInHex) {
 		super(provider);
@@ -62,11 +68,22 @@ class UnionEditorModel extends CompEditorModel {
 		adjustOffsets();
 		this.showHexNumbers = showInHex;
 
+		List<TableColumn> additionalColumns = new ArrayList<>();
+		TableColumn ordinalColumn = new TableColumn(ORDINAL, 75);
+		ordinalColumn.setHeaderRenderer(new GTableHeaderRenderer());
+		ordinalColumn.setHeaderValue("Ordinal");
+		additionalColumns.add(ordinalColumn);
+		hiddenColumns = Collections.unmodifiableList(additionalColumns);
 	}
 
 	@Override
 	public String getTypeName() {
 		return "Union";
+	}
+
+	@Override
+	protected List<TableColumn> getHiddenColumns() {
+		return hiddenColumns;
 	}
 
 	@Override
@@ -97,6 +114,29 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public int getCommentColumn() {
 		return COMMENT;
+	}
+
+	@Override
+	public Object getValueAt(int rowIndex, int columnIndex) {
+
+		if ((viewComposite == null) || (rowIndex < 0) || (columnIndex < 0)) {
+			return "";
+		}
+
+		DataTypeComponent dtc = getComponent(rowIndex);
+		if (dtc == null) {
+			if (columnIndex == getDataTypeColumn()) {
+				return null;
+			}
+			return "";
+		}
+
+		if (columnIndex == ORDINAL) {
+			int ordinal = dtc.getOrdinal();
+			return showHexNumbers ? getHexString(ordinal, true) : Integer.toString(ordinal);
+		}
+
+		return super.getValueAt(rowIndex, columnIndex);
 	}
 
 	/**
@@ -381,7 +421,7 @@ class UnionEditorModel extends CompEditorModel {
 		checkIsAllowableDataType(dataType);
 		try {
 			DataTypeComponent dtc = viewDTM.withTransaction("Add Component",
-				() -> ((Union) viewComposite).insert(rowIndex, dataType, length, name, comment));
+				() -> viewComposite.insert(rowIndex, dataType, length, name, comment));
 			if (rowIndex <= currentEditRow) {
 				currentEditRow++;
 			}
@@ -418,8 +458,8 @@ class UnionEditorModel extends CompEditorModel {
 		try {
 			boolean isSelected = selection.containsEntirely(BigInteger.valueOf(rowIndex));
 			DataTypeComponent dtc = viewDTM.withTransaction("Replace Component", () -> {
-				((Union) viewComposite).delete(rowIndex);
-				return ((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
+				viewComposite.delete(rowIndex);
+				return viewComposite.insert(rowIndex, dataType, length, name, comment);
 			});
 			if (isSelected) {
 				selection.addRange(rowIndex, rowIndex + 1);
@@ -487,7 +527,7 @@ class UnionEditorModel extends CompEditorModel {
 
 	@Override
 	public void replaceOriginalComponents() {
-		((Union) getOriginalComposite()).replaceWith(viewComposite);
+		getOriginalComposite().replaceWith(viewComposite);
 	}
 
 	@Override

@@ -19,13 +19,16 @@ import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
-import docking.widgets.combobox.GhidraComboBox;
+import org.apache.commons.lang3.StringUtils;
+
+import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.table.FocusableEditor;
 import docking.widgets.textfield.IntegerTextField;
 import generic.theme.GThemeDefaults.Colors.Palette;
@@ -36,24 +39,23 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 class VarnodeLocationCellEditor extends AbstractCellEditor
 		implements TableCellEditor, FocusableEditor {
 	private Program program;
 	private VarnodeType type;
 	private Component editorComponent;
-	private GhidraComboBox<Register> combo;
+	private DropDownSelectionTextField<Register> registerEntryTextField;
 	private AddressInput addressInput;
 	private IntegerTextField offsetInput;
 
 	private Comparator<Register> registerWrapperComparator =
 		(r1, r2) -> r1.toString().compareToIgnoreCase(r2.toString());
 	private VarnodeInfo currentVarnode;
-	private int maxRegisterSize;
 
 	VarnodeLocationCellEditor(StorageAddressModel model) {
 		this.program = model.getProgram();
-		this.maxRegisterSize = program.getDefaultPointerSize();
 	}
 
 	@Override
@@ -68,13 +70,13 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	public boolean stopCellEditing() {
 		switch (type) {
 			case Register:
-				Object selectedObj = combo.getSelectedItem();
-				if (selectedObj instanceof String) {
-					if (program.getRegister((String) selectedObj) == null) {
+				String regName = registerEntryTextField.getText().trim();
+				if (program.getRegister(regName) == null) {
+					if (!StringUtils.isBlank(regName)) {
 						Msg.showError(this, editorComponent, "Invalid Register",
-							"Register does not exist: " + selectedObj);
-						return false;
+							"Register does not exist: " + regName);
 					}
+					return false;
 				}
 				break;
 
@@ -102,7 +104,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	public Object getCellEditorValue() {
 		switch (type) {
 			case Register:
-				return combo.getSelectedItem();
+				return registerEntryTextField.getText();
 
 			case Stack:
 				BigInteger value = offsetInput.getValue();
@@ -175,47 +177,59 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	private Component createRegisterCombo(VarnodeInfo varnode) {
 		ProgramContext programContext = program.getProgramContext();
 
-		List<Register> validItems = new ArrayList<>(programContext.getRegisters());
+		List<Register> registers = new ArrayList<>(programContext.getRegisters());
 
-		for (Iterator<Register> iter = validItems.iterator(); iter.hasNext();) {
+		for (Iterator<Register> iter = registers.iterator(); iter.hasNext();) {
 			Register register = iter.next();
 			if (register.isProcessorContext() || register.isHidden()) {
 				iter.remove();
 			}
 		}
 
-		Collections.sort(validItems, registerWrapperComparator);
-		Register[] registers = validItems.toArray(new Register[validItems.size()]);
+		Collections.sort(registers, registerWrapperComparator);
+		//Register[] registers = validItems.toArray(new Register[validItems.size()]);
 
-		combo = new GhidraComboBox<>(registers);
-		combo.setEditable(false);
-		combo.setEnterKeyForwarding(true);
+		RegisterDropDownSelectionDataModel registerModel =
+			new RegisterDropDownSelectionDataModel(registers);
+		registerEntryTextField = new DropDownSelectionTextField<>(registerModel);
+		registerEntryTextField.setBorder(null);
+
+		// this allows us to show the matching list when there is no text in the editor
+		registerEntryTextField.setShowMatchingListOnEmptyText(true);
+
+		AtomicReference<Register> currentReg = new AtomicReference<>();
+
 		Address address = varnode.getAddress();
 		if (address != null && varnode.getSize() != null) {
 			Register register = program.getRegister(address, varnode.getSize());
-			combo.setSelectedItem(register);
+			if (register != null) {
+				currentReg.set(register);
+				registerEntryTextField.setText(register.getName());
+			}
 		}
 
-		combo.addPopupMenuListener(new PopupMenuListener() {
+		registerEntryTextField.addCellEditorListener(new CellEditorListener() {
 
 			@Override
-			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-				// ignore
-			}
-
-			@Override
-			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+			public void editingStopped(ChangeEvent e) {
 				stopCellEditing();
 			}
 
 			@Override
-			public void popupMenuCanceled(PopupMenuEvent e) {
-				// ignore
+			public void editingCanceled(ChangeEvent e) {
+				cancelCellEditing();
 			}
 		});
 
-		combo.addActionListener(e -> stopCellEditing());
+		registerEntryTextField.addActionListener(e -> stopCellEditing());
 
-		return combo;
+		// Note: need to do this later.  At the time of construction, this text field is not yet
+		// showing.  The text field has checks to avoid showing the list if it is not showing.  By
+		// running later, this call will happen once the widget has been added to the table.
+		Swing.runLater(() -> {
+			registerEntryTextField.showMatchingList();
+		});
+
+		return registerEntryTextField;
 	}
 }

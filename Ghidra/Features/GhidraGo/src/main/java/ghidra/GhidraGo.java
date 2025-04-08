@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 
 import docking.framework.DockingApplicationConfiguration;
@@ -48,8 +49,8 @@ public class GhidraGo implements GhidraLaunchable {
 	 */
 	@Override
 	public void launch(GhidraApplicationLayout layout, String[] args) throws Exception {
+		ApplicationConfiguration configuration = null;
 		try {
-			ApplicationConfiguration configuration = null;
 			if (!Application.isInitialized()) {
 				System.setProperty(ApplicationProperties.APPLICATION_NAME_PROPERTY, "GhidraGo");
 				configuration = new DockingApplicationConfiguration();
@@ -58,6 +59,8 @@ public class GhidraGo implements GhidraLaunchable {
 			if (args != null && args.length > 0) {
 				ghidra.framework.protocol.ghidra.Handler.registerHandler();
 				sender = new GhidraGoSender();
+				// check if ghidra url is valid
+				GhidraURL.getProjectURL(new URL(args[0]));
 
 				startGhidraIfNeeded(layout);
 
@@ -70,21 +73,27 @@ public class GhidraGo implements GhidraLaunchable {
 				}
 			}
 			else {
-				throw new IllegalArgumentException(
-					"A valid GhidraURL locating a program, program name, or path to a program name " +
-						"must be specified as the first command line argument.");
+				throw new IllegalArgumentException();
 			}
+		}
+		catch (IllegalArgumentException e) {
+			System.err.println("\n" + "USAGE: ghidraGo <ghidraURL>\n\n" +
+				"Ghidra URL Forms (ghidraURL):\n" +
+				"    ghidra://<hostname>[:<port>]/<repo-name>[/<folder-path>[/<program-name>]]\n" +
+				"    ghidra:/[<local-dirpath>/]<project-name>[?/<folder-path>[/<program-name>]]\n");
 		}
 		catch (FailedToStartGhidraException e) {
 			logOrShowError("GhidraGo Start Ghidra Exception",
 				"Failed to start Ghidra from GhidraGo", e);
-			System.exit(-1);
 		}
 		catch (StopWaitingException e) {
-			System.exit(-1);
+			// do nothing
 		}
 		catch (Exception e) {
 			logOrShowError("GhidraGo Exception", "An unexpected exception occurred in GhidraGo", e);
+		}
+		// if configuration is null, probably running inside a test
+		if (configuration != null) {
 			// calling System.exit explicitly is necessary, otherwise the Loading... screen
 			// persists instead of closing when complete.
 			System.exit(-1);

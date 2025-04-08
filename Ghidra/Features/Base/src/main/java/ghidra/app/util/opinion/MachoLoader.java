@@ -41,7 +41,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.LittleEndianDataConverter;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
@@ -310,20 +309,25 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * set and the Mach-O actually has {@code LC_REEXPORT_DYLIB} entries. 
 	 */
 	@Override
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
-		if (super.shouldSearchAllPaths(program, options)) {
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
+		if (super.shouldSearchAllPaths(program, options, log)) {
 			return true;
 		}
 		if (shouldPerformReexports(options)) {
 			try {
-				ByteProvider provider = new MemoryByteProvider(program.getMemory(),
-					program.getImageBase());
-				if (new MachHeader(provider).parseAndCheck(LoadCommandTypes.LC_REEXPORT_DYLIB)) {
+				Symbol header =
+					program.getSymbolTable().getSymbols(MachoProgramBuilder.HEADER_SYMBOL).next();
+				if (header == null) {
+					return false;
+				}
+				ByteProvider p = new MemoryByteProvider(program.getMemory(), header.getAddress());
+				if (new MachHeader(p).parseAndCheck(LoadCommandTypes.LC_REEXPORT_DYLIB)) {
 					return true;
 				}
 			}
-			catch (IOException | MachException e) {
-				Msg.error(this, "Failed to parse Mach-O header for: " + program.getName());
+			catch (Exception e) {
+				log.appendMsg("Failed to parse Mach-O header for: '%s': %s"
+						.formatted(program.getName(), e.getMessage()));
 			}
 		}
 		return false;
@@ -348,7 +352,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		}
 
 		try {
-			for (String path : getReexportPaths(lib)) {
+			for (String path : getReexportPaths(lib, log)) {
 				unprocessed.add(new UnprocessedLibrary(path, depth, depth == 1));
 			}
 		}
@@ -361,12 +365,21 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * Gets a {@link List} of reexport library paths from the given {@link Program}
 	 *  
 	 * @param program The {@link Program}
+	 * @param log The log
 	 * @return A {@link List} of reexport library paths from the given {@link Program}
 	 * @throws MachException if there was a problem parsing the Mach-O {@link Program}
 	 * @throws IOException if there was an IO-related error
 	 */
-	private List<String> getReexportPaths(Program program) throws MachException, IOException {
-		ByteProvider p = new MemoryByteProvider(program.getMemory(), program.getImageBase());
+	private List<String> getReexportPaths(Program program, MessageLog log)
+			throws MachException, IOException {
+		Symbol header =
+			program.getSymbolTable().getSymbols(MachoProgramBuilder.HEADER_SYMBOL).next();
+		if (header == null) {
+			log.appendMsg("Failed to lookup reexport paths...couldn't find '%s' symbol"
+					.formatted(MachoProgramBuilder.HEADER_SYMBOL));
+			return List.of();
+		}
+		ByteProvider p = new MemoryByteProvider(program.getMemory(), header.getAddress());
 		return new MachHeader(p).parseReexports()
 				.stream()
 				.map(DynamicLibraryCommand::getDynamicLibrary)
@@ -382,17 +395,16 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 */
 	@Override
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		if (shouldPerformReexports(options)) {
 			
 			List<DomainFolder> searchFolders =
-				getLibrarySearchFolders(loadedPrograms, project, options);
+				getLibrarySearchFolders(loadedPrograms, project, options, log);
 
-			List<LibrarySearchPath> searchPaths =
-				getLibrarySearchPaths(loadedPrograms.getFirst().getDomainObject(), loadSpec,
-					options, messageLog, monitor);
+			List<LibrarySearchPath> searchPaths = getLibrarySearchPaths(
+				loadedPrograms.getFirst().getDomainObject(), loadSpec, options, log, monitor);
 
 			monitor.initialize(loadedPrograms.size());
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
@@ -402,10 +414,10 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				int id = program.startTransaction("Reexporting");
 				try {
 					reexport(program, loadedPrograms, searchFolders, searchPaths, options, monitor,
-						messageLog);
+						log);
 				}
 				catch (Exception e) {
-					messageLog.appendException(e);
+					log.appendException(e);
 				}
 				finally {
 					program.endTransaction(id, true);
@@ -413,7 +425,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 
-		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog,
+		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, log,
 			monitor);
 	}
 
@@ -428,16 +440,16 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * @param searchPaths A {@link List} of file system search paths that will be searched
 	 * @param options The load options
 	 * @param monitor A cancelable task monitor
-	 * @param messageLog The log
+	 * @param log The log
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
 	private void reexport(Program program, List<Loaded<Program>> loadedPrograms,
 			List<DomainFolder> searchFolders, List<LibrarySearchPath> searchPaths,
-			List<Option> options, TaskMonitor monitor, MessageLog messageLog)
+			List<Option> options, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, Exception {
 
-		for (String path : getReexportPaths(program)) {
+		for (String path : getReexportPaths(program, log)) {
 			monitor.checkCancelled();
 			Program programToRelease = null;
 			try {
@@ -469,7 +481,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 						.filter(Objects::nonNull)
 						.toList();
 				Address addr = MachoProgramUtils.addExternalBlock(program,
-					reexportedSymbols.size() * 8, messageLog);
+					reexportedSymbols.size() * 8, log);
 				monitor.initialize(reexportedSymbols.size(), "Reexporting symbols...");
 				for (Symbol symbol : reexportedSymbols) {
 					monitor.increment();

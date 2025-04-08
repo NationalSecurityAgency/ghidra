@@ -242,14 +242,13 @@ public class MarkupSession {
 	 * the operation is skipped.
 	 * 
 	 * @param fieldContext the field
-	 * @param commentType {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#PLATE_COMMENT},
-	 * {@link CodeUnit#POST_COMMENT}, {@link CodeUnit#PRE_COMMENT} 
+	 * @param commentType {@link CommentType} enum 
 	 * @param prefix String prefix to place in front of the comment string
 	 * @param comment String value to append
 	 * @param sep separator to use between existing comments (for example, "\n")
 	 * @throws IOException if error adding comment
 	 */
-	public void appendComment(FieldContext<?> fieldContext, int commentType, String prefix,
+	public void appendComment(FieldContext<?> fieldContext, CommentType commentType, String prefix,
 			String comment, String sep) throws IOException {
 		DWARFUtil.appendComment(program, fieldContext.getAddress(), commentType, prefix, comment,
 			sep);
@@ -261,22 +260,21 @@ public class MarkupSession {
 	 * the operation is skipped.
 	 * 
 	 * @param structureContext the structure
-	 * @param commentType {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#PLATE_COMMENT},
-	 * {@link CodeUnit#POST_COMMENT}, {@link CodeUnit#PRE_COMMENT} 
+	 * @param commentType {@link CommentType} enum 
 	 * @param prefix String prefix to place in front of the comment string
 	 * @param comment String value to append
 	 * @param sep separator to use between existing comments (for example, "\n")
 	 * @throws IOException if error adding comment
 	 */
-	public void appendComment(StructureContext<?> structureContext, int commentType, String prefix,
-			String comment, String sep) throws IOException {
+	public void appendComment(StructureContext<?> structureContext, CommentType commentType,
+			String prefix, String comment, String sep) throws IOException {
 		DWARFUtil.appendComment(program, structureContext.getStructureAddress(), commentType,
 			prefix, comment, sep);
 	}
 
 	public void appendComment(Function func, String prefix, String comment) {
 		if (func != null) {
-			DWARFUtil.appendComment(program, func.getEntryPoint(), CodeUnit.PLATE_COMMENT, prefix,
+			DWARFUtil.appendComment(program, func.getEntryPoint(), CommentType.PLATE, prefix,
 				comment, "\n");
 		}
 	}

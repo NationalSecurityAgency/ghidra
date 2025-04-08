@@ -189,6 +189,9 @@ define pcodeop ReverseBitOrder;
 define pcodeop SendEvent;
 define pcodeop setEndianState;
 
+# Copies ISAModeSwitch to TMode
+define pcodeop setISAMode;
+
 macro affectflags() {
   CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV;
 }
@@ -197,9 +200,14 @@ macro affect_resflags() {
   ZR = tmpZR; NG = tmpNG;
 }
 
-macro SetThumbMode(value) {
+macro SetISAModeSwitch(value) {
   ISAModeSwitch = value;
   TB = ISAModeSwitch;
+}
+
+macro SetThumbMode(value) {
+  SetISAModeSwitch(value);
+  setISAMode();
 }
 
 #

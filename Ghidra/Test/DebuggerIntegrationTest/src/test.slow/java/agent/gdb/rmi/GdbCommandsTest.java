@@ -584,6 +584,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testRemoveObj() throws Exception {
+		// Must give 1 for new-snap, since snap 0 was never created
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -591,7 +592,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
 				ghidra trace insert-obj Test.Objects[1]
-				ghidra trace set-snap 1
+				ghidra trace new-snap 1 "Snap 1"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				quit
@@ -779,7 +780,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace set-value Test.Objects[1] [1] '"A"'
 				ghidra trace set-value Test.Objects[1] [2] '"B"'
 				ghidra trace set-value Test.Objects[1] [3] '"C"'
-				ghidra trace set-snap 10
+				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
 				kill

@@ -247,9 +247,7 @@ class FileActionManager {
 	 * @return true if the project was opened
 	 */
 	final boolean doOpenProject(ProjectLocator projectLocator) {
-		String status = "Opened project: " + projectLocator.getName();
 		Project project = null;
-		boolean openStatus = false;
 		try {
 			// first close the active project (if there is one)
 			// but if user cancels operation, don't continue
@@ -258,49 +256,38 @@ class FileActionManager {
 			}
 			ProjectManager pm = plugin.getProjectManager();
 			project = pm.openProject(projectLocator, true, false);
-			if (project == null) {
-				status = "Error opening project: " + projectLocator.toString();
-			}
-			else {
-				firingProjectOpened = true;
-				tool.setActiveProject(project);
-				openProjectAndNotify(project);
-				openStatus = true;
-				firingProjectOpened = false;
-			}
+			firingProjectOpened = true;
+			tool.setActiveProject(project);
+			openProjectAndNotify(project);
+			firingProjectOpened = false;
+			Msg.info(this, "Opened project: " + projectLocator.getName());
 		}
 		catch (NotFoundException nfe) {
-			status = "Project not found for " + projectLocator.toString();
-			Msg.showInfo(getClass(), tool.getToolFrame(), "Error Opening Project", status);
+			String msg = "Project not found for " + projectLocator;
+			Msg.showInfo(getClass(), tool.getToolFrame(), "Error Opening Project", msg);
+			Msg.error(this, msg);
 		}
 		catch (NotOwnerException e) {
-			status = "Cannot open project: " + e.getMessage();
 			Msg.showError(this, null, "Not Project Owner", "Cannot open project " + projectLocator +
 				"\n" + e.getMessage() +
 				"\n \nEach user must create their own project. If needed, another user's project may be viewed\n" +
 				"and files copied, using the View Other action from your own open project.  Alternatively, \n" +
 				"creating a \"Shared Project\" will allow a group of users to use a shared server-based repository.");
+			Msg.error(this,  "Cannot open project: " + e.getMessage());
 		}
 		catch (LockException e) {
-			status = "Project is already open for update: " + projectLocator.toString();
-			Msg.showError(this, null, "Open Project Failed", status);
+			Msg.showInfo(this, null, "Open Project Failed", e.getMessage());
 		}
 		catch (Exception e) {
-			status = "Error opening project: " + projectLocator.toString();
-			Msg.showError(this, null, "Open Project Failed", status, e);
+			Msg.showError(this, null, "Open Project Failed",
+				"Error opening project: " + projectLocator, e);
 		}
 		finally {
 			// update our list of recent projects
 			plugin.rebuildRecentMenus();
 		}
 
-		if (!openStatus) {
-			Msg.error(this, status);
-		}
-		else {
-			Msg.info(this, status);
-		}
-		return openStatus;
+		return project != null;
 	}
 
 	/**

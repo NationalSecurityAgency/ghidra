@@ -1430,7 +1430,7 @@ public class DyldCacheHeader implements StructConverter {
 			for (DyldCacheImageInfo imageInfo : imageInfoList) {
 				Data d = DataUtilities.createData(program, addr, imageInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, imageInfo.getPath());
+				program.getListing().setComment(addr, CommentType.EOL, imageInfo.getPath());
 				addr = addr.add(d.getLength());
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
@@ -1450,7 +1450,7 @@ public class DyldCacheHeader implements StructConverter {
 			String size = "0x" + Long.toHexString(codeSignatureSize);
 			program.getListing()
 					.setComment(fileOffsetToAddr(codeSignatureOffset, program, space),
-						CodeUnit.PLATE_COMMENT, "Code Signature (" + size + " bytes)");
+						CommentType.PLATE, "Code Signature (" + size + " bytes)");
 			monitor.incrementProgress(1);
 		}
 		catch (IllegalArgumentException e) {
@@ -1550,8 +1550,7 @@ public class DyldCacheHeader implements StructConverter {
 			for (DyldCacheImageTextInfo imageTextInfo : imageTextInfoList) {
 				Data d = DataUtilities.createData(program, addr, imageTextInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				program.getListing()
-						.setComment(addr, CodeUnit.EOL_COMMENT, imageTextInfo.getPath());
+				program.getListing().setComment(addr, CommentType.EOL, imageTextInfo.getPath());
 				addr = addr.add(d.getLength());
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);

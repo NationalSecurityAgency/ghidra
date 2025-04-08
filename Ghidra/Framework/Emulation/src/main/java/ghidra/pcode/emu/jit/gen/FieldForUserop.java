@@ -21,6 +21,8 @@ import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
@@ -63,7 +65,7 @@ public record FieldForUserop(PcodeUseropDefinition<?> userop) implements Instanc
 			null);
 
 		// []
-		iv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(iv);
 		// [this]
 		iv.visitInsn(DUP);
 		// [this,this]
@@ -79,7 +81,7 @@ public record FieldForUserop(PcodeUseropDefinition<?> userop) implements Instanc
 	@Override
 	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
 		// []
-		rv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(rv);
 		// [this]
 		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(), TDESC_PCODE_USEROP_DEFINITION);
 		// [userop]

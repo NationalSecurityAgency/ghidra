@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidratrace"
-version = "11.3"
+version = "11.4"
 authors = [
   { name="Ghidra Development Team" },
 ]
@@ -23,3 +23,6 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
 "Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"
+
+[tool.setuptools.package-data]
+ghidratrace = ["py.typed"]

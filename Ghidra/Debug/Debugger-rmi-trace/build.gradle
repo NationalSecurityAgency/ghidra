@@ -26,35 +26,44 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-rmi-trace'
 
 dependencies {
+	api project(':ProposedUtils')
 	api project(':Pty')
 	api project(':Debugger')
 	api project(':Debugger-api')
 	
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 }
 
-task generateProtoPy {
-	ext.srcdir = file("src/main/proto")
-	ext.src = fileTree(srcdir) {
-		include "**/*.proto"
-	}
-	ext.outdir = file("build/generated/source/proto/main/py")
-	outputs.dir(outdir)
-	inputs.files(src)
+task configureGenerateProtoPy {
 	dependsOn(configurations.protocArtifact)
+
 	doLast {
 		def exe = configurations.protocArtifact.first()
 		if (!isCurrentWindows()) {
 			exe.setExecutable(true)
 		}
-		providers.exec {
-			commandLine exe, "--python_out=$outdir", "-I$srcdir"
-			args src
-		}.result.get()
+		generateProtoPy.commandLine exe
+		generateProtoPy.args "--python_out=${generateProtoPy.outdir}"
+		generateProtoPy.args "--pyi_out=${generateProtoPy.stubsOutdir}"
+		generateProtoPy.args "-I${generateProtoPy.srcdir}"
+		generateProtoPy.args generateProtoPy.src
 	}
+}
+
+// Can't use providers.exec, or else we see no output
+task generateProtoPy(type:Exec) {
+	dependsOn(configureGenerateProtoPy)
+	ext.srcdir = file("src/main/proto")
+	ext.src = fileTree(srcdir) {
+		include "**/*.proto"
+	}
+	ext.outdir = file("build/generated/source/proto/main/py")
+	ext.stubsOutdir = file("build/generated/source/proto/main/pyi/ghidratrace")
+	outputs.dir(outdir)
+	outputs.dir(stubsOutdir)
+	inputs.files(src)
 }
 
 tasks.assemblePyPackage {

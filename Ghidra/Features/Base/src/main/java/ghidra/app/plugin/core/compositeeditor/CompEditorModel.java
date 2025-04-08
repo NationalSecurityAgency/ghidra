@@ -1669,15 +1669,16 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataTypeComponent dtc = getComponent(rowIndex);
 		DataType dt = dtc.getDataType();
-		int dtcLen = dt.getLength();
-		if (dtcLen < 0) {
-			dtcLen = dtc.getLength();
-		}
-		int maxDups = (Integer.MAX_VALUE - getLength()) / dtcLen;
-		if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
-			// If editModel is showing undefined bytes (non-packed)
-			// then constrain by number of undefined bytes that follow.
-			maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
+		int dtcLen = dtc.getLength();
+
+		int maxDups = (Integer.MAX_VALUE - getLength());
+		if (dtcLen > 0) {
+			maxDups /= dtcLen;
+			if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
+				// If editModel is showing undefined bytes (non-packed)
+				// then constrain by number of undefined bytes that follow.
+				maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
+			}
 		}
 		return maxDups;
 	}

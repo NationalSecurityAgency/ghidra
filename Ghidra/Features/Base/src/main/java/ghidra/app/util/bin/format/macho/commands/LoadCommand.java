@@ -140,7 +140,7 @@ public abstract class LoadCommand implements StructConverter {
 			return;
 		}
 		String comment = getContextualName(source, additionalDescription);
-		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+		program.getListing().setComment(address, CommentType.PLATE, comment);
 	}
 
 	/**

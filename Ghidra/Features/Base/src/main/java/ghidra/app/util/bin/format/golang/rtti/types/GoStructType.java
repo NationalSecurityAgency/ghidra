@@ -135,10 +135,10 @@ public class GoStructType extends GoType {
 		List<GoStructField> fieldList = getFields();
 		for (int i = 0; i < fieldList.size(); i++) {
 			GoStructField field = fieldList.get(i);
-			GoStructField nextField = i < fieldList.size() - 1 ? fieldList.get(i + 1) : null;
-			long availSpace = nextField != null
-					? nextField.getOffset() - field.getOffset()
-					: typ.getSize() - field.getOffset();
+//			GoStructField nextField = i < fieldList.size() - 1 ? fieldList.get(i + 1) : null;
+//			long availSpace = nextField != null
+//					? nextField.getOffset() - field.getOffset()
+//					: typ.getSize() - field.getOffset();
 
 			GoType fieldType = field.getType();
 			long fieldSize = fieldType.getBaseType().getSize();

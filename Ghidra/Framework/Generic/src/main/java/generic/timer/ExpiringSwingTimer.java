@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package generic.timer;
 
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
 
@@ -31,6 +31,8 @@ import utility.function.Dummy;
  * thread.
  */
 public class ExpiringSwingTimer extends GhidraSwingTimer {
+
+	private static Set<ExpiringSwingTimer> instances = new HashSet<>();
 
 	private long startMs = System.currentTimeMillis();
 	private int expireMs;
@@ -130,7 +132,14 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 			return;
 		}
 
+		instances.add(this);
 		super.start();
+	}
+
+	@Override
+	public void stop() {
+		super.stop();
+		instances.remove(this);
 	}
 
 	/**

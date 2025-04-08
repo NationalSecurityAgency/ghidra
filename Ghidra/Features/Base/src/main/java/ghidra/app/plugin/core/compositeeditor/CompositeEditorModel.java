@@ -211,7 +211,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		cloneAllComponentSettings(original, viewComposite);
+		viewDTM.withTransaction("Apply Settings",
+			() -> cloneAllComponentSettings(original, viewComposite));
+		viewDTM.clearUndo();
 	}
 
 	String getOriginType() {
@@ -692,7 +694,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		if (!isArrayAllowed()) {
 			throw new UsrException("Array not permitted in current context");
 		}
-		int min = 1;
+		int min = allowsZeroLengthComponents() ? 0 : 1;
 		int max = getMaxElements();
 		if (isSingleRowSelection()) {
 			if (max != 0) {

@@ -33,6 +33,7 @@ import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
@@ -67,6 +68,8 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	public static final PlatDep PLAT = computePlat();
+
+	protected static boolean didSetupPython = false;
 
 	static PlatDep computePlat() {
 		return switch (System.getProperty("os.arch")) {
@@ -112,15 +115,22 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected TraceRmiService traceRmi;
 	private Path lldbPath;
 
-	// @BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle",
-			"Debugger-rmi-trace:assemblePyPackage",
-			"Debugger-agent-lldb:assemblePyPackage")
-					.directory(TestApplicationUtils.getInstallationDirectory())
-					.inheritIO()
-					.start()
-					.waitFor();
+		if (didSetupPython) {
+			// Only do this once when running the full suite.
+			return;
+		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
+		new ProcessBuilder("gradle", "assemblePyPackage")
+				.directory(TestApplicationUtils.getInstallationDirectory())
+				.inheritIO()
+				.start()
+				.waitFor();
+		didSetupPython = true;
 	}
 
 	protected void setPythonPath(Map<String, String> env) throws IOException {

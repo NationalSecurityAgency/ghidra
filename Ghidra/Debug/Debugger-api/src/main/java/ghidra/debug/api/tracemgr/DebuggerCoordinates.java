@@ -402,7 +402,16 @@ public class DebuggerCoordinates {
 		return new DebuggerCoordinates(trace, platform, target, thread, view, newTime, frame, path);
 	}
 
+	/**
+	 * Get these same coordinates with time replaced by the given schedule
+	 * 
+	 * @param newTime the new schedule
+	 * @return the new coordinates
+	 */
 	public DebuggerCoordinates time(TraceSchedule newTime) {
+		if (Objects.equals(time, newTime)) {
+			return this;
+		}
 		if (trace == null) {
 			return NOWHERE;
 		}

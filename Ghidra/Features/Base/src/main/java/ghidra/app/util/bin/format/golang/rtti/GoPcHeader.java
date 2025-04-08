@@ -205,7 +205,7 @@ public class GoPcHeader {
 
 	/**
 	 * Returns true if this pcln structure contains a textStart value (only present >= 1.18)
-	 * @return
+	 * @return boolean true if struct has textstart value
 	 */
 	public boolean hasTextStart() {
 		return textStart != 0;

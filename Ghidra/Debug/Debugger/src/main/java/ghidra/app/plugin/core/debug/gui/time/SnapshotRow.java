@@ -21,6 +21,7 @@ import db.Transaction;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.DateUtils;
 
 public class SnapshotRow {
@@ -36,6 +37,14 @@ public class SnapshotRow {
 
 	public TraceSnapshot getSnapshot() {
 		return snapshot;
+	}
+
+	public TraceSchedule getTime() {
+		long snap = snapshot.getKey();
+		if (snap < 0) {
+			return snapshot.getSchedule();
+		}
+		return TraceSchedule.snap(snap);
 	}
 
 	public long getSnap() {

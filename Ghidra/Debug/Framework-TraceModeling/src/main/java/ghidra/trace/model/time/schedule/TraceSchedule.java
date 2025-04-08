@@ -30,7 +30,152 @@ import ghidra.util.task.TaskMonitor;
  * A sequence of emulator stepping commands, essentially comprising a "point in time."
  */
 public class TraceSchedule implements Comparable<TraceSchedule> {
+	/**
+	 * The initial snapshot (with no steps)
+	 */
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
+
+	/**
+	 * Specifies forms of a stepping schedule.
+	 * 
+	 * <p>
+	 * Each form defines a set of stepping schedules. It happens that each is a subset of the next.
+	 * A {@link #SNAP_ONLY} schedule is also a {@link #SNAP_ANY_STEPS_OPS} schedule, but not
+	 * necessarily vice versa.
+	 */
+	public enum ScheduleForm {
+		/**
+		 * The schedule consists only of a snapshot. No stepping after.
+		 */
+		SNAP_ONLY {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return schedule.steps.isNop() && schedule.pSteps.isNop();
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and some number of instruction steps on the event
+		 * thread only.
+		 */
+		SNAP_EVT_STEPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				if (!schedule.pSteps.isNop()) {
+					return false;
+				}
+				List<Step> steps = schedule.steps.getSteps();
+				if (steps.isEmpty()) {
+					return true;
+				}
+				if (steps.size() != 1) {
+					return false;
+				}
+				if (!(steps.getFirst() instanceof TickStep ticks)) {
+					return false;
+				}
+				if (ticks.getThreadKey() == -1) {
+					return true;
+				}
+				if (trace == null) {
+					return false;
+				}
+				TraceThread eventThread = schedule.getEventThread(trace);
+				TraceThread thread = ticks.getThread(trace.getThreadManager(), eventThread);
+				if (eventThread != thread) {
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public TraceSchedule validate(Trace trace, TraceSchedule schedule) {
+				if (!schedule.pSteps.isNop()) {
+					return null;
+				}
+				List<Step> steps = schedule.steps.getSteps();
+				if (steps.isEmpty()) {
+					return schedule;
+				}
+				if (steps.size() != 1) {
+					return null;
+				}
+				if (!(steps.getFirst() instanceof TickStep ticks)) {
+					return null;
+				}
+				if (ticks.getThreadKey() == -1) {
+					return schedule;
+				}
+				if (trace == null) {
+					return null;
+				}
+				TraceThread eventThread = schedule.getEventThread(trace);
+				TraceThread thread = ticks.getThread(trace.getThreadManager(), eventThread);
+				if (eventThread != thread) {
+					return null;
+				}
+				return TraceSchedule.snap(schedule.snap).steppedForward(null, ticks.getTickCount());
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and a sequence of instruction steps on any
+		 * threads(s).
+		 */
+		SNAP_ANY_STEPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return schedule.pSteps.isNop();
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and a sequence of instruction steps then p-code op
+		 * steps on any thread(s).
+		 * 
+		 * <p>
+		 * This is the most capable form supported by {@link TraceSchedule}.
+		 */
+		SNAP_ANY_STEPS_OPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return true;
+			}
+		};
+
+		public static final List<ScheduleForm> VALUES = List.of(ScheduleForm.values());
+
+		/**
+		 * Check if the given schedule conforms
+		 * 
+		 * @param trace if available, a trace for determining the event thread
+		 * @param schedule the schedule to test
+		 * @return true if the schedule adheres to this form
+		 */
+		public abstract boolean contains(Trace trace, TraceSchedule schedule);
+
+		/**
+		 * If the given schedule conforms, normalize the schedule to prove it does.
+		 * 
+		 * @param trace if available, a trace for determining the event thread
+		 * @param schedule the schedule to test
+		 * @return the non-null normalized schedule, or null if the given schedule does not conform
+		 */
+		public TraceSchedule validate(Trace trace, TraceSchedule schedule) {
+			if (!contains(trace, schedule)) {
+				return null;
+			}
+			return schedule;
+		}
+
+		/**
+		 * Get the more restrictive of this and the given form
+		 * 
+		 * @param that the other form
+		 * @return the more restrictive form
+		 */
+		public ScheduleForm intersect(ScheduleForm that) {
+			int ord = Math.min(this.ordinal(), that.ordinal());
+			return VALUES.get(ord);
+		}
+	}
 
 	/**
 	 * Create a schedule that consists solely of a snapshot
@@ -256,7 +401,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 *         loading a snapshot
 	 */
 	public boolean isSnapOnly() {
-		return steps.isNop() && pSteps.isNop();
+		return ScheduleForm.SNAP_ONLY.contains(null, this);
 	}
 
 	/**

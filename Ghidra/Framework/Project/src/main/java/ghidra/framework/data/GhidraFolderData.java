@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -616,8 +616,9 @@ class GhidraFolderData {
 		Map<String, T> map = new HashMap<>();
 		int badItemCount = 0;
 		int nullNameCount = 0;
+		int unknownItemCount = 0;
 		for (T item : items) {
-			if (item == null || item instanceof UnknownFolderItem) {
+			if (item == null) {
 				++badItemCount;
 				continue;
 			}
@@ -625,6 +626,16 @@ class GhidraFolderData {
 			if (itemName == null) {
 				++nullNameCount;
 				continue;
+			}
+			if (item instanceof UnknownFolderItem unk) {
+				if (unk.getFileType() == FolderItem.UNKNOWN_FILE_TYPE) {
+					++badItemCount;
+					continue;
+				}
+				Msg.error(this,
+					"Unsupported folder item encountered (" + unk.getFileType() + "): " +
+						getPathname(item.getName()));
+				++unknownItemCount;
 			}
 			map.put(itemName, item);
 		}
@@ -635,6 +646,11 @@ class GhidraFolderData {
 		if (nullNameCount != 0) {
 			Msg.error(this,
 				"Project folder contains " + nullNameCount + " null items: " + getPathname());
+		}
+		if (badItemCount != 0) {
+			Msg.error(this,
+				"Project folder contains " + unknownItemCount + " unsupported items: " +
+					getPathname());
 		}
 		return map;
 	}

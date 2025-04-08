@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -314,7 +314,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 			DataType dt = new ArrayDataType(WORD, reExportCount, WORD.getLength());
 			DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-			program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, "re-exports");
+			program.getListing().setComment(addr, CommentType.EOL, "re-exports");
 			monitor.incrementProgress(1);
 		}
 		catch (CodeUnitInsertionException e) {
@@ -332,7 +332,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 			DataType dt = new ArrayDataType(WORD, depListCount, WORD.getLength());
 			DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-			program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, "dependencies");
+			program.getListing().setComment(addr, CommentType.EOL, "dependencies");
 			monitor.incrementProgress(1);
 		}
 		catch (CodeUnitInsertionException e) {

@@ -25,35 +25,25 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Omf51FixupRecord extends OmfRecord {
-
-	/**
-	 * OMF-51 fixup metadata
-	 * 
-	 * @param refLoc The reference location
-	 * @param refType The reference type
-	 * @param operand the fixup operand
-	 */
-	public static record Omf51Fixup(int refLoc, byte refType, int operand) {}
-
+	private boolean largeBlockId;
 	private List<Omf51Fixup> fixups = new ArrayList<>();
 
 	/**
-	 * Creates a new {@link Omf51FixupRecord} record
+	 * Creates a new {@link Omf51FixupRecord}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @param largeBlockId True if the block ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51FixupRecord(BinaryReader reader) throws IOException {
+	public Omf51FixupRecord(BinaryReader reader, boolean largeBlockId) throws IOException {
 		super(reader);
+		this.largeBlockId = largeBlockId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
 		while (dataReader.getPointerIndex() < dataEnd) {
-			int refLoc = dataReader.readNextUnsignedByte();
-			byte refType = dataReader.readNextByte();
-			int operand = dataReader.readNextUnsignedShort();
-			fixups.add(new Omf51Fixup(refLoc, refType, operand));
+			fixups.add(new Omf51Fixup(dataReader, largeBlockId));
 		}
 	}
 
@@ -62,12 +52,16 @@ public class Omf51FixupRecord extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
+		
 		StructureDataType fixupStruct = new StructureDataType("Omf51Fixup", 0);
-		fixupStruct.add(BYTE, "ref_loc", null);
-		fixupStruct.add(BYTE, "ref_type", null);
-		fixupStruct.add(WORD, "operand", null);
-		struct.add(new ArrayDataType(fixupStruct, fixups.size(), fixupStruct.getLength()), "fixup",
-			null);
+		fixupStruct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
+		fixupStruct.add(WORD, "refLoc", null);
+		fixupStruct.add(BYTE, "refType", null);
+		fixupStruct.add(BYTE, "blockType", null);
+		fixupStruct.add(largeBlockId ? WORD : BYTE, "blockId", null);
+		fixupStruct.add(WORD, "offset", null);
+		
+		struct.add(new ArrayDataType(fixupStruct, fixups.size()), "fixups", null);
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));

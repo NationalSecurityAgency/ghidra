@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.gclass;
 
+import ghidra.app.util.SymbolPath;
 import ghidra.program.model.data.*;
 
 /**
@@ -41,6 +42,11 @@ public class ClassUtils {
 	public static final PointerDataType VXPTR_TYPE = new PointerDataType();
 
 	/**
+	 * The standard prefix used for the special symbol.  Private for now.
+	 */
+	private static final String VTABLE_PREFIX = "VTABLE_";
+
+	/**
 	 * private constructor -- no instances
 	 */
 	private ClassUtils() {
@@ -54,8 +60,27 @@ public class ClassUtils {
 	 */
 	public static CategoryPath getClassInternalsPath(Composite composite) {
 		DataTypePath dtp = composite.getDataTypePath();
-		return new CategoryPath(new CategoryPath(dtp.getCategoryPath(), dtp.getDataTypeName()),
-			"!internal");
+		return getClassInternalsPath(dtp.getCategoryPath(), dtp.getDataTypeName());
+	}
+
+	/**
+	 * Returns the category for class internals for the ClassID
+	 * @param id the class ID
+	 * @return the category path
+	 */
+	public static CategoryPath getClassInternalsPath(ClassID id) {
+		CategoryPath cp = recurseGetCategoryPath(id.getCategoryPath(), id.getSymbolPath());
+		return cp.extend("!internal");
+	}
+
+	/**
+	 * Returns the category for class internals
+	 * @param path the category path of the class composite
+	 * @param className the name of the class
+	 * @return the category path
+	 */
+	public static CategoryPath getClassInternalsPath(CategoryPath path, String className) {
+		return new CategoryPath(new CategoryPath(path, className), "!internal");
 	}
 
 	/**
@@ -90,6 +115,48 @@ public class ClassUtils {
 			}
 		}
 		return composite;
+	}
+
+	/**
+	 * Provides the standard special name for a virtual table (e.g., vbtable, vftable) that is
+	 * keyed off of by the Decompiler during flattening and replacing of types within a class
+	 * structure.  More details to come
+	 * @param ptrOffsetInClass the offset of the special field within the class
+	 * @return the special name
+	 */
+	public static String getSpecialVxTableName(long ptrOffsetInClass) {
+		return String.format("%s%08x", VTABLE_PREFIX, ptrOffsetInClass);
+	}
+
+	public static DataType getVftDefaultEntry(DataTypeManager dtm) {
+		return new PointerDataType(dtm);
+	}
+
+	public static DataType getVbtDefaultEntry(DataTypeManager dtm) {
+		return new IntegerDataType(dtm);
+	}
+
+	public static int getVftEntrySize(DataTypeManager dtm) {
+		return dtm.getDataOrganization().getPointerSize();
+	}
+
+	public static int getVbtEntrySize(DataTypeManager dtm) {
+		return dtm.getDataOrganization().getIntegerSize();
+	}
+
+	/**
+	 * Method to get a category path from a base category path and symbol path
+	 * @param category the {@ink CategoryPath} on which to build
+	 * @param symbolPath the current {@link SymbolPath} from which the current name is pulled.
+	 * @return the new {@link CategoryPath} for the recursion level
+	 */
+	private static CategoryPath recurseGetCategoryPath(CategoryPath category,
+			SymbolPath symbolPath) {
+		SymbolPath parent = symbolPath.getParent();
+		if (parent != null) {
+			category = recurseGetCategoryPath(category, parent);
+		}
+		return new CategoryPath(category, symbolPath.getName());
 	}
 
 }

@@ -227,6 +227,11 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		}
 
 		@Override
+		public boolean modifiesContext() {
+			return decOp.modifiesContext();
+		}
+
+		@Override
 		public boolean canInlinePcode() {
 			return decOp.canInlinePcode();
 		}

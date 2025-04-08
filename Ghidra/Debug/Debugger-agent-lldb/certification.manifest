@@ -7,7 +7,7 @@ build.gradle||GHIDRA||||END|
 data/debugger-launchers/android-lldb.bat||GHIDRA||||END|
 data/debugger-launchers/kernel-lldb.bat||GHIDRA||||END|
 data/debugger-launchers/local-lldb.bat||GHIDRA||||END|
-data/debugger-launchers/remote-lldb.bat||GHIDRA||||END|
+data/debugger-launchers/remote-lldb.ps1||GHIDRA||||END|
 data/debugger-launchers/ssh-lldb.bat||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/lldb/lldb.html||GHIDRA||||END|
@@ -15,4 +15,5 @@ src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidralldb/py.typed||GHIDRA||||END|
 src/main/py/src/ghidralldb/schema.xml||GHIDRA||||END|

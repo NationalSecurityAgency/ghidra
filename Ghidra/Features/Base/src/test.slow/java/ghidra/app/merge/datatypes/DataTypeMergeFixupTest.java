@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testRemoveInnerAddOuterChangeInnerPickLatest() throws Exception {
+	public void testRemoveInnerAddOuterChangeInnerPickLatest() throws Exception {
 
 		final CategoryPath rootPath = new CategoryPath("/");
 
@@ -105,25 +105,29 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		StructureInternal inner = (StructureInternal) dtm.getDataType(rootPath, "inner");
 		assertNull(inner);
+
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
-		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
-		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
-		assertEquals(1, outer.getNumComponents());
-		assertTrue(new ByteDataType().isEquivalent(outer.getComponent(0).getDataType()));
-		assertEquals(1, outer.getLength());
-		assertEquals(1, outer.getAlignment());
+		//@formatter:off
+		assertEquals("/outer\n" + 
+			"pack()\n" + 
+			"Structure outer {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   -BAD-   4      \"Failed to apply 'inner'\"\n" + 
+			"}\n" + 
+			"Length: 5 Alignment: 1\n", outer.toString());
+		//@formatter:on
 	}
 
 	@Test
-    public void testRemoveInnerAddOuterChangeInnerPickMy() throws Exception {
+	public void testRemoveInnerAddOuterChangeInnerPickMy() throws Exception {
 
 		final CategoryPath rootPath = new CategoryPath("/");
 
@@ -163,7 +167,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testRemoveInnerVsAddOuterContainingInner() throws Exception {
+	public void testRemoveInnerVsAddOuterContainingInner() throws Exception {
 
 		final CategoryPath rootPath = new CategoryPath("/");
 
@@ -227,25 +231,29 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		executeMerge();
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		StructureInternal inner = (StructureInternal) dtm.getDataType(rootPath, "inner");
 		assertNull(inner);
+
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
-		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
-		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
-		assertEquals(1, outer.getNumComponents());
-		assertTrue(new ByteDataType().isEquivalent(outer.getComponent(0).getDataType()));
-		assertEquals(1, outer.getLength());
-		assertEquals(1, outer.getAlignment());
+		//@formatter:off
+		assertEquals("/outer\n" + 
+			"pack()\n" + 
+			"Structure outer {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   -BAD-   4      \"Failed to apply 'inner'\"\n" + 
+			"}\n" + 
+			"Length: 5 Alignment: 1\n", outer.toString());
+		//@formatter:on
 	}
 
 	@Test
-    public void testRemoveInnerVsAddOuterWithOtherAfterInner() throws Exception {
+	public void testRemoveInnerVsAddOuterWithOtherAfterInner() throws Exception {
 
 		final CategoryPath rootPath = new CategoryPath("/");
 
@@ -293,7 +301,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
-			
+
 				// Remove inner struct
 				dtm.remove(inner, TaskMonitor.DUMMY);
 			}
@@ -323,6 +331,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		executeMerge();
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
@@ -332,31 +342,30 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		StructureInternal other = (StructureInternal) dtm.getDataType(rootPath, "other");
 		assertNotNull(other);
-		assertEquals(true, other.isPackingEnabled());
-		assertEquals(true, other.isDefaultAligned());
-		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, other.getStoredMinimumAlignment());
-		assertEquals(CompositeInternal.DEFAULT_PACKING, other.getStoredPackingValue());
-		assertEquals(2, other.getNumComponents());
-		assertTrue(new ByteDataType().isEquivalent(other.getComponent(0).getDataType()));
-		assertTrue(new PointerDataType(new VoidDataType()).isEquivalent(
-			other.getComponent(1).getDataType()));
-		assertEquals(8, other.getLength());
-		assertEquals(4, other.getAlignment());
+		//@formatter:off
+		assertEquals("/other\n" + 
+			"pack()\n" + 
+			"Structure other {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   4   void *   4      \"\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 4\n", other.toString());
+		//@formatter:on
 
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
-		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
-		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
-		assertEquals(4, outer.getNumComponents());
-		assertTrue(new ByteDataType().isEquivalent(outer.getComponent(0).getDataType()));
-		assertTrue(new FloatDataType().isEquivalent(outer.getComponent(1).getDataType()));
-		assertEquals(other, outer.getComponent(2).getDataType());
-		assertTrue(new ByteDataType().isEquivalent(outer.getComponent(3).getDataType()));
-		assertEquals(4, outer.getComponent(1).getLength());
-		assertEquals(20, outer.getLength());
-		assertEquals(4, outer.getAlignment());
+		//@formatter:off
+		assertEquals("/outer\n" + 
+			"pack()\n" + 
+			"Structure outer {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   -BAD-   4      \"Failed to apply 'inner'\"\n" + 
+			"   8   float   4      \"\"\n" + 
+			"   12   other   8      \"\"\n" + 
+			"   20   byte   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 24 Alignment: 4\n", outer.toString());
+		//@formatter:on
 	}
 
 }

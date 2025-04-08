@@ -26,6 +26,7 @@ import com.google.common.collect.Sets;
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
@@ -1152,13 +1153,34 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(8, struct.getLength());
 
 		struct.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), "flex", "FlexComment");
-		assertEquals(5, struct.getNumComponents());
-		assertEquals(8, struct.getLength());
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   int[0]   0   flex   \"FlexComment\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 1", struct);
+		//@formatter:on
 
 		dataMgr.remove(dataMgr.resolve(IntegerDataType.dataType, null), TaskMonitor.DUMMY);
 
-		assertEquals(4, struct.getNumComponents());
-		assertEquals(8, struct.getLength());
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   -BAD-   0   flex   \"Type 'int[0]' was deleted; FlexComment\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 1", struct);
+		//@formatter:on
 	}
 
 	@Test
@@ -1196,9 +1218,9 @@ public class StructureDBTest extends AbstractGenericTest {
 			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1      \"\"\n" + 
-//			"   9   undefined   1      \"\"\n" + 
-//			"   10   undefined   1      \"\"\n" + 
+			"   8   int:4(0)   1   MyBit1   \"Type 'Foo' was deleted; bitComment\"\n" + 
+			"   9   int:3(0)   1   MyBit2   \"Type 'Foo' was deleted; bitComment\"\n" + 
+			"   10   int:2(0)   1   MyBit3   \"Type 'Foo' was deleted; bitComment\"\n" + 
 			"}\n" + 
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
@@ -1449,35 +1471,35 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(dtc1, barStruct.getComponent(6));
 
 	}
-	
+
 	@Test
 	public void testSetLength() {
 
 		assertEquals(8, struct.getLength());
 		assertEquals(4, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		struct.setLength(20);
 		assertEquals(20, struct.getLength());
 		assertEquals(16, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		// new length is offcut within 3rd component at offset 0x3 which should get cleared
 		struct.setLength(4);
 		assertEquals(4, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		// Maximum length supported by GUI editor is ~Integer.MAX_VALUE/10
 		int len = Integer.MAX_VALUE / 10;
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 1, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		len /= 2;
-		struct.replaceAtOffset(len-2, WordDataType.dataType, -1, "x", null); // will be preserved below
-		struct.replaceAtOffset(len+2, WordDataType.dataType, -1, "y", null); // will be cleared below
+		struct.replaceAtOffset(len - 2, WordDataType.dataType, -1, "x", null); // will be preserved below
+		struct.replaceAtOffset(len + 2, WordDataType.dataType, -1, "y", null); // will be cleared below
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 2, struct.getNumComponents());
@@ -1806,14 +1828,33 @@ public class StructureDBTest extends AbstractGenericTest {
 		DataType dt = struct.getDataTypeManager().getDataType(struct.getCategoryPath(), "test1");
 		assertNotNull(dt);
 
-		DataTypeComponent[] dtc = struct.getComponents();
-		assertEquals(5, dtc.length);
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   test1   5      \"\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 
 		dt.getDataTypeManager().remove(dt, new TaskMonitorAdapter());
-		dtc = struct.getComponents();
-		assertEquals(9, dtc.length);
 
-		assertEquals(9, struct.getNumComponents());
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   -BAD-   5      \"Type 'test1' was deleted\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 	}
 
 	@Test
@@ -2614,6 +2655,25 @@ public class StructureDBTest extends AbstractGenericTest {
 		catch (IllegalArgumentException e) {
 			// expected
 		}
+	}
+
+	@Test
+	public void testFieldNameWhitespaceConvertedToUnderscores() throws DuplicateNameException {
+		StructureDataType newStruct = new StructureDataType("Test", 0);
+		DataTypeComponent component = newStruct.add(new ByteDataType(), " name with spaces", null);
+		assertEquals("name_with_spaces", component.getFieldName());
+
+		struct = (StructureDB) dataMgr.resolve(newStruct, null);
+		component = struct.getComponent(0);
+		component.setFieldName("name in db with spaces");
+		assertEquals("name_in_db_with_spaces", component.getFieldName());
+
+		component = struct.add(new ByteDataType(), "another test", null);
+		assertEquals("another_test", component.getFieldName());
+
+		struct.insert(0, new ByteDataType(), 1, "insert test", "");
+		component = struct.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
 	}
 
 }

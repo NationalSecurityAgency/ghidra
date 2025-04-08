@@ -32,7 +32,8 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.AbstractFloatDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
@@ -132,12 +133,12 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	private void setDataType(DataType dt) {
 		currentDataType = dt;
 		size = dt.getLength();
-		boolean unconstrained = (dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
+		boolean unconstrained = (dt instanceof AbstractFloatDataType) || (dt == DataType.DEFAULT);
 		model.setRequiredSize(size, unconstrained);
 		if (sizeLabel != null) {
 			sizeLabel.setText(Integer.toString(size));
-			dataChanged();
 		}
+		model.notifyDataChanged();
 	}
 
 	private void maybeHandleTabNavigation() {

@@ -188,7 +188,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 						.getAddressSpace(registers.getCanonicalPath().toString());
 				TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
 				RegisterValue rip = regs.getValue(snap, tb.reg("rip"));
-				assertEquals("3a40cdf7ff7f0000", rip.getUnsignedValue().toString(16));
+				assertEquals("7ffff7cd403a", rip.getUnsignedValue().toString(16));
 			}
 		}
 	}

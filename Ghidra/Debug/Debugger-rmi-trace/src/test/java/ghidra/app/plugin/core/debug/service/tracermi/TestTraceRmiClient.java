@@ -22,9 +22,9 @@ import java.nio.channels.SocketChannel;
 
 import ghidra.framework.Application;
 import ghidra.rmi.trace.TraceRmi.*;
-import ghidra.rmi.trace.TraceRmi.Compiler;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 
 public class TestTraceRmiClient {
 	final ProtobufSocket<RootMessage> socket;
@@ -118,12 +118,14 @@ public class TestTraceRmiClient {
 				.setRequestSnapshot(RequestSnapshot.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
-						.setSnap(Snap.newBuilder()
-								.setSnap(snap))
+						.setSchedule(Schedule.newBuilder()
+								.setSchedule(TraceSchedule.snap(snap).toString()))
 						.setDescription(description))
 				.build());
 		assertEquals(RootMessage.newBuilder()
-				.setReplySnapshot(ReplySnapshot.newBuilder())
+				.setReplySnapshot(ReplySnapshot.newBuilder()
+						.setSnap(Snap.newBuilder()
+								.setSnap(snap)))
 				.build(),
 			socket.recv());
 	}

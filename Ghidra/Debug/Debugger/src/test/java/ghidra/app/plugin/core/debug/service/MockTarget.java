@@ -33,8 +33,10 @@ import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -68,6 +70,11 @@ public class MockTarget implements Target {
 	@Override
 	public long getSnap() {
 		return snap;
+	}
+
+	@Override
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap) {
+		return null;
 	}
 
 	@Override

@@ -28,7 +28,6 @@ dependencies {
 	// Oof. Apparently, this doesn't work transitively....
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 	testImplementation project(path: ':SystemEmulation', configuration: 'testArtifacts')

@@ -1143,7 +1143,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 	}
 
 	@Test
-	public void testBreakEvent() throws Exception {
+	public void testBreakExtEvent() throws Exception {
 		try (GdbAndConnection conn = startAndConnectGdb()) {
 			conn.execute("""
 					file bash
@@ -1151,13 +1151,15 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					%s
 					start"""
 					.formatted(INSTRUMENT_STOPPED));
-			RemoteMethod breakEvent = conn.getMethod("break_event");
+			RemoteMethod breakEvent = conn.getMethod("break_ext_event");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
 				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
-				breakEvent.invoke(Map.of("inferior", inf, "spec", "load"));
+				breakEvent.invoke(Map.ofEntries(
+					Map.entry("inferior", inf),
+					Map.entry("spec", "load")));
 
 				String out = conn.executeCapture("info break");
 				assertThat(out, containsString("load of library"));

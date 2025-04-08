@@ -84,9 +84,9 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		init(complexStructure, tempCat);
 		int num = model.getNumComponents();
 		int len = model.getLength();
-		DataType dataType10 = model.viewComposite.getComponent(10).getDataType();
+		DataType dataType10 = getDataType(10);
 		assertEquals("complexStructure *", dataType10.getDisplayName());
-		assertEquals(4, dataType10.getLength());
+		assertEquals(4, getLength(10));
 
 		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
 		programDTM.getCategory(pgmRootCat.getCategoryPath())
@@ -97,12 +97,12 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		// complexStructure* gets removed and becomes 4 undefined bytes in this editor.
-		assertEquals(num + 3, model.getNumComponents());
+		// complexStructure* gets removed and becomes BadDataType in this editor.
+		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		dataType10 = model.viewComposite.getComponent(10).getDataType();
-		assertEquals("undefined", dataType10.getDisplayName());
-		assertEquals(1, dataType10.getLength());
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(10)));
+		assertEquals("Type 'complexStructure *' was deleted", getComment(10));
+		assertEquals(4, getLength(10));
 	}
 
 	@Test
@@ -498,25 +498,31 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		DataType dt10 = getDataType(complexStructure, 10);
 
 		init(complexStructure, pgmTestCat);
-		DataType undef = DataType.DEFAULT;
+
+		assertEquals(1, getLength(9)); // length start-off wierd - not sure why
 
 		assertEquals(23, model.getNumComponents());
+		assertEquals(0x145, model.getLength());
 
 		runSwing(
 			() -> complexStructure.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
 		waitForSwing();
-		assertEquals(30, model.getNumComponents());
+		assertEquals(23, model.getNumComponents());
 		assertTrue(dt3.isEquivalent(getDataType(3)));
-		assertTrue(undef.isEquivalent(getDataType(4)));
-		assertTrue(undef.isEquivalent(getDataType(11)));
-		assertTrue(dt5.isEquivalent(getDataType(12)));
-		assertTrue(dt8.isEquivalent(getDataType(15)));
-		assertTrue(undef.isEquivalent(getDataType(16)));
-		assertTrue(dt10.isEquivalent(getDataType(17)));
 		assertEquals(4, getOffset(3));
-		assertEquals(16, getOffset(12));
-		assertEquals(24, getOffset(15));
-		assertEquals(33, getOffset(17));
+		assertEquals(0x8, getLength(4));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(4)));
+		assertEquals("Type 'simpleUnion' was deleted", getComment(4));
+		assertTrue(dt5.isEquivalent(getDataType(5)));
+		assertTrue(dt8.isEquivalent(getDataType(8)));
+		assertEquals(0x20, getOffset(9));
+		assertEquals(1, getLength(9)); // length start-off wierd
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(9)));
+		assertEquals("Type 'simpleUnion *' was deleted", getComment(9));
+		assertEquals(0x21, getOffset(10));
+		assertEquals(0x4, getLength(10));
+		assertTrue(dt10.isEquivalent(getDataType(10)));
+		assertEquals(0x145, model.getLength());
 	}
 
 	@Test
@@ -525,12 +531,17 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		runSwingWithException(() -> model.add(simpleStructure));
 		waitForSwing();
+
+		assertEquals(1, model.getNumComponents());
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
 		runSwing(
 			() -> simpleStructure.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
 		waitForSwing();
-		assertEquals(29, model.getNumComponents());// becomes undefined bytes
+
+		assertEquals(1, model.getNumComponents());// component becomes BadDataType
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(0)));
+		assertEquals("Type 'simpleStructure' was deleted", getComment(0));
 	}
 
 	@Test

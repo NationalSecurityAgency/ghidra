@@ -59,7 +59,22 @@ dependencies {
 	}
 }*/
 
-task generateProto {
+task configureGenerateProto {
+	dependsOn(configurations.protocArtifact)
+
+	doLast {
+		def exe = configurations.protocArtifact.first()
+		if (!isCurrentWindows()) {
+			exe.setExecutable(true)
+		}
+		generateProto.commandLine exe, "--java_out=${generateProto.outdir}", "-I${generateProto.srcdir}"
+		generateProto.args generateProto.src
+	}
+}
+
+// Can't use providers.exec, or else we see no output
+task generateProto(type:Exec) {
+	dependsOn(configureGenerateProto)
 	ext.srcdir = file("src/main/proto")
 	ext.src = fileTree(srcdir) {
 		include "**/*.proto"
@@ -67,17 +82,6 @@ task generateProto {
 	ext.outdir = file("build/generated/source/proto/main/java")
 	outputs.dir(outdir)
 	inputs.files(src)
-	dependsOn(configurations.protocArtifact)
-	doLast {
-		def exe = configurations.protocArtifact.first()
-		if (!isCurrentWindows()) {
-			exe.setExecutable(true)
-		}
-		providers.exec {
-			commandLine exe, "--java_out=$outdir", "-I$srcdir"
-			args src
-		}.result.get()
-	}
 }
 
 tasks.compileJava.dependsOn(tasks.generateProto)

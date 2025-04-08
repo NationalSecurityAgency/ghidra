@@ -17,7 +17,7 @@ package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
 
-import ghidra.pcode.emu.jit.JitPassage.IndBranch;
+import ghidra.pcode.emu.jit.JitPassage.RIndBranch;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.program.model.pcode.PcodeOp;
@@ -29,7 +29,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param target the use-def node for the target offset
  * @param branch the branch record created for the p-code op
  */
-public record JitBranchIndOp(PcodeOp op, JitVal target, IndBranch branch) implements JitOp {
+public record JitBranchIndOp(PcodeOp op, JitVal target, RIndBranch branch) implements JitOp {
 
 	@Override
 	public boolean canBeRemoved() {

@@ -347,7 +347,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	public void checkExclusiveAccess() throws LockException {
 		if (!hasExclusiveAccess()) {
-			throw new LockException();
+			throw new LockException("Operation requires exclusive access to object.");
 		}
 	}
 

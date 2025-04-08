@@ -25,7 +25,6 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.Msg;
 
 /**
  * Database implementation for the Union data type.
@@ -715,20 +714,32 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			boolean changed = false;
 			for (int i = components.size() - 1; i >= 0; i--) { // reverse order
 				DataTypeComponentDB dtc = components.get(i);
-				boolean removeBitFieldComponent = false;
 				if (dtc.isBitFieldComponent()) {
+
+					// Do not allow bitfield to be destroyed
+					// If base type is removed - revert to primitive type
 					BitFieldDataType bitfieldDt = (BitFieldDataType) dtc.getDataType();
-					removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
+					if (bitfieldDt.getBaseDataType() == dt) {
+						AbstractIntegerDataType primitiveDt = bitfieldDt.getPrimitiveBaseDataType();
+						dataMgr.blockDataTypeRemoval(primitiveDt);
+						if (primitiveDt != dt && updateBitFieldDataType(dtc, dt, primitiveDt)) {
+							dtc.setComment(
+								prependComment("Type '" + dt.getDisplayName() + "' was deleted",
+									dtc.getComment()));
+							changed = true;
+						}
+					}
 				}
-				if (removeBitFieldComponent || dtc.getDataType() == dt) {
+				else if (dtc.getDataType() == dt) {
 					dt.removeParent(this);
-					components.remove(i);
-					removeComponentRecord(dtc.getKey());
-					shiftOrdinals(i, -1);
+					dtc.setDataType(BadDataType.dataType); // updates record
+					dataMgr.getSettingsAdapter().removeAllSettingsRecords(dtc.getKey());
+					dtc.setComment(prependComment("Type '" + dt.getDisplayName() + "' was deleted",
+						dtc.getComment()));
 					changed = true;
 				}
 			}
-			if (changed && !repack(false, true)) {
+			if (changed && (!isPackingEnabled() || !repack(false, true))) {
 				dataMgr.dataTypeChanged(this, false);
 			}
 		}
@@ -821,58 +832,26 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			checkDeleted();
 			DataType replacementDt = newDt;
 			try {
-				validateDataType(replacementDt);
-				if (!(replacementDt instanceof DataTypeDB) ||
-					(replacementDt.getDataTypeManager() != getDataTypeManager())) {
-					replacementDt = resolve(replacementDt);
-				}
+				replacementDt = validateDataType(replacementDt); // blocks DEFAULT use
+				replacementDt = replacementDt.clone(dataMgr);
 				checkAncestry(replacementDt);
 			}
 			catch (Exception e) {
-				// TODO: should we flag bad replacement
 				replacementDt = Undefined1DataType.dataType;
 			}
 			boolean changed = false;
 			for (int i = components.size() - 1; i >= 0; i--) {
-
 				DataTypeComponentDB dtc = components.get(i);
-
-				boolean remove = false;
 				if (dtc.isBitFieldComponent()) {
-					try {
-						changed |= updateBitFieldDataType(dtc, oldDt, replacementDt);
-					}
-					catch (InvalidDataTypeException e) {
-						Msg.error(this,
-							"Invalid bitfield replacement type " + newDt.getName() +
-								", removing bitfield " + dtc.getDataType().getName() + ": " +
-								getPathName());
-						remove = true;
-					}
+					changed |= updateBitFieldDataType(dtc, oldDt, replacementDt);
 				}
 				else if (dtc.getDataType() == oldDt) {
-					if (replacementDt == DEFAULT) {
-						Msg.error(this,
-							"Invalid replacement type " + newDt.getName() +
-								", removing component " + dtc.getDataType().getName() + ": " +
-								getPathName());
-						remove = true;
-					}
-					else {
-						int len = getPreferredComponentLength(newDt, dtc.getLength());
-						dtc.setLength(len, false);
-						oldDt.removeParent(this);
-						dtc.setDataType(replacementDt); // updates record
-						dataMgr.getSettingsAdapter().removeAllSettingsRecords(dtc.getKey());
-						replacementDt.addParent(this);
-						changed = true;
-					}
-				}
-				if (remove) {
+					int len = getPreferredComponentLength(newDt, dtc.getLength());
+					dtc.setLength(len, false);
 					oldDt.removeParent(this);
-					components.remove(i);
-					removeComponentRecord(dtc.getKey());
-					shiftOrdinals(i, -1);
+					dtc.setDataType(replacementDt); // updates record
+					dataMgr.getSettingsAdapter().removeAllSettingsRecords(dtc.getKey());
+					replacementDt.addParent(this);
 					changed = true;
 				}
 			}

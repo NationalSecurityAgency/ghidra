@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public interface StructureMarkupFunction<T> {
 	 * @param context {@link StructureContext}
 	 * @param markupSession state and methods to assist marking up the program 
 	 * @throws IOException thrown if error performing the markup
-	 * @throws CancelledException 
+	 * @throws CancelledException if cancelled
 	 */
 	void markupStructure(StructureContext<T> context, MarkupSession markupSession)
 			throws IOException, CancelledException;

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.gotoquery;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
+import static ghidra.framework.main.DataTreeDialogType.OPEN;
 
 import java.util.Stack;
 
@@ -170,27 +170,27 @@ public class GoToHelper {
 	}
 
 	/**
-	 * GoTo external address linkage location (pointer or thunk) within the current program
-	 * which is associated with the specified external location.
+	 * GoTo external address linkage location (pointer or thunk) within the current program which is
+	 * associated with the specified external location.
 	 * <p>
-	 * For those use cases which should not popup a window the popupAllowed
-	 * option should be <b>false</b>.
+	 * For those use cases which should not popup a window the popupAllowed option should be
+	 * <b>false</b>.
 	 * <p>
-	 * This method will generally cause navigation to a linkage location associated with
-	 * the specified external location.  A linkage location is either a pointer to the
-	 * external location (identified by reference) or a thunk to the external
-	 * location, provided the thunk does not reference a linkage pointer.  If more than one
-	 * linkage location exists and popupAllowed is <b>true</b>, a table will be displayed allowing
-	 * the user to navigate to any of the linkage locations.  If navigation is initiated from the
-	 * only known linkage location, and popupAllowed is <b>true</b>, navigation to the external
-	 * program will be attempted regardless of the current
-	 * {@link NavigationOptions#isGotoExternalProgramEnabled} setting.
+	 * This method will generally cause navigation to a linkage location associated with the
+	 * specified external location. A linkage location is either a pointer to the external location
+	 * (identified by reference) or a thunk to the external location, provided the thunk does not
+	 * reference a linkage pointer. If more than one linkage location exists and popupAllowed is
+	 * <b>true</b>, a table will be displayed allowing the user to navigate to any of the linkage
+	 * locations. If navigation is initiated from the only known linkage location, and popupAllowed
+	 * is <b>true</b>, navigation to the external program will be attempted regardless of the
+	 * current {@link NavigationOptions#isGotoExternalProgramEnabled} setting.
+	 * 
 	 * @param nav Navigatable
 	 * @param externalLoc external location
-	 * @param popupAllowed if true a table may be displayed when multiple linkage locations
-	 * exist, otherwise navigation to the first linkage location will be performed
-	 * @return true if navigation was successful or a list of possible linkage locations
-	 * was displayed.
+	 * @param popupAllowed if true a table may be displayed when multiple linkage locations exist,
+	 *            otherwise navigation to the first linkage location will be performed
+	 * @return true if navigation was successful or a list of possible linkage locations was
+	 *         displayed.
 	 */
 	protected boolean goToExternalLinkage(Navigatable nav, ExternalLocation externalLoc,
 			boolean popupAllowed) {
@@ -237,27 +237,28 @@ public class GoToHelper {
 
 	/**
 	 * Navigate to either the external program location or address linkage location.
-	 * This method will only navigate to the
-	 * external program associated with the specified location if either checkNavigationOption
-	 * is false, or the navigation option is set to Show External Program, or
-	 * the current location is the same as the single linkage location.  See
-	 * {@link #goToExternalLinkage(Navigatable, ExternalLocation, boolean)} method for
-	 * external linkage navigation behavior.
 	 * <p>
-	 * If navigation to an external program will be performed, the associated program will
-	 * be identified and the location within that program found.  Once this occurs, the
-	 * external program will be opened within the current tool and navigation completed.  If an
-	 * external program association has not yet been established, the user will be prompted to make
-	 * an association if they choose before completing the navigation.
+	 * This method will only navigate to the external program associated with the specified location
+	 * if either checkNavigationOption is false, or the navigation option is set to Show External
+	 * Program, or the current location is the same as the single linkage location. See
+	 * {@link #goToExternalLinkage(Navigatable, ExternalLocation, boolean)} method for external
+	 * linkage navigation behavior.
+	 * <p>
+	 * If navigation to an external program will be performed, the associated program will be
+	 * identified and the location within that program found. Once this occurs, the external program
+	 * will be opened within the current tool and navigation completed. If an external program
+	 * association has not yet been established, the user will be prompted to make an association if
+	 * they choose before completing the navigation.
+	 * 
 	 * @param nav Navigatable
 	 * @param externalLocation external location
-	 * @param checkNavigationOption if true the {@link NavigationOptions#isGotoExternalProgramEnabled}
-	 * option will be used to determine if navigation to the external program will be
-	 * attempted, or if navigation to the external linkage location within the current
-	 * program will be attempted.  If false, only navigation to the external linkage will be
-	 * attempted.
-	 * @return true if navigation to the external program was successful or navigation to a
-	 * linkage location was performed.
+	 * @param checkNavigationOption if true the
+	 *            {@link NavigationOptions#isGotoExternalProgramEnabled} option will be used to
+	 *            determine if navigation to the external program will be attempted, or if
+	 *            navigation to the external linkage location within the current program will be
+	 *            attempted. If false, only navigation to the external linkage will be attempted.
+	 * @return true if navigation to the external program was successful or navigation to a linkage
+	 *         location was performed.
 	 */
 	public boolean goToExternalLocation(Navigatable nav, ExternalLocation externalLocation,
 			boolean checkNavigationOption) {

@@ -106,16 +106,20 @@
 			        sortgroup="u"
 			        target="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html" />
 
-			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
+			<tocdef id="DebuggerTimeOverviewPlugin" text="Time Overview Sidebar"
 			        sortgroup="v"
+			        target="help/topics/DebuggerTimeOverviewPlugin/DebuggerTimeOverviewPlugin.html" />
+
+			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
+			        sortgroup="w"
 			        target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
 
 			<tocdef id="DebuggerTraceDiffPlugin" text="Comparing Times"
-			        sortgroup="w"
+			        sortgroup="x"
 			        target="help/topics/DebuggerTraceViewDiffPlugin/DebuggerTraceViewDiffPlugin.html" />
 			
 			<tocdef id="DebuggerPlatformPlugin" text="Platform Selection"
-			        sortgroup="x"
+			        sortgroup="y"
 			        target="help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html" />
 		</tocdef>
 	</tocref>

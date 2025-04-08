@@ -48,8 +48,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 
 public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
 	/**
@@ -58,6 +57,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	 */
 	public static final String PREAMBLE = """
 			from ghidradbg.commands import *
+			from ghidratrace.client import Schedule
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
@@ -106,19 +106,18 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	private Path outFile;
 	private Path errFile;
 
-	@Before
-	public void assertOS() {
-		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
-	}
-
-	//@BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
 		if (didSetupPython) {
 			// Only do this once when running the full suite.
 			return;
 		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
 		String gradle = DummyProc.which("gradle.bat");
-		new ProcessBuilder(gradle, "Debugger-agent-dbgeng:assemblePyPackage")
+		new ProcessBuilder(gradle, "assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
@@ -137,6 +136,16 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		pb.environment().compute("PYTHONPATH", (k, v) -> v == null ? add : (v + sep + add));
 	}
 
+	protected void setWindbgPath(ProcessBuilder pb) throws IOException {
+		pb.environment().put("WINDBG_DIR", "C:\\Program Files\\Amazon Corretto\\jdk21.0.3_9\\bin");
+	}
+
+	@BeforeClass
+	public static void assertOS() {
+		assumeTrue("Not on Windows",
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+	}
+
 	@Before
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
@@ -147,6 +156,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		catch (RuntimeException e) {
 			pythonPath = Paths.get(DummyProc.which("python"));
 		}
+
+		pythonPath = new File("/C:/Python313/python.exe").toPath();
+		assertTrue(pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);
 	}
@@ -194,10 +206,49 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 
 	protected record ExecInPython(Process python, CompletableFuture<PythonResult> future) {}
 
+	protected void pump(InputStream streamIn, OutputStream streamOut) {
+		Thread t = new Thread(() -> {
+			try (PrintStream printOut = new PrintStream(streamOut);
+					BufferedReader reader = new BufferedReader(new InputStreamReader(streamIn))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					printOut.println(line);
+					printOut.flush();
+				}
+			}
+			catch (IOException e) {
+				Msg.info(this, "Terminating stdin pump, because " + e);
+			}
+		});
+		t.setDaemon(true);
+		t.start();
+	}
+
+	protected void pumpTee(InputStream streamIn, File fileOut, PrintStream streamOut) {
+		Thread t = new Thread(() -> {
+			try (PrintStream fileStream = new PrintStream(fileOut);
+					BufferedReader reader = new BufferedReader(new InputStreamReader(streamIn))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					streamOut.println(line);
+					streamOut.flush();
+					fileStream.println(line);
+					fileStream.flush();
+				}
+			}
+			catch (IOException e) {
+				Msg.info(this, "Terminating tee: " + fileOut + ", because " + e);
+			}
+		});
+		t.setDaemon(true);
+		t.start();
+	}
+
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInPython execInPython(String script) throws IOException {
 		ProcessBuilder pb = new ProcessBuilder(pythonPath.toString(), "-i");
 		setPythonPath(pb);
+		setWindbgPath(pb);
 
 		// If commands come from file, Python will quit after EOF.
 		Msg.info(this, "outFile: " + outFile);
@@ -205,13 +256,29 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 
 		//pb.inheritIO();
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
-		pb.redirectOutput(outFile.toFile());
-		pb.redirectError(errFile.toFile());
+		if (SystemUtilities.isInTestingBatchMode()) {
+			pb.redirectOutput(outFile.toFile());
+			pb.redirectError(errFile.toFile());
+		}
+		else {
+			pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+			pb.redirectError(ProcessBuilder.Redirect.PIPE);
+		}
 		Process pyproc = pb.start();
+
+		if (!SystemUtilities.isInTestingBatchMode()) {
+			pumpTee(pyproc.getInputStream(), outFile.toFile(), System.out);
+			pumpTee(pyproc.getErrorStream(), errFile.toFile(), System.err);
+		}
+
 		OutputStream stdin = pyproc.getOutputStream();
 		stdin.write(script.getBytes());
 		stdin.flush();
-		//stdin.close();
+
+		if (!SystemUtilities.isInTestingBatchMode()) {
+			pump(System.in, stdin);
+		}
+
 		return new ExecInPython(pyproc, CompletableFuture.supplyAsync(() -> {
 			try {
 				if (!pyproc.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
@@ -286,7 +353,8 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			try {
 				PythonResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				r.handle();
-				waitForPass(() -> assertTrue(connection.isClosed()));
+				waitForPass(this, () -> assertTrue(connection.isClosed()),
+					TIMEOUT_SECONDS, TimeUnit.SECONDS);
 			}
 			finally {
 				exec.python.destroyForcibly();
@@ -324,18 +392,21 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		PythonAndConnection conn = startAndConnectPython(scriptSupplier);
 		PythonResult r = conn.exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		String stdout = r.handle();
-		waitForPass(() -> assertTrue(conn.connection.isClosed()));
+		waitForPass(this, () -> assertTrue(conn.connection.isClosed()),
+			TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		return stdout;
 	}
 
 	protected void waitStopped(String message) {
-		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
+		TraceObject proc =
+			Objects.requireNonNull(tb.objAny("Sessions[].Processes[]", Lifespan.at(0)));
 		waitForPass(() -> assertEquals(message, "STOPPED", tb.objValue(proc, 0, "_state")));
 		waitTxDone();
 	}
 
 	protected void waitRunning(String message) {
-		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
+		TraceObject proc =
+			Objects.requireNonNull(tb.objAny("Sessions[].Processes[]", Lifespan.at(0)));
 		waitForPass(() -> assertEquals(message, "RUNNING", tb.objValue(proc, 0, "_state")));
 		waitTxDone();
 	}

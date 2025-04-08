@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -411,7 +411,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		 * 
 		 * @return the set of spans
 		 */
-		Set<S> spans();
+		NavigableSet<S> spans();
 
 		/**
 		 * Get the values in this map
@@ -563,7 +563,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		 * 
 		 * @return the iterable
 		 */
-		Iterable<S> spans();
+		NavigableSet<S> spans();
 
 		/**
 		 * Get a span which encloses all spans in the set
@@ -862,9 +862,12 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		}
 
 		@Override
-		public Set<S> spans() {
+		public NavigableSet<S> spans() {
 			// TODO: Make this a view?
-			return spanTree.values().stream().map(e -> e.getKey()).collect(Collectors.toSet());
+			return spanTree.values()
+					.stream()
+					.map(e -> e.getKey())
+					.collect(Collectors.toCollection(TreeSet::new));
 		}
 
 		@Override
@@ -1027,7 +1030,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		}
 
 		@Override
-		public Iterable<S> spans() {
+		public NavigableSet<S> spans() {
 			return map.spans();
 		}
 

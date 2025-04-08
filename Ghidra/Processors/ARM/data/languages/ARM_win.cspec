@@ -128,4 +128,12 @@
     </prototype>
   </default_proto>
   
+  <callotherfixup targetop="setISAMode">
+    <pcode incidentalcopy="true">
+      <!-- NOP -->
+      <body><![CDATA[
+        r0 = r0;
+      ]]></body>
+    </pcode>
+  </callotherfixup>
 </compiler_spec>

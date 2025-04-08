@@ -82,8 +82,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private List<FixUpInfo> fixUpList; // FixUpInfo objects that must be resolved after
 	private HashSet<Long> fixUpIDSet; // track types with fixups
-	// data types have been added and conflicts resolved.
-	private Map<Long, CleanUpInfo> cleanupPlaceHolderList; // placeholders that need to be removed.
+
 	private int progressIndex; // index for showing progress
 
 	private int categoryChoice = ASK_USER;
@@ -496,20 +495,106 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		fixUpDataTypes();
 
-		cleanUpDataTypes();
+		showUnresolvedFixups();
+	}
 
-		if (fixUpList.size() > 0) {
-			StringBuffer sb = new StringBuffer();
-			sb.append("The following data types are unresolved:\n");
-			for (FixUpInfo info : fixUpList) {
-				DataTypeManager dtm = info.getDataTypeManager();
-				DataType dt = dtm.getDataType(info.id);
-				DataType compDt = dtm.getDataType(info.compID);
-				sb.append("  Data type name " + dt.getName() + ", component " +
-					compDt.getDisplayName() + "\n");
-			}
-			showMessage("Unresolved Data Types and Components", sb.toString());
+	private void showUnresolvedFixups() {
+		if (fixUpList.isEmpty()) {
+			return;
 		}
+		int count = 0;
+		boolean logOnly = false;
+		StringBuffer sb = new StringBuffer();
+		sb.append("The following data types failed to properly resolve, possibly due\n" +
+			"to missing dependencies (" + fixUpList.size() + " data type failures):\n");
+		for (FixUpInfo info : fixUpList) {
+			if (!logOnly && count++ == 30) {
+				sb.append("List has been truncated.  See log for additional data type failures");
+				String msg = sb.toString();
+				MergeManager.showBlockingError("Unresolved Data Types and Components", msg);
+				logOnly = true;
+				sb = new StringBuffer();
+				sb.append("Continuation of data type failure listing:\n");
+			}
+
+			DataTypeManager dtm = info.getDataTypeManager();
+			DataType dt = dtm.getDataType(info.id);
+			DataType compDt = dtm.getDataType(info.compID);
+			sb.append("   ");
+			String kind = getKind(dt);
+			if (kind != null) {
+				sb.append(kind);
+				sb.append(" ");
+			}
+			sb.append(dt.getDisplayName());
+			sb.append(", ");
+			if (info.index < 0) {
+				if (dt instanceof FunctionDefinition) {
+					sb.append("return-type");
+				}
+				else {
+					sb.append("dependency");
+				}
+			}
+			else {
+				if (dt instanceof FunctionDefinition) {
+					sb.append("param-");
+					sb.append(info.index);
+				}
+				else if (dt instanceof Union) {
+					sb.append("component-");
+					sb.append(info.index);
+				}
+				else if (dt instanceof Structure) {
+					Structure resultStruct = (Structure) info.ht.get(info.id);
+					sb.append("component-");
+					sb.append(info.index);
+					if (!resultStruct.isPackingEnabled()) {
+						sb.append(", offset-");
+						sb.append("0x");
+						sb.append(Integer.toHexString(info.offset));
+					}
+				}
+				else {
+					sb.append("index-"); // unknown use case
+					sb.append(info.index);
+				}
+
+			}
+			sb.append(": ");
+			sb.append(compDt.getDisplayName());
+			sb.append("\n");
+		}
+
+		// TODO: Use display with scrolling message area
+		// TODO: Would be could to allow messages to be saved to a file
+
+		if (logOnly) {
+			Msg.error(this, sb.toString());
+		}
+		else {
+			String msg = sb.toString();
+			MergeManager.showBlockingError("Unresolved Data Types and Components", msg);
+		}
+	}
+
+	private String getKind(DataType dt) {
+		if (dt instanceof Structure) {
+			return "Structure";
+		}
+		if (dt instanceof Union) {
+			return "Union";
+		}
+		if (dt instanceof TypeDef) {
+			return "Typedef";
+		}
+		if (dt instanceof FunctionDefinition) {
+			return "Function-Definition";
+		}
+		if (dt instanceof Enum) {
+			return "Enum";
+		}
+		return null;
 	}
 
 	private void handleDataTypeConflict(long id, int conflictIndex) throws CancelledException {
@@ -592,7 +677,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				catch (DataTypeDependencyException e) {
 					String msg = "Cannot replace data type named " + latestDt.getName() +
 						".\nProblem: " + e.getMessage();
-					Msg.showError(this, null, "Error Replacing Data Type", msg);
+					MergeManager.showBlockingError("Error Replacing Data Type", msg);
 				}
 				catch (DuplicateNameException e) {
 					// DT Need to rename using conflict name if setCategoryPath causes duplicate?
@@ -799,7 +884,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				catch (DataTypeDependencyException e) {
 					String msg = "Cannot replace data type named " + resultDt.getName() +
 						".\nProblem: " + e.getMessage();
-					Msg.showError(this, null, "Error Replacing Data Type", msg);
+					MergeManager.showBlockingError("Error Replacing Data Type", msg);
 					return null;
 				}
 			}
@@ -830,8 +915,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 			SourceArchive resultSourceArchive = resultDt.getSourceArchive();
 			if (!resultSourceArchive.getSourceArchiveID()
-					.equals(
-						mySourceArchive.getSourceArchiveID())) {
+					.equals(mySourceArchive.getSourceArchiveID())) {
 				resultDt.setSourceArchive(mySourceArchive);
 			}
 		}
@@ -899,10 +983,27 @@ public class DataTypeMergeManager implements MergeResolver {
 	private DataType getResolvedBaseType(long id, DataType dt,
 			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataTypeManager dtm = dt.getDataTypeManager();
-		DataType baseDt = getBaseDataType(dt);
-		if (baseDt == DataType.DEFAULT) {
-			return baseDt;
+
+		boolean doCheck = false;
+		DataType baseDt = dt;
+		if (baseDt instanceof TypeDef td) {
+			baseDt = td.getDataType();
+			doCheck = true;
 		}
+		if ((baseDt instanceof Pointer) || (baseDt instanceof Array)) {
+			baseDt = DataTypeUtilities.getBaseDataType(baseDt);
+			doCheck = true;
+		}
+
+		if (baseDt == null || baseDt == DataType.DEFAULT) {
+			return DataType.DEFAULT; // force DEFAULT - null will be misconstrued
+		}
+
+		if (!doCheck) {
+			throw new AssertException(
+				"Unexpected condition - method only valid for typedef, pointer or array");
+		}
+
 		long baseID = dtm.getID(baseDt);
 		DataType resolvedDt = resolvedDataTypes.get(baseID);
 		if (resolvedDt == null) {
@@ -911,14 +1012,15 @@ public class DataTypeMergeManager implements MergeResolver {
 			if (!myDtAddedList.contains(Long.valueOf(baseID))) {
 				resolvedDt = dtms[RESULT].getDataType(baseID);
 				if (resolvedDt == null) {
-					if (origDtConflictList.contains(Long.valueOf(baseID))) {
+					if (baseDt instanceof BuiltIn ||
+						origDtConflictList.contains(Long.valueOf(baseID))) {
 						// was deleted, but add it back so we can create
 						// data types depending on it; will get resolved later
 						resolvedDt = addDataType(baseID, baseDt, resolvedDataTypes);
 					}
 					else {
 						// Removed in latest so fix up later.
-						fixUpList.add(new FixUpInfo(id, baseID, -1, resolvedDataTypes));
+						fixUpList.add(new FixUpInfo(id, baseID, baseDt, -1, resolvedDataTypes));
 					}
 				}
 				else {
@@ -927,7 +1029,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			else {
 				// Added in My, but hasn't processed yet, so fixup later.
-				fixUpList.add(new FixUpInfo(id, baseID, -1, resolvedDataTypes));
+				fixUpList.add(new FixUpInfo(id, baseID, baseDt, -1, resolvedDataTypes));
 			}
 		}
 		return resolvedDt;
@@ -936,7 +1038,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private DataType createPointer(long id, Pointer pointerDt,
 			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType innerDt = pointerDt.getDataType();
-		if (innerDt == DataType.DEFAULT) {
+		if (innerDt == DataType.DEFAULT || innerDt == null) {
 			return pointerDt;
 		}
 		DataType resolvedDt = getResolvedBaseType(id, pointerDt, resolvedDataTypes);
@@ -1034,8 +1136,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		return newDt;
 	}
 
-	private void updateHashTables(long id, DataType newDt,
-			Map<Long, DataType> resolvedDataTypes) {
+	private void updateHashTables(long id, DataType newDt, Map<Long, DataType> resolvedDataTypes) {
 		resolvedDataTypes.put(id, newDt);
 		if (!myDtAddedList.contains(Long.valueOf(id))) {
 			if (resolvedDataTypes == myResolvedDts) {
@@ -1053,27 +1154,40 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 	}
 
-	private DataType getResolvedComponent(long compID,
-			Map<Long, DataType> resolvedDataTypes) {
+	/**
+	 * Get a previously resolved datatype.
+	 * @param compID datatype ID
+	 * @param resolvedDataTypes resolved datatype map
+	 * @return resolved datatype or null if noth resolved or a critical dependency has been deleted
+	 */
+	private DataType getResolvedComponent(long compID, Map<Long, DataType> resolvedDataTypes) {
 		DataType resolvedDt = resolvedDataTypes.get(compID);
 		if (resolvedDt != null) {
-			// if this is a pointer, typedef, or array, check the
-			// base type; if it was deleted, skip this component
-			if ((resolvedDt instanceof Pointer) || (resolvedDt instanceof Array) ||
-				(resolvedDt instanceof TypeDef)) {
-				DataType baseDt = getBaseDataType(resolvedDt);
-				if (baseDt == null) {
-					// DT What about built-in pointers here? Is this ok?
-					return null;
-				}
-				if (baseDt != DataType.DEFAULT) {
+
+			if (resolvedDt.isDeleted()) {
+				return null;
+			}
+
+			boolean doCheck = false;
+			DataType baseDt = resolvedDt;
+			if (baseDt instanceof TypeDef td) {
+				baseDt = td.getDataType();
+				doCheck = true;
+			}
+			if ((baseDt instanceof Pointer) || (baseDt instanceof Array)) {
+				baseDt = DataTypeUtilities.getBaseDataType(baseDt);
+				doCheck = true;
+			}
+
+			if (doCheck) {
+				if (baseDt != null && baseDt != DataType.DEFAULT) {
 					DataTypeManager dtm = baseDt.getDataTypeManager();
 					long baseID = dtm.getID(baseDt);
 					if (!myDtAddedList.contains(Long.valueOf(baseID))) {
-						if (dtms[RESULT].getDataType(baseID) != null) {
-							return resolvedDt;
+						DataType baseResultDt = dtms[RESULT].getDataType(baseID);
+						if (baseResultDt == null || baseResultDt.isDeleted()) {
+							return null; // base data type was deleted
 						}
-						return null; // base data type was deleted
 					}
 				}
 			}
@@ -1095,12 +1209,38 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 	}
 
+	/**
+	 * Compute the next non-packed component ordinal based upon the newly minted result
+	 * component {@code resultDtc} and the offset of the next source component based upon
+	 * the specified source component list {@code compList} and the current component
+	 * index.
+	 * @param resultDtc newly minted result component
+	 * @param compList source component list
+	 * @param index index of current source component
+	 * @return next result component ordinal
+	 */
+	private static int computeNextNonPackedOrdinal(DataTypeComponent resultDtc,
+			List<DataTypeComponent> compList, int index) {
+		int nextOrdinal = resultDtc.getOrdinal() + 1;
+		if (index < (compList.size() - 1)) {
+			DataTypeComponent nextDtc = compList.get(index + 1);
+			int undefinedSpace =
+				nextDtc.getOffset() - resultDtc.getOffset() - resultDtc.getLength();
+			if (undefinedSpace > 0) {
+				nextOrdinal += undefinedSpace;
+			}
+		}
+		return nextOrdinal;
+	}
+
 	private void updateStructure(long sourceDtID, Structure sourceDt, Structure destStruct,
 			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		// NOTE: it is possible for the same destStruct to be updated more than once;
 		// therefor we must cleanup any previous obsolete fixups
 		removeFixUps(sourceDtID);
+
+// TODO: Preserve timestamp?
 
 		// Get an empty destination structure that is the correct size.
 		destStruct.deleteAll();
@@ -1109,19 +1249,37 @@ public class DataTypeMergeManager implements MergeResolver {
 		updateAlignment(sourceDt, destStruct);
 
 		DataTypeManager sourceDTM = sourceDt.getDataTypeManager();
-		boolean aligned = sourceDt.isPackingEnabled();
+		boolean packed = sourceDt.isPackingEnabled();
 
 		// Add each of the defined components back in.
 		DataTypeComponent[] comps = sourceDt.getDefinedComponents();
-		int lastOffset = 0;
-		if (comps.length != 0) {
-			lastOffset = comps[comps.length - 1].getOffset();
+
+		// Component sequence must be flipped for components that share the same offset
+		// (i.e., when zero-length components exist) to ensure that the insert at offset
+		// does not alter the intended order.
+		List<DataTypeComponent> compList = new ArrayList<>();
+		int prevOffset = -1;
+		int index = -1;
+		for (DataTypeComponent dtc : comps) {
+			int offset = dtc.getOffset();
+			if (offset == prevOffset) {
+				compList.add(index, dtc);
+			}
+			else {
+				prevOffset = offset;
+				index = compList.size();
+				compList.add(dtc);
+			}
 		}
+		comps = null; // prevent improper use
 
 		// Track dependency errors to avoid duplicate popups
 		HashMap<Long, String> badIdDtMsgs = new HashMap<>();
 
-		for (DataTypeComponent sourceComp : comps) {
+		for (int i = 0; i < compList.size(); i++) {
+
+			DataTypeComponent sourceComp = compList.get(i);
+
 			DataType sourceCompDt = sourceComp.getDataType();
 			BitFieldDataType bfDt = null;
 			String comment = sourceComp.getComment();
@@ -1137,7 +1295,6 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 
 			long sourceComponentID = sourceDTM.getID(sourceCompDt);
-			boolean deletedInLatest = false;
 
 			// Try to get a mapping of the source data type to a result data type.
 			if (resultCompDt == null) {
@@ -1146,87 +1303,115 @@ public class DataTypeMergeManager implements MergeResolver {
 
 			if (resultCompDt == null) {
 				// We didn't have a map entry for the data type.
-
 				if (!myDtAddedList.contains(Long.valueOf(sourceComponentID))) {
-
 					// Not added so should be in result if it wasn't deleted there.
-					DataType rDt = dtms[RESULT].getDataType(sourceComponentID);
-					if (rDt != null) {
-						resultCompDt = rDt;
-					}
-					else {
-						// must have been deleted in LATEST
-						// put an entry in the fixup list if this is a conflict.
-						// NOTE: This may also be caused by a replaced datatype but
-						// we have no indication as to what the replacment was
-						deletedInLatest = true;
-					}
+					resultCompDt = dtms[RESULT].getDataType(sourceComponentID);
 				}
 				if (resultCompDt == null) {
 					// Not added/resolved yet
 					// put an entry in the fixup list
-					fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID, sourceComp,
-						resolvedDataTypes));
+					fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID,
+						sourceComp.getOrdinal(), sourceComp, resolvedDataTypes));
 					fixUpIDSet.add(sourceDtID);
 				}
 				if (bfDt != null &&
 					(resultCompDt == null || !BitFieldDataType.isValidBaseDataType(resultCompDt))) {
-					// use primitive type as fallback (may get fixed-up later)
+					// use primitive type as fixup placeholder
 					resultCompDt = bfDt.getPrimitiveBaseDataType();
 				}
 			}
-			try {
-				if (resultCompDt != null) {
 
-					long dtId = dtms[RESULT].getID(resultCompDt);
-					String badMsg = badIdDtMsgs.get(Long.valueOf(dtId));
+			if (resultCompDt != null && !resultCompDt.isDeleted()) {
 
-					int length = resultCompDt.getLength();
-					if (length <= 0) {
-						length = sourceComp.getLength();
-					}
+				long dtId = dtms[RESULT].getID(resultCompDt);
+				String badMsg = badIdDtMsgs.get(Long.valueOf(dtId));
 
-					// There is a matching component data type in the result.
-					if (aligned) {
-						if (bfDt != null) {
+				int length = resultCompDt.getLength();
+				if (length <= 0) {
+					length = sourceComp.getLength();
+				}
+
+				// There is a matching component data type in the result.
+				if (packed) {
+					if (bfDt != null) {
+						try {
 							destStruct.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
 								sourceComp.getFieldName(), comment);
 						}
-						else if (badMsg == null) {
+						catch (InvalidDataTypeException e) {
+							displayError(destStruct, e);
+							// Try again with primitive base type
+							DataType primitiveBaseDt = bfDt.getPrimitiveBaseDataType();
+							comment = buildDataTypeFailureComment(sourceCompDt, e.getMessage(),
+								sourceComp.getComment());
 							try {
-								// If I have compDt, it should now be from result DTM.
-								destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
-									comment);
+								destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
+									sourceComp.getFieldName(), comment);
 							}
-							catch (IllegalArgumentException e) {
-								displayError(destStruct, e);
-								badMsg = "Couldn't add " + resultCompDt.getDisplayName() +
-									" here. " + e.getMessage();
-								if (e.getCause() instanceof DataTypeDependencyException) {
-									badIdDtMsgs.put(dtId, badMsg);
-								}
+							catch (InvalidDataTypeException exc) {
+								throw new RuntimeException(exc); // unexpected
 							}
-						}
-						if (badMsg != null) {
-							destStruct.add(BadDataType.dataType, sourceComp.getLength(),
-								sourceComp.getFieldName(), badMsg + " " + comment);
 						}
 					}
-					else if (bfDt != null) {
+					else if (badMsg == null) {
+						try {
+							// If I have compDt, it should now be from result DTM.
+							destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
+								comment);
+						}
+						catch (IllegalArgumentException e) {
+							comment =
+								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
+							destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+								sourceComp.getFieldName(), comment);
+							if (e.getCause() instanceof DataTypeDependencyException) {
+								badIdDtMsgs.put(dtId, e.getMessage());
+							}
+							displayError(destStruct, e);
+						}
+					}
+					else {
+						// Preserve non-fixup ordinal with bad placeholder
+						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
+						destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+							sourceComp.getFieldName(), badMsg + "; " + comment);
+					}
+				}
+				else if (bfDt != null) {
+					// non-packed bitfield
+					try {
 						destStruct.insertBitFieldAt(sourceComp.getOffset(), sourceComp.getLength(),
 							bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
 							sourceComp.getFieldName(), comment);
 					}
-					else {
-						if (badMsg == null) {
-							try {
-								// If I have compDt, it should now be from result DTM.
-								// If not last component must constrain length to original component size
+					catch (InvalidDataTypeException e) {
+						displayError(destStruct, e);
+						// Try again with primitive base type
+						DataType primitiveBaseDt = bfDt.getPrimitiveBaseDataType();
+						comment = buildDataTypeFailureComment(sourceCompDt, e.getMessage(),
+							sourceComp.getComment());
+						try {
+							destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
+								sourceComp.getFieldName(), comment);
+						}
+						catch (InvalidDataTypeException exc) {
+							throw new RuntimeException(exc); // unexpected
+						}
+					}
+				}
+				else {
+					// normal non-packed component
+					if (badMsg == null) {
+						try {
+							// If not last component must constrain length to original component size
+							if (i < compList.size() - 1) {
 								int offset = sourceComp.getOffset();
-								if (offset < lastOffset && length > sourceComp.getLength()) {
+								DataTypeComponent nextDtc = compList.get(i + 1);
+								int available = nextDtc.getOffset() - offset;
+								if (length > available) {
 									// The data type is too big, so adjust the component length to what will fit.
-									int extraBytesNeeded = length - sourceComp.getLength();
-									length = sourceComp.getLength();
+									int extraBytesNeeded = length - available;
+									length = available;
 									// Output a warning indicating the structure has a data type that doesn't fit.
 									String message =
 										"Structure Merge: Not enough undefined bytes to fit " +
@@ -1236,45 +1421,46 @@ public class DataTypeMergeManager implements MergeResolver {
 											extraBytesNeeded + " more byte(s) to be able to fit.";
 									Msg.warn(this, message);
 								}
-								destStruct.insertAtOffset(sourceComp.getOffset(), resultCompDt,
-									length, sourceComp.getFieldName(), comment);
 							}
-							catch (IllegalArgumentException e) {
-								displayError(destStruct, e);
-								badMsg = "Couldn't add " + resultCompDt.getDisplayName() +
-									" here. " + e.getMessage();
-								if (e.getCause() instanceof DataTypeDependencyException) {
-									badIdDtMsgs.put(dtId, badMsg);
-								}
-							}
+
+							destStruct.insertAtOffset(sourceComp.getOffset(), resultCompDt, length,
+								sourceComp.getFieldName(), comment);
 						}
-						if (badMsg != null) {
+						catch (IllegalArgumentException e) {
+							comment =
+								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
 							destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
-								sourceComp.getLength(), sourceComp.getFieldName(),
-								badMsg + " " + comment);
+								length, sourceComp.getFieldName(), comment);
+
+							if (e.getCause() instanceof DataTypeDependencyException) {
+								badIdDtMsgs.put(dtId, e.getMessage());
+							}
+							displayError(destStruct, e);
 						}
 					}
+					else {
+						// Preserve non-fixup ordinal with bad placeholder
+						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
+						destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
+							sourceComp.getLength(), sourceComp.getFieldName(), comment);
+					}
 				}
-				else if (aligned) {
-					// Add a Bad data type to prevent the ordinal values and component count from changing.
-					// These should get cleaned up later in the conflict cleanup code.
-					destStruct.add(BadDataType.dataType, sourceComp.getLength(),
-						sourceComp.getFieldName(), comment);
-				}
-				else if (!deletedInLatest) {
-					// If the data type wasn't removed and isn't the result,
-					// put a Bad data type to try to keep field name and comment.
-					// If it was deleted, there should already be default data types in place of this component.
-					destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
-						sourceComp.getLength(), sourceComp.getFieldName(), comment);
-				}
-
 			}
-			catch (IllegalArgumentException | InvalidDataTypeException e) {
-				displayError(destStruct, e);
+			else if (packed) {
+				// Add fixup placeholder to prevent the ordinal values and component sizes from 
+				// changing.  Nothing we can do about packing which may be affected.
+				// These should get fixed-up later.
+				destStruct.add(BadDataType.dataType, sourceComp.getLength(),
+					sourceComp.getFieldName(), comment);
+			}
+			else {
+				// Add fixup placeholder to prevent the ordinal values and component sizes from 
+				// changing.  These should get fixed-up later.
+				destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
+					sourceComp.getLength(), sourceComp.getFieldName(), comment);
 			}
 		}
-		if (!aligned) {
+		if (!packed) {
 			adjustStructureSize(destStruct, sourceDt.getLength());
 		}
 	}
@@ -1310,7 +1496,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		String msg = "Some of your changes to " + destComposite.getName() +
 			" cannot be merged.\nProblem: " + e.getMessage();
 		String typeName = (destComposite instanceof Union) ? "Union" : "Structure";
-		MergeManager.displayErrorAndWait(this, typeName + " Update Failed", msg);
+		MergeManager.showBlockingError(typeName + " Update Failed", msg);
 	}
 
 	private void updateUnion(long sourceDtID, Union sourceDt, Union destUnion,
@@ -1319,6 +1505,8 @@ public class DataTypeMergeManager implements MergeResolver {
 		// NOTE: it is possible for the same destUnion to be updated more than once;
 		// therefor we must cleanup any previous obsolete fixups
 		removeFixUps(sourceDtID);
+
+// TODO: Preserve timestamp?
 
 		// Remove all the components from the destination union.
 		while (destUnion.getNumComponents() > 0) {
@@ -1365,8 +1553,8 @@ public class DataTypeMergeManager implements MergeResolver {
 						// must  have been deleted in LATEST
 						// put an entry in RESULT for later fixup if
 						// it is in conflict
-						FixUpInfo info =
-							new FixUpInfo(sourceDtID, sourceCompID, sourceComp, resolvedDataTypes);
+						FixUpInfo info = new FixUpInfo(sourceDtID, sourceCompID,
+							sourceComp.getOrdinal(), sourceComp, resolvedDataTypes);
 						fixUpList.add(info);
 						fixUpIDSet.add(sourceDtID);
 					}
@@ -1374,8 +1562,8 @@ public class DataTypeMergeManager implements MergeResolver {
 				else {
 					// Not added/resolved yet
 					// put an entry in RESULT for later fixup
-					fixUpList.add(
-						new FixUpInfo(sourceDtID, sourceCompID, sourceComp, resolvedDataTypes));
+					fixUpList.add(new FixUpInfo(sourceDtID, sourceCompID, sourceComp.getOrdinal(),
+						sourceComp, resolvedDataTypes));
 					fixUpIDSet.add(sourceDtID);
 				}
 				if (bfDt != null &&
@@ -1384,39 +1572,52 @@ public class DataTypeMergeManager implements MergeResolver {
 					resultCompDt = bfDt.getPrimitiveBaseDataType();
 				}
 			}
-			try {
-				if (resultCompDt != null) {
-					if (bfDt != null) {
-						destUnion.addBitField(resultCompDt, bfDt.getBitSize(),
+			if (resultCompDt != null) {
+				if (bfDt != null) {
+					// bitfield component in union
+					try {
+						destUnion.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
 							sourceComp.getFieldName(), comment);
 					}
-					else {
-						// There is a matching component data type in the result.
-						int compLen = resultCompDt.getLength();
-						if (compLen <= 0) {
-							compLen = sourceComp.getLength();
-						}
+					catch (InvalidDataTypeException e) {
+						displayError(destUnion, e);
+						// Try again with primitive base type
+						DataType primitiveBaseDt = bfDt.getPrimitiveBaseDataType();
+						comment = buildDataTypeFailureComment(sourceCompDt, e.getMessage(),
+							sourceComp.getComment());
 						try {
-							destUnion.add(resultCompDt, compLen, sourceComp.getFieldName(),
-								comment);
+							destUnion.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
+								sourceComp.getFieldName(), comment);
 						}
-						catch (IllegalArgumentException e1) {
-							displayError(destUnion, e1);
-							DataType badDt = BadDataType.dataType;
-							comment = "Couldn't add " + resultCompDt.getDisplayName() + " here. " +
-								e1.getMessage() + ((comment != null) ? (" " + comment) : "");
-							destUnion.add(badDt, sourceComp.getLength(), sourceComp.getFieldName(),
-								comment);
+						catch (InvalidDataTypeException exc) {
+							throw new RuntimeException(exc); // unexpected
 						}
 					}
 				}
 				else {
-					destUnion.add(BadDataType.dataType, sourceComp.getLength(),
-						sourceComp.getFieldName(), comment);
+					// Normal component in union
+					int compLen = resultCompDt.getLength();
+					if (compLen <= 0) {
+						compLen = sourceComp.getLength();
+					}
+					try {
+						destUnion.add(resultCompDt, compLen, sourceComp.getFieldName(), comment);
+					}
+					catch (IllegalArgumentException e) {
+						comment =
+							buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
+						destUnion.add(BadDataType.dataType, compLen, sourceComp.getFieldName(),
+							comment);
+						displayError(destUnion, e);
+					}
 				}
 			}
-			catch (IllegalArgumentException | InvalidDataTypeException e) {
-				displayError(destUnion, e);
+			else {
+				// Add fixup placeholder to prevent the ordinal values and component sizes from 
+				// changing.  Nothing we can do about packing which may be affected.
+				// These should get fixed-up later.
+				destUnion.add(BadDataType.dataType, sourceComp.getLength(),
+					sourceComp.getFieldName(), comment);
 			}
 		}
 	}
@@ -1478,8 +1679,8 @@ public class DataTypeMergeManager implements MergeResolver {
 		DataType resolvedRDT = DataType.DEFAULT;
 		if (sourceReturnType != null) {
 			long returnTypeID = sourceDTM.getID(sourceReturnType);
-			resolvedRDT =
-				getResolvedParam(sourceFunctionDefDtID, returnTypeID, -1, resolvedDataTypes);
+			resolvedRDT = getResolvedParam(sourceFunctionDefDtID, returnTypeID, sourceReturnType,
+				-1, resolvedDataTypes);
 		}
 		destDt.setReturnType(resolvedRDT);
 
@@ -1487,7 +1688,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			DataType varDt = sourceVars[i].getDataType();
 			long varID = sourceDTM.getID(varDt);
 			DataType resolvedDt =
-				getResolvedParam(sourceFunctionDefDtID, varID, i, resolvedDataTypes);
+				getResolvedParam(sourceFunctionDefDtID, varID, varDt, i, resolvedDataTypes);
 			destVars[i] = new ParameterDefinitionImpl(sourceVars[i].getName(), resolvedDt,
 				sourceVars[i].getComment());
 		}
@@ -1503,14 +1704,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * Get the resolved data type for either the return type or a variable.
 	 * @param id id of FunctionDefinition
 	 * @param paramDatatypeID ID of either the return or variable dataty type ID
+	 * @param sourceParamDataType source param datatype
 	 * @param index &gt;=0 is the index of the variable; <0 means the paramID is
 	 * the return type
 	 * @param resolvedDataTypes hashtable to use for resolving
 	 * @return resolved data type or the default data type if the data type
 	 * has not been resolved yet
 	 */
-	private DataType getResolvedParam(long id, long paramDatatypeID, int index,
-			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
+	private DataType getResolvedParam(long id, long paramDatatypeID, DataType sourceParamDataType,
+			int index, MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType resolvedDt = getResolvedComponent(paramDatatypeID, resolvedDataTypes);
 		if (resolvedDt == null) {
 			if (!myDtAddedList.contains(Long.valueOf(paramDatatypeID))) {
@@ -1525,7 +1727,8 @@ public class DataTypeMergeManager implements MergeResolver {
 					// put an entry in RESULT for later fixup if
 					// it is in conflict
 					resolvedDt = DataType.DEFAULT;
-					FixUpInfo info = new FixUpInfo(id, paramDatatypeID, index, resolvedDataTypes);
+					FixUpInfo info = new FixUpInfo(id, paramDatatypeID, sourceParamDataType, index,
+						resolvedDataTypes);
 					fixUpList.add(info);
 					fixUpIDSet.add(id);
 				}
@@ -1534,7 +1737,8 @@ public class DataTypeMergeManager implements MergeResolver {
 				// Not added/resolved yet
 				// put an entry in RESULT for later fixup
 				resolvedDt = DataType.DEFAULT;
-				fixUpList.add(new FixUpInfo(id, paramDatatypeID, index, resolvedDataTypes));
+				fixUpList.add(new FixUpInfo(id, paramDatatypeID, sourceParamDataType, index,
+					resolvedDataTypes));
 				fixUpIDSet.add(id);
 			}
 		}
@@ -1732,7 +1936,6 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 		}
 	}
-
 
 	private boolean categoryWasMoved(long id, DataTypeManager dtm1, DataTypeManager dtm2) {
 		Category cat1 = dtm1.getCategory(id);
@@ -2255,8 +2458,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			UniversalID myDtUniversalID = myDt.getUniversalID();
 			// UniversalID can be null if data type is BuiltIn.
 			if (!resultSourceArchive.getSourceArchiveID()
-					.equals(
-						mySourceArchive.getSourceArchiveID()) ||
+					.equals(mySourceArchive.getSourceArchiveID()) ||
 				!Objects.equals(resultDtUniversalID, myDtUniversalID)) {
 				return false;
 			}
@@ -2268,18 +2470,17 @@ public class DataTypeMergeManager implements MergeResolver {
 		return false;
 	}
 
-	private void cleanUpDataTypes() {
-		// clean up data types
-		List<Long> keys = new ArrayList<>(cleanupPlaceHolderList.keySet());
-		for (long key : keys) {
-			CleanUpInfo cleanUpInfo = cleanupPlaceHolderList.get(key);
-			cleanUpInfo.cleanUp();
-		}
-	}
-
 	private void fixUpDataTypes() {
 		// fix data types in the fixUpList
 		ArrayList<FixUpInfo> unresolvedFixups = new ArrayList<>();
+
+		/**
+		 * NOTE: It is important that fixups for a Structure are processed bottom-up
+		 * (i.e., last-ordinal to first-ordinal) to ensure that subsequent fixup ordinal
+		 * indexes remain valid even after components are removed as a result of processing
+		 * a Structure fixup. 
+		 */
+		Collections.sort(fixUpList);
 
 		for (int i = 0; i < fixUpList.size(); i++) {
 
@@ -2287,7 +2488,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			DataType dt = info.ht.get(info.id);
 			if (dt instanceof Union) {
 				// Fixups for a union are done all at once
-				// Determine number of applicable fixups (assumes they are sequential)
+				// Determine number of applicable fixups (assumes they are sequential for the same Union)
 				int count = 1;
 				for (int n = i + 1; n < fixUpList.size(); n++) {
 					if (fixUpList.get(n).id != info.id) {
@@ -2298,13 +2499,13 @@ public class DataTypeMergeManager implements MergeResolver {
 				fixUpUnion(info.id, (Union) dt, i, count, unresolvedFixups);
 				i += count - 1;
 			}
-			else if (dt instanceof Structure) {
-				if (!fixUpStructure(info, (Structure) dt)) {
+			else if (dt instanceof Structure struct) {
+				if (!fixUpStructure(info, struct)) {
 					unresolvedFixups.add(info);
 				}
 			}
-			else if (dt instanceof FunctionDefinition) {
-				if (!fixUpFunctionDef(info, (FunctionDefinition) dt)) {
+			else if (dt instanceof FunctionDefinition fndef) {
+				if (!fixUpFunctionDef(info, fndef)) {
 					unresolvedFixups.add(info);
 				}
 			}
@@ -2313,16 +2514,25 @@ public class DataTypeMergeManager implements MergeResolver {
 				if (resolve(info.compID, dtm, info.ht) != null) {
 					resolve(info.id, dtm, info.ht);
 				}
-//				else {
-//					// Looks like our base data type is gone.
-//					//Remove a BadDataType if there is one as a placeholder.
-//					DataType sourceDt = info.getDataTypeManager().getDataType(info.id);
-//					System.out.println("Couldn't fixup " + sourceDt.getPathName());
-//				}
 			}
 		}
 		// update fixup list with those that were unresolved
 		fixUpList = unresolvedFixups;
+	}
+
+	private String buildDataTypeFailureComment(DataType dt, String reason, String oldComment) {
+		StringBuilder sb = new StringBuilder("Failed to apply '");
+		sb.append(dt.getDisplayName());
+		sb.append("'");
+		if (!StringUtils.isBlank(reason)) {
+			sb.append(", ");
+			sb.append(reason);
+		}
+		if (!StringUtils.isBlank(oldComment)) {
+			sb.append("; ");
+			sb.append(oldComment);
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -2333,71 +2543,131 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private boolean fixUpFunctionDef(FixUpInfo info, FunctionDefinition fd) {
 
-		long lastChangeTime = fd.getLastChangeTime(); // Don't let the time change.
 		DataType dt = resolve(info.compID, info.getDataTypeManager(), info.ht);
-		if (dt != null) {
+
+		long lastChangeTime = fd.getLastChangeTime(); // Don't let the time change.
+		try {
+			if (dt != null) {
+				if (info.index < 0) { // -1 for return type
+					fd.setReturnType(dt);
+				}
+				else {
+					ParameterDefinition[] args = fd.getArguments();
+					args[info.index].setDataType(dt);
+				}
+				return true;
+			}
+
 			if (info.index < 0) { // -1 for return type
-				fd.setReturnType(dt);
+				// nowhere to set error comment
 			}
 			else {
-				ParameterDefinition[] vars = fd.getArguments();
-				vars[info.index].setDataType(dt);
+				ParameterDefinition[] args = fd.getArguments();
+				ParameterDefinition arg = args[info.index];
+				String comment =
+					buildDataTypeFailureComment(info.componentDataType, null, arg.getComment());
+				arg.setComment(comment);
 			}
 		}
-		fd.setLastChangeTime(lastChangeTime); // Reset the last change time to the merged data type's.
-		return true;
+		finally {
+			fd.setLastChangeTime(lastChangeTime); // Reset the last change time to the merged data type's.
+		}
+		return false;
 	}
 
 	/**
-	 * Process fixup for aligned structure component
+	 * Process fixup for packed structure component
 	 * @param info fixup info
 	 * @param struct result structure
-	 * @param dt component datatype
+	 * @param dt component datatype (may be null if type failed to be resolved)
 	 * @return false if component not found, else true
 	 */
-	private boolean fixUpAlignedStructureComponent(FixUpInfo info, Structure struct, DataType dt) {
+	private boolean fixUpPackedStructureComponent(FixUpInfo info, Structure struct, DataType dt) {
 		int ordinal = info.index;
 
 		DataTypeComponent dtc = null;
 		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
 			dtc = struct.getComponent(ordinal);
 		}
+
 		if (dtc == null) {
-			return false;
+			throw new AssertException("Expected bad datatype placeholder");
 		}
-		if (dtc.isBitFieldComponent()) {
-			if (BitFieldDataType.isValidBaseDataType(dt)) {
-				// replace bitfield base datatype - silent if updated type is not a valid base type
-				BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
-				struct.delete(ordinal);
+
+		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
+		try {
+			if (dtc.isBitFieldComponent()) {
+				if (info.bitOffset < 0) {
+					throw new AssertException("Expected bitfield fixup location");
+				}
+				if (dt == null || dt.isDeleted()) {
+					// bitfield will retain use of the primitive base datatype
+					String comment =
+						buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+					dtc.setComment(comment);
+					return false;
+				}
+				if (BitFieldDataType.isValidBaseDataType(dt)) {
+					// replace bitfield base datatype - silent if updated type is not a valid base type
+					BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
+					struct.delete(ordinal);
+					try {
+						struct.insertBitField(ordinal, bfDt.getLength(), bfDt.getBitOffset(), dt,
+							bfDt.getDeclaredBitSize(), dtc.getFieldName(), dtc.getComment());
+						return true;
+					}
+					catch (InvalidDataTypeException e) {
+						// Try again with primitive base type
+						DataType primitiveBaseDt = bfDt.getPrimitiveBaseDataType();
+						String comment = buildDataTypeFailureComment(info.componentDataType,
+							e.getMessage(), dtc.getComment());
+						try {
+							struct.insertBitField(ordinal, bfDt.getLength(), bfDt.getBitOffset(),
+								primitiveBaseDt, bfDt.getDeclaredBitSize(), dtc.getFieldName(),
+								comment);
+							return true;
+						}
+						catch (InvalidDataTypeException exc) {
+							throw new RuntimeException(exc); // unexpected
+						}
+					}
+				}
+			}
+			else {
+				if (info.bitOffset >= 0) {
+					throw new AssertException("Unexpected bitfield fixup location");
+				}
+				if (dtc.getDataType() != BadDataType.dataType) {
+					throw new AssertException("Expected bad datatype placeholder");
+				}
+				if (dt == null || dt.isDeleted()) {
+					String comment =
+						buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+					dtc.setComment(comment);
+					return false;
+				}
+
+				// handle non-bitfield component fixup
+				int length = dt.getLength();
+				if (length <= 0) {
+					length = dtc.getLength();
+				}
 				try {
-					struct.insertBitField(ordinal, bfDt.getLength(), bfDt.getBitOffset(), dt,
-						bfDt.getDeclaredBitSize(), dtc.getFieldName(), dtc.getComment());
+					struct.replace(ordinal, dt, length, dtc.getFieldName(), dtc.getComment());
+					return true;
 				}
-				catch (InvalidDataTypeException e) {
-					Msg.error(this, "Unexpected datatype merge fixup error", e);
+				catch (IllegalArgumentException e) {
+					displayError(struct, e);
+					String comment = buildDataTypeFailureComment(info.componentDataType,
+						e.getMessage(), dtc.getComment());
+					dtc.setComment(comment);
 				}
 			}
 		}
-		else {
-			// handle non-bitfield component fixup
-			int length = dt.getLength();
-			if (length <= 0) {
-				length = dtc.getLength();
-			}
-			try {
-				struct.replace(ordinal, dt, length, dtc.getFieldName(), dtc.getComment());
-			}
-			catch (IllegalArgumentException e) {
-				displayError(struct, e);
-				DataType badDt = BadDataType.dataType;
-				String comment = dtc.getComment();
-				comment = "Couldn't add " + dt.getDisplayName() + " here. " + e.getMessage() + " " +
-					((comment != null) ? (" " + comment) : "");
-				struct.replace(ordinal, badDt, dtc.getLength(), dtc.getFieldName(), comment);
-			}
+		finally {
+			struct.setLastChangeTime(lastChangeTime); // Reset the last change time to the merged data type's.
 		}
-		return true;
+		return false;
 	}
 
 	/**
@@ -2409,67 +2679,107 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private boolean fixUpNonPackedStructureComponent(FixUpInfo info, Structure struct,
 			DataType dt) {
-		int offset = info.index;
-		DataTypeComponent dtc = struct.getComponentAt(offset);
-		if (dtc == null) {
-			return false;
+
+		int ordinal = info.index;
+
+		DataTypeComponent dtc = null;
+		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
+			dtc = struct.getComponent(ordinal);
 		}
-		if (dtc.isBitFieldComponent()) {
-			dtc = info.findStructureBitFieldComponentAtOrAfter(struct, dtc);
-			if (dtc != null) {
+
+		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
+		try {
+			if (dtc.isBitFieldComponent()) {
+				if (info.bitOffset < 0) {
+					throw new AssertException("Expected bitfield fixup location");
+				}
+				if (dt == null || dt.isDeleted()) {
+					// bitfield will retain use of the primitive base datatype
+					String comment =
+						buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+					dtc.setComment(comment);
+					return false;
+				}
 				if (BitFieldDataType.isValidBaseDataType(dt)) {
 					// replace bitfield base datatype - silent if updated type is not a valid base type
 					BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
-					struct.delete(dtc.getOrdinal());
+					struct.delete(ordinal);
 					try {
 						struct.insertBitFieldAt(dtc.getOffset(), bfDt.getLength(),
 							bfDt.getBitOffset(), dt, bfDt.getDeclaredBitSize(), dtc.getFieldName(),
 							dtc.getComment());
 					}
 					catch (InvalidDataTypeException e) {
-						// should never occur
-						Msg.error(this, "Unexpected bitfield merge fixup error", e);
+						// Try again with primitive base type
+						DataType primitiveBaseDt = bfDt.getPrimitiveBaseDataType();
+						String comment = buildDataTypeFailureComment(info.componentDataType,
+							e.getMessage(), dtc.getComment());
+						try {
+							struct.insertBitFieldAt(dtc.getOffset(), bfDt.getLength(),
+								bfDt.getBitOffset(), primitiveBaseDt, bfDt.getDeclaredBitSize(),
+								dtc.getFieldName(), comment);
+						}
+						catch (InvalidDataTypeException exc) {
+							throw new RuntimeException(exc); // unexpected
+						}
 					}
 				}
 			}
 			else {
-				Msg.error(this, "Structure Merge: failed to identify bitfield fixup component (\n" +
-					info + ")");
-			}
-		}
-		else {
-			// handle non-bitfield component fixup
-			int ordinal = dtc.getOrdinal();
-			int dtcLength = dtc.getLength();
-			int length = dt.getLength();
-			if (length <= 0) {
-				length = dtcLength;
-			}
-			int bytesNeeded = length - dtcLength;
-			if (bytesNeeded > 0) {
-				int bytesAvailable = getNumUndefinedBytes(struct, ordinal + 1);
-				if (bytesAvailable < bytesNeeded) {
-					// The data type is too big, so adjust the component length to what will fit.
-					length = dtcLength + bytesAvailable;
-					// Output a warning indicating the structure has a data type that doesn't fit.
-					String message = "Structure Merge: Not enough undefined bytes to fit " +
-						dt.getPathName() + " in structure " + struct.getPathName() +
-						" at offset 0x" + Integer.toHexString(offset) + "." + "\nIt needs " +
-						(bytesNeeded - bytesAvailable) + " more byte(s) to be able to fit.";
-					Msg.warn(this, message);
+				if (info.bitOffset >= 0) {
+					throw new AssertException("Unexpected bitfield fixup location");
+				}
+				if (dtc.getDataType() != BadDataType.dataType) {
+					throw new AssertException("Expected bad datatype placeholder");
+				}
+				if (dt == null || dt.isDeleted()) {
+					String comment =
+						buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+					dtc.setComment(comment);
+					return false;
+				}
+
+				// handle non-bitfield component fixup
+				int offset = dtc.getOffset();
+				int dtcLength = dtc.getLength();
+				int length = dt.getLength();
+				if (length <= 0) {
+					length = dtcLength;
+				}
+				int bytesNeeded = length - dtcLength;
+				if (bytesNeeded > 0) {
+					int nextOffset = offset + dtcLength;
+					DataTypeComponent nextDefinedDtc =
+						struct.getDefinedComponentAtOrAfterOffset(nextOffset);
+					if (nextDefinedDtc != null) {
+						int bytesAvailable = nextDefinedDtc.getOffset() - nextOffset;
+						if (bytesAvailable < bytesNeeded) {
+							// The data type is too big, so adjust the component length to what will fit.
+							length = dtcLength + bytesAvailable;
+							// Output a warning indicating the structure has a data type that doesn't fit.
+							String message = "Structure Merge: Not enough undefined bytes to fit " +
+								dt.getPathName() + " in structure " + struct.getPathName() +
+								" at offset 0x" + Integer.toHexString(offset) + "." +
+								"\nIt needs " + (bytesNeeded - bytesAvailable) +
+								" more byte(s) to be able to fit.";
+							Msg.warn(this, message);
+						}
+					}
+				}
+				try {
+					struct.replaceAtOffset(offset, dt, length, dtc.getFieldName(),
+						dtc.getComment());
+				}
+				catch (IllegalArgumentException e) {
+					displayError(struct, e);
+					String comment = buildDataTypeFailureComment(info.componentDataType,
+						e.getMessage(), dtc.getComment());
+					dtc.setComment(comment);
 				}
 			}
-			try {
-				struct.replaceAtOffset(offset, dt, length, dtc.getFieldName(), dtc.getComment());
-			}
-			catch (IllegalArgumentException e) {
-				displayError(struct, e);
-				DataType badDt = BadDataType.dataType;
-				String comment = dtc.getComment();
-				comment = "Couldn't add " + dt.getDisplayName() + " here. " + e.getMessage() + " " +
-					((comment != null) ? (" " + comment) : "");
-				struct.replaceAtOffset(offset, badDt, dtc.getLength(), dtc.getFieldName(), comment);
-			}
+		}
+		finally {
+			struct.setLastChangeTime(lastChangeTime); // Reset the last change time to the merged data type's.
 		}
 		return true;
 	}
@@ -2482,153 +2792,105 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private boolean fixUpStructure(FixUpInfo info, Structure struct) {
 
-		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
-		try {
-
-			DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
-
-			if (compDt != null) {
-				if (struct.isPackingEnabled()) {
-					if (!fixUpAlignedStructureComponent(info, struct, compDt)) {
-						String msg = "component " + info.index;
-						Msg.warn(this, "Structure Merge: Couldn't get " + msg + " in " +
-							struct.getPathName() + " data type during fix up.");
-						return false; // Don't remove this FixUpInfo from the fixupList so the user will get notified.
-					}
-					return true;
-				}
-
-				if (!fixUpNonPackedStructureComponent(info, struct, compDt)) {
-					Msg.warn(this, "Structure Merge: Couldn't get component at offset " +
-						info.index + " in " + struct.getPathName());
-					return false;
-				}
-
+		DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
+		if (struct.isPackingEnabled()) {
+			if (fixUpPackedStructureComponent(info, struct, compDt)) {
+				return true;
 			}
-
-			// Datatype failed to resolved - check to see if we have a placeholder
-			else if (struct.isPackingEnabled()) {
-				int ordinal = info.index;
-				int numComponents = struct.getNumComponents();
-				if (ordinal >= 0 && ordinal < numComponents) {
-					DataTypeComponent component = struct.getComponent(ordinal);
-					DataType dataType = component.getDataType();
-					// Check to see if we have a placeholder, wait to remove it so we don't mess up ordinals.
-					if (dataType == BadDataType.dataType) {
-						addToCleanupList(info);
-					}
-				}
-			}
-			else {
-				int offset = info.index;
-				DataTypeComponent component = struct.getComponentAt(offset);
-				if (component != null) {
-					DataType dataType = component.getDataType();
-					if (dataType == BadDataType.dataType) {
-						// Clear the placeholder.
-						struct.clearComponent(component.getOrdinal());
-					}
-
-				}
-			}
+		}
+		else if (fixUpNonPackedStructureComponent(info, struct, compDt)) {
 			return true;
 		}
-		finally {
-			struct.setLastChangeTime(lastChangeTime); // Reset the last change time to the merged data type's.
-		}
-	}
 
-	/**
-	 * Determines the number of contiguous undefined bytes in this structure starting
-	 * at the indicated component ordinal.
-	 * @param struct the structure to check.
-	 * @param ordinal the ordinal of the component where checking for undefined bytes should begin.
-	 * @return the number of contiguous undefined bytes or 0.
-	 */
-	private int getNumUndefinedBytes(Structure struct, int ordinal) {
+		String loc;
 		if (struct.isPackingEnabled()) {
-			return 0;
+			loc = "ordinal " + info.index;
 		}
-		int numComponents = struct.getNumComponents();
-		if (ordinal >= numComponents) {
-			return 0;
+		else {
+			loc = "offset 0x" + Integer.toHexString(info.offset);
 		}
-		for (int index = ordinal; index < numComponents; index++) {
-			DataTypeComponent component = struct.getComponent(index);
-			if (component == null) {
-				return 0; // This shouldn't happen.
-			}
-			DataType dataType = component.getDataType();
-			if (DataType.DEFAULT != dataType) {
-				return index - ordinal;
-			}
-		}
-		return numComponents - ordinal;
+		Msg.warn(this, "Structure Merge: Failed to resolve data type '" +
+			info.componentDataType.getName() + "' at " + loc + " in " + struct.getPathName());
+		return false; // Don't remove this FixUpInfo from the fixupList so the user will get notified.
 	}
 
-	private void addToCleanupList(FixUpInfo info) {
-		long id = info.id;
-		int index = info.index;
-		MyIdentityHashMap<Long, DataType> ht = info.ht;
-		CleanUpInfo cleanUpInfo = cleanupPlaceHolderList.get(id);
-		if (cleanUpInfo == null) {
-			cleanUpInfo = new CleanUpInfo(id);
-			cleanupPlaceHolderList.put(id, cleanUpInfo);
-		}
-		cleanUpInfo.add(index, ht);
-	}
-
-	private void fixUpUnionComponent(Union union, FixUpInfo info) {
-		int ordinal = info.index;
+	private boolean fixUpUnionComponent(Union union, FixUpInfo info) {
 
 		DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
-		if (compDt != null) {
 
-			DataTypeComponent dtc = union.getComponent(ordinal);
-			if (dtc != null && dtc.isBitFieldComponent()) {
-				if (BitFieldDataType.isValidBaseDataType(compDt)) {
-					// replace bitfield base datatype - silent if updated type is not a valid base type
-					BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
-					union.delete(ordinal);
-					try {
-						union.insertBitField(ordinal, compDt, bfDt.getDeclaredBitSize(),
-							dtc.getFieldName(), dtc.getComment());
-					}
-					catch (InvalidDataTypeException e) {
-						// should never occur
-						Msg.error(this, "Unexpected datatype merge fixup error", e);
-					}
-				}
+		int ordinal = info.index;
+
+		DataTypeComponent dtc = null;
+		if (ordinal >= 0 && ordinal <= union.getNumComponents()) {
+			dtc = union.getComponent(ordinal);
+		}
+
+		if (dtc == null) {
+			throw new AssertException("Expected bad datatype placeholder");
+		}
+
+		if (dtc.isBitFieldComponent()) {
+			if (info.bitOffset < 0) {
+				throw new AssertException("Expected bitfield fixup location");
 			}
-			else {
-				// handle non-bitfield component fixup
-				int length = compDt.getLength();
-				if (length <= 0) {
-					length = dtc.getLength();
-				}
+			if (compDt == null || compDt.isDeleted()) {
+				// bitfield will retain use of the primitive base datatype
+				String comment =
+					buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+				dtc.setComment(comment);
+			}
+			else if (BitFieldDataType.isValidBaseDataType(compDt)) {
+				// replace bitfield base datatype - silent if updated type is not a valid base type
+				BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
 				union.delete(ordinal);
 				try {
-					union.insert(ordinal, compDt, length, dtc.getFieldName(), dtc.getComment());
+					union.insertBitField(ordinal, compDt, bfDt.getDeclaredBitSize(),
+						dtc.getFieldName(), dtc.getComment());
+					return true;
 				}
-				catch (IllegalArgumentException e) {
-					displayError(union, e);
-					DataType badDt = BadDataType.dataType;
-					String comment = dtc.getComment();
-					comment = "Couldn't add " + compDt.getDisplayName() + " here. " +
-						e.getMessage() + " " + ((comment != null) ? (" " + comment) : "");
-					union.insert(ordinal, badDt, dtc.getLength(), dtc.getFieldName(), comment);
+				catch (InvalidDataTypeException e) {
+					// should never occur
+					Msg.error(this, "Unexpected datatype merge fixup error", e);
 				}
 			}
 		}
-
-		// Datatype failed to resolved - check to see if we have a placeholder
 		else {
-			DataTypeComponent component = union.getComponent(ordinal);
-			DataType dataType = component.getDataType();
-			if (dataType == BadDataType.dataType) {
-				addToCleanupList(info);
+			if (info.bitOffset >= 0) {
+				throw new AssertException("Unexpected bitfield fixup location");
+			}
+			if (dtc.getDataType() != BadDataType.dataType) {
+				throw new AssertException("Expected bad datatype placeholder");
+			}
+			if (compDt == null || compDt.isDeleted()) {
+				String comment =
+					buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+				dtc.setComment(comment);
+				return false;
+			}
+
+			// handle non-bitfield component fixup
+			int length = compDt.getLength();
+			if (length <= 0) {
+				length = dtc.getLength();
+			}
+			union.delete(ordinal);
+			try {
+				union.insert(ordinal, compDt, length, dtc.getFieldName(), dtc.getComment());
+				return true;
+			}
+			catch (IllegalArgumentException e) {
+				displayError(union, e);
+				// restore bad placeholder component
+				String comment =
+					buildDataTypeFailureComment(info.componentDataType, null, dtc.getComment());
+				union.insert(ordinal, BadDataType.dataType, dtc.getLength(), dtc.getFieldName(),
+					comment);
 			}
 		}
+		Msg.warn(this,
+			"Union Merge: Failed to resolve data type '" + info.componentDataType.getName() +
+				"' at ordinal " + info.index + " in " + union.getPathName());
+		return false;
 	}
 
 	/**
@@ -2643,38 +2905,17 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void fixUpUnion(long id, Union union, int firstFixupIndex, int fixupCount,
 			ArrayList<FixUpInfo> unresolvedFixups) {
 
-		// presence of fixup implies union is not empty
-
 		long lastChangeTime = union.getLastChangeTime(); // Don't let the time change.
 		try {
-
-			int preFixupLength = union.getLength();
-			int numComponents = union.getNumComponents();
-
-			// Add a freeze length component to keep the union size from changing during fixup.
-			// Otherwise other datatypes will respond to size change and update their change times.
-			union.add(BadDataType.dataType, preFixupLength);
-
 			// Process all fixups for union
 			int endIndex = firstFixupIndex + fixupCount;
 			for (int i = firstFixupIndex; i < endIndex; i++) {
 				FixUpInfo info = fixUpList.get(i); // assume info applies to union
-				int ordinal = info.index;
-				if (ordinal < 0 || ordinal >= numComponents) {
-					Msg.warn(this, "Union Merge: Couldn't get component " + ordinal + " in " +
-						union.getPathName() + " data type during fix up.");
+				if (!fixUpUnionComponent(union, info)) {
+					Msg.warn(this, "Union Merge: Failed to apply data type at ordinal " +
+						info.index + " in " + union.getPathName());
 					unresolvedFixups.add(info);
 				}
-				else {
-					fixUpUnionComponent(union, info);
-				}
-			}
-
-			// Remove the freeze length component that is no longer needed.
-			DataType dataType = union.getComponent(numComponents).getDataType();
-			// Check to see if we have a placeholder, wait to remove it so we don't mess up ordinals.
-			if (dataType == BadDataType.dataType) {
-				union.delete(numComponents);
 			}
 		}
 		finally {
@@ -2684,40 +2925,52 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private DataType resolve(long id, DataTypeManager dtm,
 			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
+
 		DataType dt = getResolvedComponent(id, resolvedDataTypes);
+		if (dt == null && resolvedDataTypes.containsKey(id)) {
+			// previously resolved datatype is no longer valid
+			return null;
+		}
+
+		if (dt == null && !myDtAddedList.contains(Long.valueOf(id))) {
+			// use data type from RESULT if we did not add it
+			dt = dtms[RESULT].getDataType(id);
+		}
+
 		if (dt == null) {
 			DataType otherDt = dtm.getDataType(id);
-			if ((otherDt instanceof TypeDef) || (otherDt instanceof Pointer) ||
-				(otherDt instanceof Array)) {
-				DataType baseDt = getBaseDataType(otherDt);
-				if (baseDt != DataType.DEFAULT) {
-					long baseID = dtm.getID(baseDt);
-					DataType rdt = resolvedDataTypes.get(baseID);
-					if (rdt != null) {
-						// base data type was resolved, so create new data type
-						return addDataType(id, otherDt, resolvedDataTypes);
-					}
-					return null;
-				}
-				if (!myDtAddedList.contains(Long.valueOf(id))) {
-					// use data type from RESULT
-					return dtms[RESULT].getDataType(id);
-				}
-
+			if (otherDt instanceof BuiltIn) {
+				return otherDt; // don't let deleted BuiltIn stop us fro using one
 			}
+			boolean doCheck = false;
+			DataType baseDt = otherDt;
+			if (baseDt instanceof TypeDef td) {
+				baseDt = td.getDataType();
+				long baseID = dtm.getID(baseDt);
+				if (!myDtAddedList.contains(Long.valueOf(baseID))) {
+					return null; // pre-existing typedef was removed
+				}
+				doCheck = true;
+			}
+			if ((baseDt instanceof Pointer) || (baseDt instanceof Array)) {
+				baseDt = DataTypeUtilities.getBaseDataType(baseDt);
+				doCheck = true;
+			}
+
+			if (doCheck) {
+				long baseID = dtm.getID(baseDt);
+				DataType rdt = resolve(baseID, dtm, resolvedDataTypes);
+				if ((rdt != null && !rdt.isDeleted()) || (baseDt instanceof BuiltIn)) {
+					// base data type was resolved or is BuiltIn/DEFAULT, so add derived datatype
+					dt = addDataType(id, otherDt, resolvedDataTypes);
+				}
+			}
+		}
+		if (dt != null && dt.isDeleted()) {
+			return null;
 		}
 		return dt;
 	}
-
-//	private FixUpInfo findFixUpInfo(long id, int index) {
-//		for (int i = 0; i < fixUpList.size(); i++) {
-//			FixUpInfo info = fixUpList.get(i);
-//			if (info.id == id && info.index == index) {
-//				return info;
-//			}
-//		}
-//		return null;
-//	}
 
 	private void processDataTypeSourceChanged(long id) {
 		if (dataTypeSourceWasChanged(id, dtms[MY])) {
@@ -2769,7 +3022,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				catch (DataTypeDependencyException e) {
 					String msg = "Move data type named " + resultDt.getName() +
 						" failed.\nProblem: " + e.getMessage();
-					Msg.showError(this, null, "Error Moving Data Type", msg);
+					MergeManager.showBlockingError("Error Moving Data Type", msg);
 				}
 			}
 		}
@@ -2967,7 +3220,6 @@ public class DataTypeMergeManager implements MergeResolver {
 		fixUpIDSet = new HashSet<>();
 		totalConflictCount += dtConflictList.size();
 
-		cleanupPlaceHolderList = new HashMap<>();
 	}
 
 	/**
@@ -3168,40 +3420,9 @@ public class DataTypeMergeManager implements MergeResolver {
 		totalConflictCount += catConflictList.size();
 	}
 
-	/**
-	 * Gets the base data type of the specified data type.
-	 * @param dt the data type whose base data type we want.
-	 * @return the base data type
-	 */
-	private DataType getBaseDataType(final DataType dt) {
-		DataType baseDt = dt;
-		while ((baseDt instanceof Pointer) || (baseDt instanceof Array) ||
-			(baseDt instanceof TypeDef)) {
-			if (baseDt instanceof Pointer) {
-				baseDt = ((Pointer) baseDt).getDataType();
-			}
-			else if (baseDt instanceof Array) {
-				baseDt = ((Array) baseDt).getDataType();
-			}
-			else {
-				baseDt = ((TypeDef) baseDt).getDataType();
-			}
-		}
-		return baseDt;
-	}
-
 	private void resetOption() {
 		if (mergeManager != null) {
 			conflictOption = originalConflictOption;
-		}
-	}
-
-	private void showMessage(final String title, final String msg) {
-		try {
-			SwingUtilities.invokeAndWait(() -> Msg.showInfo(getClass(), null, title, msg));
-		}
-		catch (InterruptedException | InvocationTargetException e) {
-			// ignore
 		}
 	}
 
@@ -3220,23 +3441,22 @@ public class DataTypeMergeManager implements MergeResolver {
 		return dtms[MY];
 	}
 
-	private static int getComponentFixupIndex(DataTypeComponent dtc) {
-		Composite composite = (Composite) dtc.getParent();
-		if (composite.isPackingEnabled() || (composite instanceof Union)) {
-			return dtc.getOrdinal();
-		}
-		return dtc.getOffset(); // TODO: use of offset could be problematic with shared offset
-	}
-
 	/**
 	 * FixUpInfo objects that must be resolved after
 	 * data types have been added and conflicts resolved.
 	 */
-	private class FixUpInfo {
-		long id;
-		long compID;
-		int index; // TODO: index as offset could be problematic with shared offset
-		MyIdentityHashMap<Long, DataType> ht;
+	private class FixUpInfo implements Comparable<FixUpInfo> {
+
+		final long id;
+		final long compID;
+		final DataType componentDataType;
+		final int index;
+		final MyIdentityHashMap<Long, DataType> ht;
+
+		// component offset - for display/logging use only
+		// only meaningful for non-packed structure
+		// may not be unique (e.g., bitfields, 0-length components)
+		int offset = -1;
 
 		// bitfield info
 		int bitOffset = -1;
@@ -3245,31 +3465,40 @@ public class DataTypeMergeManager implements MergeResolver {
 		/**
 		 * Construct info needed to fix up data types after base types
 		 * or components were resolved.
-		 * @param id id of data type needed to be fixed up
-		 * @param compID id of either component or base type
+		 * @param id source data type ID needing to be fixed up
+		 * @param compID source datatype ID of either param/component or bitfield base type
+		 * @param componentDataType source component/dependency datatype
 		 * @param index offset into non-packed structure, or ordinal into union or packed
 		 * structure; or parameter/return ordinal; for other data types index is not used (specify -1).
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, int index,
+		FixUpInfo(long id, long compID, DataType componentDataType, int index,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			this.id = id;
 			this.compID = compID;
+			this.componentDataType = componentDataType;
 			this.index = index;
 			this.ht = resolvedDataTypes;
+
+			if (componentDataType instanceof BitFieldDataType) {
+				throw new IllegalArgumentException(
+					"BitFieldDataType not allowed - base type expected");
+			}
 		}
 
 		/**
 		 * Construct info needed to fix up data types after base types
 		 * or components were resolved.
-		 * @param id id of data type needed to be fixed up
-		 * @param compID datatype id of either component or base type
+		 * @param id id of data type needing to be fixed up
+		 * @param compID datatype ID of either param/component or bitfield base type
+		 * @param destOrdinal component ordinal within destination composite
 		 * @param sourceDtc associated composite datatype component
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, DataTypeComponent sourceDtc,
+		FixUpInfo(long id, long compID, int destOrdinal, DataTypeComponent sourceDtc,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
-			this(id, compID, getComponentFixupIndex(sourceDtc), resolvedDataTypes);
+			this(id, compID, getDataType(sourceDtc), destOrdinal, resolvedDataTypes);
+			offset = sourceDtc.getOffset();
 			if (sourceDtc.isBitFieldComponent()) {
 				BitFieldDataType bfDt = (BitFieldDataType) sourceDtc.getDataType();
 				bitSize = bfDt.getDeclaredBitSize();
@@ -3277,33 +3506,26 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 		}
 
-		/**
-		 * Find non-packed structure bitfield component at or after specified component
-		 * which matches this info's bitfield data.
-		 * @param struct structure
-		 * @param dtc structure component contained within struct
-		 * @return bitfield component which matches info or null
-		 */
-		DataTypeComponent findStructureBitFieldComponentAtOrAfter(Structure struct,
-				DataTypeComponent dtc) {
-			if (bitOffset < 0) {
-				return null;
+		private static DataType getDataType(DataTypeComponent sourceDtc) {
+			DataType dt = sourceDtc.getDataType();
+			if (dt instanceof BitFieldDataType bfDt) {
+				dt = bfDt.getBaseDataType();
 			}
-			int maxOrdinal = struct.getNumComponents();
-			while (dtc != null && dtc.getOffset() <= index) {
-				if (dtc.isBitFieldComponent()) {
-					BitFieldDataType bfDt = (BitFieldDataType) dtc.getDataType();
-					if (bitSize == bfDt.getDeclaredBitSize() && bitOffset == bfDt.getBitOffset()) {
-						return dtc;
-					}
-				}
-				int nextOrdinal = dtc.getOrdinal() + 1;
-				if (nextOrdinal > maxOrdinal) {
-					break;
-				}
-				dtc = struct.getComponent(nextOrdinal);
+			return dt;
+		}
+
+		@Override
+		public int compareTo(FixUpInfo o) {
+			// Compare such that items are grouped by id and sort such that the greatest index
+			// is first within that group.
+			long c = id - o.id;
+			if (c == 0) {
+				c = Integer.toUnsignedLong(o.index) - Integer.toUnsignedLong(index);
 			}
-			return null;
+			if (c == 0) {
+				return 0;
+			}
+			return c < 0 ? -1 : 1;
 		}
 
 		@Override
@@ -3338,7 +3560,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			return dtms[MY];
 		}
 	}
-	
+
 	/**
 	 * <code>MyIdentityHashMap</code> extends {@link HashMap} with the only difference being its 
 	 * implementation of {@link #hashCode()} and {@link #equals(Object)} which are based purely on 
@@ -3348,108 +3570,15 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * {@code Map}.
 	 */
 	private static class MyIdentityHashMap<K, V> extends HashMap<K, V> {
-		
+
 		@Override
 		public int hashCode() {
 			return System.identityHashCode(this);
 		}
-		
+
 		@Override
 		public boolean equals(Object o) {
 			return o == this;
-		}
-	}
-
-	/**
-	 * CleanUpInfo .
-	 */
-	private class CleanUpInfo {
-		long id;
-		Map<MyIdentityHashMap<Long, DataType>, int[]> map; // resolvedDataTypesMap, indexArray
-
-		/**
-		 * Construct info needed to clean up place holder data types after base types
-		 * or components were resolved.
-		 * @param id id of data type needing to be cleaned up
-		 */
-		CleanUpInfo(long id) {
-			this.id = id;
-		}
-
-		/**
-		 * 
-		 * @param index offset into non-packed structure, or ordinal into union or packed
-		 * structure; for other data types, offset is not used (specify -1)
-		 * @param resolvedDataTypes hashtable used for resolving the data type
-		 */
-		public void add(int index, MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
-			if (map == null) {
-				map = new HashMap<>();
-			}
-			int[] indices = map.get(resolvedDataTypes);
-			if (indices == null) {
-				indices = new int[0];
-			}
-			int length = indices.length;
-			int[] destIndices = new int[length + 1];
-			System.arraycopy(indices, 0, destIndices, 0, length);
-			destIndices[length] = index;
-			map.put(resolvedDataTypes, destIndices);
-		}
-
-		private void cleanUp() {
-			if (map == null) {
-				return;
-			}
-			Set<MyIdentityHashMap<Long, DataType>> keySet = map.keySet();
-			Iterator<MyIdentityHashMap<Long, DataType>> iterator = keySet.iterator();
-			while (iterator.hasNext()) {
-				Map<Long, DataType> ht = iterator.next();
-				DataType dt = ht.get(id);
-				if (dt instanceof Composite) {
-					int[] indexArray = map.get(ht);
-					if (dt instanceof Union) {
-						cleanUpUnion(indexArray, (Union) dt);
-					}
-					else {
-						cleanUpStructure(indexArray, (Structure) dt);
-					}
-					map.remove(ht); // remove it from the map
-				}
-			}
-			map = null;
-		}
-
-		private void cleanUpUnion(int[] indexArray, Union dt) {
-			Arrays.sort(indexArray);
-			for (int i = indexArray.length - 1; i >= 0; i--) {
-				int ordinal = indexArray[i];
-				if (ordinal >= 0 && ordinal < dt.getNumComponents() &&
-					dt.getComponent(ordinal).getDataType() == BadDataType.dataType) {
-					dt.delete(ordinal);
-				}
-			}
-		}
-
-		private void cleanUpStructure(int[] indexArray, Structure dt) {
-			boolean aligned = dt.isPackingEnabled();
-			Arrays.sort(indexArray);
-			for (int i = indexArray.length - 1; i >= 0; i--) {
-				if (aligned) {
-					int ordinal = indexArray[i];
-					if (ordinal >= 0 && ordinal < dt.getNumComponents() &&
-						dt.getComponent(ordinal).getDataType() == BadDataType.dataType) {
-						dt.delete(ordinal);
-					}
-				}
-				else {
-					int offset = indexArray[i];
-					DataTypeComponent component = dt.getComponentAt(offset);
-					if (component != null && component.getDataType() == BadDataType.dataType) {
-						dt.clearComponent(component.getOrdinal());
-					}
-				}
-			}
 		}
 	}
 

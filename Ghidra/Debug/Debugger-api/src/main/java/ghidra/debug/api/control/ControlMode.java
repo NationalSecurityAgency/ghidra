@@ -43,6 +43,7 @@ import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -389,22 +390,47 @@ public enum ControlMode {
 	 */
 	public DebuggerCoordinates validateCoordinates(PluginTool tool,
 			DebuggerCoordinates coordinates, ActivationCause cause) {
-		if (!followsPresent()) {
+		if (!followsPresent() || cause != ActivationCause.USER) {
 			return coordinates;
 		}
 		Target target = coordinates.getTarget();
 		if (target == null) {
 			return coordinates;
 		}
-		if (cause == ActivationCause.USER &&
-			(!coordinates.getTime().isSnapOnly() || coordinates.getSnap() != target.getSnap())) {
-			tool.setStatusInfo(
-				"Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."
+
+		ScheduleForm form =
+			target.getSupportedTimeForm(coordinates.getObject(), coordinates.getSnap());
+		if (form == null) {
+			if (coordinates.getTime().isSnapOnly() &&
+				coordinates.getSnap() == target.getSnap()) {
+				return coordinates;
+			}
+			else {
+				tool.setStatusInfo("""
+						Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."""
 						.formatted(name),
-				true);
-			return null;
+					true);
+				return null;
+			}
 		}
-		return coordinates;
+		TraceSchedule norm = form.validate(coordinates.getTrace(), coordinates.getTime());
+		if (norm != null) {
+			return coordinates.time(norm);
+		}
+
+		String errMsg = switch (form) {
+			case SNAP_ONLY -> """
+					Target can only navigate to snapshots. Switch to Emulate mode first.""";
+			case SNAP_EVT_STEPS -> """
+					Target can only replay steps on the event thread. Switch to Emulate mode \
+					first.""";
+			case SNAP_ANY_STEPS -> """
+					Target cannot perform p-code steps. Switch to Emulate mode first.""";
+			case SNAP_ANY_STEPS_OPS -> throw new AssertionError();
+		};
+
+		tool.setStatusInfo(errMsg, true);
+		return null;
 	}
 
 	protected TracePlatform platformFor(DebuggerCoordinates coordinates, Address address) {

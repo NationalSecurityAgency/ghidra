@@ -144,9 +144,9 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 
 			SourceFile source = sfasToSourceFiles.get(sourceFileAddr);
 			if (source == null) {
-				String path = SourceFileUtils.fixDwarfRelativePath(sourceFileAddr.fileName(),
-					COMPILATION_ROOT_DIRECTORY);
 				try {
+					String path = SourceFileUtils.normalizeDwarfPath(sourceFileAddr.fileName(),
+						COMPILATION_ROOT_DIRECTORY);
 					SourceFileIdType type =
 						sourceFileAddr.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
 					source = new SourceFile(path, type, sourceFileAddr.md5());

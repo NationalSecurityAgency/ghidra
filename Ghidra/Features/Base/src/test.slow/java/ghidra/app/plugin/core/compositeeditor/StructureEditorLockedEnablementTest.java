@@ -361,7 +361,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 19 });
 		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+		assertTrue(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());

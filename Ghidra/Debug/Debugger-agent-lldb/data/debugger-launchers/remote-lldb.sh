@@ -15,6 +15,7 @@
 # limitations under the License.
 ##
 #@title remote lldb
+#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
 #@desc   <p>
@@ -25,6 +26,7 @@
 #@menu-group remote
 #@icon icon.debugger
 #@help lldb#remote
+#@arg :file "Image" "The target binary executable image (a copy on the local system)"
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
@@ -43,19 +45,22 @@ else
   export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
 fi
 
-if [ -z "$OPT_ARCH" ]
-then
-  archcmd=
-else
-  archcmd=-o "settings set target.default-arch $OPT_ARCH" 
-fi
+declare -a args
 
-"$OPT_LLDB_PATH" \
-  -o "version" \
-  -o "script import ghidralldb" \
-  $archcmd \
-  -o "gdb-remote $OPT_HOST:$OPT_PORT" \
-  -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -o "ghidra trace start" \
-  -o "ghidra trace sync-enable" \
-  -o "ghidra trace sync-synth-stopped"
+args+=(-o version)
+args+=(-o "script import ghidralldb")
+if [ -n "$OPT_ARCH" ]
+then
+  args+=(-o "settings set target.default-arch $OPT_ARCH")
+fi
+if [ -n "$1" ]
+then
+  args+=(-o "file '$1'")
+fi
+args+=(-o "gdb-remote $OPT_HOST:$OPT_PORT")
+args+=(-o "ghidra trace connect '$GHIDRA_TRACE_RMI_ADDR'")
+args+=(-o "ghidra trace start")
+args+=(-o "ghidra trace sync-enable")
+args+=(-o "ghidra trace sync-synth-stopped")
+
+"$OPT_LLDB_PATH" "${args[@]}"

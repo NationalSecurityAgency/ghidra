@@ -4,7 +4,7 @@ Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
 data/debugger-launchers/local-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/qemu-sys-gdb.bat||GHIDRA||||END|
-data/debugger-launchers/remote-gdb.bat||GHIDRA||||END|
+data/debugger-launchers/remote-gdb.ps1||GHIDRA||||END|
 data/debugger-launchers/ssh-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/ssh-gdbserver.bat||GHIDRA||||END|
 data/scripts/fallback_info_proc_mappings.gdb||GHIDRA||||END|
@@ -18,5 +18,6 @@ src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidragdb/py.typed||GHIDRA||||END|
 src/main/py/src/ghidragdb/schema.xml||GHIDRA||||END|
 src/main/py/tests/EMPTY||GHIDRA||||END|

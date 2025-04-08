@@ -58,6 +58,8 @@ public class ClassFieldAttributes {
 		};
 		Property myProperty = switch (msAtts.getProperty()) {
 			case VIRTUAL -> Property.VIRTUAL;
+			case INTRO -> Property.VIRTUAL; // VIRTUAL for now; consider change, consider ELF
+			case INTRO_PURE -> Property.VIRTUAL; // VIRTUAL for now; consider change, consider ELF
 			case STATIC -> Property.STATIC;
 			case FRIEND -> Property.FRIEND;
 			case BLANK -> Property.BLANK;
