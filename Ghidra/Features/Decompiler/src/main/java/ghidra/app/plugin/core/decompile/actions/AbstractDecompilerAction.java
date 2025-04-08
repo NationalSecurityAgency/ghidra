@@ -62,17 +62,16 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
-			return isEnabledForDecompilerContext(decompilerContext);
-		});
+		if (decompilerContext.isDecompiling()) {
+			return false;
+		}
+		return isEnabledForDecompilerContext(decompilerContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		decompilerContext.performAction(() -> {
-			decompilerActionPerformed(decompilerContext);
-		});
+		decompilerActionPerformed(decompilerContext);
 	}
 
 	/**
