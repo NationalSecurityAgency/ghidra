@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.model.listing;
 import java.util.Date;
 
 import ghidra.program.model.data.DataTypeManagerDomainObject;
+import ghidra.program.model.data.StandAloneDataTypeManager;
 
 /**
  * This interface represents the main entry point into an object which
@@ -37,11 +38,11 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	public static final Date JANUARY_1_1970 = new Date(0);
 
 	/**
-	 * Determine if this archive has exclusive-write access which may be neccessary for some 
-	 * operations.
-	 * @return true if archive has exclusive-write access
+	 * Gets the associated standalone data type manager.
+	 * @return the data type manager.
 	 */
-	public boolean hasExclusiveAccess();
+	@Override
+	public StandAloneDataTypeManager getDataTypeManager();
 
 	/**
 	 * Gets the default pointer size as it may be stored within the data type archive.
