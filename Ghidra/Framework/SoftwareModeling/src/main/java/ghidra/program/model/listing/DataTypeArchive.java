@@ -38,22 +38,18 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	public static final Date JANUARY_1_1970 = new Date(0);
 
 	/**
-	 * Gets the associated standalone data type manager.
-	 * @return the data type manager.
+	 * {@return the associated standalone data type manager.}
 	 */
 	@Override
 	public StandAloneDataTypeManager getDataTypeManager();
 
 	/**
-	 * Gets the default pointer size as it may be stored within the data type archive.
-	 * @return default pointer size.
+	 * {@return the default pointer size as it may be stored within the data type archive.}
 	 */
 	public int getDefaultPointerSize();
 
 	/**
-	 * Returns the creation date of this data type archive.
-	 * existed, then Jan 1, 1970 is returned.
-	 * @return the creation date of this data type archive
+	 * {@return the creation date of this data type archive or Jan 1, 1970 if unknown.}
 	 */
 	public Date getCreationDate();
 
@@ -68,7 +64,5 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	 * NOTE: Over-using this method can adversely affect system performance.
 	 */
 	public void invalidate();
-
-	public void updateID();
 
 }

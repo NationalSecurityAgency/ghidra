@@ -571,11 +571,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	}
 
 	@Override
-	public void updateID() {
-		dataTypeManager.updateID();
-	}
-
-	@Override
 	protected void domainObjectRestored() {
 		super.domainObjectRestored();
 		dataTypeManager.notifyRestored();
