@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,4 +156,23 @@ public interface TraceRmiConnection extends AutoCloseable {
 	 * @return the collection of valid targets
 	 */
 	Collection<Target> getTargets();
+
+	/**
+	 * Check if the connection has a transaction open on any of its targets
+	 * 
+	 * <p>
+	 * This generally means the connection has an open transaction. If <em>does not</em> indicate
+	 * the execution state of the target/debuggee.
+	 * 
+	 * @return true if busy
+	 */
+	boolean isBusy();
+
+	/**
+	 * Check if the given target has a transaction open
+	 * 
+	 * @param target
+	 * @return true if busy
+	 */
+	boolean isBusy(Target target);
 }
