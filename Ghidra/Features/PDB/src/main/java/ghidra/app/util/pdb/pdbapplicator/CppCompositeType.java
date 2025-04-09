@@ -1743,7 +1743,9 @@ public class CppCompositeType {
 				for (VirtualLayoutBaseClass base : reorderedVirtualBases) {
 					CppCompositeType baseType = base.getBaseClassType();
 					addPlaceholderVirtualBaseTableEntry(plvbt, vxtManager, base, off);
-					off += baseType.getSelfBaseType().getAlignedLength();
+					if (!baseType.hasZeroBaseSize) {
+						off += baseType.getSelfBaseType().getAlignedLength();
+					}
 				}
 				return plvbt;
 			}
