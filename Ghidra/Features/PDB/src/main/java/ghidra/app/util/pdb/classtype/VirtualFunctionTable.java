@@ -224,6 +224,8 @@ public abstract class VirtualFunctionTable implements VFTable {
 			dt.add(tableEntry.getFunctionPointer(), tableEntry.getOverridePath().toString(), "");
 			masterOffset += entrySize;
 		}
+		dt.align(defaultEntry.getAlignedLength());
+		dt.setToDefaultPacking();
 		tableStructure = (Structure) dtm.resolve(dt, null);
 		//System.out.println(tableStructure.toString());
 		isBuilt = true;
