@@ -142,6 +142,18 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
+		// no actions valid at all
+		// return
+
+		// actions that are valid, but not enabled
+
+		// also, is applicable:  
+		// 		isValidContext();
+		// 		is action for active local for provider; 
+		// 		is focused
+
+		// actions that are enabled
+
 		KeyBindingPrecedence keyBindingPrecedence = getValidKeyBindingPrecedence(action);
 		if (keyBindingPrecedence == null) {
 			// Note: we used to return false here.  Returning false allows Java to handle a given 
@@ -150,8 +162,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			//       prevents inconsistent action firing between Ghidra and Java, depending upon 
 			//       Ghidra's action enablement.   If we find a case that is broken by this change, 
 			//       then we will need a more robust solution here.
-			action.reportNotEnabled();
-			return true;
+//			action.reportNotEnabled();
+//			return true;
+			return false;
 		}
 
 		// Process the key event in precedence order.
