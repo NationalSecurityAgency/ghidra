@@ -18,8 +18,7 @@ package ghidra.trace.database.guest;
 import java.util.*;
 
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.guest.TracePlatform;
@@ -34,7 +33,7 @@ import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-public interface InternalTracePlatform extends TracePlatform {
+public interface InternalTracePlatform extends TracePlatform, ProgramArchitecture {
 	String REG_MAP_BE = "__reg_map_be__";
 	String REG_MAP_LE = "__reg_map_le__";
 
@@ -50,6 +49,11 @@ public interface InternalTracePlatform extends TracePlatform {
 	int getIntKey();
 
 	DBTraceGuestLanguage getLanguageEntry();
+
+	@Override
+	default AddressFactory getAddressFactory() {
+		return TracePlatform.super.getAddressFactory();
+	}
 
 	@Override
 	default AddressRange getConventionalRegisterRange(AddressSpace space, Register register) {

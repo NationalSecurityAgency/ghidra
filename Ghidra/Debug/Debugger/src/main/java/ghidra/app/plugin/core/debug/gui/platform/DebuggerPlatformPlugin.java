@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 		}
 	}
 
-	protected interface ChooseMorePlatformsActon {
+	protected interface ChooseMorePlatformsAction {
 		String NAME = DebuggerResources.NAME_CHOOSE_MORE_PLATFORMS;
 		String TITLE = DebuggerResources.TITLE_CHOOSE_MORE_PLATFORMS;
 		String DESCRIPTION = DebuggerResources.DESCRIPTION_CHOOSE_MORE_PLATFORMS;
@@ -92,28 +92,13 @@ public class DebuggerPlatformPlugin extends Plugin {
 		}
 	}
 
-	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
-		if (!Objects.equals(a.getTrace(), b.getTrace())) {
-			return false;
-		}
-		if (!Objects.equals(a.getTime(), b.getTime())) {
-			return false;
-		}
-		if (!Objects.equals(a.getObject(), b.getObject())) {
-			return false;
-		}
-		return true;
-	}
-
 	protected class PlatformActionSet {
 		private final Trace trace;
-		private DebuggerCoordinates current;
 		private final Map<DebuggerPlatformOffer, ToggleDockingAction> actions =
 			new LinkedHashMap<>();
 
 		public PlatformActionSet(Trace trace) {
 			this.trace = trace;
-			this.current = traceManager.getCurrentFor(trace);
 		}
 
 		protected Set<DebuggerPlatformOffer> computePlatformOffers(boolean includeOverrides) {
@@ -126,15 +111,16 @@ public class DebuggerPlatformPlugin extends Plugin {
 			ToggleDockingAction action = ChoosePlatformAction.builder(DebuggerPlatformPlugin.this)
 					.menuPath(DebuggerPluginPackage.NAME, ChoosePlatformAction.NAME,
 						offer.getDescription())
-					.onAction(ctx -> activatePlatform(offer))
+					.onAction(ctx -> activatePlatformOffer(offer))
 					.build();
 			String[] path = action.getMenuBarData().getMenuPath();
 			tool.setMenuGroup(Arrays.copyOf(path, path.length - 1), ChoosePlatformAction.GROUP);
 			return action;
 		}
 
-		protected void activatePlatform(DebuggerPlatformOffer offer) {
-			platformService.setCurrentMapperFor(trace, offer.take(tool, trace), current.getSnap());
+		protected void activatePlatformOffer(DebuggerPlatformOffer offer) {
+			platformService.setCurrentMapperFor(trace, current.getObject(), offer.take(tool, trace),
+				current.getSnap());
 		}
 
 		protected void cleanOffers() {
@@ -159,7 +145,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 		protected void addChosenOffer(DebuggerPlatformOffer offer) {
 			ToggleDockingAction action = addOfferAction(offer);
 			// NB. PluginEvent will cause selections to update
-			if (currentTrace == trace) {
+			if (current.getTrace() == trace) {
 				tool.addAction(action);
 			}
 		}
@@ -174,15 +160,6 @@ public class DebuggerPlatformPlugin extends Plugin {
 			for (ToggleDockingAction action : actions.values()) {
 				tool.removeAction(action);
 			}
-		}
-
-		protected void coordinatesActivated(DebuggerCoordinates coordinates) {
-			if (sameCoordinates(current, coordinates)) {
-				current = coordinates;
-				return;
-			}
-			current = coordinates;
-			updatePlatformOffers();
 		}
 
 		protected void mapperActivated(DebuggerPlatformMapper mapper) {
@@ -201,7 +178,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
 
-	private Trace currentTrace;
+	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
 	private final ChangeListener classChangeListener = evt -> this.classesChanged();
 
@@ -221,18 +198,19 @@ public class DebuggerPlatformPlugin extends Plugin {
 	}
 
 	protected void installActions() {
-		if (currentTrace == null) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
 			return;
 		}
 		PlatformActionSet actions =
-			actionsChoosePlatform.computeIfAbsent(currentTrace, PlatformActionSet::new);
+			actionsChoosePlatform.computeIfAbsent(trace, PlatformActionSet::new);
 		actions.updatePlatformOffers();
-		actions.mapperActivated(platformService.getCurrentMapperFor(currentTrace));
+		actions.mapperActivated(platformService.getCurrentMapperFor(trace));
 		actions.installActions();
 	}
 
 	protected void uninstallActions() {
-		PlatformActionSet actions = actionsChoosePlatform.get(currentTrace);
+		PlatformActionSet actions = actionsChoosePlatform.get(current.getTrace());
 		if (actions != null) {
 			actions.uninstallActions();
 		}
@@ -240,8 +218,8 @@ public class DebuggerPlatformPlugin extends Plugin {
 
 	protected void createActions() {
 		installActions();
-		actionMore = ChooseMorePlatformsActon.builder(this)
-				.enabledWhen(ctx -> currentTrace != null)
+		actionMore = ChooseMorePlatformsAction.builder(this)
+				.enabledWhen(ctx -> current.getTrace() != null)
 				.onAction(this::activatedChooseMore)
 				.buildAndInstall(tool);
 		String[] path = actionMore.getMenuBarData().getMenuPath();
@@ -254,13 +232,11 @@ public class DebuggerPlatformPlugin extends Plugin {
 			// Still initializing or finalizing
 			return;
 		}
-		// Sort of a backwards way to retrieve the current coordinates....
-		PlatformActionSet actions = actionsChoosePlatform.get(currentTrace);
+		Trace trace = current.getTrace();
+		PlatformActionSet actions = actionsChoosePlatform.get(trace);
 		if (actions == null) {
 			return;
 		}
-		DebuggerCoordinates current = actions.current;
-		Trace trace = current.getTrace();
 		TraceObject object = current.getObject();
 		long snap = current.getSnap();
 
@@ -268,7 +244,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 		// Dialog allows Swing to do other things, so re-check platformService
 		if (offer != null && platformService != null) {
 			actions.addChosenOffer(offer);
-			platformService.setCurrentMapperFor(trace, offer.take(tool, trace), snap);
+			platformService.setCurrentMapperFor(trace, object, offer.take(tool, trace), snap);
 			// NOTE: DebuggerPlatformPluginEvent will cause selection change
 		}
 	}
@@ -282,21 +258,24 @@ public class DebuggerPlatformPlugin extends Plugin {
 	}
 
 	protected void coordinatesActivated(DebuggerCoordinates coordinates) {
+		if (Objects.equals(current, coordinates)) {
+			return;
+		}
 		uninstallActions();
-		this.currentTrace = coordinates.getTrace();
+		this.current = coordinates;
 		installActions();
 		tool.contextChanged(null);
 	}
 
 	protected void traceClosed(Trace trace) {
-		if (trace == currentTrace) {
+		if (trace == current.getTrace()) {
 			coordinatesActivated(DebuggerCoordinates.NOWHERE);
 		}
 		actionsChoosePlatform.remove(trace);
 	}
 
 	protected void mapperActivated(Trace trace, DebuggerPlatformMapper mapper) {
-		if (trace != currentTrace) {
+		if (trace != current.getTrace()) {
 			return;
 		}
 		PlatformActionSet actions = actionsChoosePlatform.get(trace);

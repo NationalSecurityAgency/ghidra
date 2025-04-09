@@ -45,6 +45,7 @@ import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
 import ghidra.program.util.*;
 import ghidra.trace.database.*;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.DBTraceDefinedUnitsView;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
@@ -333,40 +334,40 @@ public class DBTraceProgramView implements TraceProgramView {
 				range.getX1(), range.getX1(), null, null, null));
 		}
 
-		private void commentChanged(int commentType, TraceAddressSpace space,
+		private void commentChanged(CommentType commentType, TraceAddressSpace space,
 				TraceAddressSnapRange range, String oldValue, String newValue) {
 			DomainObjectEventQueues queues = isVisible(space, range);
 			if (queues == null) {
 				return;
 			}
 			queues.fireEvent(
-				new CommentChangeRecord(commentType, range.getX1(), oldValue, newValue));
+				new CommentChangeRecord(commentType.ordinal(), range.getX1(), oldValue, newValue));
 		}
 
 		private void commentEolChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
-			commentChanged(CodeUnit.EOL_COMMENT, space, range, oldValue, newValue);
+			commentChanged(CommentType.EOL, space, range, oldValue, newValue);
 		}
 
 		private void commentPlateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
-			commentChanged(CodeUnit.PLATE_COMMENT, space, range, oldValue, newValue);
+			commentChanged(CommentType.PLATE, space, range, oldValue, newValue);
 		}
 
 		private void commentPostChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
-			commentChanged(CodeUnit.POST_COMMENT, space, range, oldValue, newValue);
+			commentChanged(CommentType.POST, space, range, oldValue, newValue);
 		}
 
 		private void commentPreChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
-			commentChanged(CodeUnit.PRE_COMMENT, space, range, oldValue, newValue);
+			commentChanged(CommentType.PRE, space, range, oldValue, newValue);
 		}
 
 		private void commentRepeatableChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				String oldValue, String newValue) {
 			// TODO: The "repeatable" semantics are not implemented, yet.
-			commentChanged(CodeUnit.REPEATABLE_COMMENT, space, range, oldValue, newValue);
+			commentChanged(CommentType.REPEATABLE, space, range, oldValue, newValue);
 		}
 
 		private void compositeDataAdded(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -697,6 +698,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	protected final Map<TraceThread, DBTraceProgramViewRegisters> regViewsByThread;
 
 	protected long snap;
+	protected InternalTracePlatform platform;
 	protected final DBTraceTimeViewport viewport;
 	protected final Runnable viewportChangeListener = this::viewportChanged;
 
@@ -714,6 +716,9 @@ public class DBTraceProgramView implements TraceProgramView {
 
 		this.viewport = trace.createTimeViewport();
 		this.viewport.setSnap(snap);
+
+		// TODO: Initialize guest platform for fixed views?
+		this.platform = trace.getPlatformManager().getHostPlatform();
 
 		this.eventQueues = new DomainObjectEventQueues(this, TIME_INTERVAL, trace.getLock());
 
@@ -833,7 +838,7 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	@Override
 	public TraceBasedDataTypeManager getDataTypeManager() {
-		return trace.getDataTypeManager();
+		return platform.getDataTypeManager();
 	}
 
 	@Override

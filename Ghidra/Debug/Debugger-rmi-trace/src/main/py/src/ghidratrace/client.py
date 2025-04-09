@@ -1376,8 +1376,9 @@ class Receiver(Thread):
             Client._write_value(
                 reply.xreply_invoke_method.return_value, result)
         except BaseException as e:
-            print("Error caused by front end")
-            traceback.print_exc()
+            print(f"Error caused by front end: {e}")
+            # TODO: Add a field to error for stacktrace, log it at front-end
+            # traceback.print_exc()
             reply.xreply_invoke_method.error = repr(e)
         self.client._send(reply)
 
