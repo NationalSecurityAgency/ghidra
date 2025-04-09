@@ -273,4 +273,9 @@ public class MockTarget implements Target {
 	@Override
 	public void disconnect() {
 	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
 }

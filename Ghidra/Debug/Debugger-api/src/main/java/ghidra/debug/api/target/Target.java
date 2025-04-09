@@ -689,4 +689,15 @@ public interface Target {
 	 * @see #disconnectAsync()
 	 */
 	void disconnect();
+
+	/**
+	 * Check if the target is busy updating the trace
+	 * 
+	 * <p>
+	 * This generally means the connection has an open transaction. If <em>does not</em> indicate
+	 * the execution state of the target/debuggee.
+	 * 
+	 * @return true if busy
+	 */
+	boolean isBusy();
 }
