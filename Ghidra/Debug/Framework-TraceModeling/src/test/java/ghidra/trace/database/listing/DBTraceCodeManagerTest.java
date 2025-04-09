@@ -1830,7 +1830,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	@Test
 	public void testAddGuestInstructionThenRemoveAndDelete() throws AddressOverflowException,
 			CodeUnitInsertionException, IOException, CancelledException {
-		DBTracePlatformManager langMan = b.trace.getPlatformManager();
+		DBTracePlatformManager platMan = b.trace.getPlatformManager();
 		Language x86 = getSLEIGH_X86_LANGUAGE();
 		DBTraceGuestPlatform guest;
 		DBTraceGuestPlatformMappedRange mappedRange;
@@ -1839,7 +1839,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceInstruction i4001;
 		TraceData d4003;
 		try (Transaction tx = b.startTransaction()) {
-			guest = langMan.addGuestPlatform(x86.getDefaultCompilerSpec());
+			guest = platMan.addGuestPlatform(x86.getDefaultCompilerSpec());
 			mappedRange = guest.addMappedRange(b.addr(0x0000), b.addr(guest, 0x0000), 1L << 32);
 			g4000 = b.addInstruction(0, b.addr(0x4000), guest, b.buf(0x90));
 			i4001 = b.addInstruction(0, b.addr(0x4001), b.host, b.buf(0xf4, 0));
@@ -1857,7 +1857,6 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		b.trace.undo();
 
 		// NB. The range deletion also deletes the guest unit, so it'll have a new identity
-		// TODO: Related to GP-479?
 		g4000 = manager.instructions().getAt(0, b.addr(0x4000));
 		assertNotNull(g4000);
 		assertEquals(guest, g4000.getPlatform());
@@ -1865,11 +1864,64 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			guest.delete(new ConsoleTaskMonitor());
 		}
 		assertUndefinedWithAddr(b.addr(0x4000), manager.codeUnits().getAt(0, b.addr(0x4000)));
-		// TODO: Definitely part of GP-479. These should be able to keep their identities.
-		//assertEquals(i4001, manager.codeUnits().getAt(0, b.addr(0x4001)));
-		//assertEquals(d4003, manager.codeUnits().getAt(0, b.addr(0x4003)));
+		assertEquals(i4001, manager.codeUnits().getAt(0, b.addr(0x4001)));
+		assertEquals(d4003, manager.codeUnits().getAt(0, b.addr(0x4003)));
 		assertNotNull(manager.instructions().getAt(0, b.addr(0x4001)));
 		assertNotNull(manager.definedData().getAt(0, b.addr(0x4003)));
+	}
+
+	@Test
+	public void testAddGuestDataThenRemoveAndDelete() throws Exception {
+		DBTracePlatformManager platMan = b.trace.getPlatformManager();
+		Language x86 = getSLEIGH_X86_LANGUAGE();
+		DBTraceGuestPlatform guest;
+		DBTraceGuestPlatformMappedRange mappedRange;
+
+		TraceData hd4000;
+		TraceData gd4008;
+		TraceData gd400c;
+		try (Transaction tx = b.startTransaction()) {
+			guest = platMan.addGuestPlatform(x86.getDefaultCompilerSpec());
+			mappedRange = guest.addMappedRange(b.addr(0x0000), b.addr(guest, 0x0000), 1L << 32);
+			hd4000 = b.addData(0, b.addr(0x4000), PointerDataType.dataType,
+				b.buf(0, 0, 0, 0, 0, 0, 0x40, 0x80));
+			gd4008 = b.addData(0, b.addr(0x4008), guest, PointerDataType.dataType,
+				b.buf(0x81, 0x40, 0, 0));
+			gd400c = b.addData(0, b.addr(0x400c), gd4008.getDataType(), b.buf(0x82, 0x40, 0, 0));
+		}
+		assertEquals(b.host, hd4000.getPlatform());
+		assertEquals(8, hd4000.getLength());
+		assertEquals(guest, gd4008.getPlatform());
+		assertEquals(4, gd4008.getLength());
+		assertEquals(guest, gd400c.getPlatform());
+		assertEquals(4, gd400c.getLength());
+
+		assertEquals(gd4008, manager.codeUnits().getAt(0, b.addr(0x4008)));
+		assertEquals(gd400c, manager.codeUnits().getAt(0, b.addr(0x400c)));
+
+		try (Transaction tx = b.startTransaction()) {
+			mappedRange.delete(new ConsoleTaskMonitor());
+		}
+		assertEquals(hd4000, manager.codeUnits().getAt(0, b.addr(0x4000)));
+		assertUndefinedWithAddr(b.addr(0x4008), manager.codeUnits().getAt(0, b.addr(0x4008)));
+		assertUndefinedWithAddr(b.addr(0x400c), manager.codeUnits().getAt(0, b.addr(0x400c)));
+
+		b.trace.undo();
+
+		// NB. The range deletion also deletes the guest units, so they'll have new identities
+		gd4008 = manager.definedData().getAt(0, b.addr(0x4008));
+		gd400c = manager.definedData().getAt(0, b.addr(0x400c));
+		assertNotNull(gd4008);
+		assertNotNull(gd400c);
+		assertEquals(guest, gd4008.getPlatform());
+		assertEquals(guest, gd400c.getPlatform());
+		try (Transaction tx = b.startTransaction()) {
+			guest.delete(new ConsoleTaskMonitor());
+		}
+		assertEquals(hd4000, manager.codeUnits().getAt(0, b.addr(0x4000)));
+		assertUndefinedWithAddr(b.addr(0x4008), manager.codeUnits().getAt(0, b.addr(0x4008)));
+		assertUndefinedWithAddr(b.addr(0x400c), manager.codeUnits().getAt(0, b.addr(0x400c)));
+		assertNotNull(manager.definedData().getAt(0, b.addr(0x4000)));
 	}
 
 	@Test

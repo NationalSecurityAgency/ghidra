@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,9 +65,11 @@ public interface DebuggerPlatformService {
 	/**
 	 * Set the current mapper for the trace and initialize the trace for the mapper
 	 * 
-	 * @param trace the trace whose current mapper to set
+	 * @param trace the trace whose mapper to assign and initialize
+	 * @param focus the object of focus
 	 * @param mapper the mapper
 	 * @param snap the snap for initializing the trace
 	 */
-	void setCurrentMapperFor(Trace trace, DebuggerPlatformMapper mapper, long snap);
+	void setCurrentMapperFor(Trace trace, TraceObject focus, DebuggerPlatformMapper mapper,
+			long snap);
 }

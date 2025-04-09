@@ -128,11 +128,13 @@ public class DebuggerCoordinates {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof DebuggerCoordinates)) {
+		if (!(obj instanceof DebuggerCoordinates that)) {
 			return false;
 		}
-		DebuggerCoordinates that = (DebuggerCoordinates) obj;
 		if (!Objects.equals(this.trace, that.trace)) {
+			return false;
+		}
+		if (!Objects.equals(this.platform, that.platform)) {
 			return false;
 		}
 		if (!Objects.equals(this.target, that.target)) {
@@ -436,7 +438,6 @@ public class DebuggerCoordinates {
 		if (!Objects.equals(this.trace, that.trace)) {
 			return false;
 		}
-
 		if (!Objects.equals(this.platform, that.platform)) {
 			return false;
 		}

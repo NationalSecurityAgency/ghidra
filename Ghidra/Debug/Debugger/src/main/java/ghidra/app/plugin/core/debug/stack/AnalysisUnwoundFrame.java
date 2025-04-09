@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
 import ghidra.app.services.DebuggerControlService.StateEditor;
-import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
 import ghidra.pcode.exec.PcodeExecutorState;
@@ -352,7 +352,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 						spPlusParams.add(structure.getLength() - 1)), false, monitor);
 			TraceData frame = trace.getCodeManager()
 					.definedData()
-					.create(span, spPlusParams, structure);
+					.create(span, spPlusParams, platform, structure);
 			frame.setComment(CodeUnit.PRE_COMMENT, getDescription());
 			TraceReferenceManager refs = trace.getReferenceManager();
 			refs.clearReferencesFrom(span, frame.getRange());

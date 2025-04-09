@@ -21,6 +21,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.target.TraceObject;
@@ -83,9 +84,16 @@ public interface TracePlatform {
 	/**
 	 * Get the compiler of the guest platform
 	 * 
-	 * @return the compiler spec
+	 * @return the compiler specification
 	 */
 	CompilerSpec getCompilerSpec();
+
+	/**
+	 * Get the data type manager for this platform.
+	 * 
+	 * @return the data type manager
+	 */
+	TraceBasedDataTypeManager getDataTypeManager();
 
 	/**
 	 * Get the addresses in the host which are mapped to somewhere in the guest
