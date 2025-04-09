@@ -35,7 +35,6 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
@@ -77,7 +76,6 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected final DBTraceProgramView program;
 	protected final TraceCodeOperations codeOperations;
-	protected final InternalTracePlatform platform;
 
 	protected final DBTraceProgramViewRootModule rootModule;
 	protected final Map<TraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
@@ -90,8 +88,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			TraceCodeOperations codeOperations) {
 		this.program = program;
 		this.codeOperations = codeOperations;
-		// TODO: Guest platform views?
-		this.platform = program.trace.getPlatformManager().getHostPlatform();
+		// TODO: Map addresses when platform is guest?
 
 		this.rootModule = new DBTraceProgramViewRootModule(this);
 	}
@@ -751,7 +748,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			range, s -> s == TraceMemoryState.KNOWN);
 		long snap = mostRecent == null ? program.snap : mostRecent.getKey().getY2();
 		return codeOperations.instructions()
-				.create(Lifespan.nowOn(snap), addr, platform, prototype, context,
+				.create(Lifespan.nowOn(snap), addr, program.platform, prototype, context,
 					forcedLengthOverride);
 	}
 
@@ -759,7 +756,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public AddressSetView addInstructions(InstructionSet instructionSet, boolean overwrite)
 			throws CodeUnitInsertionException {
 		return codeOperations.instructions()
-				.addInstructionSet(Lifespan.nowOn(program.snap), platform, instructionSet,
+				.addInstructionSet(Lifespan.nowOn(program.snap), program.platform, instructionSet,
 					overwrite);
 	}
 
@@ -767,12 +764,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public Data createData(Address addr, DataType dataType, int length)
 			throws CodeUnitInsertionException {
 		return codeOperations.definedData()
-				.create(Lifespan.nowOn(program.snap), addr, dataType, length);
+				.create(Lifespan.nowOn(program.snap), addr, program.platform, dataType, length);
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType) throws CodeUnitInsertionException {
-		return codeOperations.definedData().create(Lifespan.nowOn(program.snap), addr, dataType);
+		return codeOperations.definedData()
+				.create(Lifespan.nowOn(program.snap), addr, program.platform, dataType);
 	}
 
 	@Override

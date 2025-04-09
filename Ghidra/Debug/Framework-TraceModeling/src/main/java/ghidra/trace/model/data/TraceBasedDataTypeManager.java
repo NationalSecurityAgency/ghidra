@@ -17,6 +17,7 @@ package ghidra.trace.model.data;
 
 import ghidra.program.model.data.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 
 /**
@@ -35,6 +36,13 @@ public interface TraceBasedDataTypeManager extends ProgramBasedDataTypeManager {
 	 * @return the trace
 	 */
 	Trace getTrace();
+
+	/**
+	 * Get the platform for which this data type manager is provided
+	 * 
+	 * @return the platform
+	 */
+	TracePlatform getPlatform();
 
 	/**
 	 * TODO: Petition to have this replace

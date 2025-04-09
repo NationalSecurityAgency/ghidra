@@ -535,8 +535,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (mapper == null) {
 			return coordinates;
 		}
-		TracePlatform platform =
-			getPlatformForMapper(coordinates.getTrace(), coordinates.getObject(), mapper);
+		TracePlatform platform = mapper.addToTrace(coordinates.getObject(), coordinates.getSnap());
 		return coordinates.platform(platform);
 	}
 
@@ -598,22 +597,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return mode.followsPresent();
 	}
 
-	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
-			DebuggerPlatformMapper mapper) {
-		return trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(object));
-	}
-
 	protected void doPlatformMapperSelected(Trace trace, DebuggerPlatformMapper mapper) {
 		synchronized (listenersByTrace) {
 			if (!listenersByTrace.containsKey(trace)) {
 				return;
 			}
 			LastCoords cur = lastCoordsByTrace.getOrDefault(trace, LastCoords.NEVER);
-			DebuggerCoordinates adj =
-				cur.coords.platform(getPlatformForMapper(trace, cur.coords.getObject(), mapper));
+			TracePlatform platform =
+				mapper.addToTrace(cur.coords.getObject(), cur.coords.getSnap());
+			if (cur.coords.getPlatform() == platform) {
+				return;
+			}
+			DebuggerCoordinates adj = cur.coords.platform(platform);
 			lastCoordsByTrace.put(trace, cur.keepTime(adj));
 			if (trace == current.getTrace()) {
 				current = adj;
+				trace.getProgramView().setPlatform(adj.getPlatform());
 				fireLocationEvent(adj, ActivationCause.MAPPER_CHANGED);
 			}
 		}
@@ -789,6 +788,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return; // We navigated elsewhere before emulation completed
 			}
 			varView.setSnap(snap);
+			varView.setPlatform(coordinates.getPlatform());
 			fireLocationEvent(coordinates, cause);
 		}, cause == ActivationCause.EMU_STATE_EDIT
 				? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
@@ -1167,7 +1167,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.getTrace() != newTrace) {
 				// The snap needs to match upon re-activating this trace.
 				try {
-					newTrace.getProgramView().setSnap(coordinates.getViewSnap());
+					TraceVariableSnapProgramView view = newTrace.getProgramView();
+					view.setSnap(coordinates.getViewSnap());
+					view.setPlatform(coordinates.getPlatform());
 				}
 				catch (TraceClosedException e) {
 					// Presumably, a closed event is queued

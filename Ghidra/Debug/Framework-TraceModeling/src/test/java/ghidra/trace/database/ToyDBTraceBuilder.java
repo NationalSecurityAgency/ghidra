@@ -550,6 +550,23 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
+	 * Create a data unit
+	 * 
+	 * @param snap the starting snap
+	 * @param start the min address
+	 * @param platform the platform for data organization
+	 * @param type the data type of the unit
+	 * @param length the length, or -1 for the type's default
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if the unit cannot be created
+	 */
+	public DBTraceDataAdapter addData(long snap, Address start, TracePlatform platform,
+			DataType type, int length) throws CodeUnitInsertionException {
+		DBTraceCodeManager code = trace.getCodeManager();
+		return code.definedData().create(Lifespan.nowOn(snap), start, platform, type, length);
+	}
+
+	/**
 	 * Create a data unit, first placing the given bytes
 	 * 
 	 * @param snap the starting snap
@@ -565,6 +582,27 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		DBTraceMemoryManager memory = trace.getMemoryManager();
 		memory.putBytes(snap, start, buf);
 		DBTraceDataAdapter data = addData(snap, start, type, length);
+		assertEquals(length, data.getLength());
+		return data;
+	}
+
+	/**
+	 * Create a data unit, first placing the given bytes
+	 * 
+	 * @param snap the starting snap
+	 * @param start the min address
+	 * @param platform the platform for data organization
+	 * @param type the data type of the unit
+	 * @param buf the bytes to place, which will become the unit's bytes
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if the unit cannot be created
+	 */
+	public DBTraceDataAdapter addData(long snap, Address start, TracePlatform platform,
+			DataType type, ByteBuffer buf) throws CodeUnitInsertionException {
+		int length = buf.remaining();
+		DBTraceMemoryManager memory = trace.getMemoryManager();
+		memory.putBytes(snap, start, buf);
+		DBTraceDataAdapter data = addData(snap, start, platform, type, length);
 		assertEquals(length, data.getLength());
 		return data;
 	}
@@ -838,6 +876,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * Get an object by its path pattern intersecting the given lifespan
 	 * 
 	 * @param path the path pattern
+	 * @param span the lifespan to search
 	 * @return the object or null
 	 */
 	public TraceObject objAny(String path, Lifespan span) {
