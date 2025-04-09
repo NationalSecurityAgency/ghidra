@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.net.SocketAddress;
 import ghidra.app.services.TraceRmiService;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.trace.model.Trace;
 
 /**
  * A listener for Trace RMI Service events
@@ -62,8 +63,8 @@ public interface TraceRmiServiceListener {
 	 * 
 	 * @param connection the new connection
 	 * @param mode the mechanism creating the connection
-	 * @param if by {@link TraceRmiService#acceptOne(SocketAddress)}, the acceptor that created this
-	 *            connection
+	 * @param acceptor if by {@link TraceRmiService#acceptOne(SocketAddress)}, the acceptor that
+	 *            created this connection
 	 */
 	default void connected(TraceRmiConnection connection, ConnectMode mode,
 			TraceRmiAcceptor acceptor) {
@@ -123,5 +124,33 @@ public interface TraceRmiServiceListener {
 	 * @see TargetPublicationListener#targetWithdrawn(Target)
 	 */
 	default void targetPublished(TraceRmiConnection connection, Target target) {
+	}
+
+	/**
+	 * A transaction was opened for the given target
+	 * 
+	 * <p>
+	 * Note, this is different than listening for transactions on the {@link Trace} domain object,
+	 * because this only includes those initiated <em>by the connection</em>.
+	 * 
+	 * @param connection the connection that initiated the transaction
+	 * @param target the target whose trace is to be modified
+	 */
+	default void transactionOpened(TraceRmiConnection connection, Target target) {
+	}
+
+	/**
+	 * A transaction was closed for the given target
+	 * 
+	 * <p>
+	 * Note, this is different than listening for transactions on the {@link Trace} domain object,
+	 * because this only includes those initiated <em>by the connection</em>.
+	 * 
+	 * @param connection the connection that closed the transaction
+	 * @param target the target whose trace was modified
+	 * @param aborted if the transaction was aborted. This should only be true in catastrophic
+	 *            cases.
+	 */
+	default void transactionClosed(TraceRmiConnection connection, Target target, boolean aborted) {
 	}
 }

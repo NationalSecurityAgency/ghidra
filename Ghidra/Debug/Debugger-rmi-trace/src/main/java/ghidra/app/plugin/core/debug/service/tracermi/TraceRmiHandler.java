@@ -977,6 +977,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		if (restoreEvents) {
 			open.trace.setEventsEnabled(true);
 		}
+		Swing.runLater(
+			() -> plugin.listeners.invoke().transactionClosed(this, open.target, req.getAbort()));
 		return ReplyEndTx.getDefaultInstance();
 	}
 
@@ -1188,6 +1190,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		synchronized (openTxes) {
 			openTxes.put(tx.txId, tx);
 		}
+		Swing.runLater(() -> plugin.listeners.invoke().transactionOpened(this, open.target));
 		return ReplyStartTx.getDefaultInstance();
 	}
 
@@ -1316,5 +1319,25 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return "Trace RMI";
 		}
 		return description;
+	}
+
+	@Override
+	public boolean isBusy() {
+		return !openTxes.isEmpty();
+	}
+
+	@Override
+	public boolean isBusy(Target target) {
+		OpenTrace openTrace = openTraces.getByTrace(target.getTrace());
+		if (openTrace == null || openTrace.target != target) {
+			return false;
+		}
+
+		for (Tid tid : openTxes.keySet()) {
+			if (Objects.equals(openTrace.doId, tid.doId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
