@@ -262,6 +262,8 @@ public abstract class VirtualBaseTable implements VBTable {
 			dt.add(defaultEntry, "", "");
 			masterOrdinal++;
 		}
+		dt.align(defaultEntry.getAlignedLength());
+		dt.setToDefaultPacking();
 		tableStructure = (Structure) dtm.resolve(dt, null);
 		//System.out.println(tableStructure.toString());
 		isBuilt = true;
