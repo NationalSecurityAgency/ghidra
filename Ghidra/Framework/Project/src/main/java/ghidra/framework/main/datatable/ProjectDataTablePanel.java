@@ -45,7 +45,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 	private static final String MAX_FILE_COUNT_PROPERTY = "ProjectDataTable.maxFileCount";
 	private static final int MAX_FILE_COUNT_DEFAULT = 2000;
-	private static int maxFileCount = loadMaxFileCount();
+	public static final int MAX_FILE_COUNT = loadMaxFileCount();
 
 	private FrontEndPlugin plugin;
 	private PluginTool tool;
@@ -190,7 +190,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 		int fileCount = projectData.getFileCount();
 
-		if (fileCount < 0 || fileCount > maxFileCount) {
+		if (fileCount < 0 || fileCount > MAX_FILE_COUNT) {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
