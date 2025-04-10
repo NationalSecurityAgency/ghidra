@@ -28,7 +28,7 @@ import ghidra.util.exception.UsrException;
 /**
  * Panel for editing a function stack.
  */
-public class StackEditorPanel extends CompositeEditorPanel {
+public class StackEditorPanel extends CompositeEditorPanel<StackFrameDataType, StackEditorModel> {
 
 	private JTextField frameSizeField;
 	private JTextField localSizeField;
@@ -42,7 +42,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 	}
 
 	private StackEditorModel getStackModel() {
-		return (StackEditorModel) model;
+		return model;
 	}
 
 	@Override

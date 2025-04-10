@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import db.Transaction;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.lang.*;
@@ -380,11 +381,27 @@ public interface DataTypeManager {
 	public int startTransaction(String description);
 
 	/**
-	 * Ends the current transaction
+	 * Ends the current transaction.
+	 * <P>
+	 * NOTE: If multiple transactions are outstanding the full transaction will not be ended
+	 * until all transactions have been ended.  If any of the transactions indicate a 
+	 * false for {@code commit} the transaction will ultimately be rolled-back when the final
+	 * transaction is ended.
+	 * <P>
+	 * NOTE: Use of rollback ({@code commit=false} should be avoided unless absolutely
+	 * neccessary since it will incur overhead to revert changes and may rollback multiple
+	 * concurrent transactions if they exist.
+	 * <P>
+	 * NOTE: If this manager is part of a larger {@link DomainObject} its transactions may become
+	 * entangled with other transactions at a higher level.  In such cases, use of  the 
+	 * {@link DomainObject} transaction interface is preferred.  The return value from this
+	 * method cannot be relied on in such cases. 
 	 * @param transactionID id of the transaction to end
-	 * @param commit true if changes are committed, false if changes in transaction are revoked
+	 * @param commit true if changes are committed, false if changes in transaction should be
+	 * rolled back.
+	 * @return true if this invocation was the final transaction and all changes were comitted.
 	 */
-	public void endTransaction(int transactionID, boolean commit);
+	public boolean endTransaction(int transactionID, boolean commit);
 
 	/**
 	 * Performs the given callback inside of a transaction.  Use this method in place of the more

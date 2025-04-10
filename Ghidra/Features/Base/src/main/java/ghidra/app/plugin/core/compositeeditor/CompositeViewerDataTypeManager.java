@@ -23,6 +23,7 @@ import db.util.ErrorHandler;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.ProgramArchitecture;
+import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -30,11 +31,12 @@ import utility.function.Callback;
 
 /**
  * {@link CompositeViewerDataTypeManager} provides a data type manager that the structure editor 
- * will use internally for updating the structure being edited and tracking all directly and 
+ * will use internally for updating the structure being edited and tracks all directly and 
  * indirectly referenced datatypes.  This manager also facilitates undo/redo support within
  * the editor.
+ * @param <T> Specific {@link Composite} type being managed
  */
-public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
+public class CompositeViewerDataTypeManager<T extends Composite> extends StandAloneDataTypeManager
 		implements ErrorHandler {
 
 	/** 
@@ -42,16 +44,18 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	 * This is where the edited datatype will be written back to.
 	 */
 	private final DataTypeManager originalDTM;
-	private final Composite originalComposite; // may be null if not resolved into this DTM
-	private final Composite viewComposite;  // may be null if not resolved into this DTM
+	private final T originalComposite; // may be null if not resolved into this DTM
+	private final T viewComposite;  // may be null if not resolved into this DTM
 
 	// Database-backed datatype ID map, view to/from original DTM
 	// This is needed to account for datatype use and ID alterations across undo/redo
 	private final IDMapDB dataTypeIDMap;
 
-	// single editor transaction use only - undo/redo not supported when used
+	// Editor transaction use only - undo/redo not supported if restoreCallback is null
 	private Callback restoredCallback;
+	private Callback changeCallback;
 	private int transactionId = 0;
+	private boolean dataTypeChanged;
 
 	// Modification count used to signal optional clearing of undo/redo stack at the end of a
 	// transaction should any database modifications occur.
@@ -64,13 +68,13 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	/**
 	 * Creates a data type manager that the structure editor will use internally for managing 
 	 * dependencies for an unmanaged structure being edited.  A single transaction will be started 
-	 * with this instantiation and held open until this instance is closed and undo/redo will 
+	 * with this instantiation and held open until this instance is closed.  Undo/redo is 
 	 * not be supported.
 	 * @param rootName the root name for this data type manager (usually the program name).
 	 * @param originalDTM the original data type manager.
 	 */
 	public CompositeViewerDataTypeManager(String rootName, DataTypeManager originalDTM) {
-		this(rootName, originalDTM, null, null);
+		this(rootName, originalDTM, null, null, null);
 		clearUndo();
 		transactionId = startTransaction("Composite Edit");
 	}
@@ -80,11 +84,13 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	 * structure being edited and its dependencies.
 	 * @param rootName the root name for this data type manager (usually the program name).
 	 * @param originalComposite the original composite data type that is being edited.
+	 * @param changeCallback Callback will be invoked when any change is made to the view composite.
 	 * @param restoredCallback Callback will be invoked following any undo/redo.
 	 */
-	public CompositeViewerDataTypeManager(String rootName, Composite originalComposite,
-			Callback restoredCallback) {
-		this(rootName, originalComposite.getDataTypeManager(), originalComposite, restoredCallback);
+	public CompositeViewerDataTypeManager(String rootName, T originalComposite,
+			Callback changeCallback, Callback restoredCallback) {
+		this(rootName, originalComposite.getDataTypeManager(), originalComposite, changeCallback,
+			restoredCallback);
 	}
 
 	/**
@@ -92,13 +98,15 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	 * @param rootName the root name for this data type manager (usually the program name).
 	 * @param originalDTM the original datatype manager
 	 * @param originalComposite the original composite data type that is being edited. (may be null)
+	 * @param changeCallback Callback will be invoked when any change is made to the view composite.
 	 * @param restoredCallback Callback will be invoked following any undo/redo.
 	 */
 	private CompositeViewerDataTypeManager(String rootName, DataTypeManager originalDTM,
-			Composite originalComposite, Callback restoredCallback) {
+			T originalComposite, Callback changeCallback, Callback restoredCallback) {
 		super(rootName, originalDTM.getDataOrganization());
 		this.originalDTM = originalDTM;
 		this.originalComposite = originalComposite;
+		this.changeCallback = changeCallback;
 		this.restoredCallback = restoredCallback;
 
 		int txId = startTransaction("Setup for Edit");
@@ -113,8 +121,9 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 		clearUndo();
 	}
 
-	private Composite resolveViewComposite() {
-		return originalComposite != null ? (Composite) super.resolve(originalComposite, null)
+	@SuppressWarnings("unchecked")
+	private T resolveViewComposite() {
+		return originalComposite != null ? (T) super.resolve(originalComposite, null)
 				: null;
 	}
 
@@ -160,10 +169,10 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	/**
-	 * Return the view composite if requested during instantiation.
+	 * Return the view composite
 	 * @return view composite or null if not resolved during instantiation.
 	 */
-	public Composite getResolvedViewComposite() {
+	public T getResolvedViewComposite() {
 		return viewComposite;
 	}
 
@@ -325,15 +334,24 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	public void notifyRestored() {
-		super.notifyRestored();
-		if (restoredCallback != null) {
-			restoredCallback.call();
+	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
+		super.dataTypeChanged(dt, isAutoChange);
+		if (dt == viewComposite) {
+			// Set dataTypeChanged which will trigger changeCallback when transaction fully comitted
+			dataTypeChanged = true;
 		}
 	}
 
 	@Override
-	public synchronized void endTransaction(int transactionID, boolean commit) {
+	public void notifyRestored() {
+		super.notifyRestored();
+		if (restoredCallback != null) {
+			Swing.runLater(() -> restoredCallback.call());
+		}
+	}
+
+	@Override
+	public synchronized boolean endTransaction(int transactionID, boolean commit) {
 
 		if (viewComposite != null && getTransactionCount() == 1) {
 			// Perform orphan removal only at the end of the outer-most transaction
@@ -342,7 +360,7 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 			}
 		}
 
-		super.endTransaction(transactionID, commit);
+		boolean committed = super.endTransaction(transactionID, commit);
 
 		if (!isTransactionActive() && flattenModCount != -1) {
 			if (flattenModCount != dbHandle.getModCount()) {
@@ -351,6 +369,16 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager
 			}
 			flattenModCount = -1;
 		}
+
+		if (committed && dataTypeChanged && changeCallback != null) {
+			Swing.runLater(() -> changeCallback.call());
+		}
+		
+		if (getTransactionCount() == 0) {
+			dataTypeChanged = false;
+		}
+
+		return committed;
 	}
 
 	private void checkOrphansForRemoval(boolean cleanupIdMaps) {

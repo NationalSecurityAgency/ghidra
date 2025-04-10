@@ -21,9 +21,7 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import docking.widgets.OptionDialog;
 import ghidra.program.database.DatabaseObject;
-import ghidra.program.database.data.StructureDBTest;
 import ghidra.program.model.data.*;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {
@@ -57,7 +55,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(FloatDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+		addFlexDataType(structureModel.viewComposite, DWordDataType.dataType, null,
 			null);
 
 		assertEquals(3, structureModel.getNumComponents());
@@ -76,7 +74,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+		addFlexDataType(structureModel.viewComposite, DWordDataType.dataType, null,
 			null);
 
 		waitForSwing();
@@ -110,7 +108,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+		addFlexDataType(structureModel.viewComposite, DWordDataType.dataType, null,
 			null);
 
 		waitForSwing();
@@ -138,11 +136,11 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 	public void testByValueAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+		addFlexDataType(structureModel.viewComposite, DWordDataType.dataType, null,
 			null);
 
 		waitForSwing();
@@ -209,7 +207,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		addFlexDataType(emptyStructure, DWordDataType.dataType, null, null);
 
 		init(emptyStructure, pgmRootCat, false);
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		JRadioButton explicitAlignButton =
 			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
@@ -243,11 +241,11 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		emptyStructure.setExplicitPackingValue(value);
 
 		init(emptyStructure, pgmRootCat, false);
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+		addFlexDataType(structureModel.viewComposite, DWordDataType.dataType, null,
 			null);
 
 		JRadioButton byValuePackingButton =
