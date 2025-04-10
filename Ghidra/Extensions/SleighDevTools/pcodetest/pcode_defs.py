@@ -1,20 +1,21 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 # The available pcode tests are recorded here as instances of the 'name'
 # python class.
+from pcodetest import PCodeTest
 
 PCodeTest({
     'name': 'ARM',
@@ -23,7 +24,7 @@ PCodeTest({
     'qemu_command': 'qemu-arm',
     'toolchain': 'ARM/arm-eabi',
     'language_id': 'ARM:LE:32:v7',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'cclibs': '-lgcc',
     'proc_test': 'arm',
 })
 
@@ -34,7 +35,8 @@ PCodeTest({
     'qemu_command': 'qemu-armbe',
     'toolchain': 'ARM/armbe-eabi',
     'language_id': 'ARM:BE:32:v7',
-    'ccflags': '-mbig-endian -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-mbig-endian',
+    'cclibs': '-lgcc',
     'proc_test': 'arm',
     'has_float': 0,
     'has_double': 0,
@@ -45,7 +47,8 @@ PCodeTest({
 PCodeTest({
     'name': 'ARM2',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mcpu=arm2 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=arm2',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -57,13 +60,27 @@ PCodeTest({
     'qemu_command': 'qemu-arm',
     'toolchain': 'ARM/arm-eabi',
     'language_id': 'ARM:LE:32:v5',
-    'ccflags': '-march=armv5 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'gcc_version': '7.3.0',
+    'ccflags': '-march=armv5',
+    'cclibs': '-lgcc',
+})
+
+PCodeTest({
+    'name': 'ARMv6',
+    'build_all': 1,
+    'build_exe': 1,
+    'qemu_command': 'qemu-arm',
+    'toolchain': 'ARM/arm-eabi',
+    'language_id': 'ARM:LE:32:v6',
+    'ccflags': '-march=armv6+fp',
+    'cclibs': '-lgcc',
 })
 
 PCodeTest({
     'name': 'ARM7',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mcpu=arm7 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-march=armv7-a+simd',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -71,7 +88,8 @@ PCodeTest({
 PCodeTest({
     'name': 'ARM8',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mcpu=arm8 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=arm8',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -79,7 +97,8 @@ PCodeTest({
 PCodeTest({
     'name': 'ARM9',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mcpu=arm9 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=arm9',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -90,7 +109,8 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-arm',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mcpu=arm10e -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=arm10e',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -101,7 +121,9 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-arm -cpu cortex-a8',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mthumb -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
+    'ccflags': '-mthumb -DTHUMB -march=armv7-a+simd',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -110,7 +132,9 @@ PCodeTest({
     'name': 'ARM_BE_thumb',
     'build_all': 1,
     'toolchain': 'ARM/armbe-eabi',
-    'ccflags': '-mthumb -mbig-endian -L %(toolchain_dir)s/lib/gcc/armbe-eabi/%(gcc_version)s/thumb -lgcc',
+    'ccflags': '-mthumb -DTHUMB -mbig-endian',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:BE:32:v7',
     'proc_test': 'arm',
     'has_float': 0,
@@ -124,7 +148,9 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-arm -cpu cortex-a8',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mthumb -mcpu=cortex-a8 -mfloat-abi=softfp -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
+    'ccflags': '-mthumb -DTHUMB -mcpu=cortex-a8 -mfloat-abi=softfp',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:v7',
     'proc_test': 'arm',
 })
@@ -135,7 +161,9 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-arm -cpu cortex-m33',
     'toolchain': 'ARM/arm-eabi',
-    'ccflags': '-mthumb -march=armv8-m.main -mfloat-abi=softfp -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
+    'ccflags': '-mthumb -DTHUMB -march=armv8-m.main -mfloat-abi=softfp',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb',
+    'cclibs': '-lgcc',
     'language_id': 'ARM:LE:32:Cortexv8m',
 })
 
@@ -174,6 +202,7 @@ PCodeTest({
     'build_all': 1,
     'toolchain': 'AVR/avr-elf',
     'ccflags': '-mmcu=avr6 -lgcc',
+    'cclibs': '-lgcc',
     'language_id': 'avr32:BE:32:default',
     'processor': 'Atmel',
     'has_float': 0,
@@ -184,6 +213,7 @@ PCodeTest({
     'name': 'AVR8_31',
     'toolchain': 'AVR/avr-elf',
     'ccflags': '-mmcu=avr31 -lgcc',
+    'cclibs': '-lgcc',
     'language_id': 'avr8:LE:16:default',
     'has_float': 0,
     'has_double': 0,
@@ -206,6 +236,7 @@ PCodeTest({
     'name': 'AVR8_6',
     'toolchain': 'AVR/avr-elf',
     'ccflags': '-mmcu=avr6 -lgcc',
+    'cclibs': '-lgcc',
     'language_id': 'avr8:LE:16:atmega256',
     'has_float': 0,
     'has_double': 0,
@@ -223,7 +254,19 @@ PCodeTest({
     'name': 'HPPA1.1',
     'build_all': 1,
     'toolchain': 'HPPA/hppa-linux',
-    'ccflags': '-march=1.1 -static -mlong-calls -L %(toolchain_dir)s/lib/gcc/hppa-linux/%(gcc_version)s -lgcc',
+    'ccflags': '-march=1.1 -static -mlong-calls',
+    'cclibs': '-lgcc',
+    'language_id': 'pa-risc:BE:32:default',
+    'processor': 'PA-RISC',
+    'architecture_test': 'PARISC',
+})
+
+PCodeTest({
+    'name': 'HPPA2.0',
+    'build_all': 1,
+    'toolchain': 'HPPA/hppa-linux',
+    'ccflags': '-march=2.0 -static -mlong-calls',
+    'cclibs': '-lgcc',
     'language_id': 'pa-risc:BE:32:default',
     'processor': 'PA-RISC',
     'architecture_test': 'PARISC',
@@ -233,11 +276,9 @@ PCodeTest({
     'name': 'Loongarch64',
     'build_all': 1,
     'build_exe': 0,
-    'gcc_version': '12.3.0',
     'qemu_command': 'qemu-loongarch64',
-    'target': 'loongson-linux',
-    'toolchain': '%(name)s/%(target)s', #%(toolchain_dir)s/lib/gcc/loongarch64-linux/%(gcc_version)s
-    'ccflags': '-march=loongarch64 -mabi=lp64d -L /local/cross/lib/gcc/loongarch64-linux/12.3.0/ -lgcc',
+    'toolchain': 'LoongArch/loongarch64-linux-gnu',
+    'ccflags': '-march=loongarch64 -mabi=lp64d',
     'language_id': 'Loongarch:LE:64:default',
     #'has_longlong': 0,
 })
@@ -249,8 +290,9 @@ PCodeTest({
     'gcc_version': '12.3.0',
     'qemu_command': 'qemu-loongarch64',
     'target': 'loongson-linux',
-    'toolchain': 'Loongarch64/%(target)s', #%(toolchain_dir)s/lib/gcc/loongarch64-linux/%(gcc_version)s
-    'ccflags': '-march=loongarch64 -mabi=lp64f -mfpu=32 -L /local/cross/lib/gcc/loongarch64-linux/12.3.0/ -lgcc',
+    'toolchain': 'LoongArch/loongarch64-linux-gnu',
+    'ccflags': '-march=loongarch64 -mabi=lp64f',
+    #'cclibs': '-lgcc',
     'language_id': 'Loongarch:LE:64:lp64f',
     'has_double': 0,
 })
@@ -264,7 +306,8 @@ PCodeTest({
     'build_exe': 0,
     'qemu_command': 'qemu-m68k',            # qemu: fatal: Illegal instruction
     'toolchain': 'm68k/m68k-elf',
-    'ccflags': '-mcpu=68020 -m68020 -L %(toolchain_dir)s/lib/gcc/m68k-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=68020 -m68020',
+    'cclibs': '-lgcc',
     'language_id': '68000:BE:32:default',
 })
 
@@ -274,7 +317,9 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-mips',
     'toolchain': 'MIPS/mips-elf',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_version)s -lgcc -mno-gpopt',
+    'ccflags': '-mno-gpopt',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_actual_version)s',
+    'cclibs': '-lgcc',
     'language_id': 'MIPS:BE:32:default',
 })
 
@@ -283,7 +328,9 @@ PCodeTest({
     'build_all': 1,
     'build_exe': 1,
     'toolchain': 'MIPS/mips-elf',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_version)s/el -lgcc -mno-gpopt -mel',
+    'ccflags': '-mno-gpopt -mel',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_actual_version)s/el',
+    'cclibs': '-lgcc',
     'language_id': 'MIPS:LE:32:default',
 })
 
@@ -317,7 +364,9 @@ PCodeTest({
     'name': 'MIPSMIC',
     'build_all': 1,
     'toolchain': 'MIPS/mips-elf',
-    'ccflags': '-mmicromips -L %(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_version)s/micromips -lgcc',
+    'ccflags': '-mmicromips',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_actual_version)s/micromips',
+    'cclibs': '-lgcc',
     'language_id': 'MIPS:BE:32:micro',
     'architecture_test': 'MIPSMICRO',
 })
@@ -326,7 +375,9 @@ PCodeTest({
     'name': 'MIPSMICMIX',
     'build_all': 1,
     'toolchain': 'MIPS/mips-elf',
-    'ccflags': '-minterlink-compressed -D BODYNEW=micromips -L %(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_version)s/micromips -lgcc',
+    'ccflags': '-minterlink-compressed -D BODYNEW=micromips',
+    'gcc_libdir': '%(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_actual_version)s/micromips',
+    'cclibs': '-lgcc',
     'language_id': 'MIPS:BE:32:micro',
     'architecture_test': 'MIPSMICROMIX',
 })
@@ -367,7 +418,9 @@ PCodeTest({
     'name': 'MIPSR6',
     'build_all': 1,
     'toolchain': 'MIPS/mipsr6-elf',
-    'ccflags': '-mips32r6 -L %(toolchain_dir)s/lib/gcc/mips-mti-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mips32r6',
+    'gcc_libdir': '-L %(toolchain_dir)s/lib/gcc/mips-img-elf/%(gcc_actual_version)s',
+    'cclibs': '-lgcc',
     'language_id': 'MIPS:BE:32:R6',
 })
 
@@ -383,7 +436,8 @@ PCodeTest({
     'name': 'NDS32BE',
     'build_all': 1,
     'toolchain': 'NDS32/nds32be-elf',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/nds32be-linux-elf/%(gcc_version)s -lgcc',
+    'ccflags': '',
+    'cclibs': '-lgcc',
     'language_id': 'NDS32:BE:32:default',
 })
 
@@ -391,14 +445,16 @@ PCodeTest({
     'name': 'NDS32LE',
     'build_all': 1,
     'toolchain': 'NDS32/nds32le-elf',
-    'ccflags': '-L %(toolchain_dir)s/lib/gcc/nds32le-linux-elf/%(gcc_version)s -lgcc',
+    'ccflags': '',
+    'cclibs': '-lgcc',
     'language_id': 'NDS32:LE:32:default',
 })
 
 PCodeTest({
     'name': 'power6',
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=G5 -m32 -mno-relocatable -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=G5 -m32 -mno-relocatable',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:default',
 })
 
@@ -408,7 +464,8 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-ppc64abi32',
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=powerpc -m32 -maltivec -mno-relocatable -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=powerpc -m32 -maltivec -mno-relocatable',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:default',
     'architecture_test': 'PPC',
 })
@@ -419,7 +476,8 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-ppc64',
     'toolchain': 'PPC/powerpc64-linux',
-    'ccflags': '-mabi=elfv1 -maltivec -mno-relocatable -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mabi=elfv1 -maltivec -mno-relocatable',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:64:default',
     'architecture_test': 'PPC64',
 })
@@ -427,7 +485,8 @@ PCodeTest({
 PCodeTest({
     'name': 'powerpc64v2',
     'toolchain': 'PPC/powerpc64-linux',
-    'ccflags': '-mabi=elfv2 -maltivec -mno-relocatable -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mabi=elfv2 -maltivec -mno-relocatable',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:64:default',
 })
 
@@ -435,7 +494,8 @@ PCodeTest({
     'name': 'ppcA2',
     'build_all': 1,
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=a2 -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=a2',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:A2',
     'architecture_test': 'PPCA2',
 })
@@ -444,7 +504,8 @@ PCodeTest({
     'name': 'ppcA2Alt',
     'build_all': 1,
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=a2 -maltivec -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=a2 -maltivec',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:A2ALT',
     'architecture_test': 'PPCA2Alt',
 })
@@ -453,7 +514,8 @@ PCodeTest({
     'name': 'ppcP8Alt',
     'build_all': 1,
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=power8 -mvsx -maltivec -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=power8 -mvsx -maltivec',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:A2ALT',
     'architecture_test': 'PPCP8Alt',
 })
@@ -462,7 +524,8 @@ PCodeTest({
     'name': 'ppcP9Alt',
     'build_all': 1,
     'toolchain': 'PPC/powerpc-elf',
-    'ccflags': '-mcpu=power9 -mvsx -maltivec -L %(toolchain_dir)s/lib/gcc/powerpc-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mcpu=power9 -mvsx -maltivec',
+    'cclibs': '-lgcc',
     'language_id': 'PowerPC:BE:32:A2ALT',
     'architecture_test': 'PPCP9Alt',
 })
@@ -470,8 +533,9 @@ PCodeTest({
 PCodeTest({
     'name': 'msp430x',
     'build_all': 1,
-    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
-    'ccflags': '-g -mcpu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld -L %(toolchain_dir)s/lib/gcc/msp430-elf/%(gcc_version)s/large/ -lgcc -lmul_none',
+    'toolchain': 'TI/msp430-elf',
+    'ccflags': '-g -mcpu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld',
+    'cclibs': '-lgcc -lmul_none',
     'language_id': 'TI_MSP430X:LE:32:default',
     'processor': 'TI',
     'architecture_test': 'MSP430X',
@@ -485,8 +549,9 @@ PCodeTest({
 PCodeTest({
     'name': 'msp430',
     'build_all': 1,
-    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
-    'ccflags': '-g -mcpu=msp430 -fno-builtin -mhwmult=none -lgcc -lmul_none',
+    'toolchain': 'TI/msp430-elf',
+    'ccflags': '-g -mcpu=msp430 -fno-builtin -mhwmult=none',
+    'cclibs': '-lgcc -lmul_none',
     'language_id': 'TI_MSP430:LE:16:default',
     'processor': 'TI',
     'architecture_test': 'MSP430',
@@ -502,7 +567,8 @@ PCodeTest({
     'build_exe': 0,
     'qemu_command': 'qemu-sh4eb',            # qemu gets "Invalid argument" error
     'toolchain': 'SuperH4/sh4-elf',
-    'ccflags': '-mb -mrenesas -m4 -L %(toolchain_dir)s/lib/gcc/sh4-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-mb -mrenesas -m4',
+    'cclibs': '-lgcc',
     'language_id': 'SuperH4:BE:32:default',
     'architecture_test': 'SuperH4_BE',
 })
@@ -511,7 +577,8 @@ PCodeTest({
     'name': 'SH4_LE',
     'build_all': 1,
     'toolchain': 'SuperH4/sh4le-elf',
-    'ccflags': '-ml -mrenesas -m4 -L %(toolchain_dir)s/lib/gcc/sh4le-elf/%(gcc_version)s -lgcc',
+    'ccflags': '-ml -mrenesas -m4',
+    'cclibs': '-lgcc',
     'language_id': 'SuperH4:LE:32:default',
     'architecture_test': 'SuperH4',
 })
@@ -548,7 +615,8 @@ PCodeTest({
     'build_exe': 1,
     'qemu_command': 'qemu-i386',
     'toolchain': 'x86/i386-elf-linux',
-    'ccflags': '-march=pentium -m32 -L %(toolchain_dir)s/lib/gcc/i386-elf-linux/%(gcc_version)s -lgcc',
+    'ccflags': '-march=pentium -m32',
+    'cclibs': '-lgcc',
     'objdump_option': '-M intel',
     'language_id': 'x86:LE:32:default',
     'architecture_test': 'X86m32',
@@ -559,7 +627,7 @@ PCodeTest({
     'name': 'i386_CLANG',
     'toolchain': 'LLVM/llvm',
     'toolchain_type': 'llvm',
-    'ccflags': '--target=i386',
+    'ccflags': '--target=i386 -DU4="unsigned __INT32_TYPE__" -DI4="signed __INT32_TYPE__',
     'objdump_option': '-M intel',
     'language_id': 'x86:LE:32:default',
 })
@@ -568,7 +636,7 @@ PCodeTest({
     'name': 'i686_CLANG',
     'toolchain': 'LLVM/llvm',
     'toolchain_type': 'llvm',
-    'ccflags': '--target=i686',
+    'ccflags': '--target=i686 -DU4="unsigned __INT32_TYPE__" -DI4="signed __INT32_TYPE__',
     'objdump_option': '-M intel',
     'language_id': 'x86:LE:32:default',
 })
@@ -640,7 +708,9 @@ PCodeTest({
     'objdump_exe': 'bin/xc16-objdump',
     'readelf_exe': 'bin/xc16-readelf',
     'nm_exe': 'bin/xc16-nm',
-    'ccflags': '-mcpu=30F2011 -DINT4_IS_LONG -Xlinker --defsym -Xlinker _main=0x0 -L %(toolchain_dir)s/lib -lpic30 -lc -lm',
+    'ccflags': '-mcpu=30F2011 -DI4="signed long" -DU4="unsigned long" -DF8="long double" -Xlinker --defsym -Xlinker _main=0x0',
+    'gcc_libdir': '%(toolchain_dir)s/lib',
+    'cclibs': '-lpic30 -lc -lm',
     'language_id': 'dsPIC30F:LE:24:default',
     'skip_files': ['misc.test'],
     'variants': {'O0': '-O0'},
@@ -652,7 +722,9 @@ PCodeTest({
     'toolchain': 'PIC/xc8',
     'compile_exe': 'bin/xc8',
     'objdump_exe': 'bin/dump',
-    'ccflags': '-chip=16C57 -DINT4_IS_LONG -DSTATIC_MAIN -L %(toolchain_dir)s/lib -lpic30 -lc -lm',
+    'ccflags': '-chip=16C57 -DI4="signed long" -DU4="unsigned long" -DSTATIC_MAIN',
+    'gcc_libdir': '%(toolchain_dir)s/lib',
+    'cclibs': '-lpic30 -lc -lm',
     'language_id': 'dsPIC16F:LE:24:default',
     'small_build': 1,
 })
@@ -674,7 +746,7 @@ PCodeTest({
     'toolchain': 'SDCC/z80',
     'toolchain_type': 'sdcc',
     'compile_exe': 'bin/sdcc',
-    'ccflags': '-mz80 -V --verbose --std-sdcc11 -DINT4_IS_LONG',
+    'ccflags': '-mz80 -V --verbose --std-sdcc11 -DI4="signed long" -DU4="unsigned long"',
     'language_id': 'z80:LE:16:default',
     'variants': {'OX':''},
     'has_float': 0,
@@ -712,6 +784,33 @@ PCodeTest({
     'has_float': 0,
     'has_double': 0,
     'has_longlong': 0,
+})
+
+PCodeTest({
+    'name': 'V850',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'V850/v850-elf',
+    'language_id': 'V850:LE:32:default',
+    'ccflags': '-mv850e2v3 -lgcc',
+})
+
+PCodeTest({
+    'name': 'RH850',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'V850/v850-elf',
+    'language_id': 'V850:LE:32:v850e3v5',
+    'ccflags': '-mv850e3v5 -mloop -mrh850-abi -lgcc',
+})
+
+PCodeTest({
+    'name': 'Xtensa',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'Xtensa/xtensa-elf',
+    'language_id': 'Xtensa:LE:32:default',
+    'ccflags': '-lgcc',
 })
 
 PCodeTest({
