@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,6 +126,16 @@ public class EmptyBorderButton extends JButton {
 		Icon disabledIcon = ResourceManager.getDisabledIcon(newIcon);
 		setDisabledIcon(disabledIcon);
 		super.setIcon(newIcon);
+	}
+
+	@Override
+	public void setBorder(Border border) {
+		// To keep UI from installing a non-appropriate border (such as when switching themes),
+		// only allow borders created by this class to be set.
+		if (border == RAISED_BUTTON_BORDER || border == LOWERED_BUTTON_BORDER ||
+			border == FOCUSED_BUTTON_BORDER || border == NO_BUTTON_BORDER) {
+			super.setBorder(border);
+		}
 	}
 
 	private void installLookAndFeelFix() {
