@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package docking.widgets.tab;
 
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.*;
 import java.util.*;
@@ -491,43 +492,69 @@ public class GTabPanel<T> extends JPanel {
 		removeAll();
 		closeTabList();
 		setBorder(null);
-		if (!shouldShowTabs()) {
-			setFocusable(false);
-			revalidate();
-			repaint();
-			return;
+		setFocusable(false);
+
+		if (shouldShowTabs()) {
+			setFocusable(true);
+			setBorder(new GTabPanelBorder());
+			populateTabs();
 		}
 
-		setFocusable(true);
-		setBorder(new GTabPanelBorder());
-
-		GTab<T> selectedTab = null;
-		int availableWidth = getPanelWidth();
-		if (selectedValue != null) {
-			selectedTab = new GTab<>(this, selectedValue, true);
-			availableWidth -= getTabWidth(selectedTab);
-		}
-		createNonSelectedTabsForWidth(availableWidth);
-
-		// a negative available width means there wasn't even enough room for the selected value tab
-		if (selectedValue != null && availableWidth >= 0) {
-			allTabs.add(getIndexToInsertSelectedValue(allTabs.size()), selectedTab);
-		}
-
-		// add tabs to this panel
-		for (GTab<T> gTab : allTabs) {
-			add(gTab);
-		}
-
-		// if there are hidden tabs add hidden value control to this panel
-		if (hasHiddenTabs()) {
-			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
-			add(hiddenValuesControl);
-		}
 		updateTabColors();
 		updateAccessibleName();
 		revalidate();
 		repaint();
+	}
+
+	private void populateTabs() {
+		int availableWidth = getPanelWidth();
+
+		// first try to build tabs to see if they all fit and don't need to show the 
+		// hidden values control. If the first pass doesn't fully add all the tabs, need
+		// to redo it a second time reserving space for the hidden values control
+
+		if (!buildTabs(availableWidth)) {
+			// set the controls hidden count to the hidden count for sizing purposes
+			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
+			int hiddenValuesControlWidth = getParentedComponentWidth(hiddenValuesControl);
+			buildTabs(availableWidth - hiddenValuesControlWidth);
+			hiddenValuesControl.setHiddenCount(allValues.size() - allTabs.size());
+			add(hiddenValuesControl);
+		}
+	}
+
+	private boolean buildTabs(int availableWidth) {
+		allTabs.clear();
+		removeAll();
+
+		// reserve space for the selected tab
+		GTab<T> selectedTab = selectedValue != null ? new GTab<>(this, selectedValue, true) : null;
+		availableWidth -= getParentedComponentWidth(selectedTab);
+
+		boolean selectedTabAdded = false;
+		for (T value : allValues) {
+			boolean isSelectedValue = value == selectedValue;
+			GTab<T> nextTab = isSelectedValue ? selectedTab : new GTab<>(this, value, false);
+			int tabWidth = isSelectedValue ? 0 : getParentedComponentWidth(nextTab);
+			if (tabWidth > availableWidth) {
+				break;
+			}
+			allTabs.add(nextTab);
+			add(nextTab);
+			selectedTabAdded |= isSelectedValue;
+			availableWidth -= tabWidth;
+		}
+
+		// if we ran out of space before adding the selected tab, add it now if it fits since
+		// we always want the selected tab visible and we reserved space for it (unless there 
+		// wasn't space for any tabs)
+		if (selectedTab != null && !selectedTabAdded && availableWidth >= 0) {
+			allTabs.add(selectedTab);
+			add(selectedTab);
+		}
+
+		// returns true only if all tabs fit
+		return allTabs.size() == allValues.size();
 	}
 
 	private boolean shouldShowTabs() {
@@ -566,43 +593,22 @@ public class GTabPanel<T> extends JPanel {
 		return builder.toString();
 	}
 
-	private int getIndexToInsertSelectedValue(int maxIndex) {
-		Iterator<T> it = allValues.iterator();
-		for (int i = 0; i < maxIndex; i++) {
-			T t = it.next();
-			if (t == selectedValue) {
-				return i;
-			}
-		}
-		return maxIndex;
-	}
+	private int getParentedComponentWidth(Component component) {
+		// preferred size is unreliable when unparented if the scaling factor has been changed,
+		// so temporarily parent it while computing its preferred size (if not already parented)
 
-	private void createNonSelectedTabsForWidth(int availableWidth) {
-		for (T value : allValues) {
-			if (value == selectedValue) {
-				continue;
-			}
-			GTab<T> tab = new GTab<>(this, value, false);
-
-			int tabWidth = getTabWidth(tab);
-			if (tabWidth > availableWidth) {
-				break;
-			}
-
-			allTabs.add(tab);
-			availableWidth -= tabWidth;
+		if (component == null) {
+			return 0;
 		}
 
-		// remove last tab if there isn't room for hidden values control
-		if (hasHiddenTabs() && availableWidth < hiddenValuesControl.getPreferredWidth()) {
-			if (!allTabs.isEmpty()) {
-				allTabs.remove(allTabs.size() - 1);
-			}
+		if (component.getParent() != null) {
+			return component.getPreferredSize().width;
 		}
-	}
 
-	private int getTabWidth(GTab<T> tab) {
-		return tab.getPreferredSize().width;
+		add(component);
+		int width = component.getPreferredSize().width;
+		remove(component);
+		return width;
 	}
 
 	private int getPanelWidth() {
