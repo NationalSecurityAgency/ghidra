@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ import java.util.*;
 
 import org.jdom.Element;
 
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.AbstractLocationPluginEvent;
+import ghidra.app.events.AbstractSelectionPluginEvent;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
@@ -30,6 +30,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.SystemUtilities;
 import utility.function.Callback;
 
 public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerComponentProvider>
@@ -270,8 +271,12 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		return connectedProvider;
 	}
 
-	public abstract void updateSelection(ByteViewerComponentProvider provider,
-			ProgramSelectionPluginEvent event, Program program);
+	public void updateSelection(ByteViewerComponentProvider provider,
+			AbstractSelectionPluginEvent event, Program program) {
+		if (provider == connectedProvider) {
+			firePluginEvent(event);
+		}
+	}
 
 	public abstract void highlightChanged(ByteViewerComponentProvider provider,
 			ProgramSelection highlight);
@@ -298,11 +303,31 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 		provider.dispose();
 	}
 
-	protected abstract void updateLocation(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent event, boolean export);
+	public void updateLocation(ProgramByteViewerComponentProvider provider,
+			AbstractLocationPluginEvent event, boolean export) {
 
-	protected abstract void fireProgramLocationPluginEvent(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent pluginEvent);
+		if (eventsDisabled()) {
+			return;
+		}
+
+		if (provider == connectedProvider) {
+			fireProgramLocationPluginEvent(provider, event);
+		}
+		else if (export) {
+			exportLocation(provider.getProgram(), event.getLocation());
+		}
+	}
+
+	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
+			AbstractLocationPluginEvent event) {
+
+		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
+			return;
+		}
+
+		currentLocation = event.getLocation();
+		if (provider == connectedProvider) {
+			firePluginEvent(event);
+		}
+	}
 }

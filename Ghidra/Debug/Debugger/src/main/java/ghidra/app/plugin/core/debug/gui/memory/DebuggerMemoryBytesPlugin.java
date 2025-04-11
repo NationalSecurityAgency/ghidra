@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,9 @@ import java.util.stream.Collectors;
 import org.jdom.Element;
 
 import docking.action.DockingAction;
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.byteviewer.*;
+import ghidra.app.plugin.core.byteviewer.AbstractByteViewerPlugin;
+import ghidra.app.plugin.core.byteviewer.ByteViewerComponentProvider;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
@@ -37,8 +36,8 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.program.TraceProgramView;
 
 @PluginInfo(
 	shortDescription = "View bytes of trace (possibly live) memory",
@@ -53,10 +52,16 @@ import ghidra.program.util.ProgramSelection;
 		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
 		TraceClosedPluginEvent.class,
+		TraceLocationPluginEvent.class,
+		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	eventsProduced = {
 		TraceLocationPluginEvent.class,
 		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	servicesRequired = {
 		ClipboardService.class,
@@ -117,28 +122,11 @@ public class DebuggerMemoryBytesPlugin
 	}
 
 	@Override
-	protected void updateLocation(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent event, boolean export) {
-		// TODO
-	}
-
-	@Override
-	protected void fireProgramLocationPluginEvent(
-			ProgramByteViewerComponentProvider programByteViewerComponentProvider,
-			ProgramLocationPluginEvent pluginEvent) {
-		// TODO
-	}
-
-	@Override
-	public void updateSelection(ByteViewerComponentProvider provider,
-			ProgramSelectionPluginEvent event, Program program) {
-		// TODO
-	}
-
-	@Override
 	public void highlightChanged(ByteViewerComponentProvider provider, ProgramSelection highlight) {
-		// TODO
+		if (provider == connectedProvider) {
+			tool.firePluginEvent(new TraceHighlightPluginEvent(getName(), highlight,
+				(TraceProgramView) connectedProvider.getProgram()));
+		}
 	}
 
 	protected void allProviders(Consumer<DebuggerMemoryBytesProvider> action) {
@@ -150,17 +138,22 @@ public class DebuggerMemoryBytesPlugin
 
 	@Override
 	public void processEvent(PluginEvent event) {
+		// do not delegate to super
 		if (event instanceof TraceActivatedPluginEvent ev) {
 			current = ev.getActiveCoordinates();
 			allProviders(p -> p.coordinatesActivated(current));
 		}
-		if (event instanceof TraceClosedPluginEvent ev) {
+		else if (event instanceof TraceClosedPluginEvent ev) {
 			if (current.getTrace() == ev.getTrace()) {
 				current = DebuggerCoordinates.NOWHERE;
 			}
 			allProviders(p -> p.traceClosed(ev.getTrace()));
 		}
-		// TODO: Sync among dynamic providers?
+		else if (event instanceof TraceLocationPluginEvent ev) {
+			currentLocation = ev.getLocation();
+		}
+
+		connectedProvider.doHandleTraceEvent(event);
 	}
 
 	@AutoServiceConsumed
