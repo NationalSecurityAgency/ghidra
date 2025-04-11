@@ -55,8 +55,8 @@ import utilities.util.reflection.ReflectionUtilities;
 public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegrationTest {
 	protected String languageName;
 	protected String compilerSpecID;
-	protected CompositeEditorProvider provider;
-	protected CompositeEditorModel model;
+	protected CompositeEditorProvider<?, ?> provider;
+	protected CompositeEditorModel<?> model;
 	protected TestEnv env;
 	protected ProgramBuilder builder;
 	protected Program program;
@@ -129,7 +129,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		});
 	}
 
-	protected void installProvider(CompositeEditorProvider newProvider) {
+	protected void installProvider(CompositeEditorProvider<?, ?> newProvider) {
 		assertNotNull(newProvider);
 		this.provider = newProvider;
 		runSwing(() -> removeTableCellEditorsFocusLostListener());
@@ -393,12 +393,12 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		return (dtc != null) ? dtc.getComment() : null;
 	}
 
-	protected CompositeEditorPanel getPanel() {
-		return (CompositeEditorPanel) provider.getComponent();
+	protected CompositeEditorPanel<?, ?> getPanel() {
+		return provider.getComponent();
 	}
 
 	protected JTable getTable() {
-		return ((CompositeEditorPanel) provider.getComponent()).table;
+		return provider.getComponent().table;
 	}
 
 	protected Window getWindow() {
@@ -789,37 +789,72 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void assertIsPackingEnabled(boolean aligned) {
-		assertEquals(aligned, ((CompEditorModel) model).isPackingEnabled());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(aligned, compModel.isPackingEnabled());
+		}
+		else {
+			fail("Model does not support packing concept");
+		}
 	}
 
 	protected void assertDefaultPacked() {
-		assertEquals(PackingType.DEFAULT, ((CompEditorModel) model).getPackingType());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(PackingType.DEFAULT, compModel.getPackingType());
+		}
+		else {
+			fail("Model does not support packing concept");
+		}
 	}
 
 	protected void assertPacked(int pack) {
-		assertEquals(PackingType.EXPLICIT, ((CompEditorModel) model).getPackingType());
-		assertEquals(pack, ((CompEditorModel) model).getExplicitPackingValue());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(PackingType.EXPLICIT, compModel.getPackingType());
+			assertEquals(pack, compModel.getExplicitPackingValue());
+		}
+		else {
+			fail("Model does not support packing concept");
+		}
 	}
 
 	protected void assertIsDefaultAligned() {
-		assertEquals(AlignmentType.DEFAULT, ((CompEditorModel) model).getAlignmentType());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(AlignmentType.DEFAULT, compModel.getAlignmentType());
+		}
+		else {
+			fail("Model does not support alignment concept");
+		}
 	}
 
 	protected void assertIsMachineAligned() {
-		assertEquals(AlignmentType.MACHINE, ((CompEditorModel) model).getAlignmentType());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(AlignmentType.MACHINE, compModel.getAlignmentType());
+		}
+		else {
+			fail("Model does not support alignment concept");
+		}
 	}
 
 	protected void assertExplicitAlignment(int alignment) {
-		assertEquals(AlignmentType.EXPLICIT, ((CompEditorModel) model).getAlignmentType());
-		assertEquals(alignment, ((CompEditorModel) model).getExplicitMinimumAlignment());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(AlignmentType.EXPLICIT, compModel.getAlignmentType());
+			assertEquals(alignment, compModel.getExplicitMinimumAlignment());
+		}
+		else {
+			fail("Model does not support alignment concept");
+		}
 	}
 
 	protected void assertActualAlignment(int value) {
-		assertEquals(value, ((CompEditorModel) model).getActualAlignment());
+		if (model instanceof CompEditorModel compModel) {
+			assertEquals(value, compModel.getActualAlignment());
+		}
+		else {
+			fail("Model does not support alignment concept");
+		}
 	}
 
 	protected void assertLength(int value) {
-		assertEquals(value, ((CompEditorModel) model).getLength());
+		assertEquals(value, model.getLength());
 	}
 
 	protected void setOptions(String optionName, boolean b) {

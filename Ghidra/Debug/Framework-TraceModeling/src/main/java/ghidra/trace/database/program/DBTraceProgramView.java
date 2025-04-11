@@ -1148,8 +1148,8 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
-		trace.endTransaction(transactionID, commit);
+	public boolean endTransaction(int transactionID, boolean commit) {
+		return trace.endTransaction(transactionID, commit);
 	}
 
 	@Override

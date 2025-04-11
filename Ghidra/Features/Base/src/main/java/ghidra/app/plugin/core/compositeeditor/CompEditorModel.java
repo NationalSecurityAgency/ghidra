@@ -29,7 +29,7 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class CompEditorModel extends CompositeEditorModel {
+public abstract class CompEditorModel<T extends Composite> extends CompositeEditorModel<T> {
 
 	private volatile boolean consideringReplacedDataType = false;
 
@@ -37,7 +37,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * Creates a model for editing a composite data type.
 	 * @param provider the provider that is using this model for editing.
 	 */
-	CompEditorModel(CompositeEditorProvider provider) {
+	CompEditorModel(CompositeEditorProvider<T, ? extends CompEditorModel<T>> provider) {
 		super(provider);
 	}
 
@@ -54,7 +54,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param dataType the composite data type being edited.
 	 */
 	@Override
-	public void load(Composite dataType) {
+	public void load(T dataType) {
 		super.load(dataType);
 		fixSelection();
 		selectionChanged();
@@ -76,7 +76,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 
 		FieldSelection saveSelection = new FieldSelection(selection);
-		Composite originalDt = getOriginalComposite();
+		T originalDt = getOriginalComposite();
 		if (originalDt == null || originalDTM == null) {
 			throw new IllegalStateException(
 				"Can't apply edits without a data type or data type manager.");
@@ -118,7 +118,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				load(originalDt);
 			}
 			else {
-				Composite dt = (Composite) originalDTM.resolve(viewComposite, null);
+				@SuppressWarnings("unchecked")
+				T dt = (T) originalDTM.resolve(viewComposite, null);
 				load(dt);
 			}
 			return true;
@@ -376,7 +377,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int componentOrdinal = convertRowToOrdinal(rowIndex);
 		delete(componentOrdinal);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 	}
 
@@ -411,8 +411,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		viewDTM.withTransaction("Delete Components", () -> viewComposite.delete(ordinals));
 		fixSelection();
-		componentEdited();
-		notifyCompositeChanged();
 		selectionChanged();
 	}
 
@@ -427,12 +425,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		int[] selectedComponents = getSelectedComponentRows();
 		int firstRowIndex = !selection.isEmpty() ? selectedComponents[0] : getRowCount();
-		try {
-			delete(selectedComponents);
-		}
-		finally {
-			componentEdited();
-		}
+		delete(selectedComponents);
 		selection.addRange(firstRowIndex, firstRowIndex + 1);
 		fixSelection();
 		selectionChanged();
@@ -532,7 +525,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataTypeComponent dtc = insert(rowIndex, datatype, length, null, null);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -562,7 +554,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		checkIsAllowableDataType(dataType);
 		insertMultiple(rowIndex, dataType, dtLen, multiple, monitor);
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 	}
 
@@ -601,7 +592,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		});
 
 		fixSelection();
-		componentEdited();
+//		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -637,7 +628,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 
 		fixSelection();
-		componentEdited();
+		//componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -753,7 +744,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			replace(rowIndex, datatype, newCompSize, oldDtc.getFieldName(), oldDtc.getComment());
 
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -806,7 +796,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		dtc.setComment(oldDtc.getComment());
 		fixSelection();
-		componentEdited();
 		selectionChanged();
 		return dtc;
 	}
@@ -994,7 +983,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int newIndex = startIndex - 1;
 		moved = shiftComponentsUp(startIndex, endIndex);
 		if (moved) {
-			componentEdited();
 			FieldSelection tmpFieldSelection = new FieldSelection();
 			tmpFieldSelection.addRange(newIndex, newIndex + numSelected);
 			setSelection(tmpFieldSelection);
@@ -1018,7 +1006,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int newIndex = startIndex + 1;
 		moved = shiftComponentsDown(startIndex, endIndex);
 		if (moved) {
-			componentEdited();
 			FieldSelection tmpFieldSelection = new FieldSelection();
 			tmpFieldSelection.addRange(newIndex, newIndex + numSelected);
 			setSelection(tmpFieldSelection);
@@ -1038,7 +1025,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		// Adjust the selection since we added some components. Select last component added.
 		setSelection(new int[] { rowIndex + multiple });
 
-		componentEdited();
 		lastNumDuplicates = multiple;
 	}
 
@@ -1143,9 +1129,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void setValueAt(Object aValue, int rowIndex, int modelColumnIndex) {
 		try {
 			settingValueAt = true;
-			if (fieldEdited(aValue, rowIndex, modelColumnIndex)) {
-				componentEdited();
-			}
+			fieldEdited(aValue, rowIndex, modelColumnIndex);
 		}
 		finally {
 			settingValueAt = false;
@@ -1284,7 +1268,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return;
 		}
 
-		Composite composite = getOriginalComposite();
+		T composite = getOriginalComposite();
 		boolean reload = true;
 		if (hasChanges || !viewComposite.isEquivalent(composite)) {
 			hasChanges = true;
@@ -1323,7 +1307,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
+		}
+
+		if (!isLoaded()) {
+			return;
 		}
 
 		DataType dataType = viewDTM.getDataType(path.getCategoryPath(), path.getDataTypeName());
@@ -1380,7 +1368,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
 		}
 
 		if (!isLoaded()) {
@@ -1434,7 +1422,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
+		}
+
+		if (!isLoaded()) {
+			return;
 		}
 
 		DataType dt = viewDTM.getDataType(oldPath);
@@ -1468,18 +1460,12 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 		try {
 
+			if (dtm != originalDTM) {
+				throw new AssertException("Listener only supports original DTM");
+			}
+
 			if (!isLoaded()) {
 				return;
-			}
-
-			if (dtm instanceof CompositeViewerDataTypeManager) {
-				// required to detect settings changes
-				componentEdited();
-				return;
-			}
-
-			if (dtm != originalDTM) {
-				return; // Different DTM than the one for this data type.
 			}
 
 			// If we don't currently have any modifications that need applying and
@@ -1566,7 +1552,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			DataType newDataType) {
 
 		if (dtm != originalDTM) {
-			return; // Different DTM than the one for this data type.
+			throw new AssertException("Listener only supports original DTM");
 		}
 
 		if (!isLoaded()) {
@@ -1722,15 +1708,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public int getLastNumDuplicates() {
 		return lastNumDuplicates;
-	}
-
-	/**
-	 * Called whenever the data structure's modification state changes.
-	 */
-	void componentEdited() {
-		updateAndCheckChangeState(); // Update the composite's change state information.
-		fireTableDataChanged();
-		componentDataChanged();
 	}
 
 	protected int convertRowToOrdinal(int rowIndex) {

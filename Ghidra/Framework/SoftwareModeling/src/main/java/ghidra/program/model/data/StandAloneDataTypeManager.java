@@ -873,15 +873,15 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
-	 * Get the number of active transactions
-	 * @return number of active transactions
+	 * Get the number of active datatype manager transactions
+	 * @return number of active datatype manager transactions
 	 */
 	protected int getTransactionCount() {
 		return transactionCount;
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
+	public boolean endTransaction(int transactionID, boolean commit) {
 		boolean restored = false;
 		synchronized (this) {
 			if (transaction == null) {
@@ -917,6 +917,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			invalidateCache();
 			notifyRestored();
 		}
+		return transaction == null && !restored;
 	}
 
 	public void undo() {

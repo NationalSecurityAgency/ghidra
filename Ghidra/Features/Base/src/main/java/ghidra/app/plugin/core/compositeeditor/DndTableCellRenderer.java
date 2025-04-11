@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -214,11 +214,11 @@ public class DndTableCellRenderer implements TableCellRenderer {
 	}
 
 	/**
-	 * @param inserting true indicates that only the top of the row is highlighted for feedback.
+	 * @param isInsert true indicates that only the top of the row is highlighted for feedback.
 	 * false indicates that the entire selection should be bordered on all sides.
 	 */
-	public void selectRange(boolean inserting) {
-		this.inserting = inserting;
+	public void selectRange(boolean isInsert) {
+		this.inserting = isInsert;
 		int tmpRow = rowForFeedback;
 		rowForFeedback = -1;
 		rangeMin = -1;
