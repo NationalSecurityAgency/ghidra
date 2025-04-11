@@ -1453,7 +1453,7 @@ public class CppCompositeType {
 				myVftPtrOffset = vftPtrTypeByOffset.firstKey();
 				VxtPtrInfo info =
 					new VxtPtrInfo(myVftPtrOffset, myVftPtrOffset, myId, List.of(myId));
-				VirtualFunctionTable myVft = vxtManager.findVft(myId, info.parentage());
+				VirtualFunctionTable myVft = vxtManager.findVft(myId, info.parentage(), 0);
 				myVft.setPtrOffsetInClass(info.finalOffset());
 				propagatedSelfBaseVfts.add(info);
 				finalVftByOffset.put(info.finalOffset(), myVft);
@@ -1490,7 +1490,7 @@ public class CppCompositeType {
 					Msg.warn(this, "Mismatch vbt location for " + myId);
 				}
 				VxtPtrInfo info = new VxtPtrInfo(vbtPtrOffset, vbtPtrOffset, myId, List.of(myId));
-				VirtualBaseTable myVbt = vxtManager.findVbt(myId, info.parentage());
+				VirtualBaseTable myVbt = vxtManager.findVbt(myId, info.parentage(), 0);
 				myVbt.setPtrOffsetInClass(info.finalOffset());
 				propagatedSelfBaseVbts.add(info);
 				finalVbtByOffset.put(info.finalOffset(), myVbt);
@@ -1548,7 +1548,8 @@ public class CppCompositeType {
 		Long finalOffset = info.finalOffset();
 		VirtualFunctionTable myVft = (VirtualFunctionTable) finalVftByOffset.get(finalOffset);
 		if (myVft == null) {
-			myVft = mvxtManager.findVft(myId, info.parentage());
+			Integer ordinal = getOrdinalOfKey(finalVftByOffset, finalOffset);
+			myVft = mvxtManager.findVft(myId, info.parentage(), ordinal);
 			if (myVft == null) {
 				return null;
 			}
@@ -1556,8 +1557,7 @@ public class CppCompositeType {
 		}
 
 		myVft.setPtrOffsetInClass(finalOffset);
-		VirtualFunctionTable parentVft =
-			mvxtManager.findVft(parentId, parentParentage);
+		VirtualFunctionTable parentVft = mvxtManager.findVft(parentId, parentParentage, null);
 
 		if (parentVft == null) {
 			// this is an error
@@ -1669,7 +1669,8 @@ public class CppCompositeType {
 		Long finalOffset = info.finalOffset();
 		VirtualBaseTable myVbt = (VirtualBaseTable) finalVbtByOffset.get(finalOffset);
 		if (myVbt == null) {
-			myVbt = mvxtManager.findVbt(myId, info.parentage());
+			Integer ordinal = getOrdinalOfKey(finalVbtByOffset, finalOffset);
+			myVbt = mvxtManager.findVbt(myId, info.parentage(), ordinal);
 			if (myVbt == null) {
 				return null;
 			}
@@ -1677,8 +1678,7 @@ public class CppCompositeType {
 		}
 
 		myVbt.setPtrOffsetInClass(finalOffset);
-		VirtualBaseTable parentVbt =
-			mvxtManager.findVbt(parentId, parentParentage);
+		VirtualBaseTable parentVbt = mvxtManager.findVbt(parentId, parentParentage, null);
 		if (parentVbt == null) {
 			// this is an error
 			return null;
@@ -1691,6 +1691,17 @@ public class CppCompositeType {
 		}
 
 		return myVbt;
+	}
+
+	private Integer getOrdinalOfKey(Map<Long, VXT> map, Long key) {
+		int index = 0;
+		for (Long offset : finalVftByOffset.keySet()) {
+			if (offset == key) {
+				return index;
+			}
+			index++;
+		}
+		return map.size();
 	}
 
 	/**
@@ -1739,12 +1750,15 @@ public class CppCompositeType {
 						}
 					}
 				}
-				long off = selfBaseType.getAlignedLength();
+				int off = selfBaseType.getAlignedLength();
 				for (VirtualLayoutBaseClass base : reorderedVirtualBases) {
 					CppCompositeType baseType = base.getBaseClassType();
-					addPlaceholderVirtualBaseTableEntry(plvbt, vxtManager, base, off);
+					int basePtrOff = base.getBasePointerOffset();
+					Composite baseComposite = baseType.getComposite();
+					off = DataOrganizationImpl.getAlignedOffset(baseComposite.getAlignment(), off);
+					addPlaceholderVirtualBaseTableEntry(plvbt, vxtManager, base, off - basePtrOff);
 					if (!baseType.hasZeroBaseSize) {
-						off += baseType.getSelfBaseType().getAlignedLength();
+						off += baseType.getSelfBaseType().getLength();
 					}
 				}
 				return plvbt;
