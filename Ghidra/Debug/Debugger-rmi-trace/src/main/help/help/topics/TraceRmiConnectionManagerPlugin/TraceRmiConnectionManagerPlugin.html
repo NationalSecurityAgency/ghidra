@@ -41,15 +41,17 @@
       <LI><IMG alt="" src="icon.debugger.connect"> <B>Connection:</B> A connection is a complete
       connection to a Trace RMI client. It may have one or more (but usually only one) target trace
       associated with it. The node displays a description given by the client along with the remote
-      host and port. Double-clicking the node will expand its targets, if any.</LI>
+      host and port. Double-clicking the node will expand its targets, if any. If the connection is
+      updating any trace, a busy ovelay is displayed on the icon.</LI>
 
       <LI><IMG alt="" src="icon.debugger.record"> <B>Target:</B> These are children of their
       creating connection. A client can create any number of traces to describe each target it
       wishes to trace, but by convention each client ought to create only one. The target node
       displays the name of the trace and the last snapshot activated by the client. Double-clicking
       the node will activate the target at the last snapshot, and change to <B>Control Target</B>
-      <A href=
-      "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>.</LI>
+      <A href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>.
+      If the connection is updating this target's trace, a busy overlay is displayed on the
+      icon.</LI>
     </UL>
 
     <H2>Actions</H2>

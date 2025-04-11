@@ -1105,16 +1105,14 @@ m8:   "byte ptr" Mem   	is Mem      { export *:1 Mem; }
 m16:  "word ptr" Mem  	is Mem      { export *:2 Mem; }
 m32:  "dword ptr" Mem  	is Mem      { export *:4 Mem; }
 m64:  "qword ptr" Mem  	is Mem      { export *:8 Mem; }
+m80:  "tword ptr" Mem   is Mem      { export *:10 Mem; }
 m128: "xmmword ptr" Mem	is Mem      { export *:16 Mem; }
 m256: "ymmword ptr" Mem	is Mem      { export *:32 Mem; }
 m512: "zmmword ptr" Mem is Mem      { export *:64 Mem; }
 
-# spec versions of the m8/m16/m32/... tables explicitly print the operand size
-spec_m8: "byte ptr "^Mem     is Mem      { export *:1 Mem; }
-spec_m16: "word ptr "^Mem    is Mem      { export *:2 Mem; }
-spec_m32: "dword ptr "^Mem    is Mem      { export *:4 Mem; }
-spec_m64: "qword ptr "^Mem    is Mem      { export *:8 Mem; }
-spec_m80: "tword ptr "^Mem    is Mem      { export *:10 Mem; }
+m32fp: "float ptr" Mem              is Mem      { export *:4 Mem; }
+m64fp: "double ptr" Mem             is Mem      { export *:8 Mem; }
+m80fp: "extended double ptr" Mem    is Mem      { export *:10 Mem; }
 
 ##
 ## VSIB
@@ -1383,27 +1381,15 @@ eseDI8: RDI   is addrsize=2 & RDI    { local tmp = RDI; RDI=RDI+8-16*zext(DF); e
 rm8: Rmr8   is mod=3 & Rmr8     { export Rmr8; }
 rm8: "byte ptr" Mem    is  Mem             { export *:1 Mem; }
 
-spec_rm8: Rmr8 				is mod=3 & Rmr8		{ export Rmr8; }
-spec_rm8: "byte ptr "^Mem 	is	Mem				{ export *:1 Mem; }
-
 rm16: Rmr16 is mod=3 & Rmr16    { export Rmr16; }
 rm16: "word ptr" Mem   is Mem              { export *:2 Mem; }
-
-spec_rm16: Rmr16				is mod=3 & Rmr16		{ export Rmr16; }
-spec_rm16: "word ptr "^Mem	is Mem				{ export *:2 Mem; }
 
 rm32: Rmr32 is mod=3 & Rmr32    { export Rmr32; }
 rm32: "dword ptr" Mem   is Mem              { export *:4 Mem; }
 
-spec_rm32: Rmr32				is mod=3 & Rmr32		{ export Rmr32; }
-spec_rm32: "dword ptr "^Mem	is Mem				{ export *:4 Mem; }
-
 @ifdef IA64
 rm64: Rmr64 is mod=3 & Rmr64    { export Rmr64; }
 rm64: "qword ptr" Mem   is Mem              { export *:8 Mem; }
-
-spec_rm64: Rmr64				is mod=3 & Rmr64		{ export Rmr64; }
-spec_rm64: "qword ptr "^Mem	is Mem				{ export *:8 Mem; }
 @endif
 
 n1: one	is epsilon			[ one = 1; ] { export *[const]:1 one; }
@@ -2964,16 +2950,16 @@ define pcodeop clzero;
 @ifdef IA64
 :CMP RAX,simm32      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3d; RAX & simm32            { subflags(  RAX,simm32); local tmp =   RAX -  simm32; resultflags(tmp); }
 @endif
-:CMP spec_rm8,imm8       is vexMode=0 & $(BYTE_80_82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
-:CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { local temp:2 = spec_rm16; subflags(temp,imm16); local diff = temp - imm16; resultflags(diff); }
-:CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { local temp:4 = spec_rm32; subflags(temp,imm32); local diff = temp - imm32; resultflags(diff); }
+:CMP rm8,imm8       is vexMode=0 & $(BYTE_80_82); rm8 & reg_opcode=7 ...; imm8        { local temp:1 = rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
+:CMP rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; rm16 & reg_opcode=7 ...; imm16 { local temp:2 = rm16; subflags(temp,imm16); local diff = temp - imm16; resultflags(diff); }
+:CMP rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; rm32 & reg_opcode=7 ...; imm32 { local temp:4 = rm32; subflags(temp,imm32); local diff = temp - imm32; resultflags(diff); }
 @ifdef IA64
-:CMP spec_rm64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=7 ...; simm32 { local temp:8 = spec_rm64; subflags(temp,simm32); local diff = temp - simm32; resultflags(diff); }
+:CMP rm64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; rm64 & reg_opcode=7 ...; simm32 { local temp:8 = rm64; subflags(temp,simm32); local diff = temp - simm32; resultflags(diff); }
 @endif
-:CMP spec_rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=7 ...; simm8_16	{ local temp:2 = spec_rm16; subflags(temp,simm8_16); local diff = temp - simm8_16; resultflags(diff); }
-:CMP spec_rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & reg_opcode=7 ...; simm8_32	{ local temp:4 = spec_rm32; subflags(temp,simm8_32); local diff = temp - simm8_32; resultflags(diff); }
+:CMP rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; rm16 & reg_opcode=7 ...; simm8_16	{ local temp:2 = rm16; subflags(temp,simm8_16); local diff = temp - simm8_16; resultflags(diff); }
+:CMP rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; rm32 & reg_opcode=7 ...; simm8_32	{ local temp:4 = rm32; subflags(temp,simm8_32); local diff = temp - simm8_32; resultflags(diff); }
 @ifdef IA64
-:CMP spec_rm64,simm8_64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x83; spec_rm64 & reg_opcode=7 ...; simm8_64	{ local temp:8 = spec_rm64; subflags(temp,simm8_64); local diff = temp - simm8_64; resultflags(diff); }
+:CMP rm64,simm8_64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x83; rm64 & reg_opcode=7 ...; simm8_64	{ local temp:8 = rm64; subflags(temp,simm8_64); local diff = temp - simm8_64; resultflags(diff); }
 @endif
 :CMP rm8,Reg8       is vexMode=0 & byte=0x38; rm8 & Reg8 ...                { local temp:1 = rm8; subflags(temp,Reg8); local diff = temp - Reg8; resultflags(diff); }
 :CMP rm16,Reg16     is vexMode=0 & opsize=0 & byte=0x39; rm16 & Reg16 ...       { local temp:2 = rm16; subflags(temp,Reg16); local diff = temp - Reg16; resultflags(diff); }
@@ -3867,37 +3853,37 @@ define pcodeop TaskRegister;
 @endif
 :MOV Rmr8,imm8 is vexMode=0 & byte=0xc6; (mod=3 & Rmr8 & reg_opcode=0); imm8 { Rmr8 = imm8; }
 
-:MOV^xrelease spec_m8,imm8       is vexMode=0 & xrelease & byte=0xc6; spec_m8 & reg_opcode=0 ...; imm8        
+:MOV^xrelease m8,imm8       is vexMode=0 & xrelease & byte=0xc6; m8 & reg_opcode=0 ...; imm8        
 { 
     build xrelease; 
-    build spec_m8; 
-    spec_m8 = imm8;
+    build m8; 
+    m8 = imm8;
 }
 :MOV Rmr16,imm16 is vexMode=0 & opsize=0 & byte=0xc7; (mod=3 & Rmr16 & reg_opcode=0); imm16 { Rmr16 = imm16; }
 
-:MOV^xrelease spec_m16,imm16     is vexMode=0 & xrelease & opsize=0 & byte=0xc7; spec_m16 & reg_opcode=0 ...; imm16 
+:MOV^xrelease m16,imm16     is vexMode=0 & xrelease & opsize=0 & byte=0xc7; m16 & reg_opcode=0 ...; imm16 
 { 
     build xrelease; 
-    build spec_m16; 
-    spec_m16 = imm16;
+    build m16; 
+    m16 = imm16;
 }
 
 :MOV Rmr32,imm32     is vexMode=0 & opsize=1 & byte=0xc7; (mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0); imm32 { Rmr32 = imm32; build check_Rmr32_dest; }
 
-:MOV^xrelease spec_m32,imm32     is vexMode=0 & xrelease & opsize=1 & byte=0xc7; (spec_m32 & reg_opcode=0 ...); imm32 
+:MOV^xrelease m32,imm32     is vexMode=0 & xrelease & opsize=1 & byte=0xc7; (m32 & reg_opcode=0 ...); imm32 
 { 
     build xrelease; 
-    build spec_m32;
-    spec_m32 = imm32;
+    build m32;
+    m32 = imm32;
 }
 @ifdef IA64
 :MOV Rmr64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xc7; (mod=3 & Rmr64 & reg_opcode=0); simm32 { Rmr64 = simm32; }
 
-:MOV^xrelease spec_m64,simm32     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0xc7; (spec_m64 & reg_opcode=0 ...); simm32 
+:MOV^xrelease m64,simm32     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0xc7; (m64 & reg_opcode=0 ...); simm32 
 { 
     build xrelease; 
-    build spec_m64;
-    spec_m64 = simm32; 
+    build m64;
+    m64 = simm32; 
 }
 @endif
 
@@ -3978,15 +3964,15 @@ define pcodeop swap_bytes;
 :MOVSQ^rep^reptail eseDI8,dseSI8    is $(LONGMODE_ON) & vexMode=0 & rep & reptail & opsize=2 & byte=0xa5 & eseDI8 & dseSI8   { build rep; build eseDI8; build dseSI8; eseDI8 = dseSI8; build reptail; }
 @endif
 
-:MOVSX Reg16,spec_rm8    is vexMode=0 & opsize=0 & byte=0xf; byte=0xbe; spec_rm8 & Reg16 ...  { Reg16 = sext(spec_rm8); }
-:MOVSX Reg32,spec_rm8    is vexMode=0 & opsize=1 & byte=0xf; byte=0xbe; spec_rm8 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(spec_rm8); build check_Reg32_dest; }
+:MOVSX Reg16,rm8    is vexMode=0 & opsize=0 & byte=0xf; byte=0xbe; rm8 & Reg16 ...  { Reg16 = sext(rm8); }
+:MOVSX Reg32,rm8    is vexMode=0 & opsize=1 & byte=0xf; byte=0xbe; rm8 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(rm8); build check_Reg32_dest; }
 @ifdef IA64
-:MOVSX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbe; spec_rm8 & Reg64 ...  { Reg64 = sext(spec_rm8); }
+:MOVSX Reg64,rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbe; rm8 & Reg64 ...  { Reg64 = sext(rm8); }
 @endif
-:MOVSX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xbf; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
-:MOVSX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xbf; spec_rm16 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(spec_rm16); build check_Reg32_dest; }
+:MOVSX Reg16,rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xbf; rm16 & Reg16 ... { Reg16 = rm16; }
+:MOVSX Reg32,rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xbf; rm16 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(rm16); build check_Reg32_dest; }
 @ifdef IA64
-:MOVSX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbf; spec_rm16 & Reg64 ...     { Reg64 = sext(spec_rm16); }
+:MOVSX Reg64,rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbf; rm16 & Reg64 ...     { Reg64 = sext(rm16); }
 @endif
 
 :MOVSXD Reg32,rm32  is vexMode=0 & bit64=1 & opsize=1 & byte=0x63; rm32 & Reg32 ... & check_Reg32_dest ... { Reg32 = rm32; build check_Reg32_dest; }
@@ -3994,15 +3980,15 @@ define pcodeop swap_bytes;
 :MOVSXD Reg64,rm32  is $(LONGMODE_ON) & vexMode=0 & bit64=1 & opsize=2 & byte=0x63; rm32 & Reg64 ... { Reg64 = sext(rm32); }
 @endif
 
-:MOVZX Reg16,spec_rm8    is vexMode=0 & opsize=0 & byte=0xf; byte=0xb6; spec_rm8 & Reg16 ...  { Reg16 = zext(spec_rm8); }
-:MOVZX Reg32,spec_rm8    is vexMode=0 & opsize=1 & byte=0xf; byte=0xb6; spec_rm8 & Reg32 ... & check_Reg32_dest ... { Reg32 = zext(spec_rm8); build check_Reg32_dest; }
+:MOVZX Reg16,rm8    is vexMode=0 & opsize=0 & byte=0xf; byte=0xb6; rm8 & Reg16 ...  { Reg16 = zext(rm8); }
+:MOVZX Reg32,rm8    is vexMode=0 & opsize=1 & byte=0xf; byte=0xb6; rm8 & Reg32 ... & check_Reg32_dest ... { Reg32 = zext(rm8); build check_Reg32_dest; }
 @ifdef IA64
-:MOVZX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb6; spec_rm8 & Reg64 ...  { Reg64 = zext(spec_rm8); }
+:MOVZX Reg64,rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb6; rm8 & Reg64 ...  { Reg64 = zext(rm8); }
 @endif
-:MOVZX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xb7; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
-:MOVZX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xb7; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(spec_rm16); build check_Reg32_dest; }
+:MOVZX Reg16,rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xb7; rm16 & Reg16 ... { Reg16 = rm16; }
+:MOVZX Reg32,rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xb7; rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(rm16); build check_Reg32_dest; }
 @ifdef IA64
-:MOVZX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb7; spec_rm16 & Reg64 ...     { Reg64 = zext(spec_rm16); }
+:MOVZX Reg64,rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb7; rm16 & Reg64 ...     { Reg64 = zext(rm16); }
 @endif
 
 :MUL rm8        is vexMode=0 & byte=0xf6; rm8 & reg_opcode=4 ...            { AX=zext(AL)*zext(rm8); multflags(AH); }
@@ -4714,11 +4700,11 @@ define pcodeop skinit;
 @ifdef IA64
 :TEST   RAX,simm32  is $(LONGMODE_ON) & vexMode=0 & opsize=2; byte=0xA9; RAX & simm32            { logicalflags(); local tmp =  RAX & simm32; resultflags(tmp); }
 @endif
-:TEST  spec_rm8,imm8     is vexMode=0 & byte=0xF6;  spec_rm8 & (reg_opcode=0 | reg_opcode=1) ... ; imm8        { logicalflags(); local tmp =  spec_rm8 & imm8;  resultflags(tmp); }
-:TEST spec_rm16,imm16    is vexMode=0 & opsize=0; byte=0xF7; spec_rm16 & (reg_opcode=0 | reg_opcode=1) ... ; imm16 { logicalflags(); local tmp = spec_rm16 & imm16; resultflags(tmp); }
-:TEST spec_rm32,imm32    is vexMode=0 & opsize=1; byte=0xF7; spec_rm32 & (reg_opcode=0 | reg_opcode=1) ... ; imm32 { logicalflags(); local tmp = spec_rm32 & imm32; resultflags(tmp); }
+:TEST  rm8,imm8     is vexMode=0 & byte=0xF6;  rm8 & (reg_opcode=0 | reg_opcode=1) ... ; imm8        { logicalflags(); local tmp =  rm8 & imm8;  resultflags(tmp); }
+:TEST rm16,imm16    is vexMode=0 & opsize=0; byte=0xF7; rm16 & (reg_opcode=0 | reg_opcode=1) ... ; imm16 { logicalflags(); local tmp = rm16 & imm16; resultflags(tmp); }
+:TEST rm32,imm32    is vexMode=0 & opsize=1; byte=0xF7; rm32 & (reg_opcode=0 | reg_opcode=1) ... ; imm32 { logicalflags(); local tmp = rm32 & imm32; resultflags(tmp); }
 @ifdef IA64
-:TEST spec_rm64,simm32   is $(LONGMODE_ON) & vexMode=0 & opsize=2; byte=0xF7; spec_rm64 & (reg_opcode=0 | reg_opcode=1) ... ; simm32    { logicalflags(); local tmp = spec_rm64 & simm32; resultflags(tmp); }
+:TEST rm64,simm32   is $(LONGMODE_ON) & vexMode=0 & opsize=2; byte=0xF7; rm64 & (reg_opcode=0 | reg_opcode=1) ... ; simm32    { logicalflags(); local tmp = rm64 & simm32; resultflags(tmp); }
 @endif
 :TEST  rm8,Reg8     is vexMode=0 & byte=0x84;  rm8 & Reg8  ...              { logicalflags(); local tmp =  rm8 & Reg8;  resultflags(tmp); }
 :TEST rm16,Reg16    is vexMode=0 & opsize=0; byte=0x85; rm16 & Reg16 ...        { logicalflags(); local tmp = rm16 & Reg16; resultflags(tmp); }
@@ -4958,16 +4944,16 @@ define pcodeop f2xm1;
     ST0 = abs(ST0); 
 }
     
-:FADD spec_m32      is vexMode=0 & byte=0xD8; reg_opcode=0 ... & spec_m32 
+:FADD m32fp      is vexMode=0 & byte=0xD8; reg_opcode=0 ... & m32fp 
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f+ float2float(spec_m32); 
+    ST0 = ST0 f+ float2float(m32fp); 
 }
  
-:FADD spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=0 ... & spec_m64            
+:FADD m64fp      is vexMode=0 & byte=0xDC; reg_opcode=0 ... & m64fp            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f+ float2float(spec_m64); 
+    ST0 = ST0 f+ float2float(m64fp); 
 } 
 
 :FADD ST0, freg     is vexMode=0 & byte=0xD8; frow=12 & fpage=0 & freg & ST0        
@@ -4996,31 +4982,31 @@ define pcodeop f2xm1;
     fpop();
 }    
 
-:FIADD spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & spec_m32            
+:FIADD m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & m32            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f+ int2float(spec_m32); 
+    ST0 = ST0 f+ int2float(m32); 
 }   
 
-:FIADD spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & spec_m16            
+:FIADD m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f+ int2float(spec_m16); 
+    ST0 = ST0 f+ int2float(m16); 
 }   
 
 define pcodeop from_bcd;
-:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            
+:FBLD  m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & m80            
 { 
     FPUInstructionPointer = inst_start;
     fdec(); 
-    ST0 = from_bcd(spec_m80); 
+    ST0 = from_bcd(m80); 
 }
 
 define pcodeop to_bcd;
-:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            
+:FBSTP m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & m80            
 { 
     FPUInstructionPointer = inst_start;
-    spec_m80 = to_bcd(ST0); 
+    m80 = to_bcd(ST0); 
     fpop(); 
 }
 
@@ -5097,17 +5083,17 @@ define pcodeop to_bcd;
     ST0 = freg; 
 }    
                                                                  
-:FCOM spec_m32       is vexMode=0 & byte=0xD8; reg_opcode=2 ... & spec_m32            
+:FCOM m32fp       is vexMode=0 & byte=0xD8; reg_opcode=2 ... & m32fp            
 {
     FPUInstructionPointer = inst_start; 
-    local tmp=float2float(spec_m32); 
+    local tmp=float2float(m32fp); 
     fcom(tmp); 
 }         
 
-:FCOM spec_m64       is vexMode=0 & byte=0xDC; reg_opcode=2 ... & spec_m64            
+:FCOM m64fp       is vexMode=0 & byte=0xDC; reg_opcode=2 ... & m64fp            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp=float2float(spec_m64); 
+    local tmp=float2float(m64fp); 
     fcom(tmp); 
 }         
 
@@ -5123,18 +5109,18 @@ define pcodeop to_bcd;
     fcom(ST1);
 }                   
 
-:FCOMP spec_m32      is vexMode=0 & byte=0xD8; reg_opcode=3 ... & spec_m32            
+:FCOMP m32fp      is vexMode=0 & byte=0xD8; reg_opcode=3 ... & m32fp            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp=float2float(spec_m32); 
+    local tmp=float2float(m32fp); 
     fcom(tmp); 
     fpop(); 
 }     
 
-:FCOMP spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=3 ... & spec_m64            
+:FCOMP m64fp      is vexMode=0 & byte=0xDC; reg_opcode=3 ... & m64fp            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp=float2float(spec_m64); 
+    local tmp=float2float(m64fp); 
     fcom(tmp); 
     fpop(); 
 }     
@@ -5208,16 +5194,16 @@ define pcodeop fcos;
 :FENI               is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE0 {}
 :FNENI              is vexMode=0 & byte=0xDB; byte=0xE0            {}
 
-:FDIV spec_m32      is vexMode=0 & byte=0xD8; reg_opcode=6 ... & spec_m32            
+:FDIV m32fp      is vexMode=0 & byte=0xD8; reg_opcode=6 ... & m32fp            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f/ float2float(spec_m32); 
+    ST0 = ST0 f/ float2float(m32fp); 
 }    
 
-:FDIV spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & spec_m64            
+:FDIV m64fp      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & m64fp            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f/ float2float(spec_m64); 
+    ST0 = ST0 f/ float2float(m64fp); 
 }    
 
 :FDIV ST0,freg      is vexMode=0 & byte=0xD8; frow=15 & fpage=0 & freg & ST0        
@@ -5246,28 +5232,28 @@ define pcodeop fcos;
     fpop();
 }         
 
-:FIDIV spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=6 ... & spec_m32            
+:FIDIV m32     is vexMode=0 & byte=0xDA; reg_opcode=6 ... & m32            
 { 
     FPUInstructionPointer = inst_start; 
-    ST0 = ST0 f/ int2float(spec_m32); 
+    ST0 = ST0 f/ int2float(m32); 
 }      
 
-:FIDIV spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=6 ... & spec_m16            
+:FIDIV m16     is vexMode=0 & byte=0xDE; reg_opcode=6 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f/ int2float(spec_m16); 
+    ST0 = ST0 f/ int2float(m16); 
 }      
                                                               
-:FDIVR spec_m32     is vexMode=0 & byte=0xD8; reg_opcode=7 ... & spec_m32 
+:FDIVR m32fp     is vexMode=0 & byte=0xD8; reg_opcode=7 ... & m32fp 
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = float2float(spec_m32) f/ ST0; 
+    ST0 = float2float(m32fp) f/ ST0; 
 }    
 
-:FDIVR spec_m64     is vexMode=0 & byte=0xDC; reg_opcode=7 ... & spec_m64            
+:FDIVR m64fp     is vexMode=0 & byte=0xDC; reg_opcode=7 ... & m64fp            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = float2float(spec_m64) f/ ST0; 
+    ST0 = float2float(m64fp) f/ ST0; 
 }    
 
 :FDIVR ST0,freg     is vexMode=0 & byte=0xD8; frow=15 & fpage=1 & freg & ST0        
@@ -5296,16 +5282,16 @@ define pcodeop fcos;
     fpop();
 }         
 
-:FIDIVR spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & spec_m32 
+:FIDIVR m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & m32 
 {
     FPUInstructionPointer = inst_start;
-    ST0 = int2float(spec_m32) f/ ST0; 
+    ST0 = int2float(m32) f/ ST0; 
 }      
 
-:FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            
+:FIDIVR m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = int2float(spec_m16) f/ ST0; 
+    ST0 = int2float(m16) f/ ST0; 
 }      
 
 define pcodeop ffree;
@@ -5322,54 +5308,54 @@ define pcodeop ffree;
     fpop();   # FFREE and pop
 }
                                                                   
-:FICOM spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & spec_m16            
+:FICOM m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp = int2float(spec_m16); 
+    local tmp = int2float(m16); 
     fcom(tmp); 
 }          
 
-:FICOM spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & spec_m32            
+:FICOM m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & m32            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp = int2float(spec_m32); 
+    local tmp = int2float(m32); 
     fcom(tmp);
 }          
 
-:FICOMP spec_m16    is vexMode=0 & byte=0xDE; (mod != 0b11 & reg_opcode=3) ... & spec_m16            
+:FICOMP m16    is vexMode=0 & byte=0xDE; (mod != 0b11 & reg_opcode=3) ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    local tmp = int2float(spec_m16); 
+    local tmp = int2float(m16); 
     fcom(tmp); 
     fpop(); 
 }  
 
-:FICOMP spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=3 ... & spec_m32       
+:FICOMP m32    is vexMode=0 & byte=0xDA; reg_opcode=3 ... & m32       
 {
     FPUInstructionPointer = inst_start;
-    local tmp = int2float(spec_m32); 
+    local tmp = int2float(m32); 
     fcom(tmp); 
     fpop(); 
 }  
                                                                   
-:FILD spec_m16      is vexMode=0 & byte=0xDF; reg_opcode=0 ... & spec_m16           
+:FILD m16      is vexMode=0 & byte=0xDF; reg_opcode=0 ... & m16           
 { 
     FPUInstructionPointer = inst_start;
-    fdec(); ST0 = int2float(spec_m16); 
+    fdec(); ST0 = int2float(m16); 
 }         
 
-:FILD spec_m32      is vexMode=0 & byte=0xDB; reg_opcode=0 ... & spec_m32
+:FILD m32      is vexMode=0 & byte=0xDB; reg_opcode=0 ... & m32
 { 
     FPUInstructionPointer = inst_start;
     fdec(); 
-    ST0 = int2float(spec_m32); 
+    ST0 = int2float(m32); 
 }         
 
-:FILD spec_m64      is vexMode=0 & byte=0xDF; reg_opcode=5 ... & spec_m64
+:FILD m64      is vexMode=0 & byte=0xDF; reg_opcode=5 ... & m64
 { 
     FPUInstructionPointer = inst_start;
     fdec(); 
-    ST0 = int2float(spec_m64); 
+    ST0 = int2float(m64); 
 }         
                                                                   
 :FINCSTP            is vexMode=0 & byte=0xD9; byte=0xF7                 
@@ -5406,83 +5392,83 @@ define pcodeop ffree;
     C3 = 0; 
 }          
 
-:FIST spec_m16       is vexMode=0 & byte=0xDF; (mod != 0b11 & reg_opcode=2) ... & spec_m16            
+:FIST m16       is vexMode=0 & byte=0xDF; (mod != 0b11 & reg_opcode=2) ... & m16            
 { 
     FPUInstructionPointer = inst_start;
     tmp:10 = round(ST0);
-    spec_m16 = trunc(tmp); 
+    m16 = trunc(tmp); 
 }                    
 
-:FIST spec_m32       is vexMode=0 & byte=0xDB; (mod != 0b11 & reg_opcode=2) ... & spec_m32            
+:FIST m32       is vexMode=0 & byte=0xDB; (mod != 0b11 & reg_opcode=2) ... & m32            
 { 
     FPUInstructionPointer = inst_start;
     tmp:10 = round(ST0); 
-    spec_m32 = trunc(tmp); 
+    m32 = trunc(tmp); 
 }            
 
-:FISTP spec_m16      is vexMode=0 & byte=0xDF; reg_opcode=3 ... & spec_m16            
+:FISTP m16      is vexMode=0 & byte=0xDF; reg_opcode=3 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
     tmp:10 = round(ST0); 
     fpop(); 
-    spec_m16 = trunc(tmp); 
+    m16 = trunc(tmp); 
 }                
 
-:FISTP spec_m32      is vexMode=0 & byte=0xDB; reg_opcode=3 ... & spec_m32
+:FISTP m32      is vexMode=0 & byte=0xDB; reg_opcode=3 ... & m32
 { 
     FPUInstructionPointer = inst_start;
     tmp:10 = round(ST0);
     fpop();
-    spec_m32 = trunc(tmp); 
+    m32 = trunc(tmp); 
 }                
 
-:FISTP spec_m64      is vexMode=0 & byte=0xDF; reg_opcode=7 ... & spec_m64  
+:FISTP m64      is vexMode=0 & byte=0xDF; reg_opcode=7 ... & m64  
 {
     FPUInstructionPointer = inst_start;
     tmp:10 = round(ST0); 
     fpop(); 
-    spec_m64 = trunc(tmp); 
+    m64 = trunc(tmp); 
 }                
 
-:FISTTP spec_m16     is vexMode=0 & byte=0xDF; reg_opcode=1 ... & spec_m16 
+:FISTTP m16     is vexMode=0 & byte=0xDF; reg_opcode=1 ... & m16 
 { 
     FPUInstructionPointer = inst_start;
-    spec_m16 = trunc(ST0); 
+    m16 = trunc(ST0); 
     fpop();
 }                 
 
-:FISTTP spec_m32     is vexMode=0 & byte=0xDB; reg_opcode=1 ... & spec_m32 
+:FISTTP m32     is vexMode=0 & byte=0xDB; reg_opcode=1 ... & m32 
 { 
     FPUInstructionPointer = inst_start;
-    spec_m32 = trunc(ST0); 
+    m32 = trunc(ST0); 
     fpop(); 
 }
                  
-:FISTTP spec_m64     is vexMode=0 & byte=0xDD; reg_opcode=1 ... & spec_m64
+:FISTTP m64     is vexMode=0 & byte=0xDD; reg_opcode=1 ... & m64
 { 
     FPUInstructionPointer = inst_start;
-    spec_m64 = trunc(ST0); 
+    m64 = trunc(ST0); 
     fpop(); 
 }                 
                                                                       
-:FLD spec_m32        is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=0) ... & spec_m32            
+:FLD m32fp        is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=0) ... & m32fp            
 { 
     FPUInstructionPointer = inst_start;
     fdec();
-    ST0 = float2float(spec_m32); 
+    ST0 = float2float(m32fp); 
 }           
 
-:FLD spec_m64        is vexMode=0 & byte=0xDD; reg_opcode=0 ... & spec_m64
+:FLD m64fp        is vexMode=0 & byte=0xDD; reg_opcode=0 ... & m64fp
 {
     FPUInstructionPointer = inst_start;
     fdec(); 
-    ST0 = float2float(spec_m64);
+    ST0 = float2float(m64fp);
 }            
 
-:FLD spec_m80        is vexMode=0 & byte=0xDB; reg_opcode=5 ... & spec_m80
+:FLD m80fp        is vexMode=0 & byte=0xDB; reg_opcode=5 ... & m80fp
 {
     FPUInstructionPointer = inst_start;
-    fpushv(spec_m80); 
+    fpushv(m80fp); 
 }                      
 
 # Be careful that you don't clobber freg during fpushv, need a tmp to hold the value
@@ -5560,15 +5546,15 @@ define pcodeop fldenv;
   FPULastInstructionOpcode = *:2 (Mem + 18);
 }
 
-:FMUL spec_m32       is vexMode=0 & byte=0xD8; reg_opcode=1 ... & spec_m32
+:FMUL m32fp       is vexMode=0 & byte=0xD8; reg_opcode=1 ... & m32fp
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f* float2float(spec_m32); 
+    ST0 = ST0 f* float2float(m32fp); 
 }  
 
-:FMUL spec_m64       is vexMode=0 & byte=0xDC; reg_opcode=1 ... & spec_m64            
+:FMUL m64fp       is vexMode=0 & byte=0xDC; reg_opcode=1 ... & m64fp            
 { 
-    ST0 = ST0 f* float2float(spec_m64); 
+    ST0 = ST0 f* float2float(m64fp); 
     FPUInstructionPointer = inst_start;
 }  
 
@@ -5598,16 +5584,16 @@ define pcodeop fldenv;
     fpop(); 
 }       
 
-:FIMUL spec_m32      is vexMode=0 & byte=0xDA; reg_opcode=1 ... & spec_m32            
+:FIMUL m32      is vexMode=0 & byte=0xDA; reg_opcode=1 ... & m32            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f* int2float(spec_m32); 
+    ST0 = ST0 f* int2float(m32); 
 }    
 
-:FIMUL spec_m16      is vexMode=0 & byte=0xDE; reg_opcode=1 ... & spec_m16            
+:FIMUL m16      is vexMode=0 & byte=0xDE; reg_opcode=1 ... & m16            
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f* int2float(spec_m16); 
+    ST0 = ST0 f* int2float(m16); 
 }    
 
 :FNOP           is vexMode=0 & byte=0xD9; byte=0xD0                 
@@ -5755,16 +5741,16 @@ define pcodeop fsin;
     ST0 = sqrt(ST0); 
 }
 
-:FST spec_m32   is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=2) ... & spec_m32            
+:FST m32fp   is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=2) ... & m32fp            
 { 
     FPUInstructionPointer = inst_start;
-    spec_m32 = float2float(ST0); 
+    m32fp = float2float(ST0); 
 }     
 
-:FST spec_m64   is vexMode=0 & byte=0xDD; reg_opcode=2 ... & spec_m64 
+:FST m64fp   is vexMode=0 & byte=0xDD; reg_opcode=2 ... & m64fp 
 { 
     FPUInstructionPointer = inst_start;
-    spec_m64 = float2float(ST0); 
+    m64fp = float2float(ST0); 
 }     
 
 :FST freg       is vexMode=0 & byte=0xDD; frow=13 & fpage=0 & freg          
@@ -5773,24 +5759,24 @@ define pcodeop fsin;
     freg = ST0; 
 }             
 
-:FSTP spec_m32  is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=3) ... & spec_m32 
+:FSTP m32fp  is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=3) ... & m32fp 
 {
     FPUInstructionPointer = inst_start;
-    spec_m32 = float2float(ST0); 
+    m32fp = float2float(ST0); 
     fpop();
 } 
 
-:FSTP spec_m64  is vexMode=0 & byte=0xDD; reg_opcode=3 ... & spec_m64 
+:FSTP m64fp  is vexMode=0 & byte=0xDD; reg_opcode=3 ... & m64fp 
 { 
     FPUInstructionPointer = inst_start;
-    spec_m64 = float2float(ST0); 
+    m64fp = float2float(ST0); 
     fpop();
 } 
 
-:FSTP spec_m80  is vexMode=0 & byte=0xDB; reg_opcode=7 ... & spec_m80
+:FSTP m80fp  is vexMode=0 & byte=0xDB; reg_opcode=7 ... & m80fp
 {
     FPUInstructionPointer = inst_start;
-    fpopv(spec_m80); 
+    fpopv(m80fp); 
 }             
 
 :FSTP freg      is vexMode=0 & byte=0xDD; frow=13 & fpage=1 & freg 
@@ -5849,16 +5835,16 @@ define pcodeop fsin;
     AX = FPUStatusWord; 
 }
 
-:FSUB spec_m32  is vexMode=0 & byte=0xD8; reg_opcode=4 ... & spec_m32  
+:FSUB m32fp  is vexMode=0 & byte=0xD8; reg_opcode=4 ... & m32fp  
 {
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f- float2float(spec_m32); 
+    ST0 = ST0 f- float2float(m32fp); 
 }          
 
-:FSUB spec_m64  is vexMode=0 & byte=0xDC; reg_opcode=4 ... & spec_m64            
+:FSUB m64fp  is vexMode=0 & byte=0xDC; reg_opcode=4 ... & m64fp            
 {
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f- float2float(spec_m64); 
+    ST0 = ST0 f- float2float(m64fp); 
 }          
 
 :FSUB ST0,freg  is vexMode=0 & byte=0xD8; frow=14 & fpage=0 & freg & ST0   
@@ -5887,28 +5873,28 @@ define pcodeop fsin;
     fpop(); 
 }             
 
-:FISUB spec_m32 is vexMode=0 & byte=0xDA; (mod != 0b11 & reg_opcode=4) ... & spec_m32 
+:FISUB m32 is vexMode=0 & byte=0xDA; (mod != 0b11 & reg_opcode=4) ... & m32 
 {
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f- int2float(spec_m32); 
+    ST0 = ST0 f- int2float(m32); 
 }            
 
-:FISUB spec_m16 is vexMode=0 & byte=0xDE; reg_opcode=4 ... & spec_m16 
+:FISUB m16 is vexMode=0 & byte=0xDE; reg_opcode=4 ... & m16 
 {
     FPUInstructionPointer = inst_start;
-    ST0 = ST0 f- int2float(spec_m16); 
+    ST0 = ST0 f- int2float(m16); 
 }            
                                                                     
-:FSUBR spec_m32  is vexMode=0 & byte=0xD8; reg_opcode=5 ... & spec_m32   
+:FSUBR m32fp  is vexMode=0 & byte=0xD8; reg_opcode=5 ... & m32fp   
 {
     FPUInstructionPointer = inst_start;
-    ST0 = float2float(spec_m32) f- ST0; 
+    ST0 = float2float(m32fp) f- ST0; 
 }          
 
-:FSUBR spec_m64  is vexMode=0 & byte=0xDC; reg_opcode=5 ... & spec_m64 
+:FSUBR m64fp  is vexMode=0 & byte=0xDC; reg_opcode=5 ... & m64fp 
 {
     FPUInstructionPointer = inst_start;
-    ST0 = float2float(spec_m64) f- ST0; 
+    ST0 = float2float(m64fp) f- ST0; 
 }          
 
 :FSUBR ST0,freg  is vexMode=0 & byte=0xD8; frow=14 & fpage=1 & freg & ST0 
@@ -5935,16 +5921,16 @@ define pcodeop fsin;
     freg = ST0 f- freg; fpop(); 
 }             
 
-:FISUBR spec_m32 is vexMode=0 & byte=0xDA; reg_opcode=5 ... & spec_m32  
+:FISUBR m32 is vexMode=0 & byte=0xDA; reg_opcode=5 ... & m32  
 {
     FPUInstructionPointer = inst_start;
-    ST0 = int2float(spec_m32) f- ST0; 
+    ST0 = int2float(m32) f- ST0; 
 }            
 
-:FISUBR spec_m16 is vexMode=0 & byte=0xDE; reg_opcode=5 ... & spec_m16           
+:FISUBR m16 is vexMode=0 & byte=0xDE; reg_opcode=5 ... & m16           
 { 
     FPUInstructionPointer = inst_start;
-    ST0 = int2float(spec_m16) f- ST0; 
+    ST0 = int2float(m16) f- ST0; 
 }            
                                                                     
 :FTST           is vexMode=0 & byte=0xD9; byte=0xE4                 

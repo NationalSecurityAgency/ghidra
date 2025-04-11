@@ -101,24 +101,27 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 				.buildAndInstall(tool);
 		actionCloseAllTraces = CloseAllTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty())
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty())
 				.onAction(c -> traceManager.closeAllTraces())
 				.buildAndInstall(tool);
 		actionCloseOtherTraces = CloseOtherTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> traceManager.getOpenTraces().size() > 1 && c.getTrace() != null)
+				.popupWhen(c -> traceManager != null && traceManager.getOpenTraces().size() > 1 &&
+					c.getTrace() != null)
 				.onAction(c -> traceManager.closeOtherTraces(c.getTrace()))
 				.buildAndInstall(tool);
 		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && targetService != null)
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty() &&
+					targetService != null)
 				.onAction(c -> traceManager.closeDeadTraces())
 				.buildAndInstall(tool);
 	}
 
 	private String getNameForTrace(Trace trace) {
 		String name = DomainObjectDisplayUtils.getTabText(trace);
-		DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+		DebuggerCoordinates current =
+			traceManager == null ? DebuggerCoordinates.NOWHERE : traceManager.getCurrentFor(trace);
 		if (current == DebuggerCoordinates.NOWHERE) {
 			// TODO: Could use view's snap and time table's schedule
 			return name + " (?)";
@@ -209,6 +212,9 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 
 	private void traceTabSelected(Trace newTrace) {
 		cbCoordinateActivation.invoke(() -> {
+			if (traceManager == null) {
+				return;
+			}
 			traceManager.activateTrace(newTrace);
 		});
 	}

@@ -1065,33 +1065,6 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	void removeDtFromComponents(Composite comp) {
-		DataType newDt = viewDTM.getDataType(comp.getDataTypePath());
-		if (newDt == null) {
-			return;
-		}
-		boolean clearedComponents = viewDTM.withTransaction("Remove Components", () -> {
-			boolean cleared = false;
-			int num = getNumComponents();
-			for (int i = num - 1; i >= 0; i--) {
-				DataTypeComponent dtc = getComponent(i);
-				DataType dt = dtc.getDataType();
-				if (dt instanceof Composite) {
-					Composite dtcComp = (Composite) dt;
-					if (dtcComp.isPartOf(newDt)) {
-						clearComponents(new int[] { i });
-						cleared = true;
-					}
-				}
-			}
-			return cleared;
-		});
-		if (clearedComponents) {
-			setStatus("Components containing " + comp.getDisplayName() + " were cleared.", true);
-		}
-	}
-
-	@Override
 	public boolean isShowingUndefinedBytes() {
 		return !viewComposite.isPackingEnabled();
 	}

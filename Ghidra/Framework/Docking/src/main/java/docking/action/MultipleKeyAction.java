@@ -15,10 +15,10 @@
  */
 package docking.action;
 
-import java.awt.Component;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -154,6 +154,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		else {
 			String name = (String) getValue(Action.NAME);
 			tool.setStatusInfo("Action (" + name + ") not valid in this context!", true);
+			Toolkit.getDefaultToolkit().beep();
 		}
 	}
 
@@ -216,28 +217,29 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// 3) Check for default context actions
 		//
 		for (ActionData actionData : actions) {
-			if (actionData.isGlobalAction()) {
-				// When looking for context matches, we prefer local context, even though this
-				// is a 'global' action.  This allows more specific context to be used when
-				// available
-				if (isValidAndEnabled(actionData, localContext)) {
-					list.add(new ExecutableAction(actionData.action, localContext));
-					continue;
-				}
+			if (!actionData.isGlobalAction()) {
+				continue;
+			}
 
-				// this happens if we are in a dialog, default context is not used
-				if (contextMap == null) {
-					continue;
-				}
+			// When looking for context matches, we prefer local context, even though this
+			// is a 'global' action.  This allows more specific context to be used when available
+			if (isValidAndEnabled(actionData, localContext)) {
+				list.add(new ExecutableAction(actionData.action, localContext));
+				continue;
+			}
 
-				if (!actionData.supportsDefaultContext()) {
-					continue;
-				}
+			// this happens if we are in a dialog, default context is not used
+			if (contextMap == null) {
+				continue;
+			}
 
-				ActionContext defaultContext = contextMap.get(actionData.getContextType());
-				if (isValidAndEnabled(actionData, defaultContext)) {
-					list.add(new ExecutableAction(actionData.action, defaultContext));
-				}
+			if (!actionData.supportsDefaultContext()) {
+				continue;
+			}
+
+			ActionContext defaultContext = contextMap.get(actionData.getContextType());
+			if (isValidAndEnabled(actionData, defaultContext)) {
+				list.add(new ExecutableAction(actionData.action, defaultContext));
 			}
 		}
 		return list;

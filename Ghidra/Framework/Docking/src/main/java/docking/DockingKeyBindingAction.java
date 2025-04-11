@@ -15,6 +15,7 @@
  */
 package docking;
 
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
@@ -44,6 +45,14 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 	@Override
 	public boolean isEnabled() {
 		return true; // always enable; this is a internal action that cannot be disabled
+	}
+
+	public void reportNotEnabled() {
+		String name = dockingAction.getName();
+		String ksText = KeyBindingUtils.parseKeyStroke(keyStroke);
+		String message = "Action '%s' (%s) not currently enabled".formatted(name, ksText);
+		tool.setStatusInfo(message, true);
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 	public abstract KeyBindingPrecedence getKeyBindingPrecedence();

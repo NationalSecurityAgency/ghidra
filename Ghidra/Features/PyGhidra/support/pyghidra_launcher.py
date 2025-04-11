@@ -212,8 +212,8 @@ def main() -> None:
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog=Path(__file__).name)
     parser.add_argument('install_dir', metavar='<install dir>', help='Ghidra installation directory')
-    parser.add_argument('-c', '--console', action='store_true', help='Force console launch')
-    parser.add_argument('-d', '--dev', action='store_true', help='Ghidra development mode')
+    parser.add_argument('--console', action='store_true', help='Force console launch')
+    parser.add_argument('--dev', action='store_true', help='Ghidra development mode')
     parser.add_argument('-H', '--headless', action='store_true', help='Ghidra headless mode')
     args, remaining = parser.parse_known_args()
     

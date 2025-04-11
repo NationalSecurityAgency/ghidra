@@ -142,13 +142,28 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
+		// no actions valid at all
+		// return
+
+		// actions that are valid, but not enabled
+
+		// also, is applicable:  
+		// 		isValidContext();
+		// 		is action for active local for provider; 
+		// 		is focused
+
+		// actions that are enabled
+
 		KeyBindingPrecedence keyBindingPrecedence = getValidKeyBindingPrecedence(action);
 		if (keyBindingPrecedence == null) {
-			// Odd Code: we use the precedence as a signal to say that, when it is null, there
-			//           are no valid bindings to be processed.  We used to have a isValidContext()
-			//           method on the action, but it repeated the involved work that is done
-			//           in getKeyBindingPrecedence(), which is needed below.  So, just use the
-			//           one call for both purposes.
+			// Note: we used to return false here.  Returning false allows Java to handle a given 
+			//       key stroke when our actions are disabled. We have decided it is simpler to 
+			//       always consume a given key stroke when we have actions registered.  This 
+			//       prevents inconsistent action firing between Ghidra and Java, depending upon 
+			//       Ghidra's action enablement.   If we find a case that is broken by this change, 
+			//       then we will need a more robust solution here.
+//			action.reportNotEnabled();
+//			return true;
 			return false;
 		}
 

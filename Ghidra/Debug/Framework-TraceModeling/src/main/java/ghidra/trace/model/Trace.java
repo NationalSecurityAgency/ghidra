@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import generic.theme.GIcon;
 import ghidra.lifecycle.Transitional;
 import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypeManagerDomainObject;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
@@ -31,6 +32,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointManager;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.guest.TracePlatformManager;
 import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceCodeUnit;
@@ -95,8 +97,19 @@ public interface Trace extends DataTypeManagerDomainObject {
 
 	TraceCodeManager getCodeManager();
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * For traces, this gets the "base" or "host" {@link DataTypeManager}. For platform-specific
+	 * managers, see {@link TracePlatform#getDataTypeManager()}.
+	 */
 	@Override
-	TraceBasedDataTypeManager getDataTypeManager();
+	default TraceBasedDataTypeManager getDataTypeManager() {
+		return getBaseDataTypeManager();
+	}
+
+	TraceBasedDataTypeManager getBaseDataTypeManager();
 
 	TraceEquateManager getEquateManager();
 

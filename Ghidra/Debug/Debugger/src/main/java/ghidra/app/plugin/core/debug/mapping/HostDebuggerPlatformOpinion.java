@@ -22,6 +22,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Processor;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
 
 /**
@@ -30,6 +31,8 @@ import ghidra.trace.model.target.TraceObject;
  * the real language must be mapped as a guest platform.
  */
 public class HostDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
+	// An alternative default had better mean it.
+	public static final int CONFIDENCE_HOST_KNOWN = 10000;
 
 	protected static class HostDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
 		public HostDebuggerPlatformMapper(PluginTool tool, Trace trace) {
@@ -37,13 +40,13 @@ public class HostDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 		}
 
 		@Override
-		public CompilerSpec getCompilerSpec(TraceObject object) {
+		public CompilerSpec getCompilerSpec(TraceObject object, long snap) {
 			return trace.getBaseCompilerSpec();
 		}
 
 		@Override
-		public void addToTrace(long snap) {
-			// Nothing to do
+		public TracePlatform addToTrace(TraceObject newFocus, long snap) {
+			return trace.getPlatformManager().getHostPlatform();
 		}
 
 		@Override
@@ -79,7 +82,7 @@ public class HostDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 
 			@Override
 			public int getConfidence() {
-				return 10000; // An alternative default had better mean it. Really.
+				return CONFIDENCE_HOST_KNOWN;
 			}
 		};
 

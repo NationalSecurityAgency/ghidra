@@ -334,7 +334,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 					.findAny()
 					.orElse(null)
 					.take(tool, tb.trace);
-		platformPlugin.setCurrentMapperFor(tb.trace, mapper, 0);
+		platformPlugin.setCurrentMapperFor(tb.trace, null, mapper, 0);
 		waitForSwing();
 
 		waitForPass(() -> assertEquals(x64, traceManager.getCurrentPlatform().getLanguage()));

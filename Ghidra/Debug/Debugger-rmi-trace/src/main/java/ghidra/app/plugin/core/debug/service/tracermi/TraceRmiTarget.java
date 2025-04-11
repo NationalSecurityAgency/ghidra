@@ -427,8 +427,7 @@ public class TraceRmiTarget extends AbstractTarget {
 				.orElse(null);
 	}
 
-	record ParamAndObjectArg(RemoteParameter param, TraceObject obj) {
-	}
+	record ParamAndObjectArg(RemoteParameter param, TraceObject obj) {}
 
 	protected ParamAndObjectArg getFirstObjectArgument(RemoteMethod method,
 			Map<String, Object> args) {
@@ -871,8 +870,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		static final List<ToggleBreakMatcher> SPEC = matchers(HAS_SPEC);
 	}
 
-	record MatchKey(Class<? extends MethodMatcher> cls, ActionName action, TraceObjectSchema sch) {
-	}
+	record MatchKey(Class<? extends MethodMatcher> cls, ActionName action, TraceObjectSchema sch) {}
 
 	protected class Matches {
 		private final Map<MatchKey, MatchedMethod> map = new HashMap<>();
@@ -1732,5 +1730,10 @@ public class TraceRmiTarget extends AbstractTarget {
 				ExceptionUtils.rethrow(e);
 			}
 		});
+	}
+
+	@Override
+	public boolean isBusy() {
+		return connection.isBusy(this);
 	}
 }
