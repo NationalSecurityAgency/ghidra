@@ -1378,11 +1378,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 * @param componentName name of component replacement (may be null)
 	 * @param comment comment for component replacement (may be null)
 	 * @return new/updated component (may be null if replacement is not a defined component)
+	 * @throws IllegalArgumentException if unable to identify/make sufficient space
 	 * @throws IOException if an IO error occurs
 	 */
 	private DataTypeComponent doComponentReplacement(
 			LinkedList<DataTypeComponentDB> replacedComponents, int offset, DataType dataType,
-			int length, String componentName, String comment) throws IOException {
+			int length, String componentName, String comment)
+			throws IllegalArgumentException, IOException {
 
 		// Attempt quick update of a single defined component if possible.
 		// A quick update requires that component characteristics including length, offset,
@@ -1416,13 +1418,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	@Override
 	public final DataTypeComponent replace(int ordinal, DataType dataType, int length)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, IndexOutOfBoundsException {
 		return replace(ordinal, dataType, length, null, null);
 	}
 
 	@Override
 	public DataTypeComponent replace(int ordinal, DataType dataType, int length,
-			String componentName, String comment) {
+			String componentName, String comment)
+			throws IllegalArgumentException, IndexOutOfBoundsException {
 		lock.acquire();
 		try {
 			checkDeleted();

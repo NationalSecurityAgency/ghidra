@@ -47,8 +47,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * @param <M> Specific {@link CompositeEditorModel} implementation which supports editing T
  */
 public abstract class CompositeEditorProvider<T extends Composite, M extends CompositeEditorModel<T>>
-		extends ComponentProviderAdapter
-		implements EditorProvider, EditorActionListener {
+		extends ComponentProviderAdapter implements EditorProvider, EditorActionListener {
 
 	protected static final Icon EDITOR_ICON = new GIcon("icon.plugin.composite.editor.provider");
 
@@ -317,7 +316,7 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		// Check for changes and prompt user to check if saving them.
 		if (editorModel.isValidName() && editorModel.hasChanges()) {
 			String question = "The " + editorModel.getTypeName() + " Editor is closing.\n" +
-				"Save the changes to " + getDtPath() + "?";
+				"Save the changes to " + getDisplayName() + "?";
 			String title = "Save " + editorModel.getTypeName() + " Editor Changes?";
 			int response;
 			if (allowCancel) {
@@ -335,6 +334,10 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 			return response;
 		}
 		return 2;
+	}
+
+	protected String getDisplayName() {
+		return getDtPath().toString();
 	}
 
 	@Override
