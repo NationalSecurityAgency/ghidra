@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.gotoquery;
 
-import static ghidra.framework.main.DataTreeDialogType.OPEN;
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.util.Stack;
 
@@ -204,8 +204,10 @@ public class GoToHelper {
 		Address[] externalLinkageAddresses =
 			NavigationUtils.getExternalLinkageAddresses(program, externalSym.getAddress());
 		if (externalLinkageAddresses.length == 0) {
-			tool.setStatusInfo("Failed to identify external linkage address for " +
-				externalSym.getName(true) + ". Unable to perform navigation.", true);
+			if (externalLoc.isFunction()) {
+				tool.setStatusInfo("Failed to identify external linkage address for " +
+					externalSym.getName(true) + ". Unable to perform navigation.", true);
+			}
 			return false;
 		}
 		if (externalLinkageAddresses.length > 1) {
