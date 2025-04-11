@@ -120,6 +120,10 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		//     same-named segment can easily know where to go
 		// NOTE: The key for these maps needs to include both the segment name and the type
 		AddressSet usedAddresses = new AddressSet();
+		Address codeStart = program.getAddressFactory()
+			.getAddressSpace("CODE")
+			.getMinAddress();
+		usedAddresses.add(new AddressRangeImpl(codeStart, codeStart.add(256)));
 		Map<String, Integer> segmentSizes = new HashMap<>();
 		Map<String, Address> segmentEnds = new HashMap<>();
 		for (Omf51Segment segment : segments) {
@@ -185,27 +189,15 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		if (externalSize == 0) {
 			return map;
 		}
-
-		Address codeEndAddr = Arrays.stream(program.getMemory().getBlocks())
-				.filter(block -> block.getSourceName().equals("CODE"))
-				.map(block -> block.getEnd())
-				.sorted((a, b) -> b.compareTo(a))
-				.findFirst()
-				.get();
-
-		int availableSize = (int) (program.getAddressFactory()
+		
+		Address codeStart = program.getAddressFactory()
 				.getAddressSpace("CODE")
-				.getMaxAddress()
-				.getOffset() -
-			codeEndAddr.getOffset());
+				.getMinAddress();
 
-		if (availableSize < externalSize) {
-			throw new Exception("Not enough CODE space for externals");
-		}
-
-		// Create an artificial 'EXTERNAL' block in CODE space.
+		// Create an artificial 'EXTERNAL' block at the start of CODE space.
+		// We put it at the start to make sure single byte fixups can work.
 		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false, "EXTERNAL",
-			codeEndAddr.add(1), externalSize, "", "CODE", false, false, true, log);
+			codeStart, externalSize, "", "CODE", false, false, true, log);
 
 		if (block == null) {
 			throw new Exception("Couldn't create EXTERNAL block");
@@ -216,7 +208,7 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			"NOTE: This block is artificial and allows external fixups to work correctly");
 
 		// Create thunks for each external procedure def.
-		Address addr = codeEndAddr;
+		Address addr = codeStart;
 		for (Omf51ExternalDef def : defs) {
 			addr = addr.add(1);
 
