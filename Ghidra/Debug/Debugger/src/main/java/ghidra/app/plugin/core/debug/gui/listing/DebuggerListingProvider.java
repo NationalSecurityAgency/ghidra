@@ -52,6 +52,7 @@ import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
+import ghidra.app.plugin.core.debug.event.TrackingChangedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.OpenProgramAction;
@@ -240,6 +241,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		@Override
 		protected void specChanged(LocationTrackingSpec spec) {
+			if (isMainListing()) {
+				plugin.firePluginEvent(new TrackingChangedPluginEvent(getName(), spec));
+			}
 			updateTitle();
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
