@@ -2257,24 +2257,31 @@ is b_2531=0x6b & b_2324=1 & b_2122=1 & b_1620=0x1f & b_1015=0 & aa_Xn=31 & b_000
 # CONSTRUCT xd503309f/mask=xfffff3ff MATCHED 3 DOCUMENTED OPCODES
 # AUNIT --inst xd503309f/mask=xfffff3ff --status nodest
 
-:dsb CRm_CRx
-is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_CRx & CRm_32 & CRm_10=0 & Op2=4 & Rt=0x1f
+:dsb CRm_dbarrier_op
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10 & Op2=4 & Rt=0x1f
 {
-	types:1 = 0x0;
+	types:1 = CRm_10;
 	domain:1 = CRm_32;
-	DataSynchronizationBarrier(domain, types);
+	nXS:1 = 0;
+	DataSynchronizationBarrier(domain, types, nXS);
 }
 
-# C6.2.116 DSB page C6-1464 line 87160 MATCH xd503309f/mask=xfffff0ff
-# CONSTRUCT xd503309f/mask=xfffff0ff MATCHED 1 DOCUMENTED OPCODES
-# AUNIT --inst xd503309f/mask=xfffff0ff --status nodest
-
-:dsb CRm_dbarrier_op
-is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10=2 & Op2=4 & Rt=0x1f
+:ssbb
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_CRx=0 & CRm_32 & CRm_10 & Op2=4 & Rt=0x1f
 {
-	types:1 = 0x3; #MBReqTypes_All
+	types:1 = CRm_10;
 	domain:1 = CRm_32;
-	DataSynchronizationBarrier(domain, types);
+	nXS:1 = 0;
+	DataSynchronizationBarrier(domain, types, nXS);
+}
+
+:pssbb
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_CRx=4 & CRm_32 & CRm_10 & Op2=4 & Rt=0x1f
+{
+	types:1 = CRm_10;
+	domain:1 = CRm_32;
+	nXS:1 = 0;
+	DataSynchronizationBarrier(domain, types, nXS);
 }
 
 # C6.2.116 DSB page C6-1464 line 87160 MATCH xd503323f/mask=xfffff3ff
@@ -2283,11 +2290,12 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CR
 # b_0031=11010101000000110011..1000111111
 
 :dsb CRm_32
-is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10 & Op2=1 & Rt=0x1f
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_32 & CRm_10=2 & Op2=1 & Rt=0x1f
 {
-	types:1 = CRm_10;
+	types:1 = 0x3; # MBReqTypes_All
 	domain:1 = CRm_32;
-	DataSynchronizationBarrier(domain, types);
+	nXS:1 = 1;
+	DataSynchronizationBarrier(domain, types, nXS);
 }
 
 # C6.2.118 EON (shifted register) page C6-1468 line 87407 MATCH x4a200000/mask=x7f200000
