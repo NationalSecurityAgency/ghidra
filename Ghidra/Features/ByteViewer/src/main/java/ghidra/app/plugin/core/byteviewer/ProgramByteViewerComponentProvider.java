@@ -197,7 +197,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		panel.setViewerSelection(blockSelection);
 
 		if (notify) {
-			ProgramSelectionPluginEvent selectionEvent =
+			AbstractSelectionPluginEvent selectionEvent =
 				blockSet.getPluginEvent(getName(), blockSelection);
 			plugin.updateSelection(this, selectionEvent, program);
 		}
@@ -449,7 +449,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 	}
 
-	ProgramLocation getLocation(ByteBlock block, BigInteger offset, int column) {
+	protected ProgramLocation getLocation(ByteBlock block, BigInteger offset, int column) {
 		Address address = blockSet.getAddress(block, offset);
 		int characterOffset = column;
 		ProgramLocation loc = new ByteViewerProgramLocation(program, address, characterOffset);
@@ -515,17 +515,17 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 	}
 
-	private void processHighlightEvent(ProgramHighlightPluginEvent event) {
+	protected void processHighlightEvent(AbstractHighlightPluginEvent event) {
 		ProgramSelection programSelection = event.getHighlight();
 		setHighlight(programSelection);
 	}
 
-	private void processSelectionEvent(ProgramSelectionPluginEvent event) {
+	protected void processSelectionEvent(AbstractSelectionPluginEvent event) {
 		ProgramSelection programSelection = event.getSelection();
 		setSelection(programSelection);
 	}
 
-	private void processLocationEvent(ProgramLocationPluginEvent event) {
+	protected void processLocationEvent(AbstractLocationPluginEvent event) {
 		ProgramLocation loc = event.getLocation();
 		setLocation(loc);
 	}
@@ -603,7 +603,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	protected void updateSelection(ByteBlockSelection selection) {
-		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		AbstractSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
 		liveSelection = null;
 		currentSelection = event.getSelection();
 		plugin.updateSelection(this, event, program);
@@ -614,7 +614,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	protected void updateLiveSelection(ByteBlockSelection selection) {
-		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		AbstractSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
 		liveSelection = event.getSelection();
 		updateTitle();
 	}
@@ -622,7 +622,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	protected void updateLocation(ByteBlock block, BigInteger blockOffset, int column,
 			boolean export) {
-		ProgramLocationPluginEvent event =
+		AbstractLocationPluginEvent event =
 			blockSet.getPluginEvent(plugin.getName(), block, blockOffset, column);
 		currentLocation = event.getLocation();
 		plugin.updateLocation(this, event, export);

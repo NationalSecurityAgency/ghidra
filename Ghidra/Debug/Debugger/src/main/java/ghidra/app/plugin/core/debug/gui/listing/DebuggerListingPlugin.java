@@ -62,7 +62,6 @@ import utilities.util.SuppressableCallback.Suppression;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
 		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
 		ProgramActivatedPluginEvent.class, // To track the static program for sync
@@ -70,19 +69,25 @@ import utilities.util.SuppressableCallback.Suppression;
 		ProgramSelectionPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
 		TraceClosedPluginEvent.class,
+		TraceLocationPluginEvent.class,
+		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	eventsProduced = {
 		ProgramLocationPluginEvent.class,
 		ProgramSelectionPluginEvent.class,
 		TraceLocationPluginEvent.class,
-		TraceSelectionPluginEvent.class
+		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
 		DebuggerEmulationService.class, // TODO: Optional?
 		ProgramManager.class, // For static listing sync
 		ClipboardService.class,
-		MarkerService.class // TODO: Make optional?
+		MarkerService.class, // TODO: Make optional?
 	},
 	servicesProvided = {
 		DebuggerListingService.class,
@@ -208,11 +213,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
 		// TODO: Fix cursor?
 		// Do not fire ProgramLocationPluginEvent.
-		firePluginEvent(new TraceLocationPluginEvent(getName(), location));
+		if (provider == connectedProvider) {
+			firePluginEvent(new TraceLocationPluginEvent(getName(), location));
+		}
 	}
 
 	@Override
 	public void selectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+		if (provider != connectedProvider) {
+			return;
+		}
 		TraceProgramView view = current.getView();
 		if (view == null) {
 			return;
@@ -222,9 +232,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider codeViewerProvider,
-			ProgramSelection highlight) {
-		// TODO Nothing, yet
+	public void highlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
+		if (provider != connectedProvider) {
+			return;
+		}
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return;
+		}
+		// Do not fire ProgramHighlightPluginEvent
+		firePluginEvent(new TraceHighlightPluginEvent(getName(), highlight, view));
 	}
 
 	protected boolean heedLocationEvent(PluginEvent ev) {
@@ -259,39 +276,50 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramLocationPluginEvent ev) {
-			cbProgramLocationEvents.invoke(() -> {
+		switch (event) {
+			case ProgramLocationPluginEvent ev -> cbProgramLocationEvents.invoke(() -> {
 				if (heedLocationEvent(ev)) {
 					connectedProvider.staticProgramLocationChanged(ev.getLocation());
 				}
 			});
-		}
-		if (event instanceof ProgramSelectionPluginEvent ev) {
-			cbProgramSelectionEvents.invoke(() -> {
+			case ProgramSelectionPluginEvent ev -> cbProgramSelectionEvents.invoke(() -> {
 				if (heedSelectionEvent(ev)) {
 					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
 						ev.getSelection());
 				}
 			});
-		}
-		if (event instanceof ProgramOpenedPluginEvent ev) {
-			allProviders(p -> p.programOpened(ev.getProgram()));
-		}
-		if (event instanceof ProgramClosedPluginEvent ev) {
-			allProviders(p -> p.programClosed(ev.getProgram()));
-		}
-		if (event instanceof ProgramActivatedPluginEvent ev) {
-			allProviders(p -> p.staticProgramActivated(ev.getActiveProgram()));
-		}
-		if (event instanceof TraceActivatedPluginEvent ev) {
-			current = ev.getActiveCoordinates();
-			allProviders(p -> p.coordinatesActivated(current));
-		}
-		if (event instanceof TraceClosedPluginEvent ev) {
-			if (current.getTrace() == ev.getTrace()) {
-				current = DebuggerCoordinates.NOWHERE;
+			case ProgramOpenedPluginEvent ev -> allProviders(p -> p.programOpened(ev.getProgram()));
+			case ProgramClosedPluginEvent ev -> allProviders(p -> p.programClosed(ev.getProgram()));
+			case ProgramActivatedPluginEvent ev -> allProviders(
+				p -> p.staticProgramActivated(ev.getActiveProgram()));
+			case TraceActivatedPluginEvent ev -> {
+				current = ev.getActiveCoordinates();
+				allProviders(p -> p.coordinatesActivated(current));
 			}
-			allProviders(p -> p.traceClosed(ev.getTrace()));
+			case TraceClosedPluginEvent ev -> {
+				if (current.getTrace() == ev.getTrace()) {
+					current = DebuggerCoordinates.NOWHERE;
+				}
+				allProviders(p -> p.traceClosed(ev.getTrace()));
+			}
+			case TraceLocationPluginEvent ev -> {
+				// For those comparing to CodeBrowserPlugin, there is no "viewManager" here.
+				connectedProvider.goTo(ev.getTraceProgramView(), ev.getLocation());
+			}
+			case TraceSelectionPluginEvent ev -> {
+				if (ev.getTraceProgramView() == current.getView()) {
+					connectedProvider.setSelection(ev.getSelection());
+				}
+			}
+			case TraceHighlightPluginEvent ev -> {
+				if (ev.getTraceProgramView() == current.getView()) {
+					connectedProvider.setHighlight(ev.getHighlight());
+				}
+			}
+			case TrackingChangedPluginEvent ev -> connectedProvider
+					.setTrackingSpec(ev.getLocationTrackingSpec());
+			default -> {
+			}
 		}
 	}
 

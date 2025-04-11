@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.events;
+package ghidra.app.plugin.core.debug.event;
 
-import ghidra.program.model.listing.Program;
+import java.util.Objects;
+
+import ghidra.app.events.AbstractHighlightPluginEvent;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.program.TraceProgramView;
 
-/**
- * Plugin event generated when the highlight in a program changes.
- */
-public final class ProgramHighlightPluginEvent extends AbstractHighlightPluginEvent {
-	public static final String NAME = "ProgramHighlight";
+public class TraceHighlightPluginEvent extends AbstractHighlightPluginEvent {
+	public static final String NAME = "TraceHighlight";
 
-	/**
-	 * Construct a new event.
-	 * 
-	 * @param src name of the plugin that generated the event
-	 * @param hl Program selection containing the selected address set.
-	 * @param program program being highlighted
-	 */
-	public ProgramHighlightPluginEvent(String src, ProgramSelection hl, Program program) {
-		super(src, NAME, hl, program);
+	private final TraceProgramView view;
+
+	public TraceHighlightPluginEvent(String src, ProgramSelection highlight,
+			TraceProgramView view) {
+		super(src, NAME, highlight, view);
+		this.view = Objects.requireNonNull(view);
+	}
+
+	public TraceProgramView getTraceProgramView() {
+		return view;
 	}
 }

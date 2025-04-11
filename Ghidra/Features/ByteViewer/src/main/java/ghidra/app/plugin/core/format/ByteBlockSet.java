@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.format;
 
 import java.math.BigInteger;
 
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.AbstractLocationPluginEvent;
+import ghidra.app.events.AbstractSelectionPluginEvent;
 import ghidra.program.model.address.AddressSet;
 
 /**
@@ -42,7 +42,7 @@ public interface ByteBlockSet {
 	 * @param column the column within the UI byte field
 	 * @return the event
 	 */
-	public ProgramLocationPluginEvent getPluginEvent(String source, ByteBlock block,
+	public AbstractLocationPluginEvent getPluginEvent(String source, ByteBlock block,
 			BigInteger offset, int column);
 
 	/**
@@ -52,7 +52,7 @@ public interface ByteBlockSet {
 	 * @param selection selection to use to generate the event
 	 * @return the event
 	 */
-	public ProgramSelectionPluginEvent getPluginEvent(String source, ByteBlockSelection selection);
+	public AbstractSelectionPluginEvent getPluginEvent(String source, ByteBlockSelection selection);
 
 	/**
 	 * Return true if the block has been changed at the given index.

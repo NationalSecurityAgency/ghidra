@@ -15,21 +15,20 @@
  */
 package ghidra.app.plugin.core.debug.event;
 
-import ghidra.app.events.AbstractLocationPluginEvent;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.program.TraceProgramView;
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.framework.plugintool.PluginEvent;
 
-public class TraceLocationPluginEvent extends AbstractLocationPluginEvent {
-	public static final String NAME = "TraceLocation";
+public class TrackingChangedPluginEvent extends PluginEvent {
+	public static final String NAME = "TrackingChanged";
 
-	private final TraceProgramView view;
+	private final LocationTrackingSpec spec;
 
-	public TraceLocationPluginEvent(String src, ProgramLocation loc) {
-		super(src, NAME, loc, loc.getProgram());
-		this.view = (TraceProgramView) loc.getProgram();
+	public TrackingChangedPluginEvent(String sourceName, LocationTrackingSpec spec) {
+		super(sourceName, NAME);
+		this.spec = spec;
 	}
 
-	public TraceProgramView getTraceProgramView() {
-		return view;
+	public LocationTrackingSpec getLocationTrackingSpec() {
+		return spec;
 	}
 }

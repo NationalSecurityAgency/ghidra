@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.*;
 import ghidra.app.plugin.core.format.*;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
@@ -59,17 +58,8 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 		return blocks;
 	}
 
-	/**
-	 * Get the appropriate plugin event for the given block selection.
-	 * 
-	 * @param source source to use in the event
-	 * @param selection selection to use to generate the event
-	 */
-	@Override
-	public ProgramSelectionPluginEvent getPluginEvent(String source, ByteBlockSelection selection) {
-
+	protected ProgramSelection convertSelection(ByteBlockSelection selection) {
 		AddressSet addrSet = new AddressSet();
-
 		for (int i = 0; i < selection.getNumberOfRanges(); i++) {
 			ByteBlockRange br = selection.getRange(i);
 			ByteBlock block = br.getByteBlock();
@@ -77,7 +67,20 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 			Address end = getAddress(block, br.getEndIndex());
 			addrSet.add(new AddressRangeImpl(start, end));
 		}
-		return new ProgramSelectionPluginEvent(source, new ProgramSelection(addrSet), program);
+		return new ProgramSelection(addrSet);
+	}
+
+	/**
+	 * Get the appropriate plugin event for the given block selection.
+	 * 
+	 * @param source source to use in the event
+	 * @param selection selection to use to generate the event
+	 */
+	@Override
+	public AbstractSelectionPluginEvent getPluginEvent(String source,
+			ByteBlockSelection selection) {
+		ProgramSelection pSel = convertSelection(selection);
+		return new ProgramSelectionPluginEvent(source, pSel, program);
 	}
 
 	/**
@@ -89,7 +92,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 	 * @param column the column within the UI byte field
 	 */
 	@Override
-	public ProgramLocationPluginEvent getPluginEvent(String source, ByteBlock block,
+	public AbstractLocationPluginEvent getPluginEvent(String source, ByteBlock block,
 			BigInteger offset, int column) {
 
 		ProgramLocation loc = provider.getLocation(block, offset, column);
