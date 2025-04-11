@@ -100,7 +100,7 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 
 		assertTrue(model.isValidName());
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
 		assertFalse(panel.hasInvalidEntry());
 		assertFalse(panel.hasUncomittedEntry());
 
@@ -143,7 +143,7 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 
 		assertTrue(model.isValidName());
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
 		assertFalse(panel.hasInvalidEntry());
 		assertFalse(panel.hasUncomittedEntry());
 
@@ -657,7 +657,7 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 	public void testUndoRename() throws Exception {
 		init(complexStructure, pgmTestCat);
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
 		JTextField nameField = panel.nameTextField;
 
 		setText(nameField, "myStruct");

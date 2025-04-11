@@ -195,7 +195,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	public void testByValueAlignedStructure() throws Exception {
 		init(emptyStructure, pgmRootCat, false);
 
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
@@ -268,7 +268,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		emptyStructure.add(arrayDt);
 
 		init(emptyStructure, pgmRootCat, false);
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		JRadioButton explicitAlignButton =
 			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
@@ -301,7 +301,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		emptyStructure.pack(pack);
 
 		init(emptyStructure, pgmRootCat, false);
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
@@ -433,7 +433,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		init(emptyStructure, pgmRootCat, false);
 
-		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
+		StructureEditorPanel editorPanel = (StructureEditorPanel) getPanel();
 
 		JRadioButton byValueButton =
 			(JRadioButton) findComponentByName(getPanel(), "Explicit Alignment");

@@ -48,7 +48,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
 
-class UnionEditorModel extends CompEditorModel {
+class UnionEditorModel extends CompEditorModel<Union> {
 
 	private static final long serialVersionUID = 1L;
 	private static final int LENGTH = 0;
@@ -465,7 +465,6 @@ class UnionEditorModel extends CompEditorModel {
 				selection.addRange(rowIndex, rowIndex + 1);
 				fixSelection();
 			}
-			componentEdited();
 			return dtc;
 		}
 		catch (IllegalArgumentException exc) {
