@@ -52,9 +52,9 @@ import mdemangler.typeinfo.*;
  * {@link #createVirtualTable(CategoryPath, String, Address, TaskMonitor)} methods demangle
  * the strings and created tables within a owner/parentage tree based on the demangled information.
  * <p><p>
- * The {@link #findVbt(ClassID, List)} and {@link #findVft(ClassID, List)} methods attempt
- * to find the VF/VB tables by finding the appropriate node in the tree based upon owner and
- * at-times-mismatched parentage information from the user.  This mismatch is not necessarily
+ * The {@link #findVbt(ClassID, List, Integer)} and {@link #findVft(ClassID, List, Integer)} methods
+ * attempt to find the VF/VB tables by finding the appropriate node in the tree based upon owner
+ * and at-times-mismatched parentage information from the user.  This mismatch is not necessarily
  * the fault of the user, but more due to what parentage is incorporated into the mangled name.
  * <p><p>
  * <B> DESIGN of find mechanism</B>
@@ -127,6 +127,12 @@ public class MsftVxtManager extends VxtManager {
 	private Map<ClassID, List<VirtualBaseTable>> vbtsByOwner;
 	private Map<ClassID, List<VirtualFunctionTable>> vftsByOwner;
 
+	// A new interim solution using the address order per owner.
+	private Map<ClassID, Map<Address, VirtualBaseTable>> vbtByAddressByOwner;
+	private Map<ClassID, Map<Address, VirtualFunctionTable>> vftByAddressByOwner;
+	private Map<ClassID, Map<Integer, VirtualBaseTable>> vbtByPtrOrdinalByOwner;
+	private Map<ClassID, Map<Integer, VirtualFunctionTable>> vftByPtrOrdinalByOwner;
+
 	// Used for locating vft and vbt
 	// These are explicitly used for storing/retrieving the "program" versions which result from
 	//  locating and parsing the mangled strings for these tables.  It is possible that these
@@ -149,6 +155,10 @@ public class MsftVxtManager extends VxtManager {
 		parentageNodeByMangled = new HashMap<>();
 		vbtsByOwner = new HashMap<>();
 		vftsByOwner = new HashMap<>();
+		vbtByAddressByOwner = new HashMap<>();
+		vftByAddressByOwner = new HashMap<>();
+		vbtByPtrOrdinalByOwner = new HashMap<>();
+		vftByPtrOrdinalByOwner = new HashMap<>();
 		vbtRoot = new ParentageNode(null);
 		vftRoot = new ParentageNode(null);
 		vbtsByOwnerParentage = new HashMap<>();
@@ -295,21 +305,61 @@ public class MsftVxtManager extends VxtManager {
 	 * @param parentage the parentage for the desired table.  The parentage must start with the
 	 * parent that contains the pointer to the table and should include the ordered lineage from
 	 * that class through all of its decendents to the owner, excluding the owner
+	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualBaseTable findVbt(ClassID owner, List<ClassID> parentage) {
+	public VirtualBaseTable findVbt(ClassID owner, List<ClassID> parentage, Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualBaseTable vbt = vbtsByOwnerParentage.get(op);
 		if (vbt != null) {
 			return vbt;
 		}
-		vbt = searchVbtTree(owner, parentage);
+		vbt = getVbtByAddressOrdinal(owner, ordinal);
 		if (vbt == null) {
-			vbt = new PlaceholderVirtualBaseTable(owner, parentage);
+			vbt = searchVbtTree(owner, parentage);
+			if (vbt == null) {
+				vbt = new PlaceholderVirtualBaseTable(owner, parentage);
+			}
 		}
 		vbtsByOwnerParentage.put(op, vbt);
-		storeVbt(owner, vbt);
+		storeVbt(owner, ordinal, vbt);
 		return vbt;
+	}
+
+	private VirtualBaseTable getVbtByAddressOrdinal(ClassID owner, Integer ordinal) {
+		if (ordinal == null) {
+			return null;
+		}
+		Map<Address, VirtualBaseTable> map = vbtByAddressByOwner.get(owner);
+		if (map == null) {
+			return null;
+		}
+		int count = 0;
+		for (Map.Entry<Address, VirtualBaseTable> entry : map.entrySet()) {
+			if (count == ordinal) {
+				return entry.getValue();
+			}
+			count++;
+		}
+		return null;
+	}
+
+	private VirtualFunctionTable getVftByAddressOrdinal(ClassID owner, Integer ordinal) {
+		if (ordinal == null) {
+			return null;
+		}
+		Map<Address, VirtualFunctionTable> map = vftByAddressByOwner.get(owner);
+		if (map == null) {
+			return null;
+		}
+		int count = 0;
+		for (Map.Entry<Address, VirtualFunctionTable> entry : map.entrySet()) {
+			if (count == ordinal) {
+				return entry.getValue();
+			}
+			count++;
+		}
+		return null;
 	}
 
 	private VirtualBaseTable searchVbtTree(ClassID owner, List<ClassID> parentage) {
@@ -341,20 +391,24 @@ public class MsftVxtManager extends VxtManager {
 	 * @param parentage the parentage for the desired table.  The parentage must start with the
 	 * parent that contains the pointer to the table and should include the ordered lineage from
 	 * that class through all of its decendents to the owner, excluding the owner
+	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualFunctionTable findVft(ClassID owner, List<ClassID> parentage) {
+	public VirtualFunctionTable findVft(ClassID owner, List<ClassID> parentage, Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualFunctionTable vft = vftsByOwnerParentage.get(op);
 		if (vft != null) {
 			return vft;
 		}
-		vft = searchVftTree(owner, parentage);
+		vft = getVftByAddressOrdinal(owner, ordinal);
 		if (vft == null) {
-			vft = new PlaceholderVirtualFunctionTable(owner, parentage);
+			vft = searchVftTree(owner, parentage);
+			if (vft == null) {
+				vft = new PlaceholderVirtualFunctionTable(owner, parentage);
+			}
 		}
 		vftsByOwnerParentage.put(op, vft);
-		storeVft(owner, vft);
+		storeVft(owner, ordinal, vft);
 		return vft;
 	}
 
@@ -463,7 +517,7 @@ public class MsftVxtManager extends VxtManager {
 				}
 				node.setVBTable(prvbt);
 				vbtByAddress.put(address, prvbt);
-				storeVbt(owner, prvbt); // temp solution?
+				storeVbt(owner, address, prvbt); // temp solution?
 				break;
 
 			case VFT:
@@ -475,7 +529,7 @@ public class MsftVxtManager extends VxtManager {
 				}
 				node.setVFTable(vft);
 				vftByAddress.put(address, vft);
-				storeVft(owner, vft); // temp solution?
+				storeVft(owner, address, vft); // temp solution?
 				break;
 
 			default:
@@ -484,9 +538,8 @@ public class MsftVxtManager extends VxtManager {
 		return true;
 	}
 
-	private void storeVbt(ClassID owner, VirtualBaseTable vbt) {
-		ClassID own = vbt.getOwner();
-		List<VirtualBaseTable> list = vbtsByOwner.get(own);
+	private void storeVbt(ClassID owner, Address address, VirtualBaseTable vbt) {
+		List<VirtualBaseTable> list = vbtsByOwner.get(owner);
 		if (list == null) {
 			list = new ArrayList<>();
 			vbtsByOwner.put(owner, list);
@@ -498,9 +551,55 @@ public class MsftVxtManager extends VxtManager {
 			}
 		}
 		list.add(vbt);
+
+		// Part of next interim solution
+		Map<Address, VirtualBaseTable> map = vbtByAddressByOwner.get(owner);
+		if (map == null) {
+			map = new TreeMap<>();
+			vbtByAddressByOwner.put(owner, map);
+		}
+		if (map.containsKey(address)) {
+			Msg.warn(this, String.format("VBT already exists for owner/address %s/%s",
+				owner.getSymbolPath().toString(), address.toString()));
+			return;
+		}
+		map.put(address, vbt);
+
 	}
 
-	private void storeVft(ClassID owner, VirtualFunctionTable vft) {
+	private void storeVbt(ClassID owner, Integer ordinal, VirtualBaseTable vbt) {
+		List<VirtualBaseTable> list = vbtsByOwner.get(owner);
+		if (list == null) {
+			list = new ArrayList<>();
+			vbtsByOwner.put(owner, list);
+		}
+		List<ClassID> parentage = vbt.getParentage();
+		for (VirtualBaseTable table : list) {
+			if (isEqual(table.getParentage(), parentage)) {
+				return; // return without saving
+			}
+		}
+		list.add(vbt);
+
+		// Part of next interim solution
+		if (ordinal == null) {
+			return;
+		}
+		Map<Integer, VirtualBaseTable> map = vbtByPtrOrdinalByOwner.get(owner);
+		if (map == null) {
+			map = new TreeMap<>();
+			vbtByPtrOrdinalByOwner.put(owner, map);
+		}
+		if (map.containsKey(ordinal)) {
+			Msg.warn(this, String.format("VBT already exists for owner/ordinal %s/%d ",
+				owner.getSymbolPath().toString(), ordinal));
+			return;
+		}
+		map.put(ordinal, vbt);
+
+	}
+
+	private void storeVft(ClassID owner, Address address, VirtualFunctionTable vft) {
 		List<VirtualFunctionTable> list = vftsByOwner.get(owner);
 		if (list == null) {
 			list = new ArrayList<>();
@@ -513,6 +612,52 @@ public class MsftVxtManager extends VxtManager {
 			}
 		}
 		list.add(vft);
+
+		// Part of next interim solution
+		Map<Address, VirtualFunctionTable> map = vftByAddressByOwner.get(owner);
+		if (map == null) {
+			map = new TreeMap<>();
+			vftByAddressByOwner.put(owner, map);
+		}
+		if (map.containsKey(address)) {
+			Msg.warn(this, String.format("VFT already exists for owner/address %s/%s",
+				owner.getSymbolPath().toString(), address.toString()));
+			return;
+		}
+		map.put(address, vft);
+
+	}
+
+	private void storeVft(ClassID owner, Integer ordinal, VirtualFunctionTable vft) {
+		List<VirtualFunctionTable> list = vftsByOwner.get(owner);
+		if (list == null) {
+			list = new ArrayList<>();
+			vftsByOwner.put(owner, list);
+		}
+		List<ClassID> parentage = vft.getParentage();
+		for (VirtualFunctionTable table : list) {
+			if (isEqual(table.getParentage(), parentage)) {
+				return; // return without saving
+			}
+		}
+		list.add(vft);
+
+		// Part of next interim solution
+		if (ordinal == null) {
+			return;
+		}
+		Map<Integer, VirtualFunctionTable> map = vftByPtrOrdinalByOwner.get(owner);
+		if (map == null) {
+			map = new TreeMap<>();
+			vftByPtrOrdinalByOwner.put(owner, map);
+		}
+		if (map.containsKey(ordinal)) {
+			Msg.warn(this, String.format("VFT already exists for owner/ptrOffset %s/%d",
+				owner.getSymbolPath().toString(), ordinal));
+			return;
+		}
+		map.put(ordinal, vft);
+
 	}
 
 	private boolean isEqual(List<ClassID> parentage1, List<ClassID> parentage2) {
