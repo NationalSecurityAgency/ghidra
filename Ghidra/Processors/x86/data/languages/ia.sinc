@@ -3212,13 +3212,13 @@ define pcodeop cpuid_brand_part3_info;
 
 enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 
-:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xc8; imm16; enterFrames & low5=0x00 {
+:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc8; imm16; enterFrames & low5=0x00 {
         push44(EBP);
         EBP = ESP;
         ESP = ESP - imm16;
 }
 
-:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xc8; imm16; enterFrames & low5=0x01 {
+:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc8; imm16; enterFrames & low5=0x01 {
         push44(EBP);
         frameTemp:4 = ESP;
 
@@ -3255,9 +3255,24 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
         ESP = ESP - imm16;
 }
 
+:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc8; imm16; enterFrames & low5=0x00 {
+        push42(BP);
+        BP = SP;
+        SP = SP - imm16;
+}
+
+:ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc8; imm16; enterFrames & low5=0x01 {
+        push42(BP);
+        frameTemp:2 = SP;
+
+        push42(frameTemp);
+        BP = frameTemp;
+        SP = SP - imm16;
+}
+
 :ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc8; imm16; enterFrames {
-        push44(EBP);
-        frameTemp:4 = ESP;
+        push42(BP);
+        frameTemp:2 = SP;
 @ifdef IA64
         ESPt:$(SIZE) = zext(ESP);
         EBPt:$(SIZE) = zext(EBP);
@@ -3278,9 +3293,9 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
         ESP = ESP - tmp_offset;
         EBP = EBP - tmp_offset;
 
-        push44(frameTemp);
-        EBP = frameTemp;
-        ESP = ESP - imm16;
+        push42(frameTemp);
+        BP = frameTemp;
+        SP = SP - imm16;
 }
 
 :ENTER imm16,enterFrames is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xc8; imm16; enterFrames & low5=0x00 {
@@ -3572,7 +3587,7 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :IRETD          is vexMode=0 & addrsize=1 & opsize=1 & byte=0xcf            { pop44(EIP); tmp:4=0; pop44(tmp); CS=tmp(0); pop44(eflags); return [EIP]; }
 @ifdef IA64
 :IRETD          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=1 & byte=0xcf            { pop84(RIP); tmp:8=0; pop84(tmp); CS=tmp(0); pop84(eflags); return [RIP]; }
-:IRETQ          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=2 & byte=0xcf            { pop88(RIP); tmp:8=0; pop88(tmp); CS=tmp(0); pop88(eflags); return [RIP]; }
+:IRETQ          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=2 & byte=0xcf            { pop88(RIP); tmp:8=0; pop88(tmp); CS=tmp(0); pop88(rflags); return [RIP]; }
 @endif
 
 :J^cc rel8      is vexMode=0 & row=7 & cc; rel8                                          { if (cc) goto rel8; }
@@ -3677,7 +3692,7 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xc9         { SP = BP; pop22(BP); }
 :LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0xc9         { ESP = EBP; pop24(EBP); }
 :LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc9         { ESP = EBP; pop44(EBP); }
-:LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc9         { ESP = EBP; pop42(EBP); }
+:LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc9         { ESP = EBP; pop42(BP); }
 @ifdef IA64
 :LEAVE          is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xc9         { RSP = RBP; pop82(BP); }
 :LEAVE          is $(LONGMODE_ON) & vexMode=0 & byte=0xc9   { RSP = RBP; pop88(RBP); }
@@ -4345,13 +4360,13 @@ define pcodeop rdtsc;
 :RETF imm16     is vexMode=0 & addrsize=0 & opsize=0 & byte=0xca; imm16     { pop22(IP); EIP=zext(IP); pop22(CS); SP=SP+imm16; return [EIP]; }       
 :RETF imm16     is vexMode=0 & addrsize=1 & opsize=0 & byte=0xca; imm16     { pop42(IP); EIP=zext(IP); pop42(CS); ESP=ESP+imm16; return [EIP]; }         
 @ifdef IA64
-:RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xca; imm16     { pop42(IP); RIP=zext(IP); pop42(CS); RSP=RSP+imm16; return [RIP]; }         
+:RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xca; imm16     { pop82(IP); RIP=zext(IP); pop82(CS); RSP=RSP+imm16; return [RIP]; }         
 @endif
 
 :RETF imm16     is vexMode=0 & addrsize=0 & opsize=1 & byte=0xca; imm16     { pop24(EIP); tmp:4=0; pop24(tmp); CS=tmp(0); SP=SP+imm16; return [EIP]; }
 :RETF imm16     is vexMode=0 & addrsize=1 & opsize=1 & byte=0xca; imm16     { pop44(EIP); tmp:4=0; pop44(tmp); CS=tmp(0); ESP=ESP+imm16; return [EIP]; }
 @ifdef IA64
-:RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=1 & byte=0xca; imm16     { pop44(EIP); tmp:4=0; pop44(tmp); RIP=zext(EIP); CS=tmp(0); RSP=RSP+imm16; return [RIP]; }
+:RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=1 & byte=0xca; imm16     { pop84(EIP); tmp:4=0; pop84(tmp); RIP=zext(EIP); CS=tmp(0); RSP=RSP+imm16; return [RIP]; }
 :RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=2 & byte=0xca; imm16     { pop88(RIP); tmp:8=0; pop88(tmp); CS=tmp(0); RSP=RSP+imm16; return [RIP]; }
 @endif
 
