@@ -157,7 +157,7 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 		originalDataTypePath = originalComposite.getDataTypePath();
 		currentName = dataType.getName();
 
-		createViewCompositeFromOriginalComposite(originalComposite);
+		createViewCompositeFromOriginalComposite();
 
 		// Listen so we can update editor if name changes for this structure.
 		originalDTM.addDataTypeManagerListener(this);
@@ -204,12 +204,10 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 	}
 
 	/**
-	 * Create  {@code viewComposite} and associated view datatype manager ({@code viewDTM}) and
-	 * changes listener(s) if required.
-	 *
-	 * @param original original composite being loaded
+	 * Create {@code viewComposite} and {@link CompositeViewerDataTypeManager viewDTM} for this
+	 * editor and the {@code originalComposite}.
 	 */
-	protected void createViewCompositeFromOriginalComposite(T original) {
+	protected void createViewCompositeFromOriginalComposite() {
 
 		if (viewDTM != null) {
 			viewDTM.close();
@@ -217,8 +215,9 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 		}
 
 		// Use temporary standalone view datatype manager
-		viewDTM = new CompositeViewerDataTypeManager<>(original.getDataTypeManager().getName(),
-			original, this::componentEdited, this::restoreEditor);
+		viewDTM =
+			new CompositeViewerDataTypeManager<>(originalComposite.getDataTypeManager().getName(),
+				originalComposite, this::componentEdited, this::restoreEditor);
 
 		viewComposite = viewDTM.getResolvedViewComposite();
 
@@ -230,7 +229,7 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
 		viewDTM.withTransaction("Load Settings",
-			() -> cloneAllComponentSettings(original, viewComposite));
+			() -> cloneAllComponentSettings(originalComposite, viewComposite));
 		viewDTM.clearUndo();
 	}
 
@@ -317,7 +316,6 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		// TODO: Need to handle proper placement for big-endian within a larger component (i.e., right-justified)
 		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen,
 			viewComposite.isPackingEnabled());
 	}
@@ -481,13 +479,13 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 				dtName = previousDt.getDisplayName();
 			}
 			DataType newDt = null;
-			int newLength = -1;
+			int newLength;
 			if (dataTypeObject instanceof DataTypeInstance dti) {
-				newDt = resolve(dti.getDataType());
+				newDt = dti.getDataType();
 				newLength = dti.getLength();
 			}
 			else if (dataTypeObject instanceof DataType dt) {
-				newDt = resolve(dt);
+				newDt = dt;
 				newLength = newDt.getLength();
 			}
 			else if (dataTypeObject instanceof String dtString) {
@@ -505,6 +503,9 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 			if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
 				newLength = 0;
 			}
+
+			DataType dataType = newDt.clone(originalDTM);
+			newLength = newDt.getLength();
 
 			checkIsAllowableDataType(newDt);
 
@@ -535,8 +536,7 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 			}
 
 			// Set component datatype and length on view composite
-			DataType dataType = resolve(newDt); // probably already resolved
-			setComponentDataTypeInstance(rowIndex, dataType, newLength);
+			setComponentDataTypeInstance(rowIndex, newDt, newLength);
 			return true;
 		});
 
@@ -1434,51 +1434,51 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 	 * @return a valid data type instance or null if at blank line with no data type name.
 	 * @throws UsrException indicating that the data type is not valid.
 	 */
-	protected DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
-			throws UsrException {
-		DataType dt = null;
-		String dtName = "";
-		dtString = DataTypeHelper.stripWhiteSpace(dtString);
-		DataTypeComponent element = getComponent(rowIndex);
-		if (element != null) {
-			dt = element.getDataType();
-			dtName = dt.getDisplayName();
-			if (dtString.equals(dtName)) {
-				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength(), usesAlignedLengthComponents());
-			}
-		}
-
-		int newLength = 0;
-		DataType newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
-			provider.dtmService);
-		if (newDt == null) {
-			if (dt != null) {
-				throw new UsrException("No data type was specified.");
-			}
-			throw new AssertException("Can't set data type to null.");
-		}
-
-		checkIsAllowableDataType(newDt);
-
-		newLength = newDt.getLength();
-		if (newLength < 0) {
-			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
-				lastNumBytes, getMaxReplaceLength(rowIndex));
-			newLength = sizedDataType.getLength();
-		}
-
-		newDt = viewDTM.resolve(newDt, null);
-		int maxLength = getMaxReplaceLength(rowIndex);
-		if (newLength <= 0) {
-			throw new UsrException("Can't currently add this data type.");
-		}
-		if (maxLength > 0 && newLength > maxLength) {
-			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
-		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
-			usesAlignedLengthComponents());
-	}
+//	protected DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
+//			throws UsrException {
+//		DataType dt = null;
+//		String dtName = "";
+//		dtString = DataTypeHelper.stripWhiteSpace(dtString);
+//		DataTypeComponent element = getComponent(rowIndex);
+//		if (element != null) {
+//			dt = element.getDataType();
+//			dtName = dt.getDisplayName();
+//			if (dtString.equals(dtName)) {
+//				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
+//					element.getLength(), usesAlignedLengthComponents());
+//			}
+//		}
+//
+//		int newLength = 0;
+//		DataType newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
+//			provider.dtmService);
+//		if (newDt == null) {
+//			if (dt != null) {
+//				throw new UsrException("No data type was specified.");
+//			}
+//			throw new AssertException("Can't set data type to null.");
+//		}
+//
+//		checkIsAllowableDataType(newDt);
+//
+//		newLength = newDt.getLength();
+//		if (newLength < 0) {
+//			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
+//				lastNumBytes, getMaxReplaceLength(rowIndex));
+//			newLength = sizedDataType.getLength();
+//		}
+//
+//		newDt = viewDTM.resolve(newDt, null);
+//		int maxLength = getMaxReplaceLength(rowIndex);
+//		if (newLength <= 0) {
+//			throw new UsrException("Can't currently add this data type.");
+//		}
+//		if (maxLength > 0 && newLength > maxLength) {
+//			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
+//		}
+//		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+//			usesAlignedLengthComponents());
+//	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses
 	protected void validateComponentName(int rowIndex, String name) throws UsrException {

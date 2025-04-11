@@ -36,8 +36,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	private final ComponentDBAdapter adapter;
 	private final DBRecord record; // null record -> immutable component
 	private final CompositeDB parent;
-
-	private DataType cachedDataType; // required for bit-fields during packing process
+	private final DataType cachedDataType; // used by immutable defined component (no record)
 
 	private int ordinal;
 	private int offset;
@@ -56,9 +55,15 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	 */
 	DataTypeComponentDB(DataTypeManagerDB dataMgr, CompositeDB parent, int ordinal, int offset,
 			DataType datatype, int length) {
-		this(dataMgr, parent, ordinal, offset);
+		this.dataMgr = dataMgr;
+		this.parent = parent;
 		this.cachedDataType = datatype;
+
+		this.ordinal = ordinal;
+		this.offset = offset;
 		this.length = length;
+		this.record = null;
+		this.adapter = null;
 	}
 
 	/**
@@ -73,6 +78,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		this.dataMgr = dataMgr;
 		this.parent = parent;
 		this.ordinal = ordinal;
+		this.cachedDataType = null;
+
 		this.offset = offset;
 		this.length = 1;
 		this.record = null;
@@ -90,11 +97,13 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			DBRecord record) {
 		this.dataMgr = dataMgr;
 		this.adapter = adapter;
+		this.cachedDataType = null;
 		this.record = record;
+
 		this.parent = parent;
-		ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
-		offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
-		length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
+		this.ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
+		this.offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
+		this.length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
 		if (isZeroBitFieldComponent()) {
 			length = 0; // previously stored as 1, force to 0
 		}

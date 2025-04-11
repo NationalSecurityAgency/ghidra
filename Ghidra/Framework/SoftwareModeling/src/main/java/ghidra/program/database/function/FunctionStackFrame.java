@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -277,15 +277,17 @@ class FunctionStackFrame implements StackFrame {
 		function.setLocalSize(size);
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.listing.StackFrame#getParameterSize()
-	 */
 	@Override
 	public int getParameterSize() {
 		function.manager.lock.acquire();
 		try {
 			checkIsValid();
+
+			// NOTE: This logic is sensitive to the existance of Local variables at the incorrect
+			// stack offset placed before parameters.  This can occur when adjustments are made to
+			// the prototype model's stack pentry specification.  Unfortunately, the distinction
+			// between a parameter and a local is locked-in at the time of creation due to the
+			// use of distinct symbol types.
 
 			int baseOffset = 0;
 			Integer base = VariableUtilities.getBaseStackParamOffset(function);
