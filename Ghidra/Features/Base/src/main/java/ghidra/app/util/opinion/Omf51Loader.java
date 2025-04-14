@@ -210,8 +210,6 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		// Create thunks for each external procedure def.
 		Address addr = codeStart;
 		for (Omf51ExternalDef def : defs) {
-			addr = addr.add(1);
-
 			Function f = program.getFunctionManager()
 					.createFunction(def.getName().str(), addr, new AddressSet(addr),
 						SourceType.IMPORTED);
@@ -221,6 +219,7 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			f.setThunkedFunction(extLoc.getFunction());
 
 			map.put(def.getExtId(), addr);
+			addr = addr.add(1);
 		}
 
 		return map;
