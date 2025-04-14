@@ -123,7 +123,7 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		Address codeStart = program.getAddressFactory()
 			.getAddressSpace("CODE")
 			.getMinAddress();
-		usedAddresses.add(new AddressRangeImpl(codeStart, codeStart.add(256)));
+		usedAddresses.add(new AddressRangeImpl(codeStart, codeStart.add(255)));
 		Map<String, Integer> segmentSizes = new HashMap<>();
 		Map<String, Address> segmentEnds = new HashMap<>();
 		for (Omf51Segment segment : segments) {
