@@ -48,8 +48,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	protected DecompInterface decompiler;
 	private boolean useArraysForSwitchTables = false;
 
-	public DecompilerSwitchAnalysisCmd(DecompileResults decopmileResults) {
-		this.decompilerResults = decopmileResults;
+	public DecompilerSwitchAnalysisCmd(DecompileResults decompileResults) {
+		this.decompilerResults = decompileResults;
 	}
 
 	@Override
@@ -71,20 +71,18 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		}
 
 		try {
-
 			monitor.checkCancelled();
 
 			Function f = decompilerResults.getFunction();
 			HighFunction hfunction = decompilerResults.getHighFunction();
-			processBranchIND(f, hfunction, monitor);
-
-			monitor.checkCancelled();
-
+			
 			String errMsg = getStatusMsg();
-			if (decompilerResults.getHighFunction() == null) {
+			if (hfunction == null) {
 				String msg = (errMsg != null && errMsg.length() != 0) ? (": " + errMsg) : "";
 				Msg.debug(this, "  Failed to decompile function: " + f.getName() + msg);
 			}
+			
+			processBranchIND(f, hfunction, monitor);
 		}
 		catch (Exception e) {
 			if (!monitor.isCancelled()) {
@@ -248,35 +246,37 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		Address[] tableDest = table.getCases();
 		Integer[] caseValues = table.getLabelValues();
 
-		boolean allRefsFound = true;
-		int caseIndex;
-		for (caseIndex = 0; caseIndex < tableDest.length; caseIndex++) {
+		// check that all cases are already a reference on the instruction, except default
+		for (int caseIndex = 0; caseIndex < tableDest.length; caseIndex++) {
 			monitor.checkCancelled();
 			
 			// a case is default if it is first case to not have a value, or has a magic case value
 			boolean isDefaultCase = isDefaultCase(caseValues, caseIndex);
 			
-			boolean foundit = false;
 			if (containingBody != null && !containingBody.contains(tableDest[caseIndex])) {
 				// switch case missing from owner function's body
-				allRefsFound = false;
-				break;
+				return false;
 			}
+
+			boolean foundit = false;
 			for (Reference element : referencesFrom) {
 				if (element.getToAddress().equals(tableDest[caseIndex])) {
-					// good only if this isn't default case
-					// default case should not be on switching instruction
-					foundit = !isDefaultCase;
+					foundit = true;
 					break;
-				} else if (isDefaultCase) {
-					foundit = true;  // not finding default case is good
 				}
 			}
-			if (!foundit) {
-				allRefsFound = false;
+			if (isDefaultCase) {
+				// default case should not be on switching instruction
+				if (foundit) {
+					return false;
+				}
+			}
+			else if (!foundit) {
+				return false;
 			}
 		}
-		return allRefsFound;
+		
+		return true;
 	}
 
 	/*
