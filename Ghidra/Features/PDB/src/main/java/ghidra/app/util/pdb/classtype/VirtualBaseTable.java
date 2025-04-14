@@ -216,10 +216,10 @@ public abstract class VirtualBaseTable implements VBTable {
 	}
 
 	/**
-	 * Returns the built data type for this vftable for the current entries
+	 * Returns the built data type for this vbtable for the current entries
 	 * @param dtm the data type manager
 	 * @param categoryPath category path for the table
-	 * @return the structure of the vftable
+	 * @return the structure of the vbtable
 	 */
 	public Structure getLayout(DataTypeManager dtm, CategoryPath categoryPath) {
 		if (!isBuilt) { // what if we want to rebuild... what should we do?
