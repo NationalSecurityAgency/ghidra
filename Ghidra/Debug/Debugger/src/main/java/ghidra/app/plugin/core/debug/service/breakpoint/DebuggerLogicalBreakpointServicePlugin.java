@@ -64,12 +64,21 @@ import ghidra.util.datastruct.ListenerSet;
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
-		TraceOpenedPluginEvent.class, TraceActivatedPluginEvent.class,
-		TraceInactiveCoordinatesPluginEvent.class, TraceClosedPluginEvent.class, },
-	servicesRequired = { DebuggerTraceManagerService.class,
-		DebuggerStaticMappingService.class, },
-	servicesProvided = { DebuggerLogicalBreakpointService.class, })
+	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+		TraceInactiveCoordinatesPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+		DebuggerStaticMappingService.class,
+	},
+	servicesProvided = {
+		DebuggerLogicalBreakpointService.class,
+	})
 public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		implements DebuggerLogicalBreakpointService {
 

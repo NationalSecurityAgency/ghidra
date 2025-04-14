@@ -45,13 +45,9 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.Swing;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
 
 @PluginInfo(
 	shortDescription = "View and annotate listings of trace (possibly live) memory",
@@ -62,11 +58,7 @@ import utilities.util.SuppressableCallback.Suppression;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
-		ProgramActivatedPluginEvent.class, // To track the static program for sync
-		ProgramLocationPluginEvent.class, // For static listing sync
-		ProgramSelectionPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
 		TraceClosedPluginEvent.class,
 		TraceLocationPluginEvent.class,
@@ -75,8 +67,6 @@ import utilities.util.SuppressableCallback.Suppression;
 		TrackingChangedPluginEvent.class,
 	},
 	eventsProduced = {
-		ProgramLocationPluginEvent.class,
-		ProgramSelectionPluginEvent.class,
 		TraceLocationPluginEvent.class,
 		TraceSelectionPluginEvent.class,
 		TraceHighlightPluginEvent.class,
@@ -129,10 +119,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
-
-	private final SuppressableCallback<Void> cbProgramLocationEvents = new SuppressableCallback<>();
-	private final SuppressableCallback<Void> cbProgramSelectionEvents =
-		new SuppressableCallback<>();
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -277,21 +263,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void processEvent(PluginEvent event) {
 		switch (event) {
-			case ProgramLocationPluginEvent ev -> cbProgramLocationEvents.invoke(() -> {
-				if (heedLocationEvent(ev)) {
-					connectedProvider.staticProgramLocationChanged(ev.getLocation());
-				}
-			});
-			case ProgramSelectionPluginEvent ev -> cbProgramSelectionEvents.invoke(() -> {
-				if (heedSelectionEvent(ev)) {
-					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
-						ev.getSelection());
-				}
-			});
-			case ProgramOpenedPluginEvent ev -> allProviders(p -> p.programOpened(ev.getProgram()));
 			case ProgramClosedPluginEvent ev -> allProviders(p -> p.programClosed(ev.getProgram()));
-			case ProgramActivatedPluginEvent ev -> allProviders(
-				p -> p.staticProgramActivated(ev.getActiveProgram()));
 			case TraceActivatedPluginEvent ev -> {
 				current = ev.getActiveCoordinates();
 				allProviders(p -> p.coordinatesActivated(current));
@@ -320,24 +292,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 					.setTrackingSpec(ev.getLocationTrackingSpec());
 			default -> {
 			}
-		}
-	}
-
-	void fireStaticLocationEvent(ProgramLocation staticLoc) {
-		assert Swing.isSwingThread();
-		try (Suppression supp = cbProgramLocationEvents.suppress(null)) {
-			// Use this instead of GoToService to avoid event loopback
-			programManager.setCurrentProgram(staticLoc.getProgram());
-			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), staticLoc,
-				staticLoc.getProgram()));
-			//goToService.goTo(staticLoc);
-		}
-	}
-
-	void fireStaticSelectionEvent(Program staticProg, ProgramSelection staticSel) {
-		assert Swing.isSwingThread();
-		try (Suppression supp = cbProgramSelectionEvents.suppress(null)) {
-			tool.firePluginEvent(new ProgramSelectionPluginEvent(getName(), staticSel, staticProg));
 		}
 	}
 
@@ -380,18 +334,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void setCurrentSelection(ProgramSelection selection) {
 		connectedProvider.setSelection(selection);
-	}
-
-	@Override
-	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
-		boolean result = super.goTo(location, centerOnScreen);
-		if (!result) {
-			return false;
-		}
-		DebuggerListingProvider provider = connectedProvider;
-		provider.doAutoSyncCursorIntoStatic(location);
-		provider.doCheckCurrentModuleMissing();
-		return true;
 	}
 
 	@Override
