@@ -51,10 +51,11 @@ public class HCS12ConventionAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		// Only analyze HCS12 Programs
+		// Only analyze HCS-12 / HCS-12X Programs
 		Processor processor = program.getLanguage().getProcessor();
+		boolean canDo = "HCS-12".equals(processor.toString()) ||
+						"HCS-12X".equals(processor.toString());
 
-		boolean canDo = processor.equals(Processor.findOrPossiblyCreateProcessor("HCS12"));
 		if (canDo) {
 			xgate = program.getRegister("XGATE");
 		}
