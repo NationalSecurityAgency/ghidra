@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
@@ -345,6 +346,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testAutoDisassembleReDisassembleX8664OffcutByProgEmu() throws Throwable {
+		addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		createProgram(getSLEIGH_X86_64_LANGUAGE());
@@ -361,6 +363,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		tb.trace.release(this);
 		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
 
+		programManager.openProgram(program);
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 
