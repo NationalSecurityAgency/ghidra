@@ -259,6 +259,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	}
 
 	@Override
+	public boolean isValidContext(ActionContext context) {
+		return false;
+	}
+
+	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		return false;
 	}
