@@ -1923,7 +1923,7 @@ public class GTree extends JPanel implements BusyListener {
 			@Override
 			public void actionPerformed(ActionContext context) {
 
-				GTree gTree = (GTree) context.getSourceComponent();
+				GTree gTree = getTree(context);
 				gTree.tree.isCopyFormatted = true;
 				try {
 					Action builtinCopyAction = TransferHandler.getCopyAction();
@@ -1948,7 +1948,7 @@ public class GTree extends JPanel implements BusyListener {
 		GTreeAction activateFilterAction = new GTreeAction("Table/Tree Activate Filter", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				GTree gTree = (GTree) context.getSourceComponent();
+				GTree gTree = getTree(context);
 				gTree.filterProvider.activate();
 			}
 		};
@@ -1966,7 +1966,7 @@ public class GTree extends JPanel implements BusyListener {
 		GTreeAction toggleFilterAction = new GTreeAction("Table/Tree Toggle Filter", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				GTree gTree = (GTree) context.getSourceComponent();
+				GTree gTree = getTree(context);
 				gTree.filterProvider.toggleVisibility();				
 			}
 		};

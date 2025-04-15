@@ -15,24 +15,18 @@
  */
 package docking;
 
-import java.awt.Component;
-
 /**
- * A class used by the {@link KeyBindingOverrideKeyEventDispatcher}.  It represents an action and 
- * the context in which that action should operate if {@link #execute()} is called.   This class is
- * created for each keystroke that maps to a tool action.
- * <p>
- * This is not meant to be used outside of this API.
+ * A class to track an action's precedence and enablement
+ * @param precedence the precedence
+ * @param isValid true if valid
+ * @param isEnabled true if enabled
  */
-public interface ExecutableAction {
+public record KbEnabledState(KeyBindingPrecedence precedence, boolean isValid,
+		boolean isEnabled) {
 
-	public boolean isValid();
-
-	public boolean isEnabled();
-
-	public void reportNotEnabled(Component focusOwner);
-
-	public KeyBindingPrecedence getKeyBindingPrecedence();
-
-	public void execute();
+	public KbEnabledState {
+		if (!isValid && isEnabled) {
+			throw new IllegalArgumentException("Cannot be enable if not also valid");
+		}
+	}
 }
