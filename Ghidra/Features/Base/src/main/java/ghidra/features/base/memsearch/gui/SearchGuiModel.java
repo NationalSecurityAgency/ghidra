@@ -269,7 +269,7 @@ public class SearchGuiModel {
 	}
 
 	public void selectRegion(SearchRegion region, boolean selected) {
-		settings.withSelectedRegion(region, selected);
+		settings = settings.withSelectedRegion(region, selected);
 	}
 
 	public boolean isSelectedRegion(SearchRegion region) {

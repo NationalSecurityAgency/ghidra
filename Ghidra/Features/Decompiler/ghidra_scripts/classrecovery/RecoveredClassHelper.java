@@ -278,11 +278,18 @@ public class RecoveredClassHelper {
 			program.getSymbolTable().getSymbolIterator("*vftable*", true);
 
 		List<Symbol> vftableSymbolList = new ArrayList<Symbol>();
+		List<Address> foundAddresses = new ArrayList<>();
 		while (vftableSymbols.hasNext()) {
 			monitor.checkCancelled();
 			Symbol vftableSymbol = vftableSymbols.next();
+
+			if (foundAddresses.contains(vftableSymbol.getAddress())) {
+				continue;
+			}
+
 			if (vftableSymbol.getName().equals("vftable")) {
 				vftableSymbolList.add(vftableSymbol);
+				foundAddresses.add(vftableSymbol.getAddress());
 			}
 			// check for ones that are pdb that start with ' and may or may not end with '
 			// can't just get all that contain vftable because that would get some strings
@@ -291,6 +298,7 @@ public class RecoveredClassHelper {
 				name = name.substring(1, name.length());
 				if (name.startsWith("vftable")) {
 					vftableSymbolList.add(vftableSymbol);
+					foundAddresses.add(vftableSymbol.getAddress());
 				}
 			}
 		}
@@ -2703,11 +2711,11 @@ public class RecoveredClassHelper {
 			}
 
 			// get only the functions from the ones that are not already processed structures
-			// return null if not an unprocessed table
+			// return null if not an unprocessed table or if invalid 
 			List<Function> virtualFunctions = getFunctionsFromVftable(vftableAddress, vftableSymbol,
 				allowNullFunctionPtrs, allowDefaultRefsInMiddle);
 
-			// the vftable has already been processed - skip it
+			// the vftable has already been processed or invalid - skip it
 			if (virtualFunctions == null) {
 				continue;
 			}
@@ -2761,20 +2769,19 @@ public class RecoveredClassHelper {
 		return recoveredClasses;
 	}
 
-	//TODO: rework above method to call this so it works with both that and other calls
 	protected void updateClassWithVftable(RecoveredClass recoveredClass, Symbol vftableSymbol,
 			boolean allowNullFunctionPtrs, boolean allowDefaultRefsInMiddle) throws Exception {
+
 		// get only the functions from the ones that are not already processed
 		// structures
 		// return null if not an unprocessed table
-
 		Address vftableAddress = vftableSymbol.getAddress();
 		Namespace vftableNamespace = vftableSymbol.getParentNamespace();
 
 		List<Function> virtualFunctions = getFunctionsFromVftable(vftableAddress, vftableSymbol,
 			allowNullFunctionPtrs, allowDefaultRefsInMiddle);
 
-		// the vftable has already been processed - skip it
+		// the vftable has already been processed or is invalid - skip it
 		if (virtualFunctions == null) {
 			return;
 		}
@@ -2789,15 +2796,10 @@ public class RecoveredClassHelper {
 			recoveredClass.addVftableAddress(vftableAddress);
 			recoveredClass.addVftableVfunctionsMapping(vftableAddress, virtualFunctions);
 
-			// add it to the running list of RecoveredClass objects
-			// recoveredClasses.add(recoveredClass);
 		}
 		else {
 			recoveredClass.addVftableAddress(vftableAddress);
 			recoveredClass.addVftableVfunctionsMapping(vftableAddress, virtualFunctions);
-//						if (!recoveredClasses.contains(recoveredClass)) {
-//							recoveredClasses.add(recoveredClass);
-//						}
 
 		}
 
@@ -2967,9 +2969,9 @@ public class RecoveredClassHelper {
 			// pointing to are in the class already to determine size of array
 
 			// create vtable
-			int numFunctionPointers =
+			Integer numFunctionPointers =
 				createVftable(vftableAddress, allowNullFunctionPtrs, allowDefaultRefsInMiddle);
-			if (numFunctionPointers == 0) {
+			if (numFunctionPointers == null || numFunctionPointers == 0) {
 				return null;
 			}
 			// make it an array
@@ -3035,15 +3037,27 @@ public class RecoveredClassHelper {
 	 * @param vftableAddress the vftable address
 	 * @param allowNullFunctionPtrs if true allow vftables to have null pointers
 	 * @param allowDefaultRefsInMiddle if true allow default references into the middle of the table
-	 * @return the created array of pointers Data or null
+	 * @return the number of functions in the table or null if none or in invalid block
 	 * @throws CancelledException if cancelled
 	 */
-	public int createVftable(Address vftableAddress, boolean allowNullFunctionPtrs,
+	public Integer createVftable(Address vftableAddress, boolean allowNullFunctionPtrs,
 			boolean allowDefaultRefsInMiddle) throws CancelledException {
 
 		int numFunctionPointers = 0;
 		Address address = vftableAddress;
+
 		MemoryBlock currentBlock = program.getMemory().getBlock(vftableAddress);
+
+		if (currentBlock == null) {
+			Msg.warn(this, "Cannot create vftable at " + vftableAddress.toString() +
+				" because it is in an invalid memory block.");
+			return null;
+		}
+		if (currentBlock.isExternalBlock() || !currentBlock.isInitialized()) {
+			Msg.warn(this, "Cannot create vftable at " + vftableAddress.toString() +
+				" because it is in an external or an uninitialized block.");
+			return null;
+		}
 
 		boolean stillInCurrentTable = true;
 		while (address != null && currentBlock.contains(address) && stillInCurrentTable &&
@@ -8463,15 +8477,23 @@ public class RecoveredClassHelper {
 		List<Symbol> vftableSymbols = new ArrayList<Symbol>();
 
 		SymbolIterator symbols = symbolTable.getSymbols(classNamespace);
+		List<Address> uniqueVftableAddresses = new ArrayList<>();
+
 		while (symbols.hasNext()) {
 
 			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
+
+			// make sure to only keep one vftable symbol per address 
+			if (uniqueVftableAddresses.contains(symbol.getAddress())) {
+				continue;
+			}
 			if (symbol.getName().equals("vftable") ||
 				symbol.getName().substring(1).startsWith("vftable") ||
 				symbol.getName().contains("vftable_for_") ||
 				symbol.getName().contains("vftable{for")) {
 				vftableSymbols.add(symbol);
+				uniqueVftableAddresses.add(symbol.getAddress());
 			}
 
 		}

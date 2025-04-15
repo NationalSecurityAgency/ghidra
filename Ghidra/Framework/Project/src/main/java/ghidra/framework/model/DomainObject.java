@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -500,11 +500,21 @@ public interface DomainObject {
 
 	/**
 	 * Terminate the specified transaction for this domain object.
+	 * <P>
+	 * NOTE: If multiple transactions are outstanding the full transaction will not be ended
+	 * until all transactions have been ended.  If any of the transactions indicate a 
+	 * false for {@code commit} the transaction will ultimately be rolled-back when the final
+	 * transaction is ended.
+	 * <P>
+	 * NOTE: Use of rollback ({@code commit=false} should be avoided unless absolutely
+	 * neccessary since it will incur overhead to revert changes and may rollback multiple
+	 * concurrent transactions if they exist.
 	 * @param transactionID transaction ID obtained from startTransaction method
 	 * @param commit if true the changes made in this transaction will be marked for commit,
 	 * if false this and any concurrent transaction will be rolled-back.
+	 * @return true if this invocation was the final transaction and all changes were comitted.
 	 */
-	public void endTransaction(int transactionID, boolean commit);
+	public boolean endTransaction(int transactionID, boolean commit);
 
 	/**
 	 * Returns the current transaction info
@@ -546,12 +556,12 @@ public interface DomainObject {
 	public void releaseSynchronizedDomainObject() throws LockException;
 
 	/**
-	 * Returns true if there is a previous state to "undo" to.
+	 * {@return true if there is a previous state to "undo" to.}
 	 */
 	boolean canUndo();
 
 	/**
-	 * Returns true if there is a later state to "redo" to.
+	 * {@return true if there is a later state to "redo" to.}
 	 */
 	boolean canRedo();
 

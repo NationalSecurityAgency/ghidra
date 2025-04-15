@@ -109,7 +109,7 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 	@Test
 	public void testSizeCheck() {
 		assertEquals(4, model.getCurrentSize());
-		assertTrue(model.isValid());
+		assertFalse(model.isValid());
 		assertEquals("Warning: Not enough storage space allocated", model.getStatusText());
 		VarnodeInfo varnode = model.getVarnodes().get(0);
 

@@ -81,13 +81,16 @@ def _setup_project(
         project_name: str = None,
         language: str = None,
         compiler: str = None,
-        loader: Union[str, JClass] = None
+        loader: Union[str, JClass] = None,
+        program_name: str = None
 ) -> Tuple["GhidraProject", "Program"]:
     from ghidra.base.project import GhidraProject
     from java.lang import ClassLoader  # type:ignore @UnresolvedImport
-    from java.io import IOException # type:ignore @UnresolvedImport
+    from ghidra.framework.model import ProjectLocator # type:ignore @UnresolvedImport
     if binary_path is not None:
         binary_path = Path(binary_path)
+    if program_name is None and binary_path is not None:
+        program_name = binary_path.name
     if project_location:
         project_location = Path(project_location)
     else:
@@ -95,7 +98,6 @@ def _setup_project(
     if not project_name:
         project_name = f"{binary_path.name}_ghidra"
     project_location /= project_name
-    project_location.mkdir(exist_ok=True, parents=True)
 
     if isinstance(loader, str):
         from java.lang import ClassNotFoundException # type:ignore @UnresolvedImport
@@ -113,13 +115,14 @@ def _setup_project(
 
     # Open/Create project
     program: "Program" = None
-    try:
+    if ProjectLocator(project_location, project_name).exists():
         project = GhidraProject.openProject(project_location, project_name, True)
-        if binary_path is not None:
-            if project.getRootFolder().getFile(binary_path.name):
-                program = project.openProgram("/", binary_path.name, False)
-    except IOException:
-        project = GhidraProject.createProject(project_location, project_name, False)
+    else:
+        project_location.mkdir(exist_ok=True, parents=True)
+        project = GhidraProject.createProject(project_location, project_name, False)      
+    if program_name is not None:
+        if project.getRootFolder().getFile(program_name):
+            program = project.openProgram("/", program_name, False)
 
     # NOTE: GhidraProject.importProgram behaves differently when a loader is provided
     # loaderClass may not be null so we must use the correct method override
@@ -146,7 +149,7 @@ def _setup_project(
                 else:
                     message += f"The provided language ({language}) may be invalid."
                 raise ValueError(message)
-        project.saveAs(program, "/", program.getName(), True)
+        project.saveAs(program, "/", program_name, True)
 
     return project, program
 
@@ -198,10 +201,11 @@ def open_program(
         analyze=True,
         language: str = None,
         compiler: str = None,
-        loader: Union[str, JClass] = None
+        loader: Union[str, JClass] = None,
+        program_name: str = None
 ) -> ContextManager["FlatProgramAPI"]: # type: ignore
     """
-    Opens given binary path in Ghidra and returns FlatProgramAPI object.
+    Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 
     :param binary_path: Path to binary file, may be None.
     :param project_location: Location of Ghidra project to open/create.
@@ -215,6 +219,8 @@ def open_program(
         (Defaults to the Language's default compiler)
     :param loader: The `ghidra.app.util.opinion.Loader` class to use when importing the program.
         This may be either a Java class or its path. (Defaults to None)
+    :param program_name: The name of the program to open in Ghidra.
+        (Defaults to None, which results in the name being derived from "binary_path")
     :return: A Ghidra FlatProgramAPI object.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
@@ -234,7 +240,8 @@ def open_program(
         project_name,
         language,
         compiler,
-        loader
+        loader,
+        program_name
     )
     GhidraScriptUtil.acquireBundleHostReference()
 

@@ -23,6 +23,7 @@ import java.util.function.Function;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.*;
+import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SubOptions;
 import ghidra.framework.store.LockException;
@@ -358,8 +359,9 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) throws IllegalStateException {
-		transactionMgr.endTransaction(this, transactionID, commit, true);
+	public boolean endTransaction(int transactionID, boolean commit) throws IllegalStateException {
+		TransactionInfo txInfo = transactionMgr.endTransaction(this, transactionID, commit, true);
+		return txInfo.getStatus() == Status.COMMITTED;
 	}
 
 	/**

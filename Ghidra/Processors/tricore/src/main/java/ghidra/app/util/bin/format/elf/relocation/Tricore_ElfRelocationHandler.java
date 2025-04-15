@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -355,8 +355,7 @@ public class Tricore_ElfRelocationHandler
 	 */
 	private int relocate_relB(Memory memory, Address relocationAddress, long rv)
 			throws MemoryAccessException {
-		// TODO ff000000..00fffffe?
-		long mask = 0xfffffffeL;
+		long mask = 0x00000001L;
 		long val = ~mask & rv;
 		int iw = memory.getInt(relocationAddress) & 0xff;
 		iw |= ((val & 0x1fffe) << 15);

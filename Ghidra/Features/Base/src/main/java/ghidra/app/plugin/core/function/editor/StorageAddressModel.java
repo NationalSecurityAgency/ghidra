@@ -155,7 +155,6 @@ class StorageAddressModel {
 
 	void notifyDataChanged() {
 		validate();
-
 		SwingUtilities.invokeLater(() -> listener.dataChanged());
 	}
 
@@ -174,6 +173,7 @@ class StorageAddressModel {
 		}
 		else if (currentSize < requiredSize) {
 			statusText = "Warning: Not enough storage space allocated";
+			return false;
 		}
 		else if (currentSize > requiredSize) {
 			statusText = "Warning: Too much storage space allocated";

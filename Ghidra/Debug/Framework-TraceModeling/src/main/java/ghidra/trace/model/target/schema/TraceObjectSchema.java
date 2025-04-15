@@ -721,7 +721,8 @@ public interface TraceObjectSchema {
 				for (Map.Entry<String, AttributeSchema> attrEnt : ent.schema.getAttributeSchemas()
 						.entrySet()) {
 					TraceObjectSchema attrSchema = ctx.getSchema(attrEnt.getValue().getSchema());
-					if (TraceObjectInterface.class.isAssignableFrom(attrSchema.getType()) &&
+					if ((TraceObjectInterface.class.isAssignableFrom(attrSchema.getType()) ||
+						TraceObject.class.isAssignableFrom(attrSchema.getType())) &&
 						visited.add(attrSchema)) {
 						nextLevel.add(new Private.CanonicalSearchEntry(
 							ent.path.key(attrEnt.getKey()),

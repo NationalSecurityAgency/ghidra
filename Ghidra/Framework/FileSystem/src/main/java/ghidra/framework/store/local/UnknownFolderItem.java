@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class UnknownFolderItem extends LocalFolderItem {
 
-	public static final String UNKNOWN_CONTENT_TYPE = "Unknown";
+	public static final String UNKNOWN_CONTENT_TYPE = "Unknown-File";
+
+	private final int fileType;
 
 	/**
 	 * Constructor.
@@ -37,6 +39,15 @@ public class UnknownFolderItem extends LocalFolderItem {
 	 */
 	UnknownFolderItem(LocalFileSystem fileSystem, PropertyFile propertyFile) {
 		super(fileSystem, propertyFile);
+		fileType = propertyFile.getInt(FILE_TYPE, UNKNOWN_FILE_TYPE);
+	}
+	
+	/**
+	 * Get the file type
+	 * @return file type or -1 if unspecified
+	 */
+	public int getFileType() {
+		return fileType;
 	}
 
 	@Override

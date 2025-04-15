@@ -37,7 +37,9 @@ import ghidra.util.Msg;
 /**
  * Editor for a Function Stack.
  */
-public class StackEditorProvider extends CompositeEditorProvider implements DomainObjectListener {
+public class StackEditorProvider
+		extends CompositeEditorProvider<StackFrameDataType, StackEditorModel>
+		implements DomainObjectListener {
 
 	private Program program;
 	private Function function;
@@ -136,7 +138,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	@Override
-	protected CompositeEditorModel getModel() {
+	protected StackEditorModel getModel() {
 		return stackModel;
 	}
 
@@ -147,7 +149,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 
 	private void refreshName() {
 		StackFrameDataType origDt = stackModel.getOriginalComposite();
-		StackFrameDataType viewDt = stackModel.getViewComposite();
+		StackFrameDataType viewDt = stackModel.getEditorStack();
 		String oldName = origDt.getName();
 		String newName = function.getName();
 		if (oldName.equals(newName)) {

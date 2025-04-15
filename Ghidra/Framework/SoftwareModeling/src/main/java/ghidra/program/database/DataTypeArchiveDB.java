@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.options.Options;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.StandAloneDataTypeManager;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramChangeRecord;
@@ -255,26 +256,17 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return pointerSize > 0 && pointerSize <= PointerDataType.MAX_POINTER_SIZE_BYTES;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDataTypeManager()
-	 */
 	@Override
-	public DataTypeManager getDataTypeManager() {
+	public ProjectDataTypeManager getDataTypeManager() {
 		return dataTypeManager;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getCreationDate()
-	 */
 	@Override
 	public Date getCreationDate() {
 		Options pl = getOptions(ARCHIVE_INFO);
 		return pl.getDate(DATE_CREATED, new Date(0));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDefaultPointerSize()
-	 */
 	@Override
 	public int getDefaultPointerSize() {
 		// Not sure what size this should be so use 4 for now.
@@ -283,9 +275,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return pl.getInt(DEFAULT_POINTER_SIZE, 4);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getChanges()
-	 */
 	@Override
 	public DataTypeArchiveDBChangeSet getChanges() {
 		return (DataTypeArchiveDBChangeSet) changeSet;
@@ -579,11 +568,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	protected void updateMetadata() throws IOException {
 		getMetadata(); // updates metadata map
 		super.updateMetadata();
-	}
-
-	@Override
-	public void updateID() {
-		dataTypeManager.updateID();
 	}
 
 	@Override

@@ -31,7 +31,7 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 	private final static String ACTION_NAME = "Find Uses of";
 	private final static String DESCRIPTION = "Find uses of field in the selected row";
 
-	public FindReferencesToStructureFieldAction(CompositeEditorProvider provider) {
+	public FindReferencesToStructureFieldAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, BASIC_ACTION_GROUP, new String[] { ACTION_NAME }, null, null);
 		setDescription(DESCRIPTION);
 		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, "Data_Types"));

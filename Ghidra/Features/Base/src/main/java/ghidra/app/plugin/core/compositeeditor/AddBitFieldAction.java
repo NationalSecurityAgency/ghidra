@@ -26,7 +26,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		"Add a bitfield at the position of a selected component";
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
-	public AddBitFieldAction(CompositeEditorProvider provider) {
+	public AddBitFieldAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
@@ -46,9 +46,9 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 			return false;
 		}
 		boolean enabled = true;
-		CompEditorModel editorModel = (CompEditorModel) model;
+		CompEditorModel<?> editorModel = (CompEditorModel<?>) model;
 		// Unions do not support non-packed manipulation of bitfields
-		if (!(provider instanceof StructureEditorProvider structProvider) ||
+		if (!(provider instanceof StructureEditorProvider) ||
 			editorModel.isPackingEnabled() || editorModel.getNumSelectedRows() != 1) {
 			enabled = false;
 		}

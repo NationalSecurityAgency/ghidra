@@ -23,8 +23,10 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * BiDirectionDataType is a special structure data type that allows both positive and negative
- * offset values.
+ * {@link BiDirectionDataType} is a special structure data type that allows both positive and 
+ * negative offset values.
+ * <P>
+ * NOTE: This special purpose datatype does not support resolving with a {@link DataTypeManager}
  */
 public abstract class BiDirectionDataType extends StructureDataType
 		implements BiDirectionStructure {
@@ -36,20 +38,16 @@ public abstract class BiDirectionDataType extends StructureDataType
 	protected int splitOffset; // division offset between negative/positive halves
 
 	/**
-	 * @param name
-	 * @param length
+	 * Construct {@link BiDirectionDataType}
+	 * @param name data type display name
+	 * @param negativeLength negative allocation size
+	 * @param positiveLength positive allocation size
+	 * @param splitOffset division offset between negative/positive halves
+	 * @param dtm associated datatype manager for component datatypes
 	 */
 	protected BiDirectionDataType(String name, int negativeLength, int positiveLength,
 			int splitOffset, DataTypeManager dtm) {
 		super(CategoryPath.ROOT, name, negativeLength + positiveLength, dtm);
-		this.negativeLength = negativeLength;
-		this.positiveLength = positiveLength;
-		this.splitOffset = splitOffset;
-	}
-
-	protected BiDirectionDataType(CategoryPath catPath, String name, int negativeLength,
-			int positiveLength, int splitOffset, DataTypeManager dtm) {
-		super(catPath, name, negativeLength + positiveLength, dtm);
 		this.negativeLength = negativeLength;
 		this.positiveLength = positiveLength;
 		this.splitOffset = splitOffset;

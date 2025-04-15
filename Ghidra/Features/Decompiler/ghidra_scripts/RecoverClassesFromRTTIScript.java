@@ -82,7 +82,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -414,8 +414,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			// first check that there is even rtti by searching the special string in memory
-			if (!isStringInProgramMemory("class_type_info")) {
-				return ("This program does not contain RTTI.");
+			if (!isStringInProgramMemory("class_type_info") && !containsClassTypeinfoSymbol()) {
+				return ("This program does not appear to contain RTTI.");
 			}
 
 			// then check to see if the special typeinfo namespace is in external space
@@ -1612,9 +1612,25 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return false;
 	}
 
+	// assume that if there are any symbols containing "class_type_info" there is rtti in program
+	private boolean containsClassTypeinfoSymbol() {
+
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		SymbolIterator symbolIterator =
+			symbolTable.getSymbolIterator("*class_type_info*", true);
+		return symbolIterator.hasNext();
+
+	}
+
 	private boolean isExternalNamespace(String path) throws CancelledException {
 
-		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		// try exact namespace path if there is one
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, false);
+
+		// if not, try to find path in another namespace
+		if (symbols.isEmpty()) {
+			symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+		}
 
 		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();
