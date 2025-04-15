@@ -1,3 +1,59 @@
+# Ghidra 11.3.2 Change History (April 2025)
+
+### Improvements
+* _Demangler_. Updated GNU Demangler text replacement to not replace some common namespace prefixes because in some cases doing so resulted in merging two unique namespaces into one. (GP-5503)
+* _Processors_. Corrected several AARCH64 floating point comparisons. (GP-5402, Issue #7479, #7855)
+* _Project_. In preparation for future project file types, project data error handling improvements have been made.  This will help to reduce project browsing issues when unsupported files types are encountered (locally or on newer server).  This may occur if newer file types are added to a project or shared repository and subsequently opened with an older version of Ghidra. (GP-5519)
+* _Scripting_. Updated the RecoverClassesFromRTTIScript to correctly handle case when there are two valid vftable symbols on the same address. (GP-5461, Issue #7876)
+* _Scripting_. Improved RecoverClassesFromRTTIScript ability to recognize the existence of RTTI in GCC binaries. (GP-5487, Issue #7904)
+* _Scripting_. Added check to RecoverClassesFromRTTIScript to make sure vftable addresses are contained in valid memory blocks. (GP-5500, Issue #7927)
+* _Scripting_. Improved RecoverClassesFromRTTIScript to do a better job validating GCC typeinfo structures by making sure there is space in memory before applying a typeinfo structure. (GP-5501)
+* _Scripting_. Improved RecoverClassesFromRTTIScript to do a better job prevalidating GCC typeinfo structures by making sure the typeinfo-name member points to a string. (GP-5502)
+* _Scripting_. Improved RecoverClassesFromRTTIScript's use of LowCodeBitMode addresses when validating virtual function starts. (GP-5505)
+* _Scripting_. `pyghidra.open_program()` now accepts a `program_name` parameter, which can be used to override the program name derived from the `binary_path` parameter. (GP-5521)
+
+### Bugs
+* _Analysis_. Added population of SetThunkFunction dialog to the computed thunk location. Also added thunk function pattern for Powerpc `.plt` table linkage. (GP-5411)
+* _Analysis_. Fixed issue where in some cases two vftable symbols (one plain and one with `'s`) were accidentally created at the same address. When running the RecoverClassesWithRTTIScript with the two symbols, this caused incorrect vftable structures to be applied. (GP-5422, Issue #7876)
+* _Analysis_. Default switch case flow references have been removed from the switch instruction as they are reached normally by a conditional branch.  In addition, default case labels are now placed at the correct location. (GP-5583)
+* _Basic Infrastructure_. Fixed an issue with external Ghidra extension classpath priority. (GP-5569, Issue #7977)
+* _Data Types_. Corrected transaction error which could occur within Structure Editor when creating another structure from selected components. (GP-5412, Issue #7853)
+* _Data Types_. Corrected a bug which caused an exception when typing into the Bitfield Editor datatype. (GP-5431, Issue #7865)
+* _Data Types_. Added an optional __Ordinal__ column to the Union Editor. (GP-5485)
+* _Data Types_. Corrected transaction error which can occur when launching the Structure Editor and one or more component-level datatype Settings have been previously applied. (GP-5556)
+* _Data Types_. Corrected various issues within Structure Editor which prevented the Save, Undo, Redo buttons and status text from updating correctly. (GP-5557)
+* _Data Types_. Corrected Union Editor shift up/down action bug which caused component datatype to be lost. (GP-5580, Issue #7994)
+* _Debugger:Objects_. Fixed issue re-arranging columns in Elements table of Model panel when Plot column was disabled. (GP-4915)
+* _Debugger:Watches_. Fixed issue where Watches didn't update on register changes. (GP-5383)
+* _Debugger:Watches_. Fixed issue where watches referring to registers would cause errors when _previous_ coordinates had no thread. (GP-5394)
+* _Emulator_. Fixed issue with StructuredSleigh where empty (nop) program caused compilation error. (GP-5459)
+* _Emulator_. Fixed issue when branching from injected p-code in the emulator. (GP-5460)
+* _Function_. Corrected Function parameter custom storage error which could occur when adding stack storage entries. (GP-5479, Issue #7900)
+* _Importer_. Fixed a `ClassCastException` that could occur when extracting Mach-O files from a `dyld_shared_cache`.  The exception was due to the Mach-O having very large symbol table offsets. (GP-5371, Issue #7436)
+* _Importer:ELF_. Corrected ELF MIPS import failure of DWARF debug file which could fail on processing of `.reginfo` section. (GP-5406)
+* _Importer:ELF_. Fixed Tricore relocation `24REL` handling. (GP-5449, Issue #7868)
+* _Importer:Mach-O_. Fixed an issue with processing Mach-O stub functions that could result in the wrong symbol being associated with a stub. (GP-5482, Issue #7899)
+* _Importer:PE_. Fixed an exception that could occur when importing PE files with exactly eleven data directories. (GP-5558, Issue #7973, #7974)
+* _MachineLearning_. Upgraded the MachineLearning extension's protobuf-java jar to 3.21.8 to avoid potential classpath conflicts with the Debugger. (GP-5534, Issue #7977)
+* _Processors_. Fixed ARM `vselgt` conditional instruction semantics. (GP-4648, Issue #6531)
+* _Processors_. Fixed ARM `vdup` instruction semantics. (GP-4649, Issue #5669, #6542)
+* _Processors_. Fixed stack operand sizing for x86 `ENTER`, `LEAVE`, `IRETQ`, and `RETF` instructions. (GP-5011, Issue #6923)
+* _Processors_. Fixed issue with MIPS16 processor using incorrect relative addresses on delayslot instructions. (GP-5131, Issue #862)
+* _Processors_. Fixed invalid x86 `pop` instruction macros for some instruction variants. (GP-5299, Issue #7326)
+* _Processors_. Fixed 6x09 `COM` instruction pcode. (GP-5305, Issue #5767, #6336)
+* _Processors_. Fixed ARM Thumb missing the `strt` instruction. (GP-5386, Issue #7514)
+* _Scripting_. Added `RecoverClassesFromRTTIScript` check to make sure GCC VMI typeinfo structures have valid number of bases in structure. (GP-5389, Issue #7516)
+* _Scripting_. PyGhidra `open_program()` now handles locked projects better. (GP-5444, Issue #7536)
+* _Search_. Corrected a problem with the Memory Search dialog which could prevent proper search of selected memory regions. (GP-5395)
+* _SourceMatching_. Corrected parsing of certain DWARF source file paths. (GP-5561, Issue #7963)
+* _Terminal_. Fixed issue with obtrusive scrolling when selecting text. (GP-5416)
+* _Version Tracking_. Fixed NullPointerException that occured when clicking on Version Tracking match where either source or destination address was not in current program memory. (GP-5549, Issue #7964)
+
+### Notable API Changes
+* _Debugger:Emulator_. (GP-5517) Added Stack and Frames to the `pure emulation` trace object schema.
+* _Debugger:Trace_. (GP-5522) `LifeSet.spans()` now returns a `NavigableSet`.
+* _SourceMatching_. (GP-5561) SourceFileUtils.fixDwarfRelativePath has been renamed to SourceFileUtils.normalizeDwarfPath.
+
 # Ghidra 11.3.1 Change History (February 2025)
 
 ### Improvements
