@@ -88,6 +88,8 @@ define token instrArm (32)
     x=(5,5)
     r=(5,5)
     y=(6,6)
+    banked_m1=(16,19)
+    banked_m=(8,8)
     
 	# Advanced SIMD and VFP instruction fields
 	D22=(22,22)
@@ -4142,6 +4144,66 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   Rd = coprocessor_movefromRt(t_cpn,t_op1,t_opc2,CRn,CRm);
 }
 
+BankedSysmArm: banked_sysm    is banked_m & banked_m1
+  [ banked_sysm = (banked_m << 4) $or banked_m1; ]
+{
+  export *[const]:4 banked_sysm;
+}
+
+# MRS/MSR (banked register)
+# See https://developer.arm.com/documentation/ddi0597/2024-12/Base-Instructions/MSR--Banked-register---Move-general-purpose-register-to-Banked-or-Special-register-
+#
+# M1/M are in the same places for MRS/MSR instructions, so no need to
+# distinguish between them
+
+# SPSR = 0, M = 0
+BankedRegArm: r8_usr is r8_usr & banked_m=0 & banked_m1=0b0000 { export r8_usr; }
+BankedRegArm: r9_usr is r9_usr & banked_m=0 & banked_m1=0b0001 { export r9_usr; }
+BankedRegArm: r10_usr is r10_usr & banked_m=0 & banked_m1=0b0010 { export r10_usr; }
+BankedRegArm: r11_usr is r11_usr & banked_m=0 & banked_m1=0b0011 { export r11_usr; }
+BankedRegArm: r12_usr is r12_usr & banked_m=0 & banked_m1=0b0100 { export r12_usr; }
+BankedRegArm: sp_usr is sp_usr & banked_m=0 & banked_m1=0b0101 { export sp_usr; }
+BankedRegArm: lr_usr is lr_usr & banked_m=0 & banked_m1=0b0110 { export lr_usr; }
+
+BankedRegArm: r8_fiq is r8_fiq & banked_m=0 & banked_m1=0b1000 { export r8_fiq; }
+BankedRegArm: r9_fiq is r9_fiq & banked_m=0 & banked_m1=0b1001 { export r9_fiq; }
+BankedRegArm: r10_fiq is r10_fiq & banked_m=0 & banked_m1=0b1010 { export r10_fiq; }
+BankedRegArm: r11_fiq is r11_fiq & banked_m=0 & banked_m1=0b1011 { export r11_fiq; }
+BankedRegArm: r12_fiq is r12_fiq & banked_m=0 & banked_m1=0b1100 { export r12_fiq; }
+BankedRegArm: sp_fiq is sp_fiq & banked_m=0 & banked_m1=0b1101 { export sp_fiq; }
+BankedRegArm: lr_fiq is lr_fiq & banked_m=0 & banked_m1=0b1110 { export lr_fiq; }
+
+# SPSR = 0, M = 0
+BankedRegArm: lr_irq is lr_irq & banked_m=1 & banked_m1=0b0000 { export lr_irq; }
+BankedRegArm: sp_irq is sp_irq & banked_m=1 & banked_m1=0b0001 { export sp_irq; }
+BankedRegArm: lr_svc is lr_svc & banked_m=1 & banked_m1=0b0010 { export lr_svc; }
+BankedRegArm: sp_svc is sp_svc & banked_m=1 & banked_m1=0b0011 { export sp_svc; }
+BankedRegArm: lr_abt is lr_abt & banked_m=1 & banked_m1=0b0100 { export lr_abt; }
+BankedRegArm: sp_abt is sp_abt & banked_m=1 & banked_m1=0b0101 { export sp_abt; }
+BankedRegArm: lr_und is lr_und & banked_m=1 & banked_m1=0b0110 { export lr_und; }
+BankedRegArm: sp_und is sp_und & banked_m=1 & banked_m1=0b0111 { export sp_und; }
+
+BankedRegArm: lr_mon is lr_mon & banked_m=1 & banked_m1=0b1100 { export lr_mon; }
+BankedRegArm: sp_mon is sp_mon & banked_m=1 & banked_m1=0b1101 { export sp_mon; }
+BankedRegArm: elr_hyp is elr_hyp & banked_m=1 & banked_m1=0b1110 { export elr_hyp; }
+BankedRegArm: sp_hyp is sp_hyp & banked_m=1 & banked_m1=0b1111 { export sp_hyp; }
+
+# Fallback: unknown registers
+BankedRegArm: "banked_reg_sysm("^BankedSysmArm^")" is c2027=0x10 & BankedSysmArm { tmp:4 = UnkBankedRegRead(BankedSysmArm:1); export tmp; }
+BankedRegArm: "banked_reg_sysm("^BankedSysmArm^")" is c2027=0x12 & RnLo & BankedSysmArm { tmp:4 = UnkBankedRegWrite(BankedSysmArm:1, RnLo); export tmp; }
+
+# MRS/MSR (banked register), spsr=1
+BankedSpsrArm: spsr_fiq is spsr_fiq & banked_m=0 & banked_m1=0b1110 { export spsr_fiq; }
+BankedSpsrArm: spsr_irq is spsr_irq & banked_m=1 & banked_m1=0b0000 { export spsr_irq; }
+BankedSpsrArm: spsr_svc is spsr_svc & banked_m=1 & banked_m1=0b0010 { export spsr_svc; }
+BankedSpsrArm: spsr_abt is spsr_abt & banked_m=1 & banked_m1=0b0100 { export spsr_abt; }
+BankedSpsrArm: spsr_und is spsr_und & banked_m=1 & banked_m1=0b0110 { export spsr_und; }
+BankedSpsrArm: spsr_mon is spsr_mon & banked_m=1 & banked_m1=0b1100 { export spsr_mon; }
+BankedSpsrArm: spsr_hyp is spsr_hyp & banked_m=1 & banked_m1=0b1110 { export spsr_hyp; }
+
+# Fallback: unknown registers
+BankedSpsrArm: "banked_spsr_sysm("^BankedSysmArm^")" is c2027=0x14 & BankedSysmArm { tmp:4 = UnkBankedSpsrRead(BankedSysmArm:1); export tmp; }
+BankedSpsrArm: "banked_spsr_sysm("^BankedSysmArm^")" is c2027=0x16 & RnLo & BankedSysmArm { tmp:4 = UnkBankedSpsrWrite(BankedSysmArm:1, RnLo); export tmp; }
 
 :mrs^COND Rd,cpsr 		is $(AMODE) & ARMcond=1 & COND & c2027=16 & c1619=15 & Rd & offset_12=0 & cpsr
 {
@@ -4154,6 +4216,18 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 {
   build COND;
   Rd = spsr;
+}
+
+:mrs^COND Rd,BankedRegArm   is $(AMODE) & ARMcond=1 & COND & c2027=0x10 & Rd & c0911=1 & c0007=0 & BankedRegArm
+{
+  build COND;
+  Rd = BankedRegArm;
+}
+
+:mrs^COND Rd,BankedSpsrArm  is $(AMODE) & ARMcond=1 & COND & c2027=0x14 & Rd & c0911=1 & c0007=0 & BankedSpsrArm
+{
+  build COND;
+  Rd = BankedSpsrArm;
 }
 
 :msr^COND cpsrmask,shift1 	is $(AMODE) & ARMcond=1 & COND & c2027=50 & cpsrmask & c1215=15 & c2627=0 & shift1
@@ -4191,6 +4265,18 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build spsrmask;
   spsr = (spsr& ~spsrmask) | (rm & spsrmask);
+}
+
+:msr^COND BankedRegArm,RnLo   is $(AMODE) & ARMcond=1 & COND & c2027=0x12 & c0915=0x79 & c0407=0 & RnLo & BankedRegArm
+{
+  build COND;
+  BankedRegArm = RnLo;
+}
+
+:msr^COND BankedSpsrArm,RnLo  is $(AMODE) & ARMcond=1 & COND & c2027=0x16 & c0915=0x79 & c0407=0 & RnLo & BankedSpsrArm
+{
+  build COND;
+  BankedSpsrArm = RnLo;
 }
 
 :mul^COND^SBIT_ZN rn,rm,rs 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=0 & SBIT_ZN & rn & c1215=0 & rs & c0407=9 & rm

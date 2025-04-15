@@ -34,6 +34,7 @@ define token instr2 (16)
 
 define token instrThumb (16)
   op4=(4,15)
+  op5=(5,15)
   op6=(6,15)
   op7=(7,15)
   op8=(8,15)
@@ -149,6 +150,12 @@ define token instrThumb (16)
   sysm37=(3,7)
   sysm02=(0,2)
   
+  mrs_banked_m1=(0,3)
+  mrs_banked_m=(4,4)
+
+  msr_banked_m1=(8,11)
+  msr_banked_m=(4,4)
+
 
   thc0001=(0,1)
   thc0002=(0,2)
@@ -2973,7 +2980,142 @@ define pcodeop setStackMode;
 # TODO: should we set sp ?
 }
 
-@endif
+@endif # defined(VERSION_7M)
+
+@if defined(VERSION_7)
+
+BankedSysmThumb: banked_sysm    is op5=0x79f & thc0003 ; thc0404
+  [ banked_sysm = (thc0404 << 4) $or thc0003; ]
+{
+  export *[const]:4 banked_sysm;
+}
+
+BankedSysmThumb: banked_sysm is op5=0x79c ; thc0811 & thc0404
+  [ banked_sysm = (thc0404 << 4) $or thc0811; ]
+{
+  export *[const]:4 banked_sysm;
+}
+
+# MRS/MSR (banked register)
+# See https://developer.arm.com/documentation/ddi0597/2024-12/Base-Instructions/MSR--Banked-register---Move-general-purpose-register-to-Banked-or-Special-register-
+
+# MRS, SPSR = 0, M = 0
+BankedRegThumb: r8_usr is r8_usr & op4=0xf3e & mrs_banked_m1=0b0000 ; mrs_banked_m=0 { export r8_usr; }
+BankedRegThumb: r9_usr is r9_usr & op4=0xf3e & mrs_banked_m1=0b0001 ; mrs_banked_m=0 { export r9_usr; }
+BankedRegThumb: r10_usr is r10_usr & op4=0xf3e & mrs_banked_m1=0b0010 ; mrs_banked_m=0 { export r10_usr; }
+BankedRegThumb: r11_usr is r11_usr & op4=0xf3e & mrs_banked_m1=0b0011 ; mrs_banked_m=0 { export r11_usr; }
+BankedRegThumb: r12_usr is r12_usr & op4=0xf3e & mrs_banked_m1=0b0100 ; mrs_banked_m=0 { export r12_usr; }
+BankedRegThumb: sp_usr is sp_usr & op4=0xf3e & mrs_banked_m1=0b0101 ; mrs_banked_m=0 { export sp_usr; }
+BankedRegThumb: lr_usr is lr_usr & op4=0xf3e & mrs_banked_m1=0b0110 ; mrs_banked_m=0 { export lr_usr; }
+
+BankedRegThumb: r8_fiq is r8_fiq & op4=0xf3e & mrs_banked_m1=0b1000 ; mrs_banked_m=0 { export r8_fiq; }
+BankedRegThumb: r9_fiq is r9_fiq & op4=0xf3e & mrs_banked_m1=0b1001 ; mrs_banked_m=0 { export r9_fiq; }
+BankedRegThumb: r10_fiq is r10_fiq & op4=0xf3e & mrs_banked_m1=0b1010 ; mrs_banked_m=0 { export r10_fiq; }
+BankedRegThumb: r11_fiq is r11_fiq & op4=0xf3e & mrs_banked_m1=0b1011 ; mrs_banked_m=0 { export r11_fiq; }
+BankedRegThumb: r12_fiq is r12_fiq & op4=0xf3e & mrs_banked_m1=0b1100 ; mrs_banked_m=0 { export r12_fiq; }
+BankedRegThumb: sp_fiq is sp_fiq & op4=0xf3e & mrs_banked_m1=0b1101 ; mrs_banked_m=0 { export sp_fiq; }
+BankedRegThumb: lr_fiq is lr_fiq & op4=0xf3e & mrs_banked_m1=0b1110 ; mrs_banked_m=0 { export lr_fiq; }
+
+# MSR, SPSR = 0, M = 0
+BankedRegThumb: r8_usr is r8_usr & op4=0xf38 ; msr_banked_m1=0b0000 & msr_banked_m=0 { export r8_usr; }
+BankedRegThumb: r9_usr is r9_usr & op4=0xf38 ; msr_banked_m1=0b0001 & msr_banked_m=0 { export r9_usr; }
+BankedRegThumb: r10_usr is r10_usr & op4=0xf38 ; msr_banked_m1=0b0010 & msr_banked_m=0 { export r10_usr; }
+BankedRegThumb: r11_usr is r11_usr & op4=0xf38 ; msr_banked_m1=0b0011 & msr_banked_m=0 { export r11_usr; }
+BankedRegThumb: r12_usr is r12_usr & op4=0xf38 ; msr_banked_m1=0b0100 & msr_banked_m=0 { export r12_usr; }
+BankedRegThumb: sp_usr is sp_usr & op4=0xf38 ; msr_banked_m1=0b0101 & msr_banked_m=0 { export sp_usr; }
+BankedRegThumb: lr_usr is lr_usr & op4=0xf38 ; msr_banked_m1=0b0110 & msr_banked_m=0 { export lr_usr; }
+
+BankedRegThumb: r8_fiq is r8_fiq & op4=0xf38 ; msr_banked_m1=0b1000 & msr_banked_m=0 { export r8_fiq; }
+BankedRegThumb: r9_fiq is r9_fiq & op4=0xf38 ; msr_banked_m1=0b1001 & msr_banked_m=0 { export r9_fiq; }
+BankedRegThumb: r10_fiq is r10_fiq & op4=0xf38 ; msr_banked_m1=0b1010 & msr_banked_m=0 { export r10_fiq; }
+BankedRegThumb: r11_fiq is r11_fiq & op4=0xf38 ; msr_banked_m1=0b1011 & msr_banked_m=0 { export r11_fiq; }
+BankedRegThumb: r12_fiq is r12_fiq & op4=0xf38 ; msr_banked_m1=0b1100 & msr_banked_m=0 { export r12_fiq; }
+BankedRegThumb: sp_fiq is sp_fiq & op4=0xf38 ; msr_banked_m1=0b1101 & msr_banked_m=0 { export sp_fiq; }
+BankedRegThumb: lr_fiq is lr_fiq & op4=0xf38 ; msr_banked_m1=0b1110 & msr_banked_m=0 { export lr_fiq; }
+
+# MRS, SPSR = 0, M = 1
+BankedRegThumb: lr_irq is lr_irq & op4=0xf3e & mrs_banked_m1=0b0000 ; mrs_banked_m=1 { export lr_irq; }
+BankedRegThumb: sp_irq is sp_irq & op4=0xf3e & mrs_banked_m1=0b0001 ; mrs_banked_m=1 { export sp_irq; }
+BankedRegThumb: lr_svc is lr_svc & op4=0xf3e & mrs_banked_m1=0b0010 ; mrs_banked_m=1 { export lr_svc; }
+BankedRegThumb: sp_svc is sp_svc & op4=0xf3e & mrs_banked_m1=0b0011 ; mrs_banked_m=1 { export sp_svc; }
+BankedRegThumb: lr_abt is lr_abt & op4=0xf3e & mrs_banked_m1=0b0100 ; mrs_banked_m=1 { export lr_abt; }
+BankedRegThumb: sp_abt is sp_abt & op4=0xf3e & mrs_banked_m1=0b0101 ; mrs_banked_m=1 { export sp_abt; }
+BankedRegThumb: lr_und is lr_und & op4=0xf3e & mrs_banked_m1=0b0110 ; mrs_banked_m=1 { export lr_und; }
+BankedRegThumb: sp_und is sp_und & op4=0xf3e & mrs_banked_m1=0b0111 ; mrs_banked_m=1 { export sp_und; }
+
+BankedRegThumb: lr_mon is lr_mon & op4=0xf3e & mrs_banked_m1=0b1100 ; mrs_banked_m=1 { export lr_mon; }
+BankedRegThumb: sp_mon is sp_mon & op4=0xf3e & mrs_banked_m1=0b1101 ; mrs_banked_m=1 { export sp_mon; }
+BankedRegThumb: elr_hyp is elr_hyp & op4=0xf3e & mrs_banked_m1=0b1110 ; mrs_banked_m=1 { export elr_hyp; }
+BankedRegThumb: sp_hyp is sp_hyp & op4=0xf3e & mrs_banked_m1=0b1111 ; mrs_banked_m=1 { export sp_hyp; }
+
+# MSR, SPSR = 0, M = 1
+BankedRegThumb: lr_irq is lr_irq & op4=0xf38 ; msr_banked_m1=0b0000 & msr_banked_m=1 { export lr_irq; }
+BankedRegThumb: sp_irq is sp_irq & op4=0xf38 ; msr_banked_m1=0b0001 & msr_banked_m=1 { export sp_irq; }
+BankedRegThumb: lr_svc is lr_svc & op4=0xf38 ; msr_banked_m1=0b0010 & msr_banked_m=1 { export lr_svc; }
+BankedRegThumb: sp_svc is sp_svc & op4=0xf38 ; msr_banked_m1=0b0011 & msr_banked_m=1 { export sp_svc; }
+BankedRegThumb: lr_abt is lr_abt & op4=0xf38 ; msr_banked_m1=0b0100 & msr_banked_m=1 { export lr_abt; }
+BankedRegThumb: sp_abt is sp_abt & op4=0xf38 ; msr_banked_m1=0b0101 & msr_banked_m=1 { export sp_abt; }
+BankedRegThumb: lr_und is lr_und & op4=0xf38 ; msr_banked_m1=0b0110 & msr_banked_m=1 { export lr_und; }
+BankedRegThumb: sp_und is sp_und & op4=0xf38 ; msr_banked_m1=0b0111 & msr_banked_m=1 { export sp_und; }
+
+BankedRegThumb: lr_mon is lr_mon & op4=0xf38 ; msr_banked_m1=0b1100 & msr_banked_m=1 { export lr_mon; }
+BankedRegThumb: sp_mon is sp_mon & op4=0xf38 ; msr_banked_m1=0b1101 & msr_banked_m=1 { export sp_mon; }
+BankedRegThumb: elr_hyp is elr_hyp & op4=0xf38 ; msr_banked_m1=0b1110 & msr_banked_m=1 { export elr_hyp; }
+BankedRegThumb: sp_hyp is sp_hyp & op4=0xf38 ; msr_banked_m1=0b1111 & msr_banked_m=1 { export sp_hyp; }
+
+# Fallback: unknown registers
+BankedRegThumb: "banked_reg_sysm("^BankedSysmThumb^")" is (op4=0xf3e ; op0) & BankedSysmThumb { tmp:4 = UnkBankedRegRead(BankedSysmThumb:1); export tmp; }
+BankedRegThumb: "banked_reg_sysm("^BankedSysmThumb^")" is (op4=0xf38 & thc0404=0 & Rn0003 ; op0) & BankedSysmThumb { tmp:4 = UnkBankedRegWrite(BankedSysmThumb:1, Rn0003); export tmp; }
+
+# MRS, SPSR = 1
+BankedSpsrThumb: spsr_fiq is spsr_fiq & op4=0xf3f & mrs_banked_m1=0b1110 ; mrs_banked_m=0 { export spsr_fiq; }
+BankedSpsrThumb: spsr_irq is spsr_irq & op4=0xf3f & mrs_banked_m1=0b0000 ; mrs_banked_m=1 { export spsr_irq; }
+BankedSpsrThumb: spsr_svc is spsr_svc & op4=0xf3f & mrs_banked_m1=0b0010 ; mrs_banked_m=1 { export spsr_svc; }
+BankedSpsrThumb: spsr_abt is spsr_abt & op4=0xf3f & mrs_banked_m1=0b0100 ; mrs_banked_m=1 { export spsr_abt; }
+BankedSpsrThumb: spsr_und is spsr_und & op4=0xf3f & mrs_banked_m1=0b0110 ; mrs_banked_m=1 { export spsr_und; }
+BankedSpsrThumb: spsr_mon is spsr_mon & op4=0xf3f & mrs_banked_m1=0b1100 ; mrs_banked_m=1 { export spsr_mon; }
+BankedSpsrThumb: spsr_hyp is spsr_hyp & op4=0xf3f & mrs_banked_m1=0b1110 ; mrs_banked_m=1 { export spsr_hyp; }
+
+# MSR, SPSR = 1
+BankedSpsrThumb: spsr_fiq is spsr_fiq & op4=0xf39 ; msr_banked_m1=0b1110 & msr_banked_m=0 { export spsr_fiq; }
+BankedSpsrThumb: spsr_irq is spsr_irq & op4=0xf39 ; msr_banked_m1=0b0000 & msr_banked_m=1 { export spsr_irq; }
+BankedSpsrThumb: spsr_svc is spsr_svc & op4=0xf39 ; msr_banked_m1=0b0010 & msr_banked_m=1 { export spsr_svc; }
+BankedSpsrThumb: spsr_abt is spsr_abt & op4=0xf39 ; msr_banked_m1=0b0100 & msr_banked_m=1 { export spsr_abt; }
+BankedSpsrThumb: spsr_und is spsr_und & op4=0xf39 ; msr_banked_m1=0b0110 & msr_banked_m=1 { export spsr_und; }
+BankedSpsrThumb: spsr_mon is spsr_mon & op4=0xf39 ; msr_banked_m1=0b1100 & msr_banked_m=1 { export spsr_mon; }
+BankedSpsrThumb: spsr_hyp is spsr_hyp & op4=0xf39 ; msr_banked_m1=0b1110 & msr_banked_m=1 { export spsr_hyp; }
+
+# Fallback: unknown registers
+BankedSpsrThumb: "banked_spsr_sysm("^BankedSysmThumb^")" is (op4=0xf3f ; op0) & BankedSysmThumb { tmp:4 = UnkBankedSpsrRead(BankedSysmThumb:1); export tmp; }
+BankedSpsrThumb: "banked_spsr_sysm("^BankedSysmThumb^")" is (op4=0xf39 & Rn0003 ; op0) & BankedSysmThumb { tmp:4 = UnkBankedSpsrWrite(BankedSysmThumb:1, Rn0003); export tmp; }
+
+
+:mrs^ItCond Rd0811,BankedRegThumb   is TMode=1 & ItCond & (op4=0xf3e; op12=0x8 & Rd0811 & thc0507=0x1 & thc0003=0x0) & BankedRegThumb
+{
+  build ItCond;
+  Rd0811 = BankedRegThumb;
+}
+
+:mrs^ItCond Rd0811,BankedSpsrThumb  is TMode=1 & ItCond & (op4=0xf3f; op12=0x8 & Rd0811 & thc0507=0x1 & thc0003=0x0) & BankedSpsrThumb
+{
+  build ItCond;
+  Rd0811 = BankedSpsrThumb;
+}
+
+:msr^ItCond BankedRegThumb,Rn0003   is TMode=1 & ItCond & (op4=0xf38 & Rn0003; op12=0x8 & thc0507=0x1 & thc0003=0x0) & BankedRegThumb
+{
+  build ItCond;
+  BankedRegThumb = Rn0003;
+}
+
+:msr^ItCond BankedSpsrThumb,Rn0003  is TMode=1 & ItCond & (op4=0xf39 & Rn0003; op12=0x8 & thc0507=0x1 & thc0003=0x0) & BankedSpsrThumb
+{
+  build ItCond;
+  BankedSpsrThumb = Rn0003;
+}
+
+
+@endif # defined(VERSION_7)
 
 thpsrmask:			is th_psrmask=0	{ export 0:4; }
 thpsrmask: "_c"		is th_psrmask=1	{ export 0xff:4; }

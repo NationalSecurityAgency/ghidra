@@ -11,7 +11,6 @@ define register offset=0x0020 size=4 [ r0 r1 r2 r3  r4  r5  r6  r7	r8 r9 r10 r11
 define register offset=0x0060 size=1 [ NG ZR CY OV tmpNG tmpZR tmpCY tmpOV shift_carry TB Q GE1 GE2 GE3 GE4 ]; 
 define register offset=0x0070 size=4 [ cpsr spsr ];
 define register offset=0x0080 size=4 [ mult_addr ];	# Special internal register for dealing with multiple stores/loads
-define register offset=0x0084 size=4 [ r14_svc r13_svc spsr_svc ];
 define register offset=0x0090 size=8 [ mult_dat8 ];	# Special internal register for dealing with multiple stores/loads
 define register offset=0x0090 size=16 [ mult_dat16 ];	# Special internal register for dealing with multiple stores/loads
 define register offset=0x00A0 size=4 [ fpsr ];		# floating point state register (for FPA10 floating-point accelerator)
@@ -74,6 +73,22 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 @endif # ENDIAN = "big"
 
 @endif # SIMD
+
+@if defined(VERSION_7)
+  # 0x400-0x500 is marked as volatile in the .pspec; update it there if this
+  # space is moved or expanded
+  # 33 registers x 4 bytes/register = 0x84 bytes consumed
+  define register offset=0x0400 size=4 [ r8_usr r9_usr r10_usr r11_usr r12_usr sp_usr lr_usr
+                                       r8_fiq r9_fiq r10_fiq r11_fiq r12_fiq sp_fiq lr_fiq
+                                       sp_irq lr_irq
+                                       sp_svc lr_svc
+                                       sp_mon lr_mon
+                                       sp_abt lr_abt
+                                       sp_hyp elr_hyp
+                                       sp_und lr_und
+                                       spsr_fiq spsr_irq spsr_svc spsr_mon spsr_abt spsr_hyp spsr_und ];
+
+@endif # defined(VERSION_7)
 
 # Define context bits
 # WARNING: when adjusting context keep compiler packing in mind
@@ -188,6 +203,11 @@ define pcodeop Absolute;
 define pcodeop ReverseBitOrder;
 define pcodeop SendEvent;
 define pcodeop setEndianState;
+
+define pcodeop UnkBankedRegRead;
+define pcodeop UnkBankedSpsrRead;
+define pcodeop UnkBankedRegWrite;
+define pcodeop UnkBankedSpsrWrite;
 
 # Copies ISAModeSwitch to TMode
 define pcodeop setISAMode;

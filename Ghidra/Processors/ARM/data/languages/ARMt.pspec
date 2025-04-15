@@ -41,6 +41,10 @@
     <symbol name="H_FIQ" address="ram:0xFFFF001c" entry="true"/>
   </default_symbols>
   
+  <volatile outputop="cWrite" inputop="cRead">
+    <range space="register" first="0x400" last="0x4ff"/>
+  </volatile>
+
   <register_data>
     <register name="q0" group="NEON" vector_lane_sizes="1,2,4"/> 
     <register name="q1" group="NEON" vector_lane_sizes="1,2,4"/> 
