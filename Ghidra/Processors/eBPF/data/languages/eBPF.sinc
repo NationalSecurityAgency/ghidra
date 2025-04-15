@@ -14,7 +14,9 @@ define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  P
 
 # Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
 define token instr(64)
+    llvm_imm_callx_zero=(36, 63)
     imm=(32, 63) signed
+    llvm_reg_callx=(32, 35) # special encoding for callx instruction emitted by LLVM
     off=(16, 31) signed
     src=(12, 15)
     dst=(8, 11)
@@ -31,7 +33,7 @@ define token immtoken(64)
 ;
 
 #To operate with registers
-attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
+attach variables [ src dst llvm_reg_callx ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
 
 #Arithmetic instructions
 #BPF_ALU64
@@ -354,6 +356,22 @@ disp32: reloc is imm [ reloc = inst_next + imm; ] { export *:4 reloc; }
 
 :CALL disp32 is imm & src=1 & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & disp32 {
     call disp32;
+}
+
+# GCC encoding and LLVM 19.1+ encoding
+:CALLX dst is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & src=0 & imm=0 & dst {
+    call [dst];
+}
+
+# LLVM encoding used until LLVM 19.1
+# Introduced in https://github.com/llvm/llvm-project/commit/9a67245d881f4cf89fd8f897ae2cd0bccec49496
+# Modified in https://github.com/llvm/llvm-project/commit/c43ad6c0fddac0bbed5e881801dd2bc2f9eeba2d
+:CALLX llvm_reg_callx is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & dst=0 & src=0 & llvm_imm_callx_zero=0 & llvm_reg_callx {
+    call [llvm_reg_callx];
+}
+# Both CALLX encodings are matched when both dst and imm are zero
+:CALLX R0 is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & dst=0 & src=0 & imm=0 & R0 {
+    call [R0];
 }
 
 :EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 { return [*:8 R10]; }
