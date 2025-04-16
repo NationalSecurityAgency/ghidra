@@ -1327,7 +1327,7 @@ public class DialogComponentProvider
 
 	private void addKeyBindingAction(DockingActionIf action) {
 
-		DialogActionProxy proxy = new DialogActionProxy(action);
+		DialogActionProxy proxy = new DialogActionProxy(this, action);
 		keyBindingProxyActions.add(proxy);
 
 		// The tool will be null when clients add actions to this dialog before it has been shown.
@@ -1481,8 +1481,11 @@ public class DialogComponentProvider
 	 */
 	private class DialogActionProxy extends DockingActionProxy {
 
-		public DialogActionProxy(DockingActionIf dockingAction) {
+		private DialogComponentProvider provider;
+
+		public DialogActionProxy(DialogComponentProvider provider, DockingActionIf dockingAction) {
 			super(dockingAction);
+			this.provider = provider;
 		}
 
 		@Override
@@ -1493,6 +1496,19 @@ public class DialogComponentProvider
 		@Override
 		public ToolBarData getToolBarData() {
 			return null;
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			if (context instanceof DialogActionContext dialogContext) {
+				DialogComponentProvider contextProvider =
+					dialogContext.getDialogComponentProvider();
+				if (provider != contextProvider) {
+					return false;
+				}
+				return dockingAction.isEnabledForContext(context);
+			}
+			return false;
 		}
 	}
 }

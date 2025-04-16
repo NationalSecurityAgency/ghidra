@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
+import docking.action.ToggleDockingActionIf;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
@@ -33,25 +34,27 @@ import docking.widgets.label.GLabel;
 public class MultiActionDialog extends DialogComponentProvider {
 
 	private String keystrokeName;
-	private List<ExecutableAction> list;
 	private JList<String> actionList;
 	private DefaultListModel<String> listModel;
+
+	private List<DockingActionIf> actions;
+	private ActionContext context;
 
 	/**
 	 * Constructor
 	 * @param keystrokeName keystroke name
-	 * @param list list of actions
+	 * @param actions list of actions
+	 * @param context the context
 	 */
-	public MultiActionDialog(String keystrokeName, List<ExecutableAction> list) {
+	public MultiActionDialog(String keystrokeName, List<DockingActionIf> actions,
+			ActionContext context) {
 		super("Select Action", true);
 		this.keystrokeName = keystrokeName;
+		this.context = context;
 		init();
-		setActionList(list);
+		setActionList(actions);
 	}
 
-	/**
-	 * The callback method for when the "OK" button is pressed.
-	 */
 	@Override
 	protected void okCallback() {
 		maybeDoAction();
@@ -65,21 +68,23 @@ public class MultiActionDialog extends DialogComponentProvider {
 
 		close();
 
-		ExecutableAction actionProxy = list.get(index);
-		actionProxy.execute();
+		DockingActionIf action = actions.get(index);
+
+		// Toggle actions do not toggle its state directly therefor we have to do it for 
+		// them before we execute the action.
+		if (action instanceof ToggleDockingActionIf) {
+			ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) action;
+			toggleAction.setSelected(!toggleAction.isSelected());
+		}
+
+		action.actionPerformed(context);
 	}
 
-	/**
-	 * Set the list of actions that are enabled
-	 * @param list list of actions selected
-	 */
-	public void setActionList(List<ExecutableAction> list) {
+	private void setActionList(List<DockingActionIf> actions) {
 		okButton.setEnabled(false);
-		this.list = list;
+		this.actions = actions;
 		listModel.clear();
-		for (int i = 0; i < list.size(); i++) {
-			ExecutableAction actionProxy = list.get(i);
-			DockingActionIf action = actionProxy.getAction();
+		for (DockingActionIf action : actions) {
 			listModel.addElement(action.getName() + " (" + action.getOwnerDescription() + ")");
 		}
 		actionList.setSelectedIndex(0);
