@@ -248,5 +248,8 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_SIZES = new AttributeId("sizes", 151);
 	public static final AttributeId ATTRIB_BACKFILL = new AttributeId("backfill", 152);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 153);
+	// function parameter stacking direction
+	public static final AttributeId ATTRIB_ISRIGHTTOLEFT = new AttributeId("isrighttoleft", 153);
+
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 154);
 }
