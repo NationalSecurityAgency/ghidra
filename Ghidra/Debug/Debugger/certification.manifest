@@ -65,6 +65,7 @@ src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTimeSelecti
 src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTraceViewDiffPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DynamicStaticSynchronizationPlugin/DynamicStaticSynchronizationPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/VariableValueHoverPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginBrowser.png||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginDecompiler.png||GHIDRA||||END|

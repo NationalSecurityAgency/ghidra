@@ -43,8 +43,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Model for editing a composite data type. Specific composite data type editors
  * should extend this class.
+ * 
+ * @param <T> Specific {@link Composite} type being managed
  */
-abstract public class CompositeEditorModel extends CompositeViewerModel {
+abstract public class CompositeEditorModel<T extends Composite> extends CompositeViewerModel<T> {
+
+	// TODO: This class should be combined with CompositeViewerModel since we only support editor use
 
 	/**
 	 * Whether or not an apply is occurring. Need to ignore changes to the
@@ -71,7 +75,8 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Construct abstract composite editor model
 	 * @param provider composite editor provider
 	 */
-	protected CompositeEditorModel(CompositeEditorProvider provider) {
+	protected CompositeEditorModel(
+			CompositeEditorProvider<T, ? extends CompositeEditorModel<T>> provider) {
 		super(provider);
 	}
 
@@ -88,7 +93,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 			endFieldEditing();
 		}
 
-		CompositeViewerDataTypeManager oldViewDTM = viewDTM;
+		CompositeViewerDataTypeManager<T> oldViewDTM = viewDTM;
 
 		originalComposite = viewDTM.getResolvedViewComposite();
 		originalCompositeId = DataTypeManager.NULL_DATATYPE_ID;
@@ -96,8 +101,8 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		currentName = originalComposite.getName();
 
 		// Use temporary standalone view datatype manager
-		viewDTM = new CompositeViewerDataTypeManager(viewDTM.getName(),
-			viewDTM.getResolvedViewComposite(), () -> restoreEditor());
+		viewDTM = new CompositeViewerDataTypeManager<>(viewDTM.getName(),
+			viewDTM.getResolvedViewComposite(), this::componentEdited, this::restoreEditor);
 
 		viewComposite = viewDTM.getResolvedViewComposite();
 
@@ -108,7 +113,9 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		cloneAllComponentSettings(originalComposite, viewComposite);
+		viewDTM.withTransaction("Load Settings",
+			() -> cloneAllComponentSettings(originalComposite, viewComposite));
+		viewDTM.clearUndo();
 
 		// Dispose previous view DTM
 		oldViewDTM.close();
@@ -124,7 +131,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	}
 
 	@Override
-	public void load(Composite dataType) {
+	public void load(T dataType) {
 		Objects.requireNonNull(dataType);
 
 		DataTypeManager dtm = dataType.getDataTypeManager();
@@ -179,8 +186,19 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		currentName = viewComposite.getName();
 		updateAndCheckChangeState();
 
-		clearStatus();
 		compositeInfoChanged();
+		fireTableDataChanged();
+		componentDataChanged();
+	}
+
+	protected void componentEdited() {
+
+		// NOTE: This method relies heavily on the viewDTM with transaction support
+		// and this method specified as the changeCallback method.  If viewDTM has been
+		// instantiated with a single open transaction this method will never be used
+		// and provisions must be made for proper notification when changes are made.
+
+		updateAndCheckChangeState(); // Update the composite's change state information.
 		fireTableDataChanged();
 		componentDataChanged();
 	}
@@ -191,7 +209,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 *
 	 * @param original original composite being loaded
 	 */
-	protected void createViewCompositeFromOriginalComposite(Composite original) {
+	protected void createViewCompositeFromOriginalComposite(T original) {
 
 		if (viewDTM != null) {
 			viewDTM.close();
@@ -199,8 +217,8 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		}
 
 		// Use temporary standalone view datatype manager
-		viewDTM = new CompositeViewerDataTypeManager(original.getDataTypeManager().getName(),
-			original, () -> restoreEditor());
+		viewDTM = new CompositeViewerDataTypeManager<>(original.getDataTypeManager().getName(),
+			original, this::componentEdited, this::restoreEditor);
 
 		viewComposite = viewDTM.getResolvedViewComposite();
 
@@ -211,7 +229,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
 		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
-		viewDTM.withTransaction("Apply Settings",
+		viewDTM.withTransaction("Load Settings",
 			() -> cloneAllComponentSettings(original, viewComposite));
 		viewDTM.clearUndo();
 	}
@@ -236,7 +254,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Returns the docking windows component provider associated with this edit model.
 	 * @return the component provider
 	 */
-	protected CompositeEditorProvider getProvider() {
+	protected CompositeEditorProvider<T, ?> getProvider() {
 		return provider;
 	}
 
@@ -1485,7 +1503,7 @@ abstract public class CompositeEditorModel extends CompositeViewerModel {
 	 * Get the composite edtor's datatype manager
 	 * @return composite edtor's datatype manager
 	 */
-	public CompositeViewerDataTypeManager getViewDataTypeManager() {
+	public CompositeViewerDataTypeManager<T> getViewDataTypeManager() {
 		return viewDTM;
 	}
 

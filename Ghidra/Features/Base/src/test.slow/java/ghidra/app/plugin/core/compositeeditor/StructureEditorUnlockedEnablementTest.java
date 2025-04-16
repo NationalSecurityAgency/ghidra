@@ -254,7 +254,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		init(complexStructure, pgmBbCat);
 
 		structureModel.viewDTM.withTransaction("Add Bitfield",
-			() -> ((Structure) structureModel.viewComposite).insertBitField(2, 1, 4,
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
 				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });
@@ -296,7 +296,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 		init(complexStructure, pgmBbCat);
 
 		structureModel.viewDTM.withTransaction("Add Bitfield",
-			() -> ((Structure) structureModel.viewComposite).insertBitField(2, 1, 4,
+			() -> structureModel.viewComposite.insertBitField(2, 1, 4,
 				CharDataType.dataType, 2, "bf1", null));
 
 		setSelection(new int[] { 2 });

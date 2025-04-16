@@ -810,7 +810,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 	public void testApplyWithInvalidName() throws Exception {
 		init(complexUnion, pgmTestCat, false);
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		UnionEditorPanel panel = (UnionEditorPanel) getPanel();
 		JTextField nameField = panel.nameTextField;
 		assertTrue(model.isValidName());
 
@@ -875,7 +875,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 	public void testShowNumbersInHex() {
 		init(complexUnion, pgmTestCat, false);
 		assertEquals("", model.getStatus());
-		CompEditorPanel panel = (CompEditorPanel) provider.getComponent();
+		UnionEditorPanel panel = (UnionEditorPanel) provider.getComponent();
 
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("45", model.getValueAt(11, model.getLengthColumn()));

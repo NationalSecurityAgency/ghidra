@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class StackFrameDataType extends BiDirectionDataType {
 
-	private static final long serialVersionUID = 1L;
 	static String DUMMY_FUNCTION_NAME = "StackWithoutFunction";
 	private static final String UNKNOWN_PREFIX = "unknown_";
 	StackFrame stack;
@@ -44,8 +43,10 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
+	 * The specified stack will be copied into this new instance.
 	 * 
-	 * @param stack the function stack frame to be edited.
+	 * @param stack the function stack frame to be replicated.
+	 * @param dtm datatype manager (required)
 	 */
 	public StackFrameDataType(StackFrame stack, DataTypeManager dtm) {
 		super(
@@ -57,12 +58,14 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
+	 * The specified stackDt will be copied into this new instance.
 	 * 
-	 * @param stack the function stack frame to be edited.
+	 * @param stackDt the function stack frame to be replicated.
+	 * @param dtm datatype manager (required)
 	 */
 	public StackFrameDataType(StackFrameDataType stackDt, DataTypeManager dtm) {
-		super(stackDt.getCategoryPath(), stackDt.getName(), stackDt.getNegativeLength(),
-			stackDt.getPositiveLength(), stackDt.splitOffset, dtm);
+		super(stackDt.getName(), stackDt.getNegativeLength(), stackDt.getPositiveLength(),
+			stackDt.splitOffset, dtm);
 		setDescription(stackDt.getDescription());
 		this.function = stackDt.function;
 		this.growsNegative = stackDt.growsNegative;
@@ -156,7 +159,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	@Override
-	public DataType copy(DataTypeManager dtm) {
+	public StackFrameDataType copy(DataTypeManager dtm) {
 		return new StackFrameDataType(this, dtm);
 	}
 

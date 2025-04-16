@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.SystemUtilities;
 
 //@formatter:off
 @PluginInfo(
@@ -69,10 +68,8 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 		if (event instanceof ProgramClosedPluginEvent) {
 			Program program = ((ProgramClosedPluginEvent) event).getProgram();
 			programClosed(program);
-			return;
 		}
-
-		if (event instanceof ProgramActivatedPluginEvent) {
+		else if (event instanceof ProgramActivatedPluginEvent) {
 			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
 			currentLocation = null;
 		}
@@ -91,44 +88,6 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 				iterator.remove();
 				removeProvider(provider);
 			}
-		}
-	}
-
-	@Override
-	public void updateLocation(ProgramByteViewerComponentProvider provider,
-			ProgramLocationPluginEvent event, boolean export) {
-
-		if (eventsDisabled()) {
-			return;
-		}
-
-		if (provider == connectedProvider) {
-			fireProgramLocationPluginEvent(provider, event);
-		}
-		else if (export) {
-			exportLocation(provider.getProgram(), event.getLocation());
-		}
-	}
-
-	@Override
-	public void fireProgramLocationPluginEvent(ProgramByteViewerComponentProvider provider,
-			ProgramLocationPluginEvent event) {
-
-		if (SystemUtilities.isEqual(event.getLocation(), currentLocation)) {
-			return;
-		}
-
-		currentLocation = event.getLocation();
-		if (provider == connectedProvider) {
-			firePluginEvent(event);
-		}
-	}
-
-	@Override
-	public void updateSelection(ByteViewerComponentProvider provider,
-			ProgramSelectionPluginEvent event, Program program) {
-		if (provider == connectedProvider) {
-			firePluginEvent(event);
 		}
 	}
 

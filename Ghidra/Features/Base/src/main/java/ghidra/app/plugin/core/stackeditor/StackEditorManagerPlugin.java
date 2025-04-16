@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.stackeditor;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.compositeeditor.CompositeEditorProvider;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.*;
@@ -127,10 +126,6 @@ public class StackEditorManagerPlugin extends Plugin
 	@Override
 	protected boolean canCloseDomainObject(DomainObject dObj) {
 		return editorMgr.canCloseDomainObject(dObj);
-	}
-
-	CompositeEditorProvider getProvider(Program pgm, String functionName) {
-		return editorMgr.getProvider(pgm, functionName);
 	}
 
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,

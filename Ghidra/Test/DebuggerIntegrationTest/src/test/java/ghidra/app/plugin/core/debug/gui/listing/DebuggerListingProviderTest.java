@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Set;
@@ -44,20 +43,15 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationT
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
-import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
-import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
-import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.progress.ProgressServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.modules.DebuggerMissingModuleActionContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.model.*;
-import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Register;
@@ -65,7 +59,8 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.util.*;
+import ghidra.program.util.OperandFieldLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.stack.DBTraceStackManager;
@@ -76,19 +71,16 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class)
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
 
+	protected CodeBrowserPlugin codePlugin;
+	protected CodeViewerProvider codeProvider;
 	protected DebuggerListingPlugin listingPlugin;
 	protected DebuggerListingProvider listingProvider;
 
 	protected DebuggerStaticMappingService mappingService;
-	protected CodeBrowserPlugin codePlugin;
-	protected CodeViewerProvider codeProvider;
 
 	@Before
 	public void setUpListingProviderTest() throws Exception {
@@ -465,122 +457,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 	}
 
 	@Test
-	public void testSyncCursorToStaticListingStaticToDynamicOnGoto() throws Exception {
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		ProgramLocation loc;
-
-		goTo(tool, program, ss.getAddress(0x00601234));
-		waitForSwing();
-
-		loc = listingProvider.getLocation();
-		assertEquals(tb.trace.getProgramView(), loc.getProgram());
-		assertEquals(tb.addr(0x00401234), loc.getAddress());
-
-		goTo(tool, program, ss.getAddress(0x00608765));
-		waitForSwing();
-
-		loc = listingProvider.getLocation();
-		assertEquals(tb.trace.getProgramView(), loc.getProgram());
-		assertEquals(tb.addr(0x00401234), loc.getAddress());
-
-		goTo(tool, program, ss.getAddress(0x00607fff));
-		waitForSwing();
-
-		loc = listingProvider.getLocation();
-		assertEquals(tb.trace.getProgramView(), loc.getProgram());
-		assertEquals(tb.addr(0x00407fff), loc.getAddress());
-	}
-
-	@Test
-	public void testSyncCursorToStaticListingDynamicToStaticOnSnapChange() throws Exception {
-		createAndOpenTrace();
-		createAndOpenProgramFromTrace();
-		intoProject(tb.trace);
-		intoProject(program);
-
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (Transaction tx = program.openTransaction("Add block")) {
-			program.getMemory()
-					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
-						monitor, false);
-		}
-		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
-			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			TraceLocation from =
-				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
-			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			DebuggerStaticMappingUtils.addMapping(from, to, 0x8000, false);
-
-			thread = tb.getOrAddThread("Thread1", 0);
-			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
-			regs.setValue(1, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
-		}
-		waitForProgram(program);
-		waitForDomainObject(tb.trace);
-		traceManager.activateThread(thread);
-		waitForSwing();
-
-		traceManager.activateSnap(1);
-		waitForSwing();
-
-		ProgramLocation loc = codePlugin.getCurrentLocation();
-		assertEquals(program, loc.getProgram());
-		assertEquals(ss.getAddress(0x00601234), loc.getAddress());
-	}
-
-	@Test
-	public void testSyncCursorToStaticListingDynamicToStaticOnLocationChange() throws Exception {
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		listingProvider.getListingPanel()
-				.setCursorPosition(
-					new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
-					EventTrigger.GUI_ACTION);
-		waitForSwing();
-
-		ProgramLocation loc = codePlugin.getCurrentLocation();
-		assertEquals(program, loc.getProgram());
-		assertEquals(ss.getAddress(0x00601234), loc.getAddress());
-	}
-
-	@Test
-	public void testSyncSelectionToStaticListingDynamicToStaticOnSelectionChange()
-			throws Exception {
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		runSwing(() -> listingProvider.getListingPanel()
-				.setSelection(new ProgramSelection(tb.addr(0x00401234), tb.addr(0x00404321)),
-					EventTrigger.GUI_ACTION));
-		waitForSwing();
-
-		assertEquals(tb.set(tb.range(ss, 0x00601234, 0x00604321)),
-			codePlugin.getCurrentSelection());
-	}
-
-	@Test
-	public void testSyncSelectionToStaticListingStaticToDynamicOnSelectionChange()
-			throws Exception {
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		runSwing(() -> codePlugin.getListingPanel()
-				.setSelection(
-					new ProgramSelection(tb.addr(ss, 0x00601234), tb.addr(ss, 0x00604321)),
-					EventTrigger.GUI_ACTION));
-		waitForSwing();
-
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
-	}
-
-	@Test
 	public void testDynamicListingMarksTrackedRegister() throws Exception {
 		createAndOpenTrace();
 		waitForSwing();
@@ -607,7 +483,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 	}
 
 	@Test
-	public void testSyncCursorToStaticListingMarksMappedTrackedRegister() throws Exception {
+	public void testStaticListingMarksMappedTrackedRegister() throws Exception {
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
 		intoProject(tb.trace);
@@ -968,98 +844,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 	}
 
 	@Test
-	public void testActionSyncCursorToStaticListing() throws Exception {
-		assertTrue(listingProvider.actionAutoSyncCursorWithStaticListing.isEnabled());
-
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		// Check default is on
-		assertTrue(listingProvider.actionAutoSyncCursorWithStaticListing.isSelected());
-		goTo(tool, program, ss.getAddress(0x00601234));
-		waitForSwing();
-		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
-
-		performAction(listingProvider.actionAutoSyncCursorWithStaticListing);
-		assertFalse(listingProvider.actionAutoSyncCursorWithStaticListing.isSelected());
-		goTo(tool, program, ss.getAddress(0x00608765));
-		waitForSwing();
-		// Verify the goTo was effective, but no change to dynamic listing location
-		assertEquals(ss.getAddress(0x00608765), codePlugin.getCurrentLocation().getAddress());
-		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
-
-		listingProvider.setAutoSyncCursorWithStaticListing(true);
-		// NOTE: Toggling adjusts the static listing, not the dynamic
-		waitForSwing();
-		assertTrue(listingProvider.actionAutoSyncCursorWithStaticListing.isSelected());
-		assertEquals(ss.getAddress(0x00601234), codePlugin.getCurrentLocation().getAddress());
-	}
-
-	@Test
-	public void testActionSyncSelectionToStaticListing() throws Exception {
-		assertTrue(listingProvider.actionAutoSyncCursorWithStaticListing.isEnabled());
-
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		// Check default is on
-		assertTrue(listingProvider.actionAutoSyncSelectionWithStaticListing.isSelected());
-		makeSelection(tool, program, tb.range(ss, 0x00601234, 0x00604321));
-		goTo(tool, program, ss.getAddress(0x00601234));
-		waitForSwing();
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
-
-		performAction(listingProvider.actionAutoSyncSelectionWithStaticListing);
-		assertFalse(listingProvider.actionAutoSyncSelectionWithStaticListing.isSelected());
-		goTo(tool, program, ss.getAddress(0x00608765));
-		makeSelection(tool, program, tb.range(ss, 0x00605678, 0x00608765));
-		waitForSwing();
-		// Verify the makeSelection was effective, but no change to dynamic listing location
-		assertEquals(tb.set(tb.range(ss, 0x00605678, 0x00608765)),
-			codePlugin.getCurrentSelection());
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
-
-		listingProvider.setAutoSyncSelectionWithStaticListing(true);
-		// NOTE: Toggling adjusts the static listing, not the dynamic
-		waitForSwing();
-		assertTrue(listingProvider.actionAutoSyncSelectionWithStaticListing.isSelected());
-		assertEquals(tb.set(tb.range(ss, 0x00601234, 0x00604321)),
-			codePlugin.getCurrentSelection());
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
-	}
-
-	@Test
-	public void testActionMapAddressesToStatic() throws Exception {
-		listingProvider.setAutoSyncSelectionWithStaticListing(false);
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		listingProvider.getListingPanel()
-				.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))),
-					EventTrigger.GUI_ACTION);
-		assertTrue(codePlugin.getCurrentSelection().isEmpty());
-
-		performAction(listingProvider.actionSyncSelectionIntoStaticListing,
-			listingProvider.getActionContext(null), true);
-		assertEquals(tb.set(tb.range(ss, 0x00601234, 0x00604321)),
-			codePlugin.getCurrentSelection());
-	}
-
-	@Test
-	public void testActionMapAddressesToDynamic() throws Exception {
-		listingProvider.setAutoSyncSelectionWithStaticListing(false);
-		createMappedTraceAndProgram();
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-
-		makeSelection(tool, program, tb.set(tb.range(ss, 0x00601234, 0x00604321)));
-		assertTrue(listingPlugin.getCurrentSelection().isEmpty());
-
-		performAction(listingProvider.actionSyncSelectionFromStaticListing,
-			codeProvider.getActionContext(null), true);
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
-	}
-
-	@Test
 	public void testActionFollowsCurrentThread() throws Exception {
 		createAndOpenTrace();
 		TraceThread thread1;
@@ -1177,62 +961,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		waitForSwing();
 		assertEquals(readNone, listingProvider.getAutoReadMemorySpec());
 		assertEquals(readNone, listingProvider.actionAutoReadMemory.getCurrentUserData());
-	}
-
-	@Test
-	public void testPromptImportCurrentModuleWithSections() throws Exception {
-		addPlugin(tool, ImporterPlugin.class);
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		createAndOpenTrace();
-		try (Transaction tx = tb.startTransaction()) {
-			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-
-			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
-			bin.addSection(0, "bash[.text]", tb.range(0x00400000, 0x0040ffff));
-		}
-		waitForDomainObject(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		// In the module, but not in its section
-		assertTrue(listingPlugin.goTo(tb.addr(0x00411234), true));
-		waitForSwing();
-		waitForPass(() -> assertEquals(0,
-			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
-
-		assertTrue(listingPlugin.goTo(tb.addr(0x00401234), true));
-		waitForSwing();
-		waitForPass(() -> assertEquals(1,
-			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
-	}
-
-	@Test
-	public void testPromptImportCurrentModuleWithoutSections() throws Exception {
-		addPlugin(tool, ImporterPlugin.class);
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		createAndOpenTrace();
-		try (Transaction tx = tb.startTransaction()) {
-			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-
-			tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
-		}
-		waitForDomainObject(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		// In the module, but not in its section
-		assertTrue(listingPlugin.goTo(tb.addr(0x00411234), true));
-		waitForSwing();
-		waitForPass(() -> assertEquals(1,
-			consolePlugin.getRowCount(DebuggerMissingModuleActionContext.class)));
 	}
 
 	@Test
@@ -1501,131 +1229,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		waitForDomainObject(tb.trace);
 
 		assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress());
-	}
-
-	@Test
-	public void testSyncCursorToStaticListingOpensModule() throws Exception {
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		createAndOpenTrace();
-		createAndOpenProgramFromTrace();
-		intoProject(tb.trace);
-		intoProject(program);
-
-		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (Transaction tx = program.openTransaction("Add block")) {
-			program.getMemory()
-					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
-						monitor, false);
-		}
-		try (Transaction tx = tb.startTransaction()) {
-			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			TraceLocation from =
-				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
-			ProgramLocation to = new ProgramLocation(program, ss.getAddress(0x00600000));
-			mappingService.addMapping(from, to, 0x8000, false);
-		}
-		waitForProgram(program);
-		waitForDomainObject(tb.trace);
-
-		programManager.closeAllPrograms(true);
-		waitForPass(() -> assertEquals(0, programManager.getAllOpenPrograms().length));
-
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		listingProvider.getListingPanel()
-				.setCursorPosition(
-					new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
-					EventTrigger.GUI_ACTION);
-		waitForSwing();
-
-		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
-		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
-
-		assertFalse(consolePlugin
-				.logContains(new DebuggerOpenProgramActionContext(program.getDomainFile())));
-	}
-
-	@Test
-	public void testSyncCursorToStaticLogsRecoverableProgram() throws Exception {
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
-		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
-			@Override
-			public boolean canRecover() {
-				return true;
-			}
-		};
-
-		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
-			ProgramManager.OPEN_CURRENT);
-		waitForSwing();
-
-		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
-		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).message() instanceof String message &&
-			message.contains("recovery"));
-	}
-
-	@Test
-	public void testSyncCursorToStaticLogsUpgradeableProgram() throws Exception {
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "root");
-		DomainFile df = new TestDummyDomainFile(root, "dummyFile") {
-			@Override
-			public boolean canRecover() {
-				return false;
-			}
-
-			@Override
-			public DomainObject getDomainObject(Object consumer, boolean okToUpgrade,
-					boolean okToRecover, TaskMonitor monitor)
-					throws VersionException, IOException, CancelledException {
-				throw new VersionException();
-			}
-		};
-
-		listingProvider.doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
-			ProgramManager.OPEN_CURRENT);
-		waitForSwing();
-
-		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
-		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).message() instanceof String message &&
-			message.contains("version"));
-	}
-
-	@Test
-	public void testActionOpenProgram() throws Exception {
-		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
-
-		createProgram();
-		intoProject(program);
-
-		assertEquals(0, programManager.getAllOpenPrograms().length);
-
-		DebuggerOpenProgramActionContext ctx =
-			new DebuggerOpenProgramActionContext(program.getDomainFile());
-		consolePlugin.log(DebuggerResources.ICON_MODULES, "Test resolution", ctx);
-		waitForSwing();
-
-		LogRow<?> row = consolePlugin.getLogRow(ctx);
-		assertEquals(1, row.actions().size());
-		BoundAction boundAction = row.actions().get(0);
-		assertEquals(listingProvider.actionOpenProgram, boundAction.action);
-
-		boundAction.perform();
-		waitForSwing();
-
-		waitForPass(() -> assertEquals(1, programManager.getAllOpenPrograms().length));
-		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
-		// TODO: Test this independent of this particular action?
-		assertNull(consolePlugin.getLogRow(ctx));
 	}
 
 	protected Instruction placeGuestInstruction(int guestRangeLength) throws Throwable {

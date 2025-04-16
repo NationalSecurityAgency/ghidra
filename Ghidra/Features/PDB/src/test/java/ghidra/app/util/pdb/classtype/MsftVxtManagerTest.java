@@ -976,244 +976,244 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 
 		int addressIndex = startVbtAddresses;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(A_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(A_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(A_ID, List.of(A_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(B_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(B_ID, List.of(B_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(A_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(C_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(B_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(C_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(C_ID, D_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(B_ID, List.of(B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(C_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(A_ID, D_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(B_ID, D_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(C_ID, List.of(C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(A_ID, E_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(B_ID, E_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(C_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(F_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(F_ID, List.of(F_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(G_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(G_ID, List.of(F_ID, G_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(A_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(H_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(H_ID, List.of(F_ID, H_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(G_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(F_ID, G_ID, I_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(D_ID, List.of(B_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(H_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(F_ID, H_ID, I_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(J_ID, List.of(H_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(J_ID, List.of(J_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(A_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(K_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(K_ID, List.of(J_ID, K_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(L_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(L_ID, List.of(J_ID, K_ID, L_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(E_ID, List.of(B_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, E_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(F_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, E_ID, M_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(C_ID, D_ID, M_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(F_ID, List.of(F_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, D_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(G_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, D_ID, M_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, D_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, D_ID, M_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(G_ID, List.of(F_ID, G_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(G_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(H_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(H_ID, List.of(F_ID, H_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(G_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(F_ID, G_ID, I_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(H_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(I_ID, List.of(F_ID, H_ID, I_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(J_ID, List.of(H_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(J_ID, List.of(J_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(K_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(K_ID, List.of(J_ID, K_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(L_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(L_ID, List.of(J_ID, K_ID, L_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, E_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, E_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(C_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(C_ID, D_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(A_ID, D_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, D_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(G_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		vbt =
-			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(F_ID, G_ID, I_ID, M_ID));
+			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(F_ID, G_ID, I_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(H_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(H_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		vbt =
-			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(F_ID, H_ID, I_ID, M_ID));
+			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(F_ID, H_ID, I_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		vbt =
-			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(J_ID, K_ID, L_ID, M_ID));
+			(ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(J_ID, K_ID, L_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, E_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, E_ID, M_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(M_ID, List.of(B_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
 		//===
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(A_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(B_ID, O1_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(A_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(A_ID, O2_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(B_ID, O2_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O1_ID, List.of(B_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(A_ID, O3_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(B_ID, O3_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(A_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(A_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(A_ID, O4_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O2_ID, List.of(B_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(B_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(B_ID, O4_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(A_ID, O3_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O3_ID, List.of(B_ID, O3_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(A_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(A_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O4_ID, List.of(B_ID, O4_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
 		//==
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O1_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O1_ID, O_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O1_ID, O_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O2_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O2_ID, O_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O2_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O2_ID, O_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O3_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O3_ID, O_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		addressIndex++;
-
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O3_ID));
-		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O3_ID, O_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O2_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O4_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
-		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O4_ID, O_ID));
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O2_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O3_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O3_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O3_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(B_ID, O3_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		addressIndex++;
+
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
+		vbt = (ProgramVirtualBaseTable) mVxtManager32.findVbt(O_ID, List.of(A_ID, O4_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vbt.getAddress());
 		addressIndex++;
 
@@ -1236,21 +1236,21 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 
 		int addressIndex = startVftAddresses + 1; // skip one for first meta
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A1_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A1_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A1_ID, List.of(A1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A2_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A2_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A1_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A2_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A2_ID, List.of(A2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
@@ -1261,530 +1261,530 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 		function.getName().equals(ANS_A_fa_1.getName());
 		// End of spot-check
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A1_ID, A_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A2_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A2_ID, A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A1_ID, A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B1_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B1_ID, List.of(B1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B2_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B2_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(A_ID, List.of(A2_ID, A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B1_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B1_ID, B_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B1_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B2_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B2_ID, B_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B2_ID, List.of(B2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B1_ID, B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(B_ID, List.of(B2_ID, B_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		// Second is same query as first for this one
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(C_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A1_ID, C_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A2_ID, C_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B1_ID, C_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A1_ID, C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B2_ID, C_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(C_ID, D_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(A2_ID, C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A_ID, D_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B_ID, D_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B1_ID, C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(C_ID, List.of(B2_ID, C_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(C_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(C_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A1_ID, A_ID, D_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A1_ID, A_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A2_ID, A_ID, D_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(A2_ID, A_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B1_ID, B_ID, D_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B1_ID, B_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B2_ID, B_ID, D_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(D_ID, List.of(B2_ID, B_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A_ID, E_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A1_ID, A_ID, E_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A2_ID, A_ID, E_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B1_ID, B_ID, E_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A1_ID, A_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B2_ID, B_ID, E_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B_ID, E_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(A2_ID, A_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(F_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(F_ID, List.of(A1_ID, F_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(G_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(G_ID, List.of(A1_ID, F_ID, G_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B1_ID, B_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(H_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(H_ID, List.of(A1_ID, F_ID, H_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B2_ID, B_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(I_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(E_ID, List.of(B_ID, E_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(F_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(F_ID, List.of(A1_ID, F_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(G_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(G_ID, List.of(A1_ID, F_ID, G_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(H_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(H_ID, List.of(A1_ID, F_ID, H_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(I_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(I_ID,
-			List.of(A1_ID, F_ID, G_ID, I_ID));
+			List.of(A1_ID, F_ID, G_ID, I_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(J_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(J_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(J_ID, List.of(A1_ID, J_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(K_ID, List.of());
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(K_ID, List.of(A1_ID, J_ID, K_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(J_ID, List.of(A1_ID, J_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(L_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(K_ID, List.of(), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(K_ID, List.of(A1_ID, J_ID, K_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(L_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(L_ID,
-			List.of(A1_ID, J_ID, K_ID, L_ID));
+			List.of(A1_ID, J_ID, K_ID, L_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N1_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N1_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N1_ID, List.of(A1_ID, F_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N1_ID, List.of(A1_ID, F_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N2_ID, List.of());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N2_ID, List.of(), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N2_ID, List.of(A1_ID, F_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(N2_ID, List.of(A1_ID, F_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		//==
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, E_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, E_ID, M_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(C_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(C_ID, D_ID, M_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, D_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(C_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, D_ID, M_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, D_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, D_ID, M_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(C_ID, D_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, D_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N1_ID, M_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A_ID, D_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, D_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, D_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N1_ID, M_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID,
-			List.of(A1_ID, A_ID, E_ID, M_ID));
+			List.of(A1_ID, A_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID,
-			List.of(A2_ID, A_ID, E_ID, M_ID));
+			List.of(A2_ID, A_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID,
-			List.of(B1_ID, B_ID, E_ID, M_ID));
+			List.of(B1_ID, B_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID,
-			List.of(B2_ID, B_ID, E_ID, M_ID));
+			List.of(B2_ID, B_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, E_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, E_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, E_ID, M_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N2_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N2_ID, M_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(B_ID, E_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		//==
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A1_ID, A_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A2_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A2_ID, A_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B1_ID, B_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B2_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B2_ID, B_ID, O1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(M_ID, List.of(N2_ID, M_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		//==
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A_ID, O2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B_ID, O1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A1_ID, A_ID, O2_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A1_ID, A_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A2_ID, A_ID, O2_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(A2_ID, A_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B1_ID, B_ID, O2_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B1_ID, B_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B2_ID, B_ID, O2_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B_ID, O2_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O1_ID, List.of(B2_ID, B_ID, O1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		//==
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A_ID, O3_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B_ID, O3_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A1_ID, A_ID, O3_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A1_ID, A_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A2_ID, A_ID, O3_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(A2_ID, A_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B1_ID, B_ID, O3_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B1_ID, B_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B2_ID, B_ID, O3_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B2_ID, B_ID, O2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O2_ID, List.of(B_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		//==
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A_ID, O4_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B_ID, O3_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A1_ID, A_ID, O4_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A1_ID, A_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A2_ID, A_ID, O4_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(A2_ID, A_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B1_ID, B_ID, O4_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B1_ID, B_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
-			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B2_ID, B_ID, O4_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B_ID, O4_ID));
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O3_ID, List.of(B2_ID, B_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
 		//==
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O1_ID, O_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O1_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O1_ID, O_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A_ID, O4_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O2_ID, O_ID));
+		vft =
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A1_ID, A_ID, O4_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft =
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(A2_ID, A_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft =
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B1_ID, B_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft =
+			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B2_ID, B_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O4_ID, List.of(B_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		//==
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O1_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O1_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O1_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O2_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O2_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
 			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID,
-				List.of(A1_ID, A_ID, O1_ID, O_ID));
+				List.of(A1_ID, A_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
 			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID,
-				List.of(A2_ID, A_ID, O1_ID, O_ID));
+				List.of(A2_ID, A_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B1_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B1_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
 			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID,
-				List.of(B1_ID, B_ID, O1_ID, O_ID));
+				List.of(B1_ID, B_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		vft =
 			(ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID,
-				List.of(B2_ID, B_ID, O1_ID, O_ID));
+				List.of(B2_ID, B_ID, O1_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O2_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O2_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O2_ID, O_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		addressIndex += 2;
-
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O3_ID));
-		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O3_ID, O_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O2_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O3_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O3_ID, O_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O3_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O4_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O3_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
-		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O4_ID, O_ID));
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(B_ID, O3_ID, O_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		addressIndex += 2;
+
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O4_ID), null);
+		assertEquals(addresses32.get(addressIndex), vft.getAddress());
+		vft = (ProgramVirtualFunctionTable) mVxtManager32.findVft(O_ID, List.of(A_ID, O4_ID, O_ID), null);
 		assertEquals(addresses32.get(addressIndex), vft.getAddress());
 		addressIndex += 2;
 

@@ -32,7 +32,6 @@ import javax.swing.text.JTextComponent;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
@@ -64,14 +63,18 @@ import help.HelpService;
  * This provides a table with cell edit functionality and drag and drop capability.
  * Below the table is an information area for non-component information about the
  * composite data type. To add your own info panel override the createInfoPanel() method.
+ *
+ * @param <T> Specific {@link Composite} type being edited
+ * @param <M> Specific {@link CompositeEditorModel} implementation which supports editing T
  */
-public abstract class CompositeEditorPanel extends JPanel
+public abstract class CompositeEditorPanel<T extends Composite, M extends CompositeEditorModel<T>>
+		extends JPanel
 		implements CompositeEditorModelListener, ComponentCellEditorListener, Droppable {
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 
-	protected CompositeEditorProvider provider;
-	protected CompositeEditorModel model;
+	protected CompositeEditorProvider<T, M> provider;
+	protected M model;
 	protected GTable table;
 	private JLabel statusLabel;
 
@@ -90,7 +93,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	protected SearchControlPanel searchPanel;
 
-	public CompositeEditorPanel(CompositeEditorModel model, CompositeEditorProvider provider) {
+	public CompositeEditorPanel(M model, CompositeEditorProvider<T, M> provider) {
 		super(new BorderLayout());
 		this.provider = provider;
 		this.model = model;
@@ -145,7 +148,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		return table;
 	}
 
-	protected CompositeEditorModel getModel() {
+	protected M getModel() {
 		return model;
 	}
 
@@ -165,28 +168,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
 
-	private boolean launchBitFieldEditor(int modelRow, int modelColumn) {
-		if (model.viewComposite instanceof Structure && !model.viewComposite.isPackingEnabled() &&
-			model.getDataTypeColumn() == modelColumn && modelRow < model.getNumComponents()) {
-			// check if we are attempting to edit a bitfield
-			DataTypeComponent dtComponent = model.getComponent(modelRow);
-			if (dtComponent.isBitFieldComponent()) {
-				table.getCellEditor().cancelCellEditing();
-				CompEditorModel editorModel = (CompEditorModel) model;
-				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, modelRow, model.showHexNumbers,
-					ordinal -> refreshTableAndSelection(editorModel, ordinal));
-				Component c = provider.getComponent();
-				DockingWindowManager.showDialog(c, dlg);
-				return true;
-			}
-		}
+	boolean launchBitFieldEditor(int modelRow, int modelColumn) {
 		return false;
-	}
-
-	private void refreshTableAndSelection(CompEditorModel editorModel, int ordinal) {
-		editorModel.notifyCompositeChanged();
-		editorModel.setSelection(new int[] { ordinal, ordinal });
 	}
 
 	private void setupTableCellEditor() {

@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.MouseEvent;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTable;
 
 import docking.*;
 import docking.widgets.OptionDialog;
@@ -41,16 +42,20 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Editor provider for a Composite Data Type.
+ *
+ * @param <T> Specific {@link Composite} type being edited
+ * @param <M> Specific {@link CompositeEditorModel} implementation which supports editing T
  */
-public abstract class CompositeEditorProvider extends ComponentProviderAdapter
+public abstract class CompositeEditorProvider<T extends Composite, M extends CompositeEditorModel<T>>
+		extends ComponentProviderAdapter
 		implements EditorProvider, EditorActionListener {
 
 	protected static final Icon EDITOR_ICON = new GIcon("icon.plugin.composite.editor.provider");
 
 	protected Plugin plugin;
 	protected Category category;
-	protected CompositeEditorPanel editorPanel;
-	protected CompositeEditorModel editorModel;
+	protected CompositeEditorPanel<T, M> editorPanel;
+	protected CompositeEditorModel<T> editorModel;
 	protected WeakSet<EditorListener> listeners; // listeners for the editor closing.
 
 	protected DataTypeManagerService dtmService;
@@ -90,7 +95,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		setTitle(getName() + " - " + getProviderSubTitle(editorModel.originalComposite));
 	}
 
-	protected CompositeEditorModel getModel() {
+	protected CompositeEditorModel<T> getModel() {
 		return this.editorModel;
 	}
 
@@ -178,7 +183,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public JComponent getComponent() {
+	public CompositeEditorPanel<T, M> getComponent() {
 		return editorPanel;
 	}
 

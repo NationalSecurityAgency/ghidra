@@ -144,12 +144,15 @@ public class DependentServiceResolver<T> {
 				constructed.put(cons.method, service);
 			}
 			instancesByClass.put(cons.cls, service);
-			for (Field f : fieldsByClass.remove(cons.cls)) {
-				try {
-					f.set(obj, service);
-				}
-				catch (IllegalArgumentException | IllegalAccessException e) {
-					throw new AssertionError(e);
+			Set<Field> fields = fieldsByClass.remove(cons.cls);
+			if (fields != null) {
+				for (Field f : fields) {
+					try {
+						f.set(obj, service);
+					}
+					catch (IllegalArgumentException | IllegalAccessException e) {
+						throw new AssertionError(e);
+					}
 				}
 			}
 		}

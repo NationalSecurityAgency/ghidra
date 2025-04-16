@@ -159,8 +159,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		assertNotNull(dt4);
 		insertAtPoint(dt4, 0, 0);
 
-		JDialog dialog =
-			waitForJDialog(env.getTool().getToolFrame(), "Enter Number", DEFAULT_WINDOW_TIMEOUT);
+		JDialog dialog = waitForJDialog("Enter Number");
 		assertNotNull(dialog);
 		JTextField textField = findComponent(dialog, JTextField.class);
 		triggerText(textField, "3");
