@@ -175,6 +175,10 @@ public class MemviewTable {
 		}
 	}
 
+	void fireTableDataChanged() {
+		model.fireTableDataChanged();
+	}
+
 	/*
 	private List<MemviewRow> generateRows(Collection<MemoryBox> changed) {
 		List<MemviewRow> list = new ArrayList<>();

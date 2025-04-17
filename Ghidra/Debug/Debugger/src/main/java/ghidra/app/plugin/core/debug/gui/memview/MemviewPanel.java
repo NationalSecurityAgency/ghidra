@@ -26,6 +26,7 @@ import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
 public class MemviewPanel extends JPanel implements MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = 1L;
@@ -484,11 +485,19 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 		return aval;
 	}
 
+	private TimeRadix getTimeRadix() {
+		if (boxList == null || boxList.isEmpty()) {
+			return TimeRadix.DEFAULT;
+		}
+		return boxList.get(0).trace.getTimeManager().getTimeRadix();
+	}
+
 	public String getTagForTick(long tick) {
+		TimeRadix radix = getTimeRadix();
 		String tval = "";
 		if (0 <= tick && tick < timesArray.length) {
 			Long time = timesArray[(int) tick];
-			tval = Long.toString(time, 16);
+			tval = radix.format(time);
 		}
 		return tval;
 	}

@@ -23,9 +23,12 @@ import java.util.Map;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
 public class MemoryBox {
 
+	protected final Trace trace;
 	protected String id;
 	protected MemviewBoxType type;
 	protected AddressRange range;
@@ -46,7 +49,9 @@ public class MemoryBox {
 
 	protected boolean current;
 
-	public MemoryBox(String id, MemviewBoxType type, AddressRange range, long tick, Color color) {
+	public MemoryBox(Trace trace, String id, MemviewBoxType type, AddressRange range, long tick,
+			Color color) {
+		this.trace = trace;
 		this.id = id;
 		this.type = type;
 		this.range = range;
@@ -54,12 +59,13 @@ public class MemoryBox {
 		this.color = color;
 	}
 
-	public MemoryBox(String id, MemviewBoxType type, AddressRange range, long tick) {
-		this(id, type, range, tick, type.getColor());
+	public MemoryBox(Trace trace, String id, MemviewBoxType type, AddressRange range, long tick) {
+		this(trace, id, type, range, tick, type.getColor());
 	}
 
-	public MemoryBox(String id, MemviewBoxType type, AddressRange range, Lifespan trange) {
-		this(id, type, range, trange.lmin());
+	public MemoryBox(Trace trace, String id, MemviewBoxType type, AddressRange range,
+			Lifespan trange) {
+		this(trace, id, type, range, trange.lmin());
 		setEnd(trange.lmax());
 	}
 
@@ -222,6 +228,18 @@ public class MemoryBox {
 
 	public void setStopTime(long val) {
 		stopTime = val;
+	}
+
+	private TimeRadix getTimeRadix() {
+		return trace.getTimeManager().getTimeRadix();
+	}
+
+	public String formatStart() {
+		return getTimeRadix().format(start);
+	}
+
+	public String formatEnd() {
+		return getTimeRadix().format(stop);
 	}
 
 	public boolean inPixelRange(long pos) {
