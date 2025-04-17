@@ -46,6 +46,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProjectIndexService;
+import ghidra.plugin.importer.ProjectIndexService.ProjectIndexListener;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
@@ -62,12 +63,12 @@ import ghidra.util.task.TaskMonitor;
  * See the {@link FSBFileHandler} interface for how to add actions to this component.
  */
 public class FSBComponentProvider extends ComponentProviderAdapter
-		implements FileSystemEventListener, PopupActionProvider {
+		implements FileSystemEventListener, PopupActionProvider, ProjectIndexListener {
 	private static final String TITLE = "Filesystem Viewer";
 
 	private FSBIcons fsbIcons = FSBIcons.getInstance();
 	private FileSystemService fsService = FileSystemService.getInstance();
-	private ProjectIndexService projectIndex = ProjectIndexService.getInstance();
+	private ProjectIndexService projectIndex = ProjectIndexService.DUMMY;
 
 	private FileSystemBrowserPlugin plugin;
 	private GTree gTree;
@@ -169,7 +170,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				if (df != null) {
 					overlays.add(FSBIcons.IMPORTED_OVERLAY_ICON);
 
-					if (plugin.isOpen(df)) {
+					if (df.isOpen()) {
 						// TODO: change this to a OVERLAY_OPEN option when fetching icon
 						setForeground(selected ? Palette.CYAN : Palette.MAGENTA);
 					}
@@ -222,6 +223,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 
 	void dispose() {
 		plugin.getTool().removePopupActionProvider(this);
+		projectIndex.removeIndexListener(this);
 
 		if (rootNode != null && rootNode.getFSRef() != null && !rootNode.getFSRef().isClosed()) {
 			rootNode.getFSRef().getFilesystem().getRefManager().removeListener(this);
@@ -235,6 +237,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 		rootNode = null;
 		plugin = null;
 		gTree = null;
+		projectIndex = null;
 	}
 
 	@Override
@@ -265,12 +268,18 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	}
 
 	public void setProject(Project project) {
-		gTree.runTask(monitor -> {
-			projectIndex.setProject(project, monitor);
-			Swing.runLater(() -> {
+		projectIndex = ProjectIndexService.getIndexFor(project);
+		projectIndex.addIndexListener(this);
+	}
+
+	@Override
+	public void indexUpdated() {
+		// icons might need repainting after new info is available
+		Swing.runLater(() -> {
+			if (gTree != null) {
 				contextChanged();
 				gTree.repaint();
-			}); // icons might need repainting after new info is available
+			}
 		});
 	}
 
