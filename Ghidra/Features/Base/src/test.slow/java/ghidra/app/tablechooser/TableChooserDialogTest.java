@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.tablechooser;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -456,10 +455,14 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void performLaunchKeyStrokeDialogAction() {
-		ToolActions toolActions = (ToolActions) ((AbstractDockingTool) tool).getToolActions();
+		ToolActions toolActions = (ToolActions) tool.getToolActions();
 		Action action = toolActions.getAction(KeyStroke.getKeyStroke("F4"));
 		assertNotNull(action);
-		runSwing(() -> action.actionPerformed(new ActionEvent(this, 0, "")), false);
+		runSwing(() -> {
+			SystemKeyBindingAction sysAction = (SystemKeyBindingAction) action;
+			ExecutableAction executableAction = sysAction.getExecutableAction(null);
+			executableAction.execute();
+		}, false);
 	}
 
 	private void setOptionsKeyStroke(DockingAction action, KeyStroke newKs) {
