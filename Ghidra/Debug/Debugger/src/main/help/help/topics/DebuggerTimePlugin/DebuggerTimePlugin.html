@@ -101,5 +101,14 @@
     emulated state into the trace's <EM>scratch space</EM>, which comprises all negative snaps.
     Some time-travel capable back ends may also write into scratch space. When this toggle is
     enabled, those scratch snapshots are hidden.</P>
+
+    <H3><A name="radix"></A>Set Time Radix</H3>
+
+    <P>These actions are available when a trace is active. It sets the display radix for snapshot
+    keys and time schedules <EM>throughout the tool</EM>. This is useful to match the display of
+    time coordinates with a back end that supports time travel. Notably, WinDbg TTD uses upper-case
+    hexadecimal for its event sequence numbers. Normally, the back end would set the UI's radix
+    automatically, but in case it does not, or if you'd like to override the radix, these actions
+    are available.</P>
   </BODY>
 </HTML>

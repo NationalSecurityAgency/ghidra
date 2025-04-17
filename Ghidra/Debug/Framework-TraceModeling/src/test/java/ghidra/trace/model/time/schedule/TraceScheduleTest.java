@@ -30,6 +30,7 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -161,7 +162,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testRewind() {
-		Sequence seq = Sequence.parse("10;t1-20;t2-30");
+		Sequence seq = Sequence.parse("10;t1-20;t2-30", TimeRadix.DEC);
 
 		assertEquals(0, seq.rewind(5));
 		assertEquals("10;t1-20;t2-25", seq.toString());
@@ -181,7 +182,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testRewindNegativeErr() {
-		Sequence seq = Sequence.parse("10;t1-20;t2-30");
+		Sequence seq = Sequence.parse("10;t1-20;t2-30", TimeRadix.DEC);
 		seq.rewind(-1);
 	}
 
@@ -251,7 +252,8 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	public String strRelativize(String fromSpec, String toSpec) {
-		Sequence seq = Sequence.parse(toSpec).relativize(Sequence.parse(fromSpec));
+		Sequence seq = Sequence.parse(toSpec, TimeRadix.DEC)
+				.relativize(Sequence.parse(fromSpec, TimeRadix.DEC));
 		return seq == null ? null : seq.toString();
 	}
 
@@ -502,5 +504,14 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 			TraceSchedule.parse("1:1.1").differsOnlyByPatch(TraceSchedule.parse("1:1.1;{r0=1}")));
 		assertFalse(
 			TraceSchedule.parse("1:1.1;{r0=1}").differsOnlyByPatch(TraceSchedule.parse("1:1.1")));
+	}
+
+	@Test
+	public void testTimeRadix() throws Exception {
+		TraceSchedule schedule = TraceSchedule.parse("A:t10-B.C", TimeRadix.HEX_UPPER);
+
+		assertEquals("10:t10-11.12", schedule.toString(TimeRadix.DEC));
+		assertEquals("A:t10-B.C", schedule.toString(TimeRadix.HEX_UPPER));
+		assertEquals("a:t10-b.c", schedule.toString(TimeRadix.HEX_LOWER));
 	}
 }

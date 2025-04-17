@@ -18,8 +18,12 @@ package ghidra.trace.model.time;
 import java.util.Collection;
 
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 
 public interface TraceTimeManager {
+	/** The attribute key for controlling the time radix */
+	String KEY_TIME_RADIX = "_time_radix";
+
 	/**
 	 * Create a new snapshot after the latest
 	 * 
@@ -32,6 +36,7 @@ public interface TraceTimeManager {
 	 * Get the snapshot with the given key, optionally creating it
 	 * 
 	 * @param snap the snapshot key
+	 * @param createIfAbsent create the snapshot if it's missing
 	 * @return the snapshot or {@code null}
 	 */
 	TraceSnapshot getSnapshot(long snap, boolean createIfAbsent);
@@ -105,4 +110,24 @@ public interface TraceTimeManager {
 	 * @return the count
 	 */
 	long getSnapshotCount();
+
+	/**
+	 * Set the radix for displaying and parsing time (snapshots and step counts)
+	 * 
+	 * <p>
+	 * This only affects the GUI, but storing it in the trace gives the back end a means of
+	 * controlling it.
+	 * 
+	 * @param radix the radix
+	 */
+	void setTimeRadix(TimeRadix radix);
+
+	/**
+	 * Get the radix for displaying and parsing time (snapshots and step counts)
+	 * 
+	 * @see #setTimeRadix(TimeRadix)
+	 * @return radix the radix
+	 */
+	TimeRadix getTimeRadix();
+
 }

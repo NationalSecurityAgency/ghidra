@@ -35,6 +35,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
@@ -123,10 +124,11 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 		DebuggerCoordinates current =
 			traceManager == null ? DebuggerCoordinates.NOWHERE : traceManager.getCurrentFor(trace);
 		if (current == DebuggerCoordinates.NOWHERE) {
-			// TODO: Could use view's snap and time table's schedule
+			// NOTE: Could use view's snap and time table's schedule, but not worth it.
 			return name + " (?)";
 		}
-		String schedule = current.getTime().toString();
+		TimeRadix radix = trace.getTimeManager().getTimeRadix();
+		String schedule = current.getTime().toString(radix);
 		if (schedule.length() > 15) {
 			schedule = "..." + schedule.substring(schedule.length() - 12);
 		}
