@@ -62,27 +62,15 @@ public class AssociateDataTypeAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
-			return false;
-		}
-
-		return hasAnyDtNodes(((DataTypesActionContext) context).getSelectedNodes());
-	}
-
-	private boolean hasAnyDtNodes(List<GTreeNode> nodes) {
-		if (nodes.isEmpty()) {
-			return false;
-		}
-		for (GTreeNode node : nodes) {
-			if (node instanceof DataTypeNode) {
-				return true;
-			}
-		}
-		return false;
+		// enable this action if any node is a non-built-in data type
+		return context instanceof DataTypesActionContext dtac &&
+			dtac.getSelectedNodes().stream().anyMatch(node -> {
+				return node instanceof DataTypeNode dtNode &&
+					!(dtNode.getDataType() instanceof BuiltInDataType);
+			});
 	}
 
 	private boolean isAlreadyAssociated(DataTypesActionContext dtContext) {
-
 		List<DataTypeNode> nodes = dtContext.getDisassociatableNodes();
 		return !nodes.isEmpty();
 	}
