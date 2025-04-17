@@ -36,7 +36,8 @@ import ghidra.app.services.FileSystemBrowserService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ProjectListener;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -295,7 +296,7 @@ public class FileSystemBrowserPlugin extends Plugin
 		if (FileSystemService.isInitialized()) {
 			fsService().closeUnusedFileSystems();
 		}
-		ProjectIndexService.getInstance().clearProject();
+		ProjectIndexService.projectClosed(project);
 	}
 
 	@Override
@@ -303,16 +304,6 @@ public class FileSystemBrowserPlugin extends Plugin
 		// there shouldn't be any fsb components open because the previous projectClosed would have
 		// removed all fsb trees, therefore, we don't need to update any of the components
 		// to tell them about the new project
-	}
-
-	public boolean isOpen(DomainFile df) {
-		Object tmp = new Object();
-		DomainObject openDF = df.getOpenedDomainObject(tmp);
-		if (openDF != null) {
-			openDF.release(tmp);
-			return true;
-		}
-		return false;
 	}
 
 	public File getLastExportDirectory() {
