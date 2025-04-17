@@ -27,11 +27,11 @@ import docking.action.builder.ActionBuilder;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.debug.gui.timeoverview.*;
 import ghidra.app.plugin.core.overview.OverviewColorLegendDialog;
-import ghidra.app.plugin.core.overview.OverviewColorPlugin;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.*;
 
 public class TimeTypeOverviewColorService implements TimeOverviewColorService {
@@ -50,8 +50,8 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 	private TimeTypeOverviewLegendPanel legendPanel;
 	private TimeOverviewColorPlugin plugin;
 
-	protected Map<Integer,Long> indexToSnap = new HashMap<>();
-	protected Map<Long,Integer> snapToIndex = new HashMap<>();
+	protected Map<Integer, Long> indexToSnap = new HashMap<>();
+	protected Map<Long, Integer> snapToIndex = new HashMap<>();
 	protected Lifespan bounds;
 
 	@Override
@@ -82,12 +82,13 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 		if (snap == null) {
 			return "";
 		}
+		TimeRadix radix = trace == null ? TimeRadix.DEFAULT : trace.getTimeManager().getTimeRadix();
 		Set<Pair<TimeType, String>> types = plugin.getTypes(snap);
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("<b>");
 		buffer.append(HTMLUtilities.escapeHTML(getName()));
 		buffer.append(" (");
-		buffer.append(Long.toHexString(snap));
+		buffer.append(radix.format(snap));
 		buffer.append(")");
 		buffer.append("</b>\n");
 		for (Pair<TimeType, String> pair : types) {
@@ -176,7 +177,7 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 	public Long getSnap(int pixelIndex) {
 		BigInteger bigHeight = BigInteger.valueOf(overviewComponent.getOverviewPixelCount());
 		BigInteger bigPixelIndex = BigInteger.valueOf(pixelIndex);
-		
+
 		BigInteger span = BigInteger.valueOf(indexToSnap.size());
 		BigInteger offset = span.multiply(bigPixelIndex).divide(bigHeight);
 		return indexToSnap.get(offset.intValue());

@@ -23,9 +23,11 @@ import java.lang.invoke.MethodHandles;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
@@ -37,8 +39,14 @@ import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 
 public class DebuggerTimeProvider extends ComponentProviderAdapter {
@@ -54,7 +62,8 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuGroup(GROUP)
 					.menuIcon(ICON)
@@ -62,6 +71,43 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
+
+	interface SetTimeRadixAction {
+		String NAME = "Set Time Radix";
+		String DESCRIPTION = "Change the time radix for this trace / target";
+		String GROUP = GROUP_TRACE;
+		String HELP_ANCHOR = "radix";
+
+		static ToggleActionBuilder builder(String title, Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME + " - " + title, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME, title)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	protected class ForRadixTraceListener extends TraceDomainObjectListener {
+		{
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+		}
+
+		private void valueCreated(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				refreshRadixSelection();
+			}
+		}
+
+		private void valueDeleted(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				refreshRadixSelection();
+			}
+		}
+	}
+
+	private final TraceDomainObjectListener forRadixTraceListener = new ForRadixTraceListener();
 
 	protected final DebuggerTimePlugin plugin;
 
@@ -78,6 +124,9 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 
 	DockingAction actionGoToTime;
 	ToggleDockingAction actionHideScratch;
+	ToggleDockingAction actionSetRadixDec;
+	ToggleDockingAction actionSetRadixHexUpper;
+	ToggleDockingAction actionSetRadixHexLower;
 
 	private DebuggerSnapActionContext myActionContext;
 
@@ -202,6 +251,21 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 				.selected(hideScratch)
 				.onAction(this::activatedHideScratch)
 				.buildAndInstallLocal(this);
+		actionSetRadixDec = SetTimeRadixAction.builder("Decimal", plugin)
+				.enabledWhen(c -> current.getTrace() != null &&
+					current.getTrace().getObjectManager().getRootObject() != null)
+				.onAction(c -> activatedSetRadix(TimeRadix.DEC))
+				.buildAndInstall(tool);
+		actionSetRadixHexUpper = SetTimeRadixAction.builder("Upper Hex", plugin)
+				.enabledWhen(c -> current.getTrace() != null &&
+					current.getTrace().getObjectManager().getRootObject() != null)
+				.onAction(c -> activatedSetRadix(TimeRadix.HEX_UPPER))
+				.buildAndInstall(tool);
+		actionSetRadixHexLower = SetTimeRadixAction.builder("Lower Hex", plugin)
+				.enabledWhen(c -> current.getTrace() != null &&
+					current.getTrace().getObjectManager().getRootObject() != null)
+				.onAction(c -> activatedSetRadix(TimeRadix.HEX_LOWER))
+				.buildAndInstall(tool);
 	}
 
 	private void activatedGoToTime() {
@@ -218,10 +282,42 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		mainPanel.setHideScratchSnapshots(hideScratch);
 	}
 
+	private void activatedSetRadix(TimeRadix radix) {
+		try (Transaction tx = current.getTrace().openTransaction("Set Time Radix")) {
+			current.getTrace().getTimeManager().setTimeRadix(radix);
+		}
+		// NOTE: refreshRadixSelection() should happen via listener
+	}
+
+	protected void removeTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().removeListener(forRadixTraceListener);
+		}
+	}
+
+	protected void addTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().addListener(forRadixTraceListener);
+		}
+	}
+
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
+		removeTraceListener();
 		current = coordinates;
+		addTraceListener();
+
 		mainPanel.setTrace(current.getTrace());
 		mainPanel.setCurrent(current);
+
+		refreshRadixSelection();
+	}
+
+	private void refreshRadixSelection() {
+		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+				: current.getTrace().getTimeManager().getTimeRadix();
+		actionSetRadixHexLower.setSelected(radix == TimeRadix.HEX_LOWER);
+		actionSetRadixHexUpper.setSelected(radix == TimeRadix.HEX_UPPER);
+		actionSetRadixDec.setSelected(radix == TimeRadix.DEC);
 	}
 
 	public void writeConfigState(SaveState saveState) {

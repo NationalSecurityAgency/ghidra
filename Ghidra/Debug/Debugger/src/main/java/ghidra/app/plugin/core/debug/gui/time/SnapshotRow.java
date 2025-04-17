@@ -22,17 +22,14 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.DateUtils;
 
 public class SnapshotRow {
-	//private static final DateFormat FORMAT = DateFormat.getDateTimeInstance();
-
-	private final Trace trace;
 	private final TraceSnapshot snapshot;
+	private final Trace trace;
 
-	public SnapshotRow(Trace trace, TraceSnapshot snapshot) {
-		this.trace = snapshot.getTrace();
+	public SnapshotRow(TraceSnapshot snapshot) {
 		this.snapshot = snapshot;
+		this.trace = snapshot.getTrace();
 	}
 
 	public TraceSnapshot getSnapshot() {
@@ -51,8 +48,8 @@ public class SnapshotRow {
 		return snapshot.getKey();
 	}
 
-	public String getTimeStamp() {
-		return DateUtils.formatDateTimestamp(new Date(snapshot.getRealTime()));
+	public Date getTimeStamp() {
+		return new Date(snapshot.getRealTime());
 	}
 
 	public String getEventThreadName() {
@@ -60,8 +57,8 @@ public class SnapshotRow {
 		return thread == null ? "" : thread.getName(snapshot.getKey());
 	}
 
-	public String getSchedule() {
-		return snapshot.getScheduleString();
+	public TraceSchedule getSchedule() {
+		return snapshot.getSchedule();
 	}
 
 	public String getDescription() {

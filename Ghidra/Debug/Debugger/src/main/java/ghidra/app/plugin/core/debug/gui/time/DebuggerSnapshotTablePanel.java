@@ -33,10 +33,14 @@ import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.DateUtils;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
@@ -46,10 +50,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
 		SNAP("Snap", Long.class, SnapshotRow::getSnap, false),
 		TIME("Time", TraceSchedule.class, SnapshotRow::getTime, true),
-		TIMESTAMP("Timestamp", String.class, SnapshotRow::getTimeStamp, true), // TODO: Use Date type here
+		TIMESTAMP("Timestamp", Date.class, SnapshotRow::getTimeStamp, true),
 		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName, true),
-		SCHEDULE("Schedule", String.class, SnapshotRow::getSchedule, false),
-		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, SnapshotRow::setDescription, true);
+		SCHEDULE("Schedule", TraceSchedule.class, SnapshotRow::getSchedule, false),
+		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, //
+				SnapshotRow::setDescription, true);
 
 		private final String header;
 		private final Function<SnapshotRow, ?> getter;
@@ -122,6 +127,9 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
 			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
 			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
+
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
 		}
 
 		private void objectRestored() {
@@ -132,7 +140,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			if (snapshot.getKey() < 0 && hideScratch) {
 				return;
 			}
-			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
+			SnapshotRow row = new SnapshotRow(snapshot);
 			snapshotTableModel.add(row);
 		}
 
@@ -149,12 +157,50 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			}
 			snapshotTableModel.deleteWith(row -> row.getSnapshot() == snapshot);
 		}
+
+		private void valueCreated(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				snapshotTableModel.fireTableDataChanged();
+			}
+		}
+
+		private void valueDeleted(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				snapshotTableModel.fireTableDataChanged();
+			}
+		}
 	}
 
 	final TableCellRenderer styleCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
+		protected String formatNumber(Number value, Settings settings) {
+			return switch (value) {
+				case null -> "<null>";
+				// SNAP is the only column with Long type
+				case Long snap -> getTimeRadix().format(snap);
+				default -> super.formatNumber(value, settings);
+			};
+		}
+
+		@Override
+		protected String getText(Object value) {
+			return switch (value) {
+				case null -> "<null>";
+				case Date date -> DateUtils.formatDateTimestamp(date);
+				case TraceSchedule schedule -> schedule.toString(getTimeRadix());
+				default -> value.toString();
+			};
+		}
+
+		@Override
 		public String getFilterString(Object t, Settings settings) {
-			return t == null ? "<null>" : t.toString();
+			return switch (t) {
+				case null -> "<null>";
+				// SNAP is the only column with Long type
+				case Long snap -> getTimeRadix().format(snap);
+				case Number n -> formatNumber(n, settings);
+				default -> getText(t);
+			};
 		}
 
 		@Override
@@ -216,6 +262,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		descCol.setCellRenderer(styleCurrentRenderer);
 	}
 
+	protected TimeRadix getTimeRadix() {
+		return currentTrace == null ? TimeRadix.DEFAULT
+				: currentTrace.getTimeManager().getTimeRadix();
+	}
+
 	private void addNewListeners() {
 		if (currentTrace == null) {
 			return;
@@ -268,7 +319,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		for (TraceSnapshot snapshot : hideScratch
 				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
 				: manager.getAllSnapshots()) {
-			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
+			SnapshotRow row = new SnapshotRow(snapshot);
 			toAdd.add(row);
 			if (current != DebuggerCoordinates.NOWHERE &&
 				snapshot.getKey() == current.getViewSnap()) {
@@ -289,7 +340,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		Collection<? extends TraceSnapshot> sratch =
 			manager.getSnapshots(Long.MIN_VALUE, true, 0, false);
 		snapshotTableModel.addAll(sratch.stream()
-				.map(s -> new SnapshotRow(currentTrace, s))
+				.map(s -> new SnapshotRow(s))
 				.collect(Collectors.toList()));
 	}
 
