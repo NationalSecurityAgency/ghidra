@@ -571,6 +571,24 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
+	 * @param predicate the predicate 
+	 * @return this builder (for chaining)
+	 * @deprecated use {@link #validWhen(Predicate)}
+	 */
+	@Deprecated(forRemoval = true, since = "11.4")
+	public B validContextWhen(Predicate<C> predicate) {
+		validContextPredicate = Objects.requireNonNull(predicate);
+
+		// automatic enablement management triggered, make sure there is a existing enablement 
+		// predicate. The default behavior of manual management interferes with automatic management.
+		if (enabledPredicate == null) {
+			enabledPredicate = ALWAYS_TRUE;
+		}
+
+		return self();
+	}
+
+	/**
 	 * Sets a predicate for dynamically determining if this action is valid for the current 
 	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}.
 	 * 
@@ -584,7 +602,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * validity for a given {@link ActionContext}
 	 * @return this builder (for chaining)
 	 */
-	public B validContextWhen(Predicate<C> predicate) {
+	public B validWhen(Predicate<C> predicate) {
 		validContextPredicate = Objects.requireNonNull(predicate);
 
 		// automatic enablement management triggered, make sure there is a existing enablement 
