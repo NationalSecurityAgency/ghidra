@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.dwarf.*;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -34,7 +33,8 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 	private static final String DWARF_LOADED_OPTION_NAME = "DWARF Loaded";
 	private static final String DWARF_ANALYZER_NAME = "DWARF";
 	private static final String DWARF_ANALYZER_DESCRIPTION =
-		"Automatically extracts DWARF info from ELF/MachO/PE files.";
+		"Automatically extracts DWARF info from ELF/MachO/PE files.\n" +
+			"Copies symbols from external debug files into the program.";
 
 
 	/**
@@ -92,6 +92,15 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		}
 
 		try {
+
+			if (importOptions.isCopyExternalDebugFileSymbols() &&
+				dsp instanceof ExternalDebugFileSectionProvider extDSP) {
+
+				ExternalDebugFileSymbolImporter extDFSI = new ExternalDebugFileSymbolImporter(
+					program, extDSP.getExternalProgram(), monitor);
+				extDFSI.importSymbols(log);
+			}
+
 			try (DWARFProgram prog = new DWARFProgram(program, importOptions, monitor, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
 					log.appendMsg("No DWARF to Ghidra register mappings found for this program's " +
@@ -118,6 +127,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		}
 		return false;
 	}
+
 
 	@Deprecated(forRemoval = true, since = "10.0")
 	private static boolean oldCheckIfDWARFImported(Program prog) {

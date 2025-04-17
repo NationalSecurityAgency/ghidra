@@ -82,6 +82,12 @@ public class DWARFImportOptions {
 	private static final String OPTION_MAX_SOURCE_ENTRY_LENGTH_DESC =
 		"Maximum length for a source map entry.  Longer lengths will be replaced with 0";
 
+	private static final String OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS =
+		"Copy external debug file symbols";
+	private static final String OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC =
+		"Copies symbols (which will typically be mangled) from a found external debug file into " +
+			"the main program";
+
 	//==================================================================================================
 	// Old Option Names - Should stick around for multiple major versions after 10.2
 	//==================================================================================================
@@ -119,6 +125,7 @@ public class DWARFImportOptions {
 	private boolean ignoreParamStorage = false;
 	private String defaultCC = "";
 	private long maxSourceMapEntryLength = 2000;
+	private boolean copyExternalDebugFileSymbols = true;
 
 	/**
 	 * Create new instance
@@ -438,6 +445,14 @@ public class DWARFImportOptions {
 		maxSourceMapEntryLength = maxLength;
 	}
 
+	public boolean isCopyExternalDebugFileSymbols() {
+		return copyExternalDebugFileSymbols;
+	}
+
+	public void setCopyExternalDebugFileSymbols(boolean b) {
+		copyExternalDebugFileSymbols = b;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -480,6 +495,9 @@ public class DWARFImportOptions {
 		options.registerOption(OPTION_DEFAULT_CC, getDefaultCC(), null, OPTION_DEFAULT_CC_DESC);
 		options.registerOption(OPTION_MAX_SOURCE_ENTRY_LENGTH, maxSourceMapEntryLength, null,
 			OPTION_MAX_SOURCE_ENTRY_LENGTH_DESC);
+
+		options.registerOption(OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS,
+			isCopyExternalDebugFileSymbols(), null, OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC);
 	}
 
 	/**
@@ -509,6 +527,8 @@ public class DWARFImportOptions {
 		setDefaultCC(options.getString(OPTION_DEFAULT_CC, getDefaultCC()));
 		setMaxSourceMapEntryLength(
 			options.getLong(OPTION_MAX_SOURCE_ENTRY_LENGTH, getMaxSourceMapEntryLength()));
+		setCopyExternalDebugFileSymbols(options.getBoolean(OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS,
+			isCopyExternalDebugFileSymbols()));
 
 	}
 }
