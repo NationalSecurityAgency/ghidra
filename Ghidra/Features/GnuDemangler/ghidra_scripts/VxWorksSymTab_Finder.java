@@ -415,7 +415,12 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	// Test is weak.
 	//------------------------------------------------------------------------
 	private boolean isSymTblEntry(Address entry, VxSymbol vxSymbol) throws Exception {
-
+		
+		// Make sure there's data for the symbol
+		if ( !isAddress(entry.getOffset() + vxSymbol.length() - 1) ) {
+			return false;
+		}
+		
 		// First dword must be null or a valid ptr (typically into the sym table)
 		long value = getInt(entry) & 0xffffffffL;
 		if ((value != 0) && !isAddress(value)) {
