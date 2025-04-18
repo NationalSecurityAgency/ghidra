@@ -125,9 +125,11 @@ The columns are:
 * The **Time** column numbers each snapshot.
   Other windows that indicate life spans refer to these numbers.
   If emulating (covered later in this course), this column may display the schedule.
-* The **Timestamp** column gives the time when the snapshot was created, i.e., the time when the event occurred.
 * The **Event Thread** column indicates which thread caused the target to break.
   This only applies to snapshots that were created because of an event, which is most.
+* The **PC** column gives the address of the next instruction.
+* The **Function** column gives the name of the function containing the PC mapped to its static program database, if available.
+* The **Module** column gives the name of the module containing the PC.
 * The **Description** column describes the event that generated the snapshot.
   This can be edited in the table, or by pressing **`CTRL`-`SHIFT`-`N`** to mark interesting snapshots.
 
