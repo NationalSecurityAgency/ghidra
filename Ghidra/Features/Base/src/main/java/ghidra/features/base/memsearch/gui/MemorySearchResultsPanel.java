@@ -41,13 +41,16 @@ import ghidra.util.task.*;
  * in a table. This panel also includes most of the search logic as it has direct access to the
  * table for showing the results.
  */
-class MemorySearchResultsPanel extends JPanel {
+public class MemorySearchResultsPanel extends JPanel {
 	private GhidraThreadedTablePanel<MemoryMatch> threadedTablePanel;
 	private GhidraTableFilterPanel<MemoryMatch> tableFilterPanel;
 	private GhidraTable table;
 	private MemoryMatchTableModel tableModel;
 	private MemorySearchProvider provider;
 	private SearchMarkers markers;
+
+	private boolean hasDeleted;
+	private boolean hasCombined;
 
 	MemorySearchResultsPanel(MemorySearchProvider provider, SearchMarkers markers) {
 		super(new BorderLayout());
@@ -71,6 +74,14 @@ class MemorySearchResultsPanel extends JPanel {
 
 	private void tableChanged(TableModelEvent event) {
 		markers.loadMarkers(provider.getTitle(), tableModel.getModelData());
+	}
+
+	void itemDeleted() {
+		hasDeleted = true;
+	}
+
+	boolean hasUserChanges() {
+		return hasDeleted || hasCombined;
 	}
 
 	void providerActivated() {
@@ -109,7 +120,13 @@ class MemorySearchResultsPanel extends JPanel {
 	}
 
 	private MemoryMatchTableLoader createLoader(MemorySearcher searcher, Combiner combiner) {
-		if (hasResults()) {
+		if (!hasResults()) {
+			hasDeleted = false;
+			return new NewSearchTableLoader(searcher);
+		}
+
+		// We have existing results.  Will they be merged?
+		if (combiner.isMerge()) {
 
 			// If we have existing results, the combiner determines how the new search results get
 			// combined with the existing results.
@@ -118,11 +135,14 @@ class MemorySearchResultsPanel extends JPanel {
 			// and only the new results are kept. In this case, it is preferred to use the same
 			// loader as if doing an initial search because you get incremental loading and also
 			// don't need to copy the existing results to feed to a combiner.
-			if (combiner != Combiner.REPLACE) {
-				List<MemoryMatch> previousResults = tableModel.getModelData();
-				return new CombinedMatchTableLoader(searcher, previousResults, combiner);
-			}
+			hasCombined = true;
+			List<MemoryMatch> previousResults = tableModel.getModelData();
+			return new CombinedMatchTableLoader(searcher, previousResults, combiner);
 		}
+
+		// We have results, but we are going to replace them.  A new load of data means any previous
+		// manual deletes are now irrelevant
+		hasDeleted = false;
 		return new NewSearchTableLoader(searcher);
 	}
 
@@ -146,7 +166,7 @@ class MemorySearchResultsPanel extends JPanel {
 		}
 	}
 
-	GhidraTable getTable() {
+	public GhidraTable getTable() {
 		return table;
 	}
 
