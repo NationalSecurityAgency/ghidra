@@ -249,8 +249,9 @@ public class MemoryMatchTableModel extends AddressBasedTableModel<MemoryMatch> {
 					byteString = HTMLUtilities.colorString(color, byteString);
 				}
 				b.append(byteString);
-				if (i == max)
+				if (i == max) {
 					break;
+				}
 				b.append(" ");
 			}
 
