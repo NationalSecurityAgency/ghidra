@@ -78,7 +78,7 @@ public class TracePathLastLifespanColumn
 	public SpanAndRadix getValue(PathRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		TraceObjectValue lastEntry = rowObject.getPath().getLastEntry();
-		TimeRadix radix = data.getTimeManager().getTimeRadix();
+		TimeRadix radix = data == null ? TimeRadix.DEFAULT : data.getTimeManager().getTimeRadix();
 		if (lastEntry == null) {
 			return new SpanAndRadix(Lifespan.ALL, radix);
 		}
