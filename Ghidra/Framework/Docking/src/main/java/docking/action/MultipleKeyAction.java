@@ -584,5 +584,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			tool.setStatusInfo(message, true);
 			Toolkit.getDefaultToolkit().beep();
 		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + ": " + validActions;
+		}
 	}
 }
