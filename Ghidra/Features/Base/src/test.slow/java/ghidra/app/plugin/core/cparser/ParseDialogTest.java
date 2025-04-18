@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
@@ -115,20 +116,21 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		JButton parseToFileButton = findButtonByText(dialog, "Parse to File...");
 		assertNotNull(parseToFileButton);
 
+		ActionContext context = dialog.getActionContext(null);
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
-		assertTrue(saveAsAction.isEnabled());
+		assertTrue(saveAsAction.isEnabledForContext(context));
 
 		DockingActionIf saveAction = getAction(dialog, "Save Profile");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(context));
 
 		DockingActionIf clearAction = getAction(dialog, "Clear Profile");
-		assertTrue(clearAction.isEnabled());
+		assertTrue(clearAction.isEnabledForContext(context));
 
 		DockingActionIf deleteAction = getAction(dialog, "Delete Profile");
-		assertFalse(deleteAction.isEnabled());
+		assertFalse(deleteAction.isEnabledForContext(context));
 
 		DockingActionIf refreshAction = getAction(dialog, "Refresh User Profiles");
-		assertTrue(refreshAction.isEnabled());
+		assertTrue(refreshAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -137,10 +139,10 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		addSourceFile("c:\\temp\\fred.h");
 
 		DockingActionIf saveAction = getAction(dialog, "Save Profile");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(dialog.getActionContext(null)));
 
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
-		assertTrue(saveAsAction.isEnabled());
+		assertTrue(saveAsAction.isEnabledForContext(dialog.getActionContext(null)));
 	}
 
 	@Test
