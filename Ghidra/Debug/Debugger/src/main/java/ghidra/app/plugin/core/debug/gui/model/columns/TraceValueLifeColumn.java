@@ -50,6 +50,7 @@ public class TraceValueLifeColumn
 	@Override
 	public SetAndRadix getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return new SetAndRadix(rowObject.getLife(), data.getTimeManager().getTimeRadix());
+		return new SetAndRadix(rowObject.getLife(),
+			data == null ? TimeRadix.DEFAULT : data.getTimeManager().getTimeRadix());
 	}
 }

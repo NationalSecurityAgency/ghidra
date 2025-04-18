@@ -733,7 +733,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void updateSubTitle() {
-		TimeRadix radix = current.getTrace().getTimeManager().getTimeRadix();
+		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+				: current.getTrace().getTimeManager().getTimeRadix();
 		setSubTitle(current.getTime().toString(radix));
 	}
 
