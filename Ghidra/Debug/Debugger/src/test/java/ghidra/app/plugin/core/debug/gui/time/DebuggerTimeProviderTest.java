@@ -34,6 +34,7 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.DateUtils;
 
 public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
@@ -80,13 +81,14 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		SnapshotRow firstRow = snapsDisplayed.get(0);
 		assertEquals(0, firstRow.getSnap());
 		assertEquals("First", firstRow.getDescription());
-		assertEquals("0", firstRow.getSchedule()); // Snap 0 has "0" schedule
-		assertEquals("Jan 01, 2020 09:00 AM", firstRow.getTimeStamp());
+		assertEquals("0", firstRow.getSchedule().toString()); // Snap 0 has "0" schedule
+		assertEquals("Jan 01, 2020 09:00 AM",
+			DateUtils.formatDateTimestamp(firstRow.getTimeStamp()));
 
 		SnapshotRow secondRow = snapsDisplayed.get(1);
 		assertEquals(10, secondRow.getSnap());
 		assertEquals("Snap 10", secondRow.getDescription());
-		assertEquals("0:5;t1-5", secondRow.getSchedule());
+		assertEquals("0:5;t1-5", secondRow.getSchedule().toString());
 		// Timestamp is left unchecked, since default is current time
 	}
 
