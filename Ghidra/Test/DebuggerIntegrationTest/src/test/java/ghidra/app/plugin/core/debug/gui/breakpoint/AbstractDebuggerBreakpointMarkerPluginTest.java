@@ -19,9 +19,8 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +46,8 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
+import ghidra.app.plugin.core.functiongraph.FGProvider;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -88,6 +89,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	protected DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
 	protected DebuggerListingPlugin listingPlugin;
 	protected CodeBrowserPlugin codeBrowserPlugin;
+	protected FunctionGraphPlugin functionGraphPlugin; // Not initialized in setup
 
 	protected DebuggerLogicalBreakpointService breakpointService;
 	protected DebuggerStaticMappingService mappingService;
@@ -906,5 +908,65 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 				assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
 			}
 		});
+	}
+
+	@Test
+	public void testWithFunctionGraphPlugin() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+
+		tool.removePlugins(List.of(functionGraphPlugin));
+	}
+
+	protected void toggleInstallFunctionGraphPlugin() throws Throwable {
+		if (functionGraphPlugin == null) {
+			functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(functionGraphPlugin));
+			functionGraphPlugin = null;
+		}
+	}
+
+	protected void toggleInstallBreakointMarkerPlugin() throws Throwable {
+		if (breakpointMarkerPlugin == null) {
+			breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		}
+		else {
+			tool.removePlugins(List.of(breakpointMarkerPlugin));
+			breakpointMarkerPlugin = null;
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginFrenetically() throws Throwable {
+		Random rnd = new Random();
+		for (int i = 0; i < 100; i++) {
+			if (rnd.nextBoolean()) {
+				toggleInstallFunctionGraphPlugin();
+			}
+			else {
+				toggleInstallBreakointMarkerPlugin();
+			}
+		}
+	}
+
+	@Test
+	public void testWithFunctionGraphPluginAndOpenProgram() throws Throwable {
+		functionGraphPlugin = addPlugin(tool, FunctionGraphPlugin.class);
+		tool.removePlugins(List.of(breakpointMarkerPlugin));
+
+		FGProvider functionGraphProvider = waitForComponentProvider(FGProvider.class);
+		prepareDecompiler(); // Just to get a minimally meaningful program
+		functionGraphProvider.setVisible(true);
+
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
+		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
+		tool.removePlugins(List.of(functionGraphPlugin));
 	}
 }
