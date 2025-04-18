@@ -316,6 +316,11 @@ public enum DebuggerStaticMappingUtils {
 
 	public static Function getFunction(Address pc, DebuggerCoordinates coordinates,
 			ServiceProvider serviceProvider) {
+		return getFunction(pc, coordinates.getTrace(), coordinates.getSnap(), serviceProvider);
+	}
+
+	public static Function getFunction(Address pc, Trace trace, long snap,
+			ServiceProvider serviceProvider) {
 		if (pc == null) {
 			return null;
 		}
@@ -324,8 +329,7 @@ public enum DebuggerStaticMappingUtils {
 		if (mappingService == null) {
 			return null;
 		}
-		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
-			null, Lifespan.at(coordinates.getSnap()), pc);
+		TraceLocation dloc = new DefaultTraceLocation(trace, null, Lifespan.at(snap), pc);
 		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;
@@ -346,14 +350,13 @@ public enum DebuggerStaticMappingUtils {
 	}
 
 	public static String getModuleName(Address pc, DebuggerCoordinates coordinates) {
-		if (pc == null) {
+		return getModuleName(pc, coordinates.getTrace(), coordinates.getSnap());
+	}
+
+	public static String getModuleName(Address pc, Trace trace, long snap) {
+		if (pc == null || trace == null) {
 			return null;
 		}
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
-			return null;
-		}
-		long snap = coordinates.getSnap();
 		for (TraceModule module : trace.getModuleManager().getModulesAt(snap, pc)) {
 			// Just take the first
 			return computeModuleShortName(module.getName(snap));
