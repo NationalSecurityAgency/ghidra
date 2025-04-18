@@ -518,6 +518,11 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			public void actionPerformed(ActionContext context) {
 				saveAs((ComboBoxItem) comboBox.getSelectedItem());
 			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return true;
+			}
 		};
 		icon = Icons.SAVE_AS_ICON;
 		saveAsAction.setMenuBarData(new MenuData(new String[] { "Save As..." }, icon, saveGroup));
