@@ -136,7 +136,7 @@ public:
 
 /// \brief A group of actions (generally) applied in sequence
 ///
-/// This is a a list of Action objects, which are usually applied in sequence.
+/// This is a list of Action objects, which are usually applied in sequence.
 /// But the behavior properties of each individual Action may affect this.
 /// Properties (like rule_repeatapply) may be put directly to this group
 /// that also affect how the Actions are applied.

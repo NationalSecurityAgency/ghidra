@@ -33,7 +33,7 @@ std::wstring printVariant( VARIANT & v ) {
 			return v.bstrVal;
 		case VT_EMPTY://Indicates that a value was not specified. 
 			return L"empty";
-		case VT_NULL://Indicates a a null reference (Nothing in Visual Basic) value, similar to a null value in SQL. 
+		case VT_NULL://Indicates a null reference (Nothing in Visual Basic) value, similar to a null value in SQL. 
 			return L"null";
 	}
 

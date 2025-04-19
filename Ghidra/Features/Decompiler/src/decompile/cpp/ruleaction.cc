@@ -6176,7 +6176,7 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
 
 /// Recursively walk the sub-tree from the given root.
 /// Terms that are a \e multiple of the base data-type size are accumulated either in
-/// the the sum of constant multiples or the container of non-constant multiples.
+/// the sum of constant multiples or the container of non-constant multiples.
 /// Terms that are a \e non-multiple are accumulated either in the sum of constant
 /// non-multiples or the container of non-constant non-multiples. The constant
 /// non-multiples are counted twice, once in the sum, and once in the container.

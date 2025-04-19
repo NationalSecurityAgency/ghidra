@@ -800,7 +800,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run
@@ -822,7 +822,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run

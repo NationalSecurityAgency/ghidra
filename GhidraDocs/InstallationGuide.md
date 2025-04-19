@@ -124,7 +124,7 @@ using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
        3. Click `Environment variables...`
     3. Add the JDK bin directory to the PATH variable:
        1. Under `System variables`, highlight `Path` and click `Edit...`
-       2. At the end of the the `Variable value` field, add a semicolon followed by 
+       2. At the end of the `Variable value` field, add a semicolon followed by
           `<path of extracted JDK dir>\bin`, or use the `New` button in the
           `Edit environment variable` window to add a new entry to the `Path`.
        3. Click `OK`
@@ -268,7 +268,7 @@ A single `ghidra.jar` file can be created using the `<GhidraInstallDir>/support/
 script.
 
 ### PyGhidra Mode
-Ghidra has integrated the the popular Pyhidra extension to enable native CPython 3 support out of
+Ghidra has integrated the popular Pyhidra extension to enable native CPython 3 support out of
 the box. To enable this support, Ghidra must be launched from a Python environment using special
 launch scripts.
 1. Navigate to `<GhidraInstallDir>/support/`

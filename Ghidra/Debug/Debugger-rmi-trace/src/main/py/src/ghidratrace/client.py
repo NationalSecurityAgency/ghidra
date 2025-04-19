@@ -376,7 +376,7 @@ class Trace(Generic[E]):
             List[str], RemoteResult[Any, List[str]]]:
         """Set register values at the given time on.
 
-        values is a dictionary, where each key is a a register name, and
+        values is a dictionary, where each key is a register name, and
         the value is a byte array. No matter the target architecture,
         the value is given in big-endian byte order.
         """

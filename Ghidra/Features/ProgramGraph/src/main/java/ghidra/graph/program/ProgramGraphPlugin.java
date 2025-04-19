@@ -48,7 +48,7 @@ import ghidra.util.task.TaskLauncher;
  * the graphs that it generates. This plugin generates several different types of program graphs.
  * Both the "block flow" and "code flow" actions will generate a graph of basic block flows. The only
  * difference is that the "code flow" action generates a graph that
- * displays the assembly for for each basic block, whereas the "block flow" action generates a graph
+ * displays the assembly for each basic block, whereas the "block flow" action generates a graph
  * that displays the symbol or address at the start of the basic block.  This plugin also
  * generates call graphs, using either the default subroutine model or one that the user chooses.
  */

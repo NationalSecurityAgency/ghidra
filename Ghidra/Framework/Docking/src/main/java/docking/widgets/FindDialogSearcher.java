@@ -71,7 +71,7 @@ public interface FindDialogSearcher {
 	 * @param text the search text.
 	 * @param cursorPosition the current cursor position.
 	 * @param searchForward true if searching forward.
-	 * @param useRegex useRegex true if the search text is a regular expression; false if the texts is
+	 * @param useRegex true if the search text is a regular expression; false if the texts is
 	 * literal text.
 	 * @return the search result or null if no match was found.
 	 */

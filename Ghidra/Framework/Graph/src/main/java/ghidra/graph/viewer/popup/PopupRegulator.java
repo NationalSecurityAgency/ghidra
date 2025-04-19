@@ -132,7 +132,7 @@ public class PopupRegulator<V, E> {
 
 		Component c = event.getComponent();
 		if (!c.isShowing()) {
-			// This method is called from a a timer.  It is possible that the graph has been 
+			// This method is called from a timer.  It is possible that the graph has been 
 			// closed by the time this method is called.
 			return;
 		}

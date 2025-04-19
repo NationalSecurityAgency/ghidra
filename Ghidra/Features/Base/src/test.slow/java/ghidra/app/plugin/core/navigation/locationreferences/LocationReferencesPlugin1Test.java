@@ -71,7 +71,7 @@ public class LocationReferencesPlugin1Test extends AbstractLocationReferencesTes
 		Address otherAddress = addr(0x01008014); // 0x1  ONE; this also has references
 		assertTrue(applyCmd(program, new CreateDataCmd(otherAddress, enoom)));
 
-		// this is the address will will use to search
+		// this is the address we will use to search
 		Address address = addr(0x01008019); // 0x0  ZERO		
 		assertTrue(applyCmd(program, new CreateDataCmd(address, enoom)));
 

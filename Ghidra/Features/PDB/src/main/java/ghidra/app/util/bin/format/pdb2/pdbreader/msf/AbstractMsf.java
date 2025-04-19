@@ -77,7 +77,7 @@ import ghidra.util.task.TaskMonitor;
  * The file directory is stored in stream 0, which has its information persisted in
  *  the header as described above.  However, for the newest format, the page (pointed
  *  to in the header) for the directory stream has an extra level of indirection.  The
- *  page contains page numbers, whose pages contain contain page numbers for the
+ *  page contains page numbers, whose pages contain page numbers for the
  *  directory stream.  Note that the page numbers listed on any of these pages have
  *  the following format on disk:
  * <PRE>

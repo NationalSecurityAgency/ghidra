@@ -1166,7 +1166,7 @@ ProtoModel *Architecture::createUnknownModel(const string &modelName)
   return model;
 }
 
-/// This looks for the \<processor_spec> tag and and sets configuration
+/// This looks for the \<processor_spec> tag and sets configuration
 /// parameters based on it.
 /// \param store is the document store holding the tag
 void Architecture::parseProcessorConfig(DocumentStorage &store)

@@ -141,7 +141,7 @@ public interface ProjectData {
 
 	/**
 	 * Sync the Domain folder/file structure with the underlying file structure.
-	 * @param force if true all folders will be be visited and refreshed, if false
+	 * @param force if true all folders will be visited and refreshed, if false
 	 * only those folders previously visited will be refreshed.
 	 */
 	public void refresh(boolean force);

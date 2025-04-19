@@ -114,7 +114,7 @@ public class LibObjcOptimization implements StructConverter {
 	}
 
 	/**
-	 * Marks up up this structure in memory
+	 * Marks up this structure in memory
 	 * 
 	 * @param program The {@link Program}
 	 * @param space The {@link AddressSpace}

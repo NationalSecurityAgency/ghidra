@@ -154,7 +154,7 @@ public interface Enum extends DataType {
 
 	/**
 	 * Returns the smallest length (size in bytes) this enum can be and still represent all of
-	 * it's current values. Note that that this will only return powers of 2 (1,2,4, or 8)
+	 * it's current values. Note that this will only return powers of 2 (1,2,4, or 8)
 	 * @return the smallest length (size in bytes) this enum can be and still represent all of
 	 * it's current values
 	 */

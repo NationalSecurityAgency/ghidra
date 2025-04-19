@@ -18,7 +18,7 @@ package docking.widgets.fieldpanel.support;
 import docking.widgets.fieldpanel.field.Field;
 
 /**
- * A highlighter for for {@link Field}s.
+ * A highlighter for {@link Field}s.
  */
 public interface FieldHighlightFactory {
 

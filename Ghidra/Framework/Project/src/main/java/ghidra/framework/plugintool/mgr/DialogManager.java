@@ -72,7 +72,7 @@ public class DialogManager {
 			}
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, "Error", "Error exporting tool tool", e);
+			Msg.showError(this, null, "Error", "Error exporting tool", e);
 		}
 	}
 }

@@ -52,7 +52,7 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext<RISCV_ElfRelocatio
 	}
 
 	/**
-	 * Find the HI20 relocation whose offset matches the value of of the specified symbol.
+	 * Find the HI20 relocation whose offset matches the value of the specified symbol.
 	 * @param hi20Symbol ELF symbol which corresponds to HI20 relocation
 	 * @return matching relocation or null if not found
 	 */

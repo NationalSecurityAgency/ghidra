@@ -192,7 +192,7 @@ protected:
   string name;			///< Name of type
   string displayName;		///< Name to display in output
   type_metatype metatype;	///< Meta-type - type disregarding size
-  sub_metatype submeta;		///< Sub-type of of the meta-type, for comparisons
+  sub_metatype submeta;		///< Sub-type of the meta-type, for comparisons
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
   int4 alignment;		///< Byte alignment expected for \b this data-type in addressable memory
   int4 alignSize;		///< Size of data-type rounded up to a multiple of \b alignment

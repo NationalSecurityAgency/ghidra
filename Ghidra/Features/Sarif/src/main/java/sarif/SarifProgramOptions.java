@@ -630,14 +630,14 @@ public class SarifProgramOptions {
 	}
 
 	/**
-	 * @param b trueif the processor-defined labels should be anchored
+	 * @param b true if the processor-defined labels should be anchored
 	 */
 	public void setAnchorProcDefinedLabels(boolean b) {
 		anchorProcDefinedLabels = b;
 	}
 
 	/**
-	 * @return true true if the processor-defined labels should be anchored
+	 * @return true if the processor-defined labels should be anchored
 	 */
 	public boolean anchorProcDefinedLabels() {
 		return anchorProcDefinedLabels;

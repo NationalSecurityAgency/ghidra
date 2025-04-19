@@ -28,7 +28,7 @@ public class SymbolHashRecord implements Comparable<SymbolHashRecord> {
 	public static int RECORD_SIZE = 8;
 
 	/**
-	 * Parses the contents of of this record.
+	 * Parses the contents of this record.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */
