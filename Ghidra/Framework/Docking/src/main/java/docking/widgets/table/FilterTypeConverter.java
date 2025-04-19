@@ -18,7 +18,7 @@ package docking.widgets.table;
 import ghidra.docking.settings.Settings;
 
 /**
- * An interface that is meant to take the column type of of a {@link DynamicTableColumn}
+ * An interface that is meant to take the column type of a {@link DynamicTableColumn}
  * and convert it to the specified type.   This class is meant to be used when the dynamic 
  * filtering mechanism is not correctly filtering a column, usually because the default filter
  * for the column type does not match what the renderer is displaying in the table.

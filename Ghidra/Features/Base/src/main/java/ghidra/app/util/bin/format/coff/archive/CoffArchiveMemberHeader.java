@@ -53,7 +53,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 
 	/**
 	 * Reads a COFF archive member header from the specified {@link BinaryReader reader},
-	 * leaving the file position at the start of the this member's payload.
+	 * leaving the file position at the start of this member's payload.
 	 * <p>
 	 * The archive member's name is fixed up using the specified {@link LongNamesMember longNames}
 	 * object.

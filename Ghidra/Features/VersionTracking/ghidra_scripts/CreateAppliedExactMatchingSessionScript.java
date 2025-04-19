@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // An example of how to create Version Tracking session, run some correlators to find matching
-// data and and then save the session.
+// data and then save the session.
 //@category Examples.Version Tracking
 
 import java.util.Collection;

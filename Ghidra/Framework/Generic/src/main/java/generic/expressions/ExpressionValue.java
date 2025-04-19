@@ -33,7 +33,7 @@ public interface ExpressionValue extends ExpressionElement {
 	 * @param operator the binary operator being applied.
 	 * @param value the other value to combine with this value by the operator
 	 * @return the new value after the operator is applied to this value
-	 * @throws ExpressionException if the operator is not applicable for this value or the the other
+	 * @throws ExpressionException if the operator is not applicable for this value or the other
 	 * value is not applicable for this operand and operator
 	 */
 	public ExpressionValue applyBinaryOperator(ExpressionOperator operator, ExpressionValue value)

@@ -17,7 +17,7 @@ From here, you can toggle and delete existing breakpoints.
 There are several ways to set a new breakpoint:
 
 1. From any static or dynamic listing window, including Disassembly, Memory/Hex, and the Decompiler, right-click and select ![set breakpoint](images/breakpoint-enable.png) Set Breakpoint, press **`K`** on the keyboard, or double-click the margin.
-1. From the Breakpoints window, use the **Set Breakpoint** dropdown to to access the various breakpoint actions defined by GDB.
+1. From the Breakpoints window, use the **Set Breakpoint** dropdown to access the various breakpoint actions defined by GDB.
 1. From the Terminal window, use the GDB command, e.g., `break main`.
 
 The advantage of using the listings is that you can quickly set a breakpoint at any address.

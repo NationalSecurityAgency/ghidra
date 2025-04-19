@@ -310,7 +310,7 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Sets the accessible name prefix for for the focusable components in the filter panel.
+	 * Sets the accessible name prefix for the focusable components in the filter panel.
 	 * @param prefix the base name for these components. A suffix will be added to further
 	 * describe the sub component.
 	 */

@@ -136,7 +136,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	/**
 	 * Construct a new PasswordDialog which may include user ID specification/prompt if either
 	 * {@code allowUserIdEntry} is true or a non-null {@code defaultUserId} has been specified.
-	 * The dialog optionally includes a message text area area which supports the use of 
+	 * The dialog optionally includes a message text area which supports the use of 
 	 * {@link #setErrorText(String)}.
 	 * 
 	 * @param title title of the dialog

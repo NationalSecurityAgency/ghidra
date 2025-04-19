@@ -119,7 +119,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 	/**
 	 * Adds an "application layout" panel to the tabbed pane.
 	 * <p>
-	 * The goal of this panel is to display information information about the application such as
+	 * The goal of this panel is to display information about the application such as
 	 * what directories it is using on disk, what its PID is, etc.
 	 */
 	private void addApplicationLayout() {

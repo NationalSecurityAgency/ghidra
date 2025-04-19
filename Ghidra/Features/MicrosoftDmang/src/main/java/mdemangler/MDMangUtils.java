@@ -174,7 +174,7 @@ public class MDMangUtils {
 
 	/**
 	 * Given a number in string format as input, creates the standardized local namespace
-	 *  node string of the format {@code __l2} where {@code 2} is an an example number.
+	 *  node string of the format {@code __l2} where {@code 2} is an example number.
 	 * @param localNumber the input string
 	 * @return the standardized local namespace component
 	 */

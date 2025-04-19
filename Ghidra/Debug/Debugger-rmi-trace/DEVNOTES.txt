@@ -134,7 +134,7 @@ I instead just use a fixed 32-bit int now.
 
 # How-To?
 
-For now, I'd say just the the gdb implementation as a template / guide.
+For now, I'd say just take the gdb implementation as a template / guide.
 Just beware, the whole thing is a bit unstable, so the code may change, but still, I don't expect it to change so drastically that integration work would be scrapped.
 
 If you're writing Python, create a Python package following the template for gdb's.

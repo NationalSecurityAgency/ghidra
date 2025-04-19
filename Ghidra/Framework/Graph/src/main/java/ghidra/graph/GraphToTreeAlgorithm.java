@@ -33,7 +33,7 @@ import ghidra.graph.jung.JungDirectedGraph;
  * thereby affecting the final ordering or tree structure. Higher priority edges will be processed
  * first, making those edges least likely to be removed as "back" edges.
  * <P>
- * To convert a general graph to a tree, some subset of the the graphs original edges are used to
+ * To convert a general graph to a tree, some subset of the graphs original edges are used to
  * form the tree. There are many possible different trees that can be created in this way. This
  * algorimth's goal is to create a tree such that if all the original "forward" edges are added 
  * back to the tree, they only flow down the tree. This is useful for creating a nicely organized

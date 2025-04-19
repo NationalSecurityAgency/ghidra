@@ -198,7 +198,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * valid but not created, create it
 	 * @param address the given address
 	 * @param allowNullFunctionPointer if true, allow null pointers as a valid function pointer
-	 * @return true if it is a functin pointer, else returns false
+	 * @return true if it is a function pointer, else returns false
 	 * @throws CancelledException if cancelled
 	 */
 	public boolean isFunctionPointer(Address address, boolean allowNullFunctionPointer)

@@ -21,7 +21,7 @@ import java.util.Iterator;
 import util.CollectionUtils;
 
 /**
- * Interface to define an iterator over over some set of Data.
+ * Interface to define an iterator over some set of Data.
  *
  * @see CollectionUtils#asIterable
  */

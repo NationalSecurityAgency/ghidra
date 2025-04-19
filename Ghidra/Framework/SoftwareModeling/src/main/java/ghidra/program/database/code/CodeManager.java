@@ -3161,7 +3161,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 // TODO: for now we will assume that all keys within defined memory blocks are known.
 // When a memory block is created, only its start address key is generated, if the
 // block spans a 32-bit boundary, null may be returned for all addresses beyond that
-// boundary.  A recent fix was added to the memory map to ensure ensure that we can
+// boundary.  A recent fix was added to the memory map to ensure that we can
 // handle blocks which are at least 32-bits in size by ensuring that the end address
 // key is also generated.
 			return null;

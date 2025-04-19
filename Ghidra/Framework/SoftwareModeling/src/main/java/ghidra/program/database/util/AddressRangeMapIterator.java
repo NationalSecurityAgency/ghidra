@@ -253,7 +253,7 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 	/**
 	 * Make sure the range is within the iterator's given start and end range. This really only
 	 * matters for the first and last range returned by the iterator, but it hard to know when
-	 * the given range is the first or last, just just trim all returned ranges.
+	 * the given range is the first or last, just trim all returned ranges.
 	 * @param range the range to be trimmed
 	 * @return the trimmed address range
 	 */

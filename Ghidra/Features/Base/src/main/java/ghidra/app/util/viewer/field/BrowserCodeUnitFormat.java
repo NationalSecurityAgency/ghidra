@@ -69,7 +69,7 @@ public class BrowserCodeUnitFormat extends CodeUnitFormat {
 
 	/**
 	 * Add a change listener to the underlying format options.  When a format change
-	 * occurs the listener may wish to trigger a refresh of of any formatted code units.
+	 * occurs the listener may wish to trigger a refresh of any formatted code units.
 	 * @param listener change listener
 	 */
 	public void addChangeListener(ChangeListener listener) {

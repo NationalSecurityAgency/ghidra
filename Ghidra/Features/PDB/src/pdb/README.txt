@@ -3,7 +3,7 @@ PDB.EXE
 The PDB.EXE executable delivered with Ghidra has been built with Visual Studio 2017 and has a
 dependency on the msdia140.dll in order to execute and process PDB files.  
 
-If it is necessary to rebuild the PDB.exe using a newer version of of the SDK, this can be done by 
+If it is necessary to rebuild the PDB.exe using a newer version of the SDK, this can be done by 
 using the included Visual Studio project to rebuild the executable.  After opening the project
 solution file within Visual Studio simply re-target the solution to a new version of the SDK. 
 This can be accomplished by opening the solution file within Visual Studio, right-clicking on 

@@ -27,7 +27,7 @@ import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
 //cpui_mach_addr is expected to print itself and read itself. It can take
 //a size as a "suggestion" for how it should print itself
 
-//All addresses are absolute and there are are no registers in CPUI. However,
+//All addresses are absolute and there are no registers in CPUI. However,
 //all addresses are prefixed with an "immutable" pointer, which can
 //specify a separate RAM space, a register space, an i/o space etc. Thus
 //a translation from a real machine language will typically simulate registers

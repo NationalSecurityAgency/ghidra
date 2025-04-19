@@ -61,7 +61,7 @@ SymbolEntry::SymbolEntry(Symbol *sym)
 /// is set to \e invalid, and the \b hash becomes the primary location information.
 /// \param sym is the underlying Symbol
 /// \param exfl are the Varnode flags associated with the storage location
-/// \param h is the the hash
+/// \param h is the hash
 /// \param off if the offset into the Symbol for this (piece of) storage
 /// \param sz is the size in bytes of this (piece of) storage
 /// \param rnglist is the set of code addresses where \b this SymbolEntry represents the Symbol

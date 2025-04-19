@@ -177,8 +177,8 @@ uint4 ArraySequence::selectStringCopyFunction(int4 &index)
 /// \brief Set-up for recovering COPY ops into a memory range, given a Symbol and an Address being COPYed into
 ///
 /// The SymbolEntry and Address are passed in, with an expected data-type.  Check if there is an array
-/// of the data-type within the Symbol, and if so, initialize the memory range for the the sequence.
-/// Follow on with gathering PcodeOps and testing if the sequence is viable.  If not, the the size the memory
+/// of the data-type within the Symbol, and if so, initialize the memory range for the sequence.
+/// Follow on with gathering PcodeOps and testing if the sequence is viable.  If not, the size of the memory
 /// range will be set to zero.
 /// \param fdata is the function containing the root COPY
 /// \param ct is the specific data-type for which there should be an array

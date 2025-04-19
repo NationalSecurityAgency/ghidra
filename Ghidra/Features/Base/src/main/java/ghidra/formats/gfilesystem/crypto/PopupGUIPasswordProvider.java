@@ -25,7 +25,7 @@ import ghidra.formats.gfilesystem.crypto.PasswordDialog.RESULT_STATE;
 import ghidra.framework.generic.auth.Password;
 
 /**
- * Pops up up a GUI dialog prompting the user to enter a password for the specified file.
+ * Pops up a GUI dialog prompting the user to enter a password for the specified file.
  * <p>
  * The dialog is presented to the user when the iterator's hasNext() is called.
  * <p>

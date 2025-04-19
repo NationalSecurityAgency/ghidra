@@ -1642,7 +1642,7 @@ class FuncCallSpecs : public FuncProto {
   PcodeOp *op;			///< Pointer to CALL or CALLIND instruction
   string name;			///< Name of function if present
   Address entryaddress;		///< First executing address of function
-  Funcdata *fd;			///< The Funcdata object for the called functon (if known)
+  Funcdata *fd;			///< The Funcdata object for the called function (if known)
   int4 effective_extrapop;	///< Working extrapop for the CALL
   uintb stackoffset;		///< Relative offset of stack-pointer at time of this call
   int4 stackPlaceholderSlot;	///< Slot containing temporary stack tracing placeholder (-1 means unused)

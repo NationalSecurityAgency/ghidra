@@ -1724,7 +1724,7 @@ void Funcdata::prepareThisPointer(void)
       return;		// Data-type will be obtained directly from symbol
   }
 
-  // Its possible that a recommendation for the "this" pointer has already been been collected.
+  // It's possible that a recommendation for the "this" pointer has already been collected.
   // Currently the only type recommendations are for the "this" pointer. If there any, it is for "this"
   if (localmap->hasTypeRecommendations())
     return;

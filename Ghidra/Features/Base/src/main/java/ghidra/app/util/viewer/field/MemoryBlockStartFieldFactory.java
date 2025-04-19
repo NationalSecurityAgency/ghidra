@@ -36,7 +36,7 @@ import ghidra.program.util.ProgramLocation;
 
 /**
   *  Generates a text label on each {@link CodeUnit} that marks the start of a memory block. The
-  *  label will will appear as part of the PLATE group in the field map.
+  *  label will appear as part of the PLATE group in the field map.
   */
 public class MemoryBlockStartFieldFactory extends FieldFactory {
 

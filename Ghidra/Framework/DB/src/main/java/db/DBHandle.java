@@ -1233,7 +1233,7 @@ public class DBHandle {
 
 	/**
 	 * Returns size of buffers utilized within the underlying
-	 * buffer file.  This may be larger than than the requested 
+	 * buffer file.  This may be larger than the requested 
 	 * buffer size.  This value may be used to instatiate a 
 	 * new BufferFile which is compatible with this database
 	 * when using the saveAs method.

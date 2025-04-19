@@ -35,7 +35,7 @@ import utility.function.Callback;
 
 /**
  * A component that acts like a label, but adds the ability to render HTML links with a client
- * callback for when the link is activated.  Links can be activated by mouse clicking or or by 
+ * callback for when the link is activated.  Links can be activated by mouse clicking or by
  * focusing the link and then pressing Enter or Space.
  * <p>
  * Users can make one simple text link by calling {@link #addLink(String, Callback)}.  

@@ -224,8 +224,8 @@ public interface ElfLoadHelper {
 	 * performed during the ELF import processing.  A relocation type of 0 and a status of 
 	 * {@link Status#APPLIED_OTHER} will be applied to the relocation entry.  
 	 * NOTE: The number of recorded original FileBytes currently ignores the specified length.
-	 * However, the length is still used to verify that that the intended modification region
-	 * dose not intersect another relocation.
+	 * However, the length is still used to verify that the intended modification region
+	 * does not intersect another relocation.
 	 * @param address relocation address
 	 * @param length number of bytes affected
 	 * @return true if recorded successfully, or false if conflict with existing relocation 

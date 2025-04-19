@@ -1392,7 +1392,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *
 	 * @param toggleAction the action
 	 * @param context the context for the action
-	 * @param selected true if the action is be be selected; false for not selected
+	 * @param selected true if the action is to be selected; false for not selected
 	 */
 	public static void setToggleActionSelected(ToggleDockingActionIf toggleAction,
 			ActionContext context, boolean selected) {
@@ -1405,7 +1405,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *
 	 * @param toggleAction the action
 	 * @param context the context for the action
-	 * @param selected true if the action is be be selected; false for not selected
+	 * @param selected true if the action is to be selected; false for not selected
 	 * @param wait true to wait for the action to finish; false to invoke later
 	 */
 	public static void setToggleActionSelected(ToggleDockingActionIf toggleAction,

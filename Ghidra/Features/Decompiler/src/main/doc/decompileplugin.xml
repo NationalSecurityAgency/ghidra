@@ -4387,7 +4387,7 @@
     variable or operation affected.
   </para>
   <para>
-    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    Many of the actions have a key binding, which, if it exists, will be listed in the pop-up menu.
     If the key binding is used to activate the action, local context is determined by the current cursor
     position.  Key bindings can be reassigned from the
     <link xlink:href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings</link>

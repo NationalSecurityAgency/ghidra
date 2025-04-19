@@ -190,8 +190,8 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 					buf.append(prefix);
 				}
 			}
-			//if we already appended a ref the line
-			//and we are are about to append one more,
+			//if we already appended a ref to the line
+			//and we are about to append one more,
 			//then we need the delim
 			if (refsInCurrLine > 0) {
 				buf.append(XREFS_DELIM);

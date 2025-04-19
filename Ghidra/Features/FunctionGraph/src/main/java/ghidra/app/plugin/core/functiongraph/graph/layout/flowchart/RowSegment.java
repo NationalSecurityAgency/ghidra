@@ -97,7 +97,7 @@ public class RowSegment<E> extends EdgeSegment<E> {
 	//
 	// NOTE: Segments are compared by following the next or previous segments until one of the
 	// segments definitively determines the order. When comparing segments in a particular
-	// direction, is is important not to directly call the compareTo methods as that could result
+	// direction, it is important not to directly call the compareTo methods as that could result
 	// in an infinite loop. Instead, when comparing in a particular direction, just directly
 	// use the appropriate direction comparison so that it will follow that direction until
 	// it finds a difference or it simply returns 0, in which case the original to
@@ -123,7 +123,7 @@ public class RowSegment<E> extends EdgeSegment<E> {
 
 	// NOTE: Segments are compared by following the next or previous segments until one of the
 	// segments definitively determines the order. When comparing segments in a particular
-	// direction, is is important not to directly call the compareTo methods as that could result
+	// direction, it is important not to directly call the compareTo methods as that could result
 	// in an infinite loop. Instead, when comparing in a particular direction, just directly
 	// use the appropriate direction comparison so that it will follow that direction until
 	// it finds a difference or it simply returns 0, in which case the original to

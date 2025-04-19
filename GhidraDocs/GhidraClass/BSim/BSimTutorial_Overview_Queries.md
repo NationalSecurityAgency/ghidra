@@ -12,7 +12,7 @@ To perform an Overview Query, select **BSim -> Perform Overview...** from the Co
 You should see the following result:
 ![overview window](images/overview_window.png)
 1. Sort the table by the "Hit Count" column in ascending order.  Typically, the functions with the largest hit counts will have low self-significance.
-Verify that that is the case for this table. 
+Verify that that is the case for this table.
 1. Q: Examine the functions with the highest hit count. Why are there so many matches for these functions?
    <details><summary>Answer:</summary> These are all instances of PostgreSQL statistics-reporting functions.  Their bodies are quite similar and they have identical BSim signatures.</details>
 

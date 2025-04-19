@@ -30,7 +30,7 @@ public interface AnimationPainter {
 	 * 
 	 * @param glassPane the glass pane upon which painting takes place
 	 * @param graphics the graphics used to paint
-	 * @param value a value from from the range supplied to the animator when it was created
+	 * @param value a value from the range supplied to the animator when it was created
 	 */
 	public void paint(GGlassPane glassPane, Graphics graphics, double value);
 }

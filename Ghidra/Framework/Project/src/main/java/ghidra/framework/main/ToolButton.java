@@ -469,7 +469,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Create our animation code: a zooming effect and an effect to move where the image is
 		// painted.  These effects are independent code-wise, but work together in that the
-		// mover will set the location and size, and the zoomer will will paint the image with
+		// mover will set the location and size, and the zoomer will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);

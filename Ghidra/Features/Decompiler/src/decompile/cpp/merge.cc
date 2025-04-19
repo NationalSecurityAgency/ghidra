@@ -801,7 +801,7 @@ void Merge::collectInputs(HighVariable *high,vector<PcodeOpNode> &oplist,PcodeOp
   }
 }
 
-/// \brief Snip instances of the output of an INDIRECT that are also inputs to to the underlying PcodeOp
+/// \brief Snip instances of the output of an INDIRECT that are also inputs to the underlying PcodeOp
 ///
 /// Examine the output HighVariable for the given INDIRECT op. Varnode instances (or pieces) that are also
 /// inputs to the underlying PcodeOp causing the INDIRECT are snipped by creating a new COPY op from the

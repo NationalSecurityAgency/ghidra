@@ -900,7 +900,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	/**
-	 * Returns the {@link CategoryPath} for a typedef with with the give {@link SymbolPath} and
+	 * Returns the {@link CategoryPath} for a typedef with the given {@link SymbolPath} and
 	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()}
 	 * except that modeleNumber of 0 represents publics/globals
 	 * @param moduleNumber module number

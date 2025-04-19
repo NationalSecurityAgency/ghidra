@@ -171,7 +171,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 				return;
 			}
 
-			// start with the the top-level class node and walk the namespace path to find the 
+			// start with the top-level class node and walk the namespace path to find the 
 			// parent for the given symbol
 			GTreeNode classNode = entry.getKey();
 			List<Namespace> parentPath = entry.getValue();
@@ -205,7 +205,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		Set<Entry<GTreeNode, List<Namespace>>> entries = classNodes.entrySet();
 		for (Entry<GTreeNode, List<Namespace>> entry : entries) {
 
-			// start with the the top-level class node and walk the namespace path to find the 
+			// start with the top-level class node and walk the namespace path to find the 
 			// parent for the given symbol
 			GTreeNode classNode = entry.getKey();
 			List<Namespace> parentPath = entry.getValue();
@@ -237,7 +237,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 	 		
 	 			
 	 	In this tree, the Label2 symbol is in the tree twice.  The mapping created by this method
-	 	will have have as keys both Class1 and Class2.  Class1 will be mapped to Class1/BarNs/Class2
+	 	will have as keys both Class1 and Class2.  Class1 will be mapped to Class1/BarNs/Class2
 	 	and Class2 will be mapped to Class2 (since it only has one namespace element). 
 	 	
 	 	This code is needed because this Classes category node will duplicate class nodes.  It puts

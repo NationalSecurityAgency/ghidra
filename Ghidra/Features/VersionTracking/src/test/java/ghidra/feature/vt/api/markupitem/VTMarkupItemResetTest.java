@@ -183,7 +183,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 	public void testDBMarkupItemStorageResetDoesntHappen_ClearConsidered() {
 		//
 		// Test that the markup item storage is not removed the considered status is cleared, but
-		// the the destination address is set by the user.
+		// the destination address is set by the user.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
 			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));

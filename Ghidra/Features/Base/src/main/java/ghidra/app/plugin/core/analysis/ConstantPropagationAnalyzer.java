@@ -126,7 +126,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Called to to register a more specific analyzer.
+	 * Called to register a more specific analyzer.
 	 *
 	 * @param processorName
 	 */

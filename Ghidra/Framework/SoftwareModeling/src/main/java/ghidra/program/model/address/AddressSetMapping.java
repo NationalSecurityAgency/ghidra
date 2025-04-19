@@ -101,7 +101,7 @@ public class AddressSetMapping {
 	}
 
 	/**
-	 * Check if the given index in in the "current range".
+	 * Check if the given index in the "current range".
 	 * @param index the index to check
 	 */
 	private boolean indexInCurrentRange(int index) {

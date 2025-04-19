@@ -209,7 +209,7 @@ class ComponentNode extends Node {
 	 * Removes the component from this node (and the manager), but possibly keeps an empty object as
 	 * a placeholder.
 	 * @param placeholder the placeholder object to be removed.
-	 * @param keepEmptyPlaceholder flag indicating to keep a placeholder placeholder object.
+	 * @param keepEmptyPlaceholder flag indicating to keep a placeholder object.
 	 */
 	void remove(ComponentPlaceholder placeholder, boolean keepEmptyPlaceholder) {
 		if (placeholder.isActive()) {

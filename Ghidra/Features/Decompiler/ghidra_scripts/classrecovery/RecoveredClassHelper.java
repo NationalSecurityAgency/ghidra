@@ -1256,7 +1256,7 @@ public class RecoveredClassHelper {
 
 	/**
 	 * temporarily change the function signature of the given constructor or destructor to replace
-	 * any empty structure with same size undefined datatype and to also remove the functin from
+	 * any empty structure with same size undefined datatype and to also remove the function from
 	 * its namespace to remove the empty structure from the this param. This is so that the
 	 * class member data calculations are made without bad info
 	 * @param function the given function
@@ -7863,7 +7863,7 @@ public class RecoveredClassHelper {
 			// to the purecall function and we don't want to rename that function to the new name
 			// since anyone calling purecall will call it
 			if (!componentFunctionDefinition.getName().contains("purecall")) {
-				// otherwise update data type with new new signature
+				// otherwise update data type with the new signature
 				FunctionDefinition changedFunctionDefinition =
 					updateFunctionDefinition(componentFunctionDefinition, newFunctionDefinition);
 

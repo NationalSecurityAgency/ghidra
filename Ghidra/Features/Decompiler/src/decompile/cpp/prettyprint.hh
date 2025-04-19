@@ -440,7 +440,7 @@ public:
 
   /// \brief Set a pending print callback
   ///
-  /// The callback will be issued prior to the the next call to tagLine() unless
+  /// The callback will be issued prior to the next call to tagLine() unless
   /// a the method cancelPendingPrint() is called first.
   /// \param pend is the callback to be issued
   void setPendingPrint(PendPrint *pend) { pendPrint = pend; }

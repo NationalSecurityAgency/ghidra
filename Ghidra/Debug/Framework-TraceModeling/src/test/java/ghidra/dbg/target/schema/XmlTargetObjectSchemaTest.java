@@ -46,7 +46,7 @@ public class XmlTargetObjectSchemaTest {
 				    <schema name="down1">
 				        <attribute schema="VOID" fixed="yes" hidden="yes" />
 				    </schema>
-				</context>"""; // Cannot have final final new-line or serialize test will fail
+				</context>"""; // Cannot have a final new-line or serialize test will fail
 
 	protected static final DefaultSchemaContext CTX = new DefaultSchemaContext();
 	protected static final SchemaName NAME_ROOT = new SchemaName("root");

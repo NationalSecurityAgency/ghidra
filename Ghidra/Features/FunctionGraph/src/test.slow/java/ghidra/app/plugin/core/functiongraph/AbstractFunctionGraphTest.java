@@ -1405,7 +1405,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
 
-		// -1 because one one of the edges was between two of the vertices being grouped
+		// -1 because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex =
 			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices,

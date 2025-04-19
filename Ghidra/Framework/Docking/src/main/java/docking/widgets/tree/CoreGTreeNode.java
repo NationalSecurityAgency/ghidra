@@ -327,7 +327,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	/**
 	 * Returns true if the node is in the process of loading its children.  For nodes
 	 * that directly extend GTreeNode, this is always false.  See {@link GTreeSlowLoadingNode}
-	 * for information on nodes that that can be in the progress of loading.
+	 * for information on nodes that can be in the progress of loading.
 	 * @param childList the list to test.
 	 * @return true if the node is in the progress of loading its children.
 	 */
