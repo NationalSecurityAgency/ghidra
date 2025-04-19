@@ -5221,13 +5221,9 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
 
 :ubfx^ItCond Rd0811,Rn0003,thLsbImm,thWidthMinus1	is TMode=1 & ItCond & op4=0xf3c & Rn0003; thc1515=0 & Rd0811 & thLsbImm & thc0505=0 & thWidthMinus1
 {
-   build ItCond;
-	build thLsbImm;
-	build thWidthMinus1;
-	shift:4 = 31 - (thLsbImm + thWidthMinus1); # thMsbImm represents widthMinus1
-	Rd0811 = Rn0003 << shift;
-	shift = 31 - thWidthMinus1; # msbImm represents widthMinus1
-	Rd0811 = Rd0811 >> shift;
+  build ItCond;
+  tmpmask:4 = ((1:4 << (1 + thWidthMinus1)) - 1);
+  Rd0811 = (Rn0003 >> thLsbImm) & tmpmask;
 }
 
 :udiv^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfbb & Rn0003; op12=0xf & Rd0811 & thc0407=0xf & Rm0003
