@@ -558,7 +558,7 @@ public interface LogicalBreakpoint {
 		}
 
 		/**
-		 * Get the desired state were the the logical breakpoint to be toggled
+		 * Get the desired state were the logical breakpoint to be toggled
 		 * 
 		 * <p>
 		 * The expected "action" when toggling a breakpoint may vary depending on whether or not the

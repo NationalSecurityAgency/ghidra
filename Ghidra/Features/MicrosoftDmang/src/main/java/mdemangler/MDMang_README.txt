@@ -47,13 +47,13 @@ MicrosoftDmang Development and Testing Overview:
     that requires 13 other changes with numerous tests moving back and forth between pass and fail
     states until I finally settle at the state where all previously passing tests pass again and
     I've gotten one additional failing test to now pass.  This is not an unrealistic description,
-    and we have come a very long way, which has allowed to to focus more now on cleaning up the
+    and we have come a very long way, which has allowed us to focus more now on cleaning up the
     code, but there are some areas where the code looks like spaghetti.  This is primarily in the
     section of "modified" types.  Tests have also been continually added to either provide the
     data from a new fuzzing experience or to create additional bounds on a new test case.
   Individual tests are found in MDMangBaseTest.  There are also tests in the MDMangListTest,
     which has various mechanisms for pulling test data from a file.  One of these has
-    mangled/demangled pairs, others might might just have mangled symbols only, but we are looking
+    mangled/demangled pairs, others might just have mangled symbols only, but we are looking
     for cases where the demangler could "blow up."  These file tests often provide a data record
     for creating a new individual test.
   There is also MDMangBaseTest, which uses MDMangBaseTestSuite as the junit-4 testSuite, but
@@ -100,7 +100,7 @@ MicrosoftDmang Architecture:
     representation.  All parsable items derive from MDParsableItem.
   
   MDObject: This class represents a fully presentable symbol as would be expected to be found in
-    a list of symbols for a binary.  It contains a name and and MDTypeinfo.  An MDObject could
+    a list of symbols for a binary.  It contains a name and MDTypeinfo.  An MDObject could
     probably be an abstract class (not one at the moment).  The MDObjectCPP (below) is the
     primary derived object of interest for us.  Other than MDObjectC, the others (MDObjectBracket
     and MDObjectCodeView) may or may not be true representations of the MSFT architecture.  (The

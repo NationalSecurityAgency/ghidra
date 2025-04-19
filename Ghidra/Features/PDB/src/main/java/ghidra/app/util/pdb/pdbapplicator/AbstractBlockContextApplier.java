@@ -139,7 +139,7 @@ public abstract class AbstractBlockContextApplier extends MsSymbolApplier
 			}
 		}
 //		if (foundUnsupported) {
-//			pdbLogAndInfoMessage(this, "One or or more non-nestable symbols skipped for: " + name);
+//			pdbLogAndInfoMessage(this, "One or more non-nestable symbols skipped for: " + name);
 //		}
 
 		// comments

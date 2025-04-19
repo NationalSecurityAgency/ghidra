@@ -717,7 +717,7 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 	/**
 	 * NB: This is key as well.
 	 * 
-	 * this is called in the doSetFunctio nmethod
+	 * this is called in the doSetFunction method
 	 */
 	private void doUpdate() {
 		updateIncomingReferences(currentFunction);

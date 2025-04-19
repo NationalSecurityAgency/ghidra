@@ -1858,7 +1858,7 @@ public class CppCompositeType {
 		//  hierarchy direct virtual bases can intermingled with the indirect virtual bases.
 		// We essentially walk the hierarchy of direct non-virtual bases and direct virtual bases
 		//  to craft our own list of indirect virtual bases to try to help with this, and it seems
-		//  to help a little.  We only use use the PDB-provided indirect virtual bases for when
+		//  to help a little.  We only use the PDB-provided indirect virtual bases for when
 		//  finding the offset of the base using the vbt (when we have a real vbt in program
 		//  memory).
 		// This algorithm is meant to try its best to help when we don't have a vbt in program

@@ -399,7 +399,6 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 		//
 		// if we failed to parse the PRELINK XML file,
 		// then look for the kmod_info structure in each KEXT file
-		// and use use the
 		//
 		for (long machoHeaderOffset : machoHeaderOffsets) {
 			if (monitor.isCancelled()) {

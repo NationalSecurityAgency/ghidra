@@ -222,7 +222,7 @@ public abstract class TypeProgramInterface implements TPI {
 	 * {@link TypeProgramInterface}.
 	 * <p>
 	 * Note: not all values of this class get initialized by this method.
-	 * @param pdb {@link AbstractPdb} that owns this this class
+	 * @param pdb {@link AbstractPdb} that owns this class
 	 * @param typeIndexMin the IndexMin to set/use
 	 * @param typeIndexMaxExclusive one greater than the MaxIndex to set/use
 	 */

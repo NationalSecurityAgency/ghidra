@@ -181,7 +181,7 @@ public class PdbLog {
 
 	/**
 	 * Returns the {@link Writer} for logging
-	 * @return a {@link Writer} for for logging
+	 * @return a {@link Writer} for logging
 	 */
 	private static Writer getWriter() throws IOException {
 		return enabled ? getFileWriter() : getNullWriter();

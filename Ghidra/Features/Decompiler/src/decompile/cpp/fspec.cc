@@ -206,7 +206,7 @@ bool ParamEntry::containedBy(const Address &addr,int4 sz) const
   return (entryoff <= rangeoff);
 }
 
-/// If \b this a a \e join, each piece is tested for intersection.
+/// If \b this is a \e join, each piece is tested for intersection.
 /// Otherwise, \b this, considered as a single memory, is tested for intersection.
 /// \param addr is the starting address of the given memory range to test against
 /// \param sz is the number of bytes in the given memory range

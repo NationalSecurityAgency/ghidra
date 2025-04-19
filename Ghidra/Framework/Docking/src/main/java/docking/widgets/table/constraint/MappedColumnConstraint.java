@@ -36,7 +36,7 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 
 	/**
 	 * Constructs a new Mapped ColumnConstraint
-	 * @param mapper a mapper from from the column type to a mapped type.
+	 * @param mapper a mapper from the column type to a mapped type.
 	 * @param delegate the column constraint of the mapped type.
 	 */
 	public MappedColumnConstraint(ColumnTypeMapper<T, M> mapper, ColumnConstraint<M> delegate) {

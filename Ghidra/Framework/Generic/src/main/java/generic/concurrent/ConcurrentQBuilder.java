@@ -154,7 +154,7 @@ public class ConcurrentQBuilder<I, R> {
 	 * In this case, a total count of work jobs is maintained by the queue.  As items are
 	 * completed, the queue will update the monitor provided to it at construction time to reflect
 	 * the number of jobs completed as work is done.  On the other hand, some clients have
-	 * known known number of jobs to complete, but simply add work to the queue as it arrives.
+	 * no known number of jobs to complete, but simply add work to the queue as it arrives.
 	 * In that case, the client should update its monitor for progress, as the queue cannot
 	 * do so in a meaningful way.
 	 *

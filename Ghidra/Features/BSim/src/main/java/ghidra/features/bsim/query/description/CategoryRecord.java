@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * A user-defined category associated associated with an executable
+ * A user-defined category associated with an executable
  * Specified by a -type- and then the particular -category- (within the type) that
  * the executable belongs to.
  *

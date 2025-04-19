@@ -62,7 +62,7 @@ public interface VSCodeIntegrationService {
 	public void createVSCodeModuleProject(File projectDir) throws IOException;
 	
 	/**
-	 * Adds the given project directory to the the given Visual Studio Code workspace file
+	 * Adds the given project directory to the given Visual Studio Code workspace file
 	 * A new workspace will be created if it doesn't already exist
 	 * 
 	 * @param workspaceFile The location of the workspace file

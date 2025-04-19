@@ -140,7 +140,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 	 * Adds a row to the table that doesn't provide any choices. 
 	 * Instead this row just provides information.
 	 * 
-	 * @param title title the is placed at the beginning of the row
+	 * @param title title that is placed at the beginning of the row
 	 * @param info the text for each table column in the row
 	 * @param underline true indicates each info string should be underlined 
 	 * when it appears. (Underlining is done on the header row (row 0) of the table.
@@ -170,7 +170,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 	 * Adds radiobutton choices as a row of the table.
 	 * Radiobuttons allow you to select only one choice in the row.
 	 * 
-	 * @param title title the is placed at the beginning of the row
+	 * @param title title that is placed at the beginning of the row
 	 * @param choices the text for each choice in the row
 	 * @param listener listener that gets notified whenever the state of 
 	 * one of the radiobuttons in this row changes.
@@ -222,7 +222,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 	 * Adds checkbox choices as a row of the table.
 	 * Check boxes allow you to select one or more choices in the row.
 	 * 
-	 * @param title title the is placed at the beginning of the row
+	 * @param title title that is placed at the beginning of the row
 	 * @param choices the text for each choice in the row
 	 * @param listener listener that gets notified whenever the state of 
 	 * one of the checkboxes in this row changes.

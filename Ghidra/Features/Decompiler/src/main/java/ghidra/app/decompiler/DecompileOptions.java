@@ -267,7 +267,7 @@ public class DecompileOptions {
 
 	private final static String MAXWIDTH_OPTIONSTRING = "Display.Maximum characters in a code line";
 	private final static String MAXWIDTH_OPTIONDESCRIPTION =
-		"Maximum number of characters allowed per line before before line breaks are forced.";
+		"Maximum number of characters allowed per line before line breaks are forced.";
 	private final static int MAXWIDTH_OPTIONDEFAULT = 100;	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
 	private int maxwidth;
 

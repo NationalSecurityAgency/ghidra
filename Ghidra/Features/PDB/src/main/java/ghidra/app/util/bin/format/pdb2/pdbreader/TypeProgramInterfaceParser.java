@@ -33,7 +33,7 @@ public class TypeProgramInterfaceParser {
 
 	public static final int TI40_ID = 19950410;    // 0x01306b4a
 	public static final int TI41_ID = 19951122;    // 0x01306e12
-	public static final int TI42_ID = 19951204;    // 0x01360e64 not in MSFT doc: in in MFCS42.PDB
+	public static final int TI42_ID = 19951204;    // 0x01360e64 not in MSFT doc: in MFCS42.PDB
 	public static final int TI50DEP_ID = 19960307; // 0x013091f3
 	public static final int TI50_ID = 19961031;    // 0x013094c7
 	public static final int TI70_ID = 19990903;    // 0x01310977
