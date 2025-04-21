@@ -157,7 +157,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		if (!executableAction.isEnabled()) {
 			// The action is valid, but is not enabled.  At this point we know that the focused 
 			// component has no key listeners interested in this event and that the focused 
-			// component has not action bindings either.   Stop all further processing for this 
+			// component has no action bindings either.   Stop all further processing for this 
 			// event to maintain predictable behavior.
 			executableAction.reportNotEnabled(focusOwner);
 			return true;
