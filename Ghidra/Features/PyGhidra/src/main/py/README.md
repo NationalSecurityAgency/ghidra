@@ -12,7 +12,8 @@ Ghidra provides an out-of-the box integration with the PyGhidra Python library w
 installation and usage fairly straightforward. This enables the Ghidra GUI and headless Ghidra to
 run GhidraScript's written in native CPython 3, as well as interact with the Ghidra GUI through a 
 built-in REPL. To launch Ghidra in PyGhidra-mode, see Ghidra's latest
-[Installation Guide](https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/InstallationGuide.md#pyghidra-mode). 
+[Getting Started](https://github.com/NationalSecurityAgency/ghidra/blob/stable/GhidraDocs/GettingStarted.md#pyghidra-mode)
+document.
 
 It is also possible (and encouraged!) to use PyGhidra as a standalone Python library for usage 
 in reverse engineering workflows where Ghidra may be one of many components involved. The following 

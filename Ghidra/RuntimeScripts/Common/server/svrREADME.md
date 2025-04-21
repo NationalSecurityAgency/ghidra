@@ -53,20 +53,19 @@ __NOTE__: It is highly recommended that the installation files for Ghidra reside
 and that the intended Ghidra Server process owner is granted full access to the Ghidra installation 
 directory (this is frequently not the case for NFS/SMB mounted home directories). 
 
-You may also refer to the _InstallationGuide.html_ file within the _docs/_ subdirectory for general
-installation information.
+You may also refer to the _GettingStarted.html_ file within the Ghidra installation root directory
+for general installation information.
 
 ([Back to Top][top])
 
 ## Java Runtime Environment
 The installation of a suitable Java Runtime Environment must be completed before installing or
-running the Ghidra Server.  Please refer to the Ghidra Installation Guide to identify 
-a suitable version.  Since the Ghidra Server is unable to interactively identify a Java installation
-at runtime it must rely upon the setting of `JAVA_HOME`, execution search PATH or the use of 
-standard Java installation locations.  It is important to consider the service execution environment
-which may differ from the administrator who may be installing the service.  For this reason use of 
-an installed Java release may be preferable over one that is simply unpacked to an arbitrary 
-location.
+running the Ghidra Server.  Please refer to the Getting Started document to identify a suitable 
+version.  Since the Ghidra Server is unable to interactively identify a Java installation at runtime
+it must rely upon the setting of `JAVA_HOME`, execution search PATH or the use of standard Java 
+installation locations.  It is important to consider the service execution environment which may 
+differ from the administrator who may be installing the service.  For this reason use of an 
+installed Java release may be preferable over one that is simply unpacked to an arbitrary location.
 
 ([Back to Top][top])
 
@@ -731,7 +730,7 @@ Please note that the Ghidra Server does not currently support Certificate Revoca
    [Linux/macOS](#uninstall-service-must-have-admin-privilege)).
     
 3. Unzip the new Ghidra distribution to a new installation directory (general unpacking and 
-   installation guidelines may be found in _ghidra_x.x/docs/InstallationGuide.html_).
+   installation guidelines may be found in _ghidra_x.x/GettingStarted.html_).
 
 4. Copy the old _repositories_ directory to the new Ghidra Server installation directory.
 

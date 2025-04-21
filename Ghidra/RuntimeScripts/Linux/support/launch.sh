@@ -140,7 +140,7 @@ fi
 if [ "${JAVA_CMD}" == "" ]; then
 	echo
 	echo "ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME."
-	echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+	echo "Please refer to the Getting Started document's Troubleshooting section."
 	exit 1
 fi
 
@@ -151,7 +151,7 @@ if [ ! $? -eq 0 ]; then
 	if [ ! -t 0 ]; then
 		echo
 		echo "ERROR: Unable to prompt user for JDK path, no TTY detected."
-		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "Please refer to the Getting Started document's Troubleshooting section."
 		exit 1
 	fi
 	
@@ -163,7 +163,7 @@ if [ ! $? -eq 0 ]; then
 	if [ ! $? -eq 0 ]; then
 		echo
 		echo "ERROR: Failed to find a supported JDK."
-		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "Please refer to the Getting Started document's Troubleshooting section."
 		exit 1
 	fi
 fi
