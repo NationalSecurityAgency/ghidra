@@ -37,8 +37,8 @@ To install an official pre-built multi-platform Ghidra release:
   - or launch [PyGhidra][pyghidra]: `./support/pyGhidraRun` (`support\pyGhidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
-please refer to the [Installation Guide][installationguide] which can be found in a Ghidra release
-at `docs/InstallationGuide.html`. 
+please refer to the [Getting Started][gettingstarted] document which can be found at the root of a 
+Ghidra installation directory. 
 
 ## Build
 To create the latest development build for your platform from this source repository:
@@ -128,7 +128,7 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
-[installationguide]: GhidraDocs/InstallationGuide.md
+[gettingstarted]: GhidraDocs/GettingStarted.md
 [known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
