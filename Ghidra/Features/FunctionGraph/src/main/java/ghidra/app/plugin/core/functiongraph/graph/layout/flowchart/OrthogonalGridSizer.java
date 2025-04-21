@@ -48,13 +48,13 @@ import ghidra.graph.viewer.layout.*;
  * vertices. Since the height of a vertex is assigned completely to one row, that row's height
  * is simply the maximum height of all the vertices in that row, plus any row padding.
  * <P>
- * Column sizing is more complicated. The width of any column is going to be the the max of either
+ * Column sizing is more complicated. The width of any column is going to be the max of either
  * 1) vertices that half extend from the left + the thickness of edges that extend the right, OR 
  * 2) vertices that half extend from the right + the thickness of edges the extend from the left.
  * Also, column padding is applied differently. For columns, padding is not just added to the 
  * column width like in rows. Instead, it acts as a minimum "edge thickness". In other words if the
  * edge thickness is less than the padding, the edge thickness doesn't make the gaps bigger. Only if
- * the edge thickness is greater the the column padding, then it determines the gap and the 
+ * the edge thickness is greater than the column padding, then it determines the gap and the 
  * column padding contributes nothing.
  *
  * @param <V> the vertex type

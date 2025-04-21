@@ -119,7 +119,7 @@ public interface Composite extends DataType {
 	/**
 	 * Adds a new bitfield to the end of this composite.  This method is intended
 	 * to be used with packed structures/unions only where the bitfield will be
-	 * appropriately packed.  The minimum storage storage byte size will be applied.
+	 * appropriately packed.  The minimum storage byte size will be applied.
 	 * It will not provide useful results for composites with packing disabled.
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the bitfield size in bits

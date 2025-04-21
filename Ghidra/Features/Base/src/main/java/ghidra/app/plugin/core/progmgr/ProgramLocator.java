@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for the current version of a Program.
+	 * Creates a {@link DomainFile}-based ProgramLocator for the current version of a Program.
 	 * @param domainFile the DomainFile for a program
 	 */
 	public ProgramLocator(DomainFile domainFile) {
@@ -64,7 +64,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for a specific Program version.
+	 * Creates a {@link DomainFile}-based ProgramLocator for a specific Program version.
 	 * @param domainFile the DomainFile for a program
 	 * @param version the specific version of the program
 	 */

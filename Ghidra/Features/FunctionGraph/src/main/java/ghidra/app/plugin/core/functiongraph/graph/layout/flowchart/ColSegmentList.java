@@ -63,7 +63,7 @@ public class ColSegmentList<E> {
 	}
 
 	/**
-	 * Checks if the the range of y values in a given column segment list intersects the
+	 * Checks if the range of y values in a given column segment list intersects the
 	 * range of y values in this column segment.
 	 * @param other the column segment list to compare
 	 * @return true if they intersect ranges.

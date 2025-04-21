@@ -439,7 +439,7 @@ public class PdbAddressManager {
 	}
 
 	/**
-	 * Write the mapped address for a query address, where where the mapping is
+	 * Write the mapped address for a query address, where the mapping is
 	 *  derived by using a the address of a PDB symbol as the key and finding the address of
 	 *  a symbol in the program of the same "unique" name. This is accomplished using public
 	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.

@@ -410,7 +410,7 @@ public class ProgramDiff {
 	 * program1 and program2.
 	 * @return the initialized memory addresses in common between
 	 * program1 and program2.
-	 * The addresses in the this set are derived from program1.
+	 * The addresses in this set are derived from program1.
 	 */
 	public AddressSet getInitializedInCommon() {
 		return pgmMemComp.getInitializedAddressesInCommon();

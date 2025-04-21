@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public interface ProgramUserData extends UserData {
 
 	/**
 	 * Get the Options for the given optionsName
-	 * @param optionsName the name of the options options to retrieve
+	 * @param optionsName the name of the options to retrieve
 	 * @return The options for the given name
 	 */
 	public Options getOptions(String optionsName);

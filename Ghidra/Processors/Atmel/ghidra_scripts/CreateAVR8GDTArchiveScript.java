@@ -207,7 +207,7 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 					continue;
 				}
 
-				// look at string and see if if the definition of an SFR, register
+				// look at the string and see if it is the definition of an SFR
 				String PTR_PREFIX_16 = "(*(volatile uint16_t *)";
 				String PTR_PREFIX_8 = "(*(volatile uint8_t *)";
 

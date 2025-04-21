@@ -498,7 +498,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Find the fuction's variable whose storage contains the given stack offset
+	 * Find the function's variable whose storage contains the given stack offset
 	 * 
 	 * @param function the function
 	 * @param stackAddress the stack offset

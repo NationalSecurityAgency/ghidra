@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	 * Constructs a new Array dataType.  The specified datatype's {@link DataTypeManager} will 
 	 * be used for its data organization.
 	 * @param dataType the dataType of the elements in the array. {@link FactoryDataType} and
-	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not not permitted.
+	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not permitted.
 	 * @param numElements the number of elements in the array (0 is permitted).
 	 * @param elementLength the length of an individual element in the array.  This value
 	 * is only used for {@link Dynamic} dataType where {@link Dynamic#canSpecifyLength()} 
@@ -67,7 +67,7 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	/**
 	 * Constructs a new Array dataType.
 	 * @param dataType the dataType of the elements in the array. {@link FactoryDataType} and
-	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not not permitted.
+	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not permitted.
 	 * @param numElements the number of elements in the array (0 is permitted).
 	 * @param elementLength the length of an individual element in the array.  This value
 	 * is only used for {@link Dynamic} dataType where {@link Dynamic#canSpecifyLength()} 

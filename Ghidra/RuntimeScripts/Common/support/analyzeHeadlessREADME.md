@@ -569,7 +569,7 @@ analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScri
 ```
 ----------------------------------------------------------------------------------------------------
 #### Example 17
-Import and run scripts that take their own own arguments.
+Import and run scripts that take their own arguments.
 ```bash
 analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScript Script.java arg1 arg2 arg3 -preScript AnotherScript.java "arg1 with spaces" arg2
 ```
@@ -647,7 +647,7 @@ methods can be run in both modes:
 
 _Further details for each specific `askXxx()` method can be found in the method's JavaDoc._
 
-When running headlessly, the `askXxx()` methods allow users to to "pre-set" or "pass in" one or more
+When running headlessly, the `askXxx()` methods allow users to "pre-set" or "pass in" one or more
 values for use in scripts. Use the appropriate method to pass in values of certain types (i.e., 
 file, directory, int, long).
 
