@@ -139,6 +139,14 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
+		// Let client programming have the first chance to process the event.  Any key listeners and 
+		// actions registered on the focused component are allowed to process the event before our
+		// action system.  This allows clients to perform custom event processing without the action
+		// system interfering.
+		if (processComponentKeyListeners(event) || processInputAndActionMaps(event)) {
+			return true;
+		}
+
 		if (!executableAction.isValid()) {
 			// The action is not currently valid for the given focus owner.  Let all key strokes go
 			// to Java when we have no valid context.  This allows keys like Escape to work on Java
@@ -147,10 +155,10 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		}
 
 		if (!executableAction.isEnabled()) {
-			// The action is valid, but is not enabled.  In this case, we do not want Java to get
-			// the event.  Instead, let the user know that they cannot perform the requested action.
-			// We keep the action from Java in this case to keep the event processing consistent 
-			// whether or not the action is enabled.
+			// The action is valid, but is not enabled.  At this point we know that the focused 
+			// component has no key listeners interested in this event and that the focused 
+			// component has not action bindings either.   Stop all further processing for this 
+			// event to maintain predictable behavior.
 			executableAction.reportNotEnabled(focusOwner);
 			return true;
 		}
@@ -160,8 +168,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		// Finally, if the exception statement is reached, then someone has added a new level
 		// of precedence that this algorithm has not taken into account!
 		// @formatter:off
-		return processKeyListenerPrecedence(executableAction, event) ||
-			   processComponentActionMapPrecedence(executableAction,  event) ||
+		return processActionAtPrecedence(KeyListenerLevel, executableAction, event) ||
+			   processActionAtPrecedence(ActionMapLevel, executableAction, event) ||
 			   processActionAtPrecedence(DefaultLevel, executableAction, event) ||
 			   throwAssertException();
 		// @formatter:on
@@ -324,34 +332,6 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		return true;
 	}
 
-	private boolean processKeyListenerPrecedence(ExecutableAction action, KeyEvent e) {
-		if (processActionAtPrecedence(KeyBindingPrecedence.KeyListenerLevel,
-			action, e)) {
-			return true;
-		}
-
-		// O.K., there is an action for the KeyStroke, but before we process it, we have to
-		// check the proper ordering of key events (see method JavaDoc)
-		if (processComponentKeyListeners(e)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean processComponentActionMapPrecedence(ExecutableAction action, KeyEvent event) {
-		if (processActionAtPrecedence(ActionMapLevel, action, event)) {
-			return true;
-		}
-
-		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
-		if (processInputAndActionMaps(event, keyStroke)) {
-			return true;
-		}
-
-		return false;
-	}
-
 	private boolean processActionAtPrecedence(KeyBindingPrecedence keyBindingPrecedence,
 			ExecutableAction action, KeyEvent event) {
 
@@ -398,9 +378,11 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	// note: this code is taken from the JComponent method:
 	// protected boolean processKeyBinding(KeyStroke, KeyEvent, int, boolean )
 	//
-	// returns true if there is a focused component that has an action for the given keystroke
+	// returns true if there is a focused component that has an action for the given event
 	// and it processes that action.
-	private boolean processInputAndActionMaps(KeyEvent keyEvent, KeyStroke keyStroke) {
+	private boolean processInputAndActionMaps(KeyEvent event) {
+
+		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 		Component focusOwner = focusProvider.getFocusOwner();
 		if (focusOwner == null || !focusOwner.isEnabled() || !(focusOwner instanceof JComponent)) {
 			return false;
@@ -409,15 +391,15 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		JComponent jComponent = (JComponent) focusOwner;
 		Action action = getJavaActionForComponent(jComponent, keyStroke);
 		if (action != null) {
-			return SwingUtilities.notifyAction(action, keyStroke, keyEvent, keyEvent.getSource(),
-				keyEvent.getModifiersEx());
+			Object source = event.getSource();
+			int modifiers = event.getModifiersEx();
+			return SwingUtilities.notifyAction(action, keyStroke, event, source, modifiers);
 		}
 		return false;
 	}
 
 	private Action getJavaActionForComponent(JComponent jComponent, KeyStroke keyStroke) {
-		// first see if there is a Java key binding for when the component is in the focused
-		// window...
+		// first see if there is a Java key binding for when the component is focused...
 		Action action = KeyBindingUtils.getAction(jComponent, keyStroke, JComponent.WHEN_FOCUSED);
 		if (action != null) {
 			return action;
