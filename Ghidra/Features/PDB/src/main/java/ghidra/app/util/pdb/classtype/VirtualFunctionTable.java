@@ -195,7 +195,7 @@ public abstract class VirtualFunctionTable implements VFTable {
 	 * @param categoryPath category path for the table
 	 * @return the structure of the vftable
 	 */
-	public Structure getLayout(DataTypeManager dtm, CategoryPath categoryPath) {
+	public Structure createDataType(DataTypeManager dtm, CategoryPath categoryPath) {
 		if (!isBuilt) { // what if we want to rebuild... what should we do?
 			build(dtm, categoryPath);
 		}

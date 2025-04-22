@@ -36,17 +36,19 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
-import ghidra.app.util.pdb.classtype.ClassTypeManager;
-import ghidra.app.util.pdb.classtype.MsftVxtManager;
+import ghidra.app.util.pdb.classtype.*;
 import ghidra.framework.options.Options;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
@@ -371,7 +373,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			case ALL:
 				processTypes();
 				processSymbols();
-				vxtManager.doTableLayouts(dataTypeManager);
+				vxtManager.createTables(dataTypeManager, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				break;
 			default:
 				throw new PdbException("PDB: Invalid Application Control: " +

@@ -221,7 +221,7 @@ public abstract class VirtualBaseTable implements VBTable {
 	 * @param categoryPath category path for the table
 	 * @return the structure of the vbtable
 	 */
-	public Structure getLayout(DataTypeManager dtm, CategoryPath categoryPath) {
+	public Structure createDataType(DataTypeManager dtm, CategoryPath categoryPath) {
 		if (!isBuilt) { // what if we want to rebuild... what should we do?
 			build(dtm, categoryPath);
 		}
