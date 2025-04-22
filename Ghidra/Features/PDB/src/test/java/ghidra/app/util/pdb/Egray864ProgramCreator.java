@@ -7462,7 +7462,7 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			/T/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_undefined *   8   P::pvf   ""
+			   0   _func___thiscall_undefined *   8   T::pvf   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -7476,7 +7476,7 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			/T/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_undefined *   8   P::pvf   ""
+			   0   _func___thiscall_undefined *   8   T::pvf   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -7691,7 +7691,7 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			/U/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_undefined *   8   P::pvf   ""
+			   0   _func___thiscall_undefined *   8   T::pvf   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
@@ -7705,7 +7705,7 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			/U/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_undefined *   8   P::pvf   ""
+			   0   _func___thiscall_undefined *   8   T::pvf   ""
 			}
 			Length: 8 Alignment: 8""";
 		//@formatter:on
