@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,10 @@ import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramLocation;
 
 /**
- * Symbols that represent "classes"
+ * Symbols that represent classes
  */
-
 public class ClassSymbol extends SymbolDB {
 
 	private GhidraClassDB ghidraClass;
@@ -42,17 +40,11 @@ public class ClassSymbol extends SymbolDB {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getSymbolType()
-	 */
 	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.CLASS;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		lock.acquire();
@@ -68,9 +60,6 @@ public class ClassSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return true;
@@ -82,17 +71,6 @@ public class ClassSymbol extends SymbolDB {
 		return parentSymbol != null ? parentSymbol.isExternal() : false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
-	@Override
-	public ProgramLocation getProgramLocation() {
-		return null;
-	}
-
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&

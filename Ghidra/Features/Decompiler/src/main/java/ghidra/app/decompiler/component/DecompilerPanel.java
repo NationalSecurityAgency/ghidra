@@ -41,13 +41,14 @@ import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
+import ghidra.app.decompiler.location.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
 import ghidra.app.util.viewer.util.ScrollpaneAlignedHorizontalLayout;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
@@ -979,17 +980,103 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (token == null) {
 			return null;
 		}
+
 		Address address = DecompilerUtils.getClosestAddress(getProgram(), token);
 		if (address == null) {
 			address = DecompilerUtils.findAddressBefore(layoutController.getFields(), token);
 		}
+
+		Function function = decompileData.getFunction();
 		if (address == null) {
-			address = decompileData.getFunction().getEntryPoint();
+			address = function.getEntryPoint();
 		}
 
-		return new DecompilerLocation(decompileData.getProgram(), address,
-			decompileData.getFunction().getEntryPoint(), decompileData.getDecompileResults(), token,
-			location.getIndex().intValue(), location.col);
+		Address entryPoint = function.getEntryPoint();
+		DecompileResults results = decompileData.getDecompileResults();
+		int lineNumber = location.getIndex().intValue();
+		int charPos = location.col;
+		DecompilerLocationInfo info =
+			new DecompilerLocationInfo(entryPoint, results, token, lineNumber, charPos);
+		Program program = decompileData.getProgram();
+		ProgramLocation signatureLocation = createFunctionSignatureLocation(token, address, info);
+		if (signatureLocation != null) {
+			return signatureLocation;
+		}
+
+		return new DefaultDecompilerLocation(program, address, info);
+	}
+
+	private ProgramLocation createFunctionSignatureLocation(ClangToken token, Address address,
+			DecompilerLocationInfo info) {
+
+		Function function = decompileData.getFunction();
+		Address entryPoint = function.getEntryPoint();
+		if (!entryPoint.equals(address)) {
+			// Another address implies that we are not on the function signature
+			return null;
+		}
+
+		if (token instanceof ClangFuncNameToken ft) {
+			// if the token address is the entry point of this function, then create a location that
+			// will place the cursor on the function signature in the listing
+			Program program = decompileData.getProgram();
+			String functionName = ft.getText();
+			return new FunctionNameDecompilerLocation(program, entryPoint, functionName, info);
+		}
+		else if (token instanceof ClangVariableToken cvt) {
+			return createVariableDeclarationLocation(cvt, address, info);
+		}
+		return null;
+	}
+
+	private ProgramLocation createVariableDeclarationLocation(ClangVariableToken cvt,
+			Address address, DecompilerLocationInfo info) {
+
+		Function function = decompileData.getFunction();
+		Address entryPoint = function.getEntryPoint();
+		Program program = decompileData.getProgram();
+		Variable variable = getVariable(cvt);
+		if (variable != null) {
+			return new VariableDecompilerLocation(program, entryPoint, variable, info);
+		}
+
+		HighVariable highVar = cvt.getHighVariable();
+		if (highVar == null) {
+			// decomp param that is not in the listing; put on signature
+			return new FunctionNameDecompilerLocation(program, entryPoint, cvt.getText(), info);
+		}
+
+		HighSymbol highSymbol = highVar.getSymbol();
+		if (highSymbol.isParameter()) {
+			// decomp param that is not in the listing; put on signature
+			return new FunctionNameDecompilerLocation(program, entryPoint, cvt.getText(), info);
+		}
+
+		return null;
+	}
+
+	private Variable getVariable(ClangVariableToken token) {
+
+		HighVariable highVar = token.getHighVariable();
+		if (highVar == null) {
+			return null;
+		}
+		HighSymbol highSymbol = highVar.getSymbol();
+		Variable variable = HighFunctionDBUtil.getFunctionVariable(highSymbol);
+		if (variable != null) {
+			return variable;
+		}
+
+		Function function = decompileData.getFunction();
+		Symbol symbol = highSymbol.getSymbol();
+		Variable[] locals = function.getLocalVariables();
+		for (Variable local : locals) {
+			Symbol localSymbol = local.getSymbol();
+			if (symbol == localSymbol) {
+				return local;
+			}
+		}
+		return null;
 	}
 
 	public void setSearchResults(SearchLocation searchLocation) {

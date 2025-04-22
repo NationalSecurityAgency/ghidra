@@ -25,18 +25,16 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 
 /**
- * The <CODE>LableFieldLocation</CODE> class contains specific location information
- * within the LABEL field of a CodeUnitLocation object.
+ * This class contains specific location information within the label field of a 
+ * {@link CodeUnitLocation}
  */
 public class LabelFieldLocation extends CodeUnitLocation {
 	private SymbolPath symbolPath;
 
 	/**
-	 * Default constructor needed for restoring
-	 * a label field location from XML
+	 * Default constructor needed for restoring a label field location from XML
 	 */
 	public LabelFieldLocation() {
-
 	}
 
 	/**
@@ -45,8 +43,9 @@ public class LabelFieldLocation extends CodeUnitLocation {
 	 * @param program the program of the location
 	 * @param addr address of the location; should not be null
 	 * @param componentPath array of indexes for each nested data component; the
-	 * index is the data component's index within its parent; may be null
+	 * index is the data component's index within its parent; may be null.
 	 * @param label the label String at this location.
+	 * @param namespace the namespace; may be null.
 	 * @param row the row in list of labels as displayed by the label field.  Only used for
 	 * program location comparison purposes.
 	 * @param charOffset the column position within the label string for this location.
@@ -113,9 +112,6 @@ public class LabelFieldLocation extends CodeUnitLocation {
 		}
 	}
 
-	/**
-	 * Return the label string at this location.
-	 */
 	public String getName() {
 		return symbolPath.getName();
 	}
@@ -143,9 +139,6 @@ public class LabelFieldLocation extends CodeUnitLocation {
 		return symbolPath;
 	}
 
-	/**
-	 * Returns a String representation of this location.
-	 */
 	@Override
 	public String toString() {
 		return super.toString() + ", Label = " + symbolPath.getPath();
