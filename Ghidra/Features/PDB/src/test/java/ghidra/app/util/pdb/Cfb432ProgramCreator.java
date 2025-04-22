@@ -1084,6 +1084,29 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructA() {
+		String expected =
+		//@formatter:off
+			"""
+			/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   ANS::A   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2"
+			}
+			Length: 28 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructA() {
 		return convertCommentsToSpeculative(getExpectedStructA());
 	}
@@ -1392,6 +1415,29 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructB() {
+		String expected =
+		//@formatter:off
+			"""
+			/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   BNS::B   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: B1NS::B1; B2NS::B2"
+			}
+			Length: 28 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructB() {
 		return convertCommentsToSpeculative(getExpectedStructB());
 	}
@@ -1592,6 +1638,29 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   b2   ""
 			}
 			Length: 8 Alignment: 4
+			/CNS::C/!internal/CNS::C
+			pack()
+			Structure CNS::C {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   c   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructC() {
+		String expected =
+		//@formatter:off
+			"""
+			/CNS::C
+			pack()
+			Structure CNS::C {
+			   0   CNS::C   12      "Self Base"
+			   12   char[32]   32      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 44 Alignment: 4
 			/CNS::C/!internal/CNS::C
 			pack()
 			Structure CNS::C {
@@ -1878,6 +1947,54 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   b2   ""
 			}
 			Length: 8 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/CNS::C/!internal/CNS::C
+			pack()
+			Structure CNS::C {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   c   ""
+			}
+			Length: 12 Alignment: 4
+			/DNS::D/!internal/DNS::D
+			pack()
+			Structure DNS::D {
+			   0   CNS::C   12      "Base"
+			   12   ANS::A   12      "Base"
+			   24   BNS::B   12      "Base"
+			   36   int   4   d   ""
+			}
+			Length: 40 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructD() {
+		String expected =
+		//@formatter:off
+			"""
+			/DNS::D
+			pack()
+			Structure DNS::D {
+			   0   DNS::D   40      "Self Base"
+			   40   char[32]   32      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 72 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
 			/BNS::B/!internal/BNS::B
 			pack()
 			Structure BNS::B {
@@ -2254,6 +2371,36 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructE() {
+		String expected =
+		//@formatter:off
+			"""
+			/ENS::E
+			pack()
+			Structure ENS::E {
+			   0   ENS::E   16      "Self Base"
+			   16   char[44]   44      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 60 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
+			/ENS::E/!internal/ENS::E
+			pack()
+			Structure ENS::E {
+			   0   ANS::A   12      "Base"
+			   12   int   4   e   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructE() {
 		return convertCommentsToSpeculative(getExpectedStructE());
 	}
@@ -2467,6 +2614,28 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructF() {
+		String expected =
+		//@formatter:off
+			"""
+			/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   FNS::F   8      "Self Base"
+			   8   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 16 Alignment: 4
+			/FNS::F/!internal/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   f   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructF() {
 		return convertCommentsToSpeculative(getExpectedStructF());
 	}
@@ -2583,6 +2752,35 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructG() {
+		String expected =
+		//@formatter:off
+			"""
+			/GNS::G
+			pack()
+			Structure GNS::G {
+			   0   GNS::G   12      "Self Base"
+			   12   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 20 Alignment: 4
+			/FNS::F/!internal/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   f   ""
+			}
+			Length: 8 Alignment: 4
+			/GNS::G/!internal/GNS::G
+			pack()
+			Structure GNS::G {
+			   0   FNS::F   8      "Base"
+			   8   int   4   g   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructG() {
 		return convertCommentsToSpeculative(getExpectedStructG());
 	}
@@ -2681,6 +2879,35 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   a1   ""
 			}
 			Length: 8 Alignment: 4
+			/FNS::F/!internal/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   f   ""
+			}
+			Length: 8 Alignment: 4
+			/HNS::H/!internal/HNS::H
+			pack()
+			Structure HNS::H {
+			   0   FNS::F   8      "Base"
+			   8   int   4   h   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructH() {
+		String expected =
+		//@formatter:off
+			"""
+			/HNS::H
+			pack()
+			Structure HNS::H {
+			   0   HNS::H   12      "Self Base"
+			   12   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 20 Alignment: 4
 			/FNS::F/!internal/FNS::F
 			pack()
 			Structure FNS::F {
@@ -2844,6 +3071,50 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructI() {
+		String expected =
+		//@formatter:off
+			"""
+			/INS::I
+			pack()
+			Structure INS::I {
+			   0   INS::I   28      "Self Base"
+			   28   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 36 Alignment: 4
+			/FNS::F/!internal/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   f   ""
+			}
+			Length: 8 Alignment: 4
+			/GNS::G/!internal/GNS::G
+			pack()
+			Structure GNS::G {
+			   0   FNS::F   8      "Base"
+			   8   int   4   g   ""
+			}
+			Length: 12 Alignment: 4
+			/HNS::H/!internal/HNS::H
+			pack()
+			Structure HNS::H {
+			   0   FNS::F   8      "Base"
+			   8   int   4   h   ""
+			}
+			Length: 12 Alignment: 4
+			/INS::I/!internal/INS::I
+			pack()
+			Structure INS::I {
+			   0   GNS::G   12      "Base"
+			   12   HNS::H   12      "Base"
+			   24   int   4   i   ""
+			}
+			Length: 28 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructI() {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
@@ -2955,6 +3226,28 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   a1   ""
 			}
 			Length: 8 Alignment: 4
+			/JNS::J/!internal/JNS::J
+			pack()
+			Structure JNS::J {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   j   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructJ() {
+		String expected =
+		//@formatter:off
+			"""
+			/JNS::J
+			pack()
+			Structure JNS::J {
+			   0   JNS::J   8      "Self Base"
+			   8   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 16 Alignment: 4
 			/JNS::J/!internal/JNS::J
 			pack()
 			Structure JNS::J {
@@ -3082,6 +3375,35 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructK() {
+		String expected =
+		//@formatter:off
+			"""
+			/KNS::K
+			pack()
+			Structure KNS::K {
+			   0   KNS::K   12      "Self Base"
+			   12   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 20 Alignment: 4
+			/JNS::J/!internal/JNS::J
+			pack()
+			Structure JNS::J {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   j   ""
+			}
+			Length: 8 Alignment: 4
+			/KNS::K/!internal/KNS::K
+			pack()
+			Structure KNS::K {
+			   0   JNS::J   8      "Base"
+			   8   int   4   k   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructK() {
 		return convertCommentsToSpeculative(getExpectedStructK());
 	}
@@ -3183,6 +3505,42 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   a1   ""
 			}
 			Length: 8 Alignment: 4
+			/JNS::J/!internal/JNS::J
+			pack()
+			Structure JNS::J {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   j   ""
+			}
+			Length: 8 Alignment: 4
+			/KNS::K/!internal/KNS::K
+			pack()
+			Structure KNS::K {
+			   0   JNS::J   8      "Base"
+			   8   int   4   k   ""
+			}
+			Length: 12 Alignment: 4
+			/LNS::L/!internal/LNS::L
+			pack()
+			Structure LNS::L {
+			   0   KNS::K   12      "Base"
+			   12   int   4   l   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructL() {
+		String expected =
+		//@formatter:off
+			"""
+			/LNS::L
+			pack()
+			Structure LNS::L {
+			   0   LNS::L   16      "Self Base"
+			   16   char[8]   8      "Filler for 1 Unplaceable Virtual Base: A1NS::A1"
+			}
+			Length: 24 Alignment: 4
 			/JNS::J/!internal/JNS::J
 			pack()
 			Structure JNS::J {
@@ -3752,6 +4110,121 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   4   int   4   n2   ""
 			}
 			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructM() {
+		String expected =
+		//@formatter:off
+			"""
+			/MNS::M
+			pack()
+			Structure MNS::M {
+			   0   MNS::M   104      "Self Base"
+			   104   char[60]   60      "Filler for 7 Unplaceable Virtual Bases: N1NS::N1; N2NS::N2; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2; BNS::B"
+			}
+			Length: 164 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/CNS::C/!internal/CNS::C
+			pack()
+			Structure CNS::C {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   c   ""
+			}
+			Length: 12 Alignment: 4
+			/DNS::D/!internal/DNS::D
+			pack()
+			Structure DNS::D {
+			   0   CNS::C   12      "Base"
+			   12   ANS::A   12      "Base"
+			   24   BNS::B   12      "Base"
+			   36   int   4   d   ""
+			}
+			Length: 40 Alignment: 4
+			/ENS::E/!internal/ENS::E
+			pack()
+			Structure ENS::E {
+			   0   ANS::A   12      "Base"
+			   12   int   4   e   ""
+			}
+			Length: 16 Alignment: 4
+			/FNS::F/!internal/FNS::F
+			pack()
+			Structure FNS::F {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   f   ""
+			}
+			Length: 8 Alignment: 4
+			/GNS::G/!internal/GNS::G
+			pack()
+			Structure GNS::G {
+			   0   FNS::F   8      "Base"
+			   8   int   4   g   ""
+			}
+			Length: 12 Alignment: 4
+			/HNS::H/!internal/HNS::H
+			pack()
+			Structure HNS::H {
+			   0   FNS::F   8      "Base"
+			   8   int   4   h   ""
+			}
+			Length: 12 Alignment: 4
+			/INS::I/!internal/INS::I
+			pack()
+			Structure INS::I {
+			   0   GNS::G   12      "Base"
+			   12   HNS::H   12      "Base"
+			   24   int   4   i   ""
+			}
+			Length: 28 Alignment: 4
+			/JNS::J/!internal/JNS::J
+			pack()
+			Structure JNS::J {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   j   ""
+			}
+			Length: 8 Alignment: 4
+			/KNS::K/!internal/KNS::K
+			pack()
+			Structure KNS::K {
+			   0   JNS::J   8      "Base"
+			   8   int   4   k   ""
+			}
+			Length: 12 Alignment: 4
+			/LNS::L/!internal/LNS::L
+			pack()
+			Structure LNS::L {
+			   0   KNS::K   12      "Base"
+			   12   int   4   l   ""
+			}
+			Length: 16 Alignment: 4
+			/MNS::M/!internal/MNS::M
+			pack()
+			Structure MNS::M {
+			   0   ENS::E   16      "Base"
+			   16   DNS::D   40      "Base"
+			   56   INS::I   28      "Base"
+			   84   LNS::L   16      "Base"
+			   100   int   4   m   ""
+			}
+			Length: 104 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -4595,6 +5068,45 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructO1() {
+		String expected =
+		//@formatter:off
+			"""
+			/O1NS::O1
+			pack()
+			Structure O1NS::O1 {
+			   0   O1NS::O1   28      "Self Base"
+			   28   char[32]   32      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 60 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/O1NS::O1/!internal/O1NS::O1
+			pack()
+			Structure O1NS::O1 {
+			   0   ANS::A   12      "Base"
+			   12   BNS::B   12      "Base"
+			   24   int   4   o1   ""
+			}
+			Length: 28 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructO1() {
 		return convertCommentsToSpeculative(getExpectedStructO1());
 	}
@@ -4899,6 +5411,36 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   0   pointer   4   {vfptr}   ""
 			   4   pointer   4   {vbptr}   ""
 			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/O2NS::O2/!internal/O2NS::O2
+			pack()
+			Structure O2NS::O2 {
+			   0   ANS::A   12      "Base"
+			   12   int   4   o2   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructO2() {
+		String expected =
+		//@formatter:off
+			"""
+			/O2NS::O2
+			pack()
+			Structure O2NS::O2 {
+			   0   O2NS::O2   16      "Self Base"
+			   16   char[44]   44      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 60 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
 			}
 			Length: 12 Alignment: 4
 			/O2NS::O2/!internal/O2NS::O2
@@ -5228,6 +5770,45 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructO3() {
+		String expected =
+		//@formatter:off
+			"""
+			/O3NS::O3
+			pack()
+			Structure O3NS::O3 {
+			   0   O3NS::O3   28      "Self Base"
+			   28   char[32]   32      "Filler for 4 Unplaceable Virtual Bases: A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 60 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/O3NS::O3/!internal/O3NS::O3
+			pack()
+			Structure O3NS::O3 {
+			   0   ANS::A   12      "Base"
+			   12   BNS::B   12      "Base"
+			   24   int   4   o3   ""
+			}
+			Length: 28 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructO3() {
 		return convertCommentsToSpeculative(getExpectedStructO3());
 	}
@@ -5532,6 +6113,36 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 			   0   pointer   4   {vfptr}   ""
 			   4   pointer   4   {vbptr}   ""
 			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/O4NS::O4/!internal/O4NS::O4
+			pack()
+			Structure O4NS::O4 {
+			   0   ANS::A   12      "Base"
+			   12   int   4   o4   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructO4() {
+		String expected =
+		//@formatter:off
+			"""
+			/O4NS::O4
+			pack()
+			Structure O4NS::O4 {
+			   0   O4NS::O4   16      "Self Base"
+			   16   char[44]   44      "Filler for 5 Unplaceable Virtual Bases: BNS::B; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2"
+			}
+			Length: 60 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
 			}
 			Length: 12 Alignment: 4
 			/O4NS::O4/!internal/O4NS::O4
@@ -6001,6 +6612,60 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructO() {
+		String expected =
+		//@formatter:off
+			"""
+			/ONS::O
+			pack()
+			Structure ONS::O {
+			   0   ONS::O   48      "Self Base"
+			   48   char[88]   88      "Filler for 7 Unplaceable Virtual Bases: O3NS::O3; O4NS::O4; A1NS::A1; A2NS::A2; B1NS::B1; B2NS::B2; BNS::B"
+			}
+			Length: 136 Alignment: 4
+			/ANS::A/!internal/ANS::A
+			pack()
+			Structure ANS::A {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   a   ""
+			}
+			Length: 12 Alignment: 4
+			/BNS::B/!internal/BNS::B
+			pack()
+			Structure BNS::B {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   b   ""
+			}
+			Length: 12 Alignment: 4
+			/O1NS::O1/!internal/O1NS::O1
+			pack()
+			Structure O1NS::O1 {
+			   0   ANS::A   12      "Base"
+			   12   BNS::B   12      "Base"
+			   24   int   4   o1   ""
+			}
+			Length: 28 Alignment: 4
+			/O2NS::O2/!internal/O2NS::O2
+			pack()
+			Structure O2NS::O2 {
+			   0   ANS::A   12      "Base"
+			   12   int   4   o2   ""
+			}
+			Length: 16 Alignment: 4
+			/ONS::O/!internal/ONS::O
+			pack()
+			Structure ONS::O {
+			   0   O1NS::O1   28      "Base"
+			   28   O2NS::O2   16      "Base"
+			   44   int   4   o   ""
+			}
+			Length: 48 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructO() {
 		return convertCommentsToSpeculative(getExpectedStructO());
 	}
@@ -6394,6 +7059,29 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 		expectedStructs.put(O, getExpectedStructO());
 	}
 
+	private static final Map<ClassID, String> fillerStructs = new LinkedHashMap<>();
+	static {
+		fillerStructs.putAll(expectedStructs);
+		fillerStructs.put(A, getFillerStructA());
+		fillerStructs.put(B, getFillerStructB());
+		fillerStructs.put(C, getFillerStructC());
+		fillerStructs.put(D, getFillerStructD());
+		fillerStructs.put(E, getFillerStructE());
+		fillerStructs.put(F, getFillerStructF());
+		fillerStructs.put(G, getFillerStructG());
+		fillerStructs.put(H, getFillerStructH());
+		fillerStructs.put(I, getFillerStructI());
+		fillerStructs.put(J, getFillerStructJ());
+		fillerStructs.put(K, getFillerStructK());
+		fillerStructs.put(L, getFillerStructL());
+		fillerStructs.put(M, getFillerStructM());
+		fillerStructs.put(O1, getFillerStructO1());
+		fillerStructs.put(O2, getFillerStructO2());
+		fillerStructs.put(O3, getFillerStructO3());
+		fillerStructs.put(O4, getFillerStructO4());
+		fillerStructs.put(O, getFillerStructO());
+	}
+
 	private static final Map<ClassID, String> speculatedStructs = new LinkedHashMap<>();
 	static {
 		speculatedStructs.put(A1, getSpeculatedStructA1());
@@ -6511,6 +7199,10 @@ public class Cfb432ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, String> getExpectedStructs() {
 		return expectedStructs;
+	}
+
+	public Map<ClassID, String> getFillerStructs() {
+		return fillerStructs;
 	}
 
 	public Map<ClassID, String> getSpeculatedStructs() {
