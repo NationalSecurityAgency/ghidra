@@ -57,6 +57,7 @@ public class CppCompositeType {
 	private Composite composite;
 	private Composite selfBaseType;
 
+	private Map<String, String> vxtPtrSummary;
 	private String summarizedClassVxtPtrInfo;
 
 	// Order matters for both base classes and members for class layout.  Members get offsets,
@@ -585,7 +586,23 @@ public class CppCompositeType {
 	 * @return the summary
 	 */
 	String getSummarizedClassVxtPtrInfo() {
-		return summarizedClassVxtPtrInfo;
+		if (vxtPtrSummary.isEmpty()) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append(String.format("Class: %s\n", getSymbolPath().toString()));
+		for (String value : vxtPtrSummary.values()) {
+			builder.append(value);
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Return developer VxtPtr summary for this class
+	 * @return the summary
+	 */
+	Map<String, String> getVxtPtrSummary() {
+		return vxtPtrSummary;
 	}
 
 	/**
@@ -847,6 +864,8 @@ public class CppCompositeType {
 		finalVbtPtrInfoByOffset = new TreeMap<>();
 		finalVftByOffset = new TreeMap<>();
 		finalVbtByOffset = new TreeMap<>();
+
+		vxtPtrSummary = new TreeMap<>();
 	}
 
 	/**
@@ -898,21 +917,29 @@ public class CppCompositeType {
 		}
 
 		StringBuilder builder = new StringBuilder();
+		Map<String, String> results = new TreeMap<>();
 		for (VxtPtrInfo info : finalVftPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vftChildToParentRoot, vftParentToChildRoot, info);
-			builder.append(dumpVxtPtrResult("vft", info, altParentage));
+			String name = ClassUtils.getSpecialVxTableName(info.finalOffset);
+			String result = dumpVxtPtrResult("vft", info, altParentage.reversed());
+			builder.append(result + "\n");
+			results.put(name, result);
 
 		}
 		for (VxtPtrInfo info : finalVbtPtrInfoByOffset.values()) {
 			List<ClassID> altParentage =
 				finalizeVxtPtrParentage(vbtChildToParentRoot, vbtParentToChildRoot, info);
-			builder.append(dumpVxtPtrResult("vbt", info, altParentage));
+			String name = ClassUtils.getSpecialVxTableName(info.finalOffset);
+			String result = dumpVxtPtrResult("vbt", info, altParentage.reversed());
+			builder.append(result + "\n");
+			results.put(name, result);
 		}
 		if (!builder.isEmpty()) {
 			builder.insert(0, String.format("Class: %s\n", getSymbolPath().toString()));
 		}
 		summarizedClassVxtPtrInfo = builder.toString();
+		vxtPtrSummary = results;
 	}
 
 	/**
@@ -976,7 +1003,7 @@ public class CppCompositeType {
 			String name = id.getSymbolPath().toString();
 			r2.add(name);
 		}
-		return String.format("  %4d %s %s\t%s\n", info.finalOffset(), vxt, r1.toString(),
+		return String.format("  %4d %s %s\t%s", info.finalOffset(), vxt, r1.toString(),
 			r2.toString());
 	}
 
@@ -1237,8 +1264,7 @@ public class CppCompositeType {
 						createSelfOwnedDirectVxtPtrInfo(parentInfo, baseId, baseOffset);
 					updateVft(vxtManager, baseId, newInfo, parentInfo);
 					storeVxtInfo(propagatedSelfBaseVfts, finalVftPtrInfoByOffset,
-						vftTableIdByOffset,
-						vftOffsetByTableId, newInfo);
+						vftTableIdByOffset, vftOffsetByTableId, newInfo);
 				}
 			}
 			if (cppBaseType.getPropagatedSelfBaseVbts() != null) {
@@ -1247,8 +1273,7 @@ public class CppCompositeType {
 						createSelfOwnedDirectVxtPtrInfo(parentInfo, baseId, baseOffset);
 					updateVbt(vxtManager, baseId, newInfo, parentInfo);
 					storeVxtInfo(propagatedSelfBaseVbts, finalVbtPtrInfoByOffset,
-						vbtTableIdByOffset,
-						vbtOffsetByTableId, newInfo);
+						vbtTableIdByOffset, vbtOffsetByTableId, newInfo);
 				}
 			}
 		}
