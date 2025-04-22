@@ -1318,7 +1318,7 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
 			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
 			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   Q2NS::Q2::fp2_10   ""
+			   80   _func___thiscall_int_int *   8   P2NS::P2::fp2_10   ""
 			   88   _func___thiscall_int *   8   Q2NS::Q2::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
@@ -1709,15 +1709,15 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/Q4NS/Q4/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   P1NS::P1::fp1_3   ""
-			   8   _func___thiscall_int_int *   8   P1NS::P1::fp1_4   ""
-			   16   _func___thiscall_int *   8   P1NS::P1::fp1_4   ""
-			   24   _func___thiscall_int *   8   P1NS::P1::fp1_5   ""
-			   32   _func___thiscall_int_int *   8   P1NS::P1::fp1_6   ""
-			   40   _func___thiscall_int *   8   P1NS::P1::fp1_6   ""
-			   48   _func___thiscall_int *   8   P1NS::P1::fp1_7   ""
-			   56   _func___thiscall_int_int *   8   P1NS::P1::fp1_8   ""
-			   64   _func___thiscall_int *   8   P1NS::P1::fp1_8   ""
+			   0   _func___thiscall_int *   8   Q4NS::Q4::fp1_3   ""
+			   8   _func___thiscall_int_int *   8   Q4NS::Q4::fp1_4   ""
+			   16   _func___thiscall_int *   8   Q4NS::Q4::fp1_4   ""
+			   24   _func___thiscall_int *   8   Q4NS::Q4::fp1_5   ""
+			   32   _func___thiscall_int_int *   8   Q4NS::Q4::fp1_6   ""
+			   40   _func___thiscall_int *   8   Q4NS::Q4::fp1_6   ""
+			   48   _func___thiscall_int *   8   Q4NS::Q4::fp1_7   ""
+			   56   _func___thiscall_int_int *   8   Q4NS::Q4::fp1_8   ""
+			   64   _func___thiscall_int *   8   Q4NS::Q4::fp1_8   ""
 			}
 			Length: 72 Alignment: 8""";
 		//@formatter:on
@@ -1935,18 +1935,18 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/Q5NS/Q5/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   P2NS::P2::fp2_3   ""
-			   8   _func___thiscall_int_int *   8   P2NS::P2::fp2_4   ""
-			   16   _func___thiscall_int *   8   P2NS::P2::fp2_4   ""
-			   24   _func___thiscall_int *   8   P2NS::P2::fp2_5   ""
-			   32   _func___thiscall_int_int *   8   P2NS::P2::fp2_6   ""
-			   40   _func___thiscall_int *   8   P2NS::P2::fp2_6   ""
-			   48   _func___thiscall_int *   8   P2NS::P2::fp2_7   ""
-			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
-			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
-			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   P2NS::P2::fp2_10   ""
-			   88   _func___thiscall_int *   8   P2NS::P2::fp2_10   ""
+			   0   _func___thiscall_int *   8   Q5NS::Q5::fp2_3   ""
+			   8   _func___thiscall_int_int *   8   Q5NS::Q5::fp2_4   ""
+			   16   _func___thiscall_int *   8   Q5NS::Q5::fp2_4   ""
+			   24   _func___thiscall_int *   8   Q5NS::Q5::fp2_5   ""
+			   32   _func___thiscall_int_int *   8   Q5NS::Q5::fp2_6   ""
+			   40   _func___thiscall_int *   8   Q5NS::Q5::fp2_6   ""
+			   48   _func___thiscall_int *   8   Q5NS::Q5::fp2_7   ""
+			   56   _func___thiscall_int_int *   8   Q5NS::Q5::fp2_8   ""
+			   64   _func___thiscall_int *   8   Q5NS::Q5::fp2_8   ""
+			   72   _func___thiscall_int *   8   Q5NS::Q5::fp2_9   ""
+			   80   _func___thiscall_int_int *   8   Q5NS::Q5::fp2_10   ""
+			   88   _func___thiscall_int *   8   Q5NS::Q5::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
 		//@formatter:on
@@ -2164,18 +2164,18 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/Q6NS/Q6/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   P2NS::P2::fp2_3   ""
-			   8   _func___thiscall_int_int *   8   P2NS::P2::fp2_4   ""
-			   16   _func___thiscall_int *   8   P2NS::P2::fp2_4   ""
-			   24   _func___thiscall_int *   8   P2NS::P2::fp2_5   ""
-			   32   _func___thiscall_int_int *   8   P2NS::P2::fp2_6   ""
-			   40   _func___thiscall_int *   8   P2NS::P2::fp2_6   ""
-			   48   _func___thiscall_int *   8   P2NS::P2::fp2_7   ""
-			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
-			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
-			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   P2NS::P2::fp2_10   ""
-			   88   _func___thiscall_int *   8   P2NS::P2::fp2_10   ""
+			   0   _func___thiscall_int *   8   Q6NS::Q6::fp2_3   ""
+			   8   _func___thiscall_int_int *   8   Q6NS::Q6::fp2_4   ""
+			   16   _func___thiscall_int *   8   Q6NS::Q6::fp2_4   ""
+			   24   _func___thiscall_int *   8   Q6NS::Q6::fp2_5   ""
+			   32   _func___thiscall_int_int *   8   Q6NS::Q6::fp2_6   ""
+			   40   _func___thiscall_int *   8   Q6NS::Q6::fp2_6   ""
+			   48   _func___thiscall_int *   8   Q6NS::Q6::fp2_7   ""
+			   56   _func___thiscall_int_int *   8   Q6NS::Q6::fp2_8   ""
+			   64   _func___thiscall_int *   8   Q6NS::Q6::fp2_8   ""
+			   72   _func___thiscall_int *   8   Q6NS::Q6::fp2_9   ""
+			   80   _func___thiscall_int_int *   8   Q6NS::Q6::fp2_10   ""
+			   88   _func___thiscall_int *   8   Q6NS::Q6::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
 		//@formatter:on
@@ -2387,15 +2387,15 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/Q7NS/Q7/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   P1NS::P1::fp1_3   ""
-			   8   _func___thiscall_int_int *   8   P1NS::P1::fp1_4   ""
-			   16   _func___thiscall_int *   8   P1NS::P1::fp1_4   ""
-			   24   _func___thiscall_int *   8   P1NS::P1::fp1_5   ""
-			   32   _func___thiscall_int_int *   8   P1NS::P1::fp1_6   ""
-			   40   _func___thiscall_int *   8   P1NS::P1::fp1_6   ""
-			   48   _func___thiscall_int *   8   P1NS::P1::fp1_7   ""
-			   56   _func___thiscall_int_int *   8   P1NS::P1::fp1_8   ""
-			   64   _func___thiscall_int *   8   P1NS::P1::fp1_8   ""
+			   0   _func___thiscall_int *   8   Q7NS::Q7::fp1_3   ""
+			   8   _func___thiscall_int_int *   8   Q7NS::Q7::fp1_4   ""
+			   16   _func___thiscall_int *   8   Q7NS::Q7::fp1_4   ""
+			   24   _func___thiscall_int *   8   Q7NS::Q7::fp1_5   ""
+			   32   _func___thiscall_int_int *   8   Q7NS::Q7::fp1_6   ""
+			   40   _func___thiscall_int *   8   Q7NS::Q7::fp1_6   ""
+			   48   _func___thiscall_int *   8   Q7NS::Q7::fp1_7   ""
+			   56   _func___thiscall_int_int *   8   Q7NS::Q7::fp1_8   ""
+			   64   _func___thiscall_int *   8   Q7NS::Q7::fp1_8   ""
 			}
 			Length: 72 Alignment: 8""";
 		//@formatter:on
@@ -2409,18 +2409,18 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/Q7NS/Q7/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   P2NS::P2::fp2_3   ""
-			   8   _func___thiscall_int_int *   8   P2NS::P2::fp2_4   ""
-			   16   _func___thiscall_int *   8   P2NS::P2::fp2_4   ""
-			   24   _func___thiscall_int *   8   P2NS::P2::fp2_5   ""
-			   32   _func___thiscall_int_int *   8   P2NS::P2::fp2_6   ""
-			   40   _func___thiscall_int *   8   P2NS::P2::fp2_6   ""
-			   48   _func___thiscall_int *   8   P2NS::P2::fp2_7   ""
-			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
-			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
-			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   P2NS::P2::fp2_10   ""
-			   88   _func___thiscall_int *   8   P2NS::P2::fp2_10   ""
+			   0   _func___thiscall_int *   8   Q7NS::Q7::fp2_3   ""
+			   8   _func___thiscall_int_int *   8   Q7NS::Q7::fp2_4   ""
+			   16   _func___thiscall_int *   8   Q7NS::Q7::fp2_4   ""
+			   24   _func___thiscall_int *   8   Q7NS::Q7::fp2_5   ""
+			   32   _func___thiscall_int_int *   8   Q7NS::Q7::fp2_6   ""
+			   40   _func___thiscall_int *   8   Q7NS::Q7::fp2_6   ""
+			   48   _func___thiscall_int *   8   Q7NS::Q7::fp2_7   ""
+			   56   _func___thiscall_int_int *   8   Q7NS::Q7::fp2_8   ""
+			   64   _func___thiscall_int *   8   Q7NS::Q7::fp2_8   ""
+			   72   _func___thiscall_int *   8   Q7NS::Q7::fp2_9   ""
+			   80   _func___thiscall_int_int *   8   Q7NS::Q7::fp2_10   ""
+			   88   _func___thiscall_int *   8   Q7NS::Q7::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
 		//@formatter:on
@@ -2728,16 +2728,16 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/R1NS/R1/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   Q1NS::Q1::fp1_3   ""
-			   8   _func___thiscall_int_int *   8   Q1NS::Q1::fp1_4   ""
-			   16   _func___thiscall_int *   8   Q1NS::Q1::fp1_4   ""
-			   24   _func___thiscall_int *   8   Q1NS::Q1::fp1_5   ""
-			   32   _func___thiscall_int_int *   8   Q1NS::Q1::fp1_6   ""
-			   40   _func___thiscall_int *   8   Q1NS::Q1::fp1_6   ""
-			   48   _func___thiscall_int *   8   Q1NS::Q1::fp1_7   ""
-			   56   _func___thiscall_int_int *   8   Q1NS::Q1::fp1_8   ""
-			   64   _func___thiscall_int *   8   Q1NS::Q1::fp1_8   ""
-			   72   _func___thiscall_int_int *   8   Q1NS::Q1::fq1_3   ""
+			   0   _func___thiscall_int *   8   R1NS::R1::fp1_3   ""
+			   8   _func___thiscall_int_int *   8   R1NS::R1::fp1_4   ""
+			   16   _func___thiscall_int *   8   R1NS::R1::fp1_4   ""
+			   24   _func___thiscall_int *   8   R1NS::R1::fp1_5   ""
+			   32   _func___thiscall_int_int *   8   R1NS::R1::fp1_6   ""
+			   40   _func___thiscall_int *   8   R1NS::R1::fp1_6   ""
+			   48   _func___thiscall_int *   8   R1NS::R1::fp1_7   ""
+			   56   _func___thiscall_int_int *   8   R1NS::R1::fp1_8   ""
+			   64   _func___thiscall_int *   8   R1NS::R1::fp1_8   ""
+			   72   _func___thiscall_int_int *   8   R1NS::R1::fq1_3   ""
 			   80   _func___thiscall_int *   8   Q1NS::Q1::fq1_3   ""
 			}
 			Length: 88 Alignment: 8""";
@@ -2752,18 +2752,18 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/R1NS/R1/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   P2NS::P2::fp2_3   ""
-			   8   _func___thiscall_int_int *   8   P2NS::P2::fp2_4   ""
-			   16   _func___thiscall_int *   8   P2NS::P2::fp2_4   ""
-			   24   _func___thiscall_int *   8   P2NS::P2::fp2_5   ""
-			   32   _func___thiscall_int_int *   8   P2NS::P2::fp2_6   ""
-			   40   _func___thiscall_int *   8   P2NS::P2::fp2_6   ""
-			   48   _func___thiscall_int *   8   P2NS::P2::fp2_7   ""
-			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
-			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
-			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   P2NS::P2::fp2_10   ""
-			   88   _func___thiscall_int *   8   P2NS::P2::fp2_10   ""
+			   0   _func___thiscall_int *   8   R1NS::R1::fp2_3   ""
+			   8   _func___thiscall_int_int *   8   R1NS::R1::fp2_4   ""
+			   16   _func___thiscall_int *   8   R1NS::R1::fp2_4   ""
+			   24   _func___thiscall_int *   8   R1NS::R1::fp2_5   ""
+			   32   _func___thiscall_int_int *   8   R1NS::R1::fp2_6   ""
+			   40   _func___thiscall_int *   8   R1NS::R1::fp2_6   ""
+			   48   _func___thiscall_int *   8   R1NS::R1::fp2_7   ""
+			   56   _func___thiscall_int_int *   8   R1NS::R1::fp2_8   ""
+			   64   _func___thiscall_int *   8   R1NS::R1::fp2_8   ""
+			   72   _func___thiscall_int *   8   R1NS::R1::fp2_9   ""
+			   80   _func___thiscall_int_int *   8   R1NS::R1::fp2_10   ""
+			   88   _func___thiscall_int *   8   R1NS::R1::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
 		//@formatter:on
@@ -2777,19 +2777,19 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/R1NS/R1/!internal/VTABLE_00000040
 			pack()
 			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   Q2NS::Q2::fp1_3   ""
-			   8   _func___thiscall_int_int *   8   Q2NS::Q2::fp1_4   ""
-			   16   _func___thiscall_int *   8   Q2NS::Q2::fp1_4   ""
-			   24   _func___thiscall_int *   8   Q2NS::Q2::fp1_5   ""
-			   32   _func___thiscall_int_int *   8   Q2NS::Q2::fp1_6   ""
-			   40   _func___thiscall_int *   8   Q2NS::Q2::fp1_6   ""
-			   48   _func___thiscall_int *   8   Q2NS::Q2::fp1_7   ""
-			   56   _func___thiscall_int_int *   8   Q2NS::Q2::fp1_8   ""
-			   64   _func___thiscall_int *   8   Q2NS::Q2::fp1_8   ""
+			   0   _func___thiscall_int *   8   R1NS::R1::fp1_3   ""
+			   8   _func___thiscall_int_int *   8   R1NS::R1::fp1_4   ""
+			   16   _func___thiscall_int *   8   R1NS::R1::fp1_4   ""
+			   24   _func___thiscall_int *   8   R1NS::R1::fp1_5   ""
+			   32   _func___thiscall_int_int *   8   R1NS::R1::fp1_6   ""
+			   40   _func___thiscall_int *   8   R1NS::R1::fp1_6   ""
+			   48   _func___thiscall_int *   8   R1NS::R1::fp1_7   ""
+			   56   _func___thiscall_int_int *   8   R1NS::R1::fp1_8   ""
+			   64   _func___thiscall_int *   8   R1NS::R1::fp1_8   ""
 			   72   _func___thiscall_int *   8   Q2NS::Q2::fq1_3   ""
 			   80   _func___thiscall_int *   8   Q2NS::Q2::fp2_11   ""
 			   88   _func___thiscall_int_int *   8   Q2NS::Q2::fp2_12   ""
-			   96   _func___thiscall_int_int *   8   Q2NS::Q2::fq2_3   ""
+			   96   _func___thiscall_int_int *   8   R1NS::R1::fq2_3   ""
 			}
 			Length: 104 Alignment: 8""";
 		//@formatter:on
@@ -2803,18 +2803,18 @@ public class Vftm64ProgramCreator extends ProgramCreator {
 			/R1NS/R1/!internal/VTABLE_00000050
 			pack()
 			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   P2NS::P2::fp2_3   ""
-			   8   _func___thiscall_int_int *   8   P2NS::P2::fp2_4   ""
-			   16   _func___thiscall_int *   8   P2NS::P2::fp2_4   ""
-			   24   _func___thiscall_int *   8   P2NS::P2::fp2_5   ""
-			   32   _func___thiscall_int_int *   8   P2NS::P2::fp2_6   ""
-			   40   _func___thiscall_int *   8   P2NS::P2::fp2_6   ""
-			   48   _func___thiscall_int *   8   P2NS::P2::fp2_7   ""
-			   56   _func___thiscall_int_int *   8   P2NS::P2::fp2_8   ""
-			   64   _func___thiscall_int *   8   P2NS::P2::fp2_8   ""
-			   72   _func___thiscall_int *   8   P2NS::P2::fp2_9   ""
-			   80   _func___thiscall_int_int *   8   Q2NS::Q2::fp2_10   ""
-			   88   _func___thiscall_int *   8   Q2NS::Q2::fp2_10   ""
+			   0   _func___thiscall_int *   8   R1NS::R1::fp2_3   ""
+			   8   _func___thiscall_int_int *   8   R1NS::R1::fp2_4   ""
+			   16   _func___thiscall_int *   8   R1NS::R1::fp2_4   ""
+			   24   _func___thiscall_int *   8   R1NS::R1::fp2_5   ""
+			   32   _func___thiscall_int_int *   8   R1NS::R1::fp2_6   ""
+			   40   _func___thiscall_int *   8   R1NS::R1::fp2_6   ""
+			   48   _func___thiscall_int *   8   R1NS::R1::fp2_7   ""
+			   56   _func___thiscall_int_int *   8   R1NS::R1::fp2_8   ""
+			   64   _func___thiscall_int *   8   R1NS::R1::fp2_8   ""
+			   72   _func___thiscall_int *   8   R1NS::R1::fp2_9   ""
+			   80   _func___thiscall_int_int *   8   R1NS::R1::fp2_10   ""
+			   88   _func___thiscall_int *   8   R1NS::R1::fp2_10   ""
 			}
 			Length: 96 Alignment: 8""";
 		//@formatter:on

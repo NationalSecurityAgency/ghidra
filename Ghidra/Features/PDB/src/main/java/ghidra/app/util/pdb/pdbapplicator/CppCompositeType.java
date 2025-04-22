@@ -1054,10 +1054,6 @@ public class CppCompositeType {
 		mainVft = getMainVft(vxtManager);
 		if (mainVft != null) {
 			updateMainVft();
-			for (VXT t : finalVftByOffset.values()) {
-				VirtualFunctionTable vft = (VirtualFunctionTable) t;
-				updateVftFromSelf(vft);
-			}
 		}
 		if (getNumLayoutVirtualBaseClasses() == 0) {
 			if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size,
@@ -1098,6 +1094,12 @@ public class CppCompositeType {
 				clearComponents(composite);
 			}
 		}
+
+		for (VXT t : finalVftByOffset.values()) {
+			VirtualFunctionTable vft = (VirtualFunctionTable) t;
+			updateVftFromSelf(vft);
+		}
+
 	}
 
 	// Taken from PdbUtil without change.  Would have had to change access on class PdbUtil and
@@ -1682,10 +1684,16 @@ public class CppCompositeType {
 			SymbolPath origPath = e.getOriginalPath();
 			SymbolPath methodPath = e.getOverridePath();
 			String methodName = methodPath.getName();
+			Pointer p = e.getFunctionPointer();
+			FunctionDefinition tableFunctionDefinition = (FunctionDefinition) p.getDataType();
 			for (VirtualFunctionInfo vfInfo : virtualFunctionInfo) {
 				SymbolPath selfMethodPath = vfInfo.name();
 				String selfMethodName = selfMethodPath.getName();
-				if (selfMethodName.equals(methodName)) {
+				FunctionDefinition selfFunctionDefinition = vfInfo.definition();
+				if (!selfMethodName.equals(methodName)) {
+					continue;
+				}
+				if (selfFunctionDefinition.isEquivalent(tableFunctionDefinition)) {
 					// potential overridden method; just replace path (could be the same)
 					methodPath = selfMethodPath;
 					break;
