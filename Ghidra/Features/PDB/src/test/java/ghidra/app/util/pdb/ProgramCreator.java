@@ -135,8 +135,29 @@ abstract public class ProgramCreator {
 		return builder.toString();
 	}
 
+	/**
+	 * Modifies an original expected result to look like a result that used speculative
+	 * placement of virtual base classes
+	 * @param original the original result
+	 * @return the result with the modifications
+	 */
 	protected static String convertCommentsToSpeculative(String original) {
 		return original.replace("Virtual Base", "Virtual Base - Speculative Placement");
+	}
+
+	/**
+	 * Takes an original expected result, and at the specified starting line ('\n' delimited)
+	 * index, replace the remaing expected result with the replacement String (can be multiple
+	 * lines)
+	 * @param orig the original expected result
+	 * @param startLine the line to start the replacement
+	 * @param replacement the String used to replace the remainder of the original String
+	 * @return the result
+	 */
+	protected static String doReplacement(String orig, int startLine, String replacement) {
+		List<String> lines = List.of(orig.split("\\n"));
+		List<String> newLines = lines.subList(0, startLine);
+		return String.join("\n", newLines) + "\n" + replacement;
 	}
 
 	private String programName;

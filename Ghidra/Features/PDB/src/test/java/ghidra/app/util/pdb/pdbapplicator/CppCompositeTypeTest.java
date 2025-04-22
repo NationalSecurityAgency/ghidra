@@ -68,6 +68,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 	private static ObjectOrientedClassLayout classLayoutChoice =
 		ObjectOrientedClassLayout.CLASS_HIERARCHY;
+	private static ObjectOrientedClassLayout speculativeLayoutChoice =
+		ObjectOrientedClassLayout.CLASS_HIERARCHY_SPECULATIVE;
 
 	private DataTypeManager dtm32 = new StandAloneDataTypeManager("32-bit win", dataOrg32);
 	private DataTypeManager dtm64 = new StandAloneDataTypeManager("64-bit win", dataOrg64);
@@ -2073,17 +2075,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray832Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray832Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2092,9 +2088,28 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 * @throws Exception upon error
 	 */
 	@Test
-	public void testEgray8_32_speculative() throws Exception {
+	public void testEgray8_32_noProgram() throws Exception {
 		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = egray832Pdb;
+		DataTypeManager dtm = dtm32;
+		MsftVxtManager vxtManager = egray832VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = egray832Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
+	}
 
+	/**
+	 * Tests the classes and artifacts of egray8 32-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testEgray8_32_noProgram_speculative() throws Exception {
+		boolean is64Bit = false;
 		Program program = null;
 		MockPdb pdb = egray832Pdb;
 		DataTypeManager dtm = dtm32;
@@ -2104,17 +2119,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray832Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray832Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2135,17 +2144,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray864Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray864Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2154,9 +2157,28 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 * @throws Exception upon error
 	 */
 	@Test
-	public void testEgray8_64_speculative() throws Exception {
+	public void testEgray8_64_noProgram() throws Exception {
 		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = egray864Pdb;
+		DataTypeManager dtm = dtm64;
+		MsftVxtManager vxtManager = egray864VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = egray864Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
+	}
 
+	/**
+	 * Tests the classes and artifacts of egray8 64-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testEgray8_64_noProgram_speculative() throws Exception {
+		boolean is64Bit = false;
 		Program program = null;
 		MockPdb pdb = egray864Pdb;
 		DataTypeManager dtm = dtm64;
@@ -2166,17 +2188,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray864Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray864Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2197,17 +2213,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm32Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm32Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2216,9 +2226,28 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 * @throws Exception upon error
 	 */
 	@Test
-	public void testVftm_32_speculative() throws Exception {
+	public void testVftm_32_noProgram() throws Exception {
 		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = vftm32Pdb;
+		DataTypeManager dtm = dtm32;
+		MsftVxtManager vxtManager = vftm32VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = vftm32Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
+	}
 
+	/**
+	 * Tests the classes and artifacts of vftm 32-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testVftm_32_noProgram_speculative() throws Exception {
+		boolean is64Bit = false;
 		Program program = null;
 		MockPdb pdb = vftm32Pdb;
 		DataTypeManager dtm = dtm32;
@@ -2228,17 +2257,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm32Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm32Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2259,17 +2282,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm64Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm64Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2278,9 +2295,28 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 * @throws Exception upon error
 	 */
 	@Test
-	public void testVftm_64_speculative() throws Exception {
-		boolean is64Bit = true;
+	public void testVftm_64_noProgram() throws Exception {
+		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = vftm64Pdb;
+		DataTypeManager dtm = dtm64;
+		MsftVxtManager vxtManager = vftm64VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = vftm64Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
+	}
 
+	/**
+	 * Tests the classes and artifacts of vftm 64-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testVftm_64_noProgram_speculative() throws Exception {
+		boolean is64Bit = true;
 		Program program = null;
 		MockPdb pdb = vftm64Pdb;
 		DataTypeManager dtm = dtm64;
@@ -2290,17 +2326,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm64Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm64Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2321,18 +2351,32 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb432Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb432Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+	}
+
+	/**
+	 * Tests the classes and artifacts of cfb4 32-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testCfb4_32_noProgram() throws Exception {
+		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = cfb432Pdb;
+		DataTypeManager dtm = dtm32;
+		MsftVxtManager vxtManager = cfb432VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = cfb432Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
 	}
 
 	/**
@@ -2342,7 +2386,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCfb4_32_speculative() throws Exception {
 		boolean is64Bit = false;
-
 		Program program = null;
 		MockPdb pdb = cfb432Pdb;
 		DataTypeManager dtm = dtm32;
@@ -2352,23 +2395,17 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb432Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb432Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
 	//==============================================================================================
 	/**
-	 * Tests the classes and artifacts of cfb4 32-bit program
+	 * Tests the classes and artifacts of cfb4 64-bit program
 	 * @throws Exception upon error
 	 */
 	@Test
@@ -2383,17 +2420,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb464Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb464Creator.getExpectedVxtStructs();
-		int txID = program.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
@@ -2402,9 +2433,28 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 * @throws Exception upon error
 	 */
 	@Test
-	public void testCfb4_64_speculative() throws Exception {
-		boolean is64Bit = true;
+	public void testCfb4_64_noProgram() throws Exception {
+		boolean is64Bit = false;
+		Program program = null;
+		MockPdb pdb = cfb464Pdb;
+		DataTypeManager dtm = dtm64;
+		MsftVxtManager vxtManager = cfb464VxtManagerNoProgram;
+		Map<ClassID, String> expectedResults = cfb464Creator.getFillerStructs();
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, null);
+			vxtManager.doTableLayouts(dtm);
+		});
+		// Not checking vxt structures here.
+	}
 
+	/**
+	 * Tests the classes and artifacts of cfb4 64-bit program PDB (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void testCfb4_64_noProgram_speculative() throws Exception {
+		boolean is64Bit = true;
 		Program program = null;
 		MockPdb pdb = cfb464Pdb;
 		DataTypeManager dtm = dtm64;
@@ -2414,35 +2464,33 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb464Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb464Creator.getSpeculatedVxtStructs();
-		int txID = dtm.startTransaction("Processing data.");
-		boolean commit = false;
-		try {
-			createAndTestStructures(program, dtm, pdb, is64Bit, vxtManager, expectedResults,
-				expectedVxtPtrSummaries);
+		dtm.withTransaction("Processing data.", () -> {
+			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
+				expectedResults, expectedVxtPtrSummaries);
 			vxtManager.doTableLayouts(dtm);
-			commit = true;
-		}
-		finally {
-			dtm.endTransaction(txID, commit);
-		}
+		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
 
 	//==============================================================================================
 	//==============================================================================================
-	private void createAndTestStructures(Program program, DataTypeManager dtm, MockPdb pdb,
-			boolean is64Bit, MsftVxtManager vxtManager, Map<ClassID, String> expectedResults,
+	private void createAndTestStructures(Program program, DataTypeManager dtm,
+			ObjectOrientedClassLayout layoutChoice, MockPdb pdb, boolean is64Bit,
+			MsftVxtManager vxtManager, Map<ClassID, String> expectedResults,
 			Map<ClassID, Map<String, String>> expectedVxtPtrSummaries) throws Exception {
 
 		for (CppCompositeType cppType : pdb.getCppTypes()) {
 			ClassID id = cppType.getClassId();
-			cppType.createLayout(classLayoutChoice, vxtManager, monitor);
+			cppType.createLayout(layoutChoice, vxtManager, monitor);
 			Composite composite = pdb.resolveType(dtm, cppType);
 			String expected = expectedResults.get(id);
 			if (expected == null || expected.equals("NOT YET DETERMINED")) {
 				continue;
 			}
 			CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+			if (expectedVxtPtrSummaries == null) {
+				continue;
+			}
 			Map<String, String> expectedSummary = expectedVxtPtrSummaries.get(id);
 			Map<String, String> vxtPtrSummary = cppType.getVxtPtrSummary();
 			assertEquals(expectedSummary.size(), vxtPtrSummary.size());

@@ -32,7 +32,13 @@ public enum ObjectOrientedClassLayout {
 	 * Include base class hierarchies and other C++-isms into a class layout that is suited for
 	 * understanding the hierarchies and components from the Structure Editor perspective
 	 */
-	CLASS_HIERARCHY("Class Hierarchy (Experimental)");
+	CLASS_HIERARCHY("Class Hierarchy (Experimental)"),
+	/**
+	 * Same as {@link #CLASS_HIERARCHY}, but also performs speculative virtual class placement
+	 * if an in-memory Virtual Base Table is not found.  This is risky, and not an advised
+	 * solution
+	 */
+	CLASS_HIERARCHY_SPECULATIVE("Class Hierarchy (Missing VBT Speculatation - Risky)");
 
 	private final String label;
 

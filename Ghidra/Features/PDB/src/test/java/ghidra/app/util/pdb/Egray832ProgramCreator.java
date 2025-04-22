@@ -2457,6 +2457,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructG() {
+		String expected =
+		//@formatter:off
+			"""
+			/G
+			pack()
+			Structure G {
+			   0   G   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 12 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructG() {
 		return convertCommentsToSpeculative(getExpectedStructG());
 	}
@@ -2529,6 +2551,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   c1   ""
 			}
 			Length: 4 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructH() {
+		String expected =
+		//@formatter:off
+			"""
+			/H
+			pack()
+			Structure H {
+			   0   H   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 12 Alignment: 4
 			/H/!internal/H
 			pack()
 			Structure H {
@@ -2623,6 +2667,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructGG1() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG1
+			pack()
+			Structure GG1 {
+			   0   GG1   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: CC1"
+			}
+			Length: 12 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   gg11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructGG1() {
 		return convertCommentsToSpeculative(getExpectedStructGG1());
 	}
@@ -2695,6 +2761,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   cc21   ""
 			}
 			Length: 4 Alignment: 4
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   gg21   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructGG2() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG2
+			pack()
+			Structure GG2 {
+			   0   GG2   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: CC2"
+			}
+			Length: 12 Alignment: 4
 			/GG2/!internal/GG2
 			pack()
 			Structure GG2 {
@@ -2789,6 +2877,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructGG3() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG3
+			pack()
+			Structure GG3 {
+			   0   GG3   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: CC2"
+			}
+			Length: 12 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   gg31   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructGG3() {
 		return convertCommentsToSpeculative(getExpectedStructGG3());
 	}
@@ -2855,6 +2965,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			pack()
 			Structure GG4 {
 			   0   GG4   8      "Self Base"
+			}
+			Length: 8 Alignment: 4
+			/GG4/!internal/GG4
+			pack()
+			Structure GG4 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   gg41   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructGG4() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG4
+			pack()
+			Structure GG4 {
+			   0   GG4   8      "Self Base"
+			   8   char[0]   0      "Filler for 1 Unplaceable Virtual Base: CC3"
 			}
 			Length: 8 Alignment: 4
 			/GG4/!internal/GG4
@@ -2977,6 +3109,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructI() {
+		String expected =
+		//@formatter:off
+			"""
+			/I
+			pack()
+			Structure I {
+			   0   I   20      "Self Base"
+			   20   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 24 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i1   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructI() {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
@@ -3069,6 +3238,27 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructGX1() {
+		String expected =
+		//@formatter:off
+			"""
+			/GX1
+			pack()
+			Structure GX1 {
+			   0   GX1   4      "Self Base"
+			   4   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 8 Alignment: 4
+			/GX1/!internal/GX1
+			pack()
+			Structure GX1 {
+			   0   pointer   4   {vbptr}   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructGX1() {
 		return convertCommentsToSpeculative(getExpectedStructGX1());
 	}
@@ -3135,6 +3325,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   c1   ""
 			}
 			Length: 4 Alignment: 4
+			/HX1/!internal/HX1
+			pack()
+			Structure HX1 {
+			   0   pointer   4   {vbptr}   ""
+			}
+			Length: 4 Alignment: 4
+			""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructHX1() {
+		String expected =
+		//@formatter:off
+			"""
+			/HX1
+			pack()
+			Structure HX1 {
+			   0   HX1   4      "Self Base"
+			   4   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 8 Alignment: 4
 			/HX1/!internal/HX1
 			pack()
 			Structure HX1 {
@@ -3222,6 +3434,41 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   c1   ""
 			}
 			Length: 4 Alignment: 4
+			/GX1/!internal/GX1
+			pack()
+			Structure GX1 {
+			   0   pointer   4   {vbptr}   ""
+			}
+			Length: 4 Alignment: 4
+			/HX1/!internal/HX1
+			pack()
+			Structure HX1 {
+			   0   pointer   4   {vbptr}   ""
+			}
+			Length: 4 Alignment: 4
+			/IX1/!internal/IX1
+			pack()
+			Structure IX1 {
+			   0   GX1   4      "Base"
+			   4   HX1   4      "Base"
+			   8   int   4   ix11   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructIX1() {
+		String expected =
+		//@formatter:off
+			"""
+			/IX1
+			pack()
+			Structure IX1 {
+			   0   IX1   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: C"
+			}
+			Length: 16 Alignment: 4
 			/GX1/!internal/GX1
 			pack()
 			Structure GX1 {
@@ -3357,6 +3604,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructG1() {
+		String expected =
+		//@formatter:off
+			"""
+			/G1
+			pack()
+			Structure G1 {
+			   0   G1   8      "Self Base"
+			   8   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 16 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructG1() {
 		return convertCommentsToSpeculative(getExpectedStructG1());
 	}
@@ -3442,6 +3711,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructH1() {
+		String expected =
+		//@formatter:off
+			"""
+			/H1
+			pack()
+			Structure H1 {
+			   0   H1   8      "Self Base"
+			   8   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: E; C"
+			}
+			Length: 16 Alignment: 4
 			/H1/!internal/H1
 			pack()
 			Structure H1 {
@@ -3549,6 +3840,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i11   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructI1() {
+		String expected =
+		//@formatter:off
+			"""
+			/I1
+			pack()
+			Structure I1 {
+			   0   I1   20      "Self Base"
+			   20   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 28 Alignment: 4
 			/G1/!internal/G1
 			pack()
 			Structure G1 {
@@ -3688,6 +4016,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i21   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructI2() {
+		String expected =
+		//@formatter:off
+			"""
+			/I2
+			pack()
+			Structure I2 {
+			   0   I2   20      "Self Base"
+			   20   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 28 Alignment: 4
 			/G/!internal/G
 			pack()
 			Structure G {
@@ -3854,6 +4219,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructI3() {
+		String expected =
+		//@formatter:off
+			"""
+			/I3
+			pack()
+			Structure I3 {
+			   0   I3   20      "Self Base"
+			   20   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 28 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i31   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructI3() {
 		return convertCommentsToSpeculative(getExpectedStructI3());
 	}
@@ -3977,6 +4379,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructI4() {
+		String expected =
+		//@formatter:off
+			"""
+			/I4
+			pack()
+			Structure I4 {
+			   0   I4   12      "Self Base"
+			   12   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: E; C"
+			}
+			Length: 20 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/I4/!internal/I4
+			pack()
+			Structure I4 {
+			   0   G1   8      "Base"
+			   8   int   4   i41   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructI4() {
 		return convertCommentsToSpeculative(getExpectedStructI4());
 	}
@@ -4065,6 +4496,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/I5/!internal/I5
+			pack()
+			Structure I5 {
+			   0   G1   8      "Base"
+			   8   int   4   i51   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructI5() {
+		String expected =
+		//@formatter:off
+			"""
+			/I5
+			pack()
+			Structure I5 {
+			   0   I5   12      "Self Base"
+			   12   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: E; C"
+			}
+			Length: 20 Alignment: 4
 			/G1/!internal/G1
 			pack()
 			Structure G1 {
@@ -4253,6 +4713,73 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J1/!internal/J1
+			pack()
+			Structure J1 {
+			   0   I1   20      "Base"
+			   20   I2   20      "Base"
+			   40   int   4   j11   ""
+			}
+			Length: 44 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructJ1() {
+		String expected =
+		//@formatter:off
+			"""
+			/J1
+			pack()
+			Structure J1 {
+			   0   J1   44      "Self Base"
+			   44   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 52 Alignment: 4
 			/G/!internal/G
 			pack()
 			Structure G {
@@ -4535,6 +5062,73 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructJ2() {
+		String expected =
+		//@formatter:off
+			"""
+			/J2
+			pack()
+			Structure J2 {
+			   0   J2   44      "Self Base"
+			   44   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 52 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J2/!internal/J2
+			pack()
+			Structure J2 {
+			   0   I2   20      "Base"
+			   20   I1   20      "Base"
+			   40   int   4   j21   ""
+			}
+			Length: 44 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructJ2() {
 		return convertCommentsToSpeculative(getExpectedStructJ2());
 	}
@@ -4717,6 +5311,81 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   e1   ""
 			}
 			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J3/!internal/J3
+			pack()
+			Structure J3 {
+			   0   I2   20      "Base"
+			   20   I1   20      "Base"
+			   40   A   8      "Base"
+			   48   int   4   j31   ""
+			}
+			Length: 52 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructJ3() {
+		String expected =
+		//@formatter:off
+			"""
+			/J3
+			pack()
+			Structure J3 {
+			   0   J3   52      "Self Base"
+			   52   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: C; E"
+			}
+			Length: 60 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   char   1   c   ""
+			   4   int   4   i   ""
+			}
+			Length: 8 Alignment: 4
 			/G/!internal/G
 			pack()
 			Structure G {
@@ -5042,6 +5711,89 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			Structure GG3 {
 			   0   pointer   4   {vbptr}   ""
 			   4   int   4   gg31   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   8      "Base"
+			   8   H   8      "Base"
+			   16   int   4   i1   ""
+			}
+			Length: 20 Alignment: 4
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   8      "Base"
+			   8   H1   8      "Base"
+			   16   int   4   i31   ""
+			}
+			Length: 20 Alignment: 4
+			/J4/!internal/J4
+			pack()
+			Structure J4 {
+			   0   I3   20      "Base"
+			   20   GG1   8      "Base"
+			   28   I   20      "Base"
+			   48   A   8      "Base"
+			   56   int   4   j41   ""
+			}
+			Length: 60 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructJ4() {
+		String expected =
+		//@formatter:off
+			"""
+			/J4
+			pack()
+			Structure J4 {
+			   0   J4   60      "Self Base"
+			   60   char[32]   32      "Filler for 6 Unplaceable Virtual Bases: GG2; GG3; C; E; CC1; CC2"
+			}
+			Length: 92 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   char   1   c   ""
+			   4   int   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   gg11   ""
 			}
 			Length: 8 Alignment: 4
 			/H/!internal/H
@@ -5868,6 +6620,37 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructJ6() {
+		String expected =
+		//@formatter:off
+			"""
+			/J6
+			pack()
+			Structure J6 {
+			   0   J6   16      "Self Base"
+			   16   char[20]   20      "Filler for 4 Unplaceable Virtual Bases: GG4; GG3; CC3; CC2"
+			}
+			Length: 36 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   char   1   c   ""
+			   4   int   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/J6/!internal/J6
+			pack()
+			Structure J6 {
+			   0   A   8      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   j61   ""
+			}
+			Length: 16 Alignment: 4""";
+
+		//@formatter:on
+		return expected;
+	}
+
 	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
 	//  a decision on the best speculative results yet.
 	private static String getSpeculatedStructJ6() {
@@ -6394,6 +7177,29 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructT() {
+		String expected =
+		//@formatter:off
+			"""
+			/T
+			pack()
+			Structure T {
+			   0   T   12      "Self Base"
+			   12   char[12]   12      "Filler for 1 Unplaceable Virtual Base: P"
+			}
+			Length: 24 Alignment: 4
+			/T/!internal/T
+			pack()
+			Structure T {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   t1   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructT() {
 		String expected =
 		//@formatter:off
@@ -6562,6 +7368,36 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   4   int   4   p1   ""
 			}
 			Length: 8 Alignment: 4
+			/T/!internal/T
+			pack()
+			Structure T {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   t1   ""
+			}
+			Length: 12 Alignment: 4
+			/U/!internal/U
+			pack()
+			Structure U {
+			   0   T   12      "Base"
+			   12   int   4   u1   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructU() {
+		String expected =
+		//@formatter:off
+			"""
+			/U
+			pack()
+			Structure U {
+			   0   U   16      "Self Base"
+			   16   char[12]   12      "Filler for 1 Unplaceable Virtual Base: P"
+			}
+			Length: 28 Alignment: 4
 			/T/!internal/T
 			pack()
 			Structure T {
@@ -7325,6 +8161,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA3a() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA3a
+			pack()
+			Structure AA3a {
+			   0   AA3a   8      "Self Base"
+			   8   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA2"
+			}
+			Length: 20 Alignment: 4
+			/AA3a/!internal/AA3a
+			pack()
+			Structure AA3a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3ai   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA3a() {
 		return convertCommentsToSpeculative(getExpectedStructAA3a());
 	}
@@ -7412,6 +8270,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa2bi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA3b/!internal/AA3b
+			pack()
+			Structure AA3b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3bi   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA3b() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA3b
+			pack()
+			Structure AA3b {
+			   0   AA3b   8      "Self Base"
+			   8   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA2"
+			}
+			Length: 20 Alignment: 4
 			/AA3b/!internal/AA3b
 			pack()
 			Structure AA3b {
@@ -7553,6 +8433,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa2bi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA3a/!internal/AA3a
+			pack()
+			Structure AA3a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3ai   ""
+			}
+			Length: 8 Alignment: 4
+			/AA3b/!internal/AA3b
+			pack()
+			Structure AA3b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3bi   ""
+			}
+			Length: 8 Alignment: 4
+			/AA3c/!internal/AA3c
+			pack()
+			Structure AA3c {
+			   0   AA3a   8      "Base"
+			   8   AA3b   8      "Base"
+			   16   int   4   aa3ci   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA3c() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA3c
+			pack()
+			Structure AA3c {
+			   0   AA3c   20      "Self Base"
+			   20   char[24]   24      "Filler for 2 Unplaceable Virtual Bases: AA1; AA2"
+			}
+			Length: 44 Alignment: 4
 			/AA3a/!internal/AA3a
 			pack()
 			Structure AA3a {
@@ -7825,6 +8742,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   4   int   4   aa3bi   ""
 			}
 			Length: 8 Alignment: 4
+			/AA3d/!internal/AA3d
+			pack()
+			Structure AA3d {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3di   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA3d() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA3d
+			pack()
+			Structure AA3d {
+			   0   AA3d   8      "Self Base"
+			   8   char[40]   40      "Filler for 4 Unplaceable Virtual Bases: AA1; AA3a; AA3b; AA2"
+			}
+			Length: 48 Alignment: 4
 			/AA3d/!internal/AA3d
 			pack()
 			Structure AA3d {
@@ -8212,6 +9151,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA3g() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA3g
+			pack()
+			Structure AA3g {
+			   0   AA3g   8      "Self Base"
+			   8   char[32]   32      "Filler for 2 Unplaceable Virtual Bases: AA3e; AA3f"
+			}
+			Length: 40 Alignment: 4
+			/AA3g/!internal/AA3g
+			pack()
+			Structure AA3g {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa3gi   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA3g() {
 		return convertCommentsToSpeculative(getExpectedStructAA3g());
 	}
@@ -8300,6 +9261,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa1bi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA4a/!internal/AA4a
+			pack()
+			Structure AA4a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ai   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4a() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4a
+			pack()
+			Structure AA4a {
+			   0   AA4a   8      "Self Base"
+			   8   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA1"
+			}
+			Length: 20 Alignment: 4
 			/AA4a/!internal/AA4a
 			pack()
 			Structure AA4a {
@@ -8409,6 +9392,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4b() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4b
+			pack()
+			Structure AA4b {
+			   0   AA4b   8      "Self Base"
+			   8   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA1"
+			}
+			Length: 20 Alignment: 4
+			/AA4b/!internal/AA4b
+			pack()
+			Structure AA4b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4bi   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4b() {
 		return convertCommentsToSpeculative(getExpectedStructAA4b());
 	}
@@ -8507,6 +9512,43 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa1bi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA4a/!internal/AA4a
+			pack()
+			Structure AA4a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ai   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4b/!internal/AA4b
+			pack()
+			Structure AA4b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4bi   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4c/!internal/AA4c
+			pack()
+			Structure AA4c {
+			   0   AA4a   8      "Base"
+			   8   AA4b   8      "Base"
+			   16   int   4   aa4ci   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4c() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4c
+			pack()
+			Structure AA4c {
+			   0   AA4c   20      "Self Base"
+			   20   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA1"
+			}
+			Length: 32 Alignment: 4
 			/AA4a/!internal/AA4a
 			pack()
 			Structure AA4a {
@@ -8675,6 +9717,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4d() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4d
+			pack()
+			Structure AA4d {
+			   0   AA4d   12      "Self Base"
+			   12   char[20]   20      "Filler for 2 Unplaceable Virtual Bases: AA4a; AA1"
+			}
+			Length: 32 Alignment: 4
+			/AA4b/!internal/AA4b
+			pack()
+			Structure AA4b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4bi   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4d/!internal/AA4d
+			pack()
+			Structure AA4d {
+			   0   AA4b   8      "Base"
+			   8   int   4   aa4di   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4d() {
 		return convertCommentsToSpeculative(getExpectedStructAA4d());
 	}
@@ -8805,6 +9876,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			Structure AA4b {
 			   0   pointer   4   {vbptr}   ""
 			   4   int   4   aa4bi   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4e/!internal/AA4e
+			pack()
+			Structure AA4e {
+			   0   AA4a   8      "Base"
+			   8   int   4   aa4ei   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4e() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4e
+			pack()
+			Structure AA4e {
+			   0   AA4e   12      "Self Base"
+			   12   char[20]   20      "Filler for 2 Unplaceable Virtual Bases: AA4b; AA1"
+			}
+			Length: 32 Alignment: 4
+			/AA4a/!internal/AA4a
+			pack()
+			Structure AA4a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ai   ""
 			}
 			Length: 8 Alignment: 4
 			/AA4e/!internal/AA4e
@@ -8969,6 +10069,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4f() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4f
+			pack()
+			Structure AA4f {
+			   0   AA4f   8      "Self Base"
+			   8   char[28]   28      "Filler for 3 Unplaceable Virtual Bases: AA4a; AA4b; AA1"
+			}
+			Length: 36 Alignment: 4
+			/AA4f/!internal/AA4f
+			pack()
+			Structure AA4f {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4fi   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4f() {
 		return convertCommentsToSpeculative(getExpectedStructAA4f());
 	}
@@ -9111,6 +10233,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4g() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4g
+			pack()
+			Structure AA4g {
+			   0   AA4g   12      "Self Base"
+			   12   char[12]   12      "Filler for 1 Unplaceable Virtual Base: AA1"
+			}
+			Length: 24 Alignment: 4
+			/AA4b/!internal/AA4b
+			pack()
+			Structure AA4b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4bi   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4g/!internal/AA4g
+			pack()
+			Structure AA4g {
+			   0   AA4b   8      "Base"
+			   8   int   4   aa4gi   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4g() {
 		return convertCommentsToSpeculative(getExpectedStructAA4g());
 	}
@@ -9227,6 +10378,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4j() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4j
+			pack()
+			Structure AA4j {
+			   0   AA4j   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 12 Alignment: 4
+			/AA4j/!internal/AA4j
+			pack()
+			Structure AA4j {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ji   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4j() {
 		return convertCommentsToSpeculative(getExpectedStructAA4j());
 	}
@@ -9294,6 +10467,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa4hi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA4k/!internal/AA4k
+			pack()
+			Structure AA4k {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ki   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4k() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4k
+			pack()
+			Structure AA4k {
+			   0   AA4k   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 12 Alignment: 4
 			/AA4k/!internal/AA4k
 			pack()
 			Structure AA4k {
@@ -9393,6 +10588,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4m() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4m
+			pack()
+			Structure AA4m {
+			   0   AA4m   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 16 Alignment: 4
+			/AA4j/!internal/AA4j
+			pack()
+			Structure AA4j {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ji   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4m/!internal/AA4m
+			pack()
+			Structure AA4m {
+			   0   AA4j   8      "Base"
+			   8   int   4   aa4mi   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4m() {
 		return convertCommentsToSpeculative(getExpectedStructAA4m());
 	}
@@ -9463,6 +10687,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa4hi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA4k/!internal/AA4k
+			pack()
+			Structure AA4k {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ki   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4n/!internal/AA4n
+			pack()
+			Structure AA4n {
+			   0   AA4k   8      "Base"
+			   8   int   4   aa4ni   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4n() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4n
+			pack()
+			Structure AA4n {
+			   0   AA4n   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 16 Alignment: 4
 			/AA4k/!internal/AA4k
 			pack()
 			Structure AA4k {
@@ -9579,6 +10832,42 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA4p() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4p
+			pack()
+			Structure AA4p {
+			   0   AA4p   16      "Self Base"
+			   16   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 20 Alignment: 4
+			/AA4j/!internal/AA4j
+			pack()
+			Structure AA4j {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ji   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4m/!internal/AA4m
+			pack()
+			Structure AA4m {
+			   0   AA4j   8      "Base"
+			   8   int   4   aa4mi   ""
+			}
+			Length: 12 Alignment: 4
+			/AA4p/!internal/AA4p
+			pack()
+			Structure AA4p {
+			   0   AA4m   12      "Base"
+			   12   int   4   aa4pi   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA4p() {
 		return convertCommentsToSpeculative(getExpectedStructAA4p());
 	}
@@ -9663,6 +10952,57 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa4hi   ""
 			}
 			Length: 4 Alignment: 4
+			/AA4j/!internal/AA4j
+			pack()
+			Structure AA4j {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ji   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4k/!internal/AA4k
+			pack()
+			Structure AA4k {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa4ki   ""
+			}
+			Length: 8 Alignment: 4
+			/AA4m/!internal/AA4m
+			pack()
+			Structure AA4m {
+			   0   AA4j   8      "Base"
+			   8   int   4   aa4mi   ""
+			}
+			Length: 12 Alignment: 4
+			/AA4n/!internal/AA4n
+			pack()
+			Structure AA4n {
+			   0   AA4k   8      "Base"
+			   8   int   4   aa4ni   ""
+			}
+			Length: 12 Alignment: 4
+			/AA4q/!internal/AA4q
+			pack()
+			Structure AA4q {
+			   0   AA4n   12      "Base"
+			   12   AA4m   12      "Base"
+			   24   int   4   aa4qi   ""
+			}
+			Length: 28 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA4q() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA4q
+			pack()
+			Structure AA4q {
+			   0   AA4q   28      "Self Base"
+			   28   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA4h"
+			}
+			Length: 32 Alignment: 4
 			/AA4j/!internal/AA4j
 			pack()
 			Structure AA4j {
@@ -9967,6 +11307,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA5e() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA5e
+			pack()
+			Structure AA5e {
+			   0   AA5e   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA5b"
+			}
+			Length: 16 Alignment: 4
+			/AA5a
+			pack()
+			Structure AA5a {
+			   0   int   4   aa5ai   ""
+			}
+			Length: 4 Alignment: 4
+			/AA5e/!internal/AA5e
+			pack()
+			Structure AA5e {
+			   0   AA5a   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5ei   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA5e() {
 		return convertCommentsToSpeculative(getExpectedStructAA5e());
 	}
@@ -10041,6 +11410,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			pack()
 			Structure AA5d {
 			   0   int   4   aa5di   ""
+			}
+			Length: 4 Alignment: 4
+			/AA5f/!internal/AA5f
+			pack()
+			Structure AA5f {
+			   0   AA5c   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5fi   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA5f() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA5f
+			pack()
+			Structure AA5f {
+			   0   AA5f   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA5d"
+			}
+			Length: 16 Alignment: 4
+			/AA5c
+			pack()
+			Structure AA5c {
+			   0   int   4   aa5ci   ""
 			}
 			Length: 4 Alignment: 4
 			/AA5f/!internal/AA5f
@@ -10159,6 +11557,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   8   int   4   aa5ei   ""
 			}
 			Length: 12 Alignment: 4
+			/AA5g/!internal/AA5g
+			pack()
+			Structure AA5g {
+			   0   AA5c   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5gi   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA5g() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA5g
+			pack()
+			Structure AA5g {
+			   0   AA5g   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: AA5e; AA5b"
+			}
+			Length: 28 Alignment: 4
+			/AA5c
+			pack()
+			Structure AA5c {
+			   0   int   4   aa5ci   ""
+			}
+			Length: 4 Alignment: 4
 			/AA5g/!internal/AA5g
 			pack()
 			Structure AA5g {
@@ -10296,6 +11723,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   8   int   4   aa5fi   ""
 			}
 			Length: 12 Alignment: 4
+			/AA5h/!internal/AA5h
+			pack()
+			Structure AA5h {
+			   0   AA5a   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5hi   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA5h() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA5h
+			pack()
+			Structure AA5h {
+			   0   AA5h   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: AA5f; AA5d"
+			}
+			Length: 28 Alignment: 4
+			/AA5a
+			pack()
+			Structure AA5a {
+			   0   int   4   aa5ai   ""
+			}
+			Length: 4 Alignment: 4
 			/AA5h/!internal/AA5h
 			pack()
 			Structure AA5h {
@@ -10482,6 +11938,57 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   8   int   4   aa5fi   ""
 			}
 			Length: 12 Alignment: 4
+			/AA5g/!internal/AA5g
+			pack()
+			Structure AA5g {
+			   0   AA5c   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5gi   ""
+			}
+			Length: 12 Alignment: 4
+			/AA5h/!internal/AA5h
+			pack()
+			Structure AA5h {
+			   0   AA5a   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa5hi   ""
+			}
+			Length: 12 Alignment: 4
+			/AA5j/!internal/AA5j
+			pack()
+			Structure AA5j {
+			   0   AA5g   12      "Base"
+			   12   AA5h   12      "Base"
+			   24   int   4   aa5ji   ""
+			}
+			Length: 28 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA5j() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA5j
+			pack()
+			Structure AA5j {
+			   0   AA5j   28      "Self Base"
+			   28   char[32]   32      "Filler for 4 Unplaceable Virtual Bases: AA5b; AA5e; AA5d; AA5f"
+			}
+			Length: 60 Alignment: 4
+			/AA5a
+			pack()
+			Structure AA5a {
+			   0   int   4   aa5ai   ""
+			}
+			Length: 4 Alignment: 4
+			/AA5c
+			pack()
+			Structure AA5c {
+			   0   int   4   aa5ci   ""
+			}
+			Length: 4 Alignment: 4
 			/AA5g/!internal/AA5g
 			pack()
 			Structure AA5g {
@@ -10723,6 +12230,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   aa6ai   ""
 			}
 			Length: 4 Alignment: 4
+			/AA6c/!internal/AA6c
+			pack()
+			Structure AA6c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa6ci   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA6c() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA6c
+			pack()
+			Structure AA6c {
+			   0   AA6c   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA6a"
+			}
+			Length: 12 Alignment: 4
 			/AA6c/!internal/AA6c
 			pack()
 			Structure AA6c {
@@ -10980,6 +12509,42 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA6g() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA6g
+			pack()
+			Structure AA6g {
+			   0   AA6g   16      "Self Base"
+			   16   char[4]   4      "Filler for 1 Unplaceable Virtual Base: AA6a"
+			}
+			Length: 20 Alignment: 4
+			/AA6a
+			pack()
+			Structure AA6a {
+			   0   int   4   aa6ai   ""
+			}
+			Length: 4 Alignment: 4
+			/AA6c/!internal/AA6c
+			pack()
+			Structure AA6c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa6ci   ""
+			}
+			Length: 8 Alignment: 4
+			/AA6g/!internal/AA6g
+			pack()
+			Structure AA6g {
+			   0   AA6c   8      "Base"
+			   8   int   4   aa6gi   ""
+			   12   AA6a   4   aa6a   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA6g() {
 		return convertCommentsToSpeculative(getExpectedStructAA6g());
 	}
@@ -11066,6 +12631,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   4   int   4   aa6ci   ""
 			}
 			Length: 8 Alignment: 4
+			/AA6h/!internal/AA6h
+			pack()
+			Structure AA6h {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa6hi   ""
+			   8   AA6a   4   aa6a   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA6h() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA6h
+			pack()
+			Structure AA6h {
+			   0   AA6h   12      "Self Base"
+			   12   char[12]   12      "Filler for 2 Unplaceable Virtual Bases: AA6c; AA6a"
+			}
+			Length: 24 Alignment: 4
+			/AA6a
+			pack()
+			Structure AA6a {
+			   0   int   4   aa6ai   ""
+			}
+			Length: 4 Alignment: 4
 			/AA6h/!internal/AA6h
 			pack()
 			Structure AA6h {
@@ -11186,6 +12780,36 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   4   int   4   aa6ci   ""
 			}
 			Length: 8 Alignment: 4
+			/AA6j/!internal/AA6j
+			pack()
+			Structure AA6j {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   aa6hj   ""
+			   8   AA6a   4   aa6a   ""
+			   12   AA6j *   4   paa6j   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructAA6j() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA6j
+			pack()
+			Structure AA6j {
+			   0   AA6j   16      "Self Base"
+			   16   char[12]   12      "Filler for 2 Unplaceable Virtual Bases: AA6c; AA6a"
+			}
+			Length: 28 Alignment: 4
+			/AA6a
+			pack()
+			Structure AA6a {
+			   0   int   4   aa6ai   ""
+			}
+			Length: 4 Alignment: 4
 			/AA6j/!internal/AA6j
 			pack()
 			Structure AA6j {
@@ -11576,6 +13200,29 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructAA7d() {
+		String expected =
+		//@formatter:off
+			"""
+			/AA7d
+			pack()
+			Structure AA7d {
+			   0   AA7d   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: AA7a; AA7b"
+			}
+			Length: 28 Alignment: 4
+			/AA7d/!internal/AA7d
+			pack()
+			Structure AA7d {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   aa7di   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructAA7d() {
 		return convertCommentsToSpeculative(getExpectedStructAA7d());
 	}
@@ -11791,6 +13438,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructBB1c() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB1c
+			pack()
+			Structure BB1c {
+			   0   BB1c   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB1a"
+			}
+			Length: 12 Alignment: 4
+			/BB1c/!internal/BB1c
+			pack()
+			Structure BB1c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb1ci   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructBB1c() {
 		return convertCommentsToSpeculative(getExpectedStructBB1c());
 	}
@@ -11859,6 +13528,49 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			Structure BB1d {
 			   0   BB1d   20      "Self Base"
 			   20   BB1a   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 4
+			/BB1a
+			pack()
+			Structure BB1a {
+			   0   int   4   bb1ai   ""
+			}
+			Length: 4 Alignment: 4
+			/BB1b
+			pack()
+			Structure BB1b {
+			   0   BB1a   4      "Base"
+			   4   int   4   bb1bi   ""
+			}
+			Length: 8 Alignment: 4
+			/BB1c/!internal/BB1c
+			pack()
+			Structure BB1c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb1ci   ""
+			}
+			Length: 8 Alignment: 4
+			/BB1d/!internal/BB1d
+			pack()
+			Structure BB1d {
+			   0   BB1b   8      "Base"
+			   8   BB1c   8      "Base"
+			   16   int   4   bb1di   ""
+			}
+			Length: 20 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB1d() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB1d
+			pack()
+			Structure BB1d {
+			   0   BB1d   20      "Self Base"
+			   20   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB1a"
 			}
 			Length: 24 Alignment: 4
 			/BB1a
@@ -12009,6 +13721,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructBB2a() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB2a
+			pack()
+			Structure BB2a {
+			   0   BB2a   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB2z"
+			}
+			Length: 12 Alignment: 4
+			/BB2a/!internal/BB2a
+			pack()
+			Structure BB2a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ai   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructBB2a() {
 		return convertCommentsToSpeculative(getExpectedStructBB2a());
 	}
@@ -12093,6 +13827,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   bb2zi   ""
 			}
 			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB2b() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB2b
+			pack()
+			Structure BB2b {
+			   0   BB2b   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB2z"
+			}
+			Length: 16 Alignment: 4
+			/BB2a/!internal/BB2a
+			pack()
+			Structure BB2a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ai   ""
+			}
+			Length: 8 Alignment: 4
+			/BB2b/!internal/BB2b
+			pack()
+			Structure BB2b {
+			   0   BB2a   8      "Base"
+			   8   int   4   bb2bi   ""
+			}
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -12189,6 +13952,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   bb2zi   ""
 			}
 			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB2c() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB2c
+			pack()
+			Structure BB2c {
+			   0   BB2c   8      "Self Base"
+			   8   char[12]   12      "Filler for 2 Unplaceable Virtual Bases: BB2a; BB2z"
+			}
+			Length: 20 Alignment: 4
+			/BB2c/!internal/BB2c
+			pack()
+			Structure BB2c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ci   ""
+			}
+			Length: 8 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -12340,6 +14125,50 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructBB2d() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB2d
+			pack()
+			Structure BB2d {
+			   0   BB2d   24      "Self Base"
+			   24   char[12]   12      "Filler for 2 Unplaceable Virtual Bases: BB2z; BB2a"
+			}
+			Length: 36 Alignment: 4
+			/BB2a/!internal/BB2a
+			pack()
+			Structure BB2a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ai   ""
+			}
+			Length: 8 Alignment: 4
+			/BB2b/!internal/BB2b
+			pack()
+			Structure BB2b {
+			   0   BB2a   8      "Base"
+			   8   int   4   bb2bi   ""
+			}
+			Length: 12 Alignment: 4
+			/BB2c/!internal/BB2c
+			pack()
+			Structure BB2c {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ci   ""
+			}
+			Length: 8 Alignment: 4
+			/BB2d/!internal/BB2d
+			pack()
+			Structure BB2d {
+			   0   BB2b   12      "Base"
+			   12   BB2c   8      "Base"
+			   20   int   4   bb2di   ""
+			}
+			Length: 24 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructBB2d() {
 		return convertCommentsToSpeculative(getExpectedStructBB2d());
 	}
@@ -12476,6 +14305,42 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   bb2zi   ""
 			}
 			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB2e() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB2e
+			pack()
+			Structure BB2e {
+			   0   BB2e   16      "Self Base"
+			   16   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB2z"
+			}
+			Length: 20 Alignment: 4
+			/BB2a/!internal/BB2a
+			pack()
+			Structure BB2a {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   bb2ai   ""
+			}
+			Length: 8 Alignment: 4
+			/BB2b/!internal/BB2b
+			pack()
+			Structure BB2b {
+			   0   BB2a   8      "Base"
+			   8   int   4   bb2bi   ""
+			}
+			Length: 12 Alignment: 4
+			/BB2e/!internal/BB2e
+			pack()
+			Structure BB2e {
+			   0   BB2b   12      "Base"
+			   12   int   4   bb2ei   ""
+			}
+			Length: 16 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -12692,6 +14557,42 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructBB3d() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB3d
+			pack()
+			Structure BB3d {
+			   0   BB3d   16      "Self Base"
+			   16   char[4]   4      "Filler for 1 Unplaceable Virtual Base: BB3b"
+			}
+			Length: 20 Alignment: 4
+			/BB3a
+			pack()
+			Structure BB3a {
+			   0   int   4   bb3ai   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3c
+			pack()
+			Structure BB3c {
+			   0   int   4   bb3ci   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3d/!internal/BB3d
+			pack()
+			Structure BB3d {
+			   0   BB3a   4      "Base"
+			   4   BB3c   4      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   bb3di   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructBB3d() {
 		return convertCommentsToSpeculative(getExpectedStructBB3d());
 	}
@@ -12778,6 +14679,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			pack()
 			Structure BB3c {
 			   0   int   4   bb3ci   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3e/!internal/BB3e
+			pack()
+			Structure BB3e {
+			   0   BB3b   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   bb3ei   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB3e() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB3e
+			pack()
+			Structure BB3e {
+			   0   BB3e   12      "Self Base"
+			   12   char[8]   8      "Filler for 2 Unplaceable Virtual Bases: BB3a; BB3c"
+			}
+			Length: 20 Alignment: 4
+			/BB3b
+			pack()
+			Structure BB3b {
+			   0   int   4   bb3bi   ""
 			}
 			Length: 4 Alignment: 4
 			/BB3e/!internal/BB3e
@@ -12885,6 +14815,64 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   32   BB3b   4      "Virtual Base"
 			   36   BB3a   4      "Virtual Base"
 			   40   BB3c   4      "Virtual Base"
+			}
+			Length: 44 Alignment: 4
+			/BB3a
+			pack()
+			Structure BB3a {
+			   0   int   4   bb3ai   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3b
+			pack()
+			Structure BB3b {
+			   0   int   4   bb3bi   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3c
+			pack()
+			Structure BB3c {
+			   0   int   4   bb3ci   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3d/!internal/BB3d
+			pack()
+			Structure BB3d {
+			   0   BB3a   4      "Base"
+			   4   BB3c   4      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   bb3di   ""
+			}
+			Length: 16 Alignment: 4
+			/BB3e/!internal/BB3e
+			pack()
+			Structure BB3e {
+			   0   BB3b   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   bb3ei   ""
+			}
+			Length: 12 Alignment: 4
+			/BB3f/!internal/BB3f
+			pack()
+			Structure BB3f {
+			   0   BB3d   16      "Base"
+			   16   BB3e   12      "Base"
+			   28   int   4   bb3fi   ""
+			}
+			Length: 32 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB3f() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB3f
+			pack()
+			Structure BB3f {
+			   0   BB3f   32      "Self Base"
+			   32   char[12]   12      "Filler for 3 Unplaceable Virtual Bases: BB3b; BB3a; BB3c"
 			}
 			Length: 44 Alignment: 4
 			/BB3a
@@ -13044,6 +15032,64 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   32   BB3a   4      "Virtual Base"
 			   36   BB3c   4      "Virtual Base"
 			   40   BB3b   4      "Virtual Base"
+			}
+			Length: 44 Alignment: 4
+			/BB3a
+			pack()
+			Structure BB3a {
+			   0   int   4   bb3ai   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3b
+			pack()
+			Structure BB3b {
+			   0   int   4   bb3bi   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3c
+			pack()
+			Structure BB3c {
+			   0   int   4   bb3ci   ""
+			}
+			Length: 4 Alignment: 4
+			/BB3d/!internal/BB3d
+			pack()
+			Structure BB3d {
+			   0   BB3a   4      "Base"
+			   4   BB3c   4      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   bb3di   ""
+			}
+			Length: 16 Alignment: 4
+			/BB3e/!internal/BB3e
+			pack()
+			Structure BB3e {
+			   0   BB3b   4      "Base"
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   bb3ei   ""
+			}
+			Length: 12 Alignment: 4
+			/BB3g/!internal/BB3g
+			pack()
+			Structure BB3g {
+			   0   BB3e   12      "Base"
+			   12   BB3d   16      "Base"
+			   28   int   4   bb3gi   ""
+			}
+			Length: 32 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructBB3g() {
+		String expected =
+		//@formatter:off
+			"""
+			/BB3g
+			pack()
+			Structure BB3g {
+			   0   BB3g   32      "Self Base"
+			   32   char[12]   12      "Filler for 3 Unplaceable Virtual Bases: BB3a; BB3c; BB3b"
 			}
 			Length: 44 Alignment: 4
 			/BB3a
@@ -13568,6 +15614,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   double   8   cc1fd   ""
 			}
 			Length: 8 Alignment: 8
+			/CC1h/!internal/CC1h
+			pack()
+			Structure CC1h {
+			   0   pointer   4   {vbptr}   ""
+			   4   char   1   cc1hc   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructCC1h() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC1h
+			pack()
+			Structure CC1h {
+			   0   CC1h   8      "Self Base"
+			   8   char[32]   32      "Filler for 6 Unplaceable Virtual Bases: CC1a; CC1b; CC1c; CC1d; CC1e; CC1f"
+			}
+			Length: 40 Alignment: 4
 			/CC1h/!internal/CC1h
 			pack()
 			Structure CC1h {
@@ -14339,6 +16407,28 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructDD1b() {
+		String expected =
+		//@formatter:off
+			"""
+			/DD1b
+			pack()
+			Structure DD1b {
+			   0   DD1b   8      "Self Base"
+			   8   char[4]   4      "Filler for 1 Unplaceable Virtual Base: DD1a"
+			}
+			Length: 12 Alignment: 4
+			/DD1b/!internal/DD1b
+			pack()
+			Structure DD1b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   dd1bi   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructDD1b() {
 		return convertCommentsToSpeculative(getExpectedStructDD1b());
 	}
@@ -14427,6 +16517,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructDD1c() {
+		String expected =
+		//@formatter:off
+			"""
+			/DD1c
+			pack()
+			Structure DD1c {
+			   0   DD1c   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: DD1a"
+			}
+			Length: 16 Alignment: 4
+			/DD1b/!internal/DD1b
+			pack()
+			Structure DD1b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   dd1bi   ""
+			}
+			Length: 8 Alignment: 4
+			/DD1c/!internal/DD1c
+			pack()
+			Structure DD1c {
+			   0   DD1b   8      "Base"
+			   8   int   4   dd1ci   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructDD1c() {
 		return convertCommentsToSpeculative(getExpectedStructDD1c());
 	}
@@ -14497,6 +16616,35 @@ public class Egray832ProgramCreator extends ProgramCreator {
 			   0   int   4   dd1ai   ""
 			}
 			Length: 4 Alignment: 4
+			/DD1b/!internal/DD1b
+			pack()
+			Structure DD1b {
+			   0   pointer   4   {vbptr}   ""
+			   4   int   4   dd1bi   ""
+			}
+			Length: 8 Alignment: 4
+			/DD1d/!internal/DD1d
+			pack()
+			Structure DD1d {
+			   0   DD1b   8      "Base"
+			   8   int   4   dd1di   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructDD1d() {
+		String expected =
+		//@formatter:off
+			"""
+			/DD1d
+			pack()
+			Structure DD1d {
+			   0   DD1d   12      "Self Base"
+			   12   char[4]   4      "Filler for 1 Unplaceable Virtual Base: DD1a"
+			}
+			Length: 16 Alignment: 4
 			/DD1b/!internal/DD1b
 			pack()
 			Structure DD1b {
@@ -14964,6 +17112,78 @@ public class Egray832ProgramCreator extends ProgramCreator {
 		expectedStructs.put(DD2c, getExpectedStructDD2c());
 		expectedStructs.put(DD2d, getExpectedStructDD2d());
 		expectedStructs.put(DD2e, getExpectedStructDD2e());
+	}
+
+	private static final Map<ClassID, String> fillerStructs = new LinkedHashMap<>();
+	static {
+		fillerStructs.putAll(expectedStructs);
+		fillerStructs.put(G, getFillerStructG());
+		fillerStructs.put(H, getFillerStructH());
+		fillerStructs.put(GG1, getFillerStructGG1());
+		fillerStructs.put(GG2, getFillerStructGG2());
+		fillerStructs.put(GG3, getFillerStructGG3());
+		fillerStructs.put(GG4, getFillerStructGG4());
+		fillerStructs.put(I, getFillerStructI());
+		fillerStructs.put(GX1, getFillerStructGX1());
+		fillerStructs.put(HX1, getFillerStructHX1());
+		fillerStructs.put(IX1, getFillerStructIX1());
+		fillerStructs.put(G1, getFillerStructG1());
+		fillerStructs.put(H1, getFillerStructH1());
+		fillerStructs.put(I1, getFillerStructI1());
+		fillerStructs.put(I2, getFillerStructI2());
+		fillerStructs.put(I3, getFillerStructI3());
+		fillerStructs.put(I4, getFillerStructI4());
+		fillerStructs.put(I5, getFillerStructI5());
+		fillerStructs.put(J1, getFillerStructJ1());
+		fillerStructs.put(J2, getFillerStructJ2());
+		fillerStructs.put(J3, getFillerStructJ3());
+		fillerStructs.put(J4, getFillerStructJ4());
+		fillerStructs.put(J6, getFillerStructJ6());
+		fillerStructs.put(T, getFillerStructT());
+		fillerStructs.put(U, getFillerStructU());
+		fillerStructs.put(AA3a, getFillerStructAA3a());
+		fillerStructs.put(AA3b, getFillerStructAA3b());
+		fillerStructs.put(AA3c, getFillerStructAA3c());
+		fillerStructs.put(AA3d, getFillerStructAA3d());
+		fillerStructs.put(AA3g, getFillerStructAA3g());
+		fillerStructs.put(AA4a, getFillerStructAA4a());
+		fillerStructs.put(AA4b, getFillerStructAA4b());
+		fillerStructs.put(AA4c, getFillerStructAA4c());
+		fillerStructs.put(AA4d, getFillerStructAA4d());
+		fillerStructs.put(AA4e, getFillerStructAA4e());
+		fillerStructs.put(AA4f, getFillerStructAA4f());
+		fillerStructs.put(AA4g, getFillerStructAA4g());
+		fillerStructs.put(AA4j, getFillerStructAA4j());
+		fillerStructs.put(AA4k, getFillerStructAA4k());
+		fillerStructs.put(AA4m, getFillerStructAA4m());
+		fillerStructs.put(AA4n, getFillerStructAA4n());
+		fillerStructs.put(AA4p, getFillerStructAA4p());
+		fillerStructs.put(AA4q, getFillerStructAA4q());
+		fillerStructs.put(AA5e, getFillerStructAA5e());
+		fillerStructs.put(AA5f, getFillerStructAA5f());
+		fillerStructs.put(AA5g, getFillerStructAA5g());
+		fillerStructs.put(AA5h, getFillerStructAA5h());
+		fillerStructs.put(AA5j, getFillerStructAA5j());
+		fillerStructs.put(AA6c, getFillerStructAA6c());
+		fillerStructs.put(AA6g, getFillerStructAA6g());
+		fillerStructs.put(AA6h, getFillerStructAA6h());
+		fillerStructs.put(AA6j, getFillerStructAA6j());
+		fillerStructs.put(AA7d, getFillerStructAA7d());
+		fillerStructs.put(BB1c, getFillerStructBB1c());
+		fillerStructs.put(BB1d, getFillerStructBB1d());
+		fillerStructs.put(BB2a, getFillerStructBB2a());
+		fillerStructs.put(BB2b, getFillerStructBB2b());
+		fillerStructs.put(BB2c, getFillerStructBB2c());
+		fillerStructs.put(BB2d, getFillerStructBB2d());
+		fillerStructs.put(BB2e, getFillerStructBB2e());
+		fillerStructs.put(BB3d, getFillerStructBB3d());
+		fillerStructs.put(BB3e, getFillerStructBB3e());
+		fillerStructs.put(BB3f, getFillerStructBB3f());
+		fillerStructs.put(BB3g, getFillerStructBB3g());
+		fillerStructs.put(CC1h, getFillerStructCC1h());
+		fillerStructs.put(DD1b, getFillerStructDD1b());
+		fillerStructs.put(DD1c, getFillerStructDD1c());
+		fillerStructs.put(DD1d, getFillerStructDD1d());
 	}
 
 	private static final Map<ClassID, String> speculatedStructs = new LinkedHashMap<>();
@@ -15438,6 +17658,10 @@ public class Egray832ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, String> getExpectedStructs() {
 		return expectedStructs;
+	}
+
+	public Map<ClassID, String> getFillerStructs() {
+		return fillerStructs;
 	}
 
 	public Map<ClassID, String> getSpeculatedStructs() {
