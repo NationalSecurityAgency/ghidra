@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,9 +100,6 @@ public class VariableSymbolDB extends SymbolDB {
 		return variableStorage;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getSymbolType()
-	 */
 	@Override
 	public SymbolType getSymbolType() {
 		return type;
@@ -115,18 +112,12 @@ public class VariableSymbolDB extends SymbolDB {
 		return isValid;
 	}
 
-	/**
-	 * @see ghidra.program.database.symbol.SymbolDB#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		// TODO: not sure what constitutes equality since address will differ
 		return obj == this;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#delete()
-	 */
 	@Override
 	public boolean delete() {
 		lock.acquire();
@@ -146,9 +137,6 @@ public class VariableSymbolDB extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		FunctionDB func = getFunction();
@@ -158,9 +146,6 @@ public class VariableSymbolDB extends SymbolDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return false;
@@ -178,9 +163,6 @@ public class VariableSymbolDB extends SymbolDB {
 					getParentNamespace().getID());
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
 	@Override
 	public ProgramLocation getProgramLocation() {
 		Variable var = (Variable) getObject();
@@ -190,9 +172,6 @@ public class VariableSymbolDB extends SymbolDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		// symbol is locked to single function and can't be moved
@@ -270,9 +249,8 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	/**
-	 * Change the storage address and data-type associated with this
-	 * variable symbol.
-	 * @param newStorage
+	 * Change the storage address and data-type associated with this variable symbol.
+	 * @param newStorage the new storage
 	 * @param dt data-type
 	 */
 	public void setStorageAndDataType(VariableStorage newStorage, DataType dt) {

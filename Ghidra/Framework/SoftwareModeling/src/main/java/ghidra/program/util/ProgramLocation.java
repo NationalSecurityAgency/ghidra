@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,6 +48,7 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 	private int row;
 	private int col;
 	private int charOffset;
+	private boolean hasBeenRestored;
 
 	/**
 	 * Construct a new ProgramLocation.
@@ -237,24 +238,31 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 	/**
 	 * Restore this program location using the given program and save state object.
 	 *
-	 * @param program1 program to restore from
+	 * @param newProgram program to restore from
 	 * @param obj the save state to restore from
 	 */
-	public void restoreState(Program program1, SaveState obj) {
-		this.program = program1;
+	public void restoreState(Program newProgram, SaveState obj) {
+
+		if (hasBeenRestored) {
+			// ProgramLoations are intended to be immutable.  Calling this repeatedly breaks that.
+			Msg.debug(this, "restoreState() has been called multiple times");
+			return;
+		}
+		hasBeenRestored = true;
+
+		program = newProgram;
 		String addrStr = obj.getString("_ADDRESS", "0");
 		String byteAddrStr = obj.getString("_BYTE_ADDR", addrStr);
 		String refAddrStr = obj.getString("_REF_ADDRESS", null);
 		componentPath = obj.getInts("_COMP_PATH", null);
-		addr = ProgramUtilities.parseAddress(program1, addrStr);
-		byteAddr = ProgramUtilities.parseAddress(program1, byteAddrStr);
+		addr = ProgramUtilities.parseAddress(program, addrStr);
+		byteAddr = ProgramUtilities.parseAddress(program, byteAddrStr);
 		if (refAddrStr != null) {
-			refAddr = ProgramUtilities.parseAddress(program1, refAddrStr);
+			refAddr = ProgramUtilities.parseAddress(program, refAddrStr);
 		}
 		col = obj.getInt("_COLUMN", 0);
 		row = obj.getInt("_ROW", 0);
 		charOffset = obj.getInt("_CHAR_OFFSET", 0);
-
 	}
 
 	/**
@@ -271,18 +279,24 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 		}
 
 		try {
-			Class<?> locClass = Class.forName(className);
-			ProgramLocation loc = (ProgramLocation) locClass.getConstructor().newInstance();
+			Class<?> locationClass = Class.forName(className);
+			if (locationClass.isInterface()) {
+				// This check is needed due to a refactoring that has changed a class into an 
+				// interface.  The class name may have been saved into the tool.  Upon restoring we
+				// may try to restore that class.  If that class is now an interface, the restore
+				// will not work.
+				return null;
+			}
+
+			ProgramLocation loc = (ProgramLocation) locationClass.getConstructor().newInstance();
 			loc.restoreState(program, saveState);
 			if (loc.getAddress() != null) {
 				return loc;
 			}
 			// no address, it must be in a removed block; we can't use it
 		}
-		catch (RuntimeException e) { // state may not parse the address if it is no longer valid
-		}
 		catch (ClassNotFoundException e) {
-			// not sure why we are ignoring this--if you know, then please let everyone else know
+			// this can happen for locations created by plugins that are no longer installed
 		}
 		catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
 			Msg.showError(ProgramLocation.class, null, "Programming Error",

@@ -128,9 +128,14 @@ public interface Symbol {
 	public Reference[] getReferences();
 
 	/**
-	 * @return a program location corresponding to this symbol
+	 * Returns a program location for this symbol; may be null.  This allows implementations to 
+	 * return a more specific program location than what is typically used by the system.  
+	 * 
+	 * @return the location
 	 */
-	public ProgramLocation getProgramLocation();
+	public default ProgramLocation getProgramLocation() {
+		return null;
+	}
 
 	/**
 	 * Sets the name this symbol.
