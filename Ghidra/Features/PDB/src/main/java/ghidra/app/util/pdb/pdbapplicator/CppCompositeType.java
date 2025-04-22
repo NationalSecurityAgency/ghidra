@@ -391,7 +391,8 @@ public class CppCompositeType {
 				createMembersOnlyClassLayout(monitor);
 				break;
 			case CLASS_HIERARCHY:
-				createHierarchicalClassLayout(vxtManager, monitor);
+			case CLASS_HIERARCHY_SPECULATIVE:
+				createHierarchicalClassLayout(vxtManager, layoutOptions, monitor);
 				// Next line for developer testing cfb432
 				//System.out.print(summarizedClassVxtPtrInfo);
 				break;
@@ -817,7 +818,8 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	//==============================================================================================
-	private void createHierarchicalClassLayout(MsftVxtManager vxtManager, TaskMonitor monitor)
+	private void createHierarchicalClassLayout(MsftVxtManager vxtManager,
+			ObjectOrientedClassLayout layoutOptions, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 
 		initLayoutAlgorithmData();
@@ -827,7 +829,7 @@ public class CppCompositeType {
 		findOrAllocateMainVftPtr(vxtManager);
 		findOrAllocateMainVbtPtr(vxtManager);
 
-		createClassLayout(vxtManager, monitor);
+		createClassLayout(vxtManager, layoutOptions, monitor);
 
 		finalizeAllVxtParentage();
 
@@ -1045,7 +1047,8 @@ public class CppCompositeType {
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException up issue with finding the vbt or assigning offsets to virtual bases
 	 */
-	private void createClassLayout(MsftVxtManager vxtManager, TaskMonitor monitor)
+	private void createClassLayout(MsftVxtManager vxtManager,
+			ObjectOrientedClassLayout layoutOptions, TaskMonitor monitor)
 			throws CancelledException, PdbException {
 		List<ClassPdbMember> selfBaseMembers = getSelfBaseClassMembers();
 		mainVft = getMainVft(vxtManager);
@@ -1082,16 +1085,11 @@ public class CppCompositeType {
 //					updateVbtFromSelf(vbt);
 //				}
 			}
-			assignVirtualBaseOffsets();
-
-			String baseComment = (mainVbt instanceof ProgramVirtualBaseTable) ? VIRTUAL_BASE_COMMENT
-					: VIRTUAL_BASE_SPECULATIVE_COMMENT;
-			TreeMap<Long, ClassPdbMember> virtualBasePdbMembers =
-				getVirtualBaseClassMembers(baseComment);
-			findVirtualBaseVxtPtrs(vxtManager);
 
 			TreeMap<Long, ClassPdbMember> allMembers = new TreeMap<>();
 			allMembers.put(0L, directClassPdbMember);
+			TreeMap<Long, ClassPdbMember> virtualBasePdbMembers =
+				processVirtualBaseClasses(vxtManager, layoutOptions);
 			allMembers.putAll(virtualBasePdbMembers);
 			List<ClassPdbMember> am = new ArrayList<>(allMembers.values());
 
@@ -1446,6 +1444,58 @@ public class CppCompositeType {
 		List<ClassID> newParentage = new ArrayList<>(info.parentage());
 		newParentage.add(myId);
 		return newParentage;
+	}
+
+	private TreeMap<Long, ClassPdbMember> processVirtualBaseClasses(MsftVxtManager vxtManager,
+			ObjectOrientedClassLayout layoutOptions)
+			throws PdbException {
+		if (mainVbt instanceof PlaceholderVirtualBaseTable pvbt &&
+			layoutOptions == ObjectOrientedClassLayout.CLASS_HIERARCHY &&
+			virtualLayoutBaseClasses.size() > 0) {
+			TreeMap<Long, ClassPdbMember> virtualBasePdbMembers = provideVirtualBaseFillerBytes();
+			return virtualBasePdbMembers;
+		}
+		// Below processes CLASS_HIERARCHY with ProgramVirtualBaseTable and also processes
+		//  CLASS_HIERARCHY_SPECULATIVE
+		assignVirtualBaseOffsets();
+		String baseComment = (mainVbt instanceof ProgramVirtualBaseTable) ? VIRTUAL_BASE_COMMENT
+				: VIRTUAL_BASE_SPECULATIVE_COMMENT;
+		TreeMap<Long, ClassPdbMember> virtualBasePdbMembers =
+			getVirtualBaseClassMembers(baseComment);
+		findVirtualBaseVxtPtrs(vxtManager);
+		return virtualBasePdbMembers;
+	}
+
+	private TreeMap<Long, ClassPdbMember> provideVirtualBaseFillerBytes() throws PdbException {
+		TreeMap<Long, ClassPdbMember> fillerForVirtualBasePdbMembers = new TreeMap<>();
+		int numVirtualBases = virtualLayoutBaseClasses.size();
+		if (numVirtualBases == 0) {
+			return fillerForVirtualBasePdbMembers;
+		}
+		int offset = selfBaseType.getLength();
+		int fillerSize = size - offset;
+		StringBuilder builder = new StringBuilder();
+		builder.append("Filler for " + numVirtualBases + " Unplaceable Virtual Base");
+		builder.append(numVirtualBases == 1 ? ":" : "s:");
+		boolean first = true;
+		for (VirtualLayoutBaseClass base : virtualLayoutBaseClasses) {
+			CppCompositeType cppBaseType = base.getBaseClassType();
+			if (!first) {
+				builder.append(";");
+			}
+			first = false;
+			builder.append(" ");
+			builder.append(cppBaseType.getName());
+		}
+		String comment = builder.toString();
+		ArrayDataType fillerDataType = new ArrayDataType(CharDataType.dataType, fillerSize);
+		boolean isFlexArray = (fillerSize == 0);
+		// This does not have attributes
+
+		ClassPdbMember fillerPdbMember =
+			new ClassPdbMember("", fillerDataType, isFlexArray, offset, comment);
+		fillerForVirtualBasePdbMembers.put((long) offset, fillerPdbMember);
+		return fillerForVirtualBasePdbMembers;
 	}
 
 	/**

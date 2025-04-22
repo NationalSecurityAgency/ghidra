@@ -1592,6 +1592,36 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructQ4() {
+		String expected =
+		//@formatter:off
+			"""
+			/Q4NS::Q4
+			pack()
+			Structure Q4NS::Q4 {
+			   0   Q4NS::Q4   16      "Self Base"
+			   16   char[8]   8      "Filler for 1 Unplaceable Virtual Base: P1NS::P1"
+			}
+			Length: 24 Alignment: 4
+			/P2NS::P2
+			pack()
+			Structure P2NS::P2 {
+			   0   pointer   4   {vfptr}   ""
+			   4   int   4   p2   ""
+			}
+			Length: 8 Alignment: 4
+			/Q4NS::Q4/!internal/Q4NS::Q4
+			pack()
+			Structure Q4NS::Q4 {
+			   0   P2NS::P2   8      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   q4   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructQ4() {
 		return convertCommentsToSpeculative(getExpectedStructQ4());
 	}
@@ -1774,6 +1804,36 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 			Structure P2NS::P2 {
 			   0   pointer   4   {vfptr}   ""
 			   4   int   4   p2   ""
+			}
+			Length: 8 Alignment: 4
+			/Q5NS::Q5/!internal/Q5NS::Q5
+			pack()
+			Structure Q5NS::Q5 {
+			   0   P1NS::P1   8      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   q5   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructQ5() {
+		String expected =
+		//@formatter:off
+			"""
+			/Q5NS::Q5
+			pack()
+			Structure Q5NS::Q5 {
+			   0   Q5NS::Q5   16      "Self Base"
+			   16   char[8]   8      "Filler for 1 Unplaceable Virtual Base: P2NS::P2"
+			}
+			Length: 24 Alignment: 4
+			/P1NS::P1
+			pack()
+			Structure P1NS::P1 {
+			   0   pointer   4   {vfptr}   ""
+			   4   int   4   p1   ""
 			}
 			Length: 8 Alignment: 4
 			/Q5NS::Q5/!internal/Q5NS::Q5
@@ -1984,6 +2044,36 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructQ6() {
+		String expected =
+		//@formatter:off
+			"""
+			/Q6NS::Q6
+			pack()
+			Structure Q6NS::Q6 {
+			   0   Q6NS::Q6   16      "Self Base"
+			   16   char[8]   8      "Filler for 1 Unplaceable Virtual Base: P2NS::P2"
+			}
+			Length: 24 Alignment: 4
+			/P1NS::P1
+			pack()
+			Structure P1NS::P1 {
+			   0   pointer   4   {vfptr}   ""
+			   4   int   4   p1   ""
+			}
+			Length: 8 Alignment: 4
+			/Q6NS::Q6/!internal/Q6NS::Q6
+			pack()
+			Structure Q6NS::Q6 {
+			   0   P1NS::P1   8      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   int   4   q6   ""
+			}
+			Length: 16 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructQ6() {
 		return convertCommentsToSpeculative(getExpectedStructQ6());
 	}
@@ -2175,6 +2265,29 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 			   4   int   4   p2   ""
 			}
 			Length: 8 Alignment: 4
+			/Q7NS::Q7/!internal/Q7NS::Q7
+			pack()
+			Structure Q7NS::Q7 {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   q7   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private static String getFillerStructQ7() {
+		String expected =
+		//@formatter:off
+			"""
+			/Q7NS::Q7
+			pack()
+			Structure Q7NS::Q7 {
+			   0   Q7NS::Q7   12      "Self Base"
+			   12   char[16]   16      "Filler for 2 Unplaceable Virtual Bases: P1NS::P1; P2NS::P2"
+			}
+			Length: 28 Alignment: 4
 			/Q7NS::Q7/!internal/Q7NS::Q7
 			pack()
 			Structure Q7NS::Q7 {
@@ -2481,6 +2594,29 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getFillerStructR1() {
+		String expected =
+		//@formatter:off
+			"""
+			/R1NS::R1
+			pack()
+			Structure R1NS::R1 {
+			   0   R1NS::R1   12      "Self Base"
+			   12   char[40]   40      "Filler for 2 Unplaceable Virtual Bases: Q1NS::Q1; Q2NS::Q2"
+			}
+			Length: 52 Alignment: 4
+			/R1NS::R1/!internal/R1NS::R1
+			pack()
+			Structure R1NS::R1 {
+			   0   pointer   4   {vfptr}   ""
+			   4   pointer   4   {vbptr}   ""
+			   8   int   4   r1   ""
+			}
+			Length: 12 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
 	private static String getSpeculatedStructR1() {
 		return convertCommentsToSpeculative(getExpectedStructR1());
 	}
@@ -2667,6 +2803,16 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		expectedStructs.put(R1, getExpectedStructR1());
 	}
 
+	private static final Map<ClassID, String> fillerStructs = new LinkedHashMap<>();
+	static {
+		fillerStructs.putAll(expectedStructs);
+		fillerStructs.put(Q4, getFillerStructQ4());
+		fillerStructs.put(Q5, getFillerStructQ5());
+		fillerStructs.put(Q6, getFillerStructQ6());
+		fillerStructs.put(Q7, getFillerStructQ7());
+		fillerStructs.put(R1, getFillerStructR1());
+	}
+
 	private static final Map<ClassID, String> speculatedStructs = new LinkedHashMap<>();
 	static {
 		speculatedStructs.put(P1, getSpeculatedStructP1());
@@ -2737,6 +2883,10 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, String> getExpectedStructs() {
 		return expectedStructs;
+	}
+
+	public Map<ClassID, String> getFillerStructs() {
+		return fillerStructs;
 	}
 
 	public Map<ClassID, String> getSpeculatedStructs() {
