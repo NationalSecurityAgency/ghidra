@@ -29,6 +29,7 @@ import ghidra.app.util.pdb.*;
 import ghidra.app.util.pdb.classtype.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
 import ghidra.program.model.listing.Program;
@@ -70,6 +71,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		ObjectOrientedClassLayout.CLASS_HIERARCHY;
 	private static ObjectOrientedClassLayout speculativeLayoutChoice =
 		ObjectOrientedClassLayout.CLASS_HIERARCHY_SPECULATIVE;
+
+	ClearDataMode clearMode = ClearDataMode.CLEAR_ALL_CONFLICT_DATA;
 
 	private DataTypeManager dtm32 = new StandAloneDataTypeManager("32-bit win", dataOrg32);
 	private DataTypeManager dtm64 = new StandAloneDataTypeManager("64-bit win", dataOrg64);
@@ -2078,7 +2081,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2098,7 +2101,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2122,7 +2125,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2147,7 +2150,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2167,7 +2170,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2191,7 +2194,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2216,7 +2219,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2236,7 +2239,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2260,7 +2263,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2285,7 +2288,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2305,7 +2308,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2329,7 +2332,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2354,7 +2357,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2374,7 +2377,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2398,7 +2401,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2423,7 +2426,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}
@@ -2443,7 +2446,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, null);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
 	}
@@ -2467,7 +2470,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
 				expectedResults, expectedVxtPtrSummaries);
-			vxtManager.doTableLayouts(dtm);
+			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
 	}

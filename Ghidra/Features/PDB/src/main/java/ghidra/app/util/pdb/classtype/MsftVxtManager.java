@@ -24,11 +24,12 @@ import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
 import ghidra.app.util.demangler.microsoft.MicrosoftMangledContext;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -166,17 +167,46 @@ public class MsftVxtManager extends VxtManager {
 	}
 
 	/**
-	 * Create the vxtable structures
+	 * Create the vxtable structures; attempts to place the table type down in memory if
+	 * mode is not null and table has an address
 	 * @param dtm the data type manager
+	 * @param mode clear mode for clearing existing data; if {@code null} will not attempt to place
+	 * type in memory
 	 */
-	public void doTableLayouts(DataTypeManager dtm) {
+	public void createTables(DataTypeManager dtm, ClearDataMode mode) {
 		for (VirtualBaseTable vbt : vbtsByOwnerParentage.values()) {
 			ClassID id = vbt.getOwner();
-			vbt.getLayout(dtm, ClassUtils.getClassInternalsPath(id));
+			Structure table = vbt.createDataType(dtm, ClassUtils.getClassInternalsPath(id));
+			if (mode == null) {
+				continue;
+			}
+			if (!(vbt instanceof ProgramVirtualBaseTable pvbt)) {
+				continue;
+			}
+			Address addr = pvbt.getAddress();
+			try {
+				DataUtilities.createData(program, addr, table, table.getLength(), mode);
+			}
+			catch (CodeUnitInsertionException e) {
+				Msg.warn(this, "Could not place VBT at address: " + addr);
+			}
 		}
 		for (VirtualFunctionTable vft : vftsByOwnerParentage.values()) {
 			ClassID id = vft.getOwner();
-			vft.getLayout(dtm, ClassUtils.getClassInternalsPath(id));
+			Structure table = vft.createDataType(dtm, ClassUtils.getClassInternalsPath(id));
+			if (mode == null) {
+				continue;
+			}
+			if (!(vft instanceof ProgramVirtualFunctionTable pvft)) {
+				continue;
+			}
+			Address addr = pvft.getAddress();
+			try {
+				DataUtilities.createData(program, addr, table, table.getLength(), mode);
+			}
+			catch (CodeUnitInsertionException e) {
+				Msg.warn(this, "Could not place VFT at address: " + addr);
+			}
 		}
 	}
 
