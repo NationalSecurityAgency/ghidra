@@ -1204,7 +1204,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ANS/A/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -1220,7 +1220,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ANS/A/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -1540,7 +1540,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/BNS/B/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -1556,7 +1556,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/BNS/B/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -1787,7 +1787,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			pack()
 			Structure VTABLE_00000018 {
 			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
+			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1802,7 +1802,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/CNS/C/!internal/VTABLE_00000028
 			pack()
 			Structure VTABLE_00000028 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   CNS::C::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -1819,7 +1819,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			pack()
 			Structure VTABLE_00000038 {
 			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
+			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -1834,7 +1834,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/CNS/C/!internal/VTABLE_00000048
 			pack()
 			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   CNS::C::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -2211,8 +2211,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/DNS/D/!internal/VTABLE_00000050
 			pack()
 			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -2227,7 +2227,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/DNS/D/!internal/VTABLE_00000060
 			pack()
 			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   DNS::D::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -2243,8 +2243,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/DNS/D/!internal/VTABLE_00000070
 			pack()
 			Structure VTABLE_00000070 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -2259,7 +2259,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/DNS/D/!internal/VTABLE_00000080
 			pack()
 			Structure VTABLE_00000080 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   DNS::D::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -2534,7 +2534,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ENS/E/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ENS::E::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -2550,7 +2550,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ENS/E/!internal/VTABLE_00000030
 			pack()
 			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -2566,7 +2566,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ENS/E/!internal/VTABLE_00000040
 			pack()
 			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -2582,7 +2582,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ENS/E/!internal/VTABLE_00000050
 			pack()
 			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -2741,7 +2741,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/FNS/F/!internal/VTABLE_00000010
 			pack()
 			Structure VTABLE_00000010 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   FNS::F::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -2889,7 +2889,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/GNS/G/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   GNS::G::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -3037,7 +3037,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/HNS/H/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   HNS::H::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -3248,7 +3248,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/INS/I/!internal/VTABLE_00000038
 			pack()
 			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   INS::I::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -3378,7 +3378,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/JNS/J/!internal/VTABLE_00000010
 			pack()
 			Structure VTABLE_00000010 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   JNS::J::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -3526,7 +3526,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/KNS/K/!internal/VTABLE_00000018
 			pack()
 			Structure VTABLE_00000018 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   KNS::K::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -3692,7 +3692,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/LNS/L/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   LNS::L::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -4780,7 +4780,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000d0
 			pack()
 			Structure VTABLE_000000d0 {
-			   0   _func___thiscall_int *   8   N1NS::N1::fn1_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fn1_1   ""
 			   8   _func___thiscall_int *   8   N1NS::N1::fn1_2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -4795,8 +4795,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000e0
 			pack()
 			Structure VTABLE_000000e0 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
+			   0   _func___thiscall_int *   8   MNS::M::fa1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -4811,7 +4811,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000f0
 			pack()
 			Structure VTABLE_000000f0 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -4827,8 +4827,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_00000100
 			pack()
 			Structure VTABLE_00000100 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
+			   0   _func___thiscall_int *   8   MNS::M::fb1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -4843,7 +4843,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_00000110
 			pack()
 			Structure VTABLE_00000110 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -4903,8 +4903,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000d0
 			pack()
 			Structure VTABLE_000000d0 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
-			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
+			   0   _func___thiscall_int *   8   MNS::M::fa1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -4919,7 +4919,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000e0
 			pack()
 			Structure VTABLE_000000e0 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -4935,8 +4935,8 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_000000f0
 			pack()
 			Structure VTABLE_000000f0 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
-			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
+			   0   _func___thiscall_int *   8   MNS::M::fb1_1   ""
+			   8   _func___thiscall_int *   8   CNS::C::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
 			Length: 24 Alignment: 8""";
@@ -4951,7 +4951,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_00000100
 			pack()
 			Structure VTABLE_00000100 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -4996,7 +4996,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/MNS/M/!internal/VTABLE_00000128
 			pack()
 			Structure VTABLE_00000128 {
-			   0   _func___thiscall_int *   8   N1NS::N1::fn1_1   ""
+			   0   _func___thiscall_int *   8   MNS::M::fn1_1   ""
 			   8   _func___thiscall_int *   8   N1NS::N1::fn1_2   ""
 			}
 			Length: 16 Alignment: 8""";
@@ -5323,7 +5323,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O1NS/O1/!internal/VTABLE_00000038
 			pack()
 			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -5339,7 +5339,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O1NS/O1/!internal/VTABLE_00000048
 			pack()
 			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   O1NS::O1::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -5355,7 +5355,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O1NS/O1/!internal/VTABLE_00000058
 			pack()
 			Structure VTABLE_00000058 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -5371,7 +5371,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O1NS/O1/!internal/VTABLE_00000068
 			pack()
 			Structure VTABLE_00000068 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -5649,7 +5649,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O2NS/O2/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -5665,7 +5665,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O2NS/O2/!internal/VTABLE_00000030
 			pack()
 			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   O2NS::O2::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -5681,7 +5681,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O2NS/O2/!internal/VTABLE_00000040
 			pack()
 			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -5697,7 +5697,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O2NS/O2/!internal/VTABLE_00000050
 			pack()
 			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -6039,7 +6039,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O3NS/O3/!internal/VTABLE_00000038
 			pack()
 			Structure VTABLE_00000038 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -6055,7 +6055,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O3NS/O3/!internal/VTABLE_00000048
 			pack()
 			Structure VTABLE_00000048 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   O3NS::O3::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -6071,7 +6071,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O3NS/O3/!internal/VTABLE_00000058
 			pack()
 			Structure VTABLE_00000058 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -6087,7 +6087,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O3NS/O3/!internal/VTABLE_00000068
 			pack()
 			Structure VTABLE_00000068 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -6365,7 +6365,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O4NS/O4/!internal/VTABLE_00000020
 			pack()
 			Structure VTABLE_00000020 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ANS::A::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -6381,7 +6381,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O4NS/O4/!internal/VTABLE_00000030
 			pack()
 			Structure VTABLE_00000030 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   O4NS::O4::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -6397,7 +6397,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O4NS/O4/!internal/VTABLE_00000040
 			pack()
 			Structure VTABLE_00000040 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -6413,7 +6413,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/O4NS/O4/!internal/VTABLE_00000050
 			pack()
 			Structure VTABLE_00000050 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   BNS::B::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -6984,7 +6984,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ONS/O/!internal/VTABLE_00000060
 			pack()
 			Structure VTABLE_00000060 {
-			   0   _func___thiscall_int *   8   A1NS::A1::fa1_1   ""
+			   0   _func___thiscall_int *   8   ONS::O::fa1_1   ""
 			   8   _func___thiscall_int *   8   A1NS::A1::fa1_2   ""
 			   16   _func___thiscall_int *   8   A1NS::A1::fa1_3   ""
 			}
@@ -7000,7 +7000,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ONS/O/!internal/VTABLE_00000070
 			pack()
 			Structure VTABLE_00000070 {
-			   0   _func___thiscall_int *   8   A2NS::A2::fa2_1   ""
+			   0   _func___thiscall_int *   8   ONS::O::fa2_1   ""
 			   8   _func___thiscall_int *   8   A2NS::A2::fa2_2   ""
 			   16   _func___thiscall_int *   8   A2NS::A2::fa2_3   ""
 			}
@@ -7016,7 +7016,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ONS/O/!internal/VTABLE_00000080
 			pack()
 			Structure VTABLE_00000080 {
-			   0   _func___thiscall_int *   8   B1NS::B1::fb1_1   ""
+			   0   _func___thiscall_int *   8   ONS::O::fb1_1   ""
 			   8   _func___thiscall_int *   8   B1NS::B1::fb1_2   ""
 			   16   _func___thiscall_int *   8   B1NS::B1::fb1_3   ""
 			}
@@ -7032,7 +7032,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			/ONS/O/!internal/VTABLE_00000090
 			pack()
 			Structure VTABLE_00000090 {
-			   0   _func___thiscall_int *   8   B2NS::B2::fb2_1   ""
+			   0   _func___thiscall_int *   8   ONS::O::fb2_1   ""
 			   8   _func___thiscall_int *   8   B2NS::B2::fb2_2   ""
 			   16   _func___thiscall_int *   8   B2NS::B2::fb2_3   ""
 			}
@@ -7078,7 +7078,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			pack()
 			Structure VTABLE_000000b8 {
 			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O3NS::O3::fo3_1   ""
+			   8   _func___thiscall_int *   8   ONS::O::fo3_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
@@ -7139,7 +7139,7 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			pack()
 			Structure VTABLE_000000f0 {
 			   0   _func___thiscall_int *   8   ANS::A::fa_1   ""
-			   8   _func___thiscall_int *   8   O4NS::O4::fo4_1   ""
+			   8   _func___thiscall_int *   8   ONS::O::fo4_1   ""
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
