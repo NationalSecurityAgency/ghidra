@@ -21,7 +21,6 @@ import java.util.List;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -98,7 +97,7 @@ public class StubSymbol implements Symbol {
 	}
 
 	@Override
-	public boolean isValidParent(Namespace parent) {
+	public boolean isValidParent(Namespace nsParent) {
 		return false;
 	}
 
@@ -129,11 +128,6 @@ public class StubSymbol implements Symbol {
 
 	@Override
 	public Reference[] getReferences() {
-		return null;
-	}
-
-	@Override
-	public ProgramLocation getProgramLocation() {
 		return null;
 	}
 

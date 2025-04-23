@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import ghidra.program.util.ProgramLocation;
  *   EXTERNAL:
  *   	String stringData - external memory address/label
  */
-
 public class CodeSymbol extends SymbolDB {
 
 	/**
@@ -58,9 +57,6 @@ public class CodeSymbol extends SymbolDB {
 		super(mgr, cache, addr, key);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getSymbolType()
-	 */
 	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.LABEL;
@@ -124,9 +120,6 @@ public class CodeSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		lock.acquire();
@@ -155,9 +148,6 @@ public class CodeSymbol extends SymbolDB {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		if (getSource() == SourceType.DEFAULT || isExternal()) {
@@ -166,9 +156,6 @@ public class CodeSymbol extends SymbolDB {
 		return doCheckIsPrimary();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#setPrimary()
-	 */
 	@Override
 	public boolean setPrimary() {
 		lock.acquire();
@@ -205,17 +192,11 @@ public class CodeSymbol extends SymbolDB {
 		doSetPrimary(primary);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
 	@Override
 	public ProgramLocation getProgramLocation() {
 		return new LabelFieldLocation(this);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
