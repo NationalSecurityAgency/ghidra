@@ -108,6 +108,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 */
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+
 		if (blockKeyInput(event)) {
 			return true; // let NO events through!
 		}
@@ -143,8 +144,17 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		// actions registered on the focused component are allowed to process the event before our
 		// action system.  This allows clients to perform custom event processing without the action
 		// system interfering.
-		if (processComponentKeyListeners(event) || processInputAndActionMaps(event)) {
+		if (processComponentKeyListeners(event)) {
 			return true;
+		}
+
+		// If there is a registered Java action, let the normal Java event flow process the event.
+		// (This will only work as expected if the Java action is registered for key pressed events.
+		// If it is registered for released events, and we have a valid and enabled docking action,
+		// then the docking action will take precedence, since docking actions are always registered
+		// for key pressed events.)
+		if (hasJavaAction(event)) {
+			return false;
 		}
 
 		if (!executableAction.isValid()) {
@@ -380,7 +390,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	//
 	// returns true if there is a focused component that has an action for the given event
 	// and it processes that action.
-	private boolean processInputAndActionMaps(KeyEvent event) {
+	private boolean hasJavaAction(KeyEvent event) {
 
 		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 		Component focusOwner = focusProvider.getFocusOwner();
@@ -390,12 +400,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		JComponent jComponent = (JComponent) focusOwner;
 		Action action = getJavaActionForComponent(jComponent, keyStroke);
-		if (action != null) {
-			Object source = event.getSource();
-			int modifiers = event.getModifiersEx();
-			return SwingUtilities.notifyAction(action, keyStroke, event, source, modifiers);
-		}
-		return false;
+		return action != null && action.isEnabled();
 	}
 
 	private Action getJavaActionForComponent(JComponent jComponent, KeyStroke keyStroke) {
