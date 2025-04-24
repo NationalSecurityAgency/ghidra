@@ -373,6 +373,7 @@ define register offset=2100 size=8  [
 ];
 
 # dummy registers for managing broadcast data for AVX512
+define register offset=2200 size=4 [ BCST4 ];
 define register offset=2200 size=8 [ BCST8 ];
 define register offset=2200 size=16 [ BCST16 ];
 define register offset=2200 size=32 [ BCST32 ];
@@ -446,6 +447,7 @@ define context contextreg
   vexVVVV_XmmReg=(25,28)       # value of vex byte for matching XmmReg
   vexVVVV_YmmReg=(25,28)       # value of vex byte for matching YmmReg
   vexVVVV_ZmmReg=(25,28)       # value of vex byte for matching ZmmReg
+
     vexHighV=(25,25)
   evexVopmask=(26,28)  # VEX.vvvv opmask
 
@@ -591,9 +593,23 @@ define token modrm (8)
   xmmreg1_x     = (3,5)
   ymmreg1_x     = (3,5)
   zmmreg1_x     = (3,5)
+  xmmreg1_r     = (3,5)
+  ymmreg1_r     = (3,5)
+  zmmreg1_r     = (3,5)
+  xmmreg1_rx    = (3,5)
+  ymmreg1_rx    = (3,5)
+  zmmreg1_rx    = (3,5)
+  xmmreg2_b     = (0,2)
+  ymmreg2_b     = (0,2)
+  zmmreg2_b     = (0,2)
   xmmreg2_x     = (0,2)
   ymmreg2_x     = (0,2)
   zmmreg2_x     = (0,2)
+  xmmreg2_bx    = (0,2)
+  ymmreg2_bx    = (0,2)
+  zmmreg2_bx    = (0,2)
+  
+
   vex_pp        = (0,1)
   vex_l         = (2,2)
   vex_vvvv      = (3,6)
@@ -606,7 +622,7 @@ define token modrm (8)
   evex_rp       = (4,4)
   evex_res      = (3,3)
   evex_res2     = (2,2)
-  evex_mmm       = (0,2)
+  evex_mmm      = (0,2)
   
   evex_z        = (7,7)
   evex_lp       = (6,6)
@@ -644,13 +660,25 @@ define token sib (8)
 ;
 
 define token I8 (8)
-  imm8_7=(7,7)
   Xmm_imm8_7_4=(4,7)
   Ymm_imm8_7_4=(4,7)
+  imm8_7=(7,7)
+  imm8_6=(6,6)
+  imm8_6_7=(6,7)
+  imm8_5=(5,5)
+  imm8_5_7=(5,7)
   imm8_4=(4,4)
+  imm8_4_7=(4,7)
+  imm8_3=(3,3)
+  imm8_3_7=(3,7)
+  imm8_2=(2,2)
+  imm8_2_7=(2,7)
+  imm8_1=(1,1)
+  imm8_1_7=(1,7)
   imm8_0=(0,0)
   imm8_3_0=(0,3)
   imm8=(0,7)
+  imm8_val=(0,7)
   simm8=(0,7) signed
 ;
   
@@ -686,7 +714,11 @@ attach variables [ mmxreg mmxreg1 mmxreg2 ] [ MM0 MM1 MM2 MM3 MM4 MM5 MM6 MM7 ];
 
 attach variables [ xmmreg xmmreg1 xmmreg2 xmm_vsib ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 ];
 
-attach variables [ xmmreg_x xmmreg1_x xmmreg2_x xmm_vsib_x ] [ XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
+attach variables [ xmmreg_x xmmreg1_x xmmreg2_b xmm_vsib_x ] [ XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
+
+attach variables [ xmmreg1_r xmmreg2_x ] [ XMM16 XMM17 XMM18 XMM19 XMM20 XMM21 XMM22 XMM23 ];
+
+attach variables [ xmmreg1_rx xmmreg2_bx ] [ XMM24 XMM25 XMM26 XMM27 XMM28 XMM29 XMM30 XMM31 ];
 
 attach variables [ vexVVVV_XmmReg Xmm_imm8_7_4 ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5 XMM6 XMM7 XMM8 XMM9 XMM10 XMM11 XMM12 XMM13 XMM14 XMM15 ];
 
@@ -713,10 +745,14 @@ attach variables [ vexVVVV_r32 ] [ EAX  ECX  EDX  EBX  ESP  EBP  ESI  EDI _    _
 attach variables [ evexOpmask opmaskreg opmaskrm evexVopmask ] [ K0  K1  K2  K3  K4  K5  K6  K7 ];
 
 attach variables [ ymmreg ymmreg1 ymmreg2 ymm_vsib ]			[ YMM0 YMM1  YMM2  YMM3  YMM4  YMM5  YMM6  YMM7 ];
-attach variables [ ymmreg_x ymmreg1_x ymmreg2_x ymm_vsib_x ]	[ YMM8 YMM9 YMM10 YMM11 YMM12 YMM13 YMM14 YMM15 ];
+attach variables [ ymmreg_x ymmreg1_x ymmreg2_b ymm_vsib_x ]	[ YMM8 YMM9 YMM10 YMM11 YMM12 YMM13 YMM14 YMM15 ];
+attach variables [ ymmreg1_r ymmreg2_x ]						[ YMM16 YMM17  YMM18  YMM19  YMM20  YMM21  YMM22  YMM23 ];
+attach variables [ ymmreg1_rx ymmreg2_bx ]						[ YMM24 YMM25  YMM26  YMM27  YMM28  YMM29  YMM30  YMM31 ];
 
 attach variables [ zmmreg zmmreg1 zmmreg2 zmm_vsib ]			[ ZMM0 ZMM1  ZMM2  ZMM3  ZMM4  ZMM5  ZMM6  ZMM7 ];
-attach variables [ zmmreg_x zmmreg1_x zmmreg2_x zmm_vsib_x ]	[ ZMM8 ZMM9 ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15 ];
+attach variables [ zmmreg_x zmmreg1_x zmmreg2_b zmm_vsib_x ]	[ ZMM8 ZMM9 ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15 ];
+attach variables [ zmmreg1_r zmmreg2_x ]						[ ZMM16 ZMM17  ZMM18  ZMM19  ZMM20  ZMM21  ZMM22  ZMM23 ];
+attach variables [ zmmreg1_rx zmmreg2_bx ]						[ ZMM24 ZMM25  ZMM26  ZMM27  ZMM28  ZMM29  ZMM30  ZMM31 ];
 
 attach variables [ bnd1 bnd2 ]       [ BND0 BND1 BND2 BND3 _ _ _ _ ];
 attach variables [ bnd1_lb bnd2_lb ] [ BND0_LB BND1_LB BND2_LB BND3_LB _ _ _ _ ];
@@ -827,17 +863,30 @@ XmmReg:   xmmreg    is rexRprefix=0 & xmmreg                            { export
 XmmReg:   xmmreg_x  is rexRprefix=1 & xmmreg_x                          { export xmmreg_x; }
 XmmReg1:  xmmreg1   is rexRprefix=0 & xmmreg1                           { export xmmreg1; }
 XmmReg1:  xmmreg1_x is rexRprefix=1 & xmmreg1_x                         { export xmmreg1_x; }
+XmmReg1:  xmmreg1_r  is rexRprefix=0 & evexRp=1 & xmmreg1_r             { export xmmreg1_r; }
+XmmReg1:  xmmreg1_rx is rexRprefix=1 & evexRp=1 & xmmreg1_rx            { export xmmreg1_rx; }
 XmmReg2:  xmmreg2   is rexBprefix=0 & xmmreg2                           { export xmmreg2; }
-XmmReg2:  xmmreg2_x is rexBprefix=1 & xmmreg2_x                         { export xmmreg2_x; }
+XmmReg2:  xmmreg2_b is rexBprefix=1 & xmmreg2_b                         { export xmmreg2_b; }
+XmmReg2:  xmmreg2_x is rexBprefix=0 & rexXprefix=1 & xmmreg2_x          { export xmmreg2_x; }
+XmmReg2:  xmmreg2_bx is rexBprefix=1 & rexXprefix=1 & xmmreg2_bx        { export xmmreg2_bx; }
+
 YmmReg1:  ymmreg1   is rexRprefix=0 & ymmreg1                           { export ymmreg1; }
 YmmReg1:  ymmreg1_x is rexRprefix=1 & ymmreg1_x                         { export ymmreg1_x; }
+YmmReg1:  ymmreg1_r  is rexRprefix=0 & evexRp=1 & ymmreg1_r             { export ymmreg1_r; }
+YmmReg1:  ymmreg1_rx is rexRprefix=1 & evexRp=1 & ymmreg1_rx            { export ymmreg1_rx; }
 YmmReg2:  ymmreg2   is rexBprefix=0 & ymmreg2                           { export ymmreg2; }
-YmmReg2:  ymmreg2_x is rexBprefix=1 & ymmreg2_x                         { export ymmreg2_x; }
+YmmReg2:  ymmreg2_b is rexBprefix=1 & ymmreg2_b                         { export ymmreg2_b; }
+YmmReg2:  ymmreg2_x is rexBprefix=0 & rexXprefix=1 & ymmreg2_x          { export ymmreg2_x; }
+YmmReg2:  ymmreg2_bx is rexBprefix=1 & rexXprefix=1 & ymmreg2_bx        { export ymmreg2_bx; }
 
 ZmmReg1:  zmmreg1   is rexRprefix=0 & zmmreg1                           { export zmmreg1; }
 ZmmReg1:  zmmreg1_x is rexRprefix=1 & zmmreg1_x                         { export zmmreg1_x; }
+ZmmReg1:  zmmreg1_r  is rexRprefix=0 & evexRp=1 & zmmreg1_r             { export zmmreg1_r; }
+ZmmReg1:  zmmreg1_rx is rexRprefix=1 & evexRp=1 & zmmreg1_rx            { export zmmreg1_rx; }
 ZmmReg2:  zmmreg2   is rexBprefix=0 & zmmreg2                           { export zmmreg2; }
-ZmmReg2:  zmmreg2_x is rexBprefix=1 & zmmreg2_x                         { export zmmreg2_x; }
+ZmmReg2:  zmmreg2_b is rexBprefix=1 & zmmreg2_b                         { export zmmreg2_b; }
+ZmmReg2:  zmmreg2_x is rexBprefix=0 & rexXprefix=1 & zmmreg2_x          { export zmmreg2_x; }
+ZmmReg2:  zmmreg2_bx is rexBprefix=1 & rexXprefix=1 & zmmreg2_bx        { export zmmreg2_bx; }
 
 Xmm_vsib:  xmm_vsib       is rexXprefix=0 & xmm_vsib                             { export xmm_vsib; }
 Xmm_vsib:  xmm_vsib_x     is rexXprefix=1 & xmm_vsib_x                           { export xmm_vsib_x; }
@@ -1262,6 +1311,36 @@ ZmmReg2_m512: m512      is m512                              { export m512; }
 XmmReg2_m128_extend: XmmReg2 is mod=3 & XmmReg2 & ZmmReg2 { ZmmReg2 = zext(XmmReg2); }
 XmmReg2_m128_extend: XmmReg2 is mod & XmmReg2 { }
 
+m16bcst32: m16   is m16 { local tmp:2 = m16; BCST4[0,16] = tmp; BCST4[16,16] = tmp; export BCST4; }
+
+m16bcst64: m16   is m16 { local tmp:2 = m16; BCST8[0,16] = tmp; BCST8[16,16] = tmp; BCST8[32,16] = tmp; BCST8[48,16] = tmp; export BCST8; }
+m16bcst128: m16  is m16 {
+	local tmp:2 = m16;
+	BCST16[0,16] = tmp; BCST16[16,16] = tmp; BCST16[32,16] = tmp; BCST16[48,16] = tmp;
+	BCST16[64,16] = tmp; BCST16[80,16] = tmp; BCST16[96,16] = tmp; BCST16[112,16] = tmp;
+	export BCST16;
+}
+m16bcst256: m16  is m16 {
+	local tmp:2 = m16;
+	BCST32[0,16] = tmp; BCST32[16,16] = tmp; BCST32[32,16] = tmp; BCST32[48,16] = tmp;
+	BCST32[64,16] = tmp; BCST32[80,16] = tmp; BCST32[96,16] = tmp; BCST32[112,16] = tmp;
+	BCST32[128,16] = tmp; BCST32[144,16] = tmp; BCST32[160,16] = tmp; BCST32[176,16] = tmp;
+	BCST32[192,16] = tmp; BCST32[208,16] = tmp; BCST32[224,16] = tmp; BCST32[240,16] = tmp;
+	export BCST32;
+}
+m16bcst512: m16  is m16 {
+	local tmp:2 = m16;
+	BCST64[0,16] = tmp; BCST64[16,16] = tmp; BCST64[32,16] = tmp; BCST64[48,16] = tmp;
+	BCST64[64,16] = tmp; BCST64[80,16] = tmp; BCST64[96,16] = tmp; BCST64[112,16] = tmp;
+	BCST64[128,16] = tmp; BCST64[144,16] = tmp; BCST64[160,16] = tmp; BCST64[176,16] = tmp;
+	BCST64[192,16] = tmp; BCST64[208,16] = tmp; BCST64[224,16] = tmp; BCST64[240,16] = tmp;
+	BCST64[256,16] = tmp; BCST64[272,16] = tmp; BCST64[288,16] = tmp; BCST64[304,16] = tmp;
+	BCST64[320,16] = tmp; BCST64[336,16] = tmp; BCST64[352,16] = tmp; BCST64[368,16] = tmp;
+	BCST64[384,16] = tmp; BCST64[400,16] = tmp; BCST64[416,16] = tmp; BCST64[432,16] = tmp;
+	BCST64[448,16] = tmp; BCST64[464,16] = tmp; BCST64[480,16] = tmp; BCST64[496,16] = tmp;
+	export BCST64;
+}
+
 m32bcst64:  m32 is m32 { local tmp:4 = m32; BCST8[0,32] = tmp; BCST8[32,32] = tmp; export BCST8; }
 m32bcst128: m32 is m32 { local tmp:4 = m32; BCST16[0,32] = tmp; BCST16[32,32] = tmp; BCST16[64,32] = tmp; BCST16[96,32] = tmp; export BCST16; }
 m32bcst256: m32 is m32 {
@@ -1288,9 +1367,21 @@ m64bcst512: m64 is m64 {
 	export BCST64;
 }
 
+XmmReg2_m32_m16bcst:  XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m32_m16bcst:  m32        is m32 & evexDisp8N                   { local tmp:16 = zext(m32); export tmp; }
+XmmReg2_m32_m16bcst:  m16bcst32  is evexB=1 & m16bcst32 & evexDisp8N   { local tmp:16 = zext(m16bcst32); export tmp; }
+
+XmmReg2_m64_m16bcst:  XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m64_m16bcst:  m64        is m64 & evexDisp8N                   { local tmp:16 = zext(m64); export tmp; }
+XmmReg2_m64_m16bcst:  m16bcst64  is evexB=1 & m16bcst64 & evexDisp8N   { local tmp:16 = zext(m16bcst64); export tmp; }
+
 XmmReg2_m64_m32bcst:  XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
 XmmReg2_m64_m32bcst:  m64        is m64 & evexDisp8N                   { local tmp:16 = zext(m64); export tmp; }
 XmmReg2_m64_m32bcst:  m32bcst64  is evexB=1 & m32bcst64 & evexDisp8N   { local tmp:16 = zext(m32bcst64); export tmp; }
+
+XmmReg2_m128_m16bcst: XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m128_m16bcst: m128       is m128& evexDisp8N                   { export m128; }
+XmmReg2_m128_m16bcst: m16bcst128 is evexB=1 & m16bcst128 & evexDisp8N  { export m16bcst128; }
 
 XmmReg2_m128_m32bcst: XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
 XmmReg2_m128_m32bcst: m128       is m128& evexDisp8N                   { export m128; }
@@ -1300,6 +1391,10 @@ XmmReg2_m128_m64bcst: XmmReg2    is mod=3 & XmmReg2             { export XmmReg2
 XmmReg2_m128_m64bcst: m128       is m128 & evexDisp8N                  { export m128; }
 XmmReg2_m128_m64bcst: m64bcst128 is evexB=1 & m64bcst128 & evexDisp8N  { export m64bcst128; }
 
+YmmReg2_m256_m16bcst: YmmReg2    is mod=3 & YmmReg2             { export YmmReg2; }
+YmmReg2_m256_m16bcst: m256       is m256 & evexDisp8N                  { export m256; }
+YmmReg2_m256_m16bcst: m16bcst256 is evexB=1 & m16bcst256 & evexDisp8N  { export m16bcst256; }
+
 YmmReg2_m256_m32bcst: YmmReg2    is mod=3 & YmmReg2             { export YmmReg2; }
 YmmReg2_m256_m32bcst: m256       is m256 & evexDisp8N                  { export m256; }
 YmmReg2_m256_m32bcst: m32bcst256 is evexB=1 & m32bcst256 & evexDisp8N  { export m32bcst256; }
@@ -1307,6 +1402,10 @@ YmmReg2_m256_m32bcst: m32bcst256 is evexB=1 & m32bcst256 & evexDisp8N  { export 
 YmmReg2_m256_m64bcst: YmmReg2    is mod=3 & YmmReg2             { export YmmReg2; }
 YmmReg2_m256_m64bcst: m256       is m256 & evexDisp8N                  { export m256; }
 YmmReg2_m256_m64bcst: m64bcst256 is evexB=1 & m64bcst256 & evexDisp8N  { export m64bcst256; }
+
+ZmmReg2_m512_m16bcst: ZmmReg2    is mod=3 & ZmmReg2             { export ZmmReg2; }
+ZmmReg2_m512_m16bcst: m512       is m512 & evexDisp8N                  { export m512; }
+ZmmReg2_m512_m16bcst: m16bcst512 is evexB=1 & m16bcst512 & evexDisp8N  { export m16bcst512; }
 
 ZmmReg2_m512_m32bcst: ZmmReg2    is mod=3 & ZmmReg2             { export ZmmReg2; }
 ZmmReg2_m512_m32bcst: m512       is m512 & evexDisp8N                  { export m512; }
@@ -1487,7 +1586,7 @@ unlock:		is lockprefx=1 { UNLOCK(); }
 unlock:		is epsilon { }
 
 KReg_reg: opmaskreg is opmaskreg { export opmaskreg; }
-KReg_rm: opmaskrm   is opmaskrm  { export opmaskrm; }
+KReg_rm:  opmaskrm  is opmaskrm  { export opmaskrm; }
 # not used vexVVVV_KReg: evexVopmask is evexVopmask              { export evexVopmask; }
 vex1VVV_KReg: evexVopmask is evexVopmask & vexHighV=1 { export evexVopmask; }
 
@@ -1501,7 +1600,7 @@ ZmmMaskMode: is evexZ=0 { }
 ZmmMaskMode: "{z}" is evexZ=1 { ZmmMask=0; }
 
 AVXOpMask: "{"^evexOpmask^"}" is evexOpmask { export evexOpmask; }
-
+AVXOpMask:  is evexOpmask=0 { local tmp:8 = 0xffffffffffffffff; export *[const]:8 tmp; }
 # Z=0: merge masking
 # Z=1: zero masking
 XmmOpMask: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
@@ -2300,7 +2399,7 @@ macro fucompe(val1, val2) {
 @define VEX_L128	"vexL=0"
 @define VEX_L256	"vexL=1"
 @define EVEX_L512	"evexLp=1 & vexL=0"
-@define EVEX_LIG	"evexLp & vexL"
+@define EVEX_LLIG	"evexLp & vexL"
 
 # These are only to be used with VEX or EVEX decoding, where only one "mandatory" prefix is encoded in the VEX or EVEX.
 # If no prefix is specified, then VEX_PRE_NONE must be used.
@@ -2315,7 +2414,9 @@ macro fucompe(val1, val2) {
 @define VEX_0F		"vexMMMMM=1"
 @define VEX_0F38	"vexMMMMM=2"
 @define VEX_0F3A	"vexMMMMM=3"
-#TODO: later extensions such as AVX10 and APX allow evex maps 4, 5 and 6
+@define VEX_MAP4	"vexMMMMM=4"
+@define VEX_MAP5	"vexMMMMM=5"
+@define VEX_MAP6	"vexMMMMM=6"
 
 # Specification is "WIG", "W0", or "W1".
 @define VEX_WIG		"rexWprefix"
@@ -4148,7 +4249,9 @@ define pcodeop swap_bytes;
 define pcodeop ptwrite;
 
 :PTWRITE rm32 is vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0xae; rm32 & reg_opcode=4 ...     { ptwrite(rm32); }
-
+@ifdef IA64
+:PTWRITE rm64 is vexMode=0 & $(PRE_F3) & opsize=2 & byte=0x0f; byte=0xae; rm64 & reg_opcode=4 ...     { ptwrite(rm64); }
+@endif
 
 :PUSH rm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; rm16 & reg_opcode=6 ... { push22(rm16); }
 :PUSH rm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; rm16 & reg_opcode=6 ... { push42(rm16); }
@@ -4169,8 +4272,10 @@ define pcodeop ptwrite;
 :PUSH Rmr64     is $(LONGMODE_ON) & vexMode=0            & row=5 & page=0 & Rmr64       { push88(Rmr64); }
 @endif
 
-:PUSH simm8_16     is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0x6a; simm8_16     { tmp:2=simm8_16; push22(tmp); }
-:PUSH simm8_32     is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & byte=0x6a; simm8_32     { tmp:4=simm8_32; push44(tmp); }
+:PUSH simm8_16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x6a; simm8_16     { tmp:2=simm8_16; push22(tmp); }
+:PUSH simm8_16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x6a; simm8_16     { tmp:2=simm8_16; push42(tmp); }
+:PUSH simm8_32     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x6a; simm8_32     { tmp:4=simm8_32; push24(tmp); }
+:PUSH simm8_32     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x6a; simm8_32     { tmp:4=simm8_32; push44(tmp); }
 @ifdef IA64
 :PUSH simm8_16     is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x6a; simm8_16     { tmp:2=simm8_16; push82(tmp); }
 :PUSH simm8_64     is $(LONGMODE_ON) & vexMode=0 &            byte=0x6a; simm8_64     { tmp:8=simm8_64; push88(tmp); }
@@ -4182,7 +4287,7 @@ define pcodeop ptwrite;
 :PUSH imm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x68; imm32     { tmp:4=imm32; push44(tmp); }
 @ifdef IA64
 :PUSH simm16_16    is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x68; simm16_16    { tmp:2=simm16_16; push82(tmp); }
-:PUSH simm32       is $(LONGMODE_ON) & vexMode=0 &            byte=0x68; simm32    { tmp:8=simm32; push88(tmp); }
+:PUSH simm32_64    is $(LONGMODE_ON) & vexMode=0 &            byte=0x68; simm32_64    { tmp:8=simm32_64; push88(tmp); }
 @endif
 
 :PUSH CS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xe & CS               { push22(CS); }
@@ -4196,12 +4301,12 @@ define pcodeop ptwrite;
 :PUSH FS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa0 & FS        { push22(FS); }
 :PUSH FS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa0 & FS        { pushseg44(FS); }
 @ifdef IA64
-:PUSH FS        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa0 & FS        { pushseg88(FS); }
+:PUSH FS        is $(LONGMODE_ON)  & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa0 & FS        { pushseg88(FS); }
 @endif
 :PUSH GS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa8 & GS        { push22(GS); }
 :PUSH GS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa8 & GS        { pushseg44(GS); }
 @ifdef IA64
-:PUSH GS        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa8 & GS        { pushseg88(GS); }
+:PUSH GS        is $(LONGMODE_ON)  & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa8 & GS        { pushseg88(GS); }
 @endif
 
 :PUSHA          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x60            { local tmp=SP; push22(AX); push22(CX); push22(DX); push22(BX); push22(tmp); push22(BP); push22(SI); push22(DI); }
