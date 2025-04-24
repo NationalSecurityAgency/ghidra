@@ -419,11 +419,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		if (program == null) {
 			return state;
 		}
-		SaveState pstate = plugin.readProgramLaunchConfig(program, getConfigName(), forPrompt);
-		if (!pstate.isEmpty()) {
-			state = pstate;
-		}
-		return state;
+		return plugin.readProgramLaunchConfig(program, getConfigName(), forPrompt);
 	}
 
 	/**
