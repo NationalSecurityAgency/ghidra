@@ -147,7 +147,6 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		 * Render the given span as a string
 		 * 
 		 * @param s the span
-		 * @param nToString a function to convert n to a string
 		 * @return the string
 		 */
 		default String toString(S s) {
