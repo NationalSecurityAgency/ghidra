@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import javax.help.UnsupportedOperationException;
+
 import db.util.ErrorHandler;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
@@ -66,16 +68,15 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	private TreeSet<Long> orphanIds = new TreeSet<>();
 
 	/**
-	 * Creates a data type manager that the structure editor will use internally for managing 
-	 * dependencies for an unmanaged structure being edited.  A single transaction will be started 
-	 * with this instantiation and held open until this instance is closed.  Undo/redo is 
-	 * not be supported.
+	 * Creates a data type manager that the composite editor will use internally for managing 
+	 * dependencies without resolving the actual composite being edited.  A single transaction 
+	 * will be started with this instantiation and held open until this instance is closed.  
+	 * Undo/redo and datatype pruning is not be supported.
 	 * @param rootName the root name for this data type manager (usually the program name).
 	 * @param originalDTM the original data type manager.
 	 */
 	public CompositeViewerDataTypeManager(String rootName, DataTypeManager originalDTM) {
 		this(rootName, originalDTM, null, null, null);
-		clearUndo();
 		transactionId = startTransaction("Composite Edit");
 	}
 
@@ -123,8 +124,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 
 	@SuppressWarnings("unchecked")
 	private T resolveViewComposite() {
-		return originalComposite != null ? (T) super.resolve(originalComposite, null)
-				: null;
+		return originalComposite != null ? (T) super.resolve(originalComposite, null) : null;
 	}
 
 	private void initializeArchitecture() {
@@ -158,12 +158,18 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 
 	@Override
 	public void undo() {
+		if (!isUndoRedoAllowed()) {
+			throw new UnsupportedOperationException();
+		}
 		dataTypeIDMap.invalidate();
 		super.undo();
 	}
 
 	@Override
 	public void redo() {
+		if (!isUndoRedoAllowed()) {
+			throw new UnsupportedOperationException();
+		}
 		dataTypeIDMap.invalidate();
 		super.redo();
 	}
@@ -237,10 +243,12 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	public DataType replaceDataType(DataType existingViewDt, DataType replacementDt,
 			boolean updateCategoryPath) throws DataTypeDependencyException {
 
-		long viewDtId = getID(existingViewDt);
+		if (existingViewDt.getDataTypeManager() != this) {
+			throw new IllegalArgumentException("datatype is not from this manager");
+		}
 
 		if (existingViewDt instanceof DatabaseObject) {
-			dataTypeIDMap.remove(viewDtId);
+			dataTypeIDMap.remove(getID(existingViewDt));
 		}
 
 		DataType newResolvedDt =
@@ -259,10 +267,12 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	@Override
 	public boolean remove(DataType existingViewDt, TaskMonitor monitor) {
 
-		long viewDtId = getID(existingViewDt);
+		if (existingViewDt.getDataTypeManager() != this) {
+			throw new IllegalArgumentException("datatype is not from this manager");
+		}
 
 		if (existingViewDt instanceof DatabaseObject) {
-			dataTypeIDMap.remove(viewDtId);
+			dataTypeIDMap.remove(getID(existingViewDt));
 		}
 
 		return super.remove(existingViewDt, monitor);
@@ -373,7 +383,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 		if (committed && dataTypeChanged && changeCallback != null) {
 			Swing.runLater(() -> changeCallback.call());
 		}
-		
+
 		if (getTransactionCount() == 0) {
 			dataTypeChanged = false;
 		}
@@ -432,14 +442,53 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 		}
 	}
 
+	/**
+	 * Find a resolved DB-datatype within this manager based upon its source datatype's ID 
+	 * within the original datatype manager associated with this manager.  This method is 
+	 * useful when attempting to matchup a datatype within this manager to one which has changed
+	 * within the original datatype manager.
+	 * 
+	 * @param originalId datatype ID within original datatype manager
+	 * @return matching DB-datatype or null if not found
+	 */
+	public DataType findMyDataTypeFromOriginalID(long originalId) {
+		Long myId = dataTypeIDMap.getViewIDFromOriginalID(originalId);
+		return myId != null ? getDataType(myId) : null;
+	}
+
+	/**
+	 * Find a resolved DB-datatype within the original datatype manager based upon a resolved 
+	 * datatype's ID within this manager. This method is useful when attempting to matchup a 
+	 * datatype within this manager to one which has possibly changed within the original 
+	 * datatype manager.
+	 * 
+	 * @param myId resolved datatype ID within this datatype manager
+	 * @return matching DB-datatype or null if not found
+	 */
 	public DataType findOriginalDataTypeFromMyID(long myId) {
 		Long originalId = dataTypeIDMap.getOriginalIDFromViewID(myId);
 		return originalId != null ? originalDTM.getDataType(originalId) : null;
 	}
 
-	public DataType findMyDataTypeFromOriginalID(long originalId) {
-		Long myId = dataTypeIDMap.getViewIDFromOriginalID(originalId);
-		return myId != null ? getDataType(myId) : null;
+	/**
+	 * Determine if the specified datatype which has previsouly been resolved to this datatype
+	 * manager originated from original composite's source (e.g., program).  
+	 * <P>
+	 * NOTE: Non-DB datatypes will always return false.
+	 * 
+	 * @param existingViewDt existing datatype which has previously been resolved to this
+	 * datatype manager.
+	 * @return true if specified datatype originated from this manager's associated original 
+	 * datatype manager.
+	 */
+	public boolean isViewDataTypeFromOriginalDTM(DataType existingViewDt) {
+		if (existingViewDt.getDataTypeManager() != this) {
+			throw new IllegalArgumentException("datatype is not from this manager");
+		}
+		if (!(existingViewDt instanceof DatabaseObject)) {
+			return false;
+		}
+		return dataTypeIDMap.getOriginalIDFromViewID(getID(existingViewDt)) != null;
 	}
 
 }

@@ -199,35 +199,35 @@ abstract class CompositeViewerModel<T extends Composite> extends AbstractTableMo
 		}
 	}
 
-	/**
-	 * Resolves the data type against the indicated data type manager using the specified
-	 * conflictHandler.  In general, a transaction should have already been initiated prior to 
-	 * calling this method so that the true nature of the transaction may be established for
-	 * use with undo/redo (e.g., Set Datatype).
-	 *
-	 * @param dataType the data type to be resolved
-	 * @param resolveDtm the data type manager to resolve the data type against
-	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
-	 * @return the resolved data type
-	 */
-	protected final DataType resolveDataType(DataType dataType, DataTypeManager resolveDtm,
-			DataTypeConflictHandler conflictHandler) {
-		if (resolveDtm == null || dataType == DataType.DEFAULT) {
-			return DataType.DEFAULT;
-		}
-		return resolveDtm.withTransaction("Resolve " + dataType.getPathName(), () -> {
-			return resolveDtm.resolve(dataType, conflictHandler);
-		});
-	}
-
-	/**
-	 * Resolves the indicated data type against the working copy in the viewer's data type manager.
-	 * @param dataType the data type
-	 * @return the working copy of the data type.
-	 */
-	public DataType resolve(DataType dataType) {
-		return resolveDataType(dataType, viewDTM, null);
-	}
+//	/**
+//	 * Resolves the data type against the indicated data type manager using the specified
+//	 * conflictHandler.  In general, a transaction should have already been initiated prior to 
+//	 * calling this method so that the true nature of the transaction may be established for
+//	 * use with undo/redo (e.g., Set Datatype).
+//	 *
+//	 * @param dataType the data type to be resolved
+//	 * @param resolveDtm the data type manager to resolve the data type against
+//	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
+//	 * @return the resolved data type
+//	 */
+//	protected final DataType resolveDataType(DataType dataType, DataTypeManager resolveDtm,
+//			DataTypeConflictHandler conflictHandler) {
+//		if (resolveDtm == null || dataType == DataType.DEFAULT) {
+//			return DataType.DEFAULT;
+//		}
+//		return resolveDtm.withTransaction("Resolve " + dataType.getPathName(), () -> {
+//			return resolveDtm.resolve(dataType, conflictHandler);
+//		});
+//	}
+//
+//	/**
+//	 * Resolves the indicated data type against the working copy in the viewer's data type manager.
+//	 * @param dataType the data type
+//	 * @return the working copy of the data type.
+//	 */
+//	public DataType resolve(DataType dataType) {
+//		return resolveDataType(dataType, viewDTM, null);
+//	}
 
 	/**
 	 * Gets the current row
