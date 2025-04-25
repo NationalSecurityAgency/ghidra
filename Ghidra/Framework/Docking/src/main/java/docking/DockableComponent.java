@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -166,6 +166,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		if (e.isPopupTrigger() && withinBounds) {
 			PopupMenuContext popupContext = new PopupMenuContext(e);
 			actionMgr.showPopupMenu(placeholder, popupContext);
+			e.consume();
 		}
 	}
 
@@ -328,8 +329,27 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		}
 
 		if (comp.isFocusable()) {
-			comp.removeMouseListener(popupListener);
-			comp.addMouseListener(popupListener);
+			installPopupListenerFirst(comp);
+		}
+	}
+
+	/**
+	 * Remove and re-add all mouse listeners so our popup listener can go first.  This allows our
+	 * popup listener to consume the event, preventing Java UI listeners from changing the table 
+	 * selection when the user is performing a Ctrl-Mouse click on the Mac.
+	 * 
+	 * @param comp the component
+	 */
+	private void installPopupListenerFirst(Component comp) {
+		comp.removeMouseListener(popupListener);
+		MouseListener[] listeners = comp.getMouseListeners();
+		for (MouseListener l : listeners) {
+			comp.removeMouseListener(l);
+		}
+
+		comp.addMouseListener(popupListener);
+		for (MouseListener l : listeners) {
+			comp.addMouseListener(l);
 		}
 	}
 
