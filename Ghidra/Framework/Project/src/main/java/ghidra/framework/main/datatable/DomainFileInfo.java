@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,13 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.LinkHandler.LinkStatus;
+import ghidra.framework.main.BrokenLinkIcon;
+import ghidra.framework.main.datatree.DomainFileNode;
 import ghidra.framework.model.DomainFile;
 
 public class DomainFileInfo {
-
-	// TODO: should not hang onto DomainFile since it may not track changes anymore
-	// Think of DomainFile like a File object
 
 	private DomainFile domainFile;
 	private String name;
@@ -32,6 +33,8 @@ public class DomainFileInfo {
 	private Map<String, String> metadata;
 	private Date modificationDate;
 	private DomainFileType domainFileType;
+	private Boolean isBrokenLink;
+	private String toolTipText;
 
 	public DomainFileInfo(DomainFile domainFile) {
 		this.domainFile = domainFile;
@@ -84,14 +87,14 @@ public class DomainFileInfo {
 		return path;
 	}
 
-	public Icon getIcon() {
-		return domainFile.getIcon(false);
-	}
-
 	public synchronized DomainFileType getDomainFileType() {
 		if (domainFileType == null) {
+			checkStatus();
 			String contentType = domainFile.getContentType();
 			Icon icon = domainFile.getIcon(false);
+			if (isBrokenLink) {
+				icon = new BrokenLinkIcon(icon);
+			}
 			boolean isVersioned = domainFile.isVersioned();
 			domainFileType = new DomainFileType(contentType, icon, isVersioned);
 		}
@@ -131,14 +134,15 @@ public class DomainFileInfo {
 	public synchronized void clearMetaCache() {
 		metadata = null;
 		modificationDate = null;
-		domainFileType = null;
 		refresh();
 	}
 
 	public synchronized void refresh() {
-		this.name = null;
-		this.path = null;
-
+		domainFileType = null;
+		isBrokenLink = null;
+		toolTipText = null;
+		name = null;
+		path = null;
 	}
 
 	public String getMetaDataValue(String key) {
@@ -148,6 +152,28 @@ public class DomainFileInfo {
 
 	public String getName() {
 		return domainFile.getName();
+	}
+
+	private void checkStatus() {
+		if (isBrokenLink == null) {
+			isBrokenLink = false;
+			List<String> linkErrors = null;
+			if (domainFile.isLink()) {
+				List<String> errors = new ArrayList<>();
+				LinkStatus linkStatus =
+					LinkHandler.getLinkFileStatus(domainFile, msg -> errors.add(msg));
+				isBrokenLink = (linkStatus == LinkStatus.BROKEN);
+				if (isBrokenLink) {
+					linkErrors = errors;
+				}
+			}
+			toolTipText = DomainFileNode.getToolTipText(domainFile, linkErrors);
+		}
+	}
+
+	public String getToolTip() {
+		checkStatus();
+		return toolTipText;
 	}
 
 }

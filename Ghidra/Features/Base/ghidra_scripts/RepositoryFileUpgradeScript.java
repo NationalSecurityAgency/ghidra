@@ -102,6 +102,8 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	}
 
 	private int listCheckouts(DomainFolder folder) throws IOException, CancelledException {
+		// Avoid following folder-links so we don't count the same file more than once.
+		// Link-files will never be in a checked-out state.
 		int count = 0;
 		for (DomainFile df : folder.getFiles()) {
 			monitor.checkCancelled();
@@ -115,8 +117,8 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	}
 
 	private int listCheckouts(DomainFile df) throws IOException {
-		if (!df.isVersioned()) {
-			return 0;
+		if (!df.isVersioned() || df.isLink()) {
+			return 0; // ignore non-versioned files and link-files
 		}
 		int count = 0;
 		for (ItemCheckoutStatus checkout : df.getCheckouts()) {

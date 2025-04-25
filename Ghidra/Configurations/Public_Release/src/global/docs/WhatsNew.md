@@ -15,6 +15,43 @@ applied Ghidra SRE capabilities to a variety of problems that involve analyzing 
 generating deep insights for NSA analysts who seek a better understanding of potential
 vulnerabilities in networks and systems.
 
+# What's coming in Ghidra 11.5
+This is a preview of what is coming in the future Ghidra 11.5 release.
+
+**NOTE:** Ghidra Server: The Ghidra 11.5 server is compatible with Ghidra 9.2 and later Ghidra
+clients although the presence of any newer link-files within a repository may not be handled properly
+by client versions prior to 11.5 which lack support for the new storage format.  Ghidra 11.5 clients
+which introduce new link-files into a project will not be able to add such files into version 
+control if connected to older Ghidra Server versions.  
+
+## Project Link Files
+
+Support for link-files within a Ghidra Project has been significantly expanded with this release and
+with it a new file storage type has been introduced which can create some incompatibilties if projects
+and repositories containing such files are used by older version of Ghidra or the Ghidra Server.
+
+Previously only external folder and file links were supported through the use of a Ghidra URL.
+With 11.5 the ability to establish internal folder and file links has been introduced.  The new
+storage format avoids the use of a database and relies only on a light-weight property file.  Internal
+project links also allow for either absolute or relative links.  Due to the fact that Ghidra allows 
+a folder or file to have the same pathname, some abiguities can result.  It is highly recommended that
+the use of conflicting folder and file pathnames be avoided.
+
+The use of internally linked folders and files allows batch import processing to more accurately
+reflect the native file-system and its use of symbolic links which allow for the same content to
+be referenced by multiple paths.  Allowing this within a Ghidra project can avoid the potential for
+importing content multiple times with the different paths and simply import once with additional 
+link-files which reference it.  How best to leverage links very much depends on the end-user's 
+needs and project file management preferences.  Special care must be taken when defining or 
+traversing link-files to avoid external and circular references.
+
+Additional Ghidra API methods have been provided or refined on the following classes to leverage 
+link-files: `DomainFolder`, `DomainFile`, `LinkFile`, `LinkHandler`, `DomainFileFilter`, 
+`DomainFileIterator`, etc.
+
+...TO BE CONTINUED...  
+
+
 # What's New in Ghidra 11.4
 This release includes new features, enhancements, performance improvements, quite a few bug fixes,
 and many pull-request contributions. Thanks to all those who have contributed their time, thoughts,

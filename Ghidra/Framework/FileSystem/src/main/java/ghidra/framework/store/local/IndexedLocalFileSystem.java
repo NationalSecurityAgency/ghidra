@@ -598,7 +598,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	private boolean addFileToIndex(PropertyFile pfile) throws IOException, NotFoundException {
+	private boolean addFileToIndex(ItemPropertyFile pfile) throws IOException, NotFoundException {
 
 		String parentPath = pfile.getParentPath();
 		String name = pfile.getName();
@@ -832,7 +832,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		catch (NotFoundException e) {
 			// ignore - handled below
 		}
-		throw new FileNotFoundException("Item not found: " + folderPath + SEPARATOR + itemName);
+		throw new FileNotFoundException("Item not found: " + getPath(folderPath, itemName));
 	}
 
 	/**
@@ -1207,7 +1207,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		String newFolderPath = folder.getPathname();
 		for (Item item : folder.items.values()) {
 			ItemStorage itemStorage = item.itemStorage;
-			PropertyFile pfile = item.itemStorage.getPropertyFile();
+			ItemPropertyFile pfile = item.itemStorage.getPropertyFile();
 			pfile.moveTo(itemStorage.dir, itemStorage.storageName, newFolderPath,
 				itemStorage.itemName);
 			itemStorage.folderPath = newFolderPath;
@@ -1236,7 +1236,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			folder = getFolder(folderPath, GetFolderOption.READ_ONLY);
 			if (folder.parent.folders.get(newFolderName) != null) {
 				throw new DuplicateFileException(
-					parentPath + SEPARATOR + newFolderName + " already exists.");
+					getPath(parentPath, newFolderName) + " already exists.");
 			}
 
 			indexJournal.moveFolder(folderPath, getPath(parentPath, newFolderName));
@@ -1462,7 +1462,6 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		private void replayJournal() throws IndexReadException {
-			Msg.info(this, "restoring data storage index...");
 			int lineNum = 0;
 			BufferedReader journalReader = null;
 			try {
@@ -1778,7 +1777,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		@Override
-		PropertyFile getPropertyFile() throws IOException {
+		ItemPropertyFile getPropertyFile() throws IOException {
 			return new IndexedPropertyFile(dir, storageName, folderPath, itemName);
 		}
 	}

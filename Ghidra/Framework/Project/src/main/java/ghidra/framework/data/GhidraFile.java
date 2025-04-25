@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,12 @@ import ghidra.framework.model.*;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.*;
+import ghidra.util.InvalidNameException;
+import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class GhidraFile implements DomainFile {
-
-	// FIXME: This implementation assumes a single implementation of the DomainFile and DomainFolder interfaces
+public class GhidraFile implements DomainFile, LinkFileInfo {
 
 	protected DefaultProjectData projectData;
 
@@ -157,9 +156,9 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public boolean isLinkFile() {
+	public boolean isLink() {
 		try {
-			return getFileData().isLinkFile();
+			return getFileData().isLink();
 		}
 		catch (IOException e) {
 			return false;
@@ -167,12 +166,38 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public DomainFolder followLink() {
+	public LinkFileInfo getLinkInfo() {
+		return isLink() ? this : null;
+	}
+
+	@Override
+	public DomainFile getFile() {
+		return this;
+	}
+
+	@Override
+	public String getLinkPath() {
 		try {
-			return FolderLinkContentHandler.getReadOnlyLinkedFolder(this);
+			return getFileData().getLinkPath(false);
 		}
 		catch (IOException e) {
-			Msg.error(this, "Failed to following folder-link: " + getPathname());
+			// ignore
+		}
+		return null;
+	}
+
+	@Override
+	public String getAbsoluteLinkPath() throws IOException {
+		return LinkHandler.getAbsoluteLinkPath(this);
+	}
+
+	@Override
+	public LinkedGhidraFolder getLinkedFolder() {
+		try {
+			return FolderLinkContentHandler.getLinkedFolder(this);
+		}
+		catch (IOException e) {
+			// Ignore
 		}
 		return null;
 	}
@@ -522,40 +547,40 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public GhidraFile moveTo(DomainFolder newParent) throws IOException {
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support moveTo");
+
+		if (getParent().getProjectData() != newParent.getProjectData() || !isInWritableProject()) {
+			throw new IOException("Move only supported within the same writable project");
 		}
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
+
+		GhidraFolder newGhidraParent = GhidraFolder.getDestinationFolder(newParent);
+
 		return getFileData().moveTo(newGhidraParent.getFolderData());
 	}
 
 	@Override
 	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support copyTo");
-		}
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
+
+		GhidraFolder newGhidraParent = GhidraFolder.getDestinationFolder(newParent);
+
 		return getFileData().copyTo(newGhidraParent.getFolderData(),
 			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
-			throw new UnsupportedOperationException("newParent does not support copyToAsLink");
-		}
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
-		return getFileData().copyToAsLink(newGhidraParent.getFolderData());
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+
+		GhidraFolder newGhidraParent = GhidraFolder.getDestinationFolder(newParent);
+
+		return getFileData().copyToAsLink(newGhidraParent.getFolderData(), relative);
 	}
 
 	@Override
 	public DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!GhidraFolder.class.isAssignableFrom(destFolder.getClass())) {
-			throw new UnsupportedOperationException("destFolder does not support copyVersionTo");
-		}
-		GhidraFolder destGhidraFolder = (GhidraFolder) destFolder;
+
+		GhidraFolder destGhidraFolder = GhidraFolder.getDestinationFolder(destFolder);
+
 		return getFileData().copyVersionTo(version, destGhidraFolder.getFolderData(),
 			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
@@ -636,10 +661,15 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof GhidraFile)) {
+		if (obj == null) {
 			return false;
 		}
-		GhidraFile other = (GhidraFile) obj;
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof GhidraFile other)) {
+			return false;
+		}
 		if (projectData != other.projectData) {
 			return false;
 		}

@@ -168,13 +168,14 @@ class ServerConnectTask extends Task {
 			monitor.setCancelEnabled(false);
 			monitor.setMessage("Connecting...");
 
-			Registry reg =
-				LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
-					new SslRMIClientSocketFactory());
+			Registry reg = LocateRegistry.getRegistry(server.getServerName(),
+				server.getPortNumber(), new SslRMIClientSocketFactory());
 			checkServerBindNames(reg);
 
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
-			gsh.checkCompatibility(GhidraServerHandle.INTERFACE_VERSION);
+
+			// Check interface compatibility with the minimum supported version
+			gsh.checkCompatibility(GhidraServerHandle.MINIMUM_INTERFACE_VERSION);
 		}
 		catch (NotBoundException e) {
 			throw new IOException(e.getMessage());
@@ -237,8 +238,7 @@ class ServerConnectTask extends Task {
 	 * @throws LoginException  login failure
 	 */
 	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID,
-			TaskMonitor monitor)
-			throws IOException, LoginException, CancelledException {
+			TaskMonitor monitor) throws IOException, LoginException, CancelledException {
 
 		GhidraServerHandle gsh = getGhidraServerHandle(server, monitor);
 
@@ -296,7 +296,8 @@ class ServerConnectTask extends Task {
 									"Client PKI certificate has not been installed");
 							}
 
-							if (ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate()) {
+							if (ApplicationKeyManagerFactory
+									.usingGeneratedSelfSignedCertificate()) {
 								Msg.warn(this,
 									"Server connect - client is using self-signed PKI certificate");
 							}
@@ -394,7 +395,7 @@ class ServerConnectTask extends Task {
 
 		monitor.setCancelEnabled(true);
 		monitor.setMessage("Checking Server Liveness...");
-		
+
 		// Perform simple socket test connection with short timeout to verify connectivity.
 		try (Socket socket = new FastConnectionFailSocket(serverName, sslRmiPort);
 				ConnectCancelledListener cancelListener =

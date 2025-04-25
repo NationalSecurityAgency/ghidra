@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,13 @@ package ghidra.framework.store.local;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.buffers.*;
 import ghidra.framework.store.*;
 import ghidra.framework.store.db.*;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -49,8 +52,8 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	 * @param create if true the data directory will be created
 	 * @throws IOException
 	 */
-	private LocalDatabaseItem(LocalFileSystem fileSystem, PropertyFile propertyFile, boolean create)
-			throws IOException {
+	private LocalDatabaseItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile,
+			boolean create) throws IOException {
 		super(fileSystem, propertyFile, true, create);
 		if (isVersioned) {
 			versionedDbListener = new LocalVersionedDbListener();
@@ -63,7 +66,8 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	 * @param fileSystem file system
 	 * @param propertyFile database property file
 	 */
-	LocalDatabaseItem(LocalFileSystem fileSystem, PropertyFile propertyFile) throws IOException {
+	LocalDatabaseItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile)
+			throws IOException {
 		super(fileSystem, propertyFile, true, false);
 
 		if (isVersioned) {
@@ -94,10 +98,15 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	 * @throws IOException if error occurs
 	 * @throws CancelledException if database creation cancelled by user
 	 */
-	LocalDatabaseItem(LocalFileSystem fileSystem, PropertyFile propertyFile, BufferFile srcFile,
+	LocalDatabaseItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile, BufferFile srcFile,
 			String contentType, String fileID, String comment, boolean resetDatabaseId,
 			TaskMonitor monitor, String user) throws IOException, CancelledException {
 		super(fileSystem, propertyFile, true, true);
+
+		if (StringUtils.isBlank(contentType)) {
+			abortCreate();
+			throw new IllegalArgumentException("Missing content-type");
+		}
 
 		boolean success = false;
 		long checkoutId = DEFAULT_CHECKOUT_ID;
@@ -154,7 +163,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	 * @throws IOException if error occurs
 	 * @throws CancelledException if database creation cancelled by user
 	 */
-	LocalDatabaseItem(LocalFileSystem fileSystem, PropertyFile propertyFile, File packedFile,
+	LocalDatabaseItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile, File packedFile,
 			String contentType, TaskMonitor monitor, String user)
 			throws IOException, CancelledException {
 		super(fileSystem, propertyFile, true, true);
@@ -222,7 +231,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	 * @throws IOException if error occurs
 	 */
 	static LocalManagedBufferFile create(final LocalFileSystem fileSystem,
-			PropertyFile propertyFile, int bufferSize, String contentType, String fileID,
+			ItemPropertyFile propertyFile, int bufferSize, String contentType, String fileID,
 			String user, String projectPath) throws IOException {
 
 		final LocalDatabaseItem dbItem = new LocalDatabaseItem(fileSystem, propertyFile, true);
@@ -257,6 +266,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 								db.setSynchronizationObject(dbItem.fileSystem);
 								dbItem.privateDb = (PrivateDatabase) db;
 							}
+							dbItem.log("file created", user);
 							dbItem.fireItemCreated();
 						}
 					}

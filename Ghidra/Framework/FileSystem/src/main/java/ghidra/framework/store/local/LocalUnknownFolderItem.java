@@ -19,16 +19,13 @@ import java.io.File;
 import java.io.IOException;
 
 import ghidra.framework.store.*;
-import ghidra.util.PropertyFile;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>UnknownFolderItem</code> acts as a LocalFolderItem place-holder for 
  * items of an unknown type.
  */
-public class UnknownFolderItem extends LocalFolderItem {
-
-	public static final String UNKNOWN_CONTENT_TYPE = "Unknown-File";
+public class LocalUnknownFolderItem extends LocalFolderItem implements UnknownFolderItem {
 
 	private final int fileType;
 
@@ -37,11 +34,11 @@ public class UnknownFolderItem extends LocalFolderItem {
 	 * @param fileSystem local file system
 	 * @param propertyFile property file associated with this item
 	 */
-	UnknownFolderItem(LocalFileSystem fileSystem, PropertyFile propertyFile) {
+	LocalUnknownFolderItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile) {
 		super(fileSystem, propertyFile);
 		fileType = propertyFile.getInt(FILE_TYPE, UNKNOWN_FILE_TYPE);
 	}
-	
+
 	/**
 	 * Get the file type
 	 * @return file type or -1 if unspecified
@@ -55,134 +52,82 @@ public class UnknownFolderItem extends LocalFolderItem {
 		return 0;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#updateCheckout(ghidra.framework.store.FolderItem, boolean, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void updateCheckout(FolderItem versionedFolderItem, boolean updateItem,
 			TaskMonitor monitor) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#updateCheckout(ghidra.framework.store.FolderItem, int)
-	 */
 	@Override
 	public void updateCheckout(FolderItem item, int checkoutVersion) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#checkout(java.lang.String)
-	 */
 	public synchronized ItemCheckoutStatus checkout(String user) throws IOException {
-		throw new IOException(propertyFile.getName() +
-			" may not be checked-out, item may be corrupt");
+		throw new IOException(
+			propertyFile.getName() + " may not be checked-out, item may be corrupt");
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#terminateCheckout(long)
-	 */
 	public synchronized void terminateCheckout(long checkoutId) {
 		// Do nothing
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#clearCheckout()
-	 */
 	@Override
 	public void clearCheckout() throws IOException {
 		// Do nothing
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#setCheckout(long, int, int)
-	 */
 	public void setCheckout(long checkoutId, int checkoutVersion, int localVersion) {
 		// Do nothing
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getCheckout(long)
-	 */
 	@Override
 	public synchronized ItemCheckoutStatus getCheckout(long checkoutId) throws IOException {
 		return null;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getCheckouts()
-	 */
 	@Override
 	public synchronized ItemCheckoutStatus[] getCheckouts() throws IOException {
 		return new ItemCheckoutStatus[0];
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getVersions()
-	 */
 	@Override
 	public synchronized Version[] getVersions() throws IOException {
 		throw new IOException("History data is unavailable for " + propertyFile.getName());
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getContentType()
-	 */
 	@Override
 	public String getContentType() {
+		// NOTE: We could get the content type from the property file but we don't want any 
+		// attempt to use it
 		return UNKNOWN_CONTENT_TYPE;
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#deleteMinimumVersion(java.lang.String)
-	 */
 	@Override
 	void deleteMinimumVersion(String user) throws IOException {
-
 		throw new UnsupportedOperationException("Versioning not supported for UnknownFolderItems");
-
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#deleteCurrentVersion(java.lang.String)
-	 */
 	@Override
 	void deleteCurrentVersion(String user) throws IOException {
-
 		throw new UnsupportedOperationException("Versioning not supported for UnknownFolderItems");
-
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#output(java.io.File, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
-
 		throw new UnsupportedOperationException("Output not supported for UnknownFolderItems");
-
 	}
 
-	/*
-	 * @see ghidra.framework.store.local.LocalFolderItem#getMinimumVersion()
-	 */
 	@Override
 	int getMinimumVersion() throws IOException {
 		return -1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#getCurrentVersion()
-	 */
 	@Override
 	public int getCurrentVersion() {
 		return -1;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#canRecover()
-	 */
 	@Override
 	public boolean canRecover() {
 		return false;

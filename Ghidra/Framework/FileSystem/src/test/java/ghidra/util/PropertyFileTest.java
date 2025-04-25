@@ -18,37 +18,43 @@ package ghidra.util;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.util.NamingUtilities;
+import ghidra.util.PropertyFile;
 
 public class PropertyFileTest extends AbstractGenericTest {
 
-	private static String NAME = "Test";
+	protected static String NAME = "Test";
 
-	/**
-	 * Constructor for PropertyFileTest.
-	 * @param arg0
-	 */
+	protected String storageName;
+	protected File storageDir;
+
 	public PropertyFileTest() {
 		super();
+	}
+
+	@Before
+	public void setUp() throws IOException {
+		storageDir = createTempDirectory(getName());
+		storageName = NamingUtilities.mangle(NAME);
+	}
+
+	protected PropertyFile getPropertyFile() throws IOException {
+		return new PropertyFile(storageDir, storageName);
 	}
 
 	@Test
 	public void testPropertyFile() throws Exception {
 
-		String storageName = NamingUtilities.mangle(NAME);
-
-		File parent = createTempDirectory(getName());
-
-		PropertyFile pf = new PropertyFile(parent, storageName, "/", NAME);
+		PropertyFile pf = getPropertyFile();
 		assertEquals(storageName, pf.getStorageName());
-		assertEquals(NAME, pf.getName());
-		assertEquals("/", pf.getParentPath());
-		assertEquals("/" + NAME, pf.getPath());
 
 		pf.putBoolean("TestBooleanTrue", true);
 		pf.putBoolean("TestBooleanFalse", false);
@@ -73,8 +79,8 @@ public class PropertyFileTest extends AbstractGenericTest {
 
 		pf.writeState();
 
-		PropertyFile pf2 = new PropertyFile(parent, storageName, "/", NAME);
-		pf2.readState();
+		PropertyFile pf2 = getPropertyFile();
+		assertTrue(pf2.exists()); // state will be read at construction time
 
 		assertTrue(pf2.getBoolean("TestBooleanTrue", false));
 		assertTrue(!pf2.getBoolean("TestBooleanFalse", true));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,57 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>DomainFile</code> provides a storage interface for project files.  A 
- * <code>DomainFile</code> is an immutable reference to file contained within a project.  The state 
- * of a <code>DomainFile</code> object does not track name/parent changes made to the referenced 
- * project file.
+ * {@link DomainFile} provides a storage interface for a project file.  A domain file
+ * provides an immutable reference to a stored file contained within a project.  The state 
+ * of a file object does not track name/parent changes made to the referenced project file.
+ * An up-to-date object may be obtained from {@link ProjectData#getFile(String)}, 
+ * {@link ProjectData#getFileByID(String)}, or may be returned by any method used to move or rename 
+ * it.  The project data object for the active 
+ * {@link Project} may be obtained via {@link Project#getProjectData()}.
+ * <P>
+ * <B><U>Link Files</U></B>
+ * <P>
+ * Link files may exist or be created within a project where the methods {@link #isLink()} and
+ * {@link #getLinkInfo()} may be used to obtain more details about a link and in the case of a 
+ * linked-folder can facilitate obtainining the referenced {@link LinkedGhidraFolder}.  This 
+ * information object can also be used to determine if the referenced file or folder is external
+ * to this file's project.
+ * <P>
+ * A link-file can become "broken" if its reference has one of the following conditions 
+ * occur:
+ * <ol>
+ * <li>A referenced internal file or folder does not exist, or</li>
+ * <li>the nature/content-type of the referenced file does not match the designated type when the
+ * link was created, or</li>
+ * <li>the link has a circular reference path within this file's project.</li>
+ * </ol>
+ * <P>
+ * The method {@link LinkFileInfo#getLinkStatus(java.util.function.Consumer)} may be used to 
+ * determine if a link is "broken".  Use of a broken link may result in an IOException or other
+ * failure.  The domain object for a file-link (e.g., ProgramLink) may be obtained in the same 
+ * manner as a normal file (e.g., {@link #getDomainObject(Object, boolean, boolean, TaskMonitor)}. 
+ * However, as with any file it is recommended that {@link #getDomainObjectClass()} first be used 
+ * to ensure the file corresponds to the expected/supported content type.
+ * <P>
+ * <B>NOTE:</B> Using external links to shared projects or 
+ * repositories may result in required authentication; which in headless situations may be 
+ * limited by the active authentication handler (see {@link LinkFileInfo#isExternalLink()} and
+ * {@link LinkFileInfo#getLinkStatus(java.util.function.Consumer)} for more details).
+ * <P>
+ * Link files can facilitate a link to either a folder or another file of a specific content type 
+ * within a Ghidra project.  Here's why someone might choose to use them:
+ * <ul>
+ * <li><B>File Organization:</B> links allow users to organize files and folders in a way that makes 
+ * sense for their workflow without duplicating data. A single file can appear to exist in multiple 
+ * locations without taking up additional space.</li>
+ * <li><B>Dynamic Updates:</B> If the original file or folder is modified, the changes are automatically 
+ * reflected wherever the link is used, ensuring consistency without manual updates.</li>
+ * <li><B>Shared Resources:</B> links can be used to establish shortcuts to files stored in different 
+ * repositories, projects or directories, enabling easy access without navigating deeply nested folder 
+ * structures or replicating stored data.</li>
+ * <li><B>System Configuration:</B> links can be used to link different versions of programs or libraries 
+ * without changing paths.</li>
+ * </ul>
  */
 public interface DomainFile extends Comparable<DomainFile> {
 
@@ -575,20 +622,21 @@ public interface DomainFile extends Comparable<DomainFile> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Copy this file into the newParent folder as a link file.  Restrictions:
-	 * <ul>
-	 * <li>Specified newParent must reside within a different project since internal linking is
-	 * not currently supported. </li>
-	 * <li>Content type must support linking (see {@link #isLinkingSupported()}).</li>
-	 * </ul>
-	 * If this file is associated with a temporary transient project (i.e., not a locally 
-	 * managed project) the generated link will refer to the remote file with a remote
-	 * Ghidra URL, otherwise a local project storage path will be used.
+	 * Copy this file into the newParent folder as a file-link.  A file-link references another
+	 * file without actually copying all of its content.  If this file is associated with a 
+	 * temporary transient project (i.e., not a locally managed project) the generated link will 
+	 * refer to the this file with a Ghidra URL.  If this file is contained within the 
+	 * same active {@link ProjectData} instance as {@code newParent} an internal link reference 
+	 * will be made.
+	 * 
 	 * @param newParent new parent folder
+	 * @param relative if true, and this file is contained within the same active 
+	 * {@link ProjectData} instance as {@code newParent}, an internal-project relative path 
+	 * file-link will be created.
 	 * @return newly created domain file or null if content type does not support link use.
 	 * @throws IOException if an IO or access error occurs.
 	 */
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException;
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException;
 
 	/**
 	 * Determine if this file's content type supports linking.
@@ -650,25 +698,35 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public long length() throws IOException;
 
 	/**
-	 * Determine if this file is a link file which corresponds to either a file or folder link.  
+	 * Determine if this file is a link-file which corresponds to either a file or folder link.  
+	 * See {@link #getLinkInfo()} to obtain link information.
+	 * <P>
+	 * If the link-file is a {@link LinkFileInfo#isFolderLink() folder-link} the method 
+	 * {@link LinkFileInfo#getLinkedFolder()} can be used to get the linked domain folder where the 
+	 * resulting folder's {@link DomainFolder#isLinked()} indicates that it was the result of 
+	 * following a folder-link.
+	 * <P>
+	 * The associated link path/URL may be obtained with {@link LinkFileInfo#getLinkPath()}.
+	 * <P>
+	 * The content type (see {@link #getContentType()} of a link-file will differ from that of the
+	 * linked object (e.g., "LinkedProgram" vs "Program"). It is highly recommended that the 
+	 * {@link #getDomainObjectClass()} method be used instead since it will return the same value 
+	 * for a normal file or link-file that corresponds to the same {@link DomainObject} implementation.
+	 * <P>
 	 * The {@link DomainObject} referenced by a link-file may be opened using 
 	 * {@link #getReadOnlyDomainObject(Object, int, TaskMonitor)}.  The 
 	 * {@link #getDomainObject(Object, boolean, boolean, TaskMonitor)} method may also be used
-	 * to obtain a read-only instance.  {@link #getImmutableDomainObject(Object, int, TaskMonitor)}
-	 * use is not supported.
-	 * If the link-file content type equals {@value FolderLinkContentHandler#FOLDER_LINK_CONTENT_TYPE}
-	 * the method {@link #followLink()} can be used to get the linked domain folder. 
-	 * The associated link URL may be obtained with {@link LinkHandler#getURL(DomainFile)}.
-	 * The content type (see {@link #getContentType()} of a link file will differ from that of the
-	 * linked object (e.g., "LinkedProgram" vs "Program").
+	 * to obtain a read-only instance.  These methods should not be used on a folder-link since 
+	 * an {@link UnsupportedOperationException} will be thrown.
+	 * 
 	 * @return true if link file else false for a normal domain file
 	 */
-	public boolean isLinkFile();
+	public boolean isLink();
 
 	/**
-	 * If this is a folder-link file get the corresponding linked folder.
-	 * @return a linked domain folder or null if not a folder-link.
+	 * If this file is a {@link #isLink() link-file} the link information will be returned.
+	 * @return link information or null if this is not a link-file
 	 */
-	public DomainFolder followLink();
+	public LinkFileInfo getLinkInfo();
 
 }

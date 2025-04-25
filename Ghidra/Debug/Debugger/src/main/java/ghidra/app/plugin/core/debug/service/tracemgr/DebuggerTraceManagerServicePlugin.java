@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
-import static ghidra.framework.main.DataTreeDialogType.OPEN;
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -223,9 +223,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		public void targetWithdrawn(Target target) {
 			Swing.runLater(() -> updateCurrentTarget());
 			boolean save = isSaveTracesByDefault();
-			CompletableFuture<Void> flush = save
-					? waitUnlockedDebounced(target)
-					: AsyncUtils.nil();
+			CompletableFuture<Void> flush = save ? waitUnlockedDebounced(target) : AsyncUtils.nil();
 			flush.thenRunAsync(() -> {
 				if (!isAutoCloseOnTerminate()) {
 					return;
@@ -416,20 +414,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected DataTreeDialog getTraceChooserDialog() {
-
-		DomainFileFilter filter = new DomainFileFilter() {
-
-			@Override
-			public boolean accept(DomainFile df) {
-				return Trace.class.isAssignableFrom(df.getDomainObjectClass());
-			}
-
-			@Override
-			public boolean followLinkedFolders() {
-				return false;
-			}
-		};
-
+		DomainFileFilter filter = new DefaultDomainFileFilter(Trace.class, false);
 		return new DataTreeDialog(null, OpenTraceAction.NAME, OPEN, filter);
 	}
 
@@ -454,11 +439,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeDeadTraces() {
-		checkCloseTraces(targetService == null
-				? getOpenTraces()
-				: getOpenTraces().stream()
-						.filter(t -> targetService.getTarget(t) == null)
-						.toList(),
+		checkCloseTraces(targetService == null ? getOpenTraces()
+				: getOpenTraces().stream().filter(t -> targetService.getTarget(t) == null).toList(),
 			false);
 	}
 
@@ -790,8 +772,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			varView.setSnap(snap);
 			varView.setPlatform(coordinates.getPlatform());
 			fireLocationEvent(coordinates, cause);
-		}, cause == ActivationCause.EMU_STATE_EDIT
-				? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
+		}, cause == ActivationCause.EMU_STATE_EDIT ? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
 				: SwingExecutorService.LATER); // Respect event order
 	}
 
@@ -845,7 +826,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			// TODO: Support upgrading
 			e = new VersionException(e.getVersionIndicator(), false).combine(e);
 			VersionExceptionHandler.showVersionError(null, file.getName(), file.getContentType(),
-				"Open", e);
+				"Open", false, e);
 			return null;
 		}
 		catch (IOException e) {
@@ -1069,10 +1050,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void checkCloseTraces(Collection<Trace> traces, boolean noConfirm) {
 		List<Target> live =
-			traces.stream()
-					.map(t -> targetService.getTarget(t))
-					.filter(t -> t != null)
-					.toList();
+			traces.stream().map(t -> targetService.getTarget(t)).filter(t -> t != null).toList();
 		/**
 		 * A provider may be reading a trace, likely via the Swing thread, so schedule this on the
 		 * same thread to avoid a ClosedException.

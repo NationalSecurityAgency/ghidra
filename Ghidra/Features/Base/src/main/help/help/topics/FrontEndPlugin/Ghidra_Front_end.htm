@@ -60,6 +60,8 @@
       <LI><A href="#ProjectDataTable">Data Table</A></LI>
 
       <LI><A href="#FileIcons">File Icons</A></LI>
+      
+      <LI><A href="#GhidraURLFormats">Ghidra URL Formats</A></LI>
 
       <LI><A href="#StatusWindow">Console</A></LI>
 
@@ -93,8 +95,10 @@
     <H2><A name="ActiveProjectPanel"></A>Active Project</H2>
 
     <BLOCKQUOTE>
-      <P>The Active Project view shows your programs and datatype archives in a tree view or a
-      table view.  The tree view is useful for organizing your files into folders and sub-folders.
+      <P>The Active Project view shows the various files associated with the current 
+      project which has been open for update.  Project files generally consist of programs and 
+      datatype archives but may also be related to other Ghidra content.  
+      The tree view is useful for organizing your files into folders and sub-folders.
       The table view is useful for sorting all your files on some particular attribute such as
       size, processor, or modification date.  In either view, you open and perform various
       actions on program files or datatype archives.</P>
@@ -105,13 +109,23 @@
       </CENTER>
       <BLOCKQUOTE>
         <P>The data tree shows all files in the project orgnanized into folders and sub-folders.
-         <A href="#FileIcons">Icons for files</A>
-        indicate whether they are under <A href=
+         <A href="#FileIcons">Icons for files</A> indicate whether they are under <A href=
         "help/topics/VersionControl/project_repository.htm#Versioning">version control</A> and whether
         you have the file <A href=
         "help/topics/VersionControl/project_repository.htm#SampleCheckOutIcon">checked out</A>.
-        Open this view by activating the "Tree View" tab.</P>   
+        In addition, unique icons are used to reflect content-type and if it corresponds to 
+        a link-file referring to another file or folder (see <A href="#Paste_Link">creating links</A>).
+        Open this view by activating the project window "Tree View" tab.</P>   
+
+	  <P><IMG src="help/shared/tip.png" border="0">Although Ghidra allows a folder and file within 
+	  the same parent folder to have the same name, it is recommended this be avoided if possible.
+	  Allowing both a folder and file to have the same pathname can result in ambiguous path problems
+	  when using link files and/or Ghidra URLs where only a path is used to identify either a project
+	  resource.
+	  </P>
+	  
 	  </BLOCKQUOTE>
+	  
 	  <P>&nbsp;</P>
      <H3>Tree Only Actions</H3>
         
@@ -124,7 +138,7 @@
           <P>To create a new folder,</P>
 
           <OL>
-            <LI>Select a folder that you own.&nbsp;</LI>
+            <LI>Select a folder which should contain the new folder.</LI>
 
             <LI>Right mouse click and choose the <I>New Folder</I> option.</LI>
 
@@ -133,8 +147,6 @@
             editing.</LI>
           </OL>
 
-          <P><IMG src="help/shared/note.png" border="0"> You cannot create
-          a sub-folder of a folder that you do not own.</P>
         </BLOCKQUOTE>
 
         <H4><A name="Copy"></A><A name="Paste"></A>Copy Folders and Files</H4>
@@ -159,7 +171,47 @@
             time.&nbsp;</LI>
           </OL>
         </BLOCKQUOTE>
+     
+        <H4><A name="Paste_Link"></A><A name="Paste_Relative_Link"></A>Paste Copied Folder or File as a Link</H4>
 
+        <BLOCKQUOTE>
+          <P>A Link may be created within the active project to a file or folder within the
+          same project (internal) or to a viewed project/repository (external).
+          Internal links may be defined using either a relative path or an absolute path.  Once
+          a link is created its stored path will not change.  The link will need to be replaced 
+		  should the referenced path need to be changed.  In addition, file-links are specific
+          to the content-type of the referenced file at the time of link creation (e.g., 
+          ProgramLink).
+          </P>
+          <P>To create a Link use the following steps from the source project data tree:</P>
+          <OL>
+            <LI>Select a single file or folder, right mouse click and choose the&nbsp; <I>Copy</I> option.</LI>
+
+            <LI>Select a destination folder within the active project data tree.</LI>
+
+            <LI>Right mouse click and choose the <I>Paste as Link</I> or <I>Paste as Relative-Link</I>
+            option.</LI>
+          </OL>
+		  
+		  <P>See <A href="#Create_File_Links">Create Linked Folder or File</A> for more information
+			about links and creating external links.
+			</P>
+			
+		  <P>An internal link in the project tree may indicate a "broken" status for 
+          various reasons, including:</P>
+          <ul>
+          	<li>The referenced file or folder does not exist,</li>
+          	<li>the content-type at the referenced location does not match the link type, or</li>
+          	<li>a folder-link results in a circular path reference.</li>
+          </ul>
+          <P>A broken link will have an icon which conveys its type but with a jagged red line
+          through it and a tooltip which conveys the issue detected.</P>
+          
+          <P><IMG src="help/shared/note.png" border="0">External links will never show a broken
+          link state since they are not evaluated for such conditions.</P>
+          
+        </BLOCKQUOTE>
+        
         <H4><A name="Cut"></A>Move Folders and Files</H4>
 
         <BLOCKQUOTE>
@@ -182,7 +234,7 @@
           </OL>
 
           <P><IMG src="help/shared/note.png" border="0">You cannot move a
-          file that is in use.</P>
+          file that is in use or a folder that contains a file that is in use.</P>
         </BLOCKQUOTE>
 
         <H4>Drag/Drop for Copy</H4>
@@ -217,6 +269,9 @@
 
             <LI>Release the mouse button when you get a valid drop target.</LI>
           </OL>
+          
+          <P><IMG src="help/shared/note.png" border="0">You cannot move a
+          file that is in use or a folder that contains a file that is in use.</P>
         </BLOCKQUOTE>
 
         <P><IMG src="help/shared/note.png" border="0"> If a folder or file
@@ -240,6 +295,24 @@
 
             <LI>Right mouse click and choose the <B>Collapse All</B> option.</LI>
           </OL>
+        </BLOCKQUOTE>
+		
+		<H4><A name="Follow_Link"></A>Follow Link</H4>
+
+        <BLOCKQUOTE>
+          <P>Select the internal or external folder or file referenced by a selected link-file.
+			While internal folders may be expanded directly from a folder-link, following a link
+			to the actual referenced location may be useful at times.
+		  </P>
+
+          <OL>
+            <LI>
+              Select a file-link or folder-link, right mouse click and choose the <I>Follow Link</I> 
+			  option.  The referenced file or folder will be selected if possible.  If associated 
+		  	  with an external project or repository the selection will occur in a READ-ONLY 
+		      project view once opened.</LI>
+          </OL>
+
         </BLOCKQUOTE>
 
 
@@ -421,9 +494,9 @@
             <TD style="vertical-align: top; width: 10px;">-<BR>
             </TD>
 
-            <TD style="vertical-align: top;">A <A href=
+            <TD style="vertical-align: top;"><A href=
             "help/topics/Program/Ghidra_Programs.htm"><SPAN style=
-            "font-weight: bold;">program</SPAN></A><BR>
+            "font-weight: bold;">Program</SPAN></A><BR>
             </TD>
           </TR>
 
@@ -434,10 +507,32 @@
             <TD style="vertical-align: top; width: 10px;">-<BR>
             </TD>
 
-            <TD style="vertical-align: top;">A <A href=
+            <TD style="vertical-align: top;"><A href=
             "help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#ProjectDataTypeArchive"><SPAN
-             style="font-weight: bold;">project data type archive</SPAN></A> (a data type file
+             style="font-weight: bold;">Data Type Archive</SPAN></A> (a data type file
             stored in the project)<BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD style="vertical-align: top; width: 20px;"><IMG alt="" src=
+            "images/video-x-generic16.png"></TD>
+
+            <TD style="vertical-align: top; width: 10px;">-<BR>
+            </TD>
+
+            <TD style="vertical-align: top;">Debugger Trace Data<BR>
+            </TD>
+          </TR>
+          
+          <TR>
+            <TD style="vertical-align: top; width: 20px;"><IMG alt="" src=
+            "images/start-here_16.png"></TD>
+
+            <TD style="vertical-align: top; width: 10px;">-<BR>
+            </TD>
+
+            <TD style="vertical-align: top;">Version Tracking Session Data<BR>
             </TD>
           </TR>
         </TBODY>
@@ -521,6 +616,61 @@
               not under version control, exists only on your local machine, and is not visible to
               other users.</TD>
             </TR>
+            
+            <TR>
+              <TD width="25%">File Link&nbsp;</TD>
+
+              <TD width="20%"><IMG src="images/AbsoluteFileLinkIcon.png" border="0"></TD>
+
+              <TD width="40%"><A name="FileLink"></A>A file link named "Example" which refers to
+              a Program at <I>/data/example</I>.   File links may reference another file using either an
+              1) absolute file path within the same project, 2) a relative file path within
+              the same project, 3) a shared repository Ghidra URL, or 4) a local project Ghidra URL.
+              See <A href="#GhidraURLFormats">Ghidra URL formats</A> below.
+              A file link may appear with various icon states which correspond to version control.
+              File links only support a single version and may not be modified.
+              </TD>
+            </TR>
+			
+			<TR>
+              <TD width="25%">File Link (Broken)&nbsp;</TD>
+
+              <TD width="20%"><IMG src="images/AbsoluteBrokenFileLinkIcon.png" border="0"></TD>
+
+              <TD width="40%"><A name="BrokenFileLink"></A>A file link named "Example" which refers to
+              a Program at <I>/data/example</I> and is in a "Broken" state.  Hovering the mouse
+			  on this node will display a tooltip which indicates the reason for the broken state. 
+			  External file links will never show a broken link state since they are not evaluated for such conditions. 
+              </TD>
+            </TR>
+            
+            <TR>
+              <TD width="25%">Folder Link&nbsp;</TD>
+
+              <TD width="20%"><IMG src="images/AbsoluteFolderLinkIcon.png" border="0"></TD>
+
+              <TD width="40%"><A name="FolderLink"></A>A folder link named "Example" which refers
+              to a folder at <I>/data/example</I>.   Folder links may reference another folder using either an
+              1) absolute file path within the same project, 2) a relative file path within
+              the same project, 3) a shared repository Ghidra URL, or 4) a local project Ghidra URL.
+              See <A href="#GhidraURLFormats">Ghidra URL formats</A> below.
+              Since a folder link is stored as a file, it may appear with various icon states which 
+              correspond to version control.  Folder links only support a single version and may not 
+              be modified.
+              </TD>
+            </TR>
+			
+			<TR>
+              <TD width="25%">Folder Link (Broken)&nbsp;</TD>
+
+              <TD width="20%"><IMG src="images/AbsoluteBrokenFolderLinkIcon.png" border="0"></TD>
+
+              <TD width="40%"><A name="BrokenFolderLink"></A>A folder link named "Example" which refers to
+              a folder at <I>/data/example</I> and is in a "Broken" state.  Hovering the mouse
+			  on this node will display a tooltip which indicates the reason for the broken state.  
+			  External folder links will never show a broken link state since they are not evaluated for such conditions.
+              </TD>
+            </TR>
 
             <TR>
               <TD width="25%">Hijacked File</TD>
@@ -545,9 +695,44 @@
         </TABLE>
       </CENTER>
     </DIV>
+    
 	</BLOCKQUOTE>
     <BLOCKQUOTE>
-      <H3>&nbsp;</H3>
+      <H3><A name="GhidraURLFormats"></A>Ghidra URL Formats</H3>
+ 
+      <P>The format of a remote <EM>Ghidra Server URL</EM> is distinctly different from a
+        <EM>Local Ghidra Project URL</EM>. These URLs have the following formats:</P>
+
+        <P><STRONG>Remote Ghidra Server Repository</STRONG><BR>
+        </P>
+
+        <BLOCKQUOTE>
+          <TABLE border="0" class="simplelist">
+            <TR>
+              <TD><CODE>ghidra://&lt;hostname&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_or_file_path&gt;]</CODE></TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <P>If the default Ghidra Server port (13100) is in use it is not specified by the URL.
+        The <EM>hostname</EM> may specify either a Fully Qualified Domain Name (FQDN, e.g.,
+        <EM>host.abc.com</EM>) or IP v4 Address (e.g., <EM>1.2.3.4</EM>).</P>
+        
+        <P><STRONG>Local Ghidra Project</STRONG><BR>
+        </P>
+
+        <BLOCKQUOTE>
+          <TABLE border="0" class="simplelist">
+            <TR>
+              <TD><CODE>ghidra:[/&lt;directory_path&gt;]/&lt;project_name&gt;[?/&lt;folder_or_file_path&gt;]</CODE></TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <P>For local project URLs, the absolute directory path containing the project
+        <EM>*.gpr</EM> locator file is specified with the project name but excludes any <EM>.gpr/.rep</EM> suffix.
+        The folder or file path within the project is conveyed with a URL query so the '?' is required.</P>
+ 
     </BLOCKQUOTE>
 
     <H2><A name="ReadOnlyProjectDataPanel"></A>Read-Only Project Data</H2>
@@ -697,46 +882,53 @@
       
       <BLOCKQUOTE>
         <P>This feature allows you to create a folder or file link in your active project to a 
-        corresponding folder or file within a read-only viewed project.  
-        This is done using a Ghidra URL which references the 
-        file in its local or remote storage location.  If the viewed project corresponds to a 
-        viewed repository a remote URL will be used, while other cases will refer to the
-        locally viewed project.  It is possible for links to become broken if the referenced
-        repository, local project or file location are changed.</P>
+        corresponding folder or file within your project or to a read-only viewed project.  
+        External links are established using a Ghidra URL which references a 
+        file or folder in its local or remote storage location.  An external Ghidra URL will 
+		be used if a link refers to a viewed project or repository.  It is possible for internal links to 
+		become broken if the referenced file or folder location has changed (e.g., no longers exists
+		or has the wrong content type).  External links may become invalid for various reasons
+		but will not convey an issue until the link is used.  The broken link icon does not apply
+		to external link files.
+		</P>
+		<P>To create an external folder or file link the following steps may be used:</P>
         <ol>
         <li>Select a single folder or file from a viewed READ-ONLY Project Data tree.</li>
         <li>Right mouse click on the selected tree node and choose the <I>Copy</I> option.</li>
-        <li>Select a destination folder in the active project tree.</li>
-        <li>Right mouse click on the folder and choose the <I>Paste as Link</I> option.
-            <P><IMG src="help/shared/note.png" border="0">Currently, linked-file types are 
-            currently limited to <I>Program</I> and <I>Data Type Archive</I> files 
-            only.  The <I>Past as Link</I> menu item will be disabled for 
-            unsupported file content types or for other unsupported situations such as internal 
-            linking within the same project.</P>
-            </li>
+        <li>Select a destination folder in the active project data tree.</li>
+        <li>Right mouse click on the folder and choose the <I>Paste as Link</I> option.</li>
         </ol>
-        <P>A linked-file may be opened in a tool via the project window in the same fashion that 
+		<P>It is important to note that the resulting link is always stored as a file within the
+          project.  With the exception of external links to local project content, a link may be
+          added to version control so that it may be shared.  Once added to version control it cannot 
+          be checked-out, since they are immutable, however they can still be deleted.</P>
+        <P>A file-link may be opened in a tool via the project window in the same fashion that 
         a normal file is opened (e.g., double-left-mouse-click or drag-n-drop onto a tool box icon).
         Such a project file may also be opened within a Tool using its <B>File->Open...</B> action
         and selected from the resulting project file selection dilaog.
-        Clicking on a linked-folder in the active project window will open that location in a
+        Clicking on an external folder-link in the active project window will open that location in a
         <B>READ-ONLY Project Data</B> tree.  The user may be prompted for a shared repository
-        connection password when accessing a linked folder or file.</P>
-        <P>Within a project file chooser dialog a linked-folder may be expanded in a similar fashion
+        connection password when accessing an external folder or file link.</P>
+        <P>Within a project file chooser dialog a folder-link may be expanded in a similar fashion
         to local folders provided any neccessary repository connection can be completed.</P>
-        <P><IMG src="help/shared/note.png" border="0"><B>Add to Version Control...</B> is supported
-        for repository folder and file links only and will be disabled for links to a 
-        local project.</P>
-        <P><IMG src="help/shared/note.png" border="0">Currently, linked-files only provide access
-        to the latest file version and do not facilitate access to older file versions.</P>
+        <P><IMG src="help/shared/note.png" border="0">Currently, external file-links only provide access
+        to the latest file version and do not facilitate access to older file versions.  An external
+		folder-link will allow access to file versions contained within such a folder.
+		</P>
+		<P><IMG src="help/shared/note.png" border="0">Some file chooser use cases, including the 
+		<I>GhidraScript</I> API, are restricted to selecting files and folders within the active 
+		project only and will hide all external links.
+		</P>
         <P>The project window below shows a Program file-link "Program1" which is linked to the
-        same file in the viewed project.  Hovering the mouse over a linked-file will show the URL 
-        of the linked file or folder.  The chain-link icon decoration indicates such a linked 
-        file or folder.</P>
+        same file in the viewed project.</P>
         
         <CENTER>
           <IMG src= "images/LinkOtherProject.png" border="0">
         </CENTER>
+        
+        <P>A folder or file link will show its referenced location with either
+        same file in the viewed project.</P>
+        
         
       </BLOCKQUOTE>
       

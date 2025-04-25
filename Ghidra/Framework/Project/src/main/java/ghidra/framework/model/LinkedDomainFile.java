@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,13 @@ import java.io.IOException;
  * {@link LinkedDomainFolder}.
  */
 public interface LinkedDomainFile extends DomainFile {
+
+	/**
+	 * Get the project file pathname relative to the linked-folder root.
+	 * NOTE: It may be a link-file path.
+	 * @return project pathname
+	 */
+	public String getLinkedPathname();
 
 	/**
 	 * Get the real domain file which corresponds to this file contained within a linked-folder.

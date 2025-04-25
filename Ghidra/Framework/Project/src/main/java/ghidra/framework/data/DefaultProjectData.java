@@ -19,6 +19,8 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.OptionDialog;
 import generic.timer.GhidraSwinglessTimer;
 import ghidra.framework.client.*;
@@ -253,8 +255,7 @@ public class DefaultProjectData implements ProjectData {
 	 */
 	public static Properties readProjectProperties(File projectDir) {
 		try {
-			PropertyFile pf =
-				new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
+			PropertyFile pf = new PropertyFile(projectDir, PROPERTY_FILENAME);
 			if (pf.exists()) {
 				Properties properties = new Properties();
 
@@ -281,7 +282,7 @@ public class DefaultProjectData implements ProjectData {
 			throws IOException, LockException {
 
 		projectDir = localStorageLocator.getProjectDir();
-		properties = new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
+		properties = new PropertyFile(projectDir, PROPERTY_FILENAME);
 		if (create) {
 			if (projectDir.exists()) {
 				throw new DuplicateFileException(
@@ -347,7 +348,7 @@ public class DefaultProjectData implements ProjectData {
 		}
 
 		String defaultMsg = "Unable to lock project! " + locator;
-		
+
 		// in headless mode, just spit out an error
 		if (!allowInteractiveForce || SystemUtilities.isInHeadlessMode()) {
 			throw new LockException(defaultMsg);
@@ -358,8 +359,8 @@ public class DefaultProjectData implements ProjectData {
 		String lockInformation = lock.getExistingLockFileInformation();
 		if (!lock.canForceLock()) {
 			String msg = "<html>Project is locked. You have another instance of Ghidra<br>" +
-					"already running with this project open (locally or remotely).<br><br>" +
-					projectStr + "<br><br>" + "Lock information: " + lockInformation;
+				"already running with this project open (locally or remotely).<br><br>" +
+				projectStr + "<br><br>" + "Lock information: " + lockInformation;
 			throw new LockException(msg);
 		}
 
@@ -586,35 +587,12 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public DomainFolder getFolder(String path) {
-		int len = path.length();
-		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
-			throw new IllegalArgumentException(
-				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
-		}
+		return getFolder(path, DomainFolderFilter.ALL_INTERNAL_FOLDERS_FILTER);
+	}
 
-		DomainFolder folder = getRootFolder();
-		String[] split = path.split(FileSystem.SEPARATOR);
-		if (split.length == 0) {
-			return folder;
-		}
-
-		for (int i = 1; i < split.length; i++) {
-			DomainFolder subFolder = folder.getFolder(split[i]);
-			if (subFolder == null) {
-				// Check for folder link-file if folder not found
-				// NOTE: if real folder name matches link-file name it will block
-				// use of folder link-file.
-				DomainFile file = folder.getFile(split[i]);
-				if (file != null && file.isLinkFile()) {
-					subFolder = file.followLink();
-				}
-				if (subFolder == null) {
-					return null;
-				}
-			}
-			folder = subFolder;
-		}
-		return folder;
+	@Override
+	public DomainFolder getFolder(String path, DomainFolderFilter filter) {
+		return ProjectDataUtils.getDomainFolder(getRootFolder(), path, filter);
 	}
 
 	@Override
@@ -658,25 +636,32 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public DomainFile getFile(String path) {
-		int len = path.length();
-		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
+		return getFile(path, DomainFileFilter.ALL_INTERNAL_FILES_FILTER);
+	}
+
+	@Override
+	public DomainFile getFile(String path, DomainFileFilter filter) {
+		if (StringUtils.isBlank(path) || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException(
 				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
 		}
-		else if (path.charAt(len - 1) == FileSystem.SEPARATOR_CHAR) {
+		else if (path.charAt(path.length() - 1) == FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException("Missing file name in path");
 		}
 		int ix = path.lastIndexOf(FileSystem.SEPARATOR);
 
 		DomainFolder folder;
 		if (ix > 0) {
-			folder = getFolder(path.substring(0, ix));
+			folder = getFolder(path.substring(0, ix), filter);
 		}
 		else {
 			folder = getRootFolder();
 		}
 		if (folder != null) {
-			return folder.getFile(path.substring(ix + 1));
+			DomainFile file = folder.getFile(path.substring(ix + 1));
+			if (file != null && filter.accept(file)) {
+				return file;
+			}
 		}
 		return null;
 	}
@@ -811,7 +796,9 @@ public class DefaultProjectData implements ProjectData {
 
 			ItemCheckoutStatus otherCheckoutStatus =
 				newRepository.getCheckout(df.getParent().getPathname(), df.getName(), checkoutId);
-
+			if (otherCheckoutStatus == null) {
+				return true;
+			}
 			if (!newRepository.getUser().getName().equals(otherCheckoutStatus.getUser())) {
 				return true;
 			}

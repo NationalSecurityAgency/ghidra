@@ -92,8 +92,9 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 		if (fileCount == 1) {
 			if (!selectedFiles.isEmpty()) {
 				DomainFile file = CollectionUtils.any(selectedFiles);
-				return "<html>Are you sure you want to <B><U>permanently</U></B> delete \"" +
-					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
+				String type = file.isLink() ? "link" : "file";
+				return "<html>Are you sure you want to <B><U>permanently</U></B> delete " + type +
+					" \"" + HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
 
 			// only folders are selected, but they contain files
@@ -108,6 +109,7 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 
 	@Override
 	protected boolean isEnabledForContext(ProjectDataContext context) {
+		// NOTE: Folder-links are treated as files
 		if (!context.hasOneOrMoreFilesAndFolders()) {
 			return false;
 		}

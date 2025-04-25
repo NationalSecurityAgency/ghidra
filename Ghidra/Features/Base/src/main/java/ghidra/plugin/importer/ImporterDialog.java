@@ -142,7 +142,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	 */
 	public void setDestinationFolder(DomainFolder folder) {
 		destinationFolder = folder;
-		folderNameTextField.setText(destinationFolder.toString());
+		folderNameTextField.setText(destinationFolder.getPathname());
 		validateFormInput();
 	}
 
@@ -521,7 +521,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		String parentPath = FilenameUtils.getFullPathNoEndSeparator(pathName);
 		String fileOrFolderName = FilenameUtils.getName(pathName);
 		DomainFolder localDestFolder =
-			(parentPath != null) ? ProjectDataUtils.lookupDomainPath(destinationFolder, parentPath)
+			(parentPath != null) ? ProjectDataUtils.getDomainFolder(destinationFolder, parentPath)
 					: destinationFolder;
 		if (localDestFolder != null) {
 			if (isFolder && localDestFolder.getFolder(fileOrFolderName) != null ||

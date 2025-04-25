@@ -382,6 +382,22 @@ public class RepositoryHandleImpl extends UnicastRemoteObject
 	}
 
 	@Override
+	public void createTextDataFile(String parentPath, String itemName, String fileID,
+			String contentType, String textData, String comment)
+			throws InvalidNameException, IOException {
+		synchronized (syncObject) {
+			validate();
+			repository.validateWritePrivilege(currentUser);
+			RepositoryFolder folder = repository.getFolder(currentUser, parentPath, true);
+			if (folder == null) {
+				throw new IOException("Failed to create repository Folder " + parentPath);
+			}
+			folder.createTextDataFile(itemName, fileID, contentType, textData, comment,
+				currentUser);
+		}
+	}
+
+	@Override
 	public RemoteManagedBufferFileHandle createDatabase(String parentPath, String itemName,
 			String fileID, int bufferSize, String contentType, String projectPath)
 			throws InvalidNameException, IOException {

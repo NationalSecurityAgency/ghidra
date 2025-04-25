@@ -398,6 +398,10 @@ src/main/help/help/topics/FrontEndPlugin/Project_Info.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Saving_a_Ghidra_Project.htm||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFolderLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFolderLinkIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveFileExists.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ChangeAccessList.png||GHIDRA||||END|
@@ -439,6 +443,7 @@ src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA|||
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/hijack_file.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/start-here_16.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddToComparisonIcon.png||GHIDRA||||END|

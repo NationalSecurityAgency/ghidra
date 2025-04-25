@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.references;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -34,7 +32,7 @@ import generic.theme.GIcon;
 import ghidra.app.cmd.refs.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -236,8 +234,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private void setExternalProgramAssociation() {
 		List<String> selectedExternalNames = getSelectedExternalNames();
 		String externalName = selectedExternalNames.get(0);	// must be exactly one for us to be enabled.
-		DataTreeDialog dialog = new DataTreeDialog(mainPanel,
-			"Choose External Program (" + externalName + ")", OPEN);
+		DataTreeDialog dialog = new ProgramFileChooser(mainPanel,
+			"Choose External Program (" + externalName + ")", AppInfo.getActiveProject());
 
 		dialog.setSearchText(externalName);
 

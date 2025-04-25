@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -250,12 +250,12 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	@Override
-	public void checkCompatibility(int serverInterfaceVersion) throws RemoteException {
-		if (serverInterfaceVersion > INTERFACE_VERSION) {
+	public void checkCompatibility(int minServerInterfaceVersion) throws RemoteException {
+		if (minServerInterfaceVersion > INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, a newer Ghidra Server version is required.");
 		}
-		else if (serverInterfaceVersion < INTERFACE_VERSION) {
+		else if (minServerInterfaceVersion < MINIMUM_INTERFACE_VERSION) {
 			throw new RemoteException(
 				"Incompatible server interface, the minimum supported Ghidra version is " +
 					MIN_GHIDRA_VERSION);

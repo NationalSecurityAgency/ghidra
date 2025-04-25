@@ -15,6 +15,7 @@
  */
 package help.screenshot;
 
+import java.awt.Dialog;
 import java.io.IOException;
 
 import javax.swing.JComboBox;
@@ -27,6 +28,7 @@ import ghidra.app.util.exporter.Exporter;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -40,10 +42,15 @@ public class ExporterPluginScreenShots extends GhidraScreenShotGenerator {
 		Preferences.setProperty(Preferences.LAST_EXPORT_DIRECTORY, "/path");
 
 		DomainFile df = createDomainFile();
-		ExporterDialog dialog = new ExporterDialog(tool, df);
-		runSwing(() -> tool.showDialog(dialog), false);
+
+		runSwing(() -> ExporterDialog.show(tool, df), false);
+
+		Dialog dialog = waitForJDialog("Export Program_A");
+
 		waitForSwing();
 		captureDialog(dialog);
+
+		Swing.runNow(() -> dialog.dispose());
 	}
 
 	@Test

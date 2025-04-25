@@ -28,6 +28,7 @@ import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -441,17 +442,14 @@ public class ImporterPlugin extends Plugin
 	}
 
 	private static DomainFolder getFolderFromContext(ActionContext context) {
+		DomainFolder folder = null;
 		Object contextObj = context.getContextObject();
-		if (contextObj instanceof DomainFolderNode) {
-			DomainFolderNode node = (DomainFolderNode) contextObj;
-			return node.getDomainFolder();
+		if (contextObj instanceof GTreeNode dataTreeNode) {
+			folder = DataTree.getRealInternalFolderForNode(dataTreeNode);
 		}
-		if (contextObj instanceof DomainFileNode) {
-			DomainFileNode node = (DomainFileNode) contextObj;
-			DomainFile domainFile = node.getDomainFile();
-			return domainFile != null ? domainFile.getParent() : null;
+		if (folder != null && folder.isInWritableProject()) {
+			return folder;
 		}
-
 		return AppInfo.getActiveProject().getProjectData().getRootFolder();
 	}
 
