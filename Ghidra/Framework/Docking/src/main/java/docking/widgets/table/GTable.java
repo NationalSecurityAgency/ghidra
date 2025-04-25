@@ -104,7 +104,7 @@ public class GTable extends JTable {
 	private MouseListener selectRowListener = new MouseAdapter() {
 		@Override
 		public void mousePressed(MouseEvent e) {
-			if (e.getButton() == MouseEvent.BUTTON3) {
+			if (e.isPopupTrigger()) {
 				int row = rowAtPoint(e.getPoint());
 				if (row >= 0) {
 					if (!isRowSelected(row)) {

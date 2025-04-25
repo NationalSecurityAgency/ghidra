@@ -1735,6 +1735,14 @@ public class GTree extends JPanel implements BusyListener {
 		}
 
 		@Override
+		public synchronized MouseListener[] getMouseListeners() {
+			if (mouseListenerDelegate == null) {
+				return super.getMouseListeners();
+			}
+			return mouseListenerDelegate.getMouseListeners();
+		}
+
+		@Override
 		public void removeSelectionPath(TreePath path) {
 			// Called by the UI to add/remove selections--mark it as a user event.
 			// Note: this code is based upon the fact that the BasicTreeUI calls this method on
