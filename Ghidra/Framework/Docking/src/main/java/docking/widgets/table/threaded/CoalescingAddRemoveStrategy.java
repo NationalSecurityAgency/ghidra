@@ -4,22 +4,23 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.table;
+package docking.widgets.table.threaded;
 
 import static docking.widgets.table.AddRemoveListItem.Type.*;
 
 import java.util.*;
 
-import docking.widgets.table.threaded.*;
+import docking.widgets.table.AddRemoveListItem;
+import docking.widgets.table.TableSortingContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -76,6 +77,10 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 	public void process(List<AddRemoveListItem<T>> addRemoveList, TableData<T> tableData,
 			TaskMonitor monitor) throws CancelledException {
 
+		if (addRemoveList.isEmpty()) {
+			return;
+		}
+
 		Set<AddRemoveListItem<T>> items = coalesceAddRemoveItems(addRemoveList);
 
 		//
@@ -85,11 +90,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 		// existing item still has the data used to sort it.  If the sort data has changed, then
 		// even this step will not allow the TableData to find the item in a search.
 		//
-		Map<T, T> hashed = new HashMap<>();
-		for (T t : tableData) {
-			hashed.put(t, t);
-		}
-
+		Map<T, T> hashed = hashAllTableData(tableData, monitor);
 		Set<T> failedToRemove = new HashSet<>();
 
 		int n = items.size();
@@ -103,14 +104,13 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 			if (item.isChange()) {
 				T toRemove = hashed.remove(value);
 				remove(tableData, toRemove, failedToRemove);
-				monitor.incrementProgress(1);
 			}
 			else if (item.isRemove()) {
 				T toRemove = hashed.remove(value);
 				remove(tableData, toRemove, failedToRemove);
 				it.remove();
 			}
-			monitor.checkCancelled();
+			monitor.increment();
 		}
 
 		if (!failedToRemove.isEmpty()) {
@@ -119,7 +119,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 			monitor.setMessage("Removing " + message);
 
 			tableData.process((data, sortContext) -> {
-				return expungeLostItems(failedToRemove, data, sortContext);
+				return expungeLostItems(failedToRemove, data, sortContext, monitor);
 			});
 		}
 
@@ -137,8 +137,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 				tableData.insert(value);
 				hashed.put(value, value);
 			}
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
+			monitor.increment();
 		}
 
 		monitor.setMessage("Done adding/removing");
@@ -163,6 +162,17 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 		}
 
 		return new HashSet<>(map.values());
+	}
+
+	private Map<T, T> hashAllTableData(TableData<T> tableData, TaskMonitor monitor)
+			throws CancelledException {
+		TableData<T> allData = tableData.getRootData();
+		Map<T, T> hashed = new HashMap<>();
+		for (T t : allData) {
+			monitor.checkCancelled();
+			hashed.put(t, t);
+		}
+		return hashed;
 	}
 
 	private void handleAdd(AddRemoveListItem<T> item, Map<T, AddRemoveListItem<T>> map) {
@@ -241,7 +251,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 	 * against the entire list of table data, locating the item to be removed.
 	 */
 	private List<T> expungeLostItems(Set<T> toRemove, List<T> data,
-			TableSortingContext<T> sortContext) {
+			TableSortingContext<T> sortContext, TaskMonitor monitor) {
 
 		if (sortContext.isUnsorted()) {
 			// this can happen if the data is unsorted and we were asked to remove an item that
@@ -249,10 +259,14 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 			return data;
 		}
 
-		// Copy to a new list those items that are not marked for removal.  This saves the
-		// list move its items every time a remove takes place
+		// Copy to a new list those items that are not marked for removal.  This saves a list move 
+		// time a remove takes place
 		List<T> newList = new ArrayList<>(data.size() - toRemove.size());
 		for (int i = 0; i < data.size(); i++) {
+			if (monitor.isCancelled()) {
+				return newList;
+			}
+
 			T rowObject = data.get(i);
 			if (!toRemove.contains(rowObject)) {
 				newList.add(rowObject);
