@@ -169,7 +169,7 @@ public class DecompileProcess {
 				if (!getAndSetErrorDisplayed()) {
 					String err = new String(nativeProcess.getErrorStream().readAllBytes());
 					String errorDetail = "Decompiler executable may not be compatible with your system and may need to be rebuilt.\n" +
-							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							"(see GettingStarted.md, 'Building Native Components').\n\n" +
 							err;		
 					Msg.showError(this, null, "Failed to launch Decompiler process", errorDetail);
 				}

@@ -191,7 +191,7 @@ public class GnuDemanglerNativeProcess {
 						errorDetail = exc.getMessage();
 					}
 					errorDetail = "GNU Demangler executable may not be compatible with your system and may need to be rebuilt.\n" +
-							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							"(see GettingStarted.md, 'Building Native Components').\n\n" +
 							errorDetail;		
 					Msg.showError(this, null, "Failed to launch GNU Demangler process", errorDetail);
 				}
