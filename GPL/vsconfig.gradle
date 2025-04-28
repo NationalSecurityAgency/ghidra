@@ -45,7 +45,7 @@ def configureVisualStudio() {
 				println "  -> Visual Studio vswhere.exe returned an error code (${vswhereExit})!"
 			}
 			println "  -> Please confirm ${vswherePath} is version 2.5 or later."
-			println "  -> Please check README.md or InstallationGuide.html to verify you are using a supported version of Visual Studio." 
+			println "  -> Please check README.md or GettingStarted.md to verify you are using a supported version of Visual Studio." 
 			return
 		}
 		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
