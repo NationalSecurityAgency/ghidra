@@ -3437,7 +3437,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Function calledFunction =
 					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
-				if (calledFunction.getName().equals(expectedCalledFunctionName)) {
+
+				if (calledFunction != null &&
+					calledFunction.getName().equals(expectedCalledFunctionName)) {
 					return instruction.getAddress();
 				}
 			}

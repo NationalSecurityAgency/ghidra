@@ -434,6 +434,10 @@ public class RecoveredClassHelper {
 				Function calledFunction = extendedFlatAPI
 						.getReferencedFunction(instruction.getMinAddress(), getThunkedFunction);
 
+				if (calledFunction == null) {
+					continue;
+				}
+
 				// include the null functions in map so things using map can get accurate count
 				// of number of CALL instructions even if the call reg type
 				functionCallMap.put(instruction.getMinAddress(), calledFunction);
@@ -2112,6 +2116,10 @@ public class RecoveredClassHelper {
 			Function constructor =
 				extendedFlatAPI.getReferencedFunction(constructorReference, true);
 
+			if (constructor == null) {
+				continue;
+			}
+
 			if (recoveredClass.getIndeterminateList().contains(constructor)) {
 				addConstructorToClass(recoveredClass, constructor);
 				recoveredClass.removeIndeterminateConstructorOrDestructor(constructor);
@@ -2534,6 +2542,9 @@ public class RecoveredClassHelper {
 			RecoveredClass recoveredClass = referenceToClassMap.get(destructorReference);
 
 			Function destructor = extendedFlatAPI.getReferencedFunction(destructorReference, true);
+			if (destructor == null) {
+				continue;
+			}
 
 			if (recoveredClass.getIndeterminateList().contains(destructor)) {
 				addDestructorToClass(recoveredClass, destructor);
