@@ -46,6 +46,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Function;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.datastruct.FixedSizeHashMap;
@@ -4129,6 +4130,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @return calling convention name if found else unknown
 	 */
 	public String getCallingConventionName(byte id) {
+		if (id == DEFAULT_CALLING_CONVENTION_ID) {
+			return Function.DEFAULT_CALLING_CONVENTION_STRING;
+		}
+		else if (id == UNKNOWN_CALLING_CONVENTION_ID) {
+			return CompilerSpec.CALLING_CONVENTION_unknown;
+		}
 		lock.acquire();
 		try {
 			String callingConvention = callingConventionAdapter.getCallingConventionName(id);

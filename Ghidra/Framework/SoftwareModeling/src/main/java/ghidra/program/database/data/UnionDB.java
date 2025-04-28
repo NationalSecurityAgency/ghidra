@@ -33,7 +33,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	private int unionLength;
 	private int unionAlignment;  // reflects stored alignment, -1 if not yet stored
-	private int computedAlignment = -1; // cached alignment if not yet stored
+	private int computedAlignment = -1; // lazy, cached alignment, -1 if not yet computed
 
 	private List<DataTypeComponentDB> components;
 
