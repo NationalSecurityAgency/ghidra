@@ -148,6 +148,16 @@ public class UserSearchUtilsTest {
 	}
 
 	@Test
+	public void testCreateContainsSingleBackslash() {
+		Pattern pattern = UserSearchUtils.createContainsPattern("\\", true, CASE_SENSITIVE);
+
+		assertTrue(pattern.matcher("\\").matches());
+		assertTrue(pattern.matcher("\\bob").matches());
+		assertTrue(pattern.matcher("bob\\").matches());
+		assertTrue(pattern.matcher("b\\ob").matches());
+	}
+
+	@Test
 	public void testStartsPatternNoWildCards() {
 		Pattern pattern = UserSearchUtils.createStartsWithPattern("bob", true, CASE_SENSITIVE);
 

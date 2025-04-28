@@ -313,7 +313,6 @@ public class UserSearchUtils {
 		if (allowGlobbing) {
 
 			// Note: Order is important! (due to how escape characters added and checked)
-			escaped = escapeEscapeCharacters(escaped);
 			escaped = escapeNonGlobbingRegexCharacters(escaped);
 			escaped = convertGlobbingCharactersToRegex(escaped);
 		}
@@ -353,22 +352,6 @@ public class UserSearchUtils {
 	}
 
 	/**
-	 * Replaces all escape characters ('\') by escaping that character ('\\').
-	 * <p>
-	 * Note: this method will not escape characters that are escaping a globbing character
-	 * (see {@link #NON_GLOB_BACKSLASH_PATTERN}.
-	 *
-	 * @param input
-	 *            The string containing potential escape characters.
-	 * @return The fixed string
-	 */
-	private static String escapeEscapeCharacters(String input) {
-		// replace all '\' chars that are not followed by *known* special chars
-		Matcher backslashMatcher = NON_GLOB_BACKSLASH_PATTERN.matcher(input);
-		return backslashMatcher.replaceAll("\\\\\\\\");
-	}
-
-	/**
 	 * Escapes all special regex characters so that they are treated as literal characters
 	 * by the regex engine.
 	 *
@@ -400,9 +383,24 @@ public class UserSearchUtils {
 	 */
 	// package for testing
 	static String escapeSomeRegexCharacters(String input, char[] doNotEscape) {
+		//  
+		// Note: we have to handle backslash characters specially, since we have to look at the
+		// character that follows the backslash.
+		//
+		// This search utility allows users to perform globbing operations
+		// using '*' and '?'. To disable that feature, users can escape those specific characters 
+		// using a backslash. Except for these special cases, we want to treat backslashes 
+		// literally, assuming users wish to search for backslash characters.
+		//
+		// Escape any '\' characters that are not followed by a globbing char
+		//
+		Matcher backslashMatcher = NON_GLOB_BACKSLASH_PATTERN.matcher(input);
+		String updated = backslashMatcher.replaceAll("\\\\\\\\");
+
+		// Escape all other regex chars individually with a backslash 
 		StringBuilder buffy = new StringBuilder();
-		for (int i = 0; i < input.length(); i++) {
-			char c = input.charAt(i);
+		for (int i = 0; i < updated.length(); i++) {
+			char c = updated.charAt(i);
 
 			if (contains(doNotEscape, c)) {
 				// a bit inefficient, but the array should always be short
