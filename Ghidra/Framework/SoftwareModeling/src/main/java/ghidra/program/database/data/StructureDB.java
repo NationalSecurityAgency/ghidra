@@ -37,7 +37,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	private int structLength;
 	private int structAlignment;  // reflects stored alignment, -1 if not yet stored
-	private int computedAlignment = -1; // cached alignment if not yet stored
+	private int computedAlignment = -1; // lazy, cached alignment, -1 if not yet computed
 
 	private int numComponents; // If packed, this does not include the undefined components.
 	private List<DataTypeComponentDB> components;
@@ -73,7 +73,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			structLength = record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL);
 			structAlignment = record.getIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL);
 			computedAlignment = -1;
-			numComponents = isPackingEnabled() ? components.size()
+
+			boolean packingDisabled =
+				record.getIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL) < DEFAULT_PACKING;
+
+			numComponents = !packingDisabled ? components.size()
 					: record.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL);
 
 			if (oldFlexArrayRecord != null) {

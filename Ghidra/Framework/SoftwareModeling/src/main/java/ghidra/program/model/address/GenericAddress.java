@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,19 +56,11 @@ public class GenericAddress implements Address {
 		this.addrSpace = addrSpace;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#getAddress(java.lang.String)
-	 */
 	@Override
 	public Address getAddress(String addrString) throws AddressFormatException {
 		return addrSpace.getAddress(addrString);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#getNewAddress(long)
-	 */
 	@Override
 	public Address getNewAddress(long byteOffset) {
 		return addrSpace.getAddress(byteOffset);
@@ -86,10 +78,6 @@ public class GenericAddress implements Address {
 		return addrSpace.getTruncatedAddress(addrOffset, isAddressableWordOffset);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#getOffset()
-	 */
 	@Override
 	public long getOffset() {
 		return offset;
@@ -100,9 +88,6 @@ public class GenericAddress implements Address {
 		return addrSpace.getAddressableWordOffset(offset);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#getUnsignedOffset()
-	 */
 	@Override
 	public long getUnsignedOffset() {
 		// TODO: Validity of offset within space is not verified
@@ -117,37 +102,21 @@ public class GenericAddress implements Address {
 		return spaceSize + offset;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#getAddressSpace()
-	 */
 	@Override
 	public AddressSpace getAddressSpace() {
 		return addrSpace;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#getSize()
-	 */
 	@Override
 	public int getSize() {
 		return addrSpace.getSize();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#subtract(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public long subtract(Address addr) {
 		return addrSpace.subtract(this, addr);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#subtractWrap(long)
-	 */
 	@Override
 	public Address subtractWrap(long displacement) {
 		if (displacement == 0)
@@ -155,9 +124,6 @@ public class GenericAddress implements Address {
 		return addrSpace.subtractWrap(this, displacement);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#subtractWrapSpace(long)
-	 */
 	@Override
 	public Address subtractWrapSpace(long displacement) {
 		if (displacement == 0)
@@ -165,10 +131,6 @@ public class GenericAddress implements Address {
 		return addrSpace.subtractWrapSpace(this, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#subtractNoWrap(long)
-	 */
 	@Override
 	public Address subtractNoWrap(long displacement) throws AddressOverflowException {
 		if (displacement == 0)
@@ -176,10 +138,6 @@ public class GenericAddress implements Address {
 		return addrSpace.subtractNoWrap(this, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#subtract(long)
-	 */
 	@Override
 	public Address subtract(long displacement) {
 		if (displacement == 0)
@@ -187,9 +145,6 @@ public class GenericAddress implements Address {
 		return addrSpace.subtract(this, displacement);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#addWrap(long)
-	 */
 	@Override
 	public Address addWrap(long displacement) {
 		if (displacement == 0)
@@ -197,9 +152,6 @@ public class GenericAddress implements Address {
 		return addrSpace.addWrap(this, displacement);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#addWrapSpace(long)
-	 */
 	@Override
 	public Address addWrapSpace(long displacement) {
 		if (displacement == 0)
@@ -207,10 +159,6 @@ public class GenericAddress implements Address {
 		return addrSpace.addWrapSpace(this, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#addNoWrap(long)
-	 */
 	@Override
 	public Address addNoWrap(long displacement) throws AddressOverflowException {
 		if (displacement == 0)
@@ -226,10 +174,6 @@ public class GenericAddress implements Address {
 		return addrSpace.addNoWrap(this, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#add(long)
-	 */
 	@Override
 	public Address add(long displacement) {
 		if (displacement == 0)
@@ -237,10 +181,6 @@ public class GenericAddress implements Address {
 		return addrSpace.add(this, displacement);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#isSuccessor(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean isSuccessor(Address addr) {
 		return addrSpace.isSuccessor(this, addr);
@@ -259,26 +199,17 @@ public class GenericAddress implements Address {
 		return Long.compareUnsigned(offset, otherOffset);
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
 		}
-		if (!(o instanceof GenericAddress)) {
+		if (!(o instanceof GenericAddress addr)) {
 			return false;
 		}
-		GenericAddress addr = (GenericAddress) o;
-		return addrSpace.equals(addr.getAddressSpace()) && offset == addr.offset;
+		return offset == addr.offset && addrSpace.equals(addr.getAddressSpace());
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		int hash1 = addrSpace.hashCode();
@@ -286,18 +217,11 @@ public class GenericAddress implements Address {
 		return (hash1 << 16) ^ hash3;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return toString(addrSpace.showSpaceName(), MINIMUM_DIGITS);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#toString(java.lang.String)
-	 */
 	@Override
 	public String toString(String prefix) {
 		boolean showSpace = prefix.length() == 0 && addrSpace.showSpaceName();
@@ -368,19 +292,11 @@ public class GenericAddress implements Address {
 		return buf.toString();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#hasSameAddressSpace(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public boolean hasSameAddressSpace(Address addr) {
 		return addrSpace.equals(addr.getAddressSpace());
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.Address#next()
-	 */
 	@Override
 	public Address next() {
 		if (addrSpace.getMaxAddress().getOffset() == offset) {
@@ -389,9 +305,6 @@ public class GenericAddress implements Address {
 		return addrSpace.addWrap(this, 1);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#previous()
-	 */
 	@Override
 	public Address previous() {
 		if (addrSpace.getMinAddress().getOffset() == offset) {
@@ -400,9 +313,6 @@ public class GenericAddress implements Address {
 		return addrSpace.subtractWrap(this, 1);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#getPhysicalAddress()
-	 */
 	@Override
 	public Address getPhysicalAddress() {
 		AddressSpace physical = addrSpace.getPhysicalSpace();
@@ -415,17 +325,11 @@ public class GenericAddress implements Address {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#getPointerSize()
-	 */
 	@Override
 	public int getPointerSize() {
 		return addrSpace.getPointerSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isMemoryAddress()
-	 */
 	@Override
 	public boolean isMemoryAddress() {
 		return addrSpace.isMemorySpace();
@@ -441,57 +345,36 @@ public class GenericAddress implements Address {
 		return addrSpace.isNonLoadedMemorySpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isHashAddress()
-	 */
 	@Override
 	public boolean isHashAddress() {
 		return addrSpace.isHashSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isStackAddress()
-	 */
 	@Override
 	public boolean isStackAddress() {
 		return addrSpace.isStackSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isUniqueAddress()
-	 */
 	@Override
 	public boolean isUniqueAddress() {
 		return addrSpace.isUniqueSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isConstantAddress()
-	 */
 	@Override
 	public boolean isConstantAddress() {
 		return addrSpace.isConstantSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isVariableAddress()
-	 */
 	@Override
 	public boolean isVariableAddress() {
 		return addrSpace.isVariableSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isRegisterAddress()
-	 */
 	@Override
 	public boolean isRegisterAddress() {
 		return addrSpace.isRegisterSpace();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#isExternalAddress()
-	 */
 	@Override
 	public boolean isExternalAddress() {
 		return addrSpace.isExternalSpace();

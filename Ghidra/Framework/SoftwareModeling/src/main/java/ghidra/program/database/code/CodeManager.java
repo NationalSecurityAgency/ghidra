@@ -3207,8 +3207,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		try {
 			cache.invalidate();
-			lengthMgr.invalidateCache();
-			compositeMgr.invalidateCache();
+			lengthMgr.invalidate();
+			compositeMgr.invalidate();
 			protoMgr.clearCache();
 		}
 		finally {

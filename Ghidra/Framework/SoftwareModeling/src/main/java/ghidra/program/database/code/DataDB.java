@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,7 +197,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void addValueReference(Address refAddr, RefType type) {
-		refreshIfNeeded();
+		validate(lock);
 		refMgr.addMemoryReference(address, refAddr, type, SourceType.USER_DEFINED,
 			CodeManager.DATA_OP_INDEX);
 	}
@@ -379,19 +379,19 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.isChangeAllowed(this, settingsDefinition);
 	}
 
 	@Override
 	public void clearSetting(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.clearSetting(this, name);
 	}
 
 	@Override
 	public Long getLong(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		Long value = dataMgr.getLongSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getLong(name);
@@ -401,13 +401,13 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public String[] getNames() {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.getInstanceSettingsNames(this);
 	}
 
 	@Override
 	public String getString(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		String value = dataMgr.getStringSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getString(name);
@@ -417,7 +417,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Object getValue(String name) {
-		refreshIfNeeded();
+		validate(lock);
 		Object value = dataMgr.getSettings(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getValue(name);
@@ -427,19 +427,19 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void setLong(String name, long value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setLongSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setString(String name, String value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setStringSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setValue(String name, Object value) {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.setSettings(this, name, value);
 	}
 
@@ -650,7 +650,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public String getPathName() {
-		refreshIfNeeded();
+		validate(lock);
 		Address cuAddress = address;
 		SymbolTable st = program.getSymbolTable();
 		Symbol symbol = st.getPrimarySymbol(cuAddress);
@@ -763,13 +763,13 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public void clearAllSettings() {
-		refreshIfNeeded();
+		validate(lock);
 		dataMgr.clearAllSettings(this);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		refreshIfNeeded();
+		validate(lock);
 		return dataMgr.isEmptySetting(this);
 	}
 
