@@ -756,9 +756,12 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 			// mark the 4 bytes of the flag with a data type and set it to constant mutability.
 			try {
+				// this will overwrite any DWARF discovered struct (that encompasses the flag) 
+				// that was placed here, which is necessary to allow the decompiler to determine
+				// that the flag is a constant value.
 				Data flagData = DataUtilities.createData(program, flagAddr,
 					AbstractIntegerDataType.getUnsignedDataType(4, null), 4,
-					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				MutabilitySettingsDefinition.DEF.setChoice(flagData,
 					MutabilitySettingsDefinition.CONSTANT);
 				markupSession.labelAddress(flagAddr, "runtime.writeBarrier.discovered");
