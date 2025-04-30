@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -81,7 +81,8 @@ import ghidra.trace.model.program.TraceProgramView;
 	},
 	servicesProvided = {
 		DebuggerListingService.class,
-	})
+	}
+)
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
@@ -180,13 +181,13 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	protected void viewChanged(AddressSetView addrSet) {
+	protected void setView(AddressSetView addrSet) {
 		TraceProgramView view = current.getView();
 		if (view == null) {
-			super.viewChanged(new AddressSet());
+			super.setView(new AddressSet());
 		}
 		else {
-			super.viewChanged(view.getMemory());
+			super.setView(view.getMemory());
 		}
 	}
 
