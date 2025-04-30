@@ -20,7 +20,6 @@ import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -875,9 +874,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 */
 	public void setView(AddressSetView view) {
 
+		view = ImmutableAddressSet.asImmutable(view);
+
 		AddressIndexMap currentMap = layoutModel.getAddressIndexMap();
 		AddressSetView originalView = currentMap.getOriginalAddressSet();
-		if (Objects.equals(originalView, view)) {
+		if (view.hasSameAddresses(originalView)) {
 			return;
 		}
 

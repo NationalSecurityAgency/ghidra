@@ -370,7 +370,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	 * primary program and listingModel
 	 */
 	public void setAddressSet(AddressSetView view) {
-		primaryAddrSet = view;
+		primaryAddrSet = ImmutableAddressSet.asImmutable(view);
 		modelSizeChanged();
 	}
 }
