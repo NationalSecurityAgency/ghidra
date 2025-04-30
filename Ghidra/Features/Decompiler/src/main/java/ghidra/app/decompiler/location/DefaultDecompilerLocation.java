@@ -33,12 +33,12 @@ public class DefaultDecompilerLocation extends ProgramLocation implements Decomp
 	public DefaultDecompilerLocation(Program program, Address address,
 			DecompilerLocationInfo info) {
 		super(program, address);
-
 		this.info = info;
 	}
 
 	public DefaultDecompilerLocation() {
 		// for restoring from xml
+		info = new DecompilerLocationInfo();
 	}
 
 	@Override
