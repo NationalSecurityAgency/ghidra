@@ -82,7 +82,8 @@ def _setup_project(
         language: str = None,
         compiler: str = None,
         loader: Union[str, JClass] = None,
-        program_name: str = None
+        program_name: str = None,
+        nested_project_location = True
 ) -> Tuple["GhidraProject", "Program"]:
     from ghidra.base.project import GhidraProject
     from java.lang import ClassLoader  # type:ignore @UnresolvedImport
@@ -97,7 +98,8 @@ def _setup_project(
         project_location = binary_path.parent
     if not project_name:
         project_name = f"{binary_path.name}_ghidra"
-    project_location /= project_name
+    if nested_project_location: 
+        project_location /= project_name
 
     if isinstance(loader, str):
         from java.lang import ClassNotFoundException # type:ignore @UnresolvedImport
@@ -202,7 +204,8 @@ def open_program(
         language: str = None,
         compiler: str = None,
         loader: Union[str, JClass] = None,
-        program_name: str = None
+        program_name: str = None,
+        nested_project_location = True
 ) -> ContextManager["FlatProgramAPI"]: # type: ignore
     """
     Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
@@ -221,6 +224,11 @@ def open_program(
         This may be either a Java class or its path. (Defaults to None)
     :param program_name: The name of the program to open in Ghidra.
         (Defaults to None, which results in the name being derived from "binary_path")
+    :param nested_project_location: If True, assumes "project_location" contains an extra nested 
+        directory named "project_name", which contains the actual Ghidra project files/directories.
+        By default, PyGhidra creates Ghidra projects with this nested layout, but the standalone
+        Ghidra program does not.  Nested project locations are True by default to maintain backwards
+        compatibility with older versions of PyGhidra.
     :return: A Ghidra FlatProgramAPI object.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
@@ -241,7 +249,8 @@ def open_program(
         language,
         compiler,
         loader,
-        program_name
+        program_name,
+        nested_project_location
     )
     GhidraScriptUtil.acquireBundleHostReference()
 
@@ -268,6 +277,8 @@ def _flat_api(
         language: str = None,
         compiler: str = None,
         loader: Union[str, JClass] = None,
+        program_name: str = None,
+        nested_project_location = True,
         *,
         install_dir: Path = None
 ):
@@ -308,7 +319,9 @@ def _flat_api(
             project_name,
             language,
             compiler,
-            loader
+            loader,
+            program_name,
+            nested_project_location
         )
 
     from ghidra.app.script import GhidraScriptUtil
@@ -340,6 +353,8 @@ def run_script(
     lang: str = None,
     compiler: str = None,
     loader: Union[str, JClass] = None,
+    program_name = None,
+    nested_project_location = True,
     *,
     install_dir: Path = None
 ):
@@ -364,10 +379,17 @@ def run_script(
     :param install_dir: The path to the Ghidra installation directory. This parameter is only
         used if Ghidra has not been started yet.
         (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+    :param program_name: The name of the program to open in Ghidra.
+        (Defaults to None, which results in the name being derived from "binary_path")
+    :param nested_project_location: If True, assumes "project_location" contains an extra nested 
+        directory named "project_name", which contains the actual Ghidra project files/directories.
+        By default, PyGhidra creates Ghidra projects with this nested layout, but the standalone
+        Ghidra program does not.  Nested project locations are True by default to maintain backwards
+        compatibility with older versions of PyGhidra.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
     script_path = str(script_path)
-    args = binary_path, project_location, project_name, verbose, analyze, lang, compiler, loader
+    args = binary_path, project_location, project_name, verbose, analyze, lang, compiler, loader, program_name, nested_project_location
     with _flat_api(*args, install_dir=install_dir) as script:
         script.run(script_path, script_args)
