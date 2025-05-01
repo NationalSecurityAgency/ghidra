@@ -84,43 +84,43 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private Program egray832Program;
 	private MockPdb egray832Pdb;
 	private Map<String, Address> egray832AddressesByMangled;
-	private MsftVxtManager egray832VxtManager;
-	private MsftVxtManager egray832VxtManagerNoProgram;
+	private MsVxtManager egray832VxtManager;
+	private MsVxtManager egray832VxtManagerNoProgram;
 
 	private Egray864ProgramCreator egray864Creator;
 	private Program egray864Program;
 	private MockPdb egray864Pdb;
 	private Map<String, Address> egray864AddressesByMangled;
-	private MsftVxtManager egray864VxtManager;
-	private MsftVxtManager egray864VxtManagerNoProgram;
+	private MsVxtManager egray864VxtManager;
+	private MsVxtManager egray864VxtManagerNoProgram;
 
 	private Cfb432ProgramCreator cfb432Creator;
 	private Program cfb432Program;
 	private MockPdb cfb432Pdb;
 	private Map<String, Address> cfb432AddressesByMangled;
-	private MsftVxtManager cfb432VxtManager;
-	private MsftVxtManager cfb432VxtManagerNoProgram;
+	private MsVxtManager cfb432VxtManager;
+	private MsVxtManager cfb432VxtManagerNoProgram;
 
 	private Cfb464ProgramCreator cfb464Creator;
 	private Program cfb464Program;
 	private MockPdb cfb464Pdb;
 	private Map<String, Address> cfb464AddressesByMangled;
-	private MsftVxtManager cfb464VxtManager;
-	private MsftVxtManager cfb464VxtManagerNoProgram;
+	private MsVxtManager cfb464VxtManager;
+	private MsVxtManager cfb464VxtManagerNoProgram;
 
 	private Vftm32ProgramCreator vftm32Creator;
 	private Program vftm32Program;
 	private MockPdb vftm32Pdb;
 	private Map<String, Address> vftm32AddressesByMangled;
-	private MsftVxtManager vftm32VxtManager;
-	private MsftVxtManager vftm32VxtManagerNoProgram;
+	private MsVxtManager vftm32VxtManager;
+	private MsVxtManager vftm32VxtManagerNoProgram;
 
 	private Vftm64ProgramCreator vftm64Creator;
 	private Program vftm64Program;
 	private MockPdb vftm64Pdb;
 	private Map<String, Address> vftm64AddressesByMangled;
-	private MsftVxtManager vftm64VxtManager;
-	private MsftVxtManager vftm64VxtManagerNoProgram;
+	private MsVxtManager vftm64VxtManager;
+	private MsVxtManager vftm64VxtManagerNoProgram;
 
 	@Before
 	public void setUp() throws Exception {
@@ -134,7 +134,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		egray832Pdb = programTestArtifacts.pdb();
 		egray832AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(egray832Program.getDataTypeManager());
-		egray832VxtManager = new MsftVxtManager(ctm, egray832Program);
+		egray832VxtManager = new MsVxtManager(ctm, egray832Program);
 		egray832VxtManager.createVirtualTables(CategoryPath.ROOT, egray832AddressesByMangled, log,
 			monitor);
 
@@ -148,7 +148,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray832Program.endTransaction(txID, commit);
 		}
 
-		egray832VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		egray832VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -158,7 +158,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		egray864Pdb = programTestArtifacts.pdb();
 		egray864AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(egray864Program.getDataTypeManager());
-		egray864VxtManager = new MsftVxtManager(ctm, egray864Program);
+		egray864VxtManager = new MsVxtManager(ctm, egray864Program);
 		egray864VxtManager.createVirtualTables(CategoryPath.ROOT, egray864AddressesByMangled, log,
 			monitor);
 
@@ -172,7 +172,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			egray864Program.endTransaction(txID, commit);
 		}
 
-		egray864VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		egray864VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -182,7 +182,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		cfb432Pdb = programTestArtifacts.pdb();
 		cfb432AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(cfb432Program.getDataTypeManager());
-		cfb432VxtManager = new MsftVxtManager(ctm, cfb432Program);
+		cfb432VxtManager = new MsVxtManager(ctm, cfb432Program);
 		cfb432VxtManager.createVirtualTables(CategoryPath.ROOT, cfb432AddressesByMangled, log,
 			monitor);
 
@@ -196,7 +196,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb432Program.endTransaction(txID, commit);
 		}
 
-		cfb432VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		cfb432VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -206,7 +206,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		cfb464Pdb = programTestArtifacts.pdb();
 		cfb464AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(cfb464Program.getDataTypeManager());
-		cfb464VxtManager = new MsftVxtManager(ctm, cfb464Program);
+		cfb464VxtManager = new MsVxtManager(ctm, cfb464Program);
 		cfb464VxtManager.createVirtualTables(CategoryPath.ROOT, cfb464AddressesByMangled, log,
 			monitor);
 
@@ -220,7 +220,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			cfb464Program.endTransaction(txID, commit);
 		}
 
-		cfb464VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		cfb464VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -230,7 +230,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		vftm32Pdb = programTestArtifacts.pdb();
 		vftm32AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(vftm32Program.getDataTypeManager());
-		vftm32VxtManager = new MsftVxtManager(ctm, vftm32Program);
+		vftm32VxtManager = new MsVxtManager(ctm, vftm32Program);
 		vftm32VxtManager.createVirtualTables(CategoryPath.ROOT, vftm32AddressesByMangled, log,
 			monitor);
 
@@ -244,7 +244,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm32Program.endTransaction(txID, commit);
 		}
 
-		vftm32VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		vftm32VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -254,7 +254,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		vftm64Pdb = programTestArtifacts.pdb();
 		vftm64AddressesByMangled = programTestArtifacts.addressesByMangled();
 		ctm = new ClassTypeManager(vftm64Program.getDataTypeManager());
-		vftm64VxtManager = new MsftVxtManager(ctm, vftm64Program);
+		vftm64VxtManager = new MsVxtManager(ctm, vftm64Program);
 		vftm64VxtManager.createVirtualTables(CategoryPath.ROOT, vftm64AddressesByMangled, log,
 			monitor);
 
@@ -268,7 +268,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vftm64Program.endTransaction(txID, commit);
 		}
 
-		vftm64VxtManagerNoProgram = new MsftVxtManager(ctm, null);
+		vftm64VxtManagerNoProgram = new MsVxtManager(ctm, null);
 
 		//=====
 
@@ -2072,7 +2072,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = egray832Program;
 		MockPdb pdb = egray832Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = egray832VxtManager;
+		MsVxtManager vxtManager = egray832VxtManager;
 		Map<ClassID, String> expectedResults = egray832Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray832Creator.getExpectedVxtPtrSummaries();
@@ -2096,7 +2096,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = egray832Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = egray832VxtManagerNoProgram;
+		MsVxtManager vxtManager = egray832VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray832Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2116,7 +2116,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = egray832Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = egray832VxtManagerNoProgram;
+		MsVxtManager vxtManager = egray832VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray832Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray832Creator.getSpeculatedVxtPtrSummaries();
@@ -2141,7 +2141,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = egray864Program;
 		MockPdb pdb = egray864Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = egray864VxtManager;
+		MsVxtManager vxtManager = egray864VxtManager;
 		Map<ClassID, String> expectedResults = egray864Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray864Creator.getExpectedVxtPtrSummaries();
@@ -2165,7 +2165,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = egray864Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = egray864VxtManagerNoProgram;
+		MsVxtManager vxtManager = egray864VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray864Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2185,7 +2185,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = egray864Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = egray864VxtManagerNoProgram;
+		MsVxtManager vxtManager = egray864VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray864Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray864Creator.getSpeculatedVxtPtrSummaries();
@@ -2210,7 +2210,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = vftm32Program;
 		MockPdb pdb = vftm32Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = vftm32VxtManager;
+		MsVxtManager vxtManager = vftm32VxtManager;
 		Map<ClassID, String> expectedResults = vftm32Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm32Creator.getExpectedVxtPtrSummaries();
@@ -2234,7 +2234,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = vftm32Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = vftm32VxtManagerNoProgram;
+		MsVxtManager vxtManager = vftm32VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm32Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2254,7 +2254,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = vftm32Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = vftm32VxtManagerNoProgram;
+		MsVxtManager vxtManager = vftm32VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm32Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm32Creator.getSpeculatedVxtPtrSummaries();
@@ -2279,7 +2279,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = vftm64Program;
 		MockPdb pdb = vftm64Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = vftm64VxtManager;
+		MsVxtManager vxtManager = vftm64VxtManager;
 		Map<ClassID, String> expectedResults = vftm64Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm64Creator.getExpectedVxtPtrSummaries();
@@ -2303,7 +2303,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = vftm64Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = vftm64VxtManagerNoProgram;
+		MsVxtManager vxtManager = vftm64VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm64Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2323,7 +2323,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = vftm64Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = vftm64VxtManagerNoProgram;
+		MsVxtManager vxtManager = vftm64VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm64Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm64Creator.getSpeculatedVxtPtrSummaries();
@@ -2348,7 +2348,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = cfb432Program;
 		MockPdb pdb = cfb432Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = cfb432VxtManager;
+		MsVxtManager vxtManager = cfb432VxtManager;
 		Map<ClassID, String> expectedResults = cfb432Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb432Creator.getExpectedVxtPtrSummaries();
@@ -2372,7 +2372,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = cfb432Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = cfb432VxtManagerNoProgram;
+		MsVxtManager vxtManager = cfb432VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb432Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2392,7 +2392,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = cfb432Pdb;
 		DataTypeManager dtm = dtm32;
-		MsftVxtManager vxtManager = cfb432VxtManagerNoProgram;
+		MsVxtManager vxtManager = cfb432VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb432Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb432Creator.getSpeculatedVxtPtrSummaries();
@@ -2417,7 +2417,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = cfb464Program;
 		MockPdb pdb = cfb464Pdb;
 		DataTypeManager dtm = program.getDataTypeManager();
-		MsftVxtManager vxtManager = cfb464VxtManager;
+		MsVxtManager vxtManager = cfb464VxtManager;
 		Map<ClassID, String> expectedResults = cfb464Creator.getExpectedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb464Creator.getExpectedVxtPtrSummaries();
@@ -2441,7 +2441,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = cfb464Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = cfb464VxtManagerNoProgram;
+		MsVxtManager vxtManager = cfb464VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb464Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
@@ -2461,7 +2461,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Program program = null;
 		MockPdb pdb = cfb464Pdb;
 		DataTypeManager dtm = dtm64;
-		MsftVxtManager vxtManager = cfb464VxtManagerNoProgram;
+		MsVxtManager vxtManager = cfb464VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb464Creator.getSpeculatedStructs();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb464Creator.getSpeculatedVxtPtrSummaries();
@@ -2479,7 +2479,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	//==============================================================================================
 	private void createAndTestStructures(Program program, DataTypeManager dtm,
 			ObjectOrientedClassLayout layoutChoice, MockPdb pdb, boolean is64Bit,
-			MsftVxtManager vxtManager, Map<ClassID, String> expectedResults,
+			MsVxtManager vxtManager, Map<ClassID, String> expectedResults,
 			Map<ClassID, Map<String, String>> expectedVxtPtrSummaries) throws Exception {
 
 		for (CppCompositeType cppType : pdb.getCppTypes()) {

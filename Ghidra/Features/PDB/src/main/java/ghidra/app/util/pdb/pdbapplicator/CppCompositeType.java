@@ -384,7 +384,7 @@ public class CppCompositeType {
 	 * @throws PdbException upon issue performing the layout
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void createLayout(ObjectOrientedClassLayout layoutOptions, MsftVxtManager vxtManager,
+	public void createLayout(ObjectOrientedClassLayout layoutOptions, MsVxtManager vxtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
 		switch (layoutOptions) {
 			case MEMBERS_ONLY:
@@ -818,7 +818,7 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	//==============================================================================================
-	private void createHierarchicalClassLayout(MsftVxtManager vxtManager,
+	private void createHierarchicalClassLayout(MsVxtManager vxtManager,
 			ObjectOrientedClassLayout layoutOptions, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 
@@ -1047,9 +1047,8 @@ public class CppCompositeType {
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException up issue with finding the vbt or assigning offsets to virtual bases
 	 */
-	private void createClassLayout(MsftVxtManager vxtManager,
-			ObjectOrientedClassLayout layoutOptions, TaskMonitor monitor)
-			throws CancelledException, PdbException {
+	private void createClassLayout(MsVxtManager vxtManager, ObjectOrientedClassLayout layoutOptions,
+			TaskMonitor monitor) throws CancelledException, PdbException {
 		List<ClassPdbMember> selfBaseMembers = getSelfBaseClassMembers();
 		mainVft = getMainVft(vxtManager);
 		if (mainVft != null) {
@@ -1286,7 +1285,7 @@ public class CppCompositeType {
 	 *  is done this way so that we can collect parentage information for the pointers.
 	 * @throws PdbException upon issue finding base offset
 	 */
-	private void findVirtualBaseVxtPtrs(MsftVxtManager vxtManager) throws PdbException {
+	private void findVirtualBaseVxtPtrs(MsVxtManager vxtManager) throws PdbException {
 		// Walk direct bases to find vxts of virtual bases.  TODO: also notate all rolled up
 		//  virtuals for each direct base.
 		for (DirectLayoutBaseClass base : directLayoutBaseClasses) {
@@ -1448,7 +1447,7 @@ public class CppCompositeType {
 		return newParentage;
 	}
 
-	private TreeMap<Long, ClassPdbMember> processVirtualBaseClasses(MsftVxtManager vxtManager,
+	private TreeMap<Long, ClassPdbMember> processVirtualBaseClasses(MsVxtManager vxtManager,
 			ObjectOrientedClassLayout layoutOptions)
 			throws PdbException {
 		if (mainVbt instanceof PlaceholderVirtualBaseTable pvbt &&
@@ -1521,7 +1520,7 @@ public class CppCompositeType {
 	 * Finds or allocates (if needed) the Virtual Function Table "Pointer" within the class
 	 * structure
 	 */
-	private void findOrAllocateMainVftPtr(MsftVxtManager vxtManager) {
+	private void findOrAllocateMainVftPtr(MsVxtManager vxtManager) {
 		if (propagatedSelfBaseVfts.isEmpty()) {
 			if (!vftPtrTypeByOffset.isEmpty()) {
 				if (vftPtrTypeByOffset.size() > 1) {
@@ -1552,7 +1551,7 @@ public class CppCompositeType {
 	 * Finds or allocates (if needed) the Virtual Base Table "Pointer" for within the class
 	 * structure
 	 */
-	private void findOrAllocateMainVbtPtr(MsftVxtManager vxtManager) {
+	private void findOrAllocateMainVbtPtr(MsVxtManager vxtManager) {
 		if (propagatedSelfBaseVbts.isEmpty()) { // a pointer might be available in a direct base
 			if (!virtualLayoutBaseClasses.isEmpty()) { // there is a need for a main vbtptr
 				TreeSet<Long> vbtOffsets = new TreeSet<>();
@@ -1606,7 +1605,7 @@ public class CppCompositeType {
 	 */
 	private VirtualFunctionTable updateVft(VxtManager vxtManager, ClassID baseId, VxtPtrInfo info,
 			VxtPtrInfo parentInfo) {
-		if (!(vxtManager instanceof MsftVxtManager mvxtManager)) {
+		if (!(vxtManager instanceof MsVxtManager mvxtManager)) {
 			// error
 			return null;
 		}
@@ -1733,7 +1732,7 @@ public class CppCompositeType {
 	//  classes.
 	private VirtualBaseTable updateVbt(VxtManager vxtManager, ClassID baseId, VxtPtrInfo info,
 			VxtPtrInfo parentInfo) {
-		if (!(vxtManager instanceof MsftVxtManager mvxtManager)) {
+		if (!(vxtManager instanceof MsVxtManager mvxtManager)) {
 			// error
 			return null;
 		}
@@ -1791,7 +1790,7 @@ public class CppCompositeType {
 	 * Provides the Virtual Base Table to be used for placing virtual bases of this class
 	 * @throws PdbException upon unrecognized vft type
 	 */
-	private VirtualFunctionTable getMainVft(MsftVxtManager vxtManager) throws PdbException {
+	private VirtualFunctionTable getMainVft(MsVxtManager vxtManager) throws PdbException {
 		if (!finalVftPtrInfoByOffset.isEmpty()) {
 			VxtPtrInfo firstVftPtrInfo = finalVftPtrInfoByOffset.firstEntry().getValue();
 			VirtualFunctionTable vft = vxtManager.findPrimaryVft(myId, firstVftPtrInfo.parentage());
@@ -1815,7 +1814,7 @@ public class CppCompositeType {
 	 * Provides the Virtual Base Table to be used for placing virtual bases of this class
 	 * @throws PdbException upon unrecognized vbt type
 	 */
-	private VirtualBaseTable getMainVbt(MsftVxtManager vxtManager) throws PdbException {
+	private VirtualBaseTable getMainVbt(MsVxtManager vxtManager) throws PdbException {
 		if (!finalVbtPtrInfoByOffset.isEmpty()) {
 			VxtPtrInfo firstVbtPtrInfo = finalVbtPtrInfoByOffset.firstEntry().getValue();
 			VirtualBaseTable vbt = vxtManager.findPrimaryVbt(myId, firstVbtPtrInfo.parentage());
@@ -1857,7 +1856,7 @@ public class CppCompositeType {
 	}
 
 	private void addPlaceholderVirtualBaseTableEntry(PlaceholderVirtualBaseTable ptable,
-			MsftVxtManager vxtManager, VirtualLayoutBaseClass base, long baseOffset) {
+			MsVxtManager vxtManager, VirtualLayoutBaseClass base, long baseOffset) {
 		long basePtrOffset = base.getBasePointerOffset();
 		if (ptable.getPtrOffsetInClass() != basePtrOffset) {
 			// error
