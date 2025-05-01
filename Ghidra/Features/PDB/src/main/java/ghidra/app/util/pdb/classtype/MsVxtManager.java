@@ -552,7 +552,7 @@ public class MsVxtManager extends VxtManager {
 
 			case VFT:
 				ProgramVirtualFunctionTable vft = new ProgramVirtualFunctionTable(owner, parentage,
-					program, address, ctm.getDefaultVftTableElementSize(), mangled);
+					program, address, ctm.getDefaultVfTableElementSize(), mangled);
 				if (node.getVFTable() != null) {
 					Msg.warn(this, "VFT already exists at node for " + mangled);
 					return false;
