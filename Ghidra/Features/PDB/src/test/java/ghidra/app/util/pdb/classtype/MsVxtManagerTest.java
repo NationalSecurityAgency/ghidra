@@ -35,11 +35,11 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Unit tests for the {@link MsftVxtManager}.
+ * Unit tests for the {@link MsVxtManager}.
  * <p>
- * See {@link MsftVxtManager} for a description of what tests need to work
+ * See {@link MsVxtManager} for a description of what tests need to work
  */
-public class MsftVxtManagerTest extends AbstractGenericTest {
+public class MsVxtManagerTest extends AbstractGenericTest {
 
 	private static MessageLog log = new MessageLog();
 	private static TaskMonitor monitor = TaskMonitor.DUMMY;
@@ -189,17 +189,17 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 	private Program cfb432Program;
 	private MockPdb cfb432Pdb;
 	private Map<String, Address> cfb432AddressesByMangled;
-	private MsftVxtManager cfb432VxtManager;
+	private MsVxtManager cfb432VxtManager;
 
 	private Program vftm32Program;
 	private MockPdb vftm32Pdb;
 	private Map<String, Address> vftm32AddressesByMangled;
-	private MsftVxtManager vftm32VxtManager;
+	private MsVxtManager vftm32VxtManager;
 
 	private Program egray832Program;
 	private MockPdb egray832Pdb;
 	private Map<String, Address> egray832AddressesByMangled;
-	private MsftVxtManager egray832VxtManager;
+	private MsVxtManager egray832VxtManager;
 
 	@Before
 	public void setUp() throws Exception {
@@ -221,7 +221,7 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 		finally {
 			cfb432Program.endTransaction(txID, commit);
 		}
-		cfb432VxtManager = new MsftVxtManager(ctm, cfb432Program);
+		cfb432VxtManager = new MsVxtManager(ctm, cfb432Program);
 		cfb432VxtManager.createVirtualTables(CategoryPath.ROOT, cfb432AddressesByMangled, log,
 			monitor);
 
@@ -242,7 +242,7 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 		finally {
 			vftm32Program.endTransaction(txID, commit);
 		}
-		vftm32VxtManager = new MsftVxtManager(ctm, vftm32Program);
+		vftm32VxtManager = new MsVxtManager(ctm, vftm32Program);
 		vftm32VxtManager.createVirtualTables(CategoryPath.ROOT, vftm32AddressesByMangled, log,
 			monitor);
 
@@ -263,7 +263,7 @@ public class MsftVxtManagerTest extends AbstractGenericTest {
 		finally {
 			egray832Program.endTransaction(txID, commit);
 		}
-		egray832VxtManager = new MsftVxtManager(ctm, egray832Program);
+		egray832VxtManager = new MsVxtManager(ctm, egray832Program);
 		egray832VxtManager.createVirtualTables(CategoryPath.ROOT, egray832AddressesByMangled, log,
 			monitor);
 

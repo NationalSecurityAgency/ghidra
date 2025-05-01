@@ -20,7 +20,7 @@ import java.util.*;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.pdb.classtype.MsftVxtManager;
+import ghidra.app.util.pdb.classtype.MsVxtManager;
 import ghidra.app.util.pdb.pdbapplicator.CppCompositeType;
 import ghidra.app.util.pdb.pdbapplicator.ObjectOrientedClassLayout;
 import ghidra.program.model.address.Address;
@@ -77,7 +77,7 @@ public class MockPdb {
 	}
 
 	public void applyAll(Program program, DataTypeManager dtm,
-			ObjectOrientedClassLayout layoutOptions, MsftVxtManager vxtManager, TaskMonitor monitor)
+			ObjectOrientedClassLayout layoutOptions, MsVxtManager vxtManager, TaskMonitor monitor)
 			throws CancelledException, PdbException {
 		resolveRegularTypes(dtm);
 		applyCppTypes(layoutOptions, vxtManager, monitor);
@@ -92,8 +92,8 @@ public class MockPdb {
 		return cppTypes;
 	}
 
-	public void applyCppTypes(ObjectOrientedClassLayout layoutOptions,
-			MsftVxtManager vxtManager, TaskMonitor monitor)
+	public void applyCppTypes(ObjectOrientedClassLayout layoutOptions, MsVxtManager vxtManager,
+			TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		for (CppCompositeType type : cppTypes) {
 			type.createLayout(layoutOptions, vxtManager, monitor);
@@ -101,7 +101,7 @@ public class MockPdb {
 	}
 
 	public void applyCppType(CppCompositeType type, ObjectOrientedClassLayout layoutOptions,
-			MsftVxtManager vxtManager, TaskMonitor monitor)
+			MsVxtManager vxtManager, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		type.createLayout(layoutOptions, vxtManager, monitor);
 	}
