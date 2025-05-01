@@ -24,9 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.tree.TreePath;
 
 import docking.DialogComponentProvider;
-import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
@@ -42,7 +40,7 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 	private final Category category;
 	private JTextField nameTextField;
 	private DataTypeSelectionEditor dataTypeEditor;
-	private GhidraComboBox<DataTypeManager> dataTypeManagerBox;
+	private JTextField categoryField;
 	private boolean isCancelled;
 	private final TreePath selectedTreePath;
 
@@ -96,14 +94,15 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 
 		dataTypeEditor.setDefaultSelectedTreePath(selectedTreePath);
 
-		dataTypeManagerBox = new GhidraComboBox<>();
-		dataTypeManagerBox
-				.setRenderer(GComboBoxCellRenderer.createDefaultTextRenderer(dtm -> dtm.getName()));
-		dataTypeManagerBox.addToModel(managers);
-		dataTypeManagerBox.setSelectedItem(defaultDTM);
+		categoryField = new JTextField(24);
+		categoryField.setEditable(false);
+		categoryField.setName("Category");
 
-		panel.add(new GLabel("Archive:"));
-		panel.add(dataTypeManagerBox);
+		String archiveName = category.getDataTypeManager().getName();
+		categoryField.setText(archiveName + category.getCategoryPath().getPath());
+
+		panel.add(new GLabel("Category:"));
+		panel.add(categoryField);
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
@@ -162,12 +161,6 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 			return;
 		}
 
-		DataTypeManager manager = (DataTypeManager) dataTypeManagerBox.getSelectedItem();
-		if (manager == null) {
-			setStatusText("Must select an archive", MessageType.ERROR);
-			return;
-		}
-
 		clearStatusText();
 		close();
 	}
@@ -198,7 +191,4 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		return dataType;
 	}
 
-	DataTypeManager getDataTypeManager() {
-		return (DataTypeManager) dataTypeManagerBox.getSelectedItem();
-	}
 }
