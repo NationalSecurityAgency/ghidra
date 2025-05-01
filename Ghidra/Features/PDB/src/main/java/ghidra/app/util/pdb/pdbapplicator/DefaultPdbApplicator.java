@@ -36,7 +36,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
-import ghidra.app.util.pdb.classtype.*;
+import ghidra.app.util.pdb.classtype.ClassTypeManager;
+import ghidra.app.util.pdb.classtype.MsVxtManager;
 import ghidra.framework.options.Options;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
@@ -44,11 +45,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
@@ -209,7 +208,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	// If we have symbols and memory with VBTs in them, then a better VbtManager is created.
-	private MsftVxtManager vxtManager;
+	private MsVxtManager vxtManager;
 	private PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
 
 	//==============================================================================================
@@ -646,8 +645,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		linkerModuleNumber = findLinkerModuleNumber();
 		if (program != null) {
 			// Currently, this must happen after symbolGroups are created.
-			MsftVxtManager msftVxtManager =
-				new MsftVxtManager(getClassTypeManager(), program); // TODO: need to fix MsftVxtManager to work with or without a program!!!!!!!!!!
+			MsVxtManager msftVxtManager = new MsVxtManager(getClassTypeManager(), program);
 			msftVxtManager.createVirtualTables(getRootPdbCategory(), findVirtualTableSymbols(), log,
 				monitor);
 			vxtManager = msftVxtManager;
@@ -1586,7 +1584,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	// Virtual-Base/Function-Table-related methods.
 	//==============================================================================================
-	MsftVxtManager getVxtManager() {
+	MsVxtManager getVxtManager() {
 		return vxtManager;
 	}
 
