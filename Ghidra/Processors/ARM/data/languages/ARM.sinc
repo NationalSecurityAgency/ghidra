@@ -23,7 +23,7 @@ define register offset=0x0078 size=1 [ ISAModeSwitch ];  # generic name for TB T
 @define FPSCR_V "fpscr[28,1]"
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
-define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 ];
+define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 mvfr2 fpinst fpinst2 ];
 @endif
 define register offset=0x0100 size=10 [ fp0 fp1 fp2 fp3 fp4 fp5 fp6 fp7 ];	# eight 80-bit floating registers
 
