@@ -1001,7 +1001,10 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public void selectRow(final JTable table, final int rowIndex) {
 		waitForTable(table);
 
-		runSwing(() -> table.setRowSelectionInterval(rowIndex, rowIndex));
+		runSwing(() -> {
+			table.setRowSelectionInterval(rowIndex, rowIndex);
+			table.requestFocus();
+		});
 		waitForTable(table);
 	}
 

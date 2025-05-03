@@ -54,7 +54,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	private static final String EXISITING_STRUCTURE_STATUS_PREFIX = "Using existing structure: ";
 
 	private static final String STRUCTURE_COLUMN_NAME = "Structure";
-	private static final String PATH_COLUMN_NAME = "Path";
+	private static final String CATEGORY_COLUMN_NAME = "Category";
 
 	private JTextField nameTextField;
 	private CategoryPathSelectionEditor categoryPathEditor;
@@ -74,11 +74,13 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	 * Creates a new dialog with the given parent.
 	 *
 	 * @param tool The current tool that this dialog needs to access services.
+	 * @param program the current program
 	 */
-	public CreateStructureDialog(PluginTool tool) {
+	public CreateStructureDialog(PluginTool tool, Program program) {
 		super("Create Structure", true, true, true, false);
 
-		pluginTool = tool;
+		this.pluginTool = tool;
+		this.currentProgram = program;
 		setHelpLocation(new HelpLocation("DataPlugin", "Create_Structure_Dialog"));
 
 		addWorkPanel(buildMainPanel());
@@ -159,20 +161,15 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 		JLabel nameLabel = new JLabel("Name: ");
 
-		nameTextField = new JTextField() {
-			// make sure our height doesn't stretch
-			@Override
-			public Dimension getMaximumSize() {
-				Dimension d = super.getMaximumSize();
-				d.height = getPreferredSize().height;
-				return d;
-			}
-		};
+		nameTextField = new JTextField();
+		nameTextField.setName("StructureName");
+		nameTextField.getAccessibleContext().setAccessibleName("Name");
+
 		// Allow user to click on the text field to re-activate "create new" panel without forcing
 		// a click on the radio button
-		nameTextField.addMouseListener(new MouseAdapter() {
+		nameTextField.addFocusListener(new FocusAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent event) {
+			public void focusGained(FocusEvent e) {
 				createNewStructButton.setSelected(true);
 				updateEnablement();
 			}
@@ -224,45 +221,13 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 	private void buildCategoryPathEditor() {
 		categoryPathEditor = new CategoryPathSelectionEditor(pluginTool);
-		categoryPathEditor.getEditorComponent()
-				.getAccessibleContext()
-				.setAccessibleName("Category");
-		// make sure the "Category: " text field size matches the "Name: " text field size
-		categoryPathEditor.getEditorComponent().setMaximumSize(nameTextField.getMaximumSize());
-		categoryPathEditor.addDocumentListener(new DocumentListener() {
-			@Override
-			public void changedUpdate(DocumentEvent event) {
-				updateStatus(event.getDocument());
-			}
+		JComponent editorComponent = categoryPathEditor.getEditorComponent();
+		editorComponent.getAccessibleContext().setAccessibleName("Category");
 
-			@Override
-			public void insertUpdate(DocumentEvent event) {
-				updateStatus(event.getDocument());
-			}
+		categoryPathEditor.setCellEditorValue(CategoryPath.ROOT);
 
-			@Override
-			public void removeUpdate(DocumentEvent event) {
-				updateStatus(event.getDocument());
-			}
-
-			private void updateStatus(Document document) {
-				try {
-					String text = document.getText(0, document.getLength());
-					if (StringUtils.isBlank(text)) {
-						updateStatusText(true, null);
-					}
-					else {
-						updateStatusText(true, "Using category: " + text);
-					}
-				}
-				catch (BadLocationException ble) {
-					// nothing we can do here
-				}
-			}
-		});
-		// Allow the user to re-activate the "new struct" panel without forcing toggle click. Use 
-		// FocusListener because @CategoryPathSelectionEditor.java already contains a mouse listener
-		// and would override this one.
+		// Allow user to click on the text field to re-activate "create new" panel without forcing
+		// a click on the radio button
 		categoryPathEditor.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -283,6 +248,16 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			public void mouseClicked(MouseEvent event) {
 				useExistingStructButton.setSelected(true);
 				updateEnablement();
+			}
+		});
+		ListSelectionModel selectionModel = table.getSelectionModel();
+		selectionModel.addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+
+			if (useExistingStructButton.isSelected()) {
+				setOkEnabled(table.getSelectedRowCount() > 0);
 			}
 		});
 
@@ -527,6 +502,18 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		return false;
 	}
 
+	JTextField getNameField() {
+		return nameTextField;
+	}
+
+	JTable getTable() {
+		return matchingStructuresTable;
+	}
+
+	CategoryPathSelectionEditor getCategoryEditor() {
+		return categoryPathEditor;
+	}
+
 	/**
 	 * Shows a dialog that allows the user to create a new structure.
 	 * <p>
@@ -577,32 +564,56 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	@Override
 	protected void okCallback() {
 
-		if (nameTextField.isEnabled()) {
-			// just use the name set by the user
-			String nameText = nameTextField.getText();
-
-			if (!setCategoryPath()) {
-				return;
-			}
-
-			try {
-				currentStructure.setName(nameText);
-			}
-			catch (InvalidNameException ine) {
-				setStatusText(ine.getMessage());
-				return;
-			}
-			catch (DuplicateNameException dne) {
-				setStatusText(dne.getMessage());
-				return;
-			}
-		}
-		else {
+		if (useExistingStructButton.isSelected()) {
 			// get the selected object in the table
 			currentStructure = getSelectedStructure();
+			close();
+			return;
+		}
+
+		// just use the name set by the user
+		String nameText = nameTextField.getText();
+		try {
+			currentStructure.setName(nameText);
+		}
+		catch (InvalidNameException ine) {
+			setStatusText(ine.getMessage());
+			return;
+		}
+		catch (DuplicateNameException dne) {
+			setStatusText(dne.getMessage());
+			return;
+		}
+
+		if (!setCategoryPath()) {
+			return;
+		}
+
+		if (!validateName()) {
+			return;
 		}
 
 		close();
+	}
+
+	private boolean validateName() {
+		// Use the current name and category path to see if there is already an existing name.  This
+		// allows us to avoid a conflict.
+		ProgramBasedDataTypeManager dtm = currentProgram.getDataTypeManager();
+		CategoryPath path = currentStructure.getCategoryPath();
+		Category category = dtm.getCategory(path);
+		if (category == null) {
+			return true;
+		}
+
+		String nameText = currentStructure.getName();
+		DataType existingDt = category.getDataType(nameText);
+		if (existingDt != null) {
+			setStatusText("Name already exists: " + nameText, MessageType.ERROR);
+			return false;
+		}
+
+		return true;
 	}
 
 	private Structure getSelectedStructure() {
@@ -616,66 +627,43 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	}
 
 	private boolean setCategoryPath() {
+
+		try {
+			doSetCategoryPath();
+		}
+		catch (DuplicateNameException e) {
+			setStatusText(e.getMessage(), MessageType.ERROR);
+			return false;
+		}
+		return true;
+	}
+
+	private void doSetCategoryPath() throws DuplicateNameException {
 		CategoryPath path = categoryPathEditor.getCellEditorValue();
 		// First see if a category from the list was chosen and make sure the user didn't modify it.
 		// If they did, path needs to be parsed separately.
-		if (path != null && path.getPath().equals(categoryPathEditor.getCellEditorValueAsText())) {
-			try {
-				currentStructure.setCategoryPath(path);
-			}
-			catch (DuplicateNameException dne) {
-				setStatusText(dne.getMessage(), MessageType.ERROR);
-				return false;
-			}
-			return true;
+		String editorValue = categoryPathEditor.getCellEditorValueAsText();
+		if (path != null && path.getPath().equals(editorValue)) {
+			currentStructure.setCategoryPath(path);
+			return;
 		}
 
-		String categoryText = categoryPathEditor.getCellEditorValueAsText();
 		// Selecting/entering a category is optional; root is default
-		if (!categoryText.isBlank()) {
-			try {
-				CategoryPath parsedPath = parseEnteredCategoryPath(categoryText);
-				currentStructure.setCategoryPath(parsedPath);
-			}
-			catch (DuplicateNameException dne) {
-				setStatusText(dne.getMessage(), MessageType.ERROR);
-				return false;
-			}
+		if (!editorValue.isBlank()) {
+			CategoryPath parsedPath = parseEnteredCategoryPath(editorValue);
+			currentStructure.setCategoryPath(parsedPath);
+			return;
 		}
-		else {
-			try {
-				currentStructure.setCategoryPath(CategoryPath.ROOT);
-			}
-			catch (DuplicateNameException dne) {
-				setStatusText(dne.getMessage(), MessageType.ERROR);
-				return false;
-			}
-		}
-		return true;
+
+		currentStructure.setCategoryPath(CategoryPath.ROOT);
 	}
 
 	private CategoryPath parseEnteredCategoryPath(String categoryText) {
 		// entering a leading slash is optional, path is still generated accordingly  
 		if (categoryText.startsWith(CategoryPath.DELIMITER_STRING)) {
-			return generateCategoryPath(categoryText.substring(1));
+			return new CategoryPath(categoryText);
 		}
-		return generateCategoryPath(categoryText);
-	}
-
-	private CategoryPath generateCategoryPath(String categoryText) {
-		if (!categoryText.contains(CategoryPath.DELIMITER_STRING)) {
-			return new CategoryPath(CategoryPath.ROOT, categoryText);
-		}
-
-		// Additional slashes need parsed as branch(es) and final leaf
-		List<String> parts = split(categoryText);
-		return new CategoryPath(CategoryPath.ROOT, parts);
-	}
-
-	private List<String> split(String categoryText) {
-		List<String> parts = new ArrayList<String>(
-			Arrays.asList(categoryText.split(CategoryPath.DELIMITER_STRING)));
-		return parts;
+		return new CategoryPath(CategoryPath.DELIMITER_STRING + categoryText);
 	}
 
 	// a table model that is used to allow for the easy updating of the table with new List data 
@@ -707,7 +695,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				case 0:
 					return STRUCTURE_COLUMN_NAME;
 				case 1:
-					return PATH_COLUMN_NAME;
+					return CATEGORY_COLUMN_NAME;
 			}
 			return null;
 		}
@@ -735,8 +723,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				case 1: {
 					Structure structure = t.getStructure();
 					CategoryPath path = structure.getCategoryPath();
-					String name = structure.getName();
-					return path.toString() + '/' + name;
+					return path.toString();
 				}
 			}
 			return null;
@@ -779,7 +766,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	}
 
 	// we need this renderer in order to create nice tool tip text values
-	class StructureCellRenderer extends GTableCellRenderer {
+	private class StructureCellRenderer extends GTableCellRenderer {
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -799,7 +786,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 					renderer.setToolTipText(ToolTipUtils.getToolTipText(structure));
 				}
 			}
-			else if (PATH_COLUMN_NAME.equals(columnName)) {
+			else if (CATEGORY_COLUMN_NAME.equals(columnName)) {
 				if (value != null) {
 					renderer.setToolTipText(value.toString());
 				}

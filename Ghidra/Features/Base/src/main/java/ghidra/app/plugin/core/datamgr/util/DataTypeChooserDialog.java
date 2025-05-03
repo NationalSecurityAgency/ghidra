@@ -31,12 +31,14 @@ import docking.DialogComponentProvider;
 import docking.Tool;
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.filter.TextFilterStrategy;
-import docking.widgets.label.GLabel;
+import docking.widgets.label.GDLabel;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.program.model.data.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,17 +48,20 @@ import ghidra.util.task.TaskMonitor;
  * {@link DataTypeSelectionDialog} utility widget.
  */
 public class DataTypeChooserDialog extends DialogComponentProvider {
+
+	private DataTypeManagerPlugin plugin;
 	private DataTypeArchiveGTree tree;
 	private DataType selectedDataType;
 	private CategoryPath selectedCategoryPath;
 
-	private GLabel messageLabel;
+	private GDLabel messageLabel;
 	private boolean isFilterEditable;
 
 	private boolean categorySelectionMode;
 
 	public DataTypeChooserDialog(DataTypeManagerPlugin plugin) {
 		super("Data Type Chooser", true, true, true, false);
+		this.plugin = plugin;
 
 		tree = new DataTypeArchiveGTree(plugin);
 
@@ -98,6 +103,8 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		addOKButton();
 		addCancelButton();
 		setOkEnabled(false);
+
+		setHelpLocation(new HelpLocation("DataTypeEditors", "browse"));
 	}
 
 	/**
@@ -106,6 +113,29 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	 */
 	public void setCategorySelectionMode(boolean categorySelectionMode) {
 		this.categorySelectionMode = categorySelectionMode;
+		if (categorySelectionMode) {
+			setTitle("Category Chooser");
+			messageLabel.setText("Choose a category:");
+		}
+		else {
+			setTitle("Data Type Chooser");
+			messageLabel.setText("Choose a data type:");
+		}
+	}
+
+	public void setShowProgramArchiveOnly(boolean programOnly) {
+		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		if (programOnly) {
+			DataTypeManager programDtm = handler.getProgramDataTypeManager();
+			if (programDtm != null) {
+				ArchiveRootNode root = new ArchiveRootNode(handler, true);
+				tree.setRootNode(root);
+				return;
+			}
+		}
+
+		ArchiveRootNode root = new ArchiveRootNode(handler);
+		tree.setRootNode(root);
 	}
 
 	private boolean isValidNodeSelected() {
@@ -152,7 +182,7 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		messageLabel = new GLabel("Choose the data type you wish to use.");
+		messageLabel = new GDLabel("Choose the data type you wish to use.");
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 2));
 		messageLabel.getAccessibleContext().setAccessibleName("Message");
 		panel.add(messageLabel, BorderLayout.NORTH);
@@ -335,4 +365,5 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 			}
 		}
 	}
+
 }
