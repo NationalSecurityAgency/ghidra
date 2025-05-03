@@ -674,6 +674,13 @@ public class DataTypeManagerHandler {
 		return builtInDataTypesManager;
 	}
 
+	public DataTypeManager getProgramDataTypeManager() {
+		if (programArchive != null) {
+			return programArchive.getDataTypeManager();
+		}
+		return null;
+	}
+
 	public DataTypeIndexer getDataTypeIndexer() {
 		return dataTypeIndexer;
 	}
@@ -1810,4 +1817,5 @@ public class DataTypeManagerHandler {
 		}
 		return null;
 	}
+
 }

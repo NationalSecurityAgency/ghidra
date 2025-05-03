@@ -974,7 +974,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		fireUserChoiceMade(selectedItem);
 	}
 
-	class PreviewListener implements ListSelectionListener {
+	private class PreviewListener implements ListSelectionListener {
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
 			if (e.getValueIsAdjusting()) {

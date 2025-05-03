@@ -169,10 +169,37 @@ public class DataTypeIndexer {
 		}
 	}
 
+	private class CaseInsensitiveCategoryComparator implements Comparator<CategoryPath> {
+
+		@Override
+		public int compare(CategoryPath cp1, CategoryPath cp2) {
+
+			String name1 = cp1.getName();
+			String name2 = cp2.getName();
+
+			int result = name1.compareToIgnoreCase(name2);
+			if (result != 0) {
+				return result;
+			}
+
+			result = name1.compareTo(name2);
+			if (result != 0) {
+				// let equivalent names be sorted by case ('-' for lower-case first)
+				return -result;
+			}
+
+			// if the names are the same, then sort by full path
+			String p1 = cp1.getPath();
+			String p2 = cp2.getPath();
+			return p1.compareToIgnoreCase(p2);
+		}
+	}
+
 	private class IndexerTask extends Task {
 
 		private List<DataType> dataTypes = new ArrayList<>();
-		private List<CategoryPath> categories;
+		private List<CategoryPath> categories = new ArrayList<>();
+		private Set<CategoryPath> categorySet = new HashSet<>();
 
 		IndexerTask() {
 			super("Data Type Indexer Task", false, true, true);
@@ -184,26 +211,32 @@ public class DataTypeIndexer {
 			monitor.initialize(dataTypeManagers.size());
 			monitor.setMessage("Preparing to index data types...");
 
-			for (DataTypeManager dataTypeManager : dataTypeManagers) {
-				monitor.setMessage("Searching " + dataTypeManager.getName());
-				dataTypeManager.getAllDataTypes(dataTypes);
+			for (DataTypeManager dtm : dataTypeManagers) {
+				monitor.setMessage("Searching " + dtm.getName());
+				dtm.getAllDataTypes(dataTypes);
+
+				Category root = dtm.getRootCategory();
+				populateCategories(root);
+
 				monitor.incrementProgress(1);
 			}
 
 			Collections.sort(dataTypes, new CaseInsensitiveDataTypeComparator());
-			populateCategoryList(dataTypes);
+
+			categories.addAll(categorySet);
+			Collections.sort(categories, new CaseInsensitiveCategoryComparator());
 		}
 
-		private void populateCategoryList(List<DataType> dataTypes) {
+		private void populateCategories(Category parent) {
 
-			Set<CategoryPath> set = new HashSet<>();
-			for (DataType dt : dataTypes) {
-				CategoryPath path = dt.getCategoryPath();
-				set.add(path);
+			categorySet.add(parent.getCategoryPath());
+			Category[] children = parent.getCategories();
+			for (Category category : children) {
+				CategoryPath path = category.getCategoryPath();
+				categorySet.add(path);
+
+				populateCategories(category);
 			}
-
-			categories = new ArrayList<>(set);
-			Collections.sort(categories);
 		}
 
 		List<DataType> getList() {

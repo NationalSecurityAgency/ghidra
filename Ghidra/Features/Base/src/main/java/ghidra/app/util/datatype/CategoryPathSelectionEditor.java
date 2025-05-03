@@ -15,11 +15,14 @@
  */
 package ghidra.app.util.datatype;
 
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
@@ -30,7 +33,6 @@ import docking.widgets.list.GListCellRenderer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.CategoryPath;
-import ghidra.util.exception.AssertException;
 
 /**
  * An editor that is used to show the {@link DropDownSelectionTextField} for the entering of
@@ -92,6 +94,8 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 	private void init() {
 		selectionField = createDropDownSelectionTextField(
 			new CategoryPathDropDownSelectionDataModel(dataTypeManagerService));
+		selectionField.setName("CategoryPath");
+		selectionField.getAccessibleContext().setAccessibleName("Category");
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
@@ -113,16 +117,12 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 				selectionField.requestFocus();
 			}
 		});
-		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-		browseButton = new BrowseButton();
-		browseButton.setToolTipText("Browse Existing Category Paths");
-		browseButton.addActionListener(e -> showBrowser());
 
+		JPanel browsePanel = buildBrowsePanel();
 		editorPanel = new JPanel();
 		editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
 		editorPanel.add(selectionField);
-		editorPanel.add(Box.createHorizontalStrut(5));
-		editorPanel.add(browseButton);
+		editorPanel.add(browsePanel);
 
 		keyListener = new KeyAdapter() {
 
@@ -142,6 +142,60 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 				}
 			}
 		};
+	}
+
+	private JPanel buildBrowsePanel() {
+
+		// We override the various sizes to make sure the button does not get too big or too small,
+		// which changes depending upon the theme being used.
+		JPanel browsePanel = new JPanel() {
+
+			@Override
+			public Dimension getPreferredSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMinimumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			@Override
+			public Dimension getMaximumSize() {
+				int width = getBestWidth();
+				Dimension preferredSize = super.getPreferredSize();
+				preferredSize.width = Math.min(width, preferredSize.width);
+				return preferredSize;
+			}
+
+			private int getBestWidth() {
+				Font f = getFont();
+				FontMetrics fm = getFontMetrics(f);
+				int width = fm.stringWidth(" . . . ");
+				return width;
+			}
+		};
+
+		browsePanel.setLayout(new BorderLayout());
+		browsePanel.setOpaque(false);
+
+		// Space the button so that it pops out visually.  This was chosen by trial-and-error and 
+		// looks reasonable on all themes.  
+		Border empty = BorderFactory.createEmptyBorder(2, 2, 1, 1);
+		browsePanel.setBorder(empty);
+
+		browseButton = new BrowseButton();
+		browseButton.setToolTipText("Browse Existing Category Paths");
+		browseButton.addActionListener(e -> showBrowser());
+		browsePanel.add(browseButton);
+
+		return browsePanel;
 	}
 
 	/**
@@ -179,8 +233,8 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 	}
 
 	/**
-	 * Retrieve the dropdown text field that holds the category path collection.
-	 * @return CategoryPath dropdown selection text field object
+	 * Retrieve the drop-down text field that holds the category path collection.
+	 * @return CategoryPath drop-down selection text field object
 	 */
 	public DropDownSelectionTextField<CategoryPath> getDropDownTextField() {
 		return selectionField;
@@ -333,13 +387,6 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 
 		private List<CategoryPath> data;
 
-		private Comparator<Object> searchComparator = new CategoryPathComparator();
-
-		/**
-		 * Creates a new instance.
-		 * 
-		 * @param dataTypeService {@link DataTypeManagerService}
-		 */
 		public CategoryPathDropDownSelectionDataModel(DataTypeManagerService dataTypeService) {
 			data = dataTypeService.getSortedCategoryPathList();
 		}
@@ -349,66 +396,32 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 			return new CategoryPathDropDownRenderer();
 		}
 
-		/**
-		 * Description of the CategoryPath is the display text of the path as a string.
-		
-		 * @param categoryPath CategoryPath 
-		 * @return String representation of the Category Path
-		 */
 		@Override
 		public String getDescription(CategoryPath categoryPath) {
-			return getDisplayText(categoryPath);
+			return null;
 		}
 
-		/**
-		 * Retrieve the CategoryPath string representation.
-		 * 
-		 * @param categoryPath CategoryPath 
-		 * @return String representation of the Category Path
-		 */
 		@Override
 		public String getDisplayText(CategoryPath categoryPath) {
 			return categoryPath.getPath();
 		}
 
-		/**
-		 * Support for the filtering mechanism on the collection of Category Paths in the Data Manager.
-		 * 
-		 * @param searchText String entered text
-		 * @return filtered list of Category Paths 
-		 */
 		@Override
 		public List<CategoryPath> getMatchingData(String searchText) {
 			if (searchText == null || searchText.length() == 0) {
 				return Collections.emptyList();
 			}
 
-			char END_CHAR = '\uffff';
-			String searchTextStart = searchText;
-			String searchTextEnd = searchText + END_CHAR;
-
-			int startIndex = Collections.binarySearch(data, searchTextStart, searchComparator);
-			int endIndex = Collections.binarySearch(data, searchTextEnd, searchComparator);
-
-			// the binary search returns a negative, incremented position if there is no match in the
-			// list for the given search
-			if (startIndex < 0) {
-				startIndex = -startIndex - 1;
+			List<CategoryPath> results = new ArrayList<>();
+			for (CategoryPath path : data) {
+				String pathString = path.getPath();
+				if (pathString.contains(searchText)) {
+					results.add(path);
+				}
 			}
-
-			if (endIndex < 0) {
-				endIndex = -endIndex - 1;
-			}
-
-			return data.subList(startIndex, endIndex);
+			return results;
 		}
 
-		/**
-		 * Identify index of first matching CategoryPath from entered text string.
-		 * @param dataCollection list of Category Paths
-		 * @param text search string
-		 * @return int index of first match
-		 */
 		@Override
 		public int getIndexOfFirstMatchingEntry(List<CategoryPath> dataCollection, String text) {
 			int lastPreferredMatchIndex = -1;
@@ -432,18 +445,6 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 			}
 
 			return -1; // we only get here when the list is empty
-		}
-
-		private class CategoryPathComparator implements Comparator<Object> {
-			@Override
-			public int compare(Object o1, Object o2) {
-				if (o1 instanceof CategoryPath && o2 instanceof String) {
-					CategoryPath path = (CategoryPath) o1;
-					return path.getName().compareToIgnoreCase(((String) o2));
-				}
-				throw new AssertException(
-					"CategoryPathCompartor used to compare files against a String key!");
-			}
 		}
 
 		private class CategoryPathDropDownRenderer extends GListCellRenderer<CategoryPath> {

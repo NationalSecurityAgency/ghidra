@@ -99,7 +99,7 @@ class CreateStructureAction extends ListingContextAction {
 			return;
 		}
 
-		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool());
+		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool(), program);
 		Structure userChoice = dialog.showCreateStructureDialog(program, tempStructure);
 
 		if (userChoice != null) {
@@ -148,7 +148,7 @@ class CreateStructureAction extends ListingContextAction {
 			return;
 		}
 
-		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool());
+		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool(), program);
 		Structure userChoice =
 			dialog.showCreateStructureDialog(program, tempStructure);
 

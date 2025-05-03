@@ -598,6 +598,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	public CategoryPath getCategoryPath(TreePath selectedPath) {
 		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
 		dialog.setCategorySelectionMode(true);
+		dialog.setShowProgramArchiveOnly(true);
 
 		if (selectedPath != null) {
 			dialog.setSelectedPath(selectedPath);

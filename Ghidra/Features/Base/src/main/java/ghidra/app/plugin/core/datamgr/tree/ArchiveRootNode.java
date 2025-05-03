@@ -34,8 +34,15 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 
 	private DtFilterState dtFilterState = new DtFilterState();
 
-	ArchiveRootNode(DataTypeManagerHandler archiveManager) {
+	private boolean programDtmOnly;
+
+	public ArchiveRootNode(DataTypeManagerHandler archiveManager) {
+		this(archiveManager, false);
+	}
+
+	public ArchiveRootNode(DataTypeManagerHandler archiveManager, boolean programDtmOnly) {
 		this.archiveManager = archiveManager;
+		this.programDtmOnly = programDtmOnly;
 		init();
 	}
 
@@ -93,21 +100,29 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	}
 
 	// a factory method to isolate non-OO inheritance checks
-	private static final GTreeNode createArchiveNode(Archive archive, DtFilterState dtFilterState) {
+	private final GTreeNode createArchiveNode(Archive archive, DtFilterState filterState) {
+
+		if (programDtmOnly) {
+			if (archive instanceof ProgramArchive) {
+				return new ProgramArchiveNode((ProgramArchive) archive, filterState);
+			}
+			return null;
+		}
+
 		if (archive instanceof FileArchive) {
-			return new FileArchiveNode((FileArchive) archive, dtFilterState);
+			return new FileArchiveNode((FileArchive) archive, filterState);
 		}
 		else if (archive instanceof ProjectArchive) {
-			return new ProjectArchiveNode((ProjectArchive) archive, dtFilterState);
+			return new ProjectArchiveNode((ProjectArchive) archive, filterState);
 		}
 		else if (archive instanceof InvalidFileArchive) {
 			return new InvalidArchiveNode((InvalidFileArchive) archive);
 		}
 		else if (archive instanceof ProgramArchive) {
-			return new ProgramArchiveNode((ProgramArchive) archive, dtFilterState);
+			return new ProgramArchiveNode((ProgramArchive) archive, filterState);
 		}
 		else if (archive instanceof BuiltInArchive) {
-			return new BuiltInArchiveNode((BuiltInArchive) archive, dtFilterState);
+			return new BuiltInArchiveNode((BuiltInArchive) archive, filterState);
 		}
 		return null;
 	}
@@ -178,7 +193,10 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	public List<GTreeNode> generateChildren() {
 		List<GTreeNode> list = new ArrayList<>();
 		for (Archive element : archiveManager.getAllArchives()) {
-			list.add(createArchiveNode(element, dtFilterState));
+			GTreeNode node = createArchiveNode(element, dtFilterState);
+			if (node != null) {
+				list.add(node);
+			}
 		}
 		Collections.sort(list);
 		return list;
@@ -221,15 +239,21 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 
 		@Override
 		public void archiveOpened(Archive archive) {
-			if (isLoaded()) {
-				GTreeNode node = createArchiveNode(archive, dtFilterState);
-				List<GTreeNode> allChildrenList = getChildren();
-				int index = Collections.binarySearch(allChildrenList, node);
-				if (index < 0) {
-					index = -index - 1;
-				}
-				addNode(index, node);
+			if (!isLoaded()) {
+				return;
 			}
+
+			GTreeNode node = createArchiveNode(archive, dtFilterState);
+			if (node == null) {
+				return;
+			}
+
+			List<GTreeNode> allChildrenList = getChildren();
+			int index = Collections.binarySearch(allChildrenList, node);
+			if (index < 0) {
+				index = -index - 1;
+			}
+			addNode(index, node);
 		}
 
 		@Override
