@@ -376,6 +376,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		loadProgram("x86");
 		createOverlay("TestOverlay1", "1002000", 100);
 		MemoryBlock overlay2Block = createOverlay("TestOverlay2", "1003000", 100);
+		waitForSwing();
 
 		//
 		// Put us in an address space that does not have a match for the query address
