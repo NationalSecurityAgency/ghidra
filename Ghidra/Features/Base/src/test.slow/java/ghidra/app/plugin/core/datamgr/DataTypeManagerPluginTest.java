@@ -853,6 +853,25 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
+	public void testAction_FindStructureBySize_Empty() {
+
+		StructureDataType stuct = new StructureDataType("Structure_Empty", 0);
+		builder.addDataType(stuct);
+
+		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
+		assertMatchingStructures(resultsProvider, "Structure_Empty");
+	}
+
+	@Test
 	public void testAction_FindStructureBySize_Ranage() {
 
 		createStructureWithOffset_0x4(); // 6
