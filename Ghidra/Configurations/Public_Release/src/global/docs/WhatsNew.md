@@ -166,4 +166,4 @@ The Function Graph has had a number of improvements:
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
-[Change History](ChangeHistory.html) file.
+[Change History](ChangeHistory.md) file.
