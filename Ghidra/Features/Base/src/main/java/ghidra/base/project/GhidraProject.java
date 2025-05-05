@@ -288,7 +288,7 @@ public class GhidraProject {
 	 * Opens a program.
 	 *
 	 * @param folderPath
-	 *            the path of the program within the project. ("\" is root)
+	 *            the path of the program within the project. ("/" is root)
 	 * @param programName
 	 *            the name of the program to open.
 	 * @param readOnly
