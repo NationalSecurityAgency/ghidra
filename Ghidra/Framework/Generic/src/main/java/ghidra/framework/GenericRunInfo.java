@@ -47,15 +47,15 @@ public class GenericRunInfo {
 		File userSettingsDirectory = Application.getUserSettingsDirectory();
 
 		List<File> appDirs =
-			collectAllApplicationDirectories(userSettingsDirectory.getParentFile());
+			collectAllApplicationDirectories(userSettingsDirectory.getParentFile(), false);
 
 		// Search "legacy" user setting directory locations in case the user has upgraded from an
 		// older version
 		try {
 			File legacyUserSettingsDirectory = ApplicationUtilities.getLegacyUserSettingsDir(
 				layout.getApplicationProperties(), layout.getApplicationInstallationDir());
-			appDirs.addAll(
-				collectAllApplicationDirectories(legacyUserSettingsDirectory.getParentFile()));
+			appDirs.addAll(collectAllApplicationDirectories(
+				legacyUserSettingsDirectory.getParentFile(), true));
 		}
 		catch (FileNotFoundException e) {
 			// ignore
@@ -92,9 +92,11 @@ public class GenericRunInfo {
 		return appDirs;
 	}
 
-	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir) {
+	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir,
+			boolean legacy) {
 
-		String settingsDirPrefix = "." + Application.getName().replaceAll("\\s", "").toLowerCase();
+		String appName = Application.getName().replaceAll("\\s", "").toLowerCase();
+		String settingsDirPrefix = (legacy ? "." : "") + appName;
 		FileFilter userDirFilter = f -> {
 			String name = f.getName();
 			return f.isDirectory() && name.startsWith(settingsDirPrefix) &&
