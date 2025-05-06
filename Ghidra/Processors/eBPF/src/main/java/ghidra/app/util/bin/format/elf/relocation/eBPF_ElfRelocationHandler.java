@@ -78,7 +78,7 @@ public class eBPF_ElfRelocationHandler
 				long instr_next = relocationAddress.add(0x8).getAddressableWordOffset();
 				if (symbol.isFunction()) {
 					new_value = symbolAddr.getAddressableWordOffset();
-					int offset = (int) (new_value - instr_next);
+					int offset = (int) ((new_value - instr_next) / 8);
 					memory.setInt(relocationAddress.add(0x4), offset);
 				}
 				else if (symbol.isSection()) {
@@ -95,7 +95,7 @@ public class eBPF_ElfRelocationHandler
 						// according to formula in "kernel.org" docs: https://www.kernel.org/doc/html/latest/bpf/llvm_reloc.html
 						int func_sec_offset = (current_imm + 1) * 8;
 						long func_addr = section_start + func_sec_offset;
-						int offset = (int) (func_addr - instr_next);
+						int offset = (int) ((func_addr - instr_next) / 8);
 						memory.setInt(relocationAddress.add(0x4), offset);
 					}
 //					else {
