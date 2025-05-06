@@ -776,36 +776,38 @@ void FlowInfo::generateOps(void)
   int4 notreachcnt = 0;
   clearProperties();
   addrlist.push_back(data.getAddress());
-  while(!addrlist.empty())	// Recovering as much as possible except jumptables
-    fallthru();
-  if (hasInject())
-    injectPcode();
   do {
-    while(!tablelist.empty()) {	// For each jumptable found
-      vector<JumpTable *> newTables;
-      recoverJumpTables(newTables, notreached);
-      tablelist.clear();
-      for(int4 i=0;i<newTables.size();++i) {
-	JumpTable *jt = newTables[i];
-	if (jt == (JumpTable *)0) continue;
-
-	int4 num = jt->numEntries();
-	for(int4 i=0;i<num;++i)
-	  newAddress(jt->getIndirectOp(),jt->getAddressByIndex(i));
-	while(!addrlist.empty())	// Try to fill in as much more as possible
-	  fallthru();
-      }
-    }
-    
-    checkContainedCall();	// Check for PIC constructions
-    checkMultistageJumptables();
-    while(notreachcnt < notreached.size()) {
-      tablelist.push_back(notreached[notreachcnt]);
-      notreachcnt += 1;
-    }
+    while(!addrlist.empty())	// Recovering as much as possible except jumptables
+      fallthru();
     if (hasInject())
       injectPcode();
-  } while(!tablelist.empty());	// Inlining or multistage may have added new indirect branches
+    do {
+      while(!tablelist.empty()) {	// For each jumptable found
+        vector<JumpTable *> newTables;
+        recoverJumpTables(newTables, notreached);
+        tablelist.clear();
+        for(int4 i=0;i<newTables.size();++i) {
+	  JumpTable *jt = newTables[i];
+	  if (jt == (JumpTable *)0) continue;
+
+	  int4 num = jt->numEntries();
+	  for(int4 i=0;i<num;++i)
+	    newAddress(jt->getIndirectOp(),jt->getAddressByIndex(i));
+	  while(!addrlist.empty())	// Try to fill in as much more as possible
+	    fallthru();
+        }
+      }
+
+      checkContainedCall();	// Check for PIC constructions
+      checkMultistageJumptables();
+      while(notreachcnt < notreached.size()) {
+        tablelist.push_back(notreached[notreachcnt]);
+        notreachcnt += 1;
+      }
+      if (hasInject())
+        injectPcode();
+    } while(!tablelist.empty());	// Inlining or multistage may have added new indirect branches
+  } while(!addrlist.empty());	// Injections may have added branches
 }
 
 void FlowInfo::generateBlocks(void)
