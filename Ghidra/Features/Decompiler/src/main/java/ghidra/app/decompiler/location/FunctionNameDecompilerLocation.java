@@ -37,6 +37,11 @@ public class FunctionNameDecompilerLocation extends FunctionNameFieldLocation
 		this.info = info;
 	}
 
+	public FunctionNameDecompilerLocation() {
+		// for restoring from xml
+		info = new DecompilerLocationInfo();
+	}
+
 	@Override
 	public Address getFunctionEntryPoint() {
 		return info.getFunctionEntryPoint();
