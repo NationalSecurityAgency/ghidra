@@ -1076,6 +1076,9 @@ bool Funcdata::distributeIntMultAdd(PcodeOp *op)
   if ((vn0->isFree())&&(!vn0->isConstant())) return false;
   if ((vn1->isFree())&&(!vn1->isConstant())) return false;
   uintb coeff = op->getIn(1)->getOffset();
+  if (op->code() == CPUI_INT_LEFT) {
+    coeff = 1ULL << coeff;
+  }
   int4 sz = op->getOut()->getSize();
 				// Do distribution
   if (vn0->isConstant()) {
@@ -1130,18 +1133,28 @@ bool Funcdata::collapseIntMultMult(Varnode *vn)
 {
   if (!vn->isWritten()) return false;
   PcodeOp *op = vn->getDef();
-  if (op->code() != CPUI_INT_MULT) return false;
+  if (op->code() != CPUI_INT_MULT && op->code() != CPUI_INT_LEFT) return false;
   Varnode *constVnFirst = op->getIn(1);
   if (!constVnFirst->isConstant()) return false;
   if (!op->getIn(0)->isWritten()) return false;
   PcodeOp *otherMultOp = op->getIn(0)->getDef();
-  if (otherMultOp->code() != CPUI_INT_MULT) return false;
+  if (otherMultOp->code() != CPUI_INT_MULT && otherMultOp->code() != CPUI_INT_LEFT) return false;
   Varnode *constVnSecond = otherMultOp->getIn(1);
   if (!constVnSecond->isConstant()) return false;
   Varnode *invn = otherMultOp->getIn(0);
   if (invn->isFree()) return false;
   int4 sz = invn->getSize();
-  uintb val = (constVnFirst->getOffset() * constVnSecond->getOffset()) & calc_mask(sz);
+  uintb constVnFirstVal = constVnFirst->getOffset();
+  if (op->code() == CPUI_INT_LEFT) {
+    if (constVnFirstVal == constVnFirst->getSize() * 8 - 1) return false;
+    constVnFirstVal = 1ULL << constVnFirstVal;
+  }
+  uintb constVnSecondVal = constVnSecond->getOffset();
+  if (otherMultOp->code() == CPUI_INT_LEFT) {
+    if (constVnSecondVal == constVnSecond->getSize() * 8 - 1) return false;
+    constVnSecondVal = 1ULL << constVnSecondVal;
+  }
+  uintb val = (constVnFirstVal * constVnSecondVal) & calc_mask(sz);
   Varnode *newvn = newConstant(sz,val);
   opSetInput(op,newvn,1);
   opSetInput(op,invn,0);
