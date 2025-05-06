@@ -53,7 +53,7 @@ dependencies {
 	// use this if you want slf4j log messages sent to log4j
 	//	runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.17.1" 
 	
-   	compileOnly "junit:junit:4.12"
+   	compileOnly "junit:junit:4.13.2"
 	
 	// These have abstract test classes and stubs needed by this module	
 	testImplementation project(path: ':Docking', configuration: 'testArtifacts')

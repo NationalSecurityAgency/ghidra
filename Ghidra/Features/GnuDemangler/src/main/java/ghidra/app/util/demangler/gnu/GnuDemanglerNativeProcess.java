@@ -238,7 +238,7 @@ public class GnuDemanglerNativeProcess {
 			List<String> errorLines = IOUtils.readLines(err, Charset.defaultCharset());
 			error = StringUtils.join(errorLines, '\n');
 		}
-		catch (IOException e) {
+		catch (UncheckedIOException e) {
 			throw new IOException("Unable to read process error stream: ", e);
 		}
 
