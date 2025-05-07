@@ -517,6 +517,10 @@ public class HighFunctionDBUtil {
 
 	public static Variable getFunctionVariable(HighSymbol highSymbol) {
 
+		if (highSymbol == null) {
+			return null;
+		}
+
 		HighFunction highFunction = highSymbol.getHighFunction();
 		Function function = highFunction.getFunction();
 		HighVariable highVar = highSymbol.getHighVariable();

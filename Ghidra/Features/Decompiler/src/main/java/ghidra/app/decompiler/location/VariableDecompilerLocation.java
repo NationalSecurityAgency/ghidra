@@ -38,6 +38,11 @@ public class VariableDecompilerLocation extends VariableLocFieldLocation
 		this.info = info;
 	}
 
+	public VariableDecompilerLocation() {
+		// for restoring from xml
+		info = new DecompilerLocationInfo();
+	}
+
 	@Override
 	public Address getFunctionEntryPoint() {
 		return info.getFunctionEntryPoint();
