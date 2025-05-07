@@ -27,7 +27,7 @@ import java.nio.file.Files
 import org.gradle.util.GUtil
 
 // NOTE: fetchDependencies.gradle must be updated if postgresql version changes
-def postgresql_distro = "postgresql-15.10.tar.gz"
+def postgresql_distro = "postgresql-17.0.tar.gz"
 
 dependencies {
 	api project(":Decompiler")
