@@ -56,14 +56,14 @@ if [ -z "$target_args" ]
 then
   argspart=
 else
-  argspart=-o "settings set target.run-args $target_args"
+  argspart=("-o" "settings set target.run-args $target_args")
 fi
 
 if [ -z "$OPT_ARCH" ]
 then
   archcmd=
 else
-  archcmd=-o "settings set target.default-arch $OPT_ARCH" 
+  archcmd=("-o" "settings set target.default-arch $OPT_ARCH")
 fi
 
 "$OPT_LLDB_PATH" \
@@ -71,9 +71,9 @@ fi
   -o "script import ghidralldb" \
   -o "platform select remote-android" \
   -o "platform connect connect://$OPT_HOST:$OPT_PORT" \
-  $archcmd \
+  "${archcmd[@]}" \
   -o "target create \"$target_image\"" \
-  $argspart \
+  "${argspart[@]}" \
   -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
   -o "ghidra trace start" \
   -o "ghidra trace sync-enable" \
