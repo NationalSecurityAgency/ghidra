@@ -15,6 +15,7 @@ define space syscall type=ram_space size=4;
 define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  PC ];
 
 # Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
+@if ENDIAN == "little"
 define token instr(64)
     imm=(32, 63) signed
     off=(16, 31) signed
@@ -29,8 +30,25 @@ define token instr(64)
 
 #We'll need this token to operate with LDDW instruction, which has 64 bit imm value
 define token immtoken(64)
-    imm2=(32, 63)		
+    imm2=(32, 63)
 ;
+@else # ENDIAN == "big"
+define token instr(64)
+    imm=(0, 31) signed
+    off=(32, 47) signed
+    src=(48, 51)
+    dst=(52, 55)
+    op_insn_class=(56, 58)
+    op_ld_st_size=(59, 60)
+    op_ld_st_mode=(61, 63)
+    op_alu_jmp_source=(59, 59)
+    op_alu_jmp_opcode=(60, 63)
+;
+
+define token immtoken(64)
+    imm2=(0, 31)
+;
+@endif # ENDIAN = "big"
 
 #To operate with registers
 attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
