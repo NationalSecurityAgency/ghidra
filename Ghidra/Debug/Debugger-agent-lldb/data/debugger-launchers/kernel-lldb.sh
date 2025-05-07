@@ -46,13 +46,13 @@ if [ -z "$OPT_ARCH" ]
 then
   archcmd=
 else
-  archcmd=-o "settings set target.default-arch $OPT_ARCH" 
+  archcmd=("-o" "settings set target.default-arch $OPT_ARCH")
 fi
 
 "$OPT_LLDB_PATH" \
   -o "version" \
   -o "script import ghidralldb" \
-  $archcmd \
+  "${archcmd[@]}" \
   -o "kdp-remote $OPT_HOST" \
   -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
   -o "ghidra trace start" \
