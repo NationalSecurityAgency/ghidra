@@ -67,6 +67,7 @@ public class TaintLabel {
 		Address target = pcodeOp == null ? hfun.getFunction().getEntryPoint() : pcodeOp.getSeqnum().getTarget();
 		if (vnode == null && pcodeOp != null) {
 			vnode = pcodeOp.getOutput();
+			highVar = vnode.getHigh();
 		}
 		
 		this.mtype = mtype;
