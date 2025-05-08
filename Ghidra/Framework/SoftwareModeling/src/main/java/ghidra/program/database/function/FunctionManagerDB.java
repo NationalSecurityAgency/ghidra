@@ -81,12 +81,6 @@ public class FunctionManagerDB implements FunctionManager {
 		return false;
 	};
 
-	/**
-	 * TODO: use of StringPropertyMap for callFixupMap lacks the ability to listen for changes
-	 * which may be made to the map directly (e.g., diff/merge)
-	 */
-	private StringPropertyMap callFixupMap;
-
 	private long lastFuncID = -1;
 
 	Lock lock;
@@ -825,7 +819,6 @@ public class FunctionManagerDB implements FunctionManager {
 		lock.acquire();
 		try {
 			functionTagManager.invalidateCache();
-			callFixupMap = null;
 			lastFuncID = -1;
 			cache.invalidate();
 		}
@@ -835,11 +828,8 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	StringPropertyMap getCallFixupMap(boolean create) {
-		if (callFixupMap != null) {
-			return callFixupMap;
-		}
 		PropertyMapManager usrPropertyManager = program.getUsrPropertyManager();
-		callFixupMap = usrPropertyManager.getStringPropertyMap(CALLFIXUP_MAP);
+		StringPropertyMap callFixupMap = usrPropertyManager.getStringPropertyMap(CALLFIXUP_MAP);
 		if (callFixupMap == null && create) {
 			try {
 				callFixupMap = usrPropertyManager.createStringPropertyMap(CALLFIXUP_MAP);

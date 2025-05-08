@@ -56,11 +56,18 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		this.dataMgr = dataMgr;
 		this.record = record;
 		this.lock = dataMgr.lock;
-		refreshName();
 	}
 
+	/**
+	 * Clears the current name so that the next invocation of {@link #getName()} will
+	 * force its update via {@link #doGetName()}.  It is important that {@link #doGetName()}
+	 * does not get invoked during a {@link #refresh()} to avoid problematic recursion during the
+	 * refresh caused by recursive use of {@link #checkIsValid()} on the same object.
+	 * <P>
+	 * NOTE: This must only be invoked while in a locked-state
+	 */
 	protected void refreshName() {
-		name = doGetName();
+		name = null;
 	}
 
 	/**
@@ -144,8 +151,21 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public final String getName() {
-		validate(lock);
-		return name;
+		String n = name;
+		if (n != null && !isInvalid()) {
+			return n;
+		}
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (name == null) {
+				name = doGetName();
+			}
+			return name;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override

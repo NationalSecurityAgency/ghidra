@@ -46,11 +46,12 @@ class EnumDB extends DataTypeDB implements Enum {
 	private EnumDBAdapter adapter;
 	private EnumValueDBAdapter valueAdapter;
 
-	private Map<String, Long> nameMap; // name to value
-	private SortedMap<Long, List<String>> valueMap; // value to names
-	private Map<String, String> commentMap; // name to comment
-	private List<BitGroup> bitGroups;
-	private EnumSignedState signedState = null;
+	// Lazy fields whose initialization is triggered by nameMap=null (see initializeIfNeeded)
+	private Map<String, Long> nameMap; // lazy initialization, name to value
+	private SortedMap<Long, List<String>> valueMap; // lazy initialization, value to names
+	private Map<String, String> commentMap; // lazy initialization, name to comment
+	private List<BitGroup> bitGroups; // lazy initialization
+	private EnumSignedState signedState = null; // lazy initialization
 
 	EnumDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache, EnumDBAdapter adapter,
 			EnumValueDBAdapter valueAdapter, DBRecord record) {
