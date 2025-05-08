@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,10 @@ public class RustStringAnalyzer extends AbstractAnalyzer {
 			Address start = data.getAddress();
 			int length = data.getLength();
 
+			if (length == getMaxStringLength(program, start, length)) {
+				continue;
+			}
+
 			recurseString(program, start, length);
 			monitor.checkCancelled();
 		}
@@ -80,11 +84,9 @@ public class RustStringAnalyzer extends AbstractAnalyzer {
 			return;
 		}
 
-		DataType dt =
-			new ArrayDataType(CharDataType.dataType, newLength, CharDataType.dataType.getLength());
-
 		try {
-			DataUtilities.createData(program, start, dt, 0,
+			program.getListing().clearCodeUnits(start, start, false);
+			DataUtilities.createData(program, start, StringDataType.dataType, newLength,
 				DataUtilities.ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
 			if (newLength < maxLen) {
