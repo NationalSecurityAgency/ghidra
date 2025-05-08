@@ -202,7 +202,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 */
 	public void filterBookmarks() {
 		FilterDialog d = new FilterDialog(provider, currentProgram);
-		tool.showDialog(d, provider);
+		tool.showDialog(d, provider.getComponent());
 		provider.contextChanged();
 	}
 
@@ -282,9 +282,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	}
 
 	private void disposeAllBookmarkers() {
-		Iterator<BookmarkNavigator> it = bookmarkNavigators.values().iterator();
-		while (it.hasNext()) {
-			BookmarkNavigator nav = it.next();
+		for (BookmarkNavigator nav : bookmarkNavigators.values()) {
 			nav.dispose();
 		}
 		bookmarkNavigators.clear();
@@ -624,9 +622,8 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				types.add(type);
 			}
 			else {
-				Iterator<String> it = bookmarkNavigators.keySet().iterator();
-				while (it.hasNext()) {
-					types.add(it.next());
+				for (String element : bookmarkNavigators.keySet()) {
+					types.add(element);
 				}
 			}
 			updateMgr.update();
@@ -655,9 +652,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 				running = true;
 			}
 			try {
-				Iterator<String> it = myTypes.iterator();
-				while (it.hasNext()) {
-					String type = it.next();
+				for (String type : myTypes) {
 					updateNav(type);
 				}
 			}
