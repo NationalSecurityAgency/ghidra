@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title android lldb
+#@title lldb Android
 #@image-opt arg:1
 #@desc <html><body width="300px">
-#@desc   <h3>Launch with local <tt>lldb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
+#@desc   <h3>Launch with local <tt>lldb</tt> and connect to an Android target.</h3>
 #@desc   <p>
 #@desc     This will start <tt>lldb</tt> on the local system and then use it to connect to the remote system.
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group lldb
 #@icon icon.debugger
 #@help lldb#android
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
@@ -35,48 +35,20 @@
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-lldb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-lldb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-lldb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/lldbsetuputils.sh
+
+pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"
 shift
 target_args="$@"
 
-if [ -z "$target_args" ]
-then
-  argspart=
-else
-  argspart=-o "settings set target.run-args $target_args"
-fi
+function launch-lldb() {
+	local -a args
+	compute-lldb-platform-args "$target_image" remote-android "connect://$OPT_HOST:$OPT_PORT" "$GHIDRA_TRACE_RMI_ADDR" "$@"
 
-if [ -z "$OPT_ARCH" ]
-then
-  archcmd=
-else
-  archcmd=-o "settings set target.default-arch $OPT_ARCH" 
-fi
-
-"$OPT_LLDB_PATH" \
-  -o "version" \
-  -o "script import ghidralldb" \
-  -o "platform select remote-android" \
-  -o "platform connect connect://$OPT_HOST:$OPT_PORT" \
-  $archcmd \
-  -o "target create \"$target_image\"" \
-  $argspart \
-  -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -o "ghidra trace start" \
-  -o "ghidra trace sync-enable" \
-  -o "ghidra trace sync-synth-stopped" \
-  -o "$OPT_START_CMD"
-
+	"${args[@]}"
+}
+launch-lldb

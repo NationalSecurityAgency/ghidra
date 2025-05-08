@@ -24,7 +24,7 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#gdbserver_ssh
 #@enum Endian:str auto big little
@@ -39,31 +39,19 @@
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/gdbsetuputils.sh
 
-"$OPT_GDB_PATH" \
-  -q \
-  -ex "set pagination off" \
-  -ex "set confirm off" \
-  -ex "show version" \
-  -ex "python import ghidragdb" \
-  -ex "set architecture $OPT_ARCH" \
-  -ex "set endian $OPT_ENDIAN" \
-  -ex "target remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - $@" \
-  -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -ex "ghidra trace start" \
-  -ex "ghidra trace sync-enable" \
-  -ex "ghidra trace sync-synth-stopped" \
-  -ex "set confirm on" \
-  -ex "set pagination on"
+pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
+
+target_image="$1"
+shift
+
+function launch-gdb() {
+	local -a args
+	compute-gdb-remote-args "$target_image" "remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - '$target_image' $@" "$GHIDRA_TRACE_RMI_ADDR"
+
+	"${args[@]}"
+}
+launch-gdb

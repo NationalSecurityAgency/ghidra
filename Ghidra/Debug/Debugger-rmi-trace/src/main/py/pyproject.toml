@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "protobuf >= 3, < 4",
+    "protobuf >= 3.20.0",
 ]
 
 [project.urls]

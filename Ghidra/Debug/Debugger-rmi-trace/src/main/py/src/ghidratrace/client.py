@@ -13,7 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-from typing import get_args, get_origin
+
+try:
+    from . import trace_rmi_pb2 as bufs
+except Exception as e:
+    from .setuputils import prompt_and_mitigate_dependencies
+    prompt_and_mitigate_dependencies("Debug/Debugger-rmi-trace")
+
 from collections import deque
 from concurrent.futures import Executor, Future
 from contextlib import contextmanager
@@ -26,12 +32,12 @@ import traceback
 from typing import (Annotated, Any, Callable, Collection, Dict, Generator,
                     Generic, Iterable, List, MutableSequence, Optional,
                     Sequence, Tuple, TypeVar, Union)
+from typing import get_args, get_origin
 
 from google.protobuf.internal.containers import (
     RepeatedCompositeFieldContainer as RCFC)
 
 from . import sch
-from . import trace_rmi_pb2 as bufs
 from .util import send_delimited, recv_delimited
 
 
@@ -187,7 +193,6 @@ class TraceObject:
             return self.path.result()
         else:
             return '<Future>'
-
 
     def insert(self, span: Optional[Lifespan] = None,
                resolution: str = 'adjust') -> Union[
@@ -654,7 +659,7 @@ class MethodRegistry(object):
         return ''
 
     @classmethod
-    def _make_param(cls, s:inspect.Signature, p: inspect.Parameter) -> RemoteParameter:
+    def _make_param(cls, s: inspect.Signature, p: inspect.Parameter) -> RemoteParameter:
         schema = cls._to_schema(s, p.annotation)
         required = p.default is p.empty
         return RemoteParameter(

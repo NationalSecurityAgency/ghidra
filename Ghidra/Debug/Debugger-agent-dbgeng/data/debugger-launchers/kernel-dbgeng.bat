@@ -1,4 +1,4 @@
-::@title dbgeng-kernel
+::@title dbgeng kernel
 ::@desc <html><body width="300px">
 ::@desc   <h3>Kernel debugging using <tt>dbgeng</tt> (in a Python interpreter)</h3>
 ::@desc   <p>
@@ -6,7 +6,7 @@
 ::@desc     For setup instructions, press <b>F1</b>.
 ::@desc   </p>
 ::@desc </body></html>
-::@menu-group local
+::@menu-group dbgeng
 ::@icon icon.debugger
 ::@help dbgeng#win_kernel
 ::@enum Connection:str Remote Local EXDI

@@ -78,6 +78,6 @@ public class PowerShellScriptTraceRmiLaunchOffer extends AbstractScriptTraceRmiL
 	protected void prepareSubprocess(List<String> commandLine, Map<String, String> env,
 			Map<String, ValStr<?>> args, SocketAddress address) {
 		super.prepareSubprocess(commandLine, env, args, address);
-		commandLine.add(0, "powershell");
+		commandLine.addAll(0, List.of("powershell", "-File"));
 	}
 }
