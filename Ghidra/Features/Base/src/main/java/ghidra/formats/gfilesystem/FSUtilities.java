@@ -34,9 +34,7 @@ import docking.widgets.OptionDialog;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
-import ghidra.util.HashUtilities;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -204,7 +202,9 @@ public class FSUtilities {
 	 * @return {@link List} of accumulated {@code result}s
 	 * @throws IOException if io error during listing of directories
 	 * @throws CancelledException if user cancels
+	 * @deprecated Use {@link GFileSystem#files(GFile)} instead
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public static List<GFile> listFileSystem(GFileSystem fs, GFile dir, List<GFile> result,
 			TaskMonitor taskMonitor) throws IOException, CancelledException {
 		if (result == null) {
