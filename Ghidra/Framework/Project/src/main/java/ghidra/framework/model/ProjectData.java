@@ -17,6 +17,7 @@ package ghidra.framework.model;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 
 import ghidra.framework.client.RepositoryAdapter;
@@ -30,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  * The ProjectData interface provides access to all the data files and folders
  * in a project.
  */
-public interface ProjectData {
+public interface ProjectData extends Iterable<DomainFile> {
 
 	/**
 	 * @return local storage implementation class
@@ -224,4 +225,8 @@ public interface ProjectData {
 	 */
 	public URL getLocalProjectURL();
 
+	@Override
+	public default Iterator<DomainFile> iterator() {
+		return new ProjectDataUtils.DomainFileIterator(getRootFolder());
+	}
 }
