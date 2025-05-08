@@ -17,6 +17,7 @@ package ghidra.framework.model;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 
 import ghidra.framework.client.RepositoryAdapter;
@@ -29,7 +30,7 @@ import ghidra.framework.options.SaveState;
  * and tools to work together.
  * 
  */
-public interface Project extends AutoCloseable {
+public interface Project extends AutoCloseable, Iterable<DomainFile> {
 
 	/**
 	 * Convenience method to get the name of this project.
@@ -193,5 +194,10 @@ public interface Project extends AutoCloseable {
 	 * @param listener project view listener
 	 */
 	public void removeProjectViewListener(ProjectViewListener listener);
+
+	@Override
+	public default Iterator<DomainFile> iterator() {
+		return new ProjectDataUtils.DomainFileIterator(this);
+	}
 
 }
