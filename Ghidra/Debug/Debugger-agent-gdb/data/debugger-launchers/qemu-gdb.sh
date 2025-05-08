@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title qemu + gdb
+#@title gdb + qemu
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>qemu</tt> and connect with <tt>gdb</tt></h3>
@@ -24,7 +24,7 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group cross
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#qemu
 #@enum Endian:str auto big little
@@ -40,53 +40,33 @@
 #@env OPT_PULL_ALL_SECTIONS:bool=false "Pull all section mappings" "Force gdb to send all mappings to Ghidra. This can be costly (see help)."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/gdbsetuputils.sh
+
+pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"
 
 # No need to put QEMU_GDB on command line. It's already a recognized environment variable.
 if [ -z "$TTY_TARGET" ]
 then
-  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ &
+	"$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS "$@" &
 else
-  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ <$TTY_TARGET >$TTY_TARGET 2>&1 &
+	"$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS "$@" <$TTY_TARGET >$TTY_TARGET 2>&1 &
 fi
 
 # Give QEMU a moment to open the socket
 sleep 0.1
 
-declare -a args
+function launch-gdb() {
+	local -a args
+	compute-gdb-remote-args "$target_image" "remote localhost:$QEMU_GDB" "$GHIDRA_TRACE_RMI_ADDR"
+	
+	if [ "$OPT_PULL_ALL_SECTIONS" = "true" ]; then
+		args+=(-ex "ghidra trace tx-open 'Put Sections' 'ghidra trace put-sections -all-objects'")
+	fi
 
-args+=(-q)
-args+=(-ex "set pagination off")
-args+=(-ex "set confirm off")
-args+=(-ex "show version")
-args+=(-ex "python import ghidragdb")
-args+=(-ex "set architecture $OPT_ARCH")
-args+=(-ex "set endian $OPT_ENDIAN")
-args+=(-ex "file '$target_image'")
-args+=(-ex "ghidra trace connect '$GHIDRA_TRACE_RMI_ADDR'")
-args+=(-ex "ghidra trace start")
-args+=(-ex "ghidra trace sync-enable")
-args+=(-ex "target remote localhost:$QEMU_GDB")
-if [ "$OPT_PULL_ALL_SECTIONS" = "true" ]
-then
-  args+=(-ex "ghidra trace tx-start put-all-sections")
-  args+=(-ex "ghidra trace put-sections -all-objects")
-  args+=(-ex "ghidra trace tx-commit")
-fi
-args+=(-ex "set confirm on")
-args+=(-ex "set pagination on")
-
-"$OPT_GDB_PATH" "${args[@]}"
+	"${args[@]}"
+}
+launch-gdb

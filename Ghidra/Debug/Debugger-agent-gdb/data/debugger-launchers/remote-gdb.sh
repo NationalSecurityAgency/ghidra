@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title remote gdb
+#@title gdb remote
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
@@ -23,7 +23,7 @@
 #@desc     For setup instructions, press <b>F1</b>. 
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#remote
 #@enum TargetType:str remote extended-remote
@@ -36,39 +36,18 @@
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/gdbsetuputils.sh
 
-declare -a args
+pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
-args+=(-q)
-args+=(-ex "set pagination off")
-args+=(-ex "set confirmation off")
-args+=(-ex "show version")
-args+=(-ex "python import ghidragdb")
-args+=(-ex "set architecture $OPT_ARCH")
-args+=(-ex "set endian $OPT_ENDIAN")
-if [ -n "$1" ]
-then
-  args+=(-ex "file '$1'")
-fi
-args+=(-ex "echo Connecting to $OPT_HOST:$OPT_PORT...")
-args+=(-ex "target $OPT_TARGET_TYPE $OPT_HOST:$OPT_PORT")
-args+=(-ex "ghidra trace connect '$GHIDRA_TRACE_RMI_ADDR'")
-args+=(-ex "ghidra trace start")
-args+=(-ex "ghidra trace sync-enable")
-args+=(-ex "ghidra trace sync-synth-stopped")
-args+=(-ex "set confirm on")
-args+=(-ex "set pagination on")
+target_image="$1"
 
-"$OPT_GDB_PATH" "${args[@]}"
+function launch-gdb() {
+	local -a args
+	compute-gdb-remote-args "$target_image" "$OPT_TARGET_TYPE $OPT_HOST:$OPT_PORT" "$GHIDRA_TRACE_RMI_ADDR"
+
+	"${args[@]}"
+}
+launch-gdb

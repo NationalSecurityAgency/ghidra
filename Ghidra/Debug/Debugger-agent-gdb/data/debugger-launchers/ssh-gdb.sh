@@ -24,7 +24,7 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#ssh
 #@enum StartCmd:str run start starti
@@ -40,40 +40,61 @@
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
+. ../support/gdbsetuputils.sh
+
 target_image="$1"
 shift
-target_args="$@"
 
-if [ -z "$target_image" ]
-then
-  "$OPT_SSH_PATH" "-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR" -t $OPT_EXTRA_SSH_ARGS "$OPT_HOST" "TERM='$TERM' '$OPT_GDB_PATH' \
-    -q \
-    -ex 'set pagination off' \
-    -ex 'set confirm off' \
-    -ex 'show version' \
-    -ex 'python import ghidragdb' \
-    -ex 'set architecture $OPT_ARCH' \
-    -ex 'set endian $OPT_ENDIAN' \
-    -ex 'ghidra trace connect \"localhost:$OPT_REMOTE_PORT\"' \
-    -ex 'ghidra trace start' \
-    -ex 'ghidra trace sync-enable' \
-    -ex 'set confirm on' \
-    -ex 'set pagination on'"
-else
-  "$OPT_SSH_PATH" "-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR" -t $OPT_EXTRA_SSH_ARGS "$OPT_HOST" "TERM='$TERM' '$OPT_GDB_PATH' \
-    -q \
-    -ex 'set pagination off' \
-    -ex 'set confirm off' \
-    -ex 'show version' \
-    -ex 'python import ghidragdb' \
-    -ex 'set architecture $OPT_ARCH' \
-    -ex 'set endian $OPT_ENDIAN' \
-    -ex 'file \"$target_image\"' \
-    -ex 'set args $target_args' \
-    -ex 'ghidra trace connect \"localhost:$OPT_REMOTE_PORT\"' \
-    -ex 'ghidra trace start' \
-    -ex 'ghidra trace sync-enable' \
-    -ex '$OPT_START_CMD' \
-    -ex 'set confirm on' \
-    -ex 'set pagination on'"
+function launch-gdb-ssh() {
+	local -a args
+	compute-gdb-usermode-args "$target_image" "localhost:$OPT_REMOTE_PORT" "$@"
+	local -a sshargs
+	compute-ssh-args true "${args[@]}"
+
+	"${sshargs[@]}"
+}
+version=$(get-ghidra-version)
+
+function do-installation() {
+	local -a pipargs
+	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb==$version'"
+	local -a sshargs
+	compute-ssh-args false "${pipargs[@]}"
+
+	"${sshargs[@]}"
+}
+
+launch-gdb-ssh
+if check-result-and-prompt-mitigation $? "
+It appears ghidragdb is missing from the remote system. This can happen if you
+forgot to install the required package. This can also happen if you installed
+the packages to a different Python environment than is being used by the
+remote's gdb.
+
+This script is about to offer automatic resolution. If you'd like to resolve
+this manually, answer no to the next question and then see Ghidra's help by
+pressing F1 in the dialog of launch parameters.
+
+WARNING: Answering yes to the next question will invoke pip to try to install
+missing or incorrectly-versioned dependencies. It may attempt to find packages
+from the PyPI mirror configured on the REMOTE system. If you have not configured
+one, it will connect to the official one.
+
+WARNING: We invoke pip with the --break-system-packages flag, because some
+debuggers that embed Python (gdb, lldb) may not support virtual environments,
+and so the packages must be installed to your user environment.
+
+NOTE: This will copy Python wheels into the HOME directory of the user on the
+remote system. You may be prompted to authenticate a few times while packages
+are copied and installed.
+
+NOTE: Automatic resolution will cause this session to terminate. When it has
+finished, try launching again.
+" "Would you like to install 'ghidragdb==$version'?"; then
+
+	echo "Copying Wheels to $OPT_HOST"
+	mitigate-scp-pymodules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
+
+	echo "Installing Wheels into GDB's embedded Python"
+	do-installation
 fi

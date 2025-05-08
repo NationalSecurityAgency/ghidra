@@ -534,7 +534,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
 			SocketAddress address) throws Exception;
 
-	static class NoStaticMappingException extends Exception {
+	public static class NoStaticMappingException extends Exception {
 		public NoStaticMappingException(String message) {
 			super(message);
 		}
