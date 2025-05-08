@@ -69,6 +69,7 @@ public interface FunctionDefinition extends DataType, FunctionSignature {
 	 * @deprecated Use of {@link GenericCallingConvention} is deprecated since arbitrary calling
 	 * convention names are now supported.  {@link #setCallingConvention(String)} should be used.
 	 */
+	@Deprecated
 	public void setGenericCallingConvention(GenericCallingConvention genericCallingConvention);
 
 	/**
