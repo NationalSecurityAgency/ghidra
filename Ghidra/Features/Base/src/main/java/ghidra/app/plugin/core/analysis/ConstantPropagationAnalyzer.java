@@ -108,7 +108,6 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 	final static HashSet<String> handledProcessors = new HashSet<String>();
 	protected String processorName = "Basic";
-	protected AddressSetView EMPTY_ADDRESS_SET = new AddressSet();
 
 	public ConstantPropagationAnalyzer() {
 		this("Basic");
@@ -189,7 +188,8 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			int locationCount = locations.size();
 			monitor.initialize(locationCount);
 			if (locationCount != 0) {
-				AddressSetView resultSet = runAddressAnalysis(program, locations, monitor);
+				monitor.setMessage(getName());
+				AddressSetView resultSet = runParallelAddressAnalysis(program, locations, null, maxThreadCount, monitor);
 				// get rid of any reached addresses
 				unanalyzedSet.delete(resultSet);
 			}

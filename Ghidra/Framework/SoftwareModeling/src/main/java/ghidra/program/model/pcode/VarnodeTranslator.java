@@ -70,6 +70,16 @@ public class VarnodeTranslator {
 		Varnode node = new Varnode(register.getAddress(), register.getMinimumByteSize());
 		return node;
 	}
+	
+	/**
+	 * Get register given a register name
+	 * 
+	 * @param name register name
+	 * @return register
+	 */
+	public Register getRegister(String name) {
+		return language.getRegister(name);
+	}
 
 	/**
 	 * Get all defined registers for the program this translator was created
