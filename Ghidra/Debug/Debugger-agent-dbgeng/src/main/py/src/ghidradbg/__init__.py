@@ -14,6 +14,11 @@
 # limitations under the License.
 ##
 
-# NOTE: libraries must precede EVERYTHING, esp pybag and DbgMod
+try:
+    import pybag
+except Exception as e:
+    from ghidratrace.setuputils import prompt_and_mitigate_dependencies
+    prompt_and_mitigate_dependencies("Debug/Debugger-agent-dbgeng")
 
+# NOTE: libraries must precede EVERYTHING, esp pybag and DbgMod
 from . import libraries, util, commands, methods, hooks

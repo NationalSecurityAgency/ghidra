@@ -92,9 +92,11 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 		STARTUPINFOEX si = prepareStartupInfo();
 		PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
+		String commandLine = ShellUtils.generateLine(Arrays.asList(args));
+
 		if (!ConsoleApiNative.INSTANCE.CreateProcessW(
 			null /*lpApplicationName*/,
-			new WString(ShellUtils.generateLine(Arrays.asList(args))),
+			new WString(commandLine),
 			null /*lpProcessAttributes*/,
 			null /*lpThreadAttributes*/,
 			false /*bInheritHandles*/,

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -25,6 +26,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import db.Transaction;
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -348,6 +350,16 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		executeTask(new ReLaunchTask(offer));
 	}
 
+	protected void relaunch(ActionContext ctx, TraceRmiLaunchOffer offer) {
+		int mods = ctx == null ? 0 : ctx.getEventClickModifiers();
+		if ((mods & ActionEvent.SHIFT_MASK) != 0) {
+			configureAndLaunch(offer);
+		}
+		else {
+			relaunch(offer);
+		}
+	}
+
 	protected void configureAndLaunch(TraceRmiLaunchOffer offer) {
 		executeTask(new ConfigureAndLaunchTask(offer));
 	}
@@ -478,7 +490,8 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		toolLaunchConfigs.putSaveState(name, state);
 	}
 
-	protected record ConfigLast(String configName, long last, Program program) {}
+	protected record ConfigLast(String configName, long last, Program program) {
+	}
 
 	protected ConfigLast checkSavedConfig(Program program, ProgramUserData userData,
 			String propName) {

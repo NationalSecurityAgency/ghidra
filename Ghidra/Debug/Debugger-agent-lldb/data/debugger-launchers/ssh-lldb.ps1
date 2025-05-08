@@ -1,19 +1,3 @@
-#!/usr/bin/env bash
-## ###
-# IP: GHIDRA
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-##
 #@timeout 60000
 #@title lldb via ssh
 #@image-opt arg:1
@@ -30,7 +14,7 @@
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
-#@args "Arguments" "Command-line arguments to pass to the target"
+#@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_SSH_PATH:file!="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
@@ -39,32 +23,15 @@
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_ARCH:str="x86_64" "Architecture" "Target architecture"
 
-. ../support/lldbsetuputils.sh
+. ..\support\lldbsetuputils.ps1
 
-target_image="$1"
-shift
+$arglist = Compute-Lldb-Usermode-Args -TargetImage $args[0] -RmiAddress "localhost:$Env:OPT_REMOTE_PORT"
+$sshargs = Compute-Ssh-Args $arglist True
 
-function launch-lldb-ssh() {
-	local -a args
-	compute-lldb-usermode-args "$target_image" "localhost:$OPT_REMOTE_PORT" "$@"
-	local -a sshargs
-	compute-ssh-args true "${args[@]}"
+$sshproc = Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait -PassThru
 
-	"${sshargs[@]}"
-}
-version=$(get-ghidra-version)
-
-function do-installation() {
-	local -a pipargs
-	compute-lldb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidralldb==$version'"
-	local -a sshargs
-	compute-ssh-args false "${pipargs[@]}"
-
-	"${sshargs[@]}"
-}
-
-launch-lldb-ssh
-if check-result-and-prompt-mitigation $? "
+$version = Get-Ghidra-Version
+$answer = Check-Result-And-Prompt-Mitigation $sshproc @"
 It appears ghidralldb is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
 the packages to a different Python environment than is being used by the
@@ -87,13 +54,16 @@ NOTE: This will copy Python wheels into the HOME directory of the user on the
 remote system. You may be prompted to authenticate a few times while packages
 are copied and installed.
 
-NOTE: Automatic resolution may cause this session to terminate. When it has
+NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidralldb==$version'?"; then
+"@ "Would you like to install 'ghidralldb==$version'?"
 
-	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-lldb"
+if ($answer) {
+	Write-Host "Copying Wheels to $Env:OPT_HOST"
+	Mitigate-Scp-PyModules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-lldb"
 
-	echo "Installing Wheels into LLDB's embedded Python"
-	do-installation
-fi
+	Write-Host "Installing Wheels into LLDB's embedded Python"
+	$arglist = Compute-Lldb-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidralldb==$version'"
+	$sshargs = Compute-Ssh-Args $arglist False
+	Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait
+}

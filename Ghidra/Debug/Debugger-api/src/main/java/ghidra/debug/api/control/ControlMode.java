@@ -398,20 +398,18 @@ public enum ControlMode {
 			return coordinates;
 		}
 
-		ScheduleForm form =
-			target.getSupportedTimeForm(coordinates.getObject(), coordinates.getSnap());
+		ScheduleForm form = coordinates.getObject() == null ? null
+				: target.getSupportedTimeForm(coordinates.getObject(), coordinates.getSnap());
 		if (form == null) {
 			if (coordinates.getTime().isSnapOnly() &&
 				coordinates.getSnap() == target.getSnap()) {
 				return coordinates;
 			}
-			else {
-				tool.setStatusInfo("""
-						Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."""
-						.formatted(name),
-					true);
-				return null;
-			}
+			tool.setStatusInfo("""
+					Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."""
+					.formatted(name),
+				true);
+			return null;
 		}
 		TraceSchedule norm = form.validate(coordinates.getTrace(), coordinates.getTime());
 		if (norm != null) {

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title drgn-kernel
+#@title drgn kernel
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>drgn-kernel</tt></h3>
 #@desc   <p>

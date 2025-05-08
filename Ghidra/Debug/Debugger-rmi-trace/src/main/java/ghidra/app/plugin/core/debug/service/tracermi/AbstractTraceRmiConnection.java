@@ -64,13 +64,16 @@ public abstract class AbstractTraceRmiConnection implements TraceRmiConnection {
 			if (!traceManager.getOpenTraces().contains(trace)) {
 				traceManager.openTrace(trace);
 				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
+				return;
 			}
-			else {
-				Trace currentTrace = traceManager.getCurrentTrace();
-				if (currentTrace == null || ownsTrace(currentTrace)) {
-					traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
-				}
+			Trace currentTrace = traceManager.getCurrentTrace();
+			if (currentTrace == null || ownsTrace(currentTrace)) {
+				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
+				return;
 			}
+			// LATER: See if all this ownership checking is really necessary.
+			// For now, just always activate anyway
+			traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
 		});
 	}
 }

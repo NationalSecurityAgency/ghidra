@@ -1,19 +1,3 @@
-#!/usr/bin/env bash
-## ###
-# IP: GHIDRA
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-##
 #@timeout 60000
 #@title gdb via ssh
 #@image-opt arg:1
@@ -30,8 +14,8 @@
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
-#@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_SSH_PATH:file!="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
+#@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
@@ -40,32 +24,15 @@
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-. ../support/gdbsetuputils.sh
+. ..\support\gdbsetuputils.ps1
 
-target_image="$1"
-shift
+$arglist = Compute-Gdb-Usermode-Args -TargetImage $args[0] -RmiAddress "localhost:$Env:OPT_REMOTE_PORT"
+$sshargs = Compute-Ssh-Args $arglist True
 
-function launch-gdb-ssh() {
-	local -a args
-	compute-gdb-usermode-args "$target_image" "localhost:$OPT_REMOTE_PORT" "$@"
-	local -a sshargs
-	compute-ssh-args true "${args[@]}"
+$sshproc = Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait -PassThru
 
-	"${sshargs[@]}"
-}
-version=$(get-ghidra-version)
-
-function do-installation() {
-	local -a pipargs
-	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb==$version'"
-	local -a sshargs
-	compute-ssh-args false "${pipargs[@]}"
-
-	"${sshargs[@]}"
-}
-
-launch-gdb-ssh
-if check-result-and-prompt-mitigation $? "
+$version = Get-Ghidra-Version
+$answer = Check-Result-And-Prompt-Mitigation $sshproc @"
 It appears ghidragdb is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
 the packages to a different Python environment than is being used by the
@@ -90,11 +57,14 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidragdb==$version'?"; then
+"@ "Would you like to install 'ghidragdb==$version'?"
 
-	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
+if ($answer) {
+	Write-Host "Copying Wheels to $Env:OPT_HOST"
+	Mitigate-Scp-PyModules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
 
-	echo "Installing Wheels into GDB's embedded Python"
-	do-installation
-fi
+	Write-Host "Installing Wheels into GDB's embedded Python"
+	$arglist = Compute-Gdb-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidragdb==$version'"
+	$sshargs = Compute-Ssh-Args $arglist False
+	Start-Process -FilePath $sshargs[0] -ArgumentList $sshargs[1..$sshargs.Count] -NoNewWindow -Wait
+}

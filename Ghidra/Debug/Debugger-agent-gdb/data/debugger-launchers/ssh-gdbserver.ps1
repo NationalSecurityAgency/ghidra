@@ -1,19 +1,3 @@
-#!/usr/bin/env bash
-## ###
-# IP: GHIDRA
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-##
 #@timeout 60000
 #@title gdb + gdbserver via ssh
 #@image-opt arg:1
@@ -29,8 +13,8 @@
 #@help gdb#gdbserver_ssh
 #@enum Endian:str auto big little
 #@arg :str! "Image" "The target binary executable image on the remote system"
-#@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_SSH_PATH:file!="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
+#@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_GDBSERVER_PATH:str="gdbserver" "gdbserver command (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
@@ -39,19 +23,15 @@
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-. ../support/gdbsetuputils.sh
+. ..\support\gdbsetuputils.ps1
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
-export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
+$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
+$Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
-target_image="$1"
-shift
+$arglist = Compute-Gdb-Remote-Args `
+	-TargetImage $args[0] `
+	-TargetCx "remote | '$Env:OPT_SSH_PATH' $Env:OPT_EXTRA_SSH_ARGS '$Env:OPT_HOST' '$Env:OPT_GDBSERVER_PATH' $Env:OPT_EXTRA_GDBSERVER_ARGS - '$($args[0])' $Env:OPT_TARGET_ARGS" `
+	-RmiAddress "$Env:GHIDRA_TRACE_RMI_ADDR"
 
-function launch-gdb() {
-	local -a args
-	compute-gdb-remote-args "$target_image" "remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - '$target_image' $@" "$GHIDRA_TRACE_RMI_ADDR"
-
-	"${args[@]}"
-}
-launch-gdb
+Start-Process -FilePath $arglist[0] -ArgumentList $arglist[1..$arglist.Count] -NoNewWindow -Wait
