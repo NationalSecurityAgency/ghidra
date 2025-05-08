@@ -33,6 +33,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -71,21 +73,7 @@ import ghidra.program.model.listing.DataIterator;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.FunctionPrototype;
-import ghidra.program.model.pcode.HighConstant;
-import ghidra.program.model.pcode.HighFunction;
-import ghidra.program.model.pcode.HighGlobal;
-import ghidra.program.model.pcode.HighLocal;
-import ghidra.program.model.pcode.HighOther;
-import ghidra.program.model.pcode.HighSymbol;
-import ghidra.program.model.pcode.HighVariable;
-import ghidra.program.model.pcode.PcodeBlock;
-import ghidra.program.model.pcode.PcodeBlockBasic;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOpAST;
-import ghidra.program.model.pcode.SequenceNumber;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.pcode.VarnodeAST;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.ExternalReference;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.Symbol;
@@ -178,7 +166,7 @@ enum PredicateFile {
 	PROTO_HAS_THIS("PROTO_HAS_THIS"), PROTO_CALLING_CONVENTION("PROTO_CALLING_CONVENTION"),
 	PROTO_RETTYPE("PROTO_RETTYPE"), PROTO_PARAMETER("PROTO_PARAMETER"), PROTO_PARAMETER_COUNT("PROTO_PARAMETER_COUNT"),
 	PROTO_PARAMETER_DATATYPE("PROTO_PARAMETER_DATATYPE"), SYMBOL_HVAR("SYMBOL_HVAR"), SYMBOL_HFUNC("SYMBOL_HFUNC"),
-	DATA_STRING("DATA_STRING"), VTABLE("VTABLE"), SYMBOL_NAME("SYMBOL_NAME"), PROGRAM_FILE("PROGRAM_FILE");
+	DATA_STRING("DATA_STRING"), VTABLE("VTABLE"), SYMBOL_NAME("SYMBOL_NAME"), PROGRAM_FILE("PROGRAM_FILE"), OFFSET_INDEX("OFFSET_INDEX");
 
 	private final String name;
 
@@ -327,10 +315,22 @@ class Database {
 	}
 }
 
+
+class ItemCounter {
+    private final ConcurrentHashMap<String, Integer> seenItems = new ConcurrentHashMap<>();
+    private final AtomicInteger counter = new AtomicInteger(3);
+
+    public int getUniqueNumber(String item) {
+        // Check if the item has been seen
+        return seenItems.computeIfAbsent(item, key -> counter.incrementAndGet());
+    }
+}
+
 class HighFunctionExporter {
 	private final Database db = new Database();
 	private final Set<String> types = new HashSet<String>();
 	private Set<String> varnodes = new HashSet<String>();
+	private ItemCounter offsets = new ItemCounter();
 	private final HashMap<String, PredicateFile> componentPredicates = new HashMap<String, PredicateFile>();
 	private Map<HighVariable, VarnodeAST> extraGlobals = new HashMap<HighVariable, VarnodeAST>();
 	private final Writer debug;
@@ -559,6 +559,11 @@ class HighFunctionExporter {
 	}
 
 	@SuppressWarnings("unused")
+	private void export(PredicateFile pfile, String key, String val1, String val2) {
+		db.add(pfile, key, val1, val2);
+	}
+
+	@SuppressWarnings("unused")
 	private void export(PredicateFile pfile, String key, String val1, String val2, String val3) {
 		db.add(pfile, key, val1, val2, val3);
 	}
@@ -640,6 +645,8 @@ class HighFunctionExporter {
 		export(PredicateFile.VNODE_OFFSET, id, Long.toHexString(offset));
 		// if (offset < Long.MAX_VALUE && offset > Long.MIN_VALUE) {
 		exportL(PredicateFile.VNODE_OFFSET_N, id, offset);
+                export(PredicateFile.OFFSET_INDEX, String.valueOf(offset),
+                    String.valueOf(offsets.getUniqueNumber(String.valueOf(offset))));
 		// }
 		export(PredicateFile.VNODE_SIZE, id, Integer.toString(vn.getSize()));
 		export(PredicateFile.VNODE_SPACE, id, vn.getAddress().getAddressSpace().getName());
@@ -694,6 +701,10 @@ class HighFunctionExporter {
 		if (hv.getSymbol() != null) {
 			String hsid = hsID(hfn, hv.getSymbol());
 			export(PredicateFile.SYMBOL_HVAR, hsid, hvarID(hfn, hv));
+//			HighSymbol hs = hv.getSymbol();
+//			if (hs != null) {
+//				export(PredicateFile.HVAR_NAME, id, hs.getName());
+//			}
 		}
 		if (!dontDescend) {
 			VarnodeAST representative = (VarnodeAST) hv.getRepresentative();
@@ -970,12 +981,7 @@ class HighFunctionExporter {
 	}
 
 	private String vnodeID(HighFunction hfn, VarnodeAST vn) {
-		HighVariable hv = vn.getHigh();
-		if (hv == null) {
-			return hfuncID(hfn) + SEP + Integer.toString(vn.getUniqueId());
-		} else {
-			return hfuncID(hfn) + SEP + hvarName(hfn, hv) + SEP + Integer.toString(vn.getUniqueId());
-		}
+		return hfuncID(hfn) + SEP + Integer.toString(vn.getUniqueId());
 	}
 
 	private String hvarID(HighFunction hfn, HighVariable hv) {
@@ -983,20 +989,35 @@ class HighFunctionExporter {
 	}
 
 	private String hvarName(HighFunction hf, HighVariable hv) {
+		Varnode rep = hv.getRepresentative();
+		if (rep.getAddress().isUniqueAddress()) {
+			DynamicHash dynamicHash = new DynamicHash(rep, hf);
+			return "hv"+Long.toString(dynamicHash.getHash());
+		}
 		if (hv.getName() == null || hv.getName().equals("UNNAMED")) {
-			SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
-			Varnode rep = hv.getRepresentative();
-			Address addr = rep.getAddress();
-			if (extraGlobals.containsKey(hv)) {
-				VarnodeAST vn = extraGlobals.get(hv);
-				addr = addr.getNewAddress(vn.getOffset());
-			}
-			Symbol symbol = symbolTable.getPrimarySymbol(addr);
-			if (symbol == null) {
+			if (hv instanceof HighConstant || hv instanceof HighOther) {
+				Address addr = rep.getAddress();
 				return addr.toString();
 			}
-			export(PredicateFile.HVAR_CLASS, hfuncID(hf) + SEP + symbol.getName(), "global");
-			return symbol.getName();
+			if (hv instanceof HighLocal) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighGlobal) {
+				SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
+				Address addr = rep.getAddress();
+				if (extraGlobals.containsKey(hv)) {
+					VarnodeAST vn = extraGlobals.get(hv);
+					addr = addr.getNewAddress(vn.getOffset());
+				}
+				Symbol symbol = symbolTable.getPrimarySymbol(addr);
+				if (symbol != null) {
+					export(PredicateFile.HVAR_CLASS, hfuncID(hf) + SEP + symbol.getName(), "global");
+					return symbol.getName();
+				}
+				return addr.toString();
+			}
+			return null;
 		}
 		return hv.getName();
 	}
