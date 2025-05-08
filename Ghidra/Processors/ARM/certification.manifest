@@ -26,6 +26,7 @@ data/languages/ARM8m_le.slaspec||GHIDRA||||END|
 data/languages/ARMCortex.pspec||GHIDRA||||END|
 data/languages/ARMTHUMBinstructions.sinc||GHIDRA||||END|
 data/languages/ARM_CDE.sinc||GHIDRA||||END|
+data/languages/ARM_apcs.cspec||GHIDRA||||END|
 data/languages/ARM_v45.cspec||GHIDRA||||END|
 data/languages/ARM_v45.pspec||GHIDRA||||END|
 data/languages/ARM_win.cspec||GHIDRA||||END|
