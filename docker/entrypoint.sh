@@ -39,10 +39,15 @@ elif [[ $MODE == "bsim" ]] then
 elif [[ $MODE == "bsim-server" ]] then
 	LAUNCH_MODE=${LAUNCH_MODE:=fg}
 	VMARG_LIST=${VMARG_LIST:="-Djava.awt.headless=true -Xshare:off"}
-	mkdir -p $DATADIR_PATH
-	/ghidra/support/launch.sh "$LAUNCH_MODE" jdk BSimControl "$MAXMEM" "$VMARG_LIST" ghidra.features.bsim.query.BSimControlLaunchable start $@
-	# need to do this since the launched process is not blocking terminal exit
-	while !	tail -f $DATADIR_PATH/logfile; do sleep 1 ; done
+	if [[ ! $# -eq 0 ]] then
+		/ghidra/support/launch.sh "$LAUNCH_MODE" jdk BSimControl "$MAXMEM" "$VMARG_LIST" ghidra.features.bsim.query.BSimControlLaunchable start $@
+		# need to do this since the launched process is not blocking terminal exit
+		while !	tail -f $1/logfile; do sleep 1 ; done
+	else
+		echo "ERROR: Must pass args for bsim_ctl start command."
+		/ghidra/support/launch.sh "$LAUNCH_MODE" jdk BSimControl "$MAXMEM" "$VMARG_LIST" ghidra.features.bsim.query.BSimControlLaunchable start $@
+		exit 1
+	fi
 elif [[ $MODE == "pyghidra" ]] then
 	# Add optional JVM args inside the quotes
 	VMARG_LIST=${VMARG_LIST:=""}
