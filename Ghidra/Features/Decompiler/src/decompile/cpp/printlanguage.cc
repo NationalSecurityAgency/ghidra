@@ -552,11 +552,18 @@ void PrintLanguage::opBinary(const OpToken *tok,const PcodeOp *op)
     if (tok == (const OpToken *)0)
       throw LowlevelError("Could not find fliptoken");
   }
+  const Varnode *lhs = op->getIn(0);
+  const Varnode *rhs = op->getIn(1);
+  if (op->getIn(0)->isConstant() && tok->lrswap != (const OpToken *)0) {
+    tok = tok->lrswap;
+    lhs = op->getIn(1);
+    rhs = op->getIn(0);
+  }
   pushOp(tok,op);		// Push on reverse polish notation
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVn(op->getIn(1),op,mods);
-  pushVn(op->getIn(0),op,mods);
+  pushVn(rhs,op,mods);
+  pushVn(lhs,op,mods);
 }
 
 /// Push an operator onto the stack that has a normal unary format.
