@@ -48,8 +48,10 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 
 		tool = new DummyTool();
-		winMgr = new DockingWindowManager(tool, null);
-		winMgr.setVisible(true);
+		runSwing(() -> {
+			winMgr = new DockingWindowManager(tool, null);
+			winMgr.setVisible(true);
+		});
 
 		buildTable();
 	}
@@ -63,9 +65,10 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 			filteredModel = filterPanel.getTableFilterModel();
 			table.setAutoLookupColumn(4);
 			provider = new TestTableComponentProvider(tool);
+
+			winMgr.addComponent(provider);
 		});
 
-		winMgr.addComponent(provider);
 		waitForSwing();
 	}
 
