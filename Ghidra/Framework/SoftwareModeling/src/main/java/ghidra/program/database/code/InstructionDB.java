@@ -938,7 +938,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		FlowType myFlowType = getFlowType(); // getFlowType will validate
 		if (myFlowType.hasFallthrough()) {
 			try {
-				return address.addNoWrap(getDefaultFallThroughOffset());
+				return getAddress().addNoWrap(proto.getFallThroughOffset(this));
 			}
 			catch (AddressOverflowException e) {
 				// ignore
