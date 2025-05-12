@@ -1062,6 +1062,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return null;
 		}
 		HighSymbol highSymbol = highVar.getSymbol();
+		if (highSymbol == null) {
+			return null;
+		}
 		Variable variable = HighFunctionDBUtil.getFunctionVariable(highSymbol);
 		if (variable != null) {
 			return variable;
