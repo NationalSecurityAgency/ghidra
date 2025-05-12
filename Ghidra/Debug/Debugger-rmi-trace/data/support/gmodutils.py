@@ -27,6 +27,10 @@ that minimal logic is required to get it loaded.
 This file CANNOT be assumed to be available on a remote target. For
 that, consider ghidratrace.setuputils.
 """
+import os
+
+home = os.getenv('GHIDRA_HOME')
+
 
 def ghidra_module_pypath(name: str) -> str:
     installed = f'{home}/Ghidra/{name}/pypkg/src'
