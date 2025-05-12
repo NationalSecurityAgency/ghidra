@@ -46,7 +46,7 @@ get-ghidra-version() {
 
 ghidra-module-pypath() {
 	installed="$GHIDRA_HOME/Ghidra/$1/pypkg/src"
-	if [ -d "$instaled" ]; then
+	if [ -d "$installed" ]; then
 		echo $installed
 		return 0
 	fi
@@ -66,7 +66,7 @@ ghidra-module-pypath() {
 
 ghidra-module-pydist() {
 	installed="$GHIDRA_HOME/Ghidra/$1/pypkg/dist"
-	if [ -d "$instaled" ]; then
+	if [ -d "$installed" ]; then
 		echo $installed
 		return 0
 	fi
