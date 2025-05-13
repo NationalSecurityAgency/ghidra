@@ -120,10 +120,6 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 				map.put("entry", faddr);
 				map.put("Address", faddr);
 			}
-//			Address addr = SarifUtils.getLocAddress(program, fqname);
-//			if (addr != null) {
-//				map.put("Address", addr);
-//			}
 			map.put("location", fqname);
 			map.put("kind", ll.getKind());
 			map.put("function", SarifUtils.extractFQNameFunction(fqname));

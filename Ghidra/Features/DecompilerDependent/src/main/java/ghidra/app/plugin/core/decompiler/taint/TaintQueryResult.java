@@ -29,7 +29,7 @@ import sarif.SarifUtils;
 public record TaintQueryResult(String name,String fqname, Address iaddr, Address faddr, List<String> labels, boolean functionLevelResult) {
 
 	// NB: The constructors that follow depend on data generated at different phases in the processing.
-	//   At first blush, it seems obvious that you could combine then by using the location data, accessed
+	//   At first blush, it seems obvious that you could combine them by using the location data, accessed
 	//   in the first to derive the LogicalLocation via llocs in SarifUtils.  llocs, however, is likely to
 	//   be stale when applying the SARIF results.
 	
