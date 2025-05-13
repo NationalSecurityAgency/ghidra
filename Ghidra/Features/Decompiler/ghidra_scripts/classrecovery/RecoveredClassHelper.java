@@ -4251,7 +4251,7 @@ public class RecoveredClassHelper {
 		DataType dataType = dataTypeManager.getDataType(folderPath, structureName);
 		if (extendedFlatAPI.isEmptyStructure(dataType)) {
 
-			dataTypeManager.remove(dataType, monitor);
+			dataTypeManager.remove(dataType);
 			Category classCategory = dataTypeManager.getCategory(folderPath);
 			Category parentCategory = classCategory.getParent();
 			boolean tryToRemove = true;

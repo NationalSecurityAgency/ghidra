@@ -24,7 +24,6 @@ import ghidra.program.database.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
@@ -41,7 +40,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				// 2 components should get removed from CoolUnion
 			}
 
@@ -113,7 +112,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				// 2 components should be bad in CoolUnion
 			}
 
@@ -181,7 +180,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				// 2 components should get removed from CoolUnion
 			}
 
@@ -502,7 +501,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -562,7 +561,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 				// causes Bar to be marked as changed
 			}
 
@@ -621,7 +620,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 				// causes Bar to be marked as changed
 			}
 
@@ -700,7 +699,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Structure a = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
 				Structure ms = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 					"MyStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 				Structure s1 = new StructureDataType(
 					new CategoryPath("/Category1/Category2/Category5"), "s1", 0);
 				s1.add(ms);
@@ -811,7 +810,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2"), "BF");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1127,7 +1126,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				dtm.replaceDataType(td, new TypedefDataType("NewBF", IntegerDataType.dataType),
 					true);
 				DataType dt = dtm.getDataType("/MISC/FooTypedef");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 
 				DataType dt1 = dtm.getDataType("/BF");
 				assertNull(dt1);
@@ -1200,7 +1199,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				// 2 components should get removed from CoolUnion
 			}
 
@@ -1278,7 +1277,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				// 2 components should get removed from CoolUnion
 			}
 
@@ -1364,10 +1363,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1436,10 +1435,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1518,10 +1517,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1590,10 +1589,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1693,10 +1692,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1779,10 +1778,10 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -1888,7 +1887,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 				try {
 					DataType enumm = dtm.getDataType(new CategoryPath("/Category1"), "XYZ");
-					dtm.remove(enumm, TaskMonitor.DUMMY);
+					dtm.remove(enumm);
 
 					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 						"CoolUnion");

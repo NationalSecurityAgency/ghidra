@@ -191,7 +191,12 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public boolean remove(DataType dataType, TaskMonitor monitor) {
+	public boolean remove(DataType dataType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void remove(List<DataType> dataTypes, TaskMonitor monitor) throws CancelledException {
 		throw new UnsupportedOperationException();
 	}
 
