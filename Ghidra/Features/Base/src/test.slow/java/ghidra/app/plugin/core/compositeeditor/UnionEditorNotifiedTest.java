@@ -115,7 +115,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		DataType dt18 = getDataType(18).clone(programDTM);
 		DataType dt20 = getDataType(20).clone(programDTM);
 		SwingUtilities.invokeLater(() -> {
-			programDTM.remove(complexUnion, TaskMonitor.DUMMY);
+			programDTM.remove(complexUnion);
 			programDTM.getCategory(pgmRootCat.getCategoryPath())
 					.removeCategory("Temp", TaskMonitor.DUMMY);
 		});
@@ -319,7 +319,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		assertEquals(0x57, model.getLength());
 
 		SwingUtilities.invokeLater(
-			() -> complexUnion.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
+			() -> complexUnion.getDataTypeManager().remove(simpleStructure));
 		waitForSwing();
 
 		assertEquals(21, model.getNumComponents());
@@ -362,7 +362,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		assertEquals(8, model.getLength());
 
 		SwingUtilities.invokeLater(
-			() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			() -> simpleUnion.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
 
 		assertEquals(1, model.getNumComponents());
@@ -387,7 +387,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		Union refUnion = (Union) dtm.getDataType("/testCat/refUnion");
 		assertNotNull(refUnion);
 
-		SwingUtilities.invokeLater(() -> dtm.remove(refUnion, TaskMonitor.DUMMY)); // remove refUnion
+		SwingUtilities.invokeLater(() -> dtm.remove(refUnion)); // remove refUnion
 		waitForSwing();
 
 		// refUnion* gets removed
@@ -403,7 +403,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		assertTrue(dt20.isEquivalent(getDataType(20)));
 
 		SwingUtilities.invokeLater(
-			() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			() -> simpleUnion.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
 
 		assertEquals(len, model.getLength());

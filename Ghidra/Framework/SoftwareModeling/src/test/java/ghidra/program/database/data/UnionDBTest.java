@@ -23,7 +23,6 @@ import com.google.common.collect.Sets;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitor;
 
 public class UnionDBTest extends AbstractGenericTest {
 
@@ -59,7 +58,7 @@ public class UnionDBTest extends AbstractGenericTest {
 	private void transitionToBigEndian() {
 
 		Union unionClone = union.clone(null);
-		dataMgr.remove(union, TaskMonitor.DUMMY);
+		dataMgr.remove(union);
 
 		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
 		dataOrg.setBigEndian(true);
@@ -272,7 +271,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
-		dataMgr.remove(td, TaskMonitor.DUMMY);
+		dataMgr.remove(td);
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 

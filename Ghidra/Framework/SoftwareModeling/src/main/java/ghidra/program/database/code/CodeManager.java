@@ -2707,20 +2707,18 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	public void clearData(Set<Long> dataTypeIDs, TaskMonitor monitor) throws CancelledException {
 		lock.acquire();
 		try {
-			List<Address> addrs = new ArrayList<>();
+			List<Address> toClear = new ArrayList<>();
 			RecordIterator it = dataAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				long id = rec.getLongValue(DataDBAdapter.DATA_TYPE_ID_COL);
-				for (long dataTypeID : dataTypeIDs) {
-					if (id == dataTypeID) {
-						addrs.add(addrMap.decodeAddress(rec.getKey()));
-						break;
-					}
+				if (dataTypeIDs.contains(id)) {
+					toClear.add(addrMap.decodeAddress(rec.getKey()));
 				}
 			}
-			for (Address addr : addrs) {
+
+			for (Address addr : toClear) {
 				monitor.checkCancelled();
 				clearCodeUnits(addr, addr, false, monitor);
 			}

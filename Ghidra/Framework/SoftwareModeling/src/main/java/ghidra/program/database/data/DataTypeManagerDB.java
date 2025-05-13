@@ -164,7 +164,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	private Set<Long> blockedRemovalsByID;
 
-	// TODO: idsToDataTypeMap may have issue since there could be a one to many mapping
+	// Note: idsToDataTypeMap may have issue since there could be a one to many mapping
 	// (e.g., type with same UniversalID could be in multiple categories unless specifically 
 	// prevented during resolve)
 	private IdsToDataTypeMap idsToDataTypeMap = new IdsToDataTypeMap();
@@ -172,7 +172,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private ThreadLocal<EquivalenceCache> equivalenceCache = new ThreadLocal<>();
 
 	private IdentityHashMap<DataType, DataType> resolveCache;
-	private TreeSet<ResolvePair> resolveQueue; // TODO: is TreeSet really needed?
+	private TreeSet<ResolvePair> resolveQueue; // Note: is TreeSet really needed?
 	private LinkedList<DataType> conflictQueue = new LinkedList<>();
 
 	private boolean isBulkRemoving;
@@ -1421,14 +1421,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				if (!(dataType instanceof Enum)) {
 					return false;
 				}
-				// TODO: implement doReplaceWith
+				// DT: implement doReplaceWith
 				existingDataType.replaceWith(dataType);
 			}
 			else if (existingDataType instanceof TypedefDB) {
 				if (!(dataType instanceof TypeDef)) {
 					return false;
 				}
-				// TODO: implement doReplaceWith
+				// DT: implement doReplaceWith
 				existingDataType.replaceWith(dataType);
 			}
 			else {
@@ -1733,7 +1733,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				catch (DataTypeDependencyException e) {
 					// new type refers to old type - fallthrough to RENAME_AND_ADD
-					// TODO: alternatively we could throw an exception
 				}
 
 			case RENAME_AND_ADD: // default handler behavior
@@ -1760,7 +1759,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private void replaceEquivalentLocalWithSourceDataType(DataType dataType,
 			SourceArchive sourceArchive, DataType existingDataType) {
 		// Since it's equivalent, set its source, ID, and replace its components.
-		// TODO: Need a better way to do this.
 		existingDataType.setSourceArchive(sourceArchive);
 		((DataTypeDB) existingDataType).setUniversalID(dataType.getUniversalID());
 		existingDataType.replaceWith(dataType);
@@ -1786,9 +1784,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		boolean isEquivalenceCacheOwner = activateEquivalenceCache();
 		boolean isResolveCacheOwner = activateResolveCache();
-		// TODO: extended hold time on lock may cause the GUI to become
-		// unresponsive.  Consider releasing lock between resolves, although
-		// this exposes risk of having active resolve queue/cache without lock
+		// Note: extended hold time on lock may cause the GUI to become unresponsive.  Consider 
+		// releasing lock between resolves, although this exposes risk of having active resolve 
+		// queue/cache without lock.
 		try {
 			monitor.setMessage("Adding datatypes...");
 			monitor.setMaximum(dataTypes.size());
@@ -1879,7 +1877,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	@Override
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
 			boolean updateCategoryPath) throws DataTypeDependencyException {
-		// TODO: we should probably disallow replacementDt to be an instanceof
+		// Note: we should probably disallow replacementDt to be an instanceof
 		// Dynamic or FactoryDataType
 		lock.acquire();
 		try {
@@ -2342,9 +2340,28 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (id <= 0) { // removal of certain special types not permitted
 			return false;
 		}
+
 		idsToDelete.add(id);
 		removeQueuedDataTypes();
 		return true;
+	}
+
+	private void removeInternal(List<DataType> dataTypes) {
+		for (DataType dt : dataTypes) {
+
+			if (!contains(dt)) {
+				continue;
+			}
+
+			long id = getID(dt);
+			if (id <= 0) { // removal of certain special types not permitted
+				continue;
+			}
+
+			idsToDelete.add(id);
+		}
+
+		removeQueuedDataTypes();
 	}
 
 	private void removeQueuedDataTypes() {
@@ -2358,7 +2375,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			deletedIds.add(id);
 		}
 
-		// perform any neccessary external use removals
+		// perform any necessary external use removals
 		deleteDataTypesUsed(deletedIds);
 
 		// perform actual database updates (e.g., record removal, change notifications, etc.)
@@ -2375,7 +2392,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Allow extensions to perform any neccessary fixups for all datatype removals listed.
+	 * Allow extensions to perform any necessary fixups for all datatype removals listed.
 	 * @param deletedIds list of IDs for all datatypes which are getting removed.
 	 */
 	protected abstract void deleteDataTypesUsed(Set<Long> deletedIds);
@@ -2399,10 +2416,36 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
-	public boolean remove(DataType dataType, TaskMonitor monitor) {
+	public boolean remove(DataType dataType) {
 		lock.acquire();
 		try {
 			return removeInternal(dataType);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public void remove(List<DataType> dataTypes, TaskMonitor monitor) throws CancelledException {
+
+		lock.acquire();
+		try {
+
+			// perform the delete in chunks so an excessively large list will still be cancellable
+			int n = dataTypes.size();
+			int chunk = 1000;
+			int chunkEnd = n < chunk ? n : chunk;
+			int start = 0;
+			while (start < chunkEnd) {
+				monitor.checkCancelled();
+				List<DataType> subList = dataTypes.subList(start, chunkEnd);
+				removeInternal(subList);
+
+				start = chunkEnd;
+				int nextChunk = chunkEnd + chunk;
+				chunkEnd = n < nextChunk ? n : nextChunk;
+			}
 		}
 		finally {
 			lock.release();
@@ -2846,7 +2889,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			CategoryPath catPath = catDB.getCategoryPath();
 			String classPath = record.getString(BuiltinDBAdapter.BUILT_IN_CLASSNAME_COL);
 			String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
-			try { // TODO: !! Can we look for alternate constructor which takes DTM argument
+			try {
 				Class<?> c;
 				try {
 					c = Class.forName(classPath);
@@ -4110,7 +4153,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			try {
 				// Initialization of dataOrganization may never have been established
 				// if either an architecture has never been specified or a language
-				// error occured during initializtion.  In such cases the stored
+				// error occurred during initialization.  In such cases the stored
 				// data organization should be used if available.
 				dataOrganization = readDataOrganization();
 			}
@@ -4212,7 +4255,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private TreeSet<String> buildDefinedCallingConventionSet() {
 
-		// Include all calling conventions defined by associated architecure compiler spec
+		// Include all calling conventions defined by associated architecture compiler spec
 		TreeSet<String> nameSet = new TreeSet<>();
 		ProgramArchitecture arch = getProgramArchitecture();
 		if (arch != null) {
@@ -4536,8 +4579,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private record DedupedConflicts(int processCnt, int replaceCnt) {
-	}
+	private record DedupedConflicts(int processCnt, int replaceCnt) {}
 
 	private DedupedConflicts doDedupeConflicts(DataType dataType) {
 
@@ -4761,7 +4803,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 							resolvedDt.postPointerResolve(resolvePair.definitionDt, handler);
 						}
 					}
-					// TODO: catch exceptions if needed
 					finally {
 						resolvedDt.resolving = false;
 						resolvedDt.pointerPostResolveRequired = false;

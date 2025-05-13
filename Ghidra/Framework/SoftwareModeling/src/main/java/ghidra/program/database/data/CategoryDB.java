@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Lock;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -308,9 +307,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Category#removeCategory(java.lang.String, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public boolean removeCategory(String categoryName, TaskMonitor monitor) {
 		mgr.lock.acquire();
@@ -320,6 +316,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			if (c == null) {
 				return false;
 			}
+
 			Category[] cats = c.getCategories();
 			for (Category cat : cats) {
 				if (monitor.isCancelled()) {
@@ -327,13 +324,16 @@ class CategoryDB extends DatabaseObject implements Category {
 				}
 				c.removeCategory(cat.getName(), monitor);
 			}
+
 			DataType[] dts = c.getDataTypes();
-			for (DataType dt : dts) {
-				if (monitor.isCancelled()) {
-					return false;
-				}
-				mgr.remove(dt, monitor);
+			List<DataType> dtList = Arrays.asList(dts);
+			try {
+				mgr.remove(dtList, monitor);
 			}
+			catch (CancelledException e) {
+				return false;
+			}
+
 			try {
 				mgr.getCategoryDBAdapter().removeCategory(c.getKey());
 				subcategoryMap.remove(categoryName);
@@ -565,7 +565,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			throw new IllegalArgumentException(
 				"can't remove dataType from category that its not a member of!");
 		}
-		return mgr.remove(type, monitor);
+		return mgr.remove(type);
 	}
 
 	/**
