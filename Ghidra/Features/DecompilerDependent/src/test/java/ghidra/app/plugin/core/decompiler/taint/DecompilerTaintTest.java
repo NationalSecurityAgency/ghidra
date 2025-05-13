@@ -202,11 +202,10 @@ public class DecompilerTaintTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void validateResult(ClangToken token, Map<Address, Set<TaintQueryResult>> map) {
 		Set<TaintQueryResult> set = map.get(functionAddr);
-		//System.err.println("VALIDATE: "+functionAddr);
 		if (set != null) {
 			int sz = taintService.getProvider().getTokenCount();
-			//assertEquals(testSizes[testIndex], sz);
-			System.err.println(testSizes[testIndex] + " vs " + sz);
+			assertEquals(testSizes[testIndex], sz);
+			//System.err.println(testSizes[testIndex] + " vs " + sz);
 		}
 		//else {
 		//	System.err.println("NULL for "+functionAddr);
@@ -280,9 +279,6 @@ public class DecompilerTaintTest extends AbstractGhidraHeadedIntegrationTest {
 		indexTask.addTaskListener(listener);
 		new TaskLauncher(indexTask, tool.getActiveWindow());
 		waitForBusyTool(tool);
-//		while (listener.executing) {
-//			Thread.sleep(100);
-//		}
 
 		for (String f : functionLabels) {
 			decompilerProvider = taintService.getDecompilerProvider();

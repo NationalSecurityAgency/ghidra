@@ -52,12 +52,9 @@ public class CTADLTaintState extends AbstractTaintState {
 		if (!direction.equals(TaintDirection.DEFAULT)) {
 			paramList.add("--compute-slices");
 			switch (taintOptions.getTaintDirection()) {
-				case TaintDirection.BOTH ->
-					paramList.add("all");
-				case TaintDirection.FORWARD ->
-					paramList.add("fwd");
-				case TaintDirection.BACKWARD ->
-					paramList.add("bwd");
+				case TaintDirection.BOTH -> paramList.add("all");
+				case TaintDirection.FORWARD -> paramList.add("fwd");
+				case TaintDirection.BACKWARD -> paramList.add("bwd");
 				default -> {
 					// No action
 				}
@@ -106,12 +103,11 @@ public class CTADLTaintState extends AbstractTaintState {
 		return perFunction ? "ExportPCodeForSingleFunction.java" : "ExportPCodeForCTADL.java";
 	}
 
-
 	@Override
 	protected void writeHeader(PrintWriter writer) {
 		writer.println("#include \"pcode/taintquery.dl\"");
 	}
-	
+
 	/*
 	 * NOTE: This is the only method used now for Sources and Sinks.
 	 */
@@ -161,8 +157,9 @@ public class CTADLTaintState extends AbstractTaintState {
 				// Note this is an OR
 				writer.println("\tVNODE_HVAR(vn, hv));");
 				writer.println("\tCVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
-				TaintState.varName(token, false) + "\")),");
-			} else if (mark.bySymbol()) {
+					TaintState.varName(token, false) + "\")),");
+			}
+			else if (mark.bySymbol()) {
 				writer.println("\tSYMBOL_NAME(sym, \"" + token.getText() + "\"),");
 				writer.println("\tSYMBOL_HVAR(sym, hv),");
 				writer.println("\tVNODE_HVAR(vn, hv),");
@@ -173,10 +170,10 @@ public class CTADLTaintState extends AbstractTaintState {
 			}
 			else {
 				writer.println("\t(CVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
-				TaintState.varName(token, false) + "\");");
+					TaintState.varName(token, false) + "\");");
 			}
 			if (pathConstraint != null) {
-				writer.println("\tp = \"."+pathConstraint+"\",");
+				writer.println("\tp = \"." + pathConstraint + "\",");
 			}
 			if (!allAccess) {
 				writer.println("\tp = \"\",");
@@ -191,7 +188,7 @@ public class CTADLTaintState extends AbstractTaintState {
 		Boolean allAccess = taintOptions.getTaintUseAllAccess();
 		String method = "TaintSanitizeAll";
 		Address addr = mark.getAddress();
-		// TODO: verify setting entryPoint as addr doesn't break things
+		// NOTE: verify setting entryPoint as addr doesn't break things
 
 		if (mark.getFunctionName() == null) {
 			return;
