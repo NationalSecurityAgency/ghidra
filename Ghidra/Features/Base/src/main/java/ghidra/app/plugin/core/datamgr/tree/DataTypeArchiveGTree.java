@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.datamgr.tree;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -24,7 +25,9 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
+import docking.DockingUtils;
 import docking.action.DockingAction;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
@@ -77,6 +80,19 @@ public class DataTypeArchiveGTree extends GTree {
 		addTreeExpansionListener(cleanupListener);
 
 		setAccessibleNamePrefix("Data Type Manager");
+
+		initializeKeyEvents();
+	}
+
+	private void initializeKeyEvents() {
+
+		// remove Java's default bindings for Copy/Paste on this tree, as they cause conflicts
+		// with Ghidra's key bindings
+		int ctrl = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
+		JTree jTree = getJTree();
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_C, ctrl));
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_V, ctrl));
+		KeyBindingUtils.clearKeyBinding(jTree, KeyStroke.getKeyStroke(KeyEvent.VK_X, ctrl));
 	}
 
 	private int getHeight(GTreeNode rootNode, DataTypeTreeRenderer renderer) {
