@@ -308,6 +308,11 @@ class BreakpointLocation:
     thread_groups: List[int]
 
 
+# Quite a hack, but only needed for type annotations
+if not hasattr(gdb, 'BreakpointLocation'):
+    gdb.BreakpointLocation = BreakpointLocation
+
+
 class BreakpointLocationInfoReader(object):
     @abstractmethod
     def get_locations(self, breakpoint: gdb.Breakpoint) -> List[Union[
