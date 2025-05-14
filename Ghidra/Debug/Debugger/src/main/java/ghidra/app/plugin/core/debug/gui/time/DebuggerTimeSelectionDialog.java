@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.time;
 
 import java.awt.BorderLayout;
+import java.awt.event.*;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -105,6 +106,23 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 				return;
 			}
 			scheduleText.setText(radix.format(snap));
+		});
+		snapshotPanel.snapshotTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					close();
+				}
+			}
+		});
+		snapshotPanel.snapshotTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					close();
+					e.consume(); // lest it select the next row down
+				}
+			}
 		});
 
 		scheduleText.getDocument().addDocumentListener(new DocumentListener() {

@@ -725,7 +725,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
-		return materialize(DebuggerCoordinates.NOWHERE, coordinates, ActivationCause.USER);
+		return materialize(DebuggerCoordinates.NOWHERE, coordinates, ActivationCause.USER_ALT);
 	}
 
 	protected CompletableFuture<Long> materialize(DebuggerCoordinates previous,
