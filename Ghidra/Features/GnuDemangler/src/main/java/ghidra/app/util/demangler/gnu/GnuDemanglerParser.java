@@ -1778,8 +1778,8 @@ public class GnuDemanglerParser {
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
 			if (arrayMatcher.matches()) {
 				// keep only the type information, dropping the array definition
-				type = arrayMatcher.group(1);
-				arrayType = arrayMatcher.group(2).trim();
+				this.type = arrayMatcher.group(1);
+				this.arrayType = arrayMatcher.group(2).trim();
 			}
 
 		}
