@@ -1476,8 +1476,17 @@ int4 BooleanMatch::evaluate(Varnode *vn1,Varnode *vn2,int4 depth)
   else {
     // Two boolean output ops, compare them directly
     if (opc1 == opc2) {
-      if (varnodeSame(op1->getIn(0),op2->getIn(0)) && varnodeSame(op1->getIn(1),op2->getIn(1)))
+      bool sameOp = true;
+      int numInputs = op1->numInput();
+      for (int i = 0; i < numInputs; ++i){
+          if (!varnodeSame(op1->getIn(i),op2->getIn(i))){
+              sameOp = false;
+              break;
+          }
+      }
+      if (sameOp){
         return same;
+      }
       if (sameOpComplement(op1,op2)) {
 	return complementary;
       }
