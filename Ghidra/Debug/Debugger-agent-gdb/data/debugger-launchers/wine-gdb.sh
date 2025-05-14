@@ -52,4 +52,4 @@ function launch-gdb() {
 
 	"${args[@]}"
 }
-launch-gdb
+launch-gdb "$@"
