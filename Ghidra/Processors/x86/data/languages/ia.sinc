@@ -6991,14 +6991,16 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   FPUTagWord = 0x0000;         
 }
 
-:CVTTSD2SI    Reg32, m64  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; Reg32 ... & m64
+:CVTTSD2SI    Reg32, m64  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; Reg32 ... & check_Reg32_dest ... & m64
 {
   Reg32 = trunc(m64);
+  build check_Reg32_dest;
 }
 
-:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2
+:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & check_Reg32_dest & XmmReg2
 {
   Reg32 = trunc(XmmReg2[0,64]);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
