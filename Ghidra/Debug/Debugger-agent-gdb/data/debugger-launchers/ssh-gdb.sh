@@ -64,7 +64,7 @@ function do-installation() {
 	"${sshargs[@]}"
 }
 
-launch-gdb-ssh
+launch-gdb-ssh "$@"
 if check-result-and-prompt-mitigation $? "
 It appears ghidragdb is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed

@@ -27,7 +27,7 @@ add-lldb-init-args() {
 
 add-lldb-image-and-args() {
 	target_image=$1
-	target_args=$2
+	shift
 
 	if [ -n "$target_image" ]; then
 		if [ -n "$OPT_ARCH" ]; then
@@ -36,8 +36,10 @@ add-lldb-image-and-args() {
 			args+=(-o "target create '$target_image'")
 		fi
 	fi
-	if [ -n "$target_args" ]; then
-		args+=(-o "settings set target.run-args $target_args")
+	if [ "$#" -ne 0 ]; then
+		local qargs
+		printf -v qargs '%q ' "$@"
+		args+=(-o "settings set -- target.run-args $qargs")
 	fi
 }
 

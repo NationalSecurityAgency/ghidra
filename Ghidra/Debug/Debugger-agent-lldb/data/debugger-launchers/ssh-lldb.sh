@@ -63,7 +63,7 @@ function do-installation() {
 	"${sshargs[@]}"
 }
 
-launch-lldb-ssh
+launch-lldb-ssh "$@"
 if check-result-and-prompt-mitigation $? "
 It appears ghidralldb is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
