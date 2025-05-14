@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import org.junit.*;
 
@@ -28,7 +27,6 @@ import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -274,7 +272,7 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(p.isEquivalent(dataMgr.getDataType("/ByteTypedef *32")));
 		assertTrue(ptr.isEquivalent(dataMgr.getDataType("/ByteTypedef *32 *32")));
 		DataType bdt = dataMgr.getDataType("/byte");
-		dataMgr.remove(bdt, new TaskMonitorAdapter());
+		dataMgr.remove(bdt);
 		assertNull(dataMgr.getDataType("/byte"));
 		assertNull(dataMgr.getDataType("/byte[5]"));
 		assertNull(dataMgr.getDataType("/ByteTypedef"));
@@ -294,9 +292,29 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType bdt = td.getDataType();
 		long byteID = dataMgr.getResolvedID(bdt);
 
-		dataMgr.remove(td, new TaskMonitorAdapter());
+		dataMgr.remove(td);
 		assertNull(ptr.getDataType());
 		assertNotNull(dataMgr.getDataType(byteID));
+	}
+
+	@Test
+	public void testRemoveDataTypes() throws Exception {
+		Array array = new ArrayDataType(new ByteDataType(), 5, 1);
+
+		List<DataType> toDelete = new ArrayList<>();
+
+		// Use a number that will trigger the 'chunking' behavior of the DataTypeManagerDB
+		for (int i = 0; i < 2500; i++) {
+			TypeDef td = new TypedefDataType("ByteTypedef" + (i + 1), array);
+			DataType dt = dataMgr.resolve(td, null);
+			toDelete.add(dt);
+		}
+
+		dataMgr.remove(toDelete, TaskMonitor.DUMMY);
+
+		for (DataType dt : toDelete) {
+			assertFalse(dataMgr.contains(dt));
+		}
 	}
 
 //	public void testSave() throws Exception {

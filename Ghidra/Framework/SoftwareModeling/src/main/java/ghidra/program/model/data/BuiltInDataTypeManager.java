@@ -210,7 +210,7 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	}
 
 	@Override
-	public boolean remove(DataType dataType, TaskMonitor monitor) {
+	public boolean remove(DataType dataType) {
 		throw new UnsupportedOperationException();
 	}
 

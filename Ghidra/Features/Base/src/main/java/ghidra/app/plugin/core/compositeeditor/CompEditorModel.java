@@ -1329,7 +1329,7 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			}
 			viewDTM.withTransaction("Removed Dependency", () -> {
 				viewDTM.clearUndoOnChange();
-				viewDTM.remove(dataType, TaskMonitor.DUMMY);
+				viewDTM.remove(dataType);
 			});
 			fireTableDataChanged();
 			componentDataChanged();

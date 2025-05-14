@@ -314,7 +314,7 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		// do nothing - cannot close a project data type manager
 		// dispose should be invoked by the owner of the instance
 	}

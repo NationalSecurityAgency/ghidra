@@ -22,7 +22,6 @@ import org.junit.Test;
 import ghidra.program.database.OriginalProgramModifierListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Data type merge tests with fixup for data types added in My program.
@@ -73,7 +72,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
 				// Remove inner struct
-				dtm.remove(inner, TaskMonitor.DUMMY);
+				dtm.remove(inner);
 			}
 
 			@Override
@@ -211,7 +210,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
 				// Remove inner struct
-				dtm.remove(inner, TaskMonitor.DUMMY);
+				dtm.remove(inner);
 			}
 
 			@Override
@@ -303,7 +302,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
 				// Remove inner struct
-				dtm.remove(inner, TaskMonitor.DUMMY);
+				dtm.remove(inner);
 			}
 
 			@Override
