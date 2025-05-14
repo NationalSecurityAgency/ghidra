@@ -52,6 +52,11 @@ public interface DebuggerTraceManagerService {
 		 */
 		USER,
 		/**
+		 * The request was driven by the user, but its some alternative view, e.g., to compare
+		 * snapshots
+		 */
+		USER_ALT,
+		/**
 		 * A trace was activated because a target was published or withdrawn
 		 */
 		TARGET_UPDATED,
