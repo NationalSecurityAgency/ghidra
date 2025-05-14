@@ -391,6 +391,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 		if (dynamicLoc == null) {
 			return;
 		}
+		currentDynamicLocation = dynamicLoc;
 		firePluginEvent(new TraceLocationPluginEvent(getName(), dynamicLoc));
 	}
 
@@ -412,6 +413,11 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 		if (staticLoc == null) {
 			return;
 		}
+		if (currentStatic != staticLoc.getProgram()) {
+			currentStatic = staticLoc.getProgram();
+			firePluginEvent(new ProgramActivatedPluginEvent(getName(), staticLoc.getProgram()));
+		}
+		currentStaticLocation = staticLoc;
 		firePluginEvent(
 			new ProgramLocationPluginEvent(getName(), staticLoc, staticLoc.getProgram()));
 	}
@@ -434,6 +440,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 					.map(r -> r.getDestinationAddressRange())
 					.collect(AddressCollectors.toAddressSet());
 		ProgramSelection dynamicSel = new ProgramSelection(dynamicAddrs);
+		currentDynamicSelection = dynamicSel;
 		firePluginEvent(new TraceSelectionPluginEvent(getName(), dynamicSel, view));
 		return dynamicSel;
 	}
@@ -456,6 +463,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 						.map(r -> r.getDestinationAddressRange())
 						.collect(AddressCollectors.toAddressSet());
 		ProgramSelection staticSel = new ProgramSelection(staticAddrs);
+		currentStaticSelection = staticSel;
 		firePluginEvent(new ProgramSelectionPluginEvent(getName(), staticSel, currentStatic));
 		return staticSel;
 	}
