@@ -51,4 +51,4 @@ function launch-lldb() {
 
 	"${args[@]}"
 }
-launch-lldb
+launch-lldb "$@"
