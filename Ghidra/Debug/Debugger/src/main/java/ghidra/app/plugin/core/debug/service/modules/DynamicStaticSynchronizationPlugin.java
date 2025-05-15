@@ -581,7 +581,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 					if (consoleService != null) {
 						consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
 							HTMLUtilities.escapeHTML(df.getPathname()) +
-							"</b> was created with a different version of Ghidra." +
+							"</b> was imported with a different version of Ghidra." +
 							" It must be opened manually.</html>", ctx);
 					}
 					return;
