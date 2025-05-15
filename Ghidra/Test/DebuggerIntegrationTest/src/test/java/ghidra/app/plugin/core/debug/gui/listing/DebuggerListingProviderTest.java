@@ -50,6 +50,7 @@ import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;

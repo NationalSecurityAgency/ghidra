@@ -45,7 +45,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.BasicAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
@@ -53,8 +53,7 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
-import ghidra.debug.api.action.LocationTrackingSpec;
-import ghidra.debug.api.action.LocationTrackingSpecFactory;
+import ghidra.debug.api.action.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -600,15 +599,15 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
+		return AutoReadMemorySpecFactory.fromConfigName(name);
 	}
 
 	protected final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.NONE.getConfigName());
 	protected final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VISIBLE.getConfigName());
 	protected final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VIS_RO_ONCE.getConfigName());
 
 	protected TestEnv env;
 	protected PluginTool tool;
