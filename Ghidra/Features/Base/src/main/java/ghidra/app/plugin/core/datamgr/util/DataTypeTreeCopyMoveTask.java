@@ -157,7 +157,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		if (n > 1) {
 			message = "Encountered " + n + " errors copying/moving.  See the log for details";
 
-			for (int i = 0; i < 10; i++) {
+			int max = n < 10 ? n : 10;
+			for (int i = 0; i < max; i++) {
 				Msg.error(this, errors.get(i));
 			}
 		}
