@@ -173,7 +173,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 					memory.setLong(addr, fixup.value());
 				}
 				else {
-					memory.setInt(addr, (int) fixup.value());
+					memory.setInt(addr, fixup.value().intValue());
 				}
 			}
 

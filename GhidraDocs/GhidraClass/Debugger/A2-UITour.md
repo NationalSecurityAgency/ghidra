@@ -167,8 +167,7 @@ The re-use of connections and/or the use of multiple concurrent connections is *
 
 First, check that synchronization is enabled.
 This is the default behavior, but, still, check it first.
-In the top-right of the Dynamic Listing is its local drop-down menu.
-Click it and check that **Auto-Sync Cursor with Static Listing** is selected.
+In the **Debugger &rarr; Synchronization** menu, check that **Synchronize Static and Dynamic Locations** is selected.
 
 If that does not work, check the top-left label of the Dynamic Listing to see what module you are in.
 Also check the Debug Console window.

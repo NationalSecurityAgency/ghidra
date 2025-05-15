@@ -684,17 +684,14 @@ public class MachoProgramBuilder {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol != null) {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-					if (name != null && name.length() > 0) {
-						Function stubFunc = createOneByteFunction(name, startAddr);
-						if (stubFunc != null) {
-							ExternalLocation loc = program.getExternalManager()
-									.addExtLocation(Library.UNKNOWN, name, null,
-										SourceType.IMPORTED);
-							stubFunc.setThunkedFunction(loc.createFunction());
-						}
-					}
+				String name =
+					symbol != null ? SymbolUtilities.replaceInvalidChars(symbol.getString(), true)
+							: "STUB_" + startAddr;
+				Function stubFunc = createOneByteFunction(name, startAddr);
+				if (stubFunc != null && symbol != null) {
+					ExternalLocation loc = program.getExternalManager()
+							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
+					stubFunc.setThunkedFunction(loc.createFunction());
 				}
 
 				startAddr = startAddr.add(symbolSize);
@@ -1283,7 +1280,8 @@ public class MachoProgramBuilder {
 
 			String libraryPath = null;
 
-			if (command instanceof DynamicLibraryCommand dylibCommand) {
+			if (command instanceof DynamicLibraryCommand dylibCommand &&
+				dylibCommand.getCommandType() != LoadCommandTypes.LC_ID_DYLIB) {
 				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
 				libraryPath = dylib.getName().getString();
 			}
@@ -1861,6 +1859,15 @@ public class MachoProgramBuilder {
 	 */
 	public static void fixupExternalLibrary(Program program, List<String> libraryPaths,
 			int libraryOrdinal, String symbol) throws Exception {
+
+		switch (libraryOrdinal) {
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_SELF:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_WEAK_LOOKUP:
+				return;
+		}
+
 		ExternalManager extManager = program.getExternalManager();
 		int libraryIndex = libraryOrdinal - 1;
 		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
