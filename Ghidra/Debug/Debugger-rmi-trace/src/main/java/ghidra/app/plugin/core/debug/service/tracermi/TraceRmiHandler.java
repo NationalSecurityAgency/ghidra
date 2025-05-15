@@ -860,6 +860,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		DoId doId = requireAvailableDoId(req.getOid());
 		openTraces.put(new OpenTrace(doId, trace, target));
 		createDeconflictedFile(folder, trace);
+		doActivate(null, trace, null);
 		return ReplyCreateTrace.getDefaultInstance();
 	}
 
