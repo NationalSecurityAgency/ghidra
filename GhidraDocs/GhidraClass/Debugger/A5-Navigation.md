@@ -128,8 +128,8 @@ The columns are:
 * The **Event Thread** column indicates which thread caused the target to break.
   This only applies to snapshots that were created because of an event, which is most.
 * The **PC** column gives the address of the next instruction.
-* The **Function** column gives the name of the function containing the PC mapped to its static program database, if available.
 * The **Module** column gives the name of the module containing the PC.
+* The **Function** column gives the name of the function containing the PC mapped to its static program database, if available.
 * The **Description** column describes the event that generated the snapshot.
   This can be edited in the table, or by pressing **`CTRL`-`SHIFT`-`N`** to mark interesting snapshots.
 
