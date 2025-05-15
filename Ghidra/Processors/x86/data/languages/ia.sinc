@@ -6839,14 +6839,16 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   FPUTagWord = 0x0000;         
 }
 
-:CVTSD2SI     Reg32, m64    is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; Reg32 ... & m64
+:CVTSD2SI     Reg32, m64    is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; (Reg32 & check_Reg32_dest) ... & m64
 {
   Reg32 = trunc(round(m64));
+  build check_Reg32_dest;
 }
 
-:CVTSD2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2
+:CVTSD2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & check_Reg32_dest & XmmReg2
 {
   Reg32 = trunc(round(XmmReg2[0,64]));
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -6905,14 +6907,16 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   XmmReg1[0,64] = float2float(XmmReg2[0,32]);
 }
 
-:CVTSS2SI     Reg32, m32    is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; Reg32 ... & m32
+:CVTSS2SI     Reg32, m32    is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; (Reg32 & check_Reg32_dest) ... & m32
 {
   Reg32 = trunc(round(m32));
+  build check_Reg32_dest;
 }
 
-:CVTSS2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2
+:CVTSS2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & check_Reg32_dest & XmmReg2
 {
   Reg32 = trunc(round(XmmReg2[0,32]));
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -6991,14 +6995,16 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
   FPUTagWord = 0x0000;         
 }
 
-:CVTTSD2SI    Reg32, m64  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; Reg32 ... & m64
+:CVTTSD2SI    Reg32, m64  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; (Reg32 & check_Reg32_dest) ... & m64
 {
   Reg32 = trunc(m64);
+  build check_Reg32_dest;
 }
 
-:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2
+:CVTTSD2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & check_Reg32_dest & XmmReg2
 {
   Reg32 = trunc(XmmReg2[0,64]);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -7013,14 +7019,16 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 }
 @endif
                 
-:CVTTSS2SI    Reg32, m32  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; Reg32 ... & m32
+:CVTTSS2SI    Reg32, m32  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; (Reg32 & check_Reg32_dest) ... & m32
 {
   Reg32 = trunc(m32);
+  build check_Reg32_dest;
 }
 
-:CVTTSS2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & XmmReg2
+:CVTTSS2SI    Reg32, XmmReg2  is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2C; xmmmod=3 & Reg32 & check_Reg32_dest & XmmReg2
 {
   Reg32 = trunc(XmmReg2[0,32]);
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
