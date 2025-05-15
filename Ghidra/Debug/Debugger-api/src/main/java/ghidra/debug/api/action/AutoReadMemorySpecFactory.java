@@ -22,9 +22,9 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
- * A discoverable factory of tracking specifications
+ * A discoverable factory of auto-read memory specifications
  */
-public interface LocationTrackingSpecFactory extends ExtensionPoint {
+public interface AutoReadMemorySpecFactory extends ExtensionPoint {
 
 	/**
 	 * Get the specification for the given configuration name
@@ -32,10 +32,10 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	 * @param name the name
 	 * @return the spec, or null
 	 */
-	static LocationTrackingSpec fromConfigName(String name) {
-		for (LocationTrackingSpecFactory factory : ClassSearcher
-				.getInstances(LocationTrackingSpecFactory.class)) {
-			LocationTrackingSpec spec = factory.parseSpec(name);
+	static AutoReadMemorySpec fromConfigName(String name) {
+		for (AutoReadMemorySpecFactory factory : ClassSearcher
+				.getInstances(AutoReadMemorySpecFactory.class)) {
+			AutoReadMemorySpec spec = factory.parseSpec(name);
 			if (spec != null) {
 				return spec;
 			}
@@ -44,17 +44,19 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	}
 
 	/**
-	 * Get a copy of all the known specifications
+	 * Get a copy of all the known and visible specifications
 	 * 
 	 * @param tool the plugin tool or context
 	 * @return the specifications by configuration name
 	 */
-	static Map<String, LocationTrackingSpec> allSuggested(PluginTool tool) {
-		Map<String, LocationTrackingSpec> all = new TreeMap<>();
-		for (LocationTrackingSpecFactory factory : ClassSearcher
-				.getInstances(LocationTrackingSpecFactory.class)) {
-			for (LocationTrackingSpec spec : factory.getSuggested(tool)) {
-				all.put(spec.getConfigName(), spec);
+	static Map<String, AutoReadMemorySpec> allSuggested(PluginTool tool) {
+		Map<String, AutoReadMemorySpec> all = new TreeMap<>();
+		for (AutoReadMemorySpecFactory factory : ClassSearcher
+				.getInstances(AutoReadMemorySpecFactory.class)) {
+			for (AutoReadMemorySpec spec : factory.getSuggested(tool)) {
+				if (spec.getMenuName() != null) {
+					all.put(spec.getConfigName(), spec);
+				}
 			}
 		}
 		return all;
@@ -66,7 +68,7 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	 * @param tool the plugin tool or context
 	 * @return the list of suggested specifications
 	 */
-	List<LocationTrackingSpec> getSuggested(PluginTool tool);
+	List<AutoReadMemorySpec> getSuggested(PluginTool tool);
 
 	/**
 	 * Attempt to parse the given configuration name as a specification
@@ -74,5 +76,5 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	 * @param name the configuration name, usually including a prefix unique to each factory
 	 * @return the specification, or null if this factory cannot parse it
 	 */
-	LocationTrackingSpec parseSpec(String name);
+	AutoReadMemorySpec parseSpec(String name);
 }

@@ -28,8 +28,7 @@ import docking.action.DockingActionIf;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
-import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
-import ghidra.app.plugin.core.debug.gui.action.NoneAutoReadMemorySpec;
+import ghidra.app.plugin.core.debug.gui.action.BasicAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyIntoProgramDialog.RangeEntry;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
@@ -442,8 +441,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		TraceObject process = tb.obj("Processes[1]");
 		rmiCx.publishTarget(tool, tb.trace);
 
-		listingProvider.setAutoReadMemorySpec(
-			AutoReadMemorySpec.fromConfigName(NoneAutoReadMemorySpec.CONFIG_NAME));
+		listingProvider.setAutoReadMemorySpec(BasicAutoReadMemorySpec.NONE);
 
 		traceManager.activateTrace(tb.trace);
 		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
