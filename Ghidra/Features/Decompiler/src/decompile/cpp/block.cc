@@ -3313,7 +3313,17 @@ void BlockWhileDo::finalTransform(Funcdata &data)
 {
   BlockGraph::finalTransform(data);
   if (!data.getArch()->analyze_for_loops) return;
-  if (hasOverflowSyntax()) return;
+  if (hasOverflowSyntax()) {
+    // Maybe we have since been optimised so the condition is no longer too complex...
+    FlowBlock *check = getFrontLeaf();
+    if (check == (FlowBlock *)0) return;
+    BlockBasic *cond = (BlockBasic *)check->subBlock(0);
+    if (cond->isComplex()) return;
+
+    // Unmark this block as having overflow syntax
+    clearFlag(f_whiledo_overflow);
+    cond->negateCondition(true);
+  }
   FlowBlock *copyBl = getFrontLeaf();
   if (copyBl == (FlowBlock *)0) return;
   BlockBasic *head = (BlockBasic *)copyBl->subBlock(0);
