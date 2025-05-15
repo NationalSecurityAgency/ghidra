@@ -13,58 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.action;
+package ghidra.debug.api.action;
 
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import javax.swing.Icon;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
-import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
-import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
-import ghidra.debug.api.action.InstanceUtils;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigFieldCodec;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.trace.model.Trace;
-import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.classfinder.ExtensionPoint;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * An interface for specifying how to automatically read target memory.
  */
-public interface AutoReadMemorySpec extends ExtensionPoint {
-	class Private {
-		private final Map<String, AutoReadMemorySpec> specsByName = new TreeMap<>();
-		private final ChangeListener classListener = this::classesChanged;
+public interface AutoReadMemorySpec {
 
-		private Private() {
-			ClassSearcher.addChangeListener(classListener);
-			classesChanged(null);
-		}
-
-		private synchronized void classesChanged(ChangeEvent evt) {
-			InstanceUtils.collectUniqueInstances(AutoReadMemorySpec.class, specsByName,
-				AutoReadMemorySpec::getConfigName);
-		}
-	}
-
-	Private PRIVATE = new Private();
-
+	/**
+	 * Codec for saving/restoring the auto-read specification
+	 */
 	public static class AutoReadMemorySpecConfigFieldCodec
 			implements ConfigFieldCodec<AutoReadMemorySpec> {
 		@Override
 		public AutoReadMemorySpec read(SaveState state, String name,
 				AutoReadMemorySpec current) {
 			String specName = state.getString(name, null);
-			return fromConfigName(specName);
+			return AutoReadMemorySpecFactory.fromConfigName(specName);
 		}
 
 		@Override
@@ -73,31 +48,43 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 		}
 	}
 
-	static AutoReadMemorySpec fromConfigName(String name) {
-		synchronized (PRIVATE) {
-			return PRIVATE.specsByName.get(name);
-		}
-	}
-
-	static Map<String, AutoReadMemorySpec> allSpecs() {
-		synchronized (PRIVATE) {
-			return new TreeMap<>(PRIVATE.specsByName);
-		}
-	}
-
+	/**
+	 * Get the configuration name
+	 * 
+	 * <p>
+	 * This is the value stored in configuration files to identify this specification
+	 * 
+	 * @return the configuration name
+	 */
 	String getConfigName();
 
+	/**
+	 * A human-readable name for this specification
+	 * 
+	 * <p>
+	 * This is the text displayed in menus
+	 * 
+	 * @return the menu name, or null to omit from menus
+	 */
 	String getMenuName();
 
+	/**
+	 * Get the icon for this specification
+	 * 
+	 * @return the icon
+	 */
 	Icon getMenuIcon();
 
-	default AutoReadMemorySpec getEffective(DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (trace != null && ProgramEmulationUtils.isEmulatedProgram(trace)) {
-			return LoadEmulatorAutoReadMemorySpec.INSTANCE;
-		}
-		return this;
-	}
+	/**
+	 * Get the "effective" specification.
+	 * <p>
+	 * This allows a specification to defer to some other (possibly hidden) specification, depending
+	 * on the coordinates.
+	 * 
+	 * @param coordinates the current coordinates
+	 * @return the specification
+	 */
+	AutoReadMemorySpec getEffective(DebuggerCoordinates coordinates);
 
 	/**
 	 * Perform the automatic read, if applicable
@@ -120,18 +107,4 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 	 */
 	CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible);
-
-	/**
-	 * A convenience for performing target memory reads with progress displayed
-	 * 
-	 * @param tool the tool for displaying progress
-	 * @param reader the method to perform the read, asynchronously
-	 * @return a future which returns true if the read completes
-	 */
-	default CompletableFuture<Boolean> doRead(PluginTool tool,
-			Function<TaskMonitor, CompletableFuture<Void>> reader) {
-		return TargetActionTask
-				.executeTask(tool, getMenuName(), true, true, false, m -> reader.apply(m))
-				.thenApply(__ -> true);
-	}
 }

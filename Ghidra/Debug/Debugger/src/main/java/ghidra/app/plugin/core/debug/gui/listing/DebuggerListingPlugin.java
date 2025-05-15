@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -32,11 +32,11 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -81,8 +81,7 @@ import ghidra.trace.model.program.TraceProgramView;
 	},
 	servicesProvided = {
 		DebuggerListingService.class,
-	}
-)
+	})
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
@@ -330,6 +329,11 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
 		connectedProvider.removeTrackingSpecChangeListener(listener);
+	}
+
+	@Override
+	public AutoReadMemorySpec getAutoReadMemorySpec() {
+		return connectedProvider.getAutoReadMemorySpec();
 	}
 
 	@Override
