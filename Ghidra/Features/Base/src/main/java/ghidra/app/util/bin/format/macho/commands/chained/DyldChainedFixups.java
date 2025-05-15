@@ -28,14 +28,14 @@ import ghidra.app.util.opinion.MachoProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DyldChainedFixups {
+
+	public static final int RELOCATION_TYPE = 0x8888;
 
 	/**
 	 * Walks the chained fixup information and collects a {@link List} of {@link DyldFixup}s that 
@@ -67,10 +67,10 @@ public class DyldChainedFixups {
 
 			long chainLoc = page + nextOff;
 			final long chainValue = DyldChainedPtr.getChainValue(reader, chainLoc, pointerFormat);
-			long newChainValue = chainValue;
+			Long newChainValue = chainValue;
 			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
 			boolean isBound = DyldChainedPtr.isBound(pointerFormat, chainValue);
-			Symbol symbol = null;
+			String symbol = null;
 			Integer libOrdinal = null;
 
 			if (isBound) {
@@ -88,13 +88,16 @@ public class DyldChainedFixups {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				List<Symbol> globalSymbols = symbolTable.getGlobalSymbols(chainedImport.getName());
+				symbol = SymbolUtilities.replaceInvalidChars(chainedImport.getName(), true);
+				libOrdinal = chainedImport.getLibOrdinal();
+				List<Symbol> globalSymbols = symbolTable.getGlobalSymbols(symbol);
 				if (globalSymbols.size() > 0) {
-					symbol = globalSymbols.get(0);
-					newChainValue = symbol.getAddress().getOffset();
-					libOrdinal = chainedImport.getLibOrdinal();
+					newChainValue = globalSymbols.getFirst().getAddress().getOffset();
+					newChainValue += isAuthenticated ? auth_value_add : addend;
 				}
-				newChainValue += isAuthenticated ? auth_value_add : addend;
+				else {
+					newChainValue = null;
+				}
 			}
 			else {
 				if (isAuthenticated) {
@@ -110,7 +113,7 @@ public class DyldChainedFixups {
 			}
 
 			fixups.add(new DyldFixup(chainLoc, newChainValue, DyldChainedPtr.getSize(pointerFormat),
-				symbol != null ? symbol.getName() : null, libOrdinal));
+				symbol, libOrdinal));
 
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
@@ -128,12 +131,11 @@ public class DyldChainedFixups {
 	 * @param log The log
 	 * @param monitor A cancellable monitor
 	 * @return A {@link List} of fixed up {@link Address}'s
-	 * @throws MemoryAccessException If there was a problem accessing memory
 	 * @throws CancelledException If the user cancelled the operation
 	 */
 	public static List<Address> fixupChainedPointers(List<DyldFixup> fixups, Program program,
 			Address imagebase, List<String> libraryPaths, MessageLog log, TaskMonitor monitor)
-			throws MemoryAccessException, CancelledException {
+			throws CancelledException {
 		List<Address> fixedAddrs = new ArrayList<>();
 		if (fixups.isEmpty()) {
 			return fixedAddrs;
@@ -142,37 +144,42 @@ public class DyldChainedFixups {
 		monitor.initialize(fixups.size(), "Fixing up chained pointers...");
 		for (DyldFixup fixup : fixups) {
 			monitor.increment();
-			Status status = Status.FAILURE;
+			Status status = Status.UNSUPPORTED;
 			Address addr = imagebase.add(fixup.offset());
+			String symbol = fixup.symbol();
+			long[] value = new long[] {};
 			try {
-				if (fixup.size() == 8 || fixup.size() == 4) {
-					if (fixup.size() == 8) {
-						memory.setLong(addr, fixup.value());
+				if (fixup.value() != null) {
+					if (fixup.size() == 8 || fixup.size() == 4) {
+						if (fixup.size() == 8) {
+							memory.setLong(addr, fixup.value());
+						}
+						else {
+							memory.setInt(addr, fixup.value().intValue());
+						}
+						fixedAddrs.add(addr);
+						status = Status.APPLIED_OTHER;
 					}
-					else {
-						memory.setInt(addr, (int) fixup.value());
+					value = new long[] { fixup.value() };
+				}
+				if (symbol != null && fixup.libOrdinal() != null) {
+					value = new long[] { fixup.libOrdinal() };
+					try {
+						MachoProgramBuilder.fixupExternalLibrary(program, libraryPaths,
+							fixup.libOrdinal(), symbol);
 					}
-					fixedAddrs.add(addr);
-					status = Status.APPLIED_OTHER;
+					catch (Exception e) {
+						log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
+								.formatted(symbol, e.getMessage()));
+					}
 				}
-				else {
-					status = Status.UNSUPPORTED;
-				}
+			}
+			catch (Exception e) {
+				status = Status.FAILURE;
 			}
 			finally {
 				program.getRelocationTable()
-						.add(addr, status, 0, new long[] { fixup.value() }, fixup.size(),
-							fixup.symbol() != null ? fixup.symbol() : null);
-			}
-			if (fixup.symbol() != null && fixup.libOrdinal() != null) {
-				try {
-					MachoProgramBuilder.fixupExternalLibrary(program, libraryPaths,
-						fixup.libOrdinal(), fixup.symbol());
-				}
-				catch (Exception e) {
-					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
-							.formatted(fixup.symbol(), e.getMessage()));
-				}
+						.add(addr, status, RELOCATION_TYPE, value, fixup.size(), symbol);
 			}
 		}
 		log.appendMsg("Fixed up " + fixedAddrs.size() + " chained pointers.");
