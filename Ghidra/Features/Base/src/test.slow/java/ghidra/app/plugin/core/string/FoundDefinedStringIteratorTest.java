@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.program.util.string.FoundString;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 
-public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegrationTest {
+public class FoundDefinedStringIteratorTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	private ProgramDB program;
 	private ArrayDataType arrayDataType;
 
-	public DefinedStringIteratorTest() {
+	public FoundDefinedStringIteratorTest() {
 		super();
 	}
 
@@ -87,7 +87,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testIterator() throws Exception {
-		DefinedStringIterator iterator = new DefinedStringIterator(program, false);
+		FoundDefinedStringIterator iterator = new FoundDefinedStringIterator(program, false);
 
 		assertTrue(iterator.hasNext());
 		FoundString foundString = iterator.next();
@@ -143,7 +143,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 
 		initializeStringModel();
 
-		DefinedStringIterator iterator = new DefinedStringIterator(program, true);
+		FoundDefinedStringIterator iterator = new FoundDefinedStringIterator(program, true);
 		while (iterator.hasNext()) {
 			FoundString string = iterator.next();
 			Address address = string.getAddress();
