@@ -28,7 +28,7 @@
 
 import os.path
 import sys
-import distutils.spawn
+import shutil
 from subprocess import Popen, PIPE
 from ghidra.framework import Platform, OperatingSystem
 from org.apache.commons.io import FileUtils
@@ -114,14 +114,14 @@ def createYaraDictionary(stdout):
   return yaraDictionary
 
 #Run YARA on the file (on disk) associated with the program in the Ghidra Code Browser
-#Output from YARA will be recorded via the stdout for the YARA proccess
+#Output from YARA will be recorded via the stdout for the YARA process
 def launchYaraProcess(yaraRulePath, yaraTargetPath):
   #find the location of the YARA executable on the user's machine
   if(Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS):
     #since Ghidra requires 64-bit, the user probably has yara64
-    yaraExecutablePath = distutils.spawn.find_executable("yara64.exe")
+    yaraExecutablePath = shutil.which("yara64.exe")
   else:
-    yaraExecutablePath = distutils.spawn.find_executable("yara")
+    yaraExecutablePath = shutil.which("yara")
   #if we cannot find YARA, then ask the user where YARA is located
   if(yaraExecutablePath is None):
     yaraExecutablePath = askFile(getScriptName() + \
