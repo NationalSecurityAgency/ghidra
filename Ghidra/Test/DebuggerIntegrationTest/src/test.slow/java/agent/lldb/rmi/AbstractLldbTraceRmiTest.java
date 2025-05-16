@@ -418,6 +418,12 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return new MemDump(address, buf.toByteArray());
 	}
 
+	protected void waitDomainObjectClosed(String path) {
+		DomainFile df = env.getProject().getProjectData().getFile(path);
+		assertNotNull(df);
+		waitForPass(() -> assertFalse(df.isOpen()));
+	}
+
 	protected ManagedDomainObject openDomainObject(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
