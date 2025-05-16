@@ -43,6 +43,9 @@ python3 -m pip install psutil protobuf==3.20.3
       </LI>
     </UL>
 
+    <P>If you're using <TT>lldb</TT> from the Android NDK and do not have Pip, see <A href=
+    "#setup_ndk">Setup for Android NDK</A></P>
+
     <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
     more complicated invocation:</P>
 
@@ -205,5 +208,63 @@ perl -i -pe 's/(?&lt;=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
     <P>This has the same options as the <A href="#ssh">LLDB via SSH</A> launcher, which are
     necessary for connecting to the Android debugger, but executes via the normal lldb
     mechanism.</P>
+
+    <H3><A name="setup_ndk"></A>Setup for Android NDK</H3>
+
+    <P>If you're using the copy of <TT>lldb</TT> included with the Android NDK (Native Development
+    Kit), it may not include <TT>pip</TT>. Notably, this is the case on Windows at the time of
+    writing. Fortunately, you can retrieve the components to install Pip into the NDK from an
+    official Python distribution.</P>
+
+    <OL>
+      <LI>
+        First, figure out the version of Python that is embedded in the NDK's build of LLDB, and
+        get its path. (If you know the path to lldb, you probably already know the path to its
+        Python.) From a Windows Command Prompt or Powershell: 
+<PRE>
+PS&gt; C:\path\to\android-ndk\...\lldb
+(lldb) script
+&gt;&gt;&gt; import sys
+&gt;&gt;&gt; sys.version
+[copy down the version indicated]
+&gt;&gt;&gt; sys.path
+[look for the paths ending with Lib and DLLs, and copy them down]
+</PRE>
+      </LI>
+
+      <LI>Now, obtain the same version of Python from the official Python website, and install or
+      unpack it.</LI>
+
+      <LI>Locate your new installation of Python. If you don't already know where it landed, this
+      can be found by examining the Properties of the Python shortcut in your Start Menu.</LI>
+
+      <LI>There should be a <TT>Lib\ensurepip</TT> directory in the official Python installation.
+      Copy this into the same place in the Android NDK's build of Python.</LI>
+
+      <LI>
+        There are also three native modules that need to be copied from the official Python's
+        <TT>DLLs\</TT> directory to the same in the NDK's build. This is to support SSL for
+        downloading packages from PyPI: (Substitue the ??'s appropriately.) 
+
+        <UL>
+          <LI><TT>_ssl.pyd</TT></LI>
+
+          <LI><TT>libssl-??.dll</TT></LI>
+
+          <LI><TT>libcrypto-??.dll</TT></LI>
+        </UL>
+      </LI>
+
+      <LI>
+        We should now have enough to bootstrap the NDK's Python with Pip. Again at the Windows
+        Command Prompt or Powershell: 
+<PRE>
+PS&gt; C:\path\to\android-ndk\...\python -m ensurepip
+PS&gt; C:\path\to\android-ndk\...\python -m pip install ...
+</PRE>
+        See the <A href="#setup">Setup</A> section for the arguments to pass to <TT>pip install
+        ...</TT>.
+      </LI>
+    </OL>
   </BODY>
 </HTML>
