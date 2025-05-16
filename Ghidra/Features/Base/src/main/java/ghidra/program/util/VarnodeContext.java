@@ -24,7 +24,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -35,7 +36,8 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.DuplicateNameException;
 
 
 public class VarnodeContext implements ProcessorContext {
@@ -1863,7 +1865,7 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Check if this is a bad address, or offset from a bad address
 	 * 
-	 * @param varnode to check
+	 * @param v to check
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isBadAddress(Varnode v) {
