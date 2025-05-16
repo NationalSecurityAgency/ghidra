@@ -167,10 +167,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace stop
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
-		DomainFile df = env.getProject().getProjectData().getFile("/New Traces/lldb/expPrint");
-		assertNotNull(df);
-		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
-		assertFalse(df.isOpen());
+		// NOTE: Given the 'quit' command, I'm not sure this assertion is checking anything.
+		waitDomainObjectClosed("/New Traces/lldb/expPrint");
 	}
 
 	@Test
@@ -270,6 +268,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
+		waitDomainObjectClosed("/New Traces/no-save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -286,6 +285,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
+		waitDomainObjectClosed("/New Traces/save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());

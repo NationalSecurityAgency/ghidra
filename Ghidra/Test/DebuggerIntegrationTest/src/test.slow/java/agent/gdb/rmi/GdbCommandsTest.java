@@ -160,7 +160,6 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testStopTrace() throws Exception {
-		// TODO: This test assumes gdb and the target file bash are x86-64
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -169,10 +168,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace stop
 				quit
 				""".formatted(PREAMBLE, addr));
-		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/gdb/bash");
-		assertNotNull(dfBash);
-		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
-		assertFalse(dfBash.isOpen());
+		// NOTE: Given the 'quit' command, I'm not sure this assertion is checking anything.
+		waitDomainObjectClosed("/New Traces/gdb/bash");
 	}
 
 	@Test
@@ -278,6 +275,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
+		waitDomainObjectClosed("/New Traces/no-save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -294,6 +292,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
+		waitDomainObjectClosed("/New Traces/save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
