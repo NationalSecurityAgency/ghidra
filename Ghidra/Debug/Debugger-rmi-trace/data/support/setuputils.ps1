@@ -12,7 +12,7 @@ function Find-App-Properties {
 
 function Get-Ghidra-Version {
 	$props = Find-App-Properties
-	$m = Get-Content $props | Select-String -Pattern "application\.version=(.*)"
+	$m = Get-Content $props | Select-String -Pattern "application\.version=([0-9]*\.[0-9]*)\.?.*"
 	return $m.Matches.Groups[1].Value
 }
 

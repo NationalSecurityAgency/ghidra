@@ -29,7 +29,7 @@ find-app-properties() {
 }
 
 get-ghidra-version() {
-	local app_ver_re='application\.version=(.*)'
+	local app_ver_re='application\.version=([0-9]*\.[0-9]*)\.?.*'
 	local props=$(find-app-properties)
 	local version=$(cat "$props" | while read line; do
 		if [[ $line =~ $app_ver_re ]]; then
