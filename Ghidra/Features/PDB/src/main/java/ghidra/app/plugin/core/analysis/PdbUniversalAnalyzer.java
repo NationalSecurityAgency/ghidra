@@ -167,7 +167,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchUntrustedLocations, monitor);
 		}
 		if (pdbFile == null) {
-			// warnings have already been logged
+			// Warnings have already been logged, but nice to have a post-analysis pop-up that
+			// PDB analysis was not done
+			log.appendMsg(NAME, "Aborted: Could not find an appropriate PDB file; see log");
 			return false;
 		}
 
