@@ -20,7 +20,7 @@ import static ghidra.program.util.string.FoundString.DefinedState.*;
 import java.util.Iterator;
 
 import ghidra.program.model.listing.*;
-import ghidra.program.util.DefinedDataIterator;
+import ghidra.program.util.DefinedStringIterator;
 import ghidra.program.util.string.FoundString;
 
 /**
@@ -42,16 +42,16 @@ import ghidra.program.util.string.FoundString;
  * <p>
  * The iterator is over when the resultQueue is empty and the defined data iterator's hasNext() method is false.
  */
-public class DefinedStringIterator implements Iterator<FoundString> {
+public class FoundDefinedStringIterator implements Iterator<FoundString> {
 
 	private boolean isWordModelInitialized;
 	private DataIterator stringDataIterator;
 	private Program program;
 
-	DefinedStringIterator(Program program, boolean isWordModelInitialized) {
+	FoundDefinedStringIterator(Program program, boolean isWordModelInitialized) {
 		this.program = program;
 		this.isWordModelInitialized = isWordModelInitialized;
-		this.stringDataIterator = DefinedDataIterator.definedStrings(program);
+		this.stringDataIterator = DefinedStringIterator.forProgram(program);
 	}
 
 	@Override
