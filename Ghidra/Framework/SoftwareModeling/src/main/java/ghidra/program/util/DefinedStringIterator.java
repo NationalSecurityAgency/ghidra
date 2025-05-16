@@ -177,7 +177,7 @@ public class DefinedStringIterator implements DataIterator {
 
 	private static class StructDtcIterator implements DataIterator {
 		private Data data;
-		private int currentIndex;
+		private int currentIndex = -1;
 		private DataTypeComponent[] dtcs;
 
 		public StructDtcIterator(Data data, Composite compDT) {

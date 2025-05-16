@@ -44,6 +44,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 	private int s1f3Offset = 50;
 	private ArrayDataType structArray;
 	private StructureDataType struct2DT;
+	private StructureDataType struct3DT;
 
 	@Before
 	public void setUp() throws Exception {
@@ -67,6 +68,9 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		struct2DT = new StructureDataType("struct2", 200);
 		struct2DT.replaceAtOffset(0, intDT, -1, "f1", null);
 		struct2DT.replaceAtOffset(10, struct1DT, -1, "f2", null);
+
+		struct3DT = new StructureDataType("struct3", 200);
+		struct3DT.replaceAtOffset(0, charArray, -1, "f1", null);
 
 		builder.createMemory("test", "0x0", 0x20000);
 		program = builder.getProgram();
@@ -144,6 +148,19 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		assertEquals(s1ArrayElemIndex + 2, list.size());
 	}
 
+	@Test
+	public void test_StructFirstField() throws Exception {
+		// ensure we get the first field of a struct
+
+		int structAddr = 0x100;
+
+		builder.applyFixedLengthDataType(addrStr(structAddr), struct3DT, -1);
+
+		DefinedStringIterator it = DefinedStringIterator.forProgram(program);
+		List<Data> list = IteratorUtils.toList(it);
+		assertEquals(1, list.size());
+	}
+
 	private long arrayElementAddr(long arrayAddr, int elemSize, int elemIndex) {
 		return arrayAddr + (elemSize * elemIndex);
 	}
@@ -155,7 +172,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 
 		builder.applyFixedLengthDataType("0x0", intDT, -1); // +1 candidate count 
 		builder.createString(addrStr(str1Addr), "test1", StandardCharsets.UTF_8, true, stringDT); // +1
-		builder.applyFixedLengthDataType(addrStr(s1ArrayAddr), structArray, -1); // +(1 + 10*3)
+		builder.applyFixedLengthDataType(addrStr(s1ArrayAddr), structArray, -1); // +(1 + 10 + 10*3)
 
 		DataType byteArray = new ArrayDataType(ByteDataType.dataType, 2000, -1);
 		builder.applyFixedLengthDataType("0x1000", byteArray, -1); // +1
@@ -163,7 +180,7 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		DefinedStringIterator it = DefinedStringIterator.forProgram(program);
 		List<Data> list = IteratorUtils.toList(it);
 
-		assertEquals(34, it.getDataCandidateCount()); // 1 + 1 + 1 + 10*3
+		assertEquals(44, it.getDataCandidateCount()); // 1 + 1 + 1 + 10 + 10*3
 		assertEquals(21, list.size()); // 1 ds@0x10 + 2 per structArray element
 	}
 }
