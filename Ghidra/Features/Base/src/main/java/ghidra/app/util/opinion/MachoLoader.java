@@ -65,49 +65,56 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			return loadSpecs;
 		}
 
-		// Efficient check to fail fast
-		byte[] magicBytes = provider.readBytes(0, 4);
-		if (!MachConstants.isMagic(LittleEndianDataConverter.INSTANCE.getInt(magicBytes))) {
-			return loadSpecs;
+		// This loader can handle both Mach-O files as well as Universal Binary files. If it's a
+		// Universal Binary, each Mach-O it contains will be presented as a single "preferred"
+		// load spec, forcing the user to have to select the desired processor from the import
+		// dialog.
+		List<ByteProvider> allProviders = new ArrayList<>();
+		boolean onlyPreferred;
+		if (isUniveralBinary(provider)) {
+			allProviders.addAll(getUniveralBinaryProviders(provider));
+			onlyPreferred = true;
+		}
+		else {
+			allProviders.add(provider);
+			onlyPreferred = false;
 		}
 
-		try {
-			MachHeader machHeader = new MachHeader(provider);
-			String magic =
-				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
-			String compiler = detectCompilerName(machHeader);
-			List<QueryResult> results = QueryOpinionService.query(MACH_O_NAME, magic, compiler);
-			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), result));
+		for (ByteProvider machoProvider : allProviders) {
+			byte[] magicBytes = machoProvider.readBytes(0, 4);
+			if (!MachConstants.isMagic(LittleEndianDataConverter.INSTANCE.getInt(magicBytes))) {
+				continue;
 			}
-			if (loadSpecs.isEmpty()) {
-				loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), true));
+			try {
+				MachHeader machHeader = new MachHeader(machoProvider);
+				String magic =
+					CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
+				String compiler = detectCompilerName(machHeader);
+				List<QueryResult> results = QueryOpinionService.query(MACH_O_NAME, magic, compiler);
+				for (QueryResult result : results) {
+					if (!onlyPreferred || result.preferred) {
+						loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), result));
+					}
+				}
+				if (loadSpecs.isEmpty() && !onlyPreferred) {
+					loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), true));
+				}
+			}
+			catch (MachException e) {
+				// not a problem, just don't add it
 			}
 		}
-		catch (MachException e) {
-			// not a problem, just don't add it
-		}
+
 		return loadSpecs;
-	}
-
-	private String detectCompilerName(MachHeader machHeader) throws IOException {
-		List<String> sectionNames = machHeader.parseSegments()
-				.stream()
-				.flatMap(seg -> seg.getSections().stream())
-				.map(section -> section.getSectionName())
-				.toList();
-		if (SwiftUtils.isSwift(sectionNames)) {
-			return SwiftUtils.SWIFT_COMPILER;
-		}
-		if (GoRttiMapper.hasGolangSections(sectionNames)) {
-			return GoConstants.GOLANG_CSPEC_NAME;
-		}
-		return null;
 	}
 
 	@Override
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+
+		if (isUniveralBinary(provider)) {
+			provider = matchUniversalBinaryProvider(provider, loadSpec, monitor);
+		}
 
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
@@ -293,16 +300,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Checks to see if reexports should be performed
-	 * 
-	 * @param options a {@link List} of {@link Option}s
-	 * @return True if reexports should be performed; otherwise, false
-	 */
-	private boolean shouldPerformReexports(List<Option> options) {
-		return OptionUtils.getOption(REEXPORT_OPTION_NAME, options, REEXPORT_OPTION_DEFAULT);
-	}
-
-	/**
 	 * {@inheritDoc}
 	 * <p>
 	 * If we aren't loading libraries, we still want to search all paths if the reexport option is 
@@ -362,33 +359,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Gets a {@link List} of reexport library paths from the given {@link Program}
-	 *  
-	 * @param program The {@link Program}
-	 * @param log The log
-	 * @return A {@link List} of reexport library paths from the given {@link Program}
-	 * @throws MachException if there was a problem parsing the Mach-O {@link Program}
-	 * @throws IOException if there was an IO-related error
-	 */
-	private List<String> getReexportPaths(Program program, MessageLog log)
-			throws MachException, IOException {
-		Symbol header =
-			program.getSymbolTable().getSymbols(MachoProgramBuilder.HEADER_SYMBOL).next();
-		if (header == null) {
-			log.appendMsg("Failed to lookup reexport paths...couldn't find '%s' symbol"
-					.formatted(MachoProgramBuilder.HEADER_SYMBOL));
-			return List.of();
-		}
-		ByteProvider p = new MemoryByteProvider(program.getMemory(), header.getAddress());
-		return new MachHeader(p).parseReexports()
-				.stream()
-				.map(DynamicLibraryCommand::getDynamicLibrary)
-				.map(DynamicLibrary::getName)
-				.map(LoadCommandString::getString)
-				.toList();
-	}
-
-	/**
 	 * {@inheritDoc}
 	 * <p>
 	 * Adds reexported symbols to each {@link Loaded} {@link Program}.
@@ -427,6 +397,141 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, log,
 			monitor);
+	}
+
+	/**
+	 * Checks to see if the given {@link ByteProvider} is a Universal Binary
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @return True if the given {@link ByteProvider} is a Universal Binary; otherwise, false
+	 * @throws IOException if there was an IO-related error
+	 */
+	private boolean isUniveralBinary(ByteProvider provider) throws IOException {
+		BinaryReader reader = new BinaryReader(provider, false);
+		int magic = reader.readInt(0);
+		return magic == FatHeader.FAT_MAGIC || magic == FatHeader.FAT_CIGAM;
+	}
+
+	/**
+	 * Gets a {@link List} of {@link ByteProviderWrapper}s, one for each entry in the Universal
+	 * Binary
+	 *  
+	 * @param provider The Universal Binary's provider
+	 * @return A {@link List} of {@link ByteProviderWrapper}s, one for each entry in the Universal
+	 *   Binary
+	 * @throws IOException if an IO-related error occurred
+	 */
+	private List<ByteProviderWrapper> getUniveralBinaryProviders(ByteProvider provider)
+			throws IOException {
+		List<ByteProviderWrapper> wrappers = new ArrayList<>();
+		try {
+			FatHeader fatHeader = new FatHeader(provider);
+			List<Long> machStarts = fatHeader.getMachStarts();
+			List<Long> machSizes = fatHeader.getMachSizes();
+			for (int i = 0; i < machStarts.size(); i++) {
+				wrappers.add(new ByteProviderWrapper(provider, machStarts.get(i), machSizes.get(i),
+					provider.getFSRL()));
+			}
+		}
+		catch (MachException | UbiException e) {
+			// not a problem, just don't add it
+		}
+		return wrappers;
+	}
+
+	/**
+	 * Attempts to match a Mach-O entry in the given Universal Binary {@link ByteProvider} to the 
+	 * given {@link LoadSpec}
+	 * 
+	 * @param provider A Universal Binary {@link ByteProvider}
+	 * @param loadSpec The {@link LoadSpec} to match
+	 * @param monitor A {@link TaskMonitor monitor}
+	 * @return The matched Mach-O {@link ByteProvider}, or {@code null} if a match was not found
+	 * @throws IOException if an IO-related error occurred
+	 */
+	private ByteProvider matchUniversalBinaryProvider(ByteProvider provider, LoadSpec loadSpec,
+			TaskMonitor monitor) throws IOException {
+		ByteProvider ret = null;
+		boolean stop = false;
+		for (ByteProvider machoProvider : getUniveralBinaryProviders(provider)) {
+			for (LoadSpec ls : findSupportedLoadSpecs(machoProvider)) {
+				if (monitor.isCancelled()) {
+					stop = true;
+					break;
+				}
+				if (loadSpec.getLanguageCompilerSpec().equals(ls.getLanguageCompilerSpec())) {
+					ret = machoProvider;
+					stop = true;
+					break;
+				}
+			}
+			if (stop) {
+				break;
+			}
+		}
+		if (ret == null) {
+			throw new IOException("Failed to match the load spec to a Universal Binary Mach-O");
+		}
+		return ret;
+	}
+
+	/**
+	 * Attempts to detect a more specific compiler from the Mach-O
+	 * 
+	 * @param machHeader The {@link MachHeader}
+	 * @return The detected compiler name, or {@code null} if one could be detected
+	 * @throws IOException if an IO-related error occurred
+	 */
+	private String detectCompilerName(MachHeader machHeader) throws IOException {
+		List<String> sectionNames = machHeader.parseSegments()
+				.stream()
+				.flatMap(seg -> seg.getSections().stream())
+				.map(section -> section.getSectionName())
+				.toList();
+		if (SwiftUtils.isSwift(sectionNames)) {
+			return SwiftUtils.SWIFT_COMPILER;
+		}
+		if (GoRttiMapper.hasGolangSections(sectionNames)) {
+			return GoConstants.GOLANG_CSPEC_NAME;
+		}
+		return null;
+	}
+
+	/**
+	 * Checks to see if reexports should be performed
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if reexports should be performed; otherwise, false
+	 */
+	private boolean shouldPerformReexports(List<Option> options) {
+		return OptionUtils.getOption(REEXPORT_OPTION_NAME, options, REEXPORT_OPTION_DEFAULT);
+	}
+
+	/**
+	 * Gets a {@link List} of reexport library paths from the given {@link Program}
+	 *  
+	 * @param program The {@link Program}
+	 * @param log The log
+	 * @return A {@link List} of reexport library paths from the given {@link Program}
+	 * @throws MachException if there was a problem parsing the Mach-O {@link Program}
+	 * @throws IOException if there was an IO-related error
+	 */
+	private List<String> getReexportPaths(Program program, MessageLog log)
+			throws MachException, IOException {
+		Symbol header =
+			program.getSymbolTable().getSymbols(MachoProgramBuilder.HEADER_SYMBOL).next();
+		if (header == null) {
+			log.appendMsg("Failed to lookup reexport paths...couldn't find '%s' symbol"
+					.formatted(MachoProgramBuilder.HEADER_SYMBOL));
+			return List.of();
+		}
+		ByteProvider p = new MemoryByteProvider(program.getMemory(), header.getAddress());
+		return new MachHeader(p).parseReexports()
+				.stream()
+				.map(DynamicLibraryCommand::getDynamicLibrary)
+				.map(DynamicLibrary::getName)
+				.map(LoadCommandString::getString)
+				.toList();
 	}
 
 	/**

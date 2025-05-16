@@ -137,40 +137,38 @@ public class DtFilterState {
 		DataType baseDt = DataTypeUtils.getBaseDataType(dt);
 
 		if (dt instanceof Array) {
-			return passes(arraysFilter, dt, baseDt);
+			return passes(arraysFilter, dt);
 		}
 
 		if (dt instanceof Pointer) {
-			return passes(pointersFilter, dt, baseDt);
+			return passes(pointersFilter, dt);
 		}
 
 		if (baseDt instanceof Enum) {
-			return passes(enumsFilter, dt, baseDt);
+			return passes(enumsFilter, dt);
 		}
 
 		if (baseDt instanceof Function) {
-			return passes(functionsFilter, dt, baseDt);
+			return passes(functionsFilter, dt);
 		}
 
 		if (baseDt instanceof Structure) {
-			return passes(structuresFilter, dt, baseDt);
+			return passes(structuresFilter, dt);
 		}
 
 		if (baseDt instanceof Union) {
-			return passes(unionsFilter, dt, baseDt);
+			return passes(unionsFilter, dt);
 		}
 
 		return true;
 	}
 
-	private boolean passes(DtTypeFilter filter, DataType dt, DataType baseDt) {
-		if (filter.isTypeActive()) {
-			return true;
+	private boolean passes(DtTypeFilter filter, DataType dt) {
+		if (dt instanceof TypeDef) {
+			return filter.isTypeDefActive();
 		}
-		if (filter.isTypeDefActive() && dt instanceof TypeDef) {
-			return true;
-		}
-		return false;
+
+		return filter.isTypeActive();
 	}
 
 	public void save(SaveState parentSaveState) {

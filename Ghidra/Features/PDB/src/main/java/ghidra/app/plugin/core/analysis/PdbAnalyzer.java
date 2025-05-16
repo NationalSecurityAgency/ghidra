@@ -87,7 +87,9 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 		File pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchUntrustedLocations, monitor);
 		if (pdbFile == null) {
-			// warnings have already been logged
+			// Warnings have already been logged, but nice to have a post-analysis pop-up that
+			// PDB analysis was not done
+			log.appendMsg(NAME, "Aborted: Could not find an appropriate PDB file; see log");
 			return false;
 		}
 
@@ -156,7 +158,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	 * Normally the analyzer would locate the PDB file on its own, but if a
 	 * headless script wishes to override the analyzer's behaivor, it can
 	 * use this method to specify a file.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param pdbFile the pdb file
 	 */
@@ -171,7 +173,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	 * Normally when the analyzer attempts to locate a matching PDB file it
 	 * will default to NOT searching untrusted symbol servers.  A headless script could
 	 * use this method to allow the analyzer to search untrusted symbol servers.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param allowUntrusted boolean flag, true means analyzer can search untrusted symbol
 	 * servers

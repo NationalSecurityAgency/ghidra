@@ -178,7 +178,7 @@ public class DtFilterDialog extends DialogComponentProvider {
 			this.type = type;
 			this.typeCb = new GCheckBox(type);
 			this.typeDefCb = new GCheckBox();
-			this.typeDefCb.setName(type + "Typedefs");
+			this.typeDefCb.setName(type + "TypeDefs");
 		}
 
 		JComponent getLeft() {
