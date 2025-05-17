@@ -169,11 +169,10 @@ public interface DataTypeManager {
 	public Iterator<FunctionDefinition> getAllFunctionDefinitions();
 
 	/**
-	 * Begin searching at the root category for all data types with the
-	 * given name. Places all the data types in this data type manager
-	 * with the given name into the list.  Presence of {@code .conflict}
-	 * extension will be ignored for both specified name and returned
-	 * results.
+	 * Begin searching at the root category for all data types with the given name. Places all the 
+	 * data types in this data type manager with the given name into the list.  The presence of 
+	 * {@code .conflict} extension will be ignored and thus included in the results.
+	 * 
 	 * @param name name of the data type (wildcards are not supported and will be treated
 	 * as explicit search characters)
 	 * @param list list that will be populated with matching DataType objects
@@ -181,9 +180,13 @@ public interface DataTypeManager {
 	public void findDataTypes(String name, List<DataType> list);
 
 	/**
-	 * Begin searching at the root category for all data types with names
-	 * that match the given name that may contain wildcards using familiar globbing 
-	 * characters '*' and '?'.
+	 * Begin searching at the root category for all data types with names that match the given name
+	 * that may contain wildcards using familiar globbing characters '*' and '?'.
+	 * <p>
+	 * Unlike {@link #findDataTypes(String, List)}, data types with a {@code .conflict} extension 
+	 * will not be included in the results of this method unless they explicitly match the provided
+	 * name.
+	 * 
 	 * @param name name to match; may contain wildcards
 	 * @param list list that will be populated with matching DataType objects
 	 * @param caseSensitive true if the match is case sensitive
@@ -421,7 +424,7 @@ public interface DataTypeManager {
 	 * transaction is ended.
 	 * <P>
 	 * NOTE: Use of rollback ({@code commit=false} should be avoided unless absolutely
-	 * neccessary since it will incur overhead to revert changes and may rollback multiple
+	 * necessary since it will incur overhead to revert changes and may rollback multiple
 	 * concurrent transactions if they exist.
 	 * <P>
 	 * NOTE: If this manager is part of a larger {@link DomainObject} its transactions may become
@@ -630,7 +633,7 @@ public interface DataTypeManager {
 	public SourceArchive getLocalSourceArchive();
 
 	/**
-	 * Change the given data type and its dependencies so thier source archive is set to
+	 * Change the given data type and its dependencies so their source archive is set to
 	 * given archive.  Only those data types not already associated with a source archive
 	 * will be changed.
 	 *
