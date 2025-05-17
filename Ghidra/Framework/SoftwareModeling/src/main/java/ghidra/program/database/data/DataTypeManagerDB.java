@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 
 import javax.help.UnsupportedOperationException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
@@ -2098,32 +2100,37 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public void findDataTypes(String name, List<DataType> list) {
-		if (name == null || name.length() == 0) {
+		if (StringUtils.isBlank(name)) {
 			return;
 		}
 		if (name.equals(DataType.DEFAULT.getName())) {
 			list.add(DataType.DEFAULT);
 			return;
 		}
+
 		// ignore .conflict in both name and result matches
 		lock.acquire();
 		try {
 			buildSortedDataTypeList();
 			// Use exemplar datatype in root category without .conflict to position at start
 			// of possible matches
-			name = DataTypeUtilities.getNameWithoutConflict(name);
+			String baseName = DataTypeUtilities.getNameWithoutConflict(name);
 			DataType compareDataType =
-				new TypedefDataType(CategoryPath.ROOT, name, DataType.DEFAULT, this);
+				new TypedefDataType(CategoryPath.ROOT, baseName, DataType.DEFAULT, this);
 			int index = Collections.binarySearch(sortedDataTypes, compareDataType, nameComparator);
 			if (index < 0) {
+				// this allows us to find foo.conflict types
 				index = -index - 1;
 			}
+
 			// add all matches to list
 			while (index < sortedDataTypes.size()) {
 				DataType dt = sortedDataTypes.get(index);
-				if (!name.equals(DataTypeUtilities.getNameWithoutConflict(dt, false))) {
-					break;
+				String baseDtName = DataTypeUtilities.getNameWithoutConflict(dt, false);
+				if (!baseName.equals(baseDtName)) {
+					break; // not foo or foo.conflict
 				}
+
 				list.add(dt);
 				++index;
 			}
@@ -2143,9 +2150,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			list.add(DataType.DEFAULT);
 			return;
 		}
-		if (monitor == null) {
-			monitor = TaskMonitor.DUMMY;
-		}
+
+		monitor = TaskMonitor.dummyIfNull(monitor);
+
 		Pattern regexp = UserSearchUtils.createSearchPattern(name, caseSensitive);
 		lock.acquire();
 		try {

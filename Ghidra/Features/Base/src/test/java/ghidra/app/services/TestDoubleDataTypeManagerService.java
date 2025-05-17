@@ -55,6 +55,26 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public DataType promptForDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataTypeManager getBuiltInDataTypesManager() {
 		throw new UnsupportedOperationException();
 	}

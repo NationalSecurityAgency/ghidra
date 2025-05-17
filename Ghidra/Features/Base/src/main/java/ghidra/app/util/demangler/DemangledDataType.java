@@ -379,17 +379,13 @@ public class DemangledDataType extends DemangledType {
 	static DataType findDataType(DataTypeManager dataTypeManager, Demangled namespace,
 			String dtName) {
 
-		// TODO: add support for use of Program.getPreferredRootNamespaceCategoryPath when
-		// searching for datatypes
-
 		List<DataType> list = new ArrayList<>();
 		dataTypeManager.findDataTypes(dtName, list);
 		if (list.isEmpty()) {
 			return null;
 		}
 
-		//use the datatype that exists in the root category,
-		//otherwise just pick the first one...
+		// use the datatype that exists in the root category, otherwise just pick the first one
 		DataType anyDt = null;
 		DataType preferredDataType = null;
 		for (DataType existingDT : list) {

@@ -25,6 +25,7 @@ import ghidra.app.plugin.core.datamgr.archive.DefaultDataTypeArchiveService;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.task.TaskMonitor;
 
 // FIXME!! TESTING
 public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
@@ -61,6 +62,26 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 
 	@Override
 	public DataType getDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
