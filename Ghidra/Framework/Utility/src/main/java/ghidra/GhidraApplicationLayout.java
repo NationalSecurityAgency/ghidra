@@ -133,7 +133,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		}
 
 		ResourceFile dir = applicationRootDirs.iterator().next().getParentFile();
-		if (SystemUtilities.isInDevelopmentMode()) {
+		if (SystemUtilities.isInDevelopmentMode() && applicationRootDirs.size() > 1) {
 			dir = dir.getParentFile();
 		}
 		return dir;
