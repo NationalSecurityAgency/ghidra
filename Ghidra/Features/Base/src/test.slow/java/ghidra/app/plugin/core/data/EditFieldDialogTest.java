@@ -22,7 +22,9 @@ import java.util.Date;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.widgets.DropDownSelectionTextField;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -182,6 +184,22 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("undefined", getDataTypeText());
 
 		setDataType(new ByteDataType());
+
+		pressOk();
+		waitForTasks();
+		assertEquals("byte", structure.getComponent(1).getDataType().getDisplayName());
+	}
+
+	@Test
+	public void testEditUndefinedDataType_ByTypingText() {
+		goTo(0x101);
+		showFieldEditDialog();
+		assertNull(structure.getComponent(1).getComment());
+		assertEquals("undefined", getDataTypeText());
+
+		DataTypeSelectionEditor editor = dialog.getDataTypeEditor();
+		DropDownSelectionTextField<DataType> textField = editor.getDropDownTextField();
+		setText(textField, "byte");
 
 		pressOk();
 		waitForTasks();
