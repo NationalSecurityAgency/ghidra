@@ -938,7 +938,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		FlowType myFlowType = getFlowType(); // getFlowType will validate
 		if (myFlowType.hasFallthrough()) {
 			try {
-				return getAddress().addNoWrap(proto.getFallThroughOffset(this));
+				return address.addNoWrap(getDefaultFallThroughOffset());
 			}
 			catch (AddressOverflowException e) {
 				// ignore
@@ -950,7 +950,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	@Override
 	public int getDefaultFallThroughOffset() {
 		if (proto.getDelaySlotByteCount() <= 0) {
-			return getLength();
+			return proto.getLength();
 		}
 		lock.acquire();
 		try {
