@@ -161,6 +161,23 @@ public class DefinedStringIteratorTest extends AbstractGhidraHeadlessIntegration
 		assertEquals(1, list.size());
 	}
 
+	@Test
+	public void test_UnionOfStrings() throws Exception {
+		int unionAddr = 0x100;
+		Union unionDT = new UnionDataType("unionOfStrings");
+		unionDT.add(charArray);
+		unionDT.add(new ArrayDataType(charDT, 5));
+
+		builder.applyFixedLengthDataType(addrStr(unionAddr), unionDT, -1);
+
+		DefinedStringIterator it = DefinedStringIterator.forProgram(program);
+		List<Data> list = IteratorUtils.toList(it);
+
+		assertEquals(0x100, list.get(0).getAddress().getOffset());
+		assertEquals(0x100, list.get(1).getAddress().getOffset());
+		assertEquals(2, list.size());
+	}
+
 	private long arrayElementAddr(long arrayAddr, int elemSize, int elemIndex) {
 		return arrayAddr + (elemSize * elemIndex);
 	}
