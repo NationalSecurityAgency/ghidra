@@ -8,7 +8,7 @@
     </description>
     <compiler name="default" id="default" />
     <spaces>
-        <segmented_space name="ram" default="yes" />
+        <segmented_space type="real" name="ram" default="yes" />
         <space name="register" type="register" size="4" />
     </spaces>
     <registers>
