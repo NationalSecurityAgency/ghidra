@@ -88,7 +88,7 @@ The token matching algorithm matches a function call in one program to a functio
 However, given a matched pair of calls, you can bring up a new comparison window for the callees with the **Compare Matching Callees** action.
 
 1. Click in the left panel of the decompile diff window and press ``Ctrl-F``.
-1. Enter ``FUN_`` and search for matched function calls where the callee in the left window has a default name and the callee in the right window has a non-default name.
+1. Enter ``FUN_`` and search for matched function calls where the callee in the left window has a default name and the callee in the right window has a non-default name (and is not an external function).  
 1. Right-click on one of the matched tokens and perform the **Compare Matching Callees** action.
 1. In the comparison of the callees, apply the function signature and data types from the right function to the left function.
    Verify that the update is reflected in the decompiler diff view of the callers.

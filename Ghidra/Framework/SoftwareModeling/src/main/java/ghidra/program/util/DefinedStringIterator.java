@@ -133,12 +133,14 @@ public class DefinedStringIterator implements DataIterator {
 				// be handled earlier by isString(data)
 				DataType elementDT = arrayDT.getDataType();
 				if (containsStringDataType(elementDT)) {
-					itStack.addLast(new ArrayElementIterator(data));
+					itStack.addLast(new DataComponentIterator(data));
 				}
 				// side-effect: don't iterate arrays that have elements that aren't strings
 			}
 			else if (dt instanceof Composite comp && containsStringDataType(comp)) {
-				itStack.addLast(new StructDtcIterator(data, comp));
+				itStack.addLast(comp instanceof Structure
+						? new StructDtcIterator(data, comp)
+						: new DataComponentIterator(data));
 			}
 		}
 	}
@@ -176,6 +178,7 @@ public class DefinedStringIterator implements DataIterator {
 	}
 
 	private static class StructDtcIterator implements DataIterator {
+		// this iterator only examines defined components of the data struct item
 		private Data data;
 		private int currentIndex = -1;
 		private DataTypeComponent[] dtcs;
@@ -194,7 +197,8 @@ public class DefinedStringIterator implements DataIterator {
 		private void advanceToNextGoodDtcIndex() {
 			currentIndex++;
 			while (currentIndex < dtcs.length &&
-				(dtcs[currentIndex].getLength() == 0 || dtcs[currentIndex].isBitFieldComponent())) {
+				(dtcs[currentIndex].getLength() == 0 || dtcs[currentIndex].isBitFieldComponent() ||
+					data.getComponentContaining(dtcs[currentIndex].getOffset()) == null)) {
 				currentIndex++;
 			}
 		}
@@ -208,12 +212,13 @@ public class DefinedStringIterator implements DataIterator {
 
 	}
 
-	private static class ArrayElementIterator implements DataIterator {
+	private static class DataComponentIterator implements DataIterator {
+		// use this iterator for datatypes that only have defined components (array, union)
 		private Data data;
 		private int currentIndex;
 		private int elementCount;
 
-		public ArrayElementIterator(Data data) {
+		public DataComponentIterator(Data data) {
 			this.data = data;
 			this.elementCount = data.getNumComponents();
 		}
