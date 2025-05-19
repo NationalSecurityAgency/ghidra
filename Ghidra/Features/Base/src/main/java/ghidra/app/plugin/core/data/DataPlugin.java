@@ -146,9 +146,9 @@ public class DataPlugin extends Plugin implements DataService {
 		pointerAction = new PointerDataAction(this);
 		tool.addAction(pointerAction);
 
-		new ActionBuilder("Quick Edit Field", getName())
+		new ActionBuilder("Edit Field", getName())
 				.helpLocation(new HelpLocation("DataPlugin", "Quick_Edit_Field"))
-				.popupMenuPath("Data", "Quick Edit Field...")
+				.popupMenuPath("Data", "Edit Field...")
 				.popupMenuGroup("BasicData")
 				.keyBinding("ctrl shift E")
 				.sharedKeyBinding()
