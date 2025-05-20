@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package utility.application;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.*;
@@ -50,8 +49,8 @@ public class ApplicationUtilities {
 	 * 
 	 * @return A collection of discovered application root directories (could be empty).
 	 */
-	public static Collection<ResourceFile> findDefaultApplicationRootDirs() {
-		Collection<ResourceFile> applicationRootDirs = new ArrayList<>();
+	public static SequencedCollection<ResourceFile> findDefaultApplicationRootDirs() {
+		List<ResourceFile> applicationRootDirs = new ArrayList<>();
 		ResourceFile applicationRootDir = findPrimaryApplicationRootDir();
 		if (applicationRootDir != null) {
 			applicationRootDirs.add(applicationRootDir);
@@ -121,11 +120,11 @@ public class ApplicationUtilities {
 	 * 
 	 * @param primaryApplicationRootDir The primary application root directory that may contain the
 	 *   repository config file one directory up.
-	 * @return A collection of defined application repository root directories.
+	 * @return A {@link SequencedCollection} of defined application repository root directories.
 	 */
-	private static Collection<ResourceFile> findApplicationRootDirsFromRepoConfig(
+	private static SequencedCollection<ResourceFile> findApplicationRootDirsFromRepoConfig(
 			ResourceFile primaryApplicationRootDir) {
-		Collection<ResourceFile> repoApplicationRootDirs = new ArrayList<>();
+		List<ResourceFile> repoApplicationRootDirs = new ArrayList<>();
 		ResourceFile repoConfigFile =
 			new ResourceFile(primaryApplicationRootDir.getParentFile(), "ghidra.repos.config");
 		if (repoConfigFile.isFile()) {
