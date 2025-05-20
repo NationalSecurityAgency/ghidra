@@ -26,6 +26,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
@@ -98,10 +99,16 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "Enum", 2), null);
 		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "Enum", 2), null);
 
-		ArrayList<DataType> list = new ArrayList<DataType>();
-		dataMgr.findDataTypes("Enum", list);
+		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "zEnum", 2), null);
+		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "zEnum2", 2), null);
 
+		List<DataType> list = new ArrayList<DataType>();
+		dataMgr.findDataTypes("Enum", list);
 		assertEquals(3, list.size());
+
+		list.clear();
+		dataMgr.findDataTypes("Enum1", list);
+		Msg.debug(this, "dts: " + list);
 
 		Category c1 = root.createCategory("c1");
 		dataMgr.resolve(new EnumDataType(c1.getCategoryPath(), "Enum", 2), null);

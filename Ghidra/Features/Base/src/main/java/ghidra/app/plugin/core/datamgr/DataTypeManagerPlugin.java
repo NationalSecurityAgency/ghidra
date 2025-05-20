@@ -84,7 +84,7 @@ import ghidra.util.task.TaskMonitor;
 	description = "Provides the window for managing and categorizing dataTypes.  " +
 			"The datatype display shows all built-in datatypes, datatypes in the " +
 			"current program, and datatypes in all open archives.",
-	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
+	servicesProvided = { DataTypeManagerService.class, DataTypeQueryService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin
@@ -519,6 +519,59 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public DataType getDataType(String filterText) {
+		return promptForDataType(filterText);
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String dtName, TaskMonitor monitor) {
+		List<DataType> results = new ArrayList<>();
+		DataTypeManager[] managers = getDataTypeManagers();
+
+		// we put the program's data types at the front of the list so clients can tell if the 
+		// types we have found already exist in the program
+		DataTypeManager pdtm = getProgramDataTypeManager();
+		pdtm.findDataTypes(dtName, results);
+		for (DataTypeManager manager : managers) {
+			if (!(manager instanceof ProgramDataTypeManager)) {
+				manager.findDataTypes(dtName, results);
+			}
+		}
+		return results;
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		List<DataType> results = new ArrayList<>();
+		DataTypeManager[] managers = getDataTypeManagers();
+		for (DataTypeManager manager : managers) {
+			DataType dt = manager.getDataType(path);
+			if (dt == null) {
+				continue;
+			}
+
+			if (manager instanceof ProgramDataTypeManager) {
+				// we put the program's data type at the front of the list so clients can tell if 
+				// the types we have found already exist in the program
+				results.add(0, dt);
+			}
+			else {
+				results.add(dt);
+			}
+		}
+		return results;
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		DataTypeManager pdtm = getProgramDataTypeManager();
+		if (pdtm == null) {
+			return null;
+		}
+		return pdtm.getDataType(path);
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
 		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
 		if (!StringUtils.isBlank(filterText)) {
 			dialog.showPrepopulatedDialog(tool, filterText);
