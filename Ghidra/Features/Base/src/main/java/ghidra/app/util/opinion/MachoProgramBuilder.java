@@ -514,7 +514,7 @@ public class MachoProgramBuilder {
 					if (!realEntryFound) {
 						program.getSymbolTable().createLabel(addr, "entry", SourceType.IMPORTED);
 						program.getSymbolTable().addExternalEntryPoint(addr);
-						createOneByteFunction("entry", addr);
+						createOneByteFunction(program, "entry", addr);
 						realEntryFound = true;
 					}
 					else {
@@ -684,10 +684,11 @@ public class MachoProgramBuilder {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				String name =
-					symbol != null ? SymbolUtilities.replaceInvalidChars(symbol.getString(), true)
-							: "STUB_" + startAddr;
-				Function stubFunc = createOneByteFunction(name, startAddr);
+				String name = null;
+				if (symbol != null) {
+					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+				}
+				Function stubFunc = createOneByteFunction(program, name, startAddr);
 				if (stubFunc != null && symbol != null) {
 					ExternalLocation loc = program.getExternalManager()
 							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
@@ -965,8 +966,8 @@ public class MachoProgramBuilder {
 				}
 				finally {
 					program.getRelocationTable()
-							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
-								binding.getType(), null, bytes.length, binding.getSymbolName());
+							.add(addr, success ? Status.APPLIED : Status.FAILURE, binding.getType(),
+								null, bytes.length, binding.getSymbolName());
 				}
 			}
 		}
@@ -1584,7 +1585,7 @@ public class MachoProgramBuilder {
 		}
 		Register tModeRegister = program.getLanguage().getRegister("TMode");
 		program.getProgramContext().setValue(tModeRegister, address, address, BigInteger.ONE);
-		createOneByteFunction(null, address);
+		createOneByteFunction(program, null, address);
 	}
 
 	private void processLazyPointerSection(AddressSetView set) {
@@ -1638,13 +1639,14 @@ public class MachoProgramBuilder {
 	 * create a one-byte function, so that when the code is analyzed,
 	 * it will be disassembled, and the function created with the correct body.
 	 *
+	 * @param program The {@link Program}
 	 * @param name the name of the function
 	 * @param address location to create the function
 	 * @return If a function already existed at the given address, that function will be returned.
 	 *   Otherwise, the newly created function will be returned.  If there was a problem creating
 	 *   the function, null will be returned.
 	 */
-	Function createOneByteFunction(String name, Address address) {
+	public static Function createOneByteFunction(Program program, String name, Address address) {
 		FunctionManager functionMgr = program.getFunctionManager();
 		Function function = functionMgr.getFunctionAt(address);
 		if (function != null) {
