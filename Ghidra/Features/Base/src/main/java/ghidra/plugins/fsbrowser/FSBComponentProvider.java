@@ -103,8 +103,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	}
 
 	void initFileHandlers() {
-		FSBFileHandlerContext context =
-			new FSBFileHandlerContext(plugin, this, fsService, projectIndex);
+		FSBFileHandlerContext context = new FSBFileHandlerContext(plugin, this, fsService);
 		fileHandlers = ClassSearcher.getInstances(FSBFileHandler.class);
 		for (FSBFileHandler fileHandler : fileHandlers) {
 			fileHandler.init(context);
