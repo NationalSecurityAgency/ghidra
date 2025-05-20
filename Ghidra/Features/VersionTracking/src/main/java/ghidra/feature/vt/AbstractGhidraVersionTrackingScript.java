@@ -195,7 +195,7 @@ public abstract class AbstractGhidraVersionTrackingScript extends GhidraScript {
 		if (vtSession == null) {
 			throw new RuntimeException("You must have an open vt session");
 		}
-		return getFunctionNames(vtSession.getSourceProgram());
+		return getFunctionNames(vtSession.getDestinationProgram());
 	}
 
 	private Set<String> getFunctionNames(Program program) {
