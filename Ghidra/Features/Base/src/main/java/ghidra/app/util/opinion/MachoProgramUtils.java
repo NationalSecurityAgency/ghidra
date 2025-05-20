@@ -64,9 +64,9 @@ public class MachoProgramUtils {
 		Address ret;
 		if (externalBlock != null) {
 			ret = externalBlock.getEnd().add(1);
-			MemoryBlock newBlock = mem.createBlock(externalBlock, "REEXPORTS", ret, size);
+			MemoryBlock newBlock =
+				mem.createBlock(externalBlock, MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size);
 			mem.join(externalBlock, newBlock);
-			//joinedBlock.setName(MemoryBlock.EXTERNAL_BLOCK_NAME);
 		}
 		else {
 			ret = MachoProgramUtils.getNextAvailableAddress(program);
