@@ -58,6 +58,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	public final static String COMMAND_ADDUSER = "adduser";
 	public final static String COMMAND_DROPUSER = "dropuser";
 	public final static String COMMAND_CHANGEAUTH = "changeauth";
+	public final static String COMMAND_DUMPALL = "dumpall";
+	public final static String COMMAND_RESTORE = "restore";
 
 	// Options that require a value argument
 	public static final String CAFILE_OPTION = "--cafile";
@@ -100,6 +102,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
 		AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+	private static final Set<String> DUMPALL_OPTIONS = Set.of();
+	private static final Set<String> RESTORE_OPTIONS = Set.of();
 
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
@@ -112,6 +116,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		ALLOWED_OPTION_MAP.put(COMMAND_ADDUSER, ADDUSER_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_DROPUSER, DROPUSER_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_CHANGEAUTH, CHANGEAUTH_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_DUMPALL, DUMPALL_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_RESTORE, RESTORE_OPTIONS);
 	}
 
 	private final static String POSTGRES = "postgresql";
@@ -135,8 +141,11 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private GhidraApplicationLayout layout;
 
 	private File dataDirectory;			// Directory containing postgres datafiles
+	private File dumpFile;				// Path to database dump file
 	private File postgresRoot;			// Directory containing postgres software
 	private File postgresControl;		// "pg_ctl" utility within postgres software
+	private File postgresDumpAll;		// "pg_dumpall" utility within postgres software
+	private File postgresPsql;			// "psql" utility within postgres software
 	private File certAuthorityFile;		// Certificate authority file provided by the user
 	private String certParameter;		// Path to certificate provided by user
 	private String distinguishedName;	// Certificate distinguished name provided by the user
@@ -166,8 +175,11 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 	private void clearParams() {
 		dataDirectory = null;
+		dumpFile = null;
 		postgresRoot = null;
 		postgresControl = null;
+		postgresDumpAll = null;
+		postgresPsql = null;
 		certAuthorityFile = null;
 		certParameter = null;
 		distinguishedName = null;
@@ -220,6 +232,12 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				break;
 			case COMMAND_CHANGEAUTH:
 				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_DUMPALL:
+				scanDumpFile(params, slot++);
+				break;
+			case COMMAND_RESTORE:
+				scanDumpFile(params, slot++);
 				break;
 			case COMMAND_CHANGE_PRIVILEGE:
 				scanUsername(params, slot++);
@@ -782,6 +800,14 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			if (!postgresControl.isFile()) {
 				throw new IOException("PostgreSQL pg_ctl command not found: " + postgresControl);
 			}
+			postgresDumpAll = new File(postgresRoot, "bin/pg_dumpall");
+			if (!postgresDumpAll.isFile()) {
+				throw new IOException("PostgreSQL pg_dumpall command not found: " + postgresDumpAll);
+			}
+			postgresPsql = new File(postgresRoot, "bin/psql");
+			if (!postgresPsql.isFile()) {
+				throw new IOException("PostgreSQL psql command not found: " + postgresPsql);
+			}
 			setupPostgresSharedLibrary();
 		}
 		catch (OSFileNotFoundException e) {
@@ -990,6 +1016,19 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	}
 
 	/**
+	 * Scan the PostgreSQL dump file from the command-line
+	 * @param params are the command-line arguments
+	 * @param slot is the position to retrieve the dump file argument
+	 * @throws IllegalArgumentException if the dump file is invalid
+	 */
+	private void scanDumpFile(String [] params, int slot) throws IllegalArgumentException {
+		if (params.length <= slot) {
+			throw new IllegalArgumentException("Missing dump file");
+		}
+		dumpFile = new File(params[slot]);
+	}
+
+	/**
 	 * Start a PostgreSQL server, configured for BSim, on the local host.
 	 * If the data directory is already populated, the server process is simply restarted.
 	 * If the data directory is empty, a new server configuration is established, and the server is started.
@@ -1040,6 +1079,80 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			forceShutdown = true;			// Force a shutdown, because extension isn't enabled
 			stopCommand();
 		}
+	}
+
+	/**
+	 * Dumps all PostgreSQL databases from the local host into a specified file.
+	 * Authentication may be necessary, either via password or certificate.
+	 * 
+	 * @throws IOException if the postgres databases can not be dumped
+	 * @throws InterruptedException if the process fails during the run
+	 * @throws GeneralSecurityException if the authentication fails
+	 */
+	private void dumpAllCommand()
+			throws IOException, InterruptedException, GeneralSecurityException {
+		discoverPostgresInstall();
+
+		if (localAuthentication == AUTHENTICATION_PKI && certParameter == null) {
+			throw new GeneralSecurityException(
+				"Path to certificate necessary to dump databases (--cert /path/to/cert)");
+		}
+
+		List<String> command = new ArrayList<String>();
+		command.add(postgresDumpAll.getAbsolutePath());
+		command.add("-f");
+		command.add(dumpFile.getAbsolutePath());
+		command.add("-U");
+		command.add(connectingUserName);
+		command.add("-h");
+		command.add("localhost");
+		if ((port != -1) && (port != 5432)) {	// Non-default port
+			command.add("-p");
+			command.add(Integer.toString(port));
+		}
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		if (res != 0) {
+			throw new IOException("Could not dump databases");
+		}
+		System.out.println("Databases dumped to " + dumpFile.getAbsolutePath());
+	}
+
+	/**
+	 * Restore all PostgreSQL databases to the local host from a specified file.
+	 * Authentication may be necessary, either via password or certificate.
+	 * 
+	 * @throws IOException if the postgres databases can not be restored
+	 * @throws InterruptedException if the process fails during the run
+	 * @throws GeneralSecurityException if the authentication fails
+	 */
+	private void restoreCommand()
+			throws IOException, InterruptedException, GeneralSecurityException {
+		discoverPostgresInstall();
+
+		if (localAuthentication == AUTHENTICATION_PKI && certParameter == null) {
+			throw new GeneralSecurityException(
+				"Path to certificate necessary to restore databases (--cert /path/to/cert)");
+		}
+
+		List<String> command = new ArrayList<String>();
+		command.add(postgresPsql.getAbsolutePath());
+		command.add("-f");
+		command.add(dumpFile.getAbsolutePath());
+		command.add("-U");
+		command.add(connectingUserName);
+		command.add("-h");
+		command.add("localhost");
+		command.add("-d");
+		command.add("postgres");			// psql requires a database, and 'postgres' is always available
+		if ((port != -1) && (port != 5432)) {	// Non-default port
+			command.add("-p");
+			command.add(Integer.toString(port));
+		}
+		int res = runCommand(null, command, loadLibraryVar, loadLibraryValue);
+		if (res != 0) {
+			throw new IOException("Could not restore databases");
+		}
+		System.out.println("Databases restored from " + dumpFile.getAbsolutePath());
 	}
 
 	/**
@@ -1440,6 +1553,12 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				case COMMAND_CHANGEAUTH:
 					changeAuthCommand();
 					break;
+				case COMMAND_DUMPALL:
+					dumpAllCommand();
+					break;
+				case COMMAND_RESTORE:
+					restoreCommand();
+					break;
 				case COMMAND_RESET_PASSWORD:
 					passwordCommand();
 					break;
@@ -1472,6 +1591,8 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
 			"                resetpassword   <username>\n" +
 			"                changeprivilege <username> admin|user\n" + 
+			"                dumpall    </dumpfile-path>\n" + 
+			"                restore    </dumpfile-path>\n" + 
 			"\n" + 
 			"Global options:\n" +
 			"   --port|-p <portnum>\n" + 
