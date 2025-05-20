@@ -25,8 +25,9 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.MachoProgramBuilder;
+import ghidra.app.util.opinion.MachoProgramUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
@@ -136,41 +137,79 @@ public class DyldChainedFixups {
 	public static List<Address> fixupChainedPointers(List<DyldFixup> fixups, Program program,
 			Address imagebase, List<String> libraryPaths, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
-		List<Address> fixedAddrs = new ArrayList<>();
 		if (fixups.isEmpty()) {
-			return fixedAddrs;
+			return List.of();
 		}
+
 		Memory memory = program.getMemory();
+		SymbolTable symbolTable = program.getSymbolTable();
+		ExternalManager extMgr = program.getExternalManager();
+
+		// Figure out how much space in the EXTERNAL block we need, and make it
+		Address extAddr = null;
+		try {
+			long externalSize = fixups.stream()
+					.filter(e -> e.value() == null && e.symbol() != null && e.libOrdinal() != null)
+					.mapToLong(DyldFixup::size)
+					.sum();
+			if (externalSize > 0) {
+				extAddr = MachoProgramUtils.addExternalBlock(program, externalSize, log);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(
+				"Failed to create space in EXTERNAL block for chained fixups: " + e.getMessage());
+		}
+
+		List<Address> fixedAddrs = new ArrayList<>();
 		monitor.initialize(fixups.size(), "Fixing up chained pointers...");
 		for (DyldFixup fixup : fixups) {
 			monitor.increment();
 			Status status = Status.UNSUPPORTED;
-			Address addr = imagebase.add(fixup.offset());
-			String symbol = fixup.symbol();
+			Address fixupAddr = imagebase.add(fixup.offset());
+			Long fixupValue = fixup.value();
+			String fixupSymbol = fixup.symbol();
 			long[] value = new long[] {};
 			try {
-				if (fixup.value() != null) {
+				if (fixupValue == null && fixupSymbol != null && fixup.libOrdinal() != null &&
+					extAddr != null) {
+					try {
+						symbolTable.createLabel(extAddr, fixupSymbol, SourceType.IMPORTED);
+						fixupValue = extAddr.getOffset();
+						Function stubFunc = MachoProgramBuilder.createOneByteFunction(program,
+							fixupSymbol, extAddr);
+						if (stubFunc != null) {
+							ExternalLocation loc = extMgr.addExtLocation(Library.UNKNOWN,
+								fixupSymbol, null, SourceType.IMPORTED);
+							stubFunc.setThunkedFunction(loc.createFunction());
+						}
+					}
+					finally {
+						extAddr = extAddr.add(fixup.size());
+					}
+				}
+				if (fixupValue != null) {
 					if (fixup.size() == 8 || fixup.size() == 4) {
 						if (fixup.size() == 8) {
-							memory.setLong(addr, fixup.value());
+							memory.setLong(fixupAddr, fixupValue);
 						}
 						else {
-							memory.setInt(addr, fixup.value().intValue());
+							memory.setInt(fixupAddr, fixupValue.intValue());
 						}
-						fixedAddrs.add(addr);
-						status = Status.APPLIED_OTHER;
+						fixedAddrs.add(fixupAddr);
+						status = Status.APPLIED;
 					}
-					value = new long[] { fixup.value() };
+					value = new long[] { fixupValue };
 				}
-				if (symbol != null && fixup.libOrdinal() != null) {
+				if (fixupSymbol != null && fixup.libOrdinal() != null) {
 					value = new long[] { fixup.libOrdinal() };
 					try {
 						MachoProgramBuilder.fixupExternalLibrary(program, libraryPaths,
-							fixup.libOrdinal(), symbol);
+							fixup.libOrdinal(), fixupSymbol);
 					}
 					catch (Exception e) {
 						log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
-								.formatted(symbol, e.getMessage()));
+								.formatted(fixupSymbol, e.getMessage()));
 					}
 				}
 			}
@@ -179,7 +218,7 @@ public class DyldChainedFixups {
 			}
 			finally {
 				program.getRelocationTable()
-						.add(addr, status, RELOCATION_TYPE, value, fixup.size(), symbol);
+						.add(fixupAddr, status, RELOCATION_TYPE, value, fixup.size(), fixupSymbol);
 			}
 		}
 		log.appendMsg("Fixed up " + fixedAddrs.size() + " chained pointers.");
