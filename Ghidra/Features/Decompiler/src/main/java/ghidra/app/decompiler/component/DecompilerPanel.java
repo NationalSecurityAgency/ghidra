@@ -264,13 +264,39 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		// exclude tokens that users do not want to highlight
-		if (token instanceof ClangSyntaxToken || token instanceof ClangOpToken) {
+		if (token instanceof ClangOpToken) {
+			return;
+		}
+
+		if (token instanceof ClangSyntaxToken syntaxToken && !isNamespace(syntaxToken)) {
 			return;
 		}
 
 		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token.getText());
 		newMiddleMouse.apply();
 		activeMiddleMouse = newMiddleMouse;
+	}
+
+	private boolean isNamespace(ClangSyntaxToken token) {
+
+		String text = token.getText();
+		if (text.length() <= 1) {
+			return false;
+		}
+
+		// see if we have a '::' token trailing this token
+		ClangLine line = token.getLineParent();
+		int index = line.indexOfToken(token);
+		for (int i = index + 1; i < line.getNumTokens(); i++) {
+			ClangToken nextToken = line.getToken(i);
+			String nextText = nextToken.getText();
+			if (nextText.isBlank()) {
+				continue;
+			}
+
+			return nextText.equals("::");
+		}
+		return false;
 	}
 
 	void addHighlighterHighlights(ClangDecompilerHighlighter highlighter,
