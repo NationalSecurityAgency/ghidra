@@ -113,7 +113,7 @@ public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 			// location to the newly exported function
 			Function func = funcManager.getFunctionAt(sym.getAddress());
 			if (func != null && func.getThunkedFunction(false) != null) {
-				func.setThunkedFunction(createOneByteFunction(name, exportAddr));
+				func.setThunkedFunction(createOneByteFunction(program, name, exportAddr));
 
 				// Remove the external location associated with the thunk function.
 				// After the first delete, the external location becomes an external label, which

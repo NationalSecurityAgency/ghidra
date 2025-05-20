@@ -150,7 +150,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		if (entryPoint != null) {
 			Address entryPointAddr = space.getAddress(entryPoint);
 			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
-			createOneByteFunction("entry", entryPointAddr);
+			createOneByteFunction(program, "entry", entryPointAddr);
 		}
 		else {
 			log.appendMsg("Unable to determine entry point.");
