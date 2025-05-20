@@ -59,6 +59,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * bsim commands
 	 */
 	private static final String COMMAND_CREATE_DATABASE = defineCommand("createdatabase");
+	private static final String COMMAND_DROP_DATABASE = defineCommand("dropdatabase");
 	private static final String COMMAND_SET_METADATA = defineCommand("setmetadata");
 	private static final String COMMAND_GET_METADATA = defineCommand("getmetadata");
 	private static final String COMMAND_ADD_EXE_CATEGORY = defineCommand("addexecategory");
@@ -137,6 +138,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	// Populate ALLOWED_OPTION_MAP for each command
 	private static final Set<String> CREATE_DATABASE_OPTIONS = 
 			Set.of(NAME_OPTION, OWNER_OPTION, DESCRIPTION_OPTION, NO_CALLGRAPH_OPTION);
+	private static final Set<String> DROP_DATABASE_OPTIONS = Set.of();
 	private static final Set<String> COMMIT_SIGS_OPTIONS = 
 			Set.of(OVERRIDE_OPTION, MD5_OPTION); // url requires override param
 	private static final Set<String> COMMIT_UPDATES_OPTIONS = Set.of();
@@ -167,6 +169,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
 	static {
 		ALLOWED_OPTION_MAP.put(COMMAND_CREATE_DATABASE, CREATE_DATABASE_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_DROP_DATABASE, DROP_DATABASE_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_SET_METADATA, SET_METADATA_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_GET_METADATA, GET_METADATA_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_ADD_EXE_CATEGORY, ADD_EXE_CATEGORY_OPTIONS);
@@ -400,6 +403,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doCreateDatabase(subParams);
 		}
+		else if (COMMAND_DROP_DATABASE.equals(command)) {
+			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
+			doDropDatabase(subParams);
+		}
 		else if (COMMAND_SET_METADATA.equals(command)) {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doInstallMetadata(subParams);
@@ -529,6 +536,18 @@ public class BSimLaunchable implements GhidraLaunchable {
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			bsim.createDatabase(configTemplate, nameOption, ownerOption, descOption,
 				!noTrackCallGraph);
+		}
+	}
+
+	/**
+	 * Drops the current BSim database.
+	 * 
+	 * @param params the command-line parameters
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	private void doDropDatabase(List<String> params) throws IOException {
+		try (BulkSignatures bsim = getBulkSignatures()) {
+			bsim.dropDatabase();
 		}
 	}
 
@@ -971,6 +990,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
 			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
+			"            dropdatabase    <bsimURL> \n" + 
 			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
 			"            getmetadata     <bsimURL>\n" + 
 			"            addexecategory  <bsimURL> <category_name> [--date]\n" + 
