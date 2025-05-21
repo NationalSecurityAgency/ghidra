@@ -146,8 +146,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public void setNameAndCategory(CategoryPath path, String name)
-			throws InvalidNameException, DuplicateNameException {
+	public void setNameAndCategory(CategoryPath path, String name) throws InvalidNameException {
 		// default is immutable
 	}
 
@@ -260,7 +259,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
+	public void setCategoryPath(CategoryPath path) {
 		// not-applicable
 	}
 
