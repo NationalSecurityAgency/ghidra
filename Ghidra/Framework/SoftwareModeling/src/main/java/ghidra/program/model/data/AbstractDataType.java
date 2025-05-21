@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.net.URL;
 import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
@@ -101,11 +100,6 @@ public abstract class AbstractDataType implements DataType {
 	public DataTypePath getDataTypePath() {
 		// use methods instead of fields since they mey be overriden
 		return new DataTypePath(getCategoryPath(), getName());
-	}
-
-	@Override
-	public URL getDocs() {
-		return null;
 	}
 
 	@Override
