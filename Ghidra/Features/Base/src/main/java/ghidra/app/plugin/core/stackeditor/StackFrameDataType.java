@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import java.net.URL;
 import java.util.*;
 
 import javax.help.UnsupportedOperationException;
@@ -1410,11 +1409,6 @@ class StackFrameDataType implements Structure {
 
 	@Override
 	public String getMnemonic(Settings settings) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public URL getDocs() {
 		throw new UnsupportedOperationException();
 	}
 
