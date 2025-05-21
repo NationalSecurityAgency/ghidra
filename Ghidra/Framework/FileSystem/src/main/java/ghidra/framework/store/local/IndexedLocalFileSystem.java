@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,6 +165,23 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 		readIndex();
 		indexJournal = new IndexJournal();
+	}
+
+	@Override
+	public LocalFolderItem[] getItems(String folderPath) throws IOException {
+		String[] itemNames = getItemNames(folderPath, false);
+		LocalFolderItem[] folderItems = new LocalFolderItem[itemNames.length];
+		for (int i = 0; i < itemNames.length; i++) {
+			LocalFolderItem item = getItem(folderPath, itemNames[i]);
+			if (item == null && !readOnly) {
+				// remove item from index where item storage is missing
+				Msg.warn(this, "Removing missing folder item from filesystem index: " +
+					LocalFileSystem.getPath(folderPath, itemNames[i]));
+				itemDeleted(folderPath, itemNames[i]);
+			}
+			folderItems[i] = item;
+		}
+		return folderItems;
 	}
 
 	@Override
@@ -1286,9 +1303,9 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		/**
 		 * Construct a previously allocated item and add it to the parent's 
 		 * item map.  The FileID will be read from the Property file.
-		 * @param parent
-		 * @param name
-		 * @param storageName
+		 * @param parent parent folder
+		 * @param name item name
+		 * @param storageName storage name
 		 */
 		Item(Folder parent, String name, String storageName) {
 			this.storageName = storageName;
@@ -1298,9 +1315,9 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		/**
 		 * Set this items parent, name and storage name and add the modified item
 		 * to the specified parent's item map
-		 * @param parent
-		 * @param name
-		 * @param fileId unique file ID from property file content
+		 * @param newParent new parent folder
+		 * @param newName new item name
+		 * @param newFileId unique file ID from property file content
 		 */
 		void set(Folder newParent, String newName, String newFileId) {
 			if (parent != null && itemStorage != null) {

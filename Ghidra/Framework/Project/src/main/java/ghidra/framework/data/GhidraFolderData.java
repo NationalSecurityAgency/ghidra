@@ -267,6 +267,10 @@ class GhidraFolderData {
 			if (parent.visited) {
 				parent.folderList.remove(oldName);
 				parent.folderList.add(newName);
+
+				// Must force refresh to ensure that all folder items are properly updted with new parent path
+				refresh(true, true, projectData.getProjectDisposalMonitor());
+
 				listener.domainFolderRenamed(newFolder, oldName);
 			}
 
@@ -632,9 +636,8 @@ class GhidraFolderData {
 					++badItemCount;
 					continue;
 				}
-				Msg.error(this,
-					"Unsupported folder item encountered (" + unk.getFileType() + "): " +
-						getPathname(item.getName()));
+				Msg.error(this, "Unsupported folder item encountered (" + unk.getFileType() +
+					"): " + getPathname(item.getName()));
 				++unknownItemCount;
 			}
 			map.put(itemName, item);
@@ -648,9 +651,8 @@ class GhidraFolderData {
 				"Project folder contains " + nullNameCount + " null items: " + getPathname());
 		}
 		if (badItemCount != 0) {
-			Msg.error(this,
-				"Project folder contains " + unknownItemCount + " unsupported items: " +
-					getPathname());
+			Msg.error(this, "Project folder contains " + unknownItemCount + " unsupported items: " +
+				getPathname());
 		}
 		return map;
 	}
@@ -746,7 +748,7 @@ class GhidraFolderData {
 	 * a "folder changed" notification.
 	 * @param recursive if true a recursive refresh will be done (force must also be true).
 	 * Sub-folders will only be refreshed if they have been visited.
-	 * @param force if true will refresh will be forced regardless
+	 * @param force if true, refresh will be forced regardless
 	 * of visited state, if false refresh is lazy and will not be 
 	 * performed if a previous refresh set the visited state.
 	 * @param monitor recursion task monitor - break from recursion if cancelled
