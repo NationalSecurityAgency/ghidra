@@ -934,9 +934,14 @@ public class ProgramBuilder {
 	}
 
 	public void createComment(String address, String comment, int commentType) {
+		CommentType type = CommentType.values()[commentType];
+		createComment(address, comment, type);
+	}
+
+	public void createComment(String address, String comment, CommentType type) {
 		tx(() -> {
 			Listing listing = program.getListing();
-			listing.setComment(addr(address), commentType, comment);
+			listing.setComment(addr(address), type, comment);
 		});
 	}
 
