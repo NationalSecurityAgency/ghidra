@@ -452,6 +452,30 @@ public class BulkSignatures implements AutoCloseable {
 	}
 
 	/**
+	 * Drops the current BSim database.
+	 * 
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	public void dropDatabase() throws IOException {
+		establishQueryServerConnection(false); // Set up client configuration
+		querydb.close(); // Database can't be in use when we try to drop it
+		DropDatabase command = new DropDatabase();
+		command.databaseName = bsimServerInfo.getDBName();
+		ResponseDropDatabase response = command.execute(querydb);
+		if (response == null) {
+			throw new IOException("Unable to drop database: " + querydb.getLastError().message);
+		}
+		else {
+			if (response.dropSuccessful) {
+				Msg.info(this, "Successfully dropped database \"" + command.databaseName + "\"");
+			}
+			else {
+				Msg.error(this, "Unable to drop database: " + response.errorMessage);
+			}
+		}
+	}
+
+	/**
 	 * Adds function signatures from the specified project to the BSim database
 	 * @param ghidraURL ghidra repository from which to pull files for signature generation
 	 * @param sigsLocation the location where signature files will be stored
