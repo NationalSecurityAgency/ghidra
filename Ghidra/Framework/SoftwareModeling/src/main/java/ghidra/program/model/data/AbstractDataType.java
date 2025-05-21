@@ -63,9 +63,6 @@ public abstract class AbstractDataType implements DataType {
 		return categoryPath;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDataTypeManager()
-	 */
 	@Override
 	public final DataTypeManager getDataTypeManager() {
 		return dataMgr;
@@ -108,7 +105,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public String getPathName() {
+	public final String getPathName() {
 		return getDataTypePath().getPath();
 	}
 
