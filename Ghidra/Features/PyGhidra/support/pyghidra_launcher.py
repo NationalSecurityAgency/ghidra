@@ -253,6 +253,7 @@ def main() -> None:
         offer_venv: bool = False
         if in_venv():
             # If we are already in a virtual environment, assume that's where the user wants to be
+            python_cmd = get_venv_exe(Path(sys.prefix))
             print(f'Using active virtual environment: {sys.prefix}')
         elif os.path.isdir(venv_dir):
             # If the Ghidra user settings venv exists, use that
