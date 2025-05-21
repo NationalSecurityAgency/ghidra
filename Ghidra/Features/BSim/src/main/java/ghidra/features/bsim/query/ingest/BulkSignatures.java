@@ -759,6 +759,19 @@ public class BulkSignatures implements AutoCloseable {
 	}
 
 	/**
+	 * Prints the metadata.
+	 * 
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	public void printMetadata() throws IOException {
+		DatabaseInformation info = establishQueryServerConnection(false);
+		Msg.info(this, "BSim metadata: ");
+		Msg.info(this, "   Database:     " + info.databasename);
+		Msg.info(this, "   Owner:        " + info.owner);
+		Msg.info(this, "   Description:  " + info.description);
+	}
+
+	/**
 	 * Performs the work of installing a new category name. This will build the query
 	 * object, establish the database connection, and perform the query.
 	 * 
