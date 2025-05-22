@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.*;
 import java.util.EventObject;
 
@@ -32,16 +32,15 @@ import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.MessageType;
+import ghidra.util.Swing;
 import ghidra.util.data.DataTypeParser;
 
 class ParameterDataTypeCellEditor extends AbstractCellEditor
 		implements TableCellEditor, FocusableEditor {
 	private DataTypeSelectionEditor editor;
 	private DropDownSelectionTextField<DataType> textField;
-	private JButton dataTypeChooserButton;
 	private DataType dt;
 
-	private JPanel editorPanel;
 	private DataTypeManagerService service;
 	private DialogComponentProvider dialog;
 	private DataTypeManager dtm;
@@ -62,7 +61,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 
 		editor.setCellEditorValue(dt);
 
-		return editorPanel;
+		return editor.getEditorComponent();
 	}
 
 	private void init() {
@@ -83,17 +82,8 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 			}
 		});
 
-		// force a small button for the table's cell editor
-		dataTypeChooserButton = new JButton("...") {
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension preferredSize = super.getPreferredSize();
-				preferredSize.width = 15;
-				return preferredSize;
-			}
-		};
-
-		dataTypeChooserButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+		JButton browseButton = editor.getBrowseButton();
+		browseButton.addActionListener(e -> Swing.runLater(() -> {
 			DataType dataType = service.getDataType((String) null);
 			if (dataType != null) {
 				editor.setCellEditorValue(dataType);
@@ -104,18 +94,13 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 			}
 		}));
 
-		FocusAdapter focusListener = new FocusAdapter() {
+		textField.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
 				textField.selectAll();
 				textField.removeFocusListener(this);
 			}
-		};
-		textField.addFocusListener(focusListener);
-
-		editorPanel = new JPanel(new BorderLayout());
-		editorPanel.add(textField, BorderLayout.CENTER);
-		editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
+		});
 	}
 
 	@Override
@@ -136,7 +121,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 	 * be returned if getTableCellEditorComponent method has not yet been invoked. 
 	 */
 	public JButton getChooserButton() {
-		return dataTypeChooserButton;
+		return editor.getBrowseButton();
 	}
 
 	@Override

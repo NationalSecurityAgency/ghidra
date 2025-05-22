@@ -17,6 +17,9 @@ package ghidra.app.util.datatype;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -24,26 +27,18 @@ import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.button.BrowseButton;
-import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import docking.widgets.list.GListCellRenderer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.data.*;
-import ghidra.util.data.DataTypeParser;
-import ghidra.util.data.DataTypeParser.AllowedDataTypes;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.model.data.CategoryPath;
 
 /**
  * An editor that is used to show the {@link DropDownSelectionTextField} for the entering of
- * data types by name and offers the user of a completion window.  This editor also provides a
+ * category paths by name and offers the user of a completion window.  This editor also provides a
  * browse button that when pressed will show a data type tree so that the user may browse a tree
- * of known data types.
- * <p>
- * The typical usage of this class is in conjunction with the {@link DataTypeChooserDialog}.   The
- * dialog uses this editor as part of its DataType selection process.  Users seeking a dialog
- * that allows users to choose DataTypes are encouraged to use that dialog.  If you wish to add
- * this editor to a widget directly, then see below.
+ * of known category paths.
  * <p>
  * <u>Stand Alone Usage</u><br>
  * In order to use this component directly you need to call {@link #getEditorComponent()}.  This
@@ -51,19 +46,14 @@ import ghidra.util.exception.CancelledException;
  * <p>
  * In order to know when changes are made to the component you need to add a DocumentListener
  * via the {@link #addDocumentListener(DocumentListener)} method.  The added listener will be
- * notified as the user enters text into the editor's text field.  Then, to determine when there
- * is as valid DataType in the field you may call {@link #validateUserSelection()}.
- *
- *
+ * notified as the user enters text into the editor's text field.
  */
-public class DataTypeSelectionEditor extends AbstractCellEditor {
+public class CategoryPathSelectionEditor extends AbstractCellEditor {
 
 	private JPanel editorPanel;
-	private DropDownSelectionTextField<DataType> selectionField;
+	private DropDownSelectionTextField<CategoryPath> selectionField;
 	private JButton browseButton;
 	private DataTypeManagerService dataTypeManagerService;
-	private DataTypeManager dataTypeManager;
-	private DataTypeParser.AllowedDataTypes allowedDataTypes;
 
 	private KeyAdapter keyListener;
 	private NavigationDirection navigationDirection;
@@ -74,38 +64,15 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	/**
 	 * Creates a new instance.
 	 * 
-	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
-	 * already in the preferred DTM will be suppressed.
 	 * @param serviceProvider {@link ServiceProvider} 
-	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
-	 * data types that will be shown  
 	 */
-	public DataTypeSelectionEditor(DataTypeManager dtm, ServiceProvider serviceProvider,
-			DataTypeParser.AllowedDataTypes allowedDataTypes) {
-		this(dtm, serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
-	}
+	public CategoryPathSelectionEditor(ServiceProvider serviceProvider) {
 
-	/**
-	 * Creates a new instance.
-	 * 
-	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
-	 * already in the preferred DTM will be suppressed.
-	 * @param service {@link DataTypeManagerService} 
-	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
-	 * data types that will be shown  
-	 */
-	public DataTypeSelectionEditor(DataTypeManager dtm, DataTypeManagerService service,
-			DataTypeParser.AllowedDataTypes allowedDataTypes) {
+		this.dataTypeManagerService = serviceProvider.getService(DataTypeManagerService.class);
 
-		this.dataTypeManager = dtm;
-
-		if (service == null) {
+		if (this.dataTypeManagerService == null) {
 			throw new NullPointerException("DataTypeManagerService cannot be null");
 		}
-
-		this.dataTypeManagerService = service;
-		this.allowedDataTypes = allowedDataTypes;
-
 		init();
 	}
 
@@ -119,14 +86,16 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		selectionField.setConsumeEnterKeyPress(consume);
 	}
 
-	protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(
-			DataTypeDropDownSelectionDataModel model) {
+	protected DropDownSelectionTextField<CategoryPath> createDropDownSelectionTextField(
+			CategoryPathDropDownSelectionDataModel model) {
 		return new DropDownSelectionTextField<>(model);
 	}
 
 	private void init() {
 		selectionField = createDropDownSelectionTextField(
-			new DataTypeDropDownSelectionDataModel(dataTypeManager, dataTypeManagerService));
+			new CategoryPathDropDownSelectionDataModel(dataTypeManagerService));
+		selectionField.setName("CategoryPath");
+		selectionField.getAccessibleContext().setAccessibleName("Category");
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
@@ -141,12 +110,16 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 			}
 		});
 
-		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
+		selectionField.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				selectionField.setEnabled(true);
+				selectionField.requestFocus();
+			}
+		});
 
 		JPanel browsePanel = buildBrowsePanel();
-
 		editorPanel = new JPanel();
-		editorPanel.setOpaque(false);
 		editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
 		editorPanel.add(selectionField);
 		editorPanel.add(browsePanel);
@@ -218,29 +191,29 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		browsePanel.setBorder(empty);
 
 		browseButton = new BrowseButton();
-		browseButton.setToolTipText("Browse the Data Manager");
-		browseButton.addActionListener(e -> showDataTypeBrowser());
-
+		browseButton.setToolTipText("Browse Existing Category Paths");
+		browseButton.addActionListener(e -> showBrowser());
 		browsePanel.add(browseButton);
 
 		return browsePanel;
 	}
 
+	/**
+	 * Retrieve the value in the cell.
+	 * @return categoryPath of the selected value from the drop-down
+	 */
 	@Override
-	public Object getCellEditorValue() {
+	public CategoryPath getCellEditorValue() {
 		return selectionField.getSelectedValue();
 	}
 
-	public DataType getCellEditorValueAsDataType() {
-		try {
-			if (validateUserSelection()) {
-				return selectionField.getSelectedValue();
-			}
-		}
-		catch (InvalidDataTypeException e) {
-			// just return null
-		}
-		return null;
+	/**
+	 * If a path was selected from the drop-down list, it is already 
+	 * well-formed and cannot be null. 
+	 * @return the selected category path as CategoryPath
+	 */
+	public CategoryPath getCellEditorValueAsCategoryPath() {
+		return selectionField.getSelectedValue();
 	}
 
 	/**
@@ -259,10 +232,18 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		return editorPanel;
 	}
 
-	public DropDownSelectionTextField<DataType> getDropDownTextField() {
+	/**
+	 * Retrieve the drop-down text field that holds the category path collection.
+	 * @return CategoryPath drop-down selection text field object
+	 */
+	public DropDownSelectionTextField<CategoryPath> getDropDownTextField() {
 		return selectionField;
 	}
 
+	/**
+	 * The browse button which opens a menu with the Category Path collection from the data manager.
+	 * @return browseButton
+	 */
 	public JButton getBrowseButton() {
 		return browseButton;
 	}
@@ -277,6 +258,9 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		this.initiallySelectedTreePath = path;
 	}
 
+	/**
+	 * Place focus on the selectionField.
+	 */
 	public void requestFocus() {
 		selectionField.requestFocus();
 	}
@@ -289,26 +273,28 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	}
 
 	/**
-	 * Sets the value to be edited on this cell editor.
-	 *
-	 * @param dataType The data type which is to be edited.
+	 * Sets the cell editor value as the entered String text.
+	 * @param text String input
 	 */
-	public void setCellEditorValue(DataType dataType) {
-		selectionField.setSelectedValue(dataType);
-		navigationDirection = null;
-	}
-
 	public void setCellEditorValueAsText(String text) {
 		selectionField.setText(text);
 		navigationDirection = null;
 	}
 
 	/**
+	 * Sets the value to be edited on this cell editor.
+	 *
+	 * @param path The data type which is to be edited.
+	 */
+	public void setCellEditorValue(CategoryPath path) {
+		selectionField.setSelectedValue(path);
+		navigationDirection = null;
+	}
+
+	/**
 	 * Adds a document listener to the text field editing component of this editor so that users
-	 * can be notified when the text contents of the editor change.  You may verify whether the
-	 * text changes represent a valid DataType by calling {@link #validateUserSelection()}.
+	 * can be notified when the text contents of the editor change.
 	 * @param listener the listener to add.
-	 * @see #validateUserSelection()
 	 */
 	public void addDocumentListener(DocumentListener listener) {
 		selectionField.getDocument().addDocumentListener(listener);
@@ -322,14 +308,26 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		selectionField.getDocument().removeDocumentListener(listener);
 	}
 
+	/**
+	 * Add the provided FocusListener to the selectionField.
+	 * @param listener FocusListener
+	 */
 	public void addFocusListener(FocusListener listener) {
 		selectionField.addFocusListener(listener);
 	}
 
+	/**
+	 * Remove the provided FocusListener from the selectionField.
+	 * @param listener FocusListener
+	 */
 	public void removeFocusListener(FocusListener listener) {
 		selectionField.removeFocusListener(listener);
 	}
 
+	/**
+	 * Toggle Tab key commits an edit. Sets the traversal key enabled field of the selectionField.
+	 * @param doesCommit Boolean
+	 */
 	public void setTabCommitsEdit(boolean doesCommit) {
 		selectionField.setFocusTraversalKeysEnabled(!doesCommit);
 
@@ -356,94 +354,114 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		selectionField.removeKeyListener(listener);
 	}
 
-	/**
-	 * Returns true if the current value of the data type editor is a know data type.
-	 * @return true if the current value of the data type editor is a know data type.
-	 * @throws InvalidDataTypeException If the current text in the editor's text field could not
-	 *         be parsed into a valid DataType
-	 */
-	public boolean validateUserSelection() throws InvalidDataTypeException {
-
-		// if it is not a known type, the prompt user to create new one
-		if (!isValidDataType()) {
-			return parseDataTypeTextEntry();
-		}
-
-		return true;
-	}
-
-	public boolean containsValidDataType() {
-		try {
-			return isValidDataType();
-		}
-		catch (InvalidDataTypeException e) {
-			return false;
-		}
-	}
-
-	private boolean isValidDataType() throws InvalidDataTypeException {
-		// look for the case where the user made a selection from the matching window, but
-		// then changed the text field text.
-		DataType selectedDataType = selectionField.getSelectedValue();
-		if (selectedDataType != null &&
-			selectionField.getText().equals(selectedDataType.getName())) {
-			DataTypeParser.ensureIsAllowableType(selectedDataType, allowedDataTypes);
-			return true;
-		}
-		return false;
-	}
-
-	// looks at the current text and the current data type and will return a non-null value if
-	// the current text starts with the name of the data type
-	private DataType getDataTypeRootForCurrentText() {
-		DataType dataType = selectionField.getSelectedValue();
-		if (dataType != null) {
-			String currentText = selectionField.getText();
-			DataType selectedBaseDataType = DataTypeUtils.getNamedBaseDataType(dataType);
-			if (currentText.startsWith(selectedBaseDataType.getName())) {
-				return selectedBaseDataType;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Parse datatype text entry using {@link DataTypeParser}.  Allows addition
-	 * of supported modifiers (e.g., arrays, pointers, etc.).
-	 * @return true if parse successful else false
-	 */
-	private boolean parseDataTypeTextEntry() throws InvalidDataTypeException {
-
-		if (selectionField.getText().trim().length() == 0) {
-			// no need to invoke parser on empty string
-			return false;
-		}
-
-		// we will create new pointer and array types by default
-		DataType newDataType = null;
-		DataTypeParser parser = new DataTypeParser(dataTypeManager, dataTypeManager,
-			dataTypeManagerService, allowedDataTypes);
-		try {
-			newDataType = parser.parse(selectionField.getText(), getDataTypeRootForCurrentText());
-		}
-		catch (CancelledException e) {
-			return false;
-		}
-
-		if (newDataType != null) {
-			selectionField.setSelectedValue(newDataType);
-			return true;
-		}
-		return false;
-	}
-
-	private void showDataTypeBrowser() {
-		// get the data type browser
-		DataType dataType = dataTypeManagerService.getDataType(initiallySelectedTreePath);
-		if (dataType != null) {
-			setCellEditorValue(dataType);
+	private void showBrowser() {
+		CategoryPath path = dataTypeManagerService.getCategoryPath(initiallySelectedTreePath);
+		if (path != null) {
+			setCellEditorValue(path);
 			selectionField.requestFocus();
 		}
 	}
 
+	/**
+	 * Enable or disable the Category Path Text Field. 
+	 * @param createStructureByName Boolean 
+	 */
+	public void setEnabled(boolean createStructureByName) {
+		selectionField.setEnabled(createStructureByName);
+	}
+
+	/**
+	 * Determine whether the Category Path Text Field is enabled. 
+	 * @return isEnabled boolean 
+	 */
+	public boolean isEnabled() {
+		return selectionField.isEnabled();
+	}
+
+	/**
+	 * CategoryPathDropDownSelectionDataModel class handles the display and selection of a 
+	 * Category Path.
+	 */
+	private class CategoryPathDropDownSelectionDataModel
+			implements DropDownTextFieldDataModel<CategoryPath> {
+
+		private List<CategoryPath> data;
+
+		public CategoryPathDropDownSelectionDataModel(DataTypeManagerService dataTypeService) {
+			data = dataTypeService.getSortedCategoryPathList();
+		}
+
+		@Override
+		public ListCellRenderer<CategoryPath> getListRenderer() {
+			return new CategoryPathDropDownRenderer();
+		}
+
+		@Override
+		public String getDescription(CategoryPath categoryPath) {
+			return null;
+		}
+
+		@Override
+		public String getDisplayText(CategoryPath categoryPath) {
+			return categoryPath.getPath();
+		}
+
+		@Override
+		public List<CategoryPath> getMatchingData(String searchText) {
+			if (searchText == null || searchText.length() == 0) {
+				return Collections.emptyList();
+			}
+
+			List<CategoryPath> results = new ArrayList<>();
+			for (CategoryPath path : data) {
+				String pathString = path.getPath();
+				if (pathString.contains(searchText)) {
+					results.add(path);
+				}
+			}
+			return results;
+		}
+
+		@Override
+		public int getIndexOfFirstMatchingEntry(List<CategoryPath> dataCollection, String text) {
+			int lastPreferredMatchIndex = -1;
+			for (int i = 0; i < data.size(); i++) {
+				CategoryPath dataType = data.get(i);
+				String dataTypeName = dataType.getName();
+				dataTypeName = dataTypeName.replaceAll(" ", "");
+				if (dataTypeName.equals(text)) {
+					// an exact match is the best possible match!
+					return i;
+				}
+
+				if (dataTypeName.equalsIgnoreCase(text)) {
+					// keep going, but remember this location, in case we don't find any more matches
+					lastPreferredMatchIndex = i;
+				}
+				else {
+					// we've encountered a non-matching entry--nothing left to search
+					return lastPreferredMatchIndex;
+				}
+			}
+
+			return -1; // we only get here when the list is empty
+		}
+
+		private class CategoryPathDropDownRenderer extends GListCellRenderer<CategoryPath> {
+
+			@Override
+			protected String getItemText(CategoryPath path) {
+				return path.getPath();
+			}
+
+			@Override
+			public Component getListCellRendererComponent(JList<? extends CategoryPath> list,
+					CategoryPath value, int index, boolean isSelected, boolean cellHasFocus) {
+
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				return this;
+			}
+		}
+
+	}
 }

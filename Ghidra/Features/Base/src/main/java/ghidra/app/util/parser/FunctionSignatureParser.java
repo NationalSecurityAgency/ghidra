@@ -353,6 +353,11 @@ public class FunctionSignatureParser {
 		}
 
 		@Override
+		public List<CategoryPath> getSortedCategoryPathList() {
+			return service.getSortedCategoryPathList();
+		}
+
+		@Override
 		public DataType getDataType(String filterText) {
 			return promptForDataType(filterText);
 		}

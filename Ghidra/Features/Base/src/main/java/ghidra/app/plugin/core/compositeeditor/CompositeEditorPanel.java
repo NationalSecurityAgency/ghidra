@@ -1158,8 +1158,6 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 		private int maxLength;
 		private boolean bitfieldAllowed;
 
-		private JPanel editorPanel;
-
 		@Override
 		public Component getTableCellEditorComponent(JTable table1, Object value,
 				boolean isSelected, int row, int column) {
@@ -1178,7 +1176,7 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 
 			editor.setCellEditorValue(dt);
 
-			return editorPanel;
+			return editor.getEditorComponent();
 		}
 
 		private void init() {
@@ -1193,7 +1191,7 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 			editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
 			textField = editor.getDropDownTextField();
-			textField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
+
 			editor.addCellEditorListener(new CellEditorListener() {
 				@Override
 				public void editingCanceled(ChangeEvent e) {
@@ -1206,17 +1204,8 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 				}
 			});
 
-			// force a small button for the table's cell editor
-			JButton dataTypeChooserButton = new JButton("...") {
-				@Override
-				public Dimension getPreferredSize() {
-					Dimension preferredSize = super.getPreferredSize();
-					preferredSize.width = 15;
-					return preferredSize;
-				}
-			};
-
-			dataTypeChooserButton.addActionListener(e -> Swing.runLater(() -> stopEdit(tool)));
+			JButton browseButton = editor.getBrowseButton();
+			browseButton.addActionListener(e -> Swing.runLater(() -> stopEdit(tool)));
 
 			textField.addFocusListener(new FocusAdapter() {
 				@Override
@@ -1226,10 +1215,6 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 				}
 			});
 
-			editorPanel = new JPanel();
-			editorPanel.setLayout(new BorderLayout());
-			editorPanel.add(textField, BorderLayout.CENTER);
-			editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
 		}
 
 		private void stopEdit(PluginTool tool) {

@@ -50,7 +50,7 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
-	public DataType getDataType(String filterText) {
+	public List<CategoryPath> getSortedCategoryPathList() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -162,7 +162,17 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public DataType getDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(TreePath selectedPath) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
 		throw new UnsupportedOperationException();
 	}
 

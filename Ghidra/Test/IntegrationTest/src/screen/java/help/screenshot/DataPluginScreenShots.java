@@ -19,6 +19,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JRadioButton;
+import javax.swing.JTable;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.junit.Test;
 
@@ -66,7 +69,21 @@ public class DataPluginScreenShots extends GhidraScreenShotGenerator {
 		GhidraTable table = (GhidraTable) getInstanceField("matchingStructuresTable", dialog);
 		selectRow(table, 2);
 
-		captureDialog(500, 400);
+		shrinkCategoryColumn(table);
+
+		captureDialog(600, 500);
+	}
+
+	private void shrinkCategoryColumn(JTable table) {
+
+		runSwing(() -> {
+			TableColumnModel columnModel = table.getColumnModel();
+			int columnIndex = columnModel.getColumnIndex("Category");
+			TableColumn column = columnModel.getColumn(columnIndex);
+			int size = 150;
+			column.setPreferredWidth(size);
+			column.setMaxWidth(size);
+		});
 	}
 
 	@Test
