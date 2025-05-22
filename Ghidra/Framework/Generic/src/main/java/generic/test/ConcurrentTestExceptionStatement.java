@@ -16,12 +16,10 @@
 package generic.test;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.runners.model.Statement;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 import junit.framework.AssertionFailedError;
@@ -204,10 +202,11 @@ public class ConcurrentTestExceptionStatement extends Statement {
 			return;
 		}
 
-		if (SystemUtilities.isInDevelopmentMode()) {
-			throw new AssertionFailedError("Test timeout after " +
-				TimeUnit.MINUTES.convert(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS) + " mins");
-		}
+//		Not sure why we were doing this before
+//		if (SystemUtilities.isInDevelopmentMode()) {
+//			throw new AssertionFailedError("Test timeout after " +
+//				TimeUnit.MINUTES.convert(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS) + " mins");
+//		}
 
 		String vmTrace = AbstractGenericTest.createStackTraceForAllThreads();
 		Msg.error(ConcurrentTestExceptionStatement.class,
