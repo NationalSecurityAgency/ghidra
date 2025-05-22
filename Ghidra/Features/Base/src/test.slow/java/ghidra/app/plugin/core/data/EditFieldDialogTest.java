@@ -55,7 +55,7 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		program = buildProgram();
 		env.open(program);
 		env.showTool();
-		editFieldAction = getAction(plugin, "Quick Edit Field");
+		editFieldAction = getAction(plugin, "Edit Field");
 		Data dataAt = program.getListing().getDataAt(addr(0x100));
 		structure = (Structure) dataAt.getDataType();
 		codeBrowser.toggleOpen(dataAt);
