@@ -5,7 +5,7 @@
 # a ghidra release using the command 
 # docker build -f docker/Dockerfile -t <image-name>
 ###############################################################
-FROM alpine:3.20 as base
+FROM alpine:3.20 AS base
 
 LABEL org.opencontainers.image.title="ghidra" \
 	org.opencontainers.image.description="Docker image for Ghidra" \
@@ -17,12 +17,9 @@ LABEL org.opencontainers.image.title="ghidra" \
 RUN addgroup -g 1001 -S ghidra && adduser -u 1001 -S ghidra -G ghidra
 ENTRYPOINT ["/bin/bash", "/ghidra/docker/entrypoint.sh"]
 # Set JAVA_HOME so that we don't need to do this manually when Ghidra is first started.
-ENV JAVA_HOME /usr/lib/jvm/java-21-openjdk
-ENV LD_LIBRARY_PATH /usr/lib/jvm/java-21-openjdk/lib/:/usr/lib/jvm/java-21-openjdk/lib/server/
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-21-openjdk/lib/:/usr/lib/jvm/java-21-openjdk/lib/server/
 WORKDIR /ghidra
-
-# validate build context is correct. an error will happen if this file is not present.
-COPY ./ghidraRun ./ghidraRun
 
 # update and install dependencies used to both build and run ghidra
 RUN apk update \
@@ -32,7 +29,7 @@ RUN apk update \
         linux-headers libressl-dev \
         && update-ms-fonts
 
-FROM base as build
+FROM base AS build
 
 # install additional dependencies used to build ghidra
 RUN apk add gradle \
@@ -51,7 +48,7 @@ RUN /ghidra/Ghidra/Features/BSim/support/make-postgres.sh \
 		&& mkdir /ghidra/repositories && mkdir /ghidra/bsim_datadir
 
 
-FROM base as runtime
+FROM base AS runtime
 
 # install additional dependencies needed for running ghidra
 RUN apk add openssl openssh-client \
