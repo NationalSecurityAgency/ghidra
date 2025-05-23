@@ -50,7 +50,7 @@ public class RenameStructFieldTask extends RenameTask {
 		DataTypeComponent comp = structure.getComponentAt(offset);
 		if (comp.getDataType() == DataType.DEFAULT) {		// Is this just a placeholder
 			DataType newtype = new Undefined1DataType();
-			structure.replaceAtOffset(offset, newtype, 1, newName, "Created by retype action");
+			structure.replaceAtOffset(offset, newtype, 1, newName, "Created by Rename Structure Field action");
 		}
 		else {
 			comp.setFieldName(newName);
