@@ -266,12 +266,13 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	/**
 	 * Gets an {@link Iterator} over this {@link GFileSystem}'s {@link GFile files}.
 	 * 
-	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}
+	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}. If
+	 *   {@code null}, iteration will start at the root of the {@link GFileSystem}.
 	 * @throws UncheckedIOException if {@code dir} is not a directory
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
 	default Iterable<GFile> files(GFile dir) throws UncheckedIOException {
-		return () -> new GFileSystemIterator(dir);
+		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()));
 	}
 
 	/**
@@ -287,14 +288,16 @@ public interface GFileSystem extends Closeable, Iterable<GFile>, ExtensionPoint 
 	/**
 	 * Gets an {@link Iterator} over this {@link GFileSystem}'s {@link GFile files}.
 	 * 
-	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}
+	 * @param dir The {@link GFile directory} to start iterating at in this {@link GFileSystem}. If
+	 *   {@code null}, iteration will start at the root of the {@link GFileSystem}.
 	 * @param fileFilter A filter to apply to the {@link GFile files} iterated over
 	 * @throws UncheckedIOException if {@code dir} is not a directory
 	 * @return An {@link Iterable} over this {@link GFileSystem}'s {@link GFile files}.
 	 */
 	default Iterable<GFile> files(GFile dir, Predicate<GFile> fileFilter)
 			throws UncheckedIOException {
-		return () -> new GFileSystemIterator(dir, fileFilter);
+		return () -> new GFileSystemIterator(Objects.requireNonNullElse(dir, getRootDir()),
+			fileFilter);
 	}
 
 	@Override
