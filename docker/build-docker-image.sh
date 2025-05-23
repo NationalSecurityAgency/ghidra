@@ -31,12 +31,12 @@ fi
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-if [! -e $SCRIPT_DIR/../ghidraRun] then
+if [! -e $SCRIPT_DIR/../ghidraRun]; then
 	echo "ERROR: This script must be run on a built release of Ghidra."
 	exit 1
 fi
 
-if [! -e $SCRIPT_DIR/../Ghidra/application.properties] then
+if [! -e $SCRIPT_DIR/../Ghidra/application.properties]; then
 	echo "ERROR: $SCRIPT_DIR/../Ghidra/application.properties does not exist. Dockerized Ghidra needs this file to get tagging information."
 	exit 1
 fi
