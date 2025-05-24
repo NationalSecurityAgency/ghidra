@@ -2590,7 +2590,9 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   int4 id1 = emit->openGroup();
   emitSymbolScope(fd->getSymbol());
   emit->tagFuncName(fd->getDisplayName(),EmitMarkup::funcname_color,fd,(PcodeOp *)0);
-
+  if (proto->isNoReturn()) {
+    emit->tagNoreturn(EmitMarkup::no_color);
+  }
   emit->spaces(function_call.spacing,function_call.bump);
   int4 id2 = emit->openParen(OPEN_PAREN);
   emit->spaces(0,function_call.bump);
@@ -2598,7 +2600,6 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   emitPrototypeInputs(proto);
   emit->closeParen(CLOSE_PAREN,id2);
   emit->closeGroup(id1);
-
   emit->endFuncProto(id);
 }
 
