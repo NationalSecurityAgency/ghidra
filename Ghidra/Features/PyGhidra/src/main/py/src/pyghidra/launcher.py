@@ -152,6 +152,29 @@ def _plugin_lock():
             # it will be removed by said process when done
             pass
 
+def _lastrun() -> Path:
+
+    lastrun_file: Path = None
+    lastrun_rel: Path = Path('ghidra/lastrun')
+    
+    # Check for XDG_CONFIG_HOME environment variable
+    xdg_config_home: str = os.environ.get('XDG_CONFIG_HOME')
+    if xdg_config_home:
+        lastrun_file = Path(xdg_config_home) / lastrun_rel
+    else:
+        # Default to platform-specific locations
+        if platform.system() == 'Windows':
+            lastrun_file = Path(os.environ['APPDATA']) / lastrun_rel
+        elif platform.system() == 'Darwin':
+            lastrun_file = Path.home() / 'Library' / lastrun_rel
+        else:
+            lastrun_file = Path.home() / '.config' / lastrun_rel
+            
+    if lastrun_file is not None and lastrun_file.is_file():
+        with open(lastrun_file, "r") as file:
+            return Path(file.readline().strip())
+        
+    return None
 
 class PyGhidraLauncher:
     """
@@ -164,7 +187,7 @@ class PyGhidraLauncher:
 
         :param verbose: True to enable verbose output when starting Ghidra.
         :param install_dir: Ghidra installation directory.
-            (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+            (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
         :raises ValueError: If the Ghidra installation directory is invalid.
         """
         self._layout = None
@@ -173,7 +196,7 @@ class PyGhidraLauncher:
         self._dev_mode = False
         self._extension_path = None
 
-        install_dir = install_dir or os.getenv("GHIDRA_INSTALL_DIR")
+        install_dir = install_dir or os.getenv("GHIDRA_INSTALL_DIR") or _lastrun()
         self._install_dir = self._validate_install_dir(install_dir)
 
         java_home_override = os.getenv("JAVA_HOME_OVERRIDE")
