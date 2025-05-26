@@ -959,6 +959,39 @@ typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**
+ ** C23 enum types
+ **/
+enum _C23_enum_char: char {
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_short : short
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_int : int
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_long : long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+enum _C23_enum_longlong : long long
+{
+    A = 1,
+    B = 2,
+    C = 3
+};
+
+/**
  ** Casting
  **/
 char * retInitedStorage(int i)
