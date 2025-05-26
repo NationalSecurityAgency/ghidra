@@ -479,6 +479,22 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 			((Enum) dt).getValue("SHIFTED3"));
 		assertEquals("enum options_enum not correct", 15 >> 3 << 3,
 			((Enum) dt).getValue("SHIFTED4"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_char");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_char size not correct", 1, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_short");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_short size not correct", 2, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_int");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_int size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_long");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_long size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_longlong");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_longlong size not correct", 8, dt.getLength());
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "__checkint");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
