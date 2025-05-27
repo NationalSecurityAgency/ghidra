@@ -55,7 +55,7 @@ def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
 
     :param verbose: Enable verbose output during JVM startup (Defaults to False)
     :param install_dir: The path to the Ghidra installation directory.
-        (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
     :return: The PyGhidraLauncher used to start the JVM
     """
 ```
@@ -222,7 +222,7 @@ def run_script(
         This may be either a Java class or its path. (Defaults to None)
     :param install_dir: The path to the Ghidra installation directory. This parameter is only
         used if Ghidra has not been started yet.
-        (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
     :param program_name: The name of the program to open in Ghidra.
         (Defaults to None, which results in the name being derived from "binary_path")
     :param nested_project_location: If True, assumes "project_location" contains an extra nested 
@@ -330,6 +330,10 @@ __2.2.0:__
   [`pyghidra.run_script()`](#pyghidrarun_script) now accept a `nested_project_location` parameter
   which can be set to `False` to open existing Ghidra projects that were created with the
   Ghidra GUI.
+* If a Ghidra installation directory is not specified by the `install_dir` parameter or
+  `GHIDRA_INSTALL_DIR` environment variable, PyGhidra will look for a `lastrun` file in the
+  Ghidra user settings parent directory, and use the installation directory it specifies.  The
+  `lastrun` file is created by Ghidra 11.4 and later.
 
 __2.1.0:__
 * [`pyghidra.open_program()`](#pyghidraopen_program) now accepts a `program_name` parameter, which
