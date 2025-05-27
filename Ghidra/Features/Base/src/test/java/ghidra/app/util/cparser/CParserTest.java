@@ -495,6 +495,50 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_longlong");
 		assertTrue(dt instanceof Enum);
 		assertEquals("enum _C23_enum_longlong size not correct", 8, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_gnu");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_gnu size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "non_packed_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum non_packed_enum size not correct", 4, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_negative_enum size not correct", 1, dt.getLength());
+		assertEquals("enum packed_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum packed_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum packed_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "normal_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum normal_negative_enum size not correct", 4, dt.getLength());
+		assertEquals("enum normal_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum normal_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum normal_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "__checkint");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
