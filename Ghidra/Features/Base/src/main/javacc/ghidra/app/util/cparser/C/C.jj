@@ -521,7 +521,6 @@ public class CParser {
         String enumName = (t != null ? t.image : ("enum_" + cnt++));
         int defaultSize = (dtMgr != null && dtMgr.getDataOrganization() != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
         int initialEnumSize = defaultSize;
-        addNearParseMessage("Enum " + enumName + " is packed: " + isPacked);
         
         if (underlyingTypeDecl != null) {
             DataType resolvedUnderlyingType = underlyingTypeDecl.getDataType();
