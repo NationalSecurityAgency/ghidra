@@ -19,6 +19,7 @@ import java.io.*;
 
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
+import ghidra.framework.store.local.UnknownFolderItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -77,7 +78,9 @@ public interface FileSystem {
 	/**
 	 * Returns a list of the folder items contained in the given folder.
 	 * @param folderPath the path of the folder.
-	 * @return a list of folder items.
+	 * @return a list of folder items.  Null items may exist if index contained item name
+	 * while storage was not found.  An {@link UnknownFolderItem} may be returned if unsupported
+	 * item storage encountered.
 	 * @throws IOException
 	 */
 	public FolderItem[] getItems(String folderPath) throws IOException;

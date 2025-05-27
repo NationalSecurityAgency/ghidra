@@ -55,10 +55,14 @@
       checked out "disappear" from the Ghidra Project Window, as they are unavailable. Private
       files remain intact and are not affected by the server connection.</P>
 
-      <P><IMG alt="" src="help/shared/tip.png" border="0">You are authenticated only once per
-      Ghidra session; so if you open other project repositories managed by the same Ghidra Server,
-      you will be prompted only once for a password, as required.&nbsp;</P>
-
+	  <BLOCKQUOTE>
+    	<P>
+    	<IMG SRC="help/shared/tip.png" />
+  		You are authenticated only once per
+  		Ghidra session; so if you open other project repositories managed by the same Ghidra Server,
+  		you will be prompted only once for a password, as required.&nbsp;</P>
+	  </BLOCKQUOTE>
+	  
       <H3><A name="Troubleshooting"></A>Troubleshooting a Failed Connection</H3>
 
       <BLOCKQUOTE>
@@ -133,17 +137,25 @@
         has not been added to version control (note the plain icon and no version information). It
         is considered to be a "private" file. Private files are never visible to other users.</P>
 
-        <P><IMG alt="" src="help/shared/note.png" border="0"> A normal checkout is indicated by a
-        checkmark with a green background<IMG alt="" src="images/check.png" border="0">, while an
-        exclusive checkout is indicated by checkmark with a blue background<IMG alt="" src=
-        "images/checkex.png" border="0">. A checkmark with a red background<IMG alt="" src=
-        "images/checkNotLatest.gif" border="0"> indicates that a newer version has been checked-in
-        by another user.</P>
-
-        <P align="left">A tool tip on the file (let the mouse pointer hover over it) shows the date
-        the file was checked out, and the date that is was last modified. An asterisk will appear
-        on the file icon to indicate that changes have been made but not checked in.<BR>
-        </P>
+		<BLOCKQUOTE>
+    		<P>
+    		<IMG SRC="help/shared/tip.png" />
+  			A normal checkout is indicated by a
+        	checkmark with a green background<IMG alt="" src="images/check.png" border="0">, while an
+        	exclusive checkout is indicated by checkmark with a blue background<IMG alt="" src=
+        	"images/checkex.png" border="0">. A checkmark with a red background<IMG alt="" src=
+        	"images/checkNotLatest.gif" border="0"> indicates that a newer version has been checked-in
+        	by another user.</P>
+	  	</BLOCKQUOTE>
+	  	
+	  	<BLOCKQUOTE>
+    		<P>
+    		<IMG SRC="help/shared/note.png" />
+  			A tool tip on the file (let the mouse pointer hover over it) shows the date
+        	the file was checked out, and the date that is was last modified. An asterisk will appear
+        	on the file icon to indicate that changes have been made but not checked in.</P>
+	  	</BLOCKQUOTE>
+	  	
       </BLOCKQUOTE>
 
       <H3>Check Out<A name="CheckOut"></A> <IMG alt="" src="images/vcCheckOut.png" border=
@@ -171,8 +183,12 @@
         out. While the exclusive lock exists, no other user can check out the file.<BR>
         </P>
 
-        <P><IMG alt="" src="help/shared/note.png" border="0"> The exclusive lock is implied for a
-        non-shared project repository.</P>
+		<BLOCKQUOTE>
+    		<P>
+    		<IMG SRC="help/shared/note.png" />
+  			The exclusive lock is implied for a non-shared project repository.</P>
+	  	</BLOCKQUOTE>
+	  	
       </BLOCKQUOTE>
 
       <H3>Check In<A name="CheckIn"></A> <IMG alt="" src="images/vcCheckIn.png" border=
@@ -185,11 +201,15 @@
         either click on the check in icon <IMG alt="" src="images/vcCheckIn.png" border="0"> on the
         tool bar, or right mouse click and select the <B>Check In...</B> option.&nbsp;</P>
 
-        <P><IMG alt="" src="help/shared/tip.png" border="0">The <IMG alt="" src=
-        "images/vcCheckIn.png" border="0"> icon is also available from the tool where you have the
-        file opened.&nbsp;</P>
+		<P>A dialog is displayed so that you can enter comments that describe your changes.</P>
 
-        <P>A dialog is displayed so that you can enter comments that describe your changes.</P>
+		<BLOCKQUOTE>
+    		<P>
+    		<IMG SRC="help/shared/tip.png" />
+  			The <IMG alt="" src="images/vcCheckIn.png" border="0"> toolbar action icon is also 
+  			available from within the tool where you have the file opened.</P>
+	  	</BLOCKQUOTE>
+        
       </BLOCKQUOTE>
 
       <P align="center"><IMG alt="" src="images/CheckInFile.png" border="0"></P>
@@ -240,10 +260,26 @@
         <P align="left">If the checkbox on the dialog is selected, then a private file is created
         with a ".keep" extension on the filename. The checkbox is selected by default.&nbsp;</P>
 
-        <P align="left"><IMG alt="" src="help/shared/note.png" border="0">If you have the file
-        open in the Code Browser when you attempt to undo the check out, you will get an error
-        dialog indicating that the file is in use. You must close the file first, then undo check
-        out.</P>
+ 		<BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="help/shared/note.yellow.png" />
+        	If you have the file
+        	open in the Code Browser when you attempt to undo the check out, you will get an error
+        	dialog indicating that the file is in use. You must close the file first, then undo check
+        	out.</P>
+        </BLOCKQUOTE>
+        
+        <BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="help/shared/note.png" />
+        	When a file is checked-out a copy of the file and 
+        	its folder path is created within the private project data store.  When an undo checkout
+        	is performed that file and any empty parent folders are removed from the private data 
+        	store.  This is done to ensure any folder name changes or removals within a shared project 
+        	repository are properly reflected while connected and avoid showing old/stale folders. 
+        	</P>
+        </BLOCKQUOTE>
+        
       </BLOCKQUOTE>
 
       <H3>Update<A name="Update"></A> <IMG alt="" src="images/vcMerge.png" border="0">&nbsp;</H3>
@@ -276,12 +312,19 @@
         option is only enabled when the latest version number on the server is <B>greater</B> than
         the version that you checked out.&nbsp;&nbsp;</P>
 
-        <P><IMG alt="" src="help/shared/tip.png" border="0">&nbsp; The <IMG alt="" src=
-        "images/vcMerge.png" border="0"> icon is also available from the tool where you have the
-        file opened.</P>
-
-        <P><IMG alt="" src="help/shared/note.png" border="0"> The update action is not applicable
-        in a non-shared project repository.</P>
+		<BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="help/shared/tip.png" />
+        	The <IMG alt="" src="images/vcMerge.png" border="0"> icon is also available from the 
+        	tool where you have the file opened.</P>
+        </BLOCKQUOTE>
+        
+        <BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="help/shared/note.png" />
+        	The update action is not applicable in a non-shared project repository.</P>
+        </BLOCKQUOTE>
+ 
       </BLOCKQUOTE>
 
       <H3>&nbsp;</H3>
@@ -343,23 +386,27 @@
         version 10 of SharedProgram.exe.&nbsp; You can make changes to the file, but you must save
         it to a new name.</P>
 
-        <P><IMG alt="" src="help/shared/tip.png" border="0">&nbsp; Other ways to open a specific
-        version in a tool are:</P>
+		<BLOCKQUOTE>
+        	<P>
+        	<IMG SRC="help/shared/tip.png" />
+        	Other ways to open a specific version in a tool are:</P>
 
-        <UL>
-          <LI>Drag a version from the <I>Version History</I> dialog to a running tool, the running
-          tool's icon, or to a tool icon in the tool chest.</LI>
-
-          <LI>If you have a <A href=
-          "help/topics/Tool/Ghidra_Tool_Administration.htm#Set_Tool_Associations">default tool</A>
-          specified, double click on the version that you want to open.</LI>
-
-          <LI>Choose the <B>File</B><IMG alt="" src="help/shared/arrow.gif" border=
-          "0"><B>Open...</B> option; the <A href=
-          "help/topics/ProgramManagerPlugin/Opening_Program_Files.htm#VersionHistory">Open Program
-          dialog</A> is displayed; from this dialog you can select a version to
-          open.&nbsp;&nbsp;</LI>
-        </UL>
+	        <UL>
+	          <LI>Drag a version from the <I>Version History</I> dialog to a running tool, the running
+	          tool's icon, or to a tool icon in the tool chest.</LI>
+	
+	          <LI>If you have a <A href=
+	          "help/topics/Tool/Ghidra_Tool_Administration.htm#Set_Tool_Associations">default tool</A>
+	          specified, double click on the version that you want to open.</LI>
+	
+	          <LI>Choose the <B>File</B><IMG alt="" src="help/shared/arrow.gif" border=
+	          "0"><B>Open...</B> option; the <A href=
+	          "help/topics/ProgramManagerPlugin/Opening_Program_Files.htm#VersionHistory">Open Program
+	          dialog</A> is displayed; from this dialog you can select a version to
+	          open.&nbsp;&nbsp;</LI>
+	        </UL>
+        </BLOCKQUOTE>
+        
       </BLOCKQUOTE>
 
       <H3>Delete</H3>

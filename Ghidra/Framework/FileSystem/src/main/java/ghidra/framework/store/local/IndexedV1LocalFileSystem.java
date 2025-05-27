@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,15 @@ package ghidra.framework.store.local;
 import java.io.*;
 import java.util.HashMap;
 
-import ghidra.framework.store.FolderItem;
 import ghidra.util.Msg;
 import ghidra.util.PropertyFile;
 import ghidra.util.exception.NotFoundException;
 
 /**
- * <code>IndexedLocalFileSystem</code> implements a case-sensitive indexed filesystem
+ * <code>IndexedV1LocalFileSystem</code> implements a case-sensitive indexed filesystem
  * which uses a shallow storage hierarchy with no restriction on file name or path 
  * length.  This filesystem is identified by the existence of an index file (~index.dat) 
- * and recovery journal (~index.jrn).
+ * and recovery journal (~index.jrn).  File system also maintains a file-ID mapping.
  */
 public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 
