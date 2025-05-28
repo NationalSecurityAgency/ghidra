@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	public static final String POINTER_NAME = "pointer";
 	public static final String POINTER_LABEL_PREFIX = "PTR";
+	public static final String POINTER_LABEL_PREFIX_U = POINTER_LABEL_PREFIX + "_";
 	public static final String POINTER_LOOP_LABEL_PREFIX = "PTR_LOOP";
 	public static final String NOT_A_POINTER = "NaP";
 
@@ -203,16 +204,6 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return POINTER_LABEL_PREFIX;
 		}
 
-		PointerReferenceClassification pointerClassification =
-			getPointerClassification(program, ref);
-		if (pointerClassification == PointerReferenceClassification.DEEP) {
-			// pointer exceed depth limit of 2
-			return POINTER_LABEL_PREFIX + "_" + POINTER_LABEL_PREFIX;
-		}
-		if (pointerClassification == PointerReferenceClassification.LOOP) {
-			return POINTER_LOOP_LABEL_PREFIX;// pointer is self referencing
-		}
-
 		Symbol symbol = program.getSymbolTable().getSymbol(ref);
 		if (symbol == null) {
 			// unexpected
@@ -222,7 +213,21 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		String symName = symbol.getName();
 		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
 		symName = symName.replace(Namespace.DELIMITER, "_");
-		return POINTER_LABEL_PREFIX + "_" + symName;
+
+		if (!symName.startsWith(POINTER_LABEL_PREFIX_U)) {
+			return POINTER_LABEL_PREFIX_U + symName;
+		}
+
+		PointerReferenceClassification pointerClassification =
+			getPointerClassification(program, ref);
+		if (pointerClassification == PointerReferenceClassification.DEEP) {
+			// pointer exceed depth limit of 2
+			return POINTER_LABEL_PREFIX_U + POINTER_LABEL_PREFIX;
+		}
+		if (pointerClassification == PointerReferenceClassification.LOOP) {
+			return POINTER_LOOP_LABEL_PREFIX;// pointer is self referencing
+		}
+		return POINTER_LABEL_PREFIX_U + symName;
 	}
 
 	private enum PointerReferenceClassification {
