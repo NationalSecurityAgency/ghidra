@@ -26,22 +26,27 @@ public class NullOutputStream extends OutputStream {
 	public NullOutputStream() {
 	}
 
+	@Override
 	public void write(int b) throws IOException {
 		// nada
 	}
 
+	@Override
 	public void write(byte b[]) throws IOException {
 		// nada
 	}
 
+	@Override
 	public void write(byte b[], int off, int len) throws IOException {
 		// nada
 	}
 
+	@Override
 	public void flush() throws IOException {
 		// nada
 	}
 
+	@Override
 	public void close() throws IOException {
 		// nada
 	}
