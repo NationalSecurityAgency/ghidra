@@ -2933,15 +2933,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 				if (allowsDefaultBuiltInSettings() &&
 					builtInDt.getSettingsDefinitions().length != 0) {
+					// Alter built-in datatype instance to use new DB-backed default settings which 
+					// facilitates user adjustments to the original default settings.
 					DataTypeSettingsDB settings =
 						new DataTypeSettingsDB(this, builtInDt, dataTypeID);
-					if (builtInDt instanceof TypeDef) {
-						// Copy default immutable builtin typedef settings
-						Settings typedefSettings = builtInDt.getDefaultSettings();
-						for (String n : typedefSettings.getNames()) {
-							settings.setValue(n, typedefSettings.getValue(n));
-						}
-					}
+					settings.setDefaultSettings(builtInDt.getDefaultSettings());
 					settings.setAllowedSettingPredicate(n -> isBuiltInSettingAllowed(builtInDt, n));
 					builtInDt.setDefaultSettings(settings);
 				}
