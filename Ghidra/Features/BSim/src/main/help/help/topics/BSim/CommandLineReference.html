@@ -268,6 +268,7 @@
 <CODE class&nbsp;"computeroutput">
     bsim createdatabase  &lt;bsimURL&gt; &lt;config_template&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"] [--nocallgraph]
     bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]\n" + 
+    bsim getmetadata     &lt;bsimURL&gt;
     bsim addexecategory  &lt;bsimURL&gt; &lt;category_name&gt; [--date]
     bsim addfunctiontag  &lt;bsimURL&gt; &lt;tag_name&gt;
     bsim dropindex       &lt;bsimURL&gt;
@@ -371,6 +372,16 @@
 
                 <P><SPAN class="command"><STRONG>--description|-d</STRONG></SPAN> - specifies a short
                 string describing the intended contents of the new repository.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>getmetadata</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Show the global <SPAN class="emphasis"><EM>name</EM></SPAN>, <SPAN class=
+                "emphasis"><EM>owner</EM></SPAN>, and <SPAN class=
+                "emphasis"><EM>description</EM></SPAN> metadata associated with a BSim server. A
+                BSim server URL is required.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
