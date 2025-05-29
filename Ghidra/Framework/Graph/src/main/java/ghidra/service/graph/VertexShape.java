@@ -157,6 +157,7 @@ public abstract class VertexShape {
 			super("Rectangle", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			return new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0);
 		}
@@ -168,6 +169,7 @@ public abstract class VertexShape {
 			super("Ellipse", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			return new Ellipse2D.Double(-1.0, -1.0, 2.0, 2.0);
 		}
@@ -184,6 +186,7 @@ public abstract class VertexShape {
 			super("Triangle Up", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(-1.0, 1.0);
@@ -209,6 +212,7 @@ public abstract class VertexShape {
 			super("Triangle Down", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(-1.0, -1.0);
@@ -235,6 +239,7 @@ public abstract class VertexShape {
 			super("Star", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			int numPoints = 7;
 			Path2D path = new Path2D.Double();
@@ -264,6 +269,7 @@ public abstract class VertexShape {
 			super("Diamond", size);
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 			path.moveTo(0.0, -1.0);
@@ -291,6 +297,7 @@ public abstract class VertexShape {
 			this.startAngle = startAngle;
 		}
 
+		@Override
 		protected Shape createShape() {
 			Path2D path = new Path2D.Double();
 

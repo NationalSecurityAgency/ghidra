@@ -199,6 +199,7 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 			return funcAddr.equals(method.getTfn());
 		}
 		
+		@Override
 		public String toString() {
 			return type.getMethodPrototypeString(method.getName(), getMethodFuncType());
 		}

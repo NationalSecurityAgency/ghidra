@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +62,7 @@ class InvertableImageIcon implements Icon {
 	/**
 	 * @see javax.swing.Icon#getIconHeight()
 	 */
+	@Override
 	public int getIconHeight() {
 		return icon.getIconHeight();
 	}
@@ -70,6 +70,7 @@ class InvertableImageIcon implements Icon {
 	/**
 	 * @see javax.swing.Icon#getIconWidth()
 	 */
+	@Override
 	public int getIconWidth() {
 		return icon.getIconWidth();
 	}
@@ -77,6 +78,7 @@ class InvertableImageIcon implements Icon {
 	/**
 	 * @see javax.swing.Icon#paintIcon(java.awt.Component, java.awt.Graphics, int, int)
 	 */
+	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
 		icon.paintIcon(c, g, x, y);
 	}

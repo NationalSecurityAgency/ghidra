@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putInt(int)
 	 */
+	@Override
 	public void putInt(int value) {
 		table.putInt(row, col++, value);
 	}
@@ -46,6 +47,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putByte(byte)
 	 */
+	@Override
 	public void putByte(byte value) {
 		table.putByte(row, col++, value);
 	}
@@ -53,6 +55,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putShort(short)
 	 */
+	@Override
 	public void putShort(short value) {
 		table.putShort(row, col++, value);
 	}
@@ -60,6 +63,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putLong(long)
 	 */
+	@Override
 	public void putLong(long value) {
 		table.putLong(row, col++, value);
 	}
@@ -67,6 +71,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putString(String)
 	 */
+	@Override
 	public void putString(String value) {
 		table.putString(row, col++, value);
 	}
@@ -74,6 +79,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putBoolean(boolean)
 	 */
+	@Override
 	public void putBoolean(boolean value) {
 		table.putBoolean(row, col++, value);
 	}
@@ -81,6 +87,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putFloat(float)
 	 */
+	@Override
 	public void putFloat(float value) {
 		table.putFloat(row, col++, value);
 	}
@@ -88,6 +95,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putDouble(double)
 	 */
+	@Override
 	public void putDouble(double value) {
 		table.putDouble(row, col++, value);
 	}
@@ -95,6 +103,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getInt()
 	 */
+	@Override
 	public int getInt() {
 		return table.getInt(row, col++);
 	}
@@ -102,6 +111,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getByte()
 	 */
+	@Override
 	public byte getByte() {
 		return table.getByte(row, col++);
 	}
@@ -109,6 +119,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getShort()
 	 */
+	@Override
 	public short getShort() {
 		return table.getShort(row, col++);
 	}
@@ -116,6 +127,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getLong()
 	 */
+	@Override
 	public long getLong() {
 		return table.getLong(row, col++);
 	}
@@ -123,6 +135,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getBoolean()
 	 */
+	@Override
 	public boolean getBoolean() {
 		return table.getBoolean(row, col++);
 	}
@@ -130,6 +143,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getString()
 	 */
+	@Override
 	public String getString() {
 		return table.getString(row, col++);
 	}
@@ -137,6 +151,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getFloat()
 	 */
+	@Override
 	public float getFloat() {
 		return table.getFloat(row, col++);
 	}
@@ -144,6 +159,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getDouble()
 	 */
+	@Override
 	public double getDouble() {
 		return table.getDouble(row, col++);
 	}
@@ -151,6 +167,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putInts(int[])
 	 */
+	@Override
 	public void putInts(int[] value) {
 		table.putIntArray(row, col++, value);
 	}
@@ -158,6 +175,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putBytes(byte[])
 	 */
+	@Override
 	public void putBytes(byte[] value) {
 		table.putByteArray(row, col++, value);
 	}
@@ -165,6 +183,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putShorts(short[])
 	 */
+	@Override
 	public void putShorts(short[] value) {
 		table.putShortArray(row, col++, value);
 	}
@@ -172,6 +191,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putLongs(long[])
 	 */
+	@Override
 	public void putLongs(long[] value) {
 		table.putLongArray(row, col++, value);
 	}
@@ -179,6 +199,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putFloats(float[])
 	 */
+	@Override
 	public void putFloats(float[] value) {
 		table.putFloatArray(row, col++, value);
 	}
@@ -186,6 +207,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putDoubles(double[])
 	 */
+	@Override
 	public void putDoubles(double[] value) {
 		table.putDoubleArray(row, col++, value);
 	}
@@ -193,6 +215,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getInts()
 	 */
+	@Override
 	public int[] getInts() {
 		return table.getIntArray(row, col++);
 	}
@@ -200,6 +223,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getBytes()
 	 */
+	@Override
 	public byte[] getBytes() {
 		return table.getByteArray(row, col++);
 	}
@@ -207,6 +231,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getShorts()
 	 */
+	@Override
 	public short[] getShorts() {
 		return table.getShortArray(row, col++);
 	}
@@ -214,6 +239,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getLongs()
 	 */
+	@Override
 	public long[] getLongs() {
 		return table.getLongArray(row, col++);
 	}
@@ -222,6 +248,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getFloats()
 	 */
+	@Override
 	public float[] getFloats() {
 		return table.getFloatArray(row, col++);
 	}
@@ -229,6 +256,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getDoubles()
 	 */
+	@Override
 	public double[] getDoubles() {
 		return table.getDoubleArray(row, col++);
 	}
@@ -236,6 +264,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#getStrings()
 	 */
+	@Override
 	public String[] getStrings() {
 		return table.getStringArray(row, col++);
 	}
@@ -243,6 +272,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	/**
 	 * @see ObjectStorage#putStrings(String[])
 	 */
+	@Override
 	public void putStrings(String[] value) {
 		table.putStringArray(row, col++, value);
 	}

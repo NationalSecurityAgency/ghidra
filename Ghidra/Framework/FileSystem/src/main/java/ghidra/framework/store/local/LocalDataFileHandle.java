@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +43,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#read(byte[])
 	 */
+	@Override
 	public void read(byte[] b) throws IOException {
 		raf.readFully(b);
 	}
@@ -51,6 +51,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#read(byte[], int, int)
 	 */
+	@Override
 	public void read(byte[] b, int off, int len) throws IOException {
 		raf.readFully(b, off, len);
 	}
@@ -58,6 +59,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#skipBytes(int)
 	 */
+	@Override
 	public int skipBytes(int n) throws IOException {
 		return raf.skipBytes(n);
 	}
@@ -65,6 +67,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#write(int)
 	 */
+	@Override
 	public void write(int b) throws IOException {
 		raf.write(b);
 	}
@@ -72,6 +75,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#write(byte[])
 	 */
+	@Override
 	public void write(byte[] b) throws IOException {
 		raf.write(b);
 	}
@@ -79,6 +83,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#write(byte[], int, int)
 	 */
+	@Override
 	public void write(byte[] b, int off, int len) throws IOException {
 		raf.write(b, off, len);
 	}
@@ -86,6 +91,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#seek(long)
 	 */
+	@Override
 	public void seek(long pos) throws IOException {
 		raf.seek(pos);
 	}
@@ -93,6 +99,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#length()
 	 */
+	@Override
 	public long length() throws IOException {
 		return raf.length();
 	}
@@ -100,6 +107,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#setLength(long)
 	 */
+	@Override
 	public void setLength(long newLength) throws IOException {
 		raf.setLength(newLength);
 	}
@@ -107,6 +115,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#close()
 	 */
+	@Override
 	public void close() throws IOException {
 		raf.close();
 	}
@@ -114,6 +123,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#isReadOnly()
 	 */
+	@Override
 	public boolean isReadOnly() throws IOException {
 		return readOnly;
 	}
