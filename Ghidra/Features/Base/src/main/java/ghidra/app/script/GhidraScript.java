@@ -1790,13 +1790,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * This format object may be used to format any code unit (instruction/data) using
 	 * the same option settings.
 	 *
-	 *  @return code unit format when in GUI mode, default format in headless
+	 * @return code unit format when in GUI mode, default format in headless
 	 */
 	public CodeUnitFormat getCodeUnitFormat() {
 		PluginTool tool = state.getTool();
 		if (cuFormat == null) {
 			if (tool != null) {
-				cuFormat = new BrowserCodeUnitFormat(state.getTool());
+				cuFormat = new BrowserCodeUnitFormat(tool);
 			}
 			else {
 				cuFormat = new CodeUnitFormat(ShowBlockName.NEVER, ShowNamespace.NON_LOCAL);
@@ -3855,7 +3855,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPlateComment(Address)
 	 */
 	public String getPlateCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PLATE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3874,7 +3874,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPreComment(Address)
 	 */
 	public String getPreCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PRE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3892,7 +3892,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPostComment(Address)
 	 */
 	public String getPostCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.POST, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3910,7 +3910,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getEOLComment(Address)
 	 */
 	public String getEOLCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.EOL, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3929,7 +3929,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public String getRepeatableCommentAsRendered(Address address) {
 		String comment =
-			currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+			currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
