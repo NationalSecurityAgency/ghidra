@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,11 @@
  */
 package ghidra.app.plugin.core.module;
 
+import javax.swing.tree.TreePath;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.module.RenameCmd;
 import ghidra.app.context.ListingActionContext;
@@ -26,20 +31,15 @@ import ghidra.app.services.ProgramTreeService;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.LabelFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-
-import javax.swing.tree.TreePath;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
 /**
  * Plugin provides the following Fragment rename actions:
@@ -113,7 +113,7 @@ public class AutoRenamePlugin extends ProgramPlugin {
         if (obj instanceof ProgramNode) {
             ProgramNode node = (ProgramNode) obj;
 
-            CompoundCmd cmd = new CompoundCmd("Auto Rename Fragment(s)");
+			CompoundCmd<Program> cmd = new CompoundCmd<>("Auto Rename Fragment(s)");
             SymbolTable symTable = currentProgram.getSymbolTable();
 
             // Find selected Fragments

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -637,7 +637,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		clearExisingBookmarks();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01001110"), BookmarkType.ERROR, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01001118"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01001120"), BookmarkType.ERROR, "Cat1a", "Cmt1B"));
@@ -736,7 +736,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		clearExisingBookmarks();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01003e2c"), BookmarkType.WARNING, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01003e2e"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01003e30"), BookmarkType.WARNING, "Cat1a", "Cmt1B"));
@@ -803,7 +803,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		String typeString = bob.getTypeString();
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("0100529b"), typeString, "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("0100529d"), BookmarkType.NOTE, "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("0100529e"), typeString, "Cat1a", "Cmt1B"));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -231,7 +231,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		while (it.hasNext()) {
 			AddressRange range = it.next();
 			if (range.contains(addr)) {
-				Command cmd = new SetRegisterCmd(register, range.getMinAddress(),
+				Command<Program> cmd = new SetRegisterCmd(register, range.getMinAddress(),
 					range.getMaxAddress(), null);
 				if (!tool.execute(cmd, context.getProgram())) {
 					Msg.showError(this, tool.getToolFrame(), "Register Context Error",
@@ -246,7 +246,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		RegisterFieldLocation location = (RegisterFieldLocation) context.getLocation();
 		Register register = location.getRegister();
 		Address addr = location.getAddress();
-		Command cmd = new SetRegisterCmd(register, addr, addr, null);
+		Command<Program> cmd = new SetRegisterCmd(register, addr, addr, null);
 		if (!tool.execute(cmd, context.getProgram())) {
 			Msg.showError(this, tool.getToolFrame(), "Register Context Error", cmd.getStatusMsg());
 		}
@@ -377,7 +377,7 @@ public class RegisterPlugin extends ProgramPlugin {
 			return;
 		}
 
-		CompoundCmd cmd = new CompoundCmd("Set Register Values");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Set Register Values");
 		for (AddressRange range : addressSet) {
 			SetRegisterCmd regCmd =
 				new SetRegisterCmd(register, range.getMinAddress(), range.getMaxAddress(), value);

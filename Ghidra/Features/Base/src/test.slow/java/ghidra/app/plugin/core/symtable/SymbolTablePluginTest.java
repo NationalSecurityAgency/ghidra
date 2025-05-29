@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1438,7 +1438,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addLabel(String label, String namespaceName, Address address) throws Exception {
 		Namespace namespace = null;
 		if (namespaceName != null) {
-			Command command = new CreateNamespacesCmd(namespaceName, SourceType.USER_DEFINED);
+			Command<Program> command =
+				new CreateNamespacesCmd(namespaceName, SourceType.USER_DEFINED);
 			if (tool.execute(command, program)) {
 				List<Namespace> namespaces =
 					NamespaceUtils.getNamespaceByPath(program, null, namespaceName);
@@ -1450,7 +1451,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 		}
 
-		Command command = new AddLabelCmd(address, label, namespace, SourceType.USER_DEFINED);
+		Command<Program> command =
+			new AddLabelCmd(address, label, namespace, SourceType.USER_DEFINED);
 		tool.execute(command, program);
 		waitForNotBusy();
 	}
@@ -1700,7 +1702,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		int max = symbolTable.getRowCount();
 		for (int i = 0; i < max; i++) {
-			Symbol s = (Symbol) symbolTable.getValueAt(i, SymbolTableModel.LABEL_COL);
+			Symbol s = (Symbol) symbolTable.getValueAt(i, AbstractSymbolTableModel.LABEL_COL);
 			if (s == null) {
 				continue; // symbol deleted
 			}

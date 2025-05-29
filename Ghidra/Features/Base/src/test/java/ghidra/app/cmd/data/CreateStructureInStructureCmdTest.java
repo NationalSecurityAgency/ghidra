@@ -102,7 +102,7 @@ public class CreateStructureInStructureCmdTest extends AbstractGenericTest {
 		offset = createArray(offset, 8, 4, stringPtr);
 
 		int structLen = (int) (offset - startOffset);
-		Command cmd = new CreateStructureCmd("TestStructA", addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd("TestStructA", addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr(startOffset));
@@ -179,7 +179,7 @@ public class CreateStructureInStructureCmdTest extends AbstractGenericTest {
 		offset = createArray(offset, 8, 4, stringPtr);
 
 		int structLen = (int) (offset - startOffset);
-		Command cmd = new CreateStructureCmd("TestStructA", addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd("TestStructA", addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr(startOffset));

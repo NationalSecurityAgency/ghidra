@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -433,7 +433,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			Data referredData = constantPoolData.getComponent(indexMap.get(index));
 			instruction.addOperandReference(0, referredData.getAddress(), RefType.DATA,
 				SourceType.ANALYSIS);
-			CompoundCmd cmd = new CompoundCmd("Add constant pool reference");
+			CompoundCmd<Program> cmd = new CompoundCmd<>("Add constant pool reference");
 			String constantPoolLabel = "CPOOL[" + index + "]";
 			cmd.add(
 				new AddLabelCmd(referredData.getAddress(), constantPoolLabel, SourceType.ANALYSIS));

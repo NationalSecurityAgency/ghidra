@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +15,7 @@
  */
 package ghidra.app.plugin.core.function;
 
+import docking.action.MenuData;
 import ghidra.app.cmd.function.SetFunctionVarArgsCommand;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -25,7 +25,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
-import docking.action.MenuData;
 
 /**
  * Action that changes a Function so that it has VarArgs (a variable argument list).
@@ -62,7 +61,7 @@ public class DeleteVarArgsAction extends ListingContextAction {
 	public void actionPerformed(ListingActionContext context) {
 		Function function = functionPlugin.getFunction(context);
 		if ((function != null) && (function.hasVarArgs())) {
-			Command command = new SetFunctionVarArgsCommand(function, false);
+			Command<Program> command = new SetFunctionVarArgsCommand(function, false);
 
 			PluginTool tool = functionPlugin.getTool();
 			Program program = context.getProgram();
