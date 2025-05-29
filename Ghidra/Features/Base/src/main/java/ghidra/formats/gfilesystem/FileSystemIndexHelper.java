@@ -177,7 +177,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	public synchronized GFile lookup(GFile baseDir, String path, Comparator<String> nameComp) {
 		try {
-			return lookup(baseDir, path, false, nameComp);
+			FileData<METADATATYPE> baseDirData = getFileData(baseDir);
+			FileData<METADATATYPE> fileData =
+				lookup(baseDirData, splitPath(path), -1, false, nameComp);
+			return (fileData != null) ? fileData.file : null;
 		}
 		catch (IOException e) {
 			// shouldn't happen, fall thru
@@ -185,42 +188,15 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		return null;
 	}
 
-	protected GFile lookup(GFile baseDir, String path, boolean followSymlinks,
-			Comparator<String> nameComp) throws IOException {
-		FileData<METADATATYPE> baseDirData = getFileData(baseDir);
-		FileData<METADATATYPE> fileData =
-			lookup(baseDirData, splitPath(path), -1, false, followSymlinks, 0, null, nameComp);
-		return (fileData != null) ? fileData.file : null;
-	}
-
 	protected FileData<METADATATYPE> lookup(FileData<METADATATYPE> baseDir, String[] nameparts,
-			int maxpart, boolean createIfMissing, boolean followSymlinks, int depth,
-			StringBuilder symlinkPathDebug, Comparator<String> nameComp) throws IOException {
-		symlinkPathDebug = Objects.requireNonNullElseGet(symlinkPathDebug, StringBuilder::new);
+			int maxpart, boolean createIfMissing, Comparator<String> nameComp) {
 		maxpart = maxpart < 0 ? nameparts.length : maxpart;
 
-		if (depth > MAX_SYMLINK_RECURSE_DEPTH) {
-			throw new IOException(
-				"Too many symlinks: %s, %s".formatted(symlinkPathDebug, Arrays.asList(nameparts)));
-		}
-
-		symlinkPathDebug.append("[");
 		FileData<METADATATYPE> currentFile = Objects.requireNonNullElse(baseDir, rootDir);
 		for (int i = 0; i < maxpart && currentFile != null; i++) {
 			String name = nameparts[i];
-			symlinkPathDebug.append(i != 0 ? "," : "").append(name);
 			if (name.isEmpty()) {
 				continue;
-			}
-			if (followSymlinks) {
-				// otherwise "." and ".." are valid path elements that need to be matched exactly
-				if (".".equals(name)) {
-					continue;
-				}
-				if ("..".equals(name)) {
-					currentFile = getParentFileData(currentFile);
-					continue;
-				}
 			}
 
 			Map<String, FileData<METADATATYPE>> currentDirContents =
@@ -229,9 +205,46 @@ public class FileSystemIndexHelper<METADATATYPE> {
 			if (next == null && createIfMissing) {
 				next = doStoreMissingDir(name, currentFile.file);
 			}
-			if (next != null && next.symlinkPath != null && followSymlinks) {
-				next = lookup(currentFile, splitPath(next.symlinkPath), -1, createIfMissing,
-					followSymlinks, depth + 1, symlinkPathDebug, nameComp);
+			currentFile = next;
+		}
+
+		return currentFile;
+	}
+
+	protected FileData<METADATATYPE> resolveSymlinkPath(FileData<METADATATYPE> baseDir, String path,
+			int depth, StringBuilder symlinkPathDebug, Comparator<String> nameComp)
+			throws IOException {
+		symlinkPathDebug = Objects.requireNonNullElseGet(symlinkPathDebug, StringBuilder::new);
+
+		if (depth > MAX_SYMLINK_RECURSE_DEPTH) {
+			throw new IOException("Too many symlinks: %s, %s".formatted(symlinkPathDebug, path));
+		}
+
+		symlinkPathDebug.append("[");
+		FileData<METADATATYPE> currentFile = Objects.requireNonNullElse(baseDir, rootDir);
+		String[] pathparts = splitPath(path);
+		for (int i = 0; i < pathparts.length && currentFile != null; i++) {
+			String name = pathparts[i];
+			symlinkPathDebug.append(i != 0 ? "," : "").append(name);
+			if (i == 0 && name.isEmpty()) {
+				// leading '/' was present in the path, it overrides the current location
+				currentFile = rootDir;
+				continue;
+			}
+			if (name.isEmpty() || ".".equals(name)) {
+				continue;
+			}
+			if ("..".equals(name)) {
+				currentFile = getParentFileData(currentFile);
+				continue;
+			}
+
+			Map<String, FileData<METADATATYPE>> currentDirContents =
+				getDirectoryContents(currentFile.file, false);
+			FileData<METADATATYPE> next = lookupFileInDir(currentDirContents, name, nameComp);
+			if (next != null && next.symlinkPath != null) {
+				next = resolveSymlinkPath(currentFile, next.symlinkPath, depth + 1,
+					symlinkPathDebug, nameComp);
 			}
 			currentFile = next;
 		}
@@ -252,8 +265,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public synchronized GFile resolveSymlinks(GFile file) throws IOException {
 		FileData<METADATATYPE> fd = getFileData(file);
 		if (fd.symlinkPath != null) {
-			fd = lookup(getParentFileData(fd), splitPath(fd.symlinkPath), -1, false, true, 0, null,
-				null);
+			fd = resolveSymlinkPath(getParentFileData(fd), fd.symlinkPath, 0, null, null);
 		}
 		return fd != null ? fd.file : null;
 	}
@@ -481,16 +493,9 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	protected GFile lookupParent(String[] nameparts, Comparator<String> nameComp) {
 
-		try {
-			FileData<METADATATYPE> parent =
-				lookup(rootDir, nameparts, nameparts.length - 1, true, false, 0, null, nameComp);
-			return parent.file;
-		}
-		catch (IOException e) {
-			// fall thru, return rootdir
-		}
-
-		return rootDir.file;
+		FileData<METADATATYPE> parent =
+			lookup(rootDir, nameparts, nameparts.length - 1, true, nameComp);
+		return parent.file;
 	}
 
 	protected String[] splitPath(String path) {
