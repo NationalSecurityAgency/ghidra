@@ -139,8 +139,7 @@ public enum VariableValueUtils {
 		}
 
 		@Override
-		protected Boolean evaluateLoad(Program program, PcodeOp op,
-				Map<Varnode, Boolean> already) {
+		protected Boolean evaluateLoad(Program program, PcodeOp op, Map<Varnode, Boolean> already) {
 			return evaluateVarnode(program, op.getInput(1), already);
 		}
 
@@ -181,8 +180,13 @@ public enum VariableValueUtils {
 		}
 
 		@Override
+		public boolean isImmutableSettings() {
+			return true;
+		}
+
+		@Override
 		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-			return delegate.isChangeAllowed(settingsDefinition);
+			return false;
 		}
 
 		@Override
@@ -473,9 +477,8 @@ public enum VariableValueUtils {
 	 */
 	public static boolean hasFreshUnwind(PluginTool tool, DebuggerCoordinates coordinates) {
 		ListingUnwoundFrame innermost = locateInnermost(tool, coordinates);
-		if (innermost == null || !Objects.equals(innermost.getProgramCounter(),
-			getProgramCounter(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getViewSnap()))) {
+		if (innermost == null || !Objects.equals(innermost.getProgramCounter(), getProgramCounter(
+			coordinates.getPlatform(), coordinates.getThread(), coordinates.getViewSnap()))) {
 			return false;
 		}
 		return true;
@@ -866,13 +869,12 @@ public enum VariableValueUtils {
 				address.isRegisterAddress()) {
 				settings = new DefaultSpaceSettings(settings, language.getDefaultSpace());
 			}
-			ByteMemBufferImpl buf =
-				new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
-					@Override
-					public Memory getMemory() {
-						return coordinates.getView().getMemory();
-					}
-				};
+			ByteMemBufferImpl buf = new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
+				@Override
+				public Memory getMemory() {
+					return coordinates.getView().getMemory();
+				}
+			};
 			return type.getRepresentation(buf, settings, bytes.length);
 		}
 

@@ -46,6 +46,11 @@ public interface Data extends CodeUnit, Settings {
 	 */
 	public Class<?> getValueClass();
 
+	@Override
+	default boolean isImmutableSettings() {
+		return true; // NOTE: We could check to see if any editable Settings are defined
+	}
+
 	/**
 	 * Returns true if this data corresponds to string data.  This is determined
 	 * by the corresponding data type producing a String value.
