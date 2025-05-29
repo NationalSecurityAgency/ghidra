@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.core.scalartable;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -818,7 +816,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("Unable to apply data type at address: " + address, apply(createDataCommand));
 	}
 
-	private boolean apply(Command cmd) throws RollbackException {
+	private boolean apply(Command<Program> cmd) throws RollbackException {
 		return cmd.applyTo(program);
 	}
 

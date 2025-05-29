@@ -789,8 +789,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		//--- Verify register variable markup options
 
-		Command cmd = new AddRegisterRefCmd(addr("0x1002d0b"), 0, program.getRegister("EDI"),
-			SourceType.USER_DEFINED);
+		Command<Program> cmd = new AddRegisterRefCmd(addr("0x1002d0b"), 0,
+			program.getRegister("EDI"), SourceType.USER_DEFINED);
 		applyCmd(program, cmd);
 		cb.updateNow();
 

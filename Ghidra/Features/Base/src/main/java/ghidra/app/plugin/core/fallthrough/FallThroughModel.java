@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.fallthrough;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import ghidra.app.cmd.refs.ClearFallThroughCmd;
 import ghidra.app.cmd.refs.SetFallThroughCmd;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
@@ -22,9 +25,6 @@ import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * This class is really a model for the FallThroughDialog state.  However, it is used as a 
@@ -187,7 +187,7 @@ class FallThroughModel implements ChangeListener {
 	 * @param currentSelection
 	 */
 	void autoOverride(AddressSetView view) {
-		CompoundCmd cmd = new CompoundCmd("Auto-Override");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Auto-Override");
 		AddressRangeIterator iter = view.getAddressRanges();
 		while (iter.hasNext()) {
 			override(iter.next(), cmd);
@@ -200,7 +200,7 @@ class FallThroughModel implements ChangeListener {
 	}
 
 	void clearOverride(AddressSetView view) {
-		CompoundCmd cmd = new CompoundCmd("Clear FallThroughs");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Clear FallThroughs");
 		InstructionIterator it = program.getListing().getInstructions(view, true);
 		while(it.hasNext()) {
 			Instruction inst = it.next();
@@ -225,7 +225,7 @@ class FallThroughModel implements ChangeListener {
 		return program;
 	}
 	
-	private void override(AddressRange range, CompoundCmd cmd) {
+	private void override(AddressRange range, CompoundCmd<Program> cmd) {
 		Address min = range.getMinAddress();
 		Address max = range.getMaxAddress();
 		Listing listing = program.getListing();
@@ -248,7 +248,7 @@ class FallThroughModel implements ChangeListener {
 		}
 	} 
 	
-	private void setFallThrough(Address addr, CompoundCmd cmd) {
+	private void setFallThrough(Address addr, CompoundCmd<Program> cmd) {
 		Instruction inst = program.getListing().getInstructionAfter(addr);
 		if (inst != null) {
 			cmd.add(new SetFallThroughCmd(addr, inst.getMinAddress()));

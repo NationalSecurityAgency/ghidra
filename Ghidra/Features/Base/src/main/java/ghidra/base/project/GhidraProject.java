@@ -573,7 +573,7 @@ public class GhidraProject {
 	 * @param program
 	 *            the program on which the command is to be applied.
 	 */
-	public void execute(Command cmd, Program program) {
+	public void execute(Command<Program> cmd, Program program) {
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		cmd.applyTo(program);
 		mgr.initializeOptions();
