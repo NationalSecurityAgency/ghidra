@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,21 +67,24 @@ public class GroupTransferable implements Transferable {
     /**
      * Return all data flavors that this class supports.
      */
-    public synchronized DataFlavor []getTransferDataFlavors() {
+    @Override
+	public synchronized DataFlavor []getTransferDataFlavors() {
         return flavors;
     }
     
     /**
      * Return whether the specified data flavor is supported.
      */
-    public boolean isDataFlavorSupported(DataFlavor f) {
+    @Override
+	public boolean isDataFlavorSupported(DataFlavor f) {
         return flavorList.contains(f);
     }
     
     /**
      * Return the transfer data with the given data flavor.
      */
-    public synchronized Object getTransferData(DataFlavor f) 
+    @Override
+	public synchronized Object getTransferData(DataFlavor f) 
         throws UnsupportedFlavorException, IOException {
             
         if (f.equals(localGroupFlavor)) {

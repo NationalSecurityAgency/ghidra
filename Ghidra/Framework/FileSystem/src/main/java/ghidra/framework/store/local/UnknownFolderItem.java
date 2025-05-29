@@ -157,6 +157,7 @@ public class UnknownFolderItem extends LocalFolderItem {
 	/*
 	 * @see ghidra.framework.store.FolderItem#output(java.io.File, int, ghidra.util.task.TaskMonitor)
 	 */
+	@Override
 	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException {
 
 		throw new UnsupportedOperationException("Output not supported for UnknownFolderItems");
@@ -174,6 +175,7 @@ public class UnknownFolderItem extends LocalFolderItem {
 	/*
 	 * @see ghidra.framework.store.FolderItem#getCurrentVersion()
 	 */
+	@Override
 	public int getCurrentVersion() {
 		return -1;
 	}
@@ -181,6 +183,7 @@ public class UnknownFolderItem extends LocalFolderItem {
 	/*
 	 * @see ghidra.framework.store.FolderItem#canRecover()
 	 */
+	@Override
 	public boolean canRecover() {
 		return false;
 	}
