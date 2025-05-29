@@ -1983,6 +1983,7 @@ dUI16PlusRAOrZeroAddress: val^"("^RA_OR_ZERO^")" is  RA_OR_ZERO & UI_16_s8 [ val
 @ifdef BIT_64
 dsPlusRaAddress: simm_ds(A)	is SIMM_DS & A [simm_ds = SIMM_DS << 2;] {tmp:8 = simm_ds + A;export tmp;} 
 dsPlusRaOrZeroAddress: simm_ds(RA_OR_ZERO)	is SIMM_DS & RA_OR_ZERO [simm_ds = SIMM_DS << 2;] {tmp:8 = simm_ds + RA_OR_ZERO;export tmp;} 
+dqPlusRaOrZeroAddress: simm_ds(RA_OR_ZERO)	is DQs & RA_OR_ZERO [simm_ds = DQs << 4;] {tmp:8 = simm_ds + RA_OR_ZERO;export tmp;}
 @endif
 
 
