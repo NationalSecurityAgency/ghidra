@@ -200,7 +200,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 		Reference ref = refMgr.getPrimaryReferenceFrom(fromAddr, 0);
-		if (ref == null) {
+		if (ref == null || ref.getToAddress().equals(fromAddr)) {
 			return POINTER_LABEL_PREFIX;
 		}
 
