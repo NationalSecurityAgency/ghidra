@@ -47,6 +47,7 @@ public class GoPcHeader {
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
+	public static final int GO_1_20_MAGIC = 0xfffffff1;
 
 	/**
 	 * Returns the {@link Address} (if present) of the go pclntab section or symbol.
@@ -314,6 +315,7 @@ public class GoPcHeader {
 			case GO_1_2_MAGIC -> new GoVer(1, 2, 0);
 			case GO_1_16_MAGIC -> new GoVer(1, 16, 0);
 			case GO_1_18_MAGIC -> new GoVer(1, 18, 0);
+			case GO_1_20_MAGIC -> new GoVer(1, 20, 0);
 			default -> GoVer.INVALID;
 		};
 		
