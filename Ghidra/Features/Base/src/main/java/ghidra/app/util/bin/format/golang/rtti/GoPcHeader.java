@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -113,15 +112,18 @@ public class GoPcHeader {
 			(byte) 0xff // ptrSize 
 		};
 		Memory memory = programContext.getProgram().getMemory();
-		Address pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, searchMask, true, monitor);
-		if (pcHeaderAddr == null) {
-			return null;
+		Address pcHeaderAddr;
+		while ((pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, searchMask, true, monitor)) != null) {
+			try (MemoryByteProvider bp =
+				new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
+				if (isPcHeader(bp)) {
+					return pcHeaderAddr;
+				}
+			}
+			range = new AddressRangeImpl(pcHeaderAddr.next(), range.getMaxAddress());
 		}
-		try (MemoryByteProvider bp =
-			new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
-			return isPcHeader(bp) ? pcHeaderAddr : null;
-		}
+		return null;
 	}
 
 	/**
@@ -285,6 +287,10 @@ public class GoPcHeader {
 	 */
 	public byte getPtrSize() {
 		return ptrSize;
+	}
+
+	public int getMagic() {
+		return magic;
 	}
 
 	//--------------------------------------------------------------------------------------------
