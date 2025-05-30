@@ -521,8 +521,7 @@ public class VarnodeContext implements ProcessorContext {
 			Reference[] refsFrom = program.getReferenceManager().getReferencesFrom(addr);
 			if (refsFrom.length > 0 && refsFrom[0].isExternalReference()) {
 				Address external = refsFrom[0].getToAddress();
-				return createVarnode(external.getOffset(), external.getAddressSpace().getSpaceID(),
-					0);
+				return createVarnode(external.getOffset(), external.getAddressSpace().getSpaceID(), 0);
 			}
 
 			// If the memory is Writeable, then maybe don't trust it
@@ -768,7 +767,7 @@ public class VarnodeContext implements ProcessorContext {
 			return;
 		}
 
-		Varnode split[] = splitToBytes(value);
+		Varnode split[] = splitToBytes(value, out.getSize());
 		// copy in partial values after
 		for (int nodeOff = 0; nodeOff < len; nodeOff++) {
 			if (split == null) {
@@ -856,22 +855,21 @@ public class VarnodeContext implements ProcessorContext {
 		return new Varnode(addr, size);
 	}
 
-	public Varnode[] splitToBytes(Varnode v) {
+	public Varnode[] splitToBytes(Varnode v, int len) {
 		if (!isConstant(v)) {
 			return null;
 		}
-
-		int size = v.getSize();
-		Varnode split[] = new Varnode[size];
+		
+		Varnode split[] = new Varnode[len];
 		long value = v.getOffset();
 		if (isBE) {
-			for (int i = 0; i < v.getSize(); i++) {
+			for (int i = 0; i < len; i++) {
 				long subv = value >> (i * 8);
-				split[size - i - 1] = createConstantVarnode(subv, 1);
+				split[len - i - 1] = createConstantVarnode(subv, 1);
 			}
 		}
 		else {
-			for (int i = 0; i < v.getSize(); i++) {
+			for (int i = 0; i < len; i++) {
 				long subv = value >> (i * 8);
 				split[i] = createConstantVarnode(subv, 1);
 			}
@@ -1405,6 +1403,7 @@ public class VarnodeContext implements ProcessorContext {
 		if (!in.isRegister() || !out.isRegister()) {
 			// normal case easy get value, put value
 			putValue(out, val1, mustClearAll);
+			return;
 		}
 		if (mustClearAll) {
 			clearVals.add(out);
@@ -1665,7 +1664,9 @@ public class VarnodeContext implements ProcessorContext {
 			if (isBadAddress(val1)) {
 				return val1;
 			}
-			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), val1.getSize());
+			int size = val1.getSize();
+			size = size > 0 ? size : 1; // turning into constant, make sure has a size
+			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), size);
 		}
 		int spaceID = val1.getSpace();
 		long valbase = 0;
