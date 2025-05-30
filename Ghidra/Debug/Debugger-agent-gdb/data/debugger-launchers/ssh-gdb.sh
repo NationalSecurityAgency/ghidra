@@ -57,7 +57,7 @@ version=$(get-ghidra-version)
 
 function do-installation() {
 	local -a pipargs
-	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb==$version'"
+	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb>=$version'"
 	local -a sshargs
 	compute-ssh-args false "${pipargs[@]}"
 
@@ -90,7 +90,7 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidragdb==$version'?"; then
+" "Would you like to install 'ghidragdb>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
 	mitigate-scp-pymodules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
