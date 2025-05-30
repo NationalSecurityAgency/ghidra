@@ -49,10 +49,13 @@ public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectI
 
 	void setRange(Lifespan lifespan, AddressRange range);
 
+	@Override
 	AddressRange getRange(long snap);
 
+	@Override
 	Address getMinAddress(long snap);
 
+	@Override
 	Address getMaxAddress(long snap);
 
 	void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
@@ -61,5 +64,6 @@ public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectI
 
 	void clearFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 
+	@Override
 	Set<TraceMemoryFlag> getFlags(long snap);
 }

@@ -128,6 +128,7 @@ public class StackEditorManagerPlugin extends Plugin
 		return editorMgr.canCloseDomainObject(dObj);
 	}
 
+	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 		setOptions(options);
@@ -155,6 +156,7 @@ public class StackEditorManagerPlugin extends Plugin
 		options.setBoolean(HEX_NUMBERS_OPTION_NAME, showNumbersInHex);
 	}
 
+	@Override
 	public boolean showStackNumbersInHex() {
 		return showNumbersInHex;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -276,6 +276,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		return null;
 	}
 
+	@Override
 	public void dataReference(PcodeOp op, int instrOpIndex,
 			Varnode storageVarnode, RefType refType, TaskMonitor monitor)
 			throws CancelledException {
@@ -283,6 +284,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		
 	}
 
+	@Override
 	public void indirectDataReference(PcodeOp op, int instrOpIndex,
 			Varnode offsetVarnode, int size, int storageSpaceID,
 			RefType refType, TaskMonitor monitor) throws CancelledException {
@@ -290,6 +292,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		
 	}
 
+	@Override
 	public boolean resolvedFlow(PcodeOp op, int instrOpIndex, Address destAddr,
 			ContextState currentState, ResultsState results, TaskMonitor monitor)
 			throws CancelledException {
@@ -297,6 +300,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		return false;
 	}
 
+	@Override
 	public void stackReference(PcodeOp op, int instrOpIndex, int stackOffset,
 			int size, int storageSpaceID, RefType refType, TaskMonitor monitor)
 			throws CancelledException {
@@ -304,6 +308,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		
 	}
 
+	@Override
 	public void stackReference(PcodeOp op, int instrOpIndex,
 			VarnodeOperation computedStackOffset, int size, int storageSpaceID,
 			RefType refType, TaskMonitor monitor) throws CancelledException {
@@ -311,6 +316,7 @@ System.out.println("Time to build ResultState = " + t + " msec.");
 		
 	}
 
+	@Override
 	public List<Address> unresolvedIndirectFlow(PcodeOp op, int instrOpIndex,
 			Varnode destination, ContextState currentState,
 			ResultsState results, TaskMonitor monitor)

@@ -449,6 +449,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	 * @return - set of addresses actually flowed to
 	 * @throws CancelledException
 	 */
+	@Override
 	public AddressSetView analyzeLocation(final Program program, Address start, AddressSetView set,
 			final TaskMonitor monitor) throws CancelledException {
 

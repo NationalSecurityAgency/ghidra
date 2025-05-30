@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,6 +65,7 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 	/**
 	 * Return all data flavors that this class supports.
 	 */
+	@Override
 	public synchronized DataFlavor[] getTransferDataFlavors() {
 		return flavors;
 	}
@@ -73,6 +73,7 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 	/**
 	 * Return whether the specified data flavor is supported.
 	 */
+	@Override
 	public boolean isDataFlavorSupported(DataFlavor f) {
 		return flavorList.contains(f);
 	}
@@ -80,6 +81,7 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 	/**
 	 * Return the transfer data with the given data flavor.
 	 */
+	@Override
 	public synchronized Object getTransferData(DataFlavor f) throws UnsupportedFlavorException,
 			IOException {
 
@@ -101,6 +103,7 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 	 *  (non-Javadoc)
 	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
 	 */
+	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 	}
 

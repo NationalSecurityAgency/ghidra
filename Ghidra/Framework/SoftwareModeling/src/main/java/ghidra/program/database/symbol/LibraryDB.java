@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getSymbol()
 	 */
+	@Override
 	public Symbol getSymbol() {
 		return symbol;
 	}
@@ -50,6 +51,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getName()
 	 */
+	@Override
 	public String getName() {
 		return symbol.getName();
 	}
@@ -57,6 +59,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getID()
 	 */
+	@Override
 	public long getID() {
 		return symbol.getID();
 	}
@@ -64,6 +67,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getParentNamespace()
 	 */
+	@Override
 	public Namespace getParentNamespace() {
 		return symbol.getParentNamespace();
 	}
@@ -71,6 +75,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getBody()
 	 */
+	@Override
 	public AddressSetView getBody() {
 		return namespaceMgr.getAddressSet(this);
 	}
@@ -78,6 +83,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#getName(boolean)
 	 */
+	@Override
 	public String getName(boolean includeNamespacePath) {
 		return symbol.getName(includeNamespacePath);
 	}
@@ -101,6 +107,7 @@ class LibraryDB implements Library {
 	/**
 	 * @see ghidra.program.model.symbol.Namespace#setParentNamespace(ghidra.program.model.symbol.Namespace)
 	 */
+	@Override
 	public void setParentNamespace(Namespace parentNamespace) throws DuplicateNameException,
 			InvalidInputException, CircularDependencyException {
 		symbol.setNamespace(parentNamespace);

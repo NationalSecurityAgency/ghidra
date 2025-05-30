@@ -69,7 +69,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 
 		int structLen = defaultPtrLen + 1;
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, new ByteDataType());
@@ -116,7 +116,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 
 		int structLen = defaultPtrLen + structA.getLength();
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, structA);
@@ -155,7 +155,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 		long startOffset = UNDEFINED_AREA;
 
 		int structLen = 1;
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, new ByteDataType());
@@ -203,7 +203,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 		struct1.add(adt);
 		struct1.add(new WordDataType());
 
-		Command cmd = new CreateDataCmd(addr(startOffset + 1000), struct1);
+		Command<Program> cmd = new CreateDataCmd(addr(startOffset + 1000), struct1);
 		cmd.applyTo(program);
 		Data dataAt = program.getListing().getDataAt(addr(startOffset + 1000));
 		struct1 = (Structure) dataAt.getDataType();

@@ -91,7 +91,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr(EXT_POINTERS_OFFSET + 23));
 
-		Command cmd = new CreateStructureCmd(addr, 24);
+		Command<Program> cmd = new CreateStructureCmd(addr, 24);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr);
@@ -127,7 +127,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr(EXT_POINTERS_OFFSET + 23));
 
-		Command cmd = new CreateArrayCmd(addr, 6, new Pointer32DataType(), 4);
+		Command<Program> cmd = new CreateArrayCmd(addr, 6, new Pointer32DataType(), 4);
 		cmd.applyTo(program);
 
 		Symbol s = createLabel(addr, "ArrayA");
@@ -161,7 +161,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr(EXT_POINTERS_OFFSET + (4 * 24)));
 
-		Command cmd = new CreateStructureCmd(addr, 24);
+		Command<Program> cmd = new CreateStructureCmd(addr, 24);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr);
@@ -207,11 +207,11 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < 4; i++) {
 			Address a = addr(EXT_POINTERS_OFFSET + (i * 24));
-			Command cmd = new CreateArrayCmd(a, 6, new Pointer32DataType(), 4);
+			Command<Program> cmd = new CreateArrayCmd(a, 6, new Pointer32DataType(), 4);
 			cmd.applyTo(program);
 		}
 
-		Command cmd = new CreateStructureCmd(addr, 4 * 24);
+		Command<Program> cmd = new CreateStructureCmd(addr, 4 * 24);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr);
@@ -254,7 +254,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr(EXT_POINTERS_OFFSET + (4 * 24)));
 
-		Command cmd = new CreateArrayCmd(addr, 6, new Pointer32DataType(), 4);
+		Command<Program> cmd = new CreateArrayCmd(addr, 6, new Pointer32DataType(), 4);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr);
@@ -294,7 +294,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr(EXT_POINTERS_OFFSET + (4 * 24)));
 
-		Command cmd = new CreateStructureCmd(addr, 24);
+		Command<Program> cmd = new CreateStructureCmd(addr, 24);
 		cmd.applyTo(program);
 
 		Data d = program.getListing().getDataAt(addr);
@@ -349,7 +349,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(23));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(23)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(23)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
@@ -407,7 +407,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address structAddr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(structAddr, structAddr.add(23));
 
-		Command cmd = new ClearCmd(new AddressSet(structAddr, structAddr.add(23)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(structAddr, structAddr.add(23)));
 		cmd.applyTo(program);
 
 		structAddr = addr(EXT_POINTERS_OFFSET + 2);
@@ -443,7 +443,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(23));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(23)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(23)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
@@ -488,7 +488,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(7));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
@@ -508,7 +508,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(7));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
@@ -528,7 +528,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(7));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
@@ -551,7 +551,7 @@ public class DataReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(EXT_POINTERS_OFFSET);
 		clearSymbols(addr, addr.add(7));
 
-		Command cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
+		Command<Program> cmd = new ClearCmd(new AddressSet(addr, addr.add(7)));
 		cmd.applyTo(program);
 
 		addr = addr(EXT_POINTERS_OFFSET + 2);
