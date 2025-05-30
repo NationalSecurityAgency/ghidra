@@ -472,17 +472,21 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		int ptrSize = context.getPtrSize();
 		byte[] searchBytes = new byte[ptrSize];
 		context.getDataConverter().putValue(pcHeaderAddress.getOffset(), ptrSize, searchBytes, 0);
-		Address moduleAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, null, true, monitor);
-		if (moduleAddr == null) {
-			return null;
+
+		Address moduleAddr;
+		while ((moduleAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, null, true, monitor)) != null) {
+
+			GoModuledata moduleData = context.readStructure(GoModuledata.class, moduleAddr);
+
+			// Verify that we read a good GoModuledata struct by comparing some of its values to
+			// the pclntab structure.
+			if (moduleData.matchesPcHeader(pcHeader)) {
+				return moduleData;
+			}
+			range = new AddressRangeImpl(moduleAddr.next(), range.getMaxAddress());
 		}
-
-		GoModuledata moduleData = context.readStructure(GoModuledata.class, moduleAddr);
-
-		// Verify that we read a good GoModuledata struct by comparing some of its values to
-		// the pclntab structure.
-		return moduleData.matchesPcHeader(pcHeader) ? moduleData : null;
+		return null;
 	}
 
 }
