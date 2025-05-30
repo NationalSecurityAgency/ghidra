@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.struct.sub;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -82,7 +81,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 	@Test
 	public void testUseRegister() throws Exception {
 		StructuredSleigh ss = new TestStructuredSleigh() {
-			final Var vR0 = reg(r0, type("int"));;
+			final Var vR0 = reg(r0, type("int"));
 
 			@StructuredUserop(type = "int")
 			public void my_userop() {

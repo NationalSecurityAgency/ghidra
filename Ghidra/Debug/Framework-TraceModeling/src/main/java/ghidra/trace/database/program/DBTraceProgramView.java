@@ -680,7 +680,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	protected final DomainObjectEventQueues eventQueues;
 	protected EventTranslator eventTranslator;
 	private volatile boolean allAddressesValid;
-	private volatile AddressSetView allAddresses;;
+	private volatile AddressSetView allAddresses;
 
 	protected final DBTraceProgramViewBookmarkManager bookmarkManager;
 	protected final DBTraceProgramViewEquateTable equateTable;

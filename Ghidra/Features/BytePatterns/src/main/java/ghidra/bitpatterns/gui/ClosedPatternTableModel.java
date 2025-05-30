@@ -62,7 +62,7 @@ public class ClosedPatternTableModel extends ThreadedTableModelStub<ClosedPatter
 			Component component = super.getTableCellRendererComponent(data);
 			component.setFont(Gui.getFont(FONT_ID));
 			return component;
-		};
+		}
 
 		@Override
 		public String getFilterString(String t, Settings settings) {

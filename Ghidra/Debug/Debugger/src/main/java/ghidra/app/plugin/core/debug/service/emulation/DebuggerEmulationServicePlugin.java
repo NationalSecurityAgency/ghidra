@@ -498,7 +498,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		/*TraceMemoryRegion region = current.getTrace()
 				.getMemoryManager()
 				.getRegionContaining(current.getSnap(), traceLoc.getAddress());
-		return region != null && region.isExecute()*/;
+		return region != null && region.isExecute();*/
 		return true;
 	}
 
