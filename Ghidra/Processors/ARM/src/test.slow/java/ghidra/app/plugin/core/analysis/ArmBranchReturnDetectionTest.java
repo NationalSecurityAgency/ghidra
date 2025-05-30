@@ -91,7 +91,7 @@ public class ArmBranchReturnDetectionTest extends AbstractGhidraHeadedIntegratio
 		builder.disassemble("0x00015d9c", 27, true);
 		
 		builder.createFunction("0x00015d9c");
-		builder.createLabel("0x00015d9c", "func1");;
+		builder.createLabel("0x00015d9c", "func1");
 
 		program = builder.getProgram();
 

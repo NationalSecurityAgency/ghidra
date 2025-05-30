@@ -634,7 +634,6 @@ public class VarnodeContext implements ProcessorContext {
 				stateLayer = null;
 				layer--;
 			}
-			;
 
 			if (stateLayer == null) {
 				return null;

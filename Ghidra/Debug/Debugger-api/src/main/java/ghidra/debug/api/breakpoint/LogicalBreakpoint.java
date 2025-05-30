@@ -540,7 +540,7 @@ public interface LogicalBreakpoint {
 			Mode mode = this.mode.sameAddress(that.mode);
 			Consistency consistency = this.consistency.sameAddress(that.consistency);
 			return fromFields(mode, consistency);
-		};
+		}
 
 		/**
 		 * For logical breakpoints which appear at the same address, compose their state
