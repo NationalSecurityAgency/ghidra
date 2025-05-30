@@ -1968,11 +1968,6 @@ public class SymbolicPropogator {
 			return;
 		}
 
-		// don't check for params on external calls
-		if (callTarget != null && callTarget.isExternalAddress()) {
-			return;
-		}
-
 		// find the calling conventions
 		// look up any register parameters
 		//     get the value of each, as soon as find no value, stop
