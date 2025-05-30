@@ -17,31 +17,18 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
-import java.math.BigInteger;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.junit.*;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.app.plugin.core.analysis.*;
-import ghidra.framework.cmd.Command;
+import ghidra.app.plugin.core.analysis.DecompilerSwitchAnalyzer;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.SymbolicPropogator.Value;
-import ghidra.test.TestEnv;
-import ghidra.util.TaskUtilities;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
-import junit.framework.AssertionFailedError;
 
 /**
  * Test of DecompilerSwitchAnalyzer

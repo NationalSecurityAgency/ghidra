@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.table.*;
-import docking.widgets.table.threaded.CoalescingAddRemoveStrategy;
 import ghidra.util.task.TaskMonitor;
 
 public class CoalescingAddRemoveStrategyTest {

@@ -16,7 +16,6 @@
 package ghidra.trace.database.listing;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 

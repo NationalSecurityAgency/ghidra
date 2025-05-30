@@ -23,7 +23,6 @@ import org.apache.commons.compress.utils.Sets;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class StructureDataTypeTest extends AbstractGenericTest {
 

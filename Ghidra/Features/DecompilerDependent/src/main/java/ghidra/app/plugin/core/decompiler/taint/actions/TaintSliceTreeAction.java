@@ -19,7 +19,6 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.util.HelpLocation;

@@ -22,7 +22,6 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.util.HelpLocation;
 
 /**

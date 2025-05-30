@@ -19,7 +19,6 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;

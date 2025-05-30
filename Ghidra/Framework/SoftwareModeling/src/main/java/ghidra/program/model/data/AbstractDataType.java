@@ -21,7 +21,6 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Base class for DataType classes. Many of the DataType methods are stubbed out so simple datatype
