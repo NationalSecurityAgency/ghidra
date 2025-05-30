@@ -31,7 +31,6 @@ import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class FidDB implements Closeable {
 	private static final String FID_CONTENT_TYPE = "Function ID Database";

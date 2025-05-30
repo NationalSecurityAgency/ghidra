@@ -38,7 +38,6 @@ import ghidra.test.TestEnv;
 import ghidra.test.TestProgramManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import junit.framework.AssertionFailedError;
 import utilities.util.FileUtilities;
 
 /**

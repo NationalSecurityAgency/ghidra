@@ -19,8 +19,6 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 
-import javax.swing.JDialog;
-
 import org.junit.Assert;
 import org.junit.Test;
 

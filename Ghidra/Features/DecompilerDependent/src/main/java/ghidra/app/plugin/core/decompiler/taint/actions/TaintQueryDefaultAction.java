@@ -22,7 +22,6 @@ import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryDefaultAction extends TaintAbstractQueryAction {
