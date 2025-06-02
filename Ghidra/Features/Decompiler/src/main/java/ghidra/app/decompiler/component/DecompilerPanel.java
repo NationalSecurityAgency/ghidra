@@ -1073,7 +1073,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		HighSymbol highSymbol = highVar.getSymbol();
-		if (highSymbol.isParameter()) {
+		if (highSymbol != null && highSymbol.isParameter()) {
 			// decomp param that is not in the listing; put on signature
 			return new FunctionNameDecompilerLocation(program, entryPoint, cvt.getText(), info);
 		}
