@@ -504,7 +504,7 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 				newLength = 0;
 			}
 
-			DataType dataType = newDt.clone(originalDTM);
+			newDt = newDt.clone(viewDTM);
 			newLength = newDt.getLength();
 
 			checkIsAllowableDataType(newDt);
