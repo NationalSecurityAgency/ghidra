@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -47,6 +46,7 @@ public class GoPcHeader {
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
+	public static final int GO_1_20_MAGIC = 0xfffffff1;
 
 	/**
 	 * Returns the {@link Address} (if present) of the go pclntab section or symbol.
@@ -112,15 +112,18 @@ public class GoPcHeader {
 			(byte) 0xff // ptrSize 
 		};
 		Memory memory = programContext.getProgram().getMemory();
-		Address pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, searchMask, true, monitor);
-		if (pcHeaderAddr == null) {
-			return null;
+		Address pcHeaderAddr;
+		while ((pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, searchMask, true, monitor)) != null) {
+			try (MemoryByteProvider bp =
+				new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
+				if (isPcHeader(bp)) {
+					return pcHeaderAddr;
+				}
+			}
+			range = new AddressRangeImpl(pcHeaderAddr.next(), range.getMaxAddress());
 		}
-		try (MemoryByteProvider bp =
-			new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
-			return isPcHeader(bp) ? pcHeaderAddr : null;
-		}
+		return null;
 	}
 
 	/**
@@ -286,6 +289,10 @@ public class GoPcHeader {
 		return ptrSize;
 	}
 
+	public int getMagic() {
+		return magic;
+	}
+
 	//--------------------------------------------------------------------------------------------
 	record GoVerEndian(GoVer goVer, Endian endian) {
 		GoVerEndian(GoVer goVer, boolean isLittleEndian) {
@@ -314,6 +321,7 @@ public class GoPcHeader {
 			case GO_1_2_MAGIC -> new GoVer(1, 2, 0);
 			case GO_1_16_MAGIC -> new GoVer(1, 16, 0);
 			case GO_1_18_MAGIC -> new GoVer(1, 18, 0);
+			case GO_1_20_MAGIC -> new GoVer(1, 20, 0);
 			default -> GoVer.INVALID;
 		};
 		
