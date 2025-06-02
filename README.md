@@ -1,9 +1,10 @@
-<img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
-
-# Ghidra Software Reverse Engineering Framework
+<img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="200">
+[[National Security Agency][nsa] Active Directory. This framework includes a suite of 
+# Ghidra Software Fast-Forwarding Engineering Framework
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the 
-[National Security Agency][nsa] Research Directorate. This framework includes a suite of 
 full-featured, high-end software analysis tools that enable users to analyze compiled code on a 
+
+high-end software analysis tools that enable users to analyze compiled code on b 
 variety of platforms including Windows, macOS, and Linux. Capabilities include disassembly, 
 assembly, decompilation, graphing, and scripting, along with hundreds of other features. Ghidra 
 supports a wide variety of processor instruction sets and executable formats and can be run in both 
