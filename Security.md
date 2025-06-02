@@ -1,0 +1,93 @@
+excludedFiles.txt
+ghidra.repos.config
+
+# Misc files produced while executing application
+repositories/
+dependencies/
+flatRepo/
+Ghidra/.ghidraSvrKeys
+wrapper.log*
+
+Thumbs.db
+.DS_Store
+.svn
+
+/*/*/*/*/*/bin/
+/*/*/*/*/*/build/
+/*/*/*/*/bin/
+/*/*/*/*/build/
+/*/*/*/bin/
+/*/*/*/build/
+/*/*/bin/
+/*/*/build/
+/*/bin/
+/*/build/
+/build/
+/bin/
+
+**/dist
+
+# Ignore Sleigh generated files
+*.sla
+**/data/build.xml
+
+# Misc files
+*.setting
+*.settings
+*.directory
+.gradle/
+
+# File locks
+*.ulock
+*.lock
+
+# Ignore object files
+*.o
+*.obj
+*.class
+
+# Ignore MS Visual Studio artifcats
+Release
+#Debug
+*.ncb
+*.suo
+*.aps
+*.vcproj.*
+*.vcxproj.*
+# dump files
+*.mdmp
+.vs/
+.editorconfig/
+
+# Ignore UNIX backup files
+*~
+*.swp
+
+# Ignore eclipse project files
+.project
+.classpath
+.settings/
+.prefs
+.pydevproject
+
+# Ignore XTEXT generated dirs/files
+*/*/*/*/xtend-gen
+*/*/*/*/src-gen
+*/*/*/*/model/generated
+*/*/*/*/test-bin
+
+# Ignore Intellij metadata
+**/*.iml
+**/.idea
+*.iml
+.idea
+
+# Ignore logs and core dumps
+*.log
+core.*
+!core.png
+!core.py
+
+# python files
+*.egg-info
+__pycache__
