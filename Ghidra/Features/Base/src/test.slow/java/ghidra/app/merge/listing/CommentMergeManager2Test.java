@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,6 @@ import ghidra.program.model.listing.*;
  */
 public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
-	/**
-	 * 
-	 * @param arg0
-	 */
 	public CommentMergeManager2Test() {
 		super();
 	}
@@ -48,15 +44,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 
 				CodeUnit cu = listing.getCodeUnitAt(addr(program, "0x1001000"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -66,31 +62,31 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 				// EOL Comment @ 100283e
 				cu = listing.getCodeUnitAt(addr(program, "0x100283e"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// Pre Comment @ 1002840
 				cu = listing.getCodeUnitAt(addr(program, "0x1002840"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
 
 				// Post Comment @ 1002843
 				cu = listing.getCodeUnitAt(addr(program, "0x1002843"));
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
 
 				// Plate Comment @ 1002847
 				cu = listing.getCodeUnitAt(addr(program, "0x1002847"));
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
 
 				// Repeatable Comment @ 100284a
 				cu = listing.getCodeUnitAt(addr(program, "0x100284a"));
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 		executeMerge(KEEP_LATEST);
@@ -100,35 +96,35 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 		// EOL Comment @ 100283e
 		assertEquals("EOL Comment",
-			listing.getCodeUnitAt(addr("0x100283e")).getComment(CodeUnit.EOL_COMMENT));
+			listing.getCodeUnitAt(addr("0x100283e")).getComment(CommentType.EOL));
 
 		// Pre Comment @ 1002840
 		assertEquals("Pre Comment",
-			listing.getCodeUnitAt(addr("0x1002840")).getComment(CodeUnit.PRE_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002840")).getComment(CommentType.PRE));
 
 		// Post Comment @ 1002843
 		assertEquals("Post Comment",
-			listing.getCodeUnitAt(addr("0x1002843")).getComment(CodeUnit.POST_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002843")).getComment(CommentType.POST));
 
 		// Plate Comment @ 1002847
 		assertEquals("Plate Comment",
-			listing.getCodeUnitAt(addr("0x1002847")).getComment(CodeUnit.PLATE_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002847")).getComment(CommentType.PLATE));
 
 		// Repeatable Comment @ 100284a
 		assertEquals("Repeatable Comment",
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CodeUnit.REPEATABLE_COMMENT));
+			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE));
 
 		// Latest has comment
 		assertEquals("EOL Comment",
-			listing.getCodeUnitAt(addr("0x1001000")).getComment(CodeUnit.EOL_COMMENT));
+			listing.getCodeUnitAt(addr("0x1001000")).getComment(CommentType.EOL));
 
 		// Conflicts become latest comments @ 10028b1
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x10028b1"));
-		assertEquals("Latest EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Latest Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("Latest Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("Latest Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Latest Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals("Latest EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("Latest Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("Latest Post Comment", cu.getComment(CommentType.POST));
+		assertEquals("Latest Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
 	}
 
 @Test
@@ -140,15 +136,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 
 				CodeUnit cu = listing.getCodeUnitAt(addr(program, "0x1001000"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -158,31 +154,31 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 				// EOL Comment @ 100283e
 				cu = listing.getCodeUnitAt(addr(program, "0x100283e"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// Pre Comment @ 1002840
 				cu = listing.getCodeUnitAt(addr(program, "0x1002840"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
 
 				// Post Comment @ 1002843
 				cu = listing.getCodeUnitAt(addr(program, "0x1002843"));
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
 
 				// Plate Comment @ 1002847
 				cu = listing.getCodeUnitAt(addr(program, "0x1002847"));
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
 
 				// Repeatable Comment @ 100284a
 				cu = listing.getCodeUnitAt(addr(program, "0x100284a"));
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -193,35 +189,35 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 		// EOL Comment @ 100283e
 		assertEquals("EOL Comment",
-			listing.getCodeUnitAt(addr("0x100283e")).getComment(CodeUnit.EOL_COMMENT));
+			listing.getCodeUnitAt(addr("0x100283e")).getComment(CommentType.EOL));
 
 		// Pre Comment @ 1002840
 		assertEquals("Pre Comment",
-			listing.getCodeUnitAt(addr("0x1002840")).getComment(CodeUnit.PRE_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002840")).getComment(CommentType.PRE));
 
 		// Post Comment @ 1002843
 		assertEquals("Post Comment",
-			listing.getCodeUnitAt(addr("0x1002843")).getComment(CodeUnit.POST_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002843")).getComment(CommentType.POST));
 
 		// Plate Comment @ 1002847
 		assertEquals("Plate Comment",
-			listing.getCodeUnitAt(addr("0x1002847")).getComment(CodeUnit.PLATE_COMMENT));
+			listing.getCodeUnitAt(addr("0x1002847")).getComment(CommentType.PLATE));
 
 		// Repeatable Comment @ 100284a
 		assertEquals("Repeatable Comment",
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CodeUnit.REPEATABLE_COMMENT));
+			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE));
 
 		// Latest has comment
 		assertEquals("EOL Comment",
-			listing.getCodeUnitAt(addr("0x1001000")).getComment(CodeUnit.EOL_COMMENT));
+			listing.getCodeUnitAt(addr("0x1001000")).getComment(CommentType.EOL));
 
 		// Conflicts become my comments @ 10028b1
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x10028b1"));
-		assertEquals("My EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("My Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("My Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("My Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals("My EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("My Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
+		assertEquals("My Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
 	}
 
 @Test
@@ -233,15 +229,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 
 				CodeUnit cu = listing.getCodeUnitAt(addr(program, "0x1001000"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -251,31 +247,31 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 				// EOL Comment @ 100283e
 				cu = listing.getCodeUnitAt(addr(program, "0x100283e"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// Pre Comment @ 1002840
 				cu = listing.getCodeUnitAt(addr(program, "0x1002840"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
 
 				// Post Comment @ 1002843
 				cu = listing.getCodeUnitAt(addr(program, "0x1002843"));
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
 
 				// Plate Comment @ 1002847
 				cu = listing.getCodeUnitAt(addr(program, "0x1002847"));
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
 
 				// Repeatable Comment @ 100284a
 				cu = listing.getCodeUnitAt(addr(program, "0x100284a"));
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 		executeMerge(KEEP_BOTH);
@@ -284,42 +280,42 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		// EOL Comment @ 100283e
-		assertEquals(listing.getCodeUnitAt(addr("0x100283e")).getComment(CodeUnit.EOL_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x100283e")).getComment(CommentType.EOL),
 			"EOL Comment");
 
 		// Pre Comment @ 1002840
-		assertEquals(listing.getCodeUnitAt(addr("0x1002840")).getComment(CodeUnit.PRE_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002840")).getComment(CommentType.PRE),
 			"Pre Comment");
 
 		// Post Comment @ 1002843
-		assertEquals(listing.getCodeUnitAt(addr("0x1002843")).getComment(CodeUnit.POST_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002843")).getComment(CommentType.POST),
 			"Post Comment");
 
 		// Plate Comment @ 1002847
-		assertEquals(listing.getCodeUnitAt(addr("0x1002847")).getComment(CodeUnit.PLATE_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002847")).getComment(CommentType.PLATE),
 			"Plate Comment");
 
 		// Repeatable Comment @ 100284a
 		assertEquals(
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CodeUnit.REPEATABLE_COMMENT),
+			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
 			"Repeatable Comment");
 
 		// Latest has comment
-		assertEquals(listing.getCodeUnitAt(addr("0x1001000")).getComment(CodeUnit.EOL_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1001000")).getComment(CommentType.EOL),
 			"EOL Comment");
 
 		// Conflicts become combined comments @ 10028b1
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x10028b1"));
 		assertEquals("Latest EOL Comment" + "\n" + "My EOL Comment",
-			cu.getComment(CodeUnit.EOL_COMMENT));
+			cu.getComment(CommentType.EOL));
 		assertEquals("Latest Pre Comment" + "\n" + "My Pre Comment",
-			cu.getComment(CodeUnit.PRE_COMMENT));
+			cu.getComment(CommentType.PRE));
 		assertEquals("Latest Post Comment" + "\n" + "My Post Comment",
-			cu.getComment(CodeUnit.POST_COMMENT));
+			cu.getComment(CommentType.POST));
 		assertEquals("Latest Plate Comment" + "\n" + "My Plate Comment",
-			cu.getComment(CodeUnit.PLATE_COMMENT));
+			cu.getComment(CommentType.PLATE));
 		assertEquals("Latest Repeatable Comment" + "\n" + "My Repeatable Comment",
-			cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+			cu.getComment(CommentType.REPEATABLE));
 	}
 
 @Test
@@ -331,15 +327,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 
 				CodeUnit cu = listing.getCodeUnitAt(addr(program, "0x1001000"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -349,31 +345,31 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 				// EOL Comment @ 100283e
 				cu = listing.getCodeUnitAt(addr(program, "0x100283e"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
 
 				// Pre Comment @ 1002840
 				cu = listing.getCodeUnitAt(addr(program, "0x1002840"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
 
 				// Post Comment @ 1002843
 				cu = listing.getCodeUnitAt(addr(program, "0x1002843"));
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
 
 				// Plate Comment @ 1002847
 				cu = listing.getCodeUnitAt(addr(program, "0x1002847"));
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
 
 				// Repeatable Comment @ 100284a
 				cu = listing.getCodeUnitAt(addr(program, "0x100284a"));
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 
 				// All comments @ 10028b1
 				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -388,38 +384,38 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		// EOL Comment @ 100283e
-		assertEquals(listing.getCodeUnitAt(addr("0x100283e")).getComment(CodeUnit.EOL_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x100283e")).getComment(CommentType.EOL),
 			"EOL Comment");
 
 		// Pre Comment @ 1002840
-		assertEquals(listing.getCodeUnitAt(addr("0x1002840")).getComment(CodeUnit.PRE_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002840")).getComment(CommentType.PRE),
 			"Pre Comment");
 
 		// Post Comment @ 1002843
-		assertEquals(listing.getCodeUnitAt(addr("0x1002843")).getComment(CodeUnit.POST_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002843")).getComment(CommentType.POST),
 			"Post Comment");
 
 		// Plate Comment @ 1002847
-		assertEquals(listing.getCodeUnitAt(addr("0x1002847")).getComment(CodeUnit.PLATE_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1002847")).getComment(CommentType.PLATE),
 			"Plate Comment");
 
 		// Repeatable Comment @ 100284a
 		assertEquals(
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CodeUnit.REPEATABLE_COMMENT),
+			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
 			"Repeatable Comment");
 
 		// Latest has comment
-		assertEquals(listing.getCodeUnitAt(addr("0x1001000")).getComment(CodeUnit.EOL_COMMENT),
+		assertEquals(listing.getCodeUnitAt(addr("0x1001000")).getComment(CommentType.EOL),
 			"EOL Comment");
 
 		// Conflicts become latest comments @ 10028b1
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x10028b1"));
-		assertEquals("Latest Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals("Latest Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Pre Comment", cu.getComment(CommentType.PRE));
 		assertEquals("Latest EOL Comment" + "\n" + "My EOL Comment",
-			cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Latest Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("My Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+			cu.getComment(CommentType.EOL));
+		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -428,6 +424,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
+				// do nothing
 			}
 
 			@Override
@@ -435,11 +432,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 		});
 
@@ -449,11 +446,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
+		assertNull(cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -465,15 +462,16 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
+				// do nothing
 			}
 		});
 
@@ -483,11 +481,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
+		assertNull(cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -499,11 +497,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 
 			@Override
@@ -511,11 +509,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 		});
 
@@ -525,11 +523,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
+		assertNull(cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -541,11 +539,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -553,11 +551,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 		});
 
@@ -572,11 +570,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertEquals("Latest Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Latest Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("Latest EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Latest Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("Latest Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Latest Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("Latest EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("Latest Post Comment", cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -588,11 +586,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -600,11 +598,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 		});
 
@@ -619,11 +617,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
+		assertNull(cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -635,11 +633,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 
 			@Override
@@ -647,11 +645,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -666,11 +664,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
+		assertNull(cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -682,11 +680,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, null);
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
-				cu.setComment(CodeUnit.POST_COMMENT, null);
-				cu.setComment(CodeUnit.PLATE_COMMENT, null);
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, null);
+				cu.setComment(CommentType.EOL, null);
+				cu.setComment(CommentType.PRE, null);
+				cu.setComment(CommentType.POST, null);
+				cu.setComment(CommentType.PLATE, null);
+				cu.setComment(CommentType.REPEATABLE, null);
 			}
 
 			@Override
@@ -694,11 +692,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -713,11 +711,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x100230d"));
-		assertEquals("My Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("My EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("My Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("My Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("My Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("My EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -729,17 +727,17 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x1008606"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008607"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 			}
 
 			@Override
@@ -747,17 +745,17 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x1008607"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
+				cu.setComment(CommentType.EOL, "EOL Comment");
+				cu.setComment(CommentType.PRE, "Pre Comment");
+				cu.setComment(CommentType.POST, "Post Comment");
+				cu.setComment(CommentType.PLATE, "Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008608"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -767,23 +765,23 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1008606"));
-		assertEquals("Latest Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Latest Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("Latest EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Latest Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("Latest Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Latest Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("Latest EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("Latest Post Comment", cu.getComment(CommentType.POST));
 		cu = listing.getCodeUnitAt(addr("0x1008607"));
-		assertEquals("Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("Post Comment", cu.getComment(CommentType.POST));
 		cu = listing.getCodeUnitAt(addr("0x1008608"));
-		assertEquals("My Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("My EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("My Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("My Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("My Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("My EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -795,23 +793,23 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x1008606"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008607"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008608"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				cu.setComment(CommentType.EOL, "Latest EOL Comment");
+				cu.setComment(CommentType.PRE, "Latest Pre Comment");
+				cu.setComment(CommentType.POST, "Latest Post Comment");
+				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
 
 			@Override
@@ -819,23 +817,23 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x1008606"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008607"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 				cu = listing.getCodeUnitAt(addr(program, "0x1008608"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				cu.setComment(CommentType.EOL, "My EOL Comment");
+				cu.setComment(CommentType.PRE, "My Pre Comment");
+				cu.setComment(CommentType.POST, "My Post Comment");
+				cu.setComment(CommentType.PLATE, "My Plate Comment");
+				cu.setComment(CommentType.REPEATABLE, "My Repeatable Comment");
 			}
 		});
 
@@ -864,25 +862,25 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		Listing listing = resultProgram.getListing();
 
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1008606"));
-		assertEquals("Latest Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Latest Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("Latest EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Latest Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("Latest Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Latest Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("Latest EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("Latest Post Comment", cu.getComment(CommentType.POST));
 		cu = listing.getCodeUnitAt(addr("0x1008607"));
-		assertEquals("My Plate Comment", cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("My Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("My EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("My Repeatable Comment", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("My Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("My Plate Comment", cu.getComment(CommentType.PLATE));
+		assertEquals("My Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("My EOL Comment", cu.getComment(CommentType.EOL));
+		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
+		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 		cu = listing.getCodeUnitAt(addr("0x1008608"));
 		assertEquals("Latest Plate Comment\nMy Plate Comment",
-			cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("Latest Pre Comment\nMy Pre Comment", cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("Latest EOL Comment\nMy EOL Comment", cu.getComment(CodeUnit.EOL_COMMENT));
+			cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Pre Comment\nMy Pre Comment", cu.getComment(CommentType.PRE));
+		assertEquals("Latest EOL Comment\nMy EOL Comment", cu.getComment(CommentType.EOL));
 		assertEquals("Latest Repeatable Comment\nMy Repeatable Comment",
-			cu.getComment(CodeUnit.REPEATABLE_COMMENT));
-		assertEquals("Latest Post Comment\nMy Post Comment", cu.getComment(CodeUnit.POST_COMMENT));
+			cu.getComment(CommentType.REPEATABLE));
+		assertEquals("Latest Post Comment\nMy Post Comment", cu.getComment(CommentType.POST));
 	}
 
 @Test
@@ -894,11 +892,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x10065e3"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre");
-				cu.setComment(CodeUnit.POST_COMMENT, "Post");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable");
+				cu.setComment(CommentType.EOL, "EOL");
+				cu.setComment(CommentType.PRE, "Pre");
+				cu.setComment(CommentType.POST, "Post");
+				cu.setComment(CommentType.PLATE, "Plate");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable");
 
 				createData(program, "0x10065e8", new DWordDataType());
 			}
@@ -910,11 +908,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x10065e9"));
-				cu.setComment(CodeUnit.EOL_COMMENT, "EOL2");
-				cu.setComment(CodeUnit.PRE_COMMENT, "Pre2");
-				cu.setComment(CodeUnit.POST_COMMENT, "Post2");
-				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate2");
-				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable2");
+				cu.setComment(CommentType.EOL, "EOL2");
+				cu.setComment(CommentType.PRE, "Pre2");
+				cu.setComment(CommentType.POST, "Post2");
+				cu.setComment(CommentType.PLATE, "Plate2");
+				cu.setComment(CommentType.REPEATABLE, "Repeatable2");
 			}
 		});
 
@@ -928,23 +926,23 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x10065e2"), cu.getMinAddress());
 		assertEquals(4, cu.getLength());
 		assertTrue(((Data) cu).getDataType().isEquivalent(new FloatDataType()));
-		assertEquals("EOL", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x10065e3")));
-		assertEquals("Pre", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x10065e3")));
-		assertEquals("Post", listing.getComment(CodeUnit.POST_COMMENT, addr("0x10065e3")));
-		assertEquals("Plate", listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x10065e3")));
+		assertEquals("EOL", listing.getComment(CommentType.EOL, addr("0x10065e3")));
+		assertEquals("Pre", listing.getComment(CommentType.PRE, addr("0x10065e3")));
+		assertEquals("Post", listing.getComment(CommentType.POST, addr("0x10065e3")));
+		assertEquals("Plate", listing.getComment(CommentType.PLATE, addr("0x10065e3")));
 		assertEquals("Repeatable",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x10065e3")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x10065e3")));
 
 		cu = listing.getCodeUnitContaining(addr("0x10065e9"));
 		assertEquals(addr("0x10065e8"), cu.getMinAddress());
 		assertEquals(4, cu.getLength());
 		assertTrue(((Data) cu).getDataType().isEquivalent(new DWordDataType()));
-		assertEquals("EOL2", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x10065e9")));
-		assertEquals("Pre2", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x10065e9")));
-		assertEquals("Post2", listing.getComment(CodeUnit.POST_COMMENT, addr("0x10065e9")));
-		assertEquals("Plate2", listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x10065e9")));
+		assertEquals("EOL2", listing.getComment(CommentType.EOL, addr("0x10065e9")));
+		assertEquals("Pre2", listing.getComment(CommentType.PRE, addr("0x10065e9")));
+		assertEquals("Post2", listing.getComment(CommentType.POST, addr("0x10065e9")));
+		assertEquals("Plate2", listing.getComment(CommentType.PLATE, addr("0x10065e9")));
 		assertEquals("Repeatable2",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x10065e9")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x10065e9")));
 	}
 
 @Test
@@ -954,15 +952,13 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
-					"New EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
-					"New Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "New EOL Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "New Pre Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST,
 					"New Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"New Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"New Repeatable Comment");
 			}
 
@@ -984,14 +980,14 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertEquals("New EOL Comment", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
-		assertEquals("New Pre Comment", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
+		assertEquals("New EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
+		assertEquals("New Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
 		assertEquals("New Post Comment",
-			listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.POST, addr("0x1002040")));
 		assertEquals("New Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 @Test
@@ -1008,15 +1004,13 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
-					"New EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
-					"New Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "New EOL Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "New Pre Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST,
 					"New Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"New Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"New Repeatable Comment");
 			}
 		});
@@ -1031,14 +1025,14 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertEquals("New EOL Comment", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
-		assertEquals("New Pre Comment", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
+		assertEquals("New EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
+		assertEquals("New Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
 		assertEquals("New Post Comment",
-			listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.POST, addr("0x1002040")));
 		assertEquals("New Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 @Test
@@ -1048,13 +1042,13 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT, null);
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, null);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT, null);
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, null);
 				disassemble(program,
 					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
 					false);
@@ -1071,12 +1065,12 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertNull(listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
-		assertNull(listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
-		assertEquals("Post in P1.", listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
-		assertEquals("Plate in P1.", listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+		assertNull(listing.getComment(CommentType.EOL, addr("0x1002040")));
+		assertNull(listing.getComment(CommentType.PRE, addr("0x1002040")));
+		assertEquals("Post in P1.", listing.getComment(CommentType.POST, addr("0x1002040")));
+		assertEquals("Plate in P1.", listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("Repeatable in P1.",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 @Test
@@ -1086,7 +1080,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT, null);
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST, null);
 				disassemble(program,
 					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
 					false);
@@ -1095,7 +1089,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT, null);
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE, null);
 			}
 		});
 
@@ -1109,12 +1103,12 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertEquals("EOL in P1.", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
-		assertEquals("Pre in P1.", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
-		assertNull(listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
-		assertNull(listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+		assertEquals("EOL in P1.", listing.getComment(CommentType.EOL, addr("0x1002040")));
+		assertEquals("Pre in P1.", listing.getComment(CommentType.PRE, addr("0x1002040")));
+		assertNull(listing.getComment(CommentType.POST, addr("0x1002040")));
+		assertNull(listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("Repeatable in P1.",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 @Test
@@ -1124,30 +1118,27 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL,
 					"Latest EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE,
 					"Latest Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST,
 					"Latest Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"New Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"New Repeatable Comment");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
-					"My EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
-					"My Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
-					"My Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "My EOL Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "My Pre Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST, "My Post Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"New Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"New Repeatable Comment");
 				disassemble(program,
 					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
@@ -1168,15 +1159,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertEquals("My EOL Comment", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
+		assertEquals("My EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
 		assertEquals("Latest Pre Comment",
-			listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.PRE, addr("0x1002040")));
 		assertEquals("Latest Post Comment\nMy Post Comment",
-			listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.POST, addr("0x1002040")));
 		assertEquals("New Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 @Test
@@ -1189,30 +1180,25 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				disassemble(program,
 					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
 					false);
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
-					"New EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
-					"New Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "New EOL Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "New Pre Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST,
 					"Latest Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"Latest Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"Latest Repeatable Comment");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.EOL_COMMENT,
-					"New EOL Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PRE_COMMENT,
-					"New Pre Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.POST_COMMENT,
-					"My Post Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.PLATE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "New EOL Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "New Pre Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.POST, "My Post Comment");
+				listing.setComment(addr(program, "0x1002040"), CommentType.PLATE,
 					"My Plate Comment");
-				listing.setComment(addr(program, "0x1002040"), CodeUnit.REPEATABLE_COMMENT,
+				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"My Repeatable Comment");
 			}
 		});
@@ -1230,14 +1216,14 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(addr("0x100203f"), cu.getMinAddress());
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
-		assertEquals("New EOL Comment", listing.getComment(CodeUnit.EOL_COMMENT, addr("0x1002040")));
-		assertEquals("New Pre Comment", listing.getComment(CodeUnit.PRE_COMMENT, addr("0x1002040")));
+		assertEquals("New EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
+		assertEquals("New Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
 		assertEquals("Latest Post Comment\nMy Post Comment",
-			listing.getComment(CodeUnit.POST_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.POST, addr("0x1002040")));
 		assertEquals("Latest Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("My Repeatable Comment",
-			listing.getComment(CodeUnit.REPEATABLE_COMMENT, addr("0x1002040")));
+			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
 }

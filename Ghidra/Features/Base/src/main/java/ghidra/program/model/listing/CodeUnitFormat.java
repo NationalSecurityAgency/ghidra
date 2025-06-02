@@ -133,7 +133,7 @@ public class CodeUnitFormat {
 			stringBuffer.append(getOperandRepresentationString(cu, 0));
 		}
 		if (includeEOLcomment) {
-			String eolComment = cu.getComment(CodeUnit.EOL_COMMENT);
+			String eolComment = cu.getComment(CommentType.EOL);
 			if (eolComment != null) {
 				// fixup annotations
 				eolComment = CommentUtils.getDisplayString(eolComment, cu.getProgram());

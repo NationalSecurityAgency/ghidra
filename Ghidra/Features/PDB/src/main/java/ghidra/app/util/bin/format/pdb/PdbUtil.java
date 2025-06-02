@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Conv;
 
@@ -52,10 +52,10 @@ final class PdbUtil {
 	 * @param program program
 	 * @param address listing address
 	 * @param text comment text
-	 * @param commentType comment type ({@link CodeUnit}
+	 * @param commentType comment type
 	 */
 	final static void appendComment(Program program, Address address, String text,
-			int commentType) {
+			CommentType commentType) {
 
 		String comment = program.getListing().getComment(commentType, address);
 		if (comment != null) {

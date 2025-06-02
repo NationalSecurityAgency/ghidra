@@ -84,7 +84,7 @@ class OldFunctionDataDB {
 	public synchronized String getComment() {
 		CodeUnit cu = program.getCodeManager().getCodeUnitContaining(entryPoint);
 
-		return cu.getComment(CodeUnit.PLATE_COMMENT);
+		return cu.getComment(CommentType.PLATE);
 	}
 
 	/**

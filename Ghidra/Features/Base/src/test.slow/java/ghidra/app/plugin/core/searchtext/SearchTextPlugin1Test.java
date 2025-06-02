@@ -376,17 +376,17 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = listing.getCodeUnitAt(getAddr(0x0100416f));
 		int transactionID = program.startTransaction("test");
-		cu.setComment(CodeUnit.EOL_COMMENT, "call sscanf");
+		cu.setComment(CommentType.EOL, "call sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004178));
-		cu.setComment(CodeUnit.REPEATABLE_COMMENT, "make a reference to sscanf");
+		cu.setComment(CommentType.REPEATABLE, "make a reference to sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004192));
-		cu.setComment(CodeUnit.PLATE_COMMENT, "another ref to sscanf");
-		cu.setComment(CodeUnit.POST_COMMENT, "sscanf in a post comment");
+		cu.setComment(CommentType.PLATE, "another ref to sscanf");
+		cu.setComment(CommentType.POST, "sscanf in a post comment");
 
 		cu = listing.getCodeUnitAt(getAddr(0x0100467b));
-		cu.setComment(CodeUnit.PRE_COMMENT, "call sscanf here");
+		cu.setComment(CommentType.PRE, "call sscanf here");
 
 		program.endTransaction(transactionID, true);
 

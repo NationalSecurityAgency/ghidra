@@ -83,7 +83,7 @@ public class ObjectiveC2_MessageAnalyzer extends AbstractAnalyzer {
 			Instruction instruction = instructionIterator.next();
 
 			if (isCallingObjcMsgSend(instruction)) {
-				String eolComment = instruction.getComment(CodeUnit.EOL_COMMENT);
+				String eolComment = instruction.getComment(CommentType.EOL);
 
 				if (eolComment != null) {//if a comment already exists, ignore...
 					continue;
@@ -196,7 +196,7 @@ public class ObjectiveC2_MessageAnalyzer extends AbstractAnalyzer {
 			}
 
 			if (currentClass != null && currentMethod != null) {
-				instruction.setComment(CodeUnit.EOL_COMMENT, "[" + currentClass + " " +
+				instruction.setComment(CommentType.EOL, "[" + currentClass + " " +
 					currentMethod + "]");
 				break;
 			}

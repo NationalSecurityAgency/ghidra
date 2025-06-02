@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -382,17 +382,17 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 	}
 
 	void addEolComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.EOL_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.EOL, comment);
 		tool.execute(cmd, program);
 	}
 
 	void addPreComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.PRE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.PRE, comment);
 		tool.execute(cmd, program);
 	}
 
 	void addPostComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.POST_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.POST, comment);
 		tool.execute(cmd, program);
 	}
 

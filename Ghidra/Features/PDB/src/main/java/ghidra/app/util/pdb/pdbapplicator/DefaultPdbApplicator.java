@@ -1065,7 +1065,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Stores whether the structure referenced by the record number has been filled in such that
 	 * it can be used as a base class
 	 * @param recordNumber record number of type record
-	 * @param dataType the data type to store
 	 */
 	void markFilledInForBase(RecordNumber recordNumber) {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
@@ -2366,7 +2365,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (StringUtils.isBlank(comment)) {
 			return false;
 		}
-		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String plate = program.getListing().getComment(CommentType.PLATE, address);
 		if (plate == null) {
 			plate = "";
 		}
@@ -2377,7 +2376,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			comment += '\n';
 		}
 		plate = comment + plate; // putting new comment at top of existing plate
-		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
+		SetCommentCmd.createComment(program, address, plate, CommentType.PLATE);
 		return true;
 	}
 

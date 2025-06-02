@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,24 +25,12 @@ import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Undefined1DataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Equate;
-import ghidra.program.model.symbol.EquateTable;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -199,7 +187,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 					Data data = createData(program, address, dataType);
 					Scalar scalar = data.getScalar(0);
 					Address toAddr = destinationBlock.getStart().add(scalar.getUnsignedValue());
-					program.getListing().setComment(address, CodeUnit.EOL_COMMENT, "->" + toAddr);
+					program.getListing().setComment(address, CommentType.EOL, "->" + toAddr);
 				}
 				catch (Exception e) {
 					log.appendException(e);

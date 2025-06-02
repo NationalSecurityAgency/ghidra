@@ -166,7 +166,7 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 					 * {@link program.model.listing.CodeUnit}
 					 */
 					String comment = (String) value;
-					getProgram().getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
+					getProgram().getListing().setComment(addr, CommentType.PLATE, comment);
 					break;
 				case "highlight":
 					Color color = Color.decode((String) value);

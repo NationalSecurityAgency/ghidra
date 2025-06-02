@@ -15,32 +15,16 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.VTAssociation;
-import ghidra.feature.vt.api.main.VTAssociationStatus;
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.api.main.VTMatchInfo;
-import ghidra.feature.vt.api.main.VTMatchSet;
-import ghidra.feature.vt.api.main.VTProgramCorrelator;
-import ghidra.feature.vt.api.main.VTScore;
-import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.db.VTTestUtils;
@@ -55,13 +39,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -671,7 +649,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		while (sourceCodeUnits.hasNext()) {
 			CodeUnit cu = sourceCodeUnits.next();
 			Address addr = cu.getAddress();
-			sourceListing.setComment(addr, CodeUnit.EOL_COMMENT, "Test Comment " + numComments++);
+			sourceListing.setComment(addr, CommentType.EOL, "Test Comment " + numComments++);
 		}
 		sourceProgram.endTransaction(startTransaction, true);
 
@@ -698,7 +676,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			CodeUnit cu = destCodeUnits.next();
 			Address addr = cu.getAddress();
 			assertEquals("Test Comment " + numComments++,
-				destListing.getComment(CodeUnit.EOL_COMMENT, addr));
+				destListing.getComment(CommentType.EOL, addr));
 		}
 	}
 
@@ -731,7 +709,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		while (sourceCodeUnits.hasNext()) {
 			CodeUnit cu = sourceCodeUnits.next();
 			Address addr = cu.getAddress();
-			sourceListing.setComment(addr, CodeUnit.EOL_COMMENT, "Test Comment " + numComments++);
+			sourceListing.setComment(addr, CommentType.EOL, "Test Comment " + numComments++);
 		}
 		sourceProgram.endTransaction(startTransaction, true);
 
@@ -758,7 +736,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			CodeUnit cu = destCodeUnits.next();
 			Address addr = cu.getAddress();
 			assertEquals("Test Comment " + numComments++,
-				destListing.getComment(CodeUnit.EOL_COMMENT, addr));
+				destListing.getComment(CommentType.EOL, addr));
 		}
 	}
 
@@ -794,7 +772,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		while (codeUnits.hasNext()) {
 			CodeUnit cu = codeUnits.next();
 			Address addr = cu.getAddress();
-			sourceListing.setComment(addr, CodeUnit.EOL_COMMENT, "Test Comment " + numComments++);
+			sourceListing.setComment(addr, CommentType.EOL, "Test Comment " + numComments++);
 		}
 		sourceProgram.endTransaction(startTransaction, true);
 
@@ -833,12 +811,12 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			CodeUnit cu = codeUnitsDestTop.next();
 			Address addr = cu.getAddress();
 			assertEquals("Test Comment " + numComments++,
-				destListing.getComment(CodeUnit.EOL_COMMENT, addr));
+				destListing.getComment(CommentType.EOL, addr));
 		}
 
 		// Now check the one that should not have a comment at all
 		assertEquals(null,
-			destListing.getComment(CodeUnit.EOL_COMMENT, addr("0x4119af", destinationProgram)));
+			destListing.getComment(CommentType.EOL, addr("0x4119af", destinationProgram)));
 
 		// Now get the bottom section
 		AddressSet bottomAddressSet = destinationProgram.getAddressFactory()
@@ -852,7 +830,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		while (codeUnitsDestBottom.hasNext()) {
 			CodeUnit cu = codeUnitsDestBottom.next();
 			Address addr = cu.getAddress();
-			assertEquals(destListing.getComment(CodeUnit.EOL_COMMENT, addr),
+			assertEquals(destListing.getComment(CommentType.EOL, addr),
 				"Test Comment " + numComments++);
 		}
 	}

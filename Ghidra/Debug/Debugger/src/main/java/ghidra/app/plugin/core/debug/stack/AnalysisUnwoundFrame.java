@@ -353,7 +353,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 			TraceData frame = trace.getCodeManager()
 					.definedData()
 					.create(span, spPlusParams, platform, structure);
-			frame.setComment(CodeUnit.PRE_COMMENT, getDescription());
+			frame.setComment(CommentType.PRE, getDescription());
 			TraceReferenceManager refs = trace.getReferenceManager();
 			refs.clearReferencesFrom(span, frame.getRange());
 			refs.clearReferencesTo(span, frame.getRange());

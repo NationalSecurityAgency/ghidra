@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +19,11 @@
 //@category Analysis
 
 
+import java.util.*;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
-
-import java.util.*;
 
 public class RegisterTouchesPerFunction extends GhidraScript
 {
@@ -65,7 +64,7 @@ public class RegisterTouchesPerFunction extends GhidraScript
         
         monitor.setMessage("Analyzing registers in " + func.getName());
 
-        String comment = list.getComment(CodeUnit.PLATE_COMMENT, func.getBody().getMinAddress());
+        String comment = list.getComment(CommentType.PLATE, func.getBody().getMinAddress());
 
         if (comment != null && comment.indexOf("TOUCHED REGISTER SUMMARY") > -1)
             return;
@@ -163,7 +162,7 @@ public class RegisterTouchesPerFunction extends GhidraScript
         	buffer.append("   "+getString(pushPops, 8));
         }
 
-        list.setComment(func.getEntryPoint(), CodeUnit.PLATE_COMMENT, buffer.toString());
+		list.setComment(func.getEntryPoint(), CommentType.PLATE, buffer.toString());
     }
 
     private String getString(Collection<String> c, int itemsPerLine)

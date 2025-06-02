@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,7 +181,7 @@ public abstract class ArtImageSections {
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 			program.getSymbolTable().createLabel(address, name, SourceType.ANALYSIS);
 			program.getListing()
-					.setComment(address, CodeUnit.PLATE_COMMENT, "Size: " + section.getSize());
+					.setComment(address, CommentType.PLATE, "Size: " + section.getSize());
 
 			createFragment(program, address, section, name, monitor);
 		}
@@ -210,7 +210,7 @@ public abstract class ArtImageSections {
 
 				String comment =
 					"Declaring Class: 0x" + Integer.toHexString(field.getDeclaringClass());
-				program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+				program.getListing().setComment(address, CommentType.PLATE, comment);
 
 				address = address.add(dataType.getLength());
 
@@ -230,7 +230,7 @@ public abstract class ArtImageSections {
 					ArtField artField = fieldGroup.getFieldList().get(0);
 					String comment =
 						"Declaring Class: 0x" + Integer.toHexString(artField.getDeclaringClass());
-					program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+					program.getListing().setComment(address, CommentType.PLATE, comment);
 				}
 				address = address.add(dataType.getLength());
 
@@ -261,7 +261,7 @@ public abstract class ArtImageSections {
 				program.getListing().createData(address, dataType);
 				String comment =
 					"Declaring Class: 0x" + Integer.toHexString(method.getDeclaringClass());
-				program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+				program.getListing().setComment(address, CommentType.PLATE, comment);
 
 				address = address.add(dataType.getLength());
 
@@ -282,7 +282,7 @@ public abstract class ArtImageSections {
 					ArtMethod artMethod = methodGroup.getMethodList().get(0);
 					String comment =
 						"Declaring Class: 0x" + Integer.toHexString(artMethod.getDeclaringClass());
-					program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+					program.getListing().setComment(address, CommentType.PLATE, comment);
 				}
 				address = address.add(dataType.getLength());
 

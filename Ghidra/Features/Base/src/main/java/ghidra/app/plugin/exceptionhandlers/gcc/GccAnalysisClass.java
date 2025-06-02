@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.task.TaskMonitor;
@@ -100,12 +100,10 @@ public abstract class GccAnalysisClass {
 	 * @param addr the address where data is created
 	 * @param dt the type for the data
 	 * @param comment the comment about the data
-	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
-	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
-	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * @param commentType the {@link CommentType type of comment }
 	 */
 	protected static void createAndCommentData(Program program, Address addr, DataType dt,
-			String comment, int commentType) {
+			String comment, CommentType commentType) {
 		createData(program, addr, dt);
 		SetCommentCmd.createComment(program, addr, comment, commentType);
 	}

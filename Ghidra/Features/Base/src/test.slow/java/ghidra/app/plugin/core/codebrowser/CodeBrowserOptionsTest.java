@@ -595,7 +595,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		cb.goToField(callAddress, "Bytes", 0, 0);
 
-		SetCommentCmd eolCmd = new SetCommentCmd(callAddress, CodeUnit.EOL_COMMENT,
+		SetCommentCmd eolCmd = new SetCommentCmd(callAddress, CommentType.EOL,
 			"a bb ccc dddd eeeee ffff ggg hhh ii j k ll mmm nnn oooo " +
 				"ppppp qqqq rrrr ssss tttt uuuuu vvvvvv wwwww\n\n\n\n" +
 				"AAA BBB CCC DDD EEE FFF GGG HHH III JJJ KKK LLL MMM NNN OOO PPP QQQ " +
@@ -604,7 +604,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 				"4444 55555 666666 7777777 88888888 999999999 0000000000 1 22 333 4444 55555");
 		tool.execute(eolCmd, program);
 
-		SetCommentCmd repeatCmd = new SetCommentCmd(callAddress, CodeUnit.REPEATABLE_COMMENT,
+		SetCommentCmd repeatCmd = new SetCommentCmd(callAddress, CommentType.REPEATABLE,
 			"Local repeatable line1.\n" + "\n" + "Line3 of repeatable.");
 		tool.execute(repeatCmd, program);
 
@@ -613,7 +613,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 			new CreateFunctionCmd(null, callRefAddress, body, SourceType.USER_DEFINED);
 		tool.execute(createFunctionCmd, program);
 
-		SetCommentCmd callRepeatCmd = new SetCommentCmd(callRefAddress, CodeUnit.REPEATABLE_COMMENT,
+		SetCommentCmd callRepeatCmd = new SetCommentCmd(callRefAddress, CommentType.REPEATABLE,
 			"\n" + "Function Repeatable line2");
 		tool.execute(callRepeatCmd, program);
 
@@ -622,7 +622,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		tool.execute(addRefCmd, program);
 
 		SetCommentCmd commentRefCmd = new SetCommentCmd(otherRefAddress,
-			CodeUnit.REPEATABLE_COMMENT, "Mem ref line1.\n" + "");
+			CommentType.REPEATABLE, "Mem ref line1.\n" + "");
 		tool.execute(commentRefCmd, program);
 
 		// these values are all DEFAULT, by default; set them in case that changes in the future

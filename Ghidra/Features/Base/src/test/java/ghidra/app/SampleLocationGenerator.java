@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,42 +119,42 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 
 		Address a = addr(0x100101c);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.PRE);
 		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
 
 		a = addr(0x100352f);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.EOL);
 		locs[2] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.EOL);
 		locs[3] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 1, 5);
 
 		a = addr(0x10075ff);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.POST);
 		locs[4] = new PostCommentFieldLocation(program, a, null, comment, 0, 5);
 
 		a = addr(0x1003cf3);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.POST);
 		locs[5] = new PostCommentFieldLocation(program, a, null, comment, 0, 0);
 
 		a = addr(0x10030f0);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.PLATE);
 		locs[6] = new PlateFieldLocation(program, a, null, 0, 5, comment, -1);
 
 		a = addr(0x1003efc);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.PLATE);
 		locs[7] = new PlateFieldLocation(program, a, null, 0, 3, comment, -1);
 
 // TODO add test for repeatable comments.
@@ -168,12 +168,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 
 		Address a = addr(0x100101c);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.PRE);
 		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
 		return locs;
 	}
@@ -184,12 +184,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 
 		Address a = addr(0x100352f);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
-		String[] comment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.EOL);
 		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.EOL);
 		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 1, 5);
 		return locs;
 	}
@@ -200,12 +200,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 		Address a = addr(0x10075ff);
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
-		String[] comment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.POST);
 		locs[0] = new PostCommentFieldLocation(program, a, null, comment, 0, 5);
 
 		a = addr(0x1003cf3);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.POST);
 		locs[1] = new PostCommentFieldLocation(program, a, null, comment, 0, 0);
 		return locs;
 	}
@@ -216,12 +216,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 		Address a = addr(0x10030f0);
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
-		String[] comment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PLATE);
 		locs[0] = new PlateFieldLocation(program, a, null, 0, 5, comment, -1);
 
 		a = addr(0x1003efc);
 		cu = program.getListing().getCodeUnitAt(a);
-		comment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		comment = cu.getCommentAsArray(CommentType.PLATE);
 		locs[1] = new PlateFieldLocation(program, a, null, 0, 3, comment, -1);
 		return locs;
 	}

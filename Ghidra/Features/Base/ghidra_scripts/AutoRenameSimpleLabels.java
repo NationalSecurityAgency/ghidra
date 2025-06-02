@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.*;
 
@@ -147,14 +147,14 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 
 				// now also propogate the repeatable comment up as well
 
-				String comment = currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT,
+				String comment = currentProgram.getListing().getComment(CommentType.REPEATABLE,
 					operand_addr);
 				if (comment != null) {
-					if (currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT,
+					if (currentProgram.getListing().getComment(CommentType.REPEATABLE,
 						startAddr) == null) {
 						//println("updating comment for " + operand +" is " + comment);
-						currentProgram.getListing().setComment(startAddr,
-							CodeUnit.REPEATABLE_COMMENT, comment);
+						currentProgram.getListing()
+								.setComment(startAddr, CommentType.REPEATABLE, comment);
 					}
 				}
 			}

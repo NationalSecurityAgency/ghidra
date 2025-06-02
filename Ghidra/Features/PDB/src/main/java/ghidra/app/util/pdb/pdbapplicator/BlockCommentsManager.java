@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.util.Map;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 
 /**
@@ -118,7 +117,7 @@ public class BlockCommentsManager {
 	private void finalizeBlockComments(Program program, long addressDelta) {
 		for (Map.Entry<Address, String> entry : blockPreComments.entrySet()) {
 			appendBlockComment(program, entry.getKey().add(addressDelta), entry.getValue(),
-				CodeUnit.PRE_COMMENT);
+				CommentType.PRE);
 		}
 		for (Map.Entry<Address, String> entry : blockPostComments.entrySet()) {
 			CodeUnit codeUnit = program.getListing()
@@ -129,14 +128,13 @@ public class BlockCommentsManager {
 			}
 			else {
 				Address endCodeUnitAddress = codeUnit.getAddress();
-				appendBlockComment(program, endCodeUnitAddress, entry.getValue(),
-					CodeUnit.POST_COMMENT);
+				appendBlockComment(program, endCodeUnitAddress, entry.getValue(), CommentType.POST);
 			}
 		}
 	}
 
 	private void appendBlockComment(Program program, Address address, String text,
-			int commentType) {
+			CommentType commentType) {
 		String comment = program.getListing().getComment(commentType, address);
 		comment = (comment == null) ? text : comment + "\n" + text;
 		SetCommentCmd.createComment(program, address, comment, commentType);
