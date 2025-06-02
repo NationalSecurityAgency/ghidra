@@ -89,7 +89,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		if (pdbFile == null) {
 			// Warnings have already been logged, but nice to have a post-analysis pop-up that
 			// PDB analysis was not done
-			log.appendMsg(NAME, "Aborted: Could not find an appropriate PDB file; see log");
+			log.appendMsg(NAME, "Warning: Could not find an appropriate PDB file; see log");
 			return false;
 		}
 
