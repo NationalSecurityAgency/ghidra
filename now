@@ -1,0 +1,17 @@
+## Review
+
+ We welcome code reviews from anyone. A committer is required to formally
+  accept and merge the changes.
+- Reviewers will be looking for things like threading issues, performance
+  implications, API design, duplication of existing functionality, readability
+  and code style, avoidance of bloat (scope-creep), etc.
+- Reviewers will likely ask questions to better understand your change.
+- Reviewers will make comments about changes to your patch:
+    - MUST means that the change is required
+    - SHOULD means that the change is suggested, further discussion on the
+      subject may be required
+    - COULD means that the change is optional
+
+## Getting Started
+
+available now, please see my profile compared to your production
