@@ -410,7 +410,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			}
 			catch(Exception e)
 			{
-				
+				Msg.warn(this, e);
 			}
 			if (fallback != null) {
 				args.put(param.name(), ValStr.from(fallback));
