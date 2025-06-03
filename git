@@ -1,0 +1,3 @@
+git clone https://github.com/NationalSecurityAgency/ghidra-ghsa-86wm-2f7g-p5j3.git
+cd ghidra-ghsa-86wm-2f7g-p5j3
+git checkout -b advisory-fix-1
