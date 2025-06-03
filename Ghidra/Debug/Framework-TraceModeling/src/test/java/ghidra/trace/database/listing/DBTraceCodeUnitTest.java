@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -399,28 +399,28 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			// pass
 		}
 
-		assertNull(i4004.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(i4004.getComment(CommentType.EOL));
 		try (Transaction tx = b.startTransaction()) {
-			i4004.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+			i4004.setComment(CommentType.EOL, "My EOL Comment");
 		}
-		assertEquals("My EOL Comment", i4004.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(i4006.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("My EOL Comment", i4004.getComment(CommentType.EOL));
+		assertNull(i4006.getComment(CommentType.EOL));
 
-		assertArrayEquals(EMPTY_STRING_ARRAY, i4004.getCommentAsArray(CodeUnit.PRE_COMMENT));
+		assertArrayEquals(EMPTY_STRING_ARRAY, i4004.getCommentAsArray(CommentType.PRE));
 		try (Transaction tx = b.startTransaction()) {
 			i4004.setCommentAsArray(CodeUnit.PRE_COMMENT, new String[] { "My", "Pre", "Comment" });
 		}
-		assertEquals("My EOL Comment", i4004.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("My EOL Comment", i4004.getComment(CommentType.EOL));
 		assertArrayEquals(new String[] { "My", "Pre", "Comment" },
-			i4004.getCommentAsArray(CodeUnit.PRE_COMMENT));
-		assertArrayEquals(EMPTY_STRING_ARRAY, i4006.getCommentAsArray(CodeUnit.PRE_COMMENT));
-		assertEquals("My\nPre\nComment", i4004.getComment(CodeUnit.PRE_COMMENT));
+			i4004.getCommentAsArray(CommentType.PRE));
+		assertArrayEquals(EMPTY_STRING_ARRAY, i4006.getCommentAsArray(CommentType.PRE));
+		assertEquals("My\nPre\nComment", i4004.getComment(CommentType.PRE));
 
 		try (Transaction tx = b.startTransaction()) {
 			i4004.setCommentAsArray(CodeUnit.PRE_COMMENT, null);
 			i4006.setCommentAsArray(CodeUnit.PRE_COMMENT, null); // NOP
 		}
-		assertNull(i4004.getComment(CodeUnit.PRE_COMMENT));
+		assertNull(i4004.getComment(CommentType.PRE));
 
 		TraceInstruction i4004_10;
 		DBTraceCommentAdapter commentAdapter = b.trace.getCommentAdapter();
@@ -436,25 +436,25 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			assertEquals(Lifespan.nowOn(0), c4004.getLifespan());
 
 			i4004_10 = b.addInstruction(10, b.addr(0x4004), b.host);
-			i4004_10.setComment(CodeUnit.PRE_COMMENT, "Get this back in the mix");
-			i4004_10.setComment(CodeUnit.EOL_COMMENT, "A different comment");
+			i4004_10.setComment(CommentType.PRE, "Get this back in the mix");
+			i4004_10.setComment(CommentType.EOL, "A different comment");
 		}
 		assertEquals(Lifespan.span(0, 9), c4004.getLifespan());
-		assertEquals("My EOL Comment", i4004.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("My EOL Comment", i4004.getComment(CommentType.EOL));
 
 		try (Transaction tx = b.startTransaction()) {
 			commentAdapter.clearComments(Lifespan.nowOn(0), b.range(0x4000, 0x5000),
 				CodeUnit.EOL_COMMENT);
 		}
-		assertNull(i4004.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("Get this back in the mix", i4004_10.getComment(CodeUnit.PRE_COMMENT));
+		assertNull(i4004.getComment(CommentType.EOL));
+		assertEquals("Get this back in the mix", i4004_10.getComment(CommentType.PRE));
 
 		try (Transaction tx = b.startTransaction()) {
 			commentAdapter.clearComments(Lifespan.nowOn(0), b.range(0x4000, 0x5000),
 				CodeUnit.NO_COMMENT);
 		}
-		assertNull(i4004.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(i4004_10.getComment(CodeUnit.PRE_COMMENT));
+		assertNull(i4004.getComment(CommentType.EOL));
+		assertNull(i4004_10.getComment(CommentType.PRE));
 	}
 
 	@Test

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
@@ -189,7 +189,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 			if (program.getMemory().getInt(methodIndexAddress) == -1) {
 				program.getListing()
-						.setComment(methodIndexAddress, CodeUnit.PLATE_COMMENT, builder.toString());
+						.setComment(methodIndexAddress, CommentType.PLATE, builder.toString());
 
 				// Add placeholder symbol for external functions
 				String methodName = DexUtil.convertToString(header, item.getNameIndex());

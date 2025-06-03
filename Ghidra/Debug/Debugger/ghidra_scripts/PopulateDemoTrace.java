@@ -26,7 +26,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -409,8 +409,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			trace.getCodeManager()
 					.codeUnits()
 					.getAt(0, cloneLabel.getAddress())
-					.setComment(
-						CodeUnit.EOL_COMMENT, "Pretend this is a syscall");
+					.setComment(CommentType.EOL, "Pretend this is a syscall");
 
 			/**
 			 * Stub out "exit"
@@ -419,8 +418,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			trace.getCodeManager()
 					.codeUnits()
 					.getAt(0, exitLabel.getAddress())
-					.setComment(
-						CodeUnit.EOL_COMMENT, "Pretend this is a syscall");
+					.setComment(CommentType.EOL, "Pretend this is a syscall");
 
 			/**
 			 * "Launch" the program by initializing RIP and RSP of the main thread

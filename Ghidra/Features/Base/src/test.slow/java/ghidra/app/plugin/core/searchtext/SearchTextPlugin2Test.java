@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -309,7 +309,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** my entry Exit **********");
+			cu.setComment(CommentType.POST, "********** my entry Exit **********");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -340,7 +340,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** ___sbh_find_block Exit **********");
+			cu.setComment(CommentType.POST, "********** ___sbh_find_block Exit **********");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -369,7 +369,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** ___sbh_find_block Exit **********");
+			cu.setComment(CommentType.POST, "********** ___sbh_find_block Exit **********");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -395,7 +395,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "Comment test * with an asterisk");
+			cu.setComment(CommentType.POST, "Comment test * with an asterisk");
 		}
 		finally {
 			program.endTransaction(transactionID, true);

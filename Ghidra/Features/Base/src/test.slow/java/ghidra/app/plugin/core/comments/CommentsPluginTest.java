@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,7 +133,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(new WordDataType().getName(), subData1.getDataType().getName());
 		String comment1 = "aaa bbb ccc ddd eee";
 		setAt(addr, CodeUnit.EOL_COMMENT, comment1, "OK");
-		assertEquals(comment1, subData1.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals(comment1, subData1.getComment(CommentType.EOL));
 
 		browser.goToField(addr(0x10080a2), "+", 0, 0);
 
@@ -147,7 +147,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(new FloatDataType().getName(), subData.getDataType().getName());
 		String comment = "This is a comment on a structure element.";
 		setAt(addr, CodeUnit.EOL_COMMENT, comment, "OK");
-		assertEquals(comment, subData.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals(comment, subData.getComment(CommentType.EOL));
 
 		browser.goToField(addr(0x010080a2), EolCommentFieldFactory.FIELD_NAME, 0, 0);
 		assertEquals(comment, browser.getCurrentFieldText());
@@ -171,11 +171,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 
 		comment += "\n\nHI, MOM";
-		assertEquals(comment, subData.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals(comment, subData.getComment(CommentType.EOL));
 
 		performAction(deleteAction, browser.getProvider(), false);
 		waitForSwing();
-		assertNull(subData.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(subData.getComment(CommentType.EOL));
 	}
 
 	@Test
@@ -276,11 +276,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006420);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.PRE_COMMENT, PRE, "OK");
-		assertEquals(PRE, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(PRE, cu.getComment(CommentType.PRE));
 		undo(program);
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
+		assertNull(cu.getComment(CommentType.PRE));
 		redo(program);
-		assertEquals(PRE, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(PRE, cu.getComment(CommentType.PRE));
 		browser.goToField(addr, PreCommentFieldFactory.FIELD_NAME, 0, 0);
 		assertEquals(PRE, browser.getCurrentFieldText());
 	}
@@ -291,11 +291,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006420);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.POST_COMMENT, POST, "OK");
-		assertEquals(POST, cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals(POST, cu.getComment(CommentType.POST));
 		undo(program);
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.POST));
 		redo(program);
-		assertEquals(POST, cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals(POST, cu.getComment(CommentType.POST));
 		browser.goToField(addr, PostCommentFieldFactory.FIELD_NAME, 0, 0);
 		assertEquals(POST, browser.getCurrentFieldText());
 	}
@@ -306,11 +306,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006420);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.EOL_COMMENT, EOL, "OK");
-		assertEquals(EOL, cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals(EOL, cu.getComment(CommentType.EOL));
 		undo(program);
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(cu.getComment(CommentType.EOL));
 		redo(program);
-		assertEquals(EOL, cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals(EOL, cu.getComment(CommentType.EOL));
 		browser.goToField(addr, EolCommentFieldFactory.FIELD_NAME, 0, 0);
 		assertEquals(EOL, browser.getCurrentFieldText());
 	}
@@ -322,11 +322,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006420);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.PLATE_COMMENT, PLATE, "OK");
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
 		undo(program);
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
 		redo(program);
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
 		browser.goToField(addr, PlateFieldFactory.FIELD_NAME, 0, 0);
 		//allow for the "*" that get added to the plate
 		assertEquals(65, browser.getCurrentFieldText().indexOf(PLATE));
@@ -338,11 +338,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006420);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.REPEATABLE_COMMENT, REPEAT, "OK");
-		assertEquals(REPEAT, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals(REPEAT, cu.getComment(CommentType.REPEATABLE));
 		undo(program);
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
 		redo(program);
-		assertEquals(REPEAT, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals(REPEAT, cu.getComment(CommentType.REPEATABLE));
 		browser.goToField(addr, EolCommentFieldFactory.FIELD_NAME, 0, 0);
 		assertEquals(REPEAT, browser.getCurrentFieldText());
 	}
@@ -355,7 +355,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String longComment = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\n";
 		setAt(addr, CodeUnit.REPEATABLE_COMMENT, longComment, "OK");
-		assertEquals(longComment, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals(longComment, cu.getComment(CommentType.REPEATABLE));
 
 		// this fails when excepting
 		assertTrue(browser.goToField(addr, EolCommentFieldFactory.FIELD_NAME, 0, 0));
@@ -373,27 +373,27 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setAt(addr, CodeUnit.PLATE_COMMENT, PLATE, "OK");
 		setAt(addr, CodeUnit.REPEATABLE_COMMENT, REPEAT, "OK");
 
-		assertEquals(PRE, cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals(POST, cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals(EOL, cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals(REPEAT, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals(PRE, cu.getComment(CommentType.PRE));
+		assertEquals(POST, cu.getComment(CommentType.POST));
+		assertEquals(EOL, cu.getComment(CommentType.EOL));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
+		assertEquals(REPEAT, cu.getComment(CommentType.REPEATABLE));
 
 		undo(program, 5);
 
-		assertNull(cu.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertNull(cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertNull(cu.getComment(CommentType.PRE));
+		assertNull(cu.getComment(CommentType.POST));
+		assertNull(cu.getComment(CommentType.EOL));
+		assertNull(cu.getComment(CommentType.PLATE));
+		assertNull(cu.getComment(CommentType.REPEATABLE));
 
 		redo(program, 5);
 
-		assertEquals(PRE, cu.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals(POST, cu.getComment(CodeUnit.POST_COMMENT));
-		assertEquals(EOL, cu.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals(REPEAT, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals(PRE, cu.getComment(CommentType.PRE));
+		assertEquals(POST, cu.getComment(CommentType.POST));
+		assertEquals(EOL, cu.getComment(CommentType.EOL));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
+		assertEquals(REPEAT, cu.getComment(CommentType.REPEATABLE));
 	}
 
 	@Test
@@ -406,7 +406,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(commentsDialog);
 		pressButtonByText(commentsDialog.getComponent(), "Dismiss", false);
 		waitForSwing();
-		assertEquals("Bla bla bla", cu.getComment(CodeUnit.REPEATABLE_COMMENT));
+		assertEquals("Bla bla bla", cu.getComment(CommentType.REPEATABLE));
 		assertTrue(!commentsDialog.isVisible());
 	}
 
@@ -418,9 +418,9 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setAt(addr, CodeUnit.PRE_COMMENT, PRE, "OK");
 		setAt(addr, CodeUnit.PRE_COMMENT, PRE_U, "OK");
 		undo(program);
-		assertEquals(PRE, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(PRE, cu.getComment(CommentType.PRE));
 		redo(program);
-		assertEquals(PRE_U, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(PRE_U, cu.getComment(CommentType.PRE));
 	}
 
 	@Test
@@ -439,7 +439,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(button, false);
 		waitForSwing();
 
-		assertEquals("Bla bla bla", cu.getComment(CodeUnit.POST_COMMENT));
+		assertEquals("Bla bla bla", cu.getComment(CommentType.POST));
 		assertFalse(commentsDialog.isVisible());
 	}
 
@@ -460,7 +460,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(button, false);
 		waitForSwing();
 
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.POST));
 		assertFalse(commentsDialog.isVisible());
 	}
 
@@ -482,7 +482,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(button, false);
 		waitForSwing();
 
-		assertNull(cu.getComment(CodeUnit.POST_COMMENT));
+		assertNull(cu.getComment(CommentType.POST));
 		assertTrue(commentsDialog.isVisible());
 
 		close(commentsDialog);
@@ -494,13 +494,13 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0xf0000250);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.PLATE_COMMENT, PLATE, "OK");
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
 		removeAt(addr, CodeUnit.PLATE_COMMENT);
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
 		undo(program);
-		assertEquals(PLATE, cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals(PLATE, cu.getComment(CommentType.PLATE));
 		redo(program);
-		assertNull(cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertNull(cu.getComment(CommentType.PLATE));
 	}
 
 	@Test
@@ -543,7 +543,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr(0x01006000);
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		setAt(addr, CodeUnit.PRE_COMMENT, comment, "OK");
-		assertEquals(comment, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(comment, cu.getComment(CommentType.PRE));
 	}
 
 	@Test
@@ -586,7 +586,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String comment = "This is a comment DAT_01008094 with a label in it.";
 		setAt(srcAddr, CodeUnit.PRE_COMMENT, comment, "OK");
-		assertEquals(comment, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(comment, cu.getComment(CommentType.PRE));
 
 		browser.goToField(srcAddr, PreCommentFieldFactory.FIELD_NAME, 0, 23);
 		click(browser, 2);
@@ -603,7 +603,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String comment = "This is a comment 01008094 with an address in it.";
 		setAt(srcAddr, CodeUnit.PRE_COMMENT, comment, "OK");
-		assertEquals(comment, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(comment, cu.getComment(CommentType.PRE));
 
 		browser.goToField(srcAddr, PreCommentFieldFactory.FIELD_NAME, 0, 23);
 		click(browser, 2);
@@ -678,7 +678,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String comment = "This is a comment DAT_* with a wildcard in it.";
 		setAt(srcAddr, CodeUnit.PRE_COMMENT, comment, "OK");
-		assertEquals(comment, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(comment, cu.getComment(CommentType.PRE));
 
 		browser.goToField(srcAddr, PreCommentFieldFactory.FIELD_NAME, 0, 19);
 		click(browser, 2);
@@ -727,7 +727,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// space comment is exactly the same; i.e. make sure that no tab conversion happens
 		String spaceComment = "abcd\tdefg\n\t1\t2\t3\t4";
-		assertEquals(spaceComment, cu.getComment(CodeUnit.PLATE_COMMENT));
+		assertEquals(spaceComment, cu.getComment(CommentType.PLATE));
 	}
 
 	/*
@@ -791,7 +791,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		String illegal = "null\0 comment";
 		String legal = "null comment";
 		setAt(addr, CodeUnit.PRE_COMMENT, illegal, "OK");
-		assertEquals(legal, cu.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals(legal, cu.getComment(CommentType.PRE));
 	}
 
 	private void setAt(Address addr, int commentType, String comment, String nameOfButtonToClick)

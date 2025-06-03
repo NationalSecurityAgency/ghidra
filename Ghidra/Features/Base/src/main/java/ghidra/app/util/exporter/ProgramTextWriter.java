@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ class ProgramTextWriter {
 			//// Plate Property ////////////////////////////////////////////
 			boolean cuHasPlate = false;
 			if (options.isShowProperties()) {
-				String[] plate = currentCodeUnit.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+				String[] plate = currentCodeUnit.getCommentAsArray(CommentType.PLATE);
 				cuHasPlate = plate != null && plate.length > 0;
 				if (cuHasPlate) {
 					processPlate(currentCodeUnit, plate);
@@ -200,7 +200,7 @@ class ProgramTextWriter {
 			//// Pre-Comment ///////////////////////////////////////////////
 
 			if (options.isShowComments()) {
-				String[] pre = currentCodeUnit.getCommentAsArray(CodeUnit.PRE_COMMENT);
+				String[] pre = currentCodeUnit.getCommentAsArray(CommentType.PRE);
 				if (pre != null && pre.length > 0) {
 					String fill = genFill(options.getAddrWidth() + options.getBytesWidth());
 					for (String element : pre) {
@@ -301,7 +301,7 @@ class ProgramTextWriter {
 
 			//// Post Comment //////////////////////////////////////////////
 			if (options.isShowComments()) {
-				String[] post = currentCodeUnit.getCommentAsArray(CodeUnit.POST_COMMENT);
+				String[] post = currentCodeUnit.getCommentAsArray(CommentType.POST);
 				if (post != null) {
 					String fill = genFill(options.getAddrWidth() + options.getBytesWidth());
 					for (String element : post) {

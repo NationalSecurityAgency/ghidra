@@ -678,7 +678,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					func.updateFunction(ccName, duffFunc.getReturn(),
 						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.ANALYSIS);
 					if (duffComment != null && !duffComment.isBlank()) {
-						new SetCommentCmd(func.getEntryPoint(), CodeUnit.PLATE_COMMENT, duffComment)
+						new SetCommentCmd(func.getEntryPoint(), CommentType.PLATE, duffComment)
 								.applyTo(program);
 					}
 				}

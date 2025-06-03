@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1721,7 +1721,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "Before the code unit.");
+				cu.setComment(CommentType.PRE, "Before the code unit.");
 			}
 
 			@Override
@@ -1729,7 +1729,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT, null);
+				cu.setComment(CommentType.PRE, null);
 			}
 
 			@Override
@@ -1737,7 +1737,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "This is a changed pre-comment.");
+				cu.setComment(CommentType.PRE, "This is a changed pre-comment.");
 			}
 		});
 
@@ -1765,7 +1765,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.");
+				cu.setComment(CommentType.PRE, "This is a simple comment for example.");
 			}
 
 			@Override
@@ -1773,7 +1773,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.\n" +
+				cu.setComment(CommentType.PRE, "This is a simple comment for example.\n" +
 					"I added some more to this comment to make it multiple lines.");
 			}
 
@@ -1782,7 +1782,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CodeUnit.PRE_COMMENT,
+				cu.setComment(CommentType.PRE,
 					"Changed this to a multiple line comment.\n" +
 						"It was necessary for demonstration purposes.");
 			}

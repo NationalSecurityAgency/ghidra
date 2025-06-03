@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 
 public class CommentTypeUtils {
 
@@ -39,19 +40,19 @@ public class CommentTypeUtils {
 			return CodeUnit.REPEATABLE_COMMENT;
 		}
 		else if (cu != null) {
-			if (cu.getComment(CodeUnit.PRE_COMMENT) != null) {
+			if (cu.getComment(CommentType.PRE) != null) {
 				return CodeUnit.PRE_COMMENT;
 			}
-			if (cu.getComment(CodeUnit.POST_COMMENT) != null) {
+			if (cu.getComment(CommentType.POST) != null) {
 				return CodeUnit.POST_COMMENT;
 			}
-			if (cu.getComment(CodeUnit.EOL_COMMENT) != null) {
+			if (cu.getComment(CommentType.EOL) != null) {
 				return CodeUnit.EOL_COMMENT;
 			}
-			if (cu.getComment(CodeUnit.PLATE_COMMENT) != null) {
+			if (cu.getComment(CommentType.PLATE) != null) {
 				return CodeUnit.PLATE_COMMENT;
 			}
-			if (cu.getComment(CodeUnit.REPEATABLE_COMMENT) != null) {
+			if (cu.getComment(CommentType.REPEATABLE) != null) {
 				return CodeUnit.REPEATABLE_COMMENT;
 			}
 		}

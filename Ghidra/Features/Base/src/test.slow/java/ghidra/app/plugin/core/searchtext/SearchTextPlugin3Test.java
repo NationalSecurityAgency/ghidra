@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -179,13 +179,13 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		CodeUnit cu = listing.getCodeUnitAt(getAddr(0x01002c97));
 
 		int transactionID = program.startTransaction("test");
-		cu.setComment(CodeUnit.PLATE_COMMENT, "find hit for eax");
-		cu.setComment(CodeUnit.PRE_COMMENT, "find another hit for eax");
+		cu.setComment(CommentType.PLATE, "find hit for eax");
+		cu.setComment(CommentType.PRE, "find another hit for eax");
 		SymbolTable st = program.getSymbolTable();
 		st.createLabel(cu.getMinAddress(), "My_EAX", SourceType.USER_DEFINED);
-		cu.setComment(CodeUnit.EOL_COMMENT, "eol comment for eax");
+		cu.setComment(CommentType.EOL, "eol comment for eax");
 
-		cu.setComment(CodeUnit.POST_COMMENT, "last comment for eax");
+		cu.setComment(CommentType.POST, "last comment for eax");
 		program.endTransaction(transactionID, true);
 
 		SearchTextDialog dialog = getDialog();
@@ -340,16 +340,16 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = listing.getCodeUnitAt(getAddr(0x0100416f));
 		int transactionID = program.startTransaction("test");
-		cu.setComment(CodeUnit.EOL_COMMENT, "call sscanf");
+		cu.setComment(CommentType.EOL, "call sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004178));
-		cu.setComment(CodeUnit.REPEATABLE_COMMENT, "make a reference to sscanf");
+		cu.setComment(CommentType.REPEATABLE, "make a reference to sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004192));
-		cu.setComment(CodeUnit.POST_COMMENT, "sscanf in a post comment");
+		cu.setComment(CommentType.POST, "sscanf in a post comment");
 
 		cu = listing.getCodeUnitAt(getAddr(0x0100467b));
-		cu.setComment(CodeUnit.PRE_COMMENT, "call sscanf here");
+		cu.setComment(CommentType.PRE, "call sscanf here");
 
 		program.endTransaction(transactionID, true);
 
@@ -427,16 +427,16 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = listing.getCodeUnitAt(getAddr(0x0100416f));
 		int transactionID = program.startTransaction("test");
-		cu.setComment(CodeUnit.EOL_COMMENT, "call sscanf");
+		cu.setComment(CommentType.EOL, "call sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004178));
-		cu.setComment(CodeUnit.REPEATABLE_COMMENT, "make a reference to sscanf");
+		cu.setComment(CommentType.REPEATABLE, "make a reference to sscanf");
 
 		cu = listing.getCodeUnitAt(getAddr(0x01004192));
-		cu.setComment(CodeUnit.POST_COMMENT, "sscanf in a post comment");
+		cu.setComment(CommentType.POST, "sscanf in a post comment");
 
 		cu = listing.getCodeUnitAt(getAddr(0x0100467b));
-		cu.setComment(CodeUnit.PRE_COMMENT, "call sscanf here");
+		cu.setComment(CommentType.PRE, "call sscanf here");
 
 		program.endTransaction(transactionID, true);
 

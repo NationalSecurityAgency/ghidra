@@ -233,7 +233,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		buffer.append("Other Flags:       " + Conv.toHexString(ib.getOtherFlags()) + "\n");
 		buffer.append(ib.getOtherFlagsAsString());
 
-		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
+		firstCU.setComment(CommentType.PLATE, buffer.toString());
 	}
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
@@ -314,7 +314,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
 				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
+				cu.setComment(CommentType.PRE, buff.toString());
 			}
 
 			for (Segment segment : segments) {
@@ -392,7 +392,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buf.append("Usage:          " + Conv.toHexString(resource.getUsage()) + "\n");
 				CodeUnit cu = listing.getCodeUnitAt(addr);
 				if (cu != null) {
-					cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+					cu.setComment(CommentType.PRE, buf.toString());
 				}
 
 				//if this resource is a string table,

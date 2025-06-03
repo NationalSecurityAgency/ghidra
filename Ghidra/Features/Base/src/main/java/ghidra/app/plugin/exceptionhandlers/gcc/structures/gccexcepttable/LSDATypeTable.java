@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +22,7 @@ import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.RefType;
@@ -92,7 +91,7 @@ public class LSDATypeTable extends GccAnalysisClass {
 
 				typeInfoAddrs.add(typeRef);
 
-				createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+				createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 				if (typeRef.getOffset() != 0) {
 					program.getReferenceManager().addMemoryReference(addr, typeRef, RefType.DATA,
@@ -102,15 +101,14 @@ public class LSDATypeTable extends GccAnalysisClass {
 			}
 			catch (MemoryAccessException mae) {
 				SetCommentCmd commentCmd =
-					new SetCommentCmd(addr, CodeUnit.EOL_COMMENT, "Unable to resolve pointer");
+					new SetCommentCmd(addr, CommentType.EOL, "Unable to resolve pointer");
 				commentCmd.applyTo(program);
 			}
 
 			addr = addr.subtract(stride);
 		}
 
-		SetCommentCmd commentCmd =
-			new SetCommentCmd(top, CodeUnit.PLATE_COMMENT, "(LSDA) Type Table");
+		SetCommentCmd commentCmd = new SetCommentCmd(top, CommentType.PLATE, "(LSDA) Type Table");
 		commentCmd.applyTo(program);
 
 		nextAddress = bottom.add(1);
@@ -124,7 +122,7 @@ public class LSDATypeTable extends GccAnalysisClass {
 		}
 
 		createAndCommentData(program, addr, new ArrayDataType(new ByteDataType(), incr, 1),
-			" -- alignment pad", CodeUnit.EOL_COMMENT);
+			" -- alignment pad", CommentType.EOL);
 
 		return addr.add(incr);
 

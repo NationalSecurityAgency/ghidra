@@ -38,8 +38,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.task.TaskMonitor;
@@ -446,7 +445,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		Program p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		editProgram(p, program -> {
 			CodeUnit cu = program.getListing().getCodeUnitAt(program.getMinAddress());
-			cu.setComment(CodeUnit.PLATE_COMMENT, "my Plate Comment");
+			cu.setComment(CommentType.PLATE, "my Plate Comment");
 		});
 		p.release(this);
 

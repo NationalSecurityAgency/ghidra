@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,7 @@
  */
 package ghidra.file.formats.android.vdex;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.dex.format.DexHeader;
@@ -25,11 +23,8 @@ import ghidra.file.formats.android.oat.OatUtilities;
 import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.ByteDataType;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
@@ -90,8 +85,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 					monitor.checkCancelled();
 
 					program.getListing()
-							.setComment(address, CodeUnit.PLATE_COMMENT,
-								"quicken info table entry");
+							.setComment(address, CommentType.PLATE, "quicken info table entry");
 					createData(program, address, new DWordDataType());
 					address = address.add(4);
 
@@ -130,7 +124,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 		if (sectionHeader != null) {
 			int dexSharedDataSize = sectionHeader.getDexSharedDataSize();
 			String comment = "dex_shared_data_size_ : 0x" + Integer.toHexString(dexSharedDataSize);
-			program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+			program.getListing().setComment(address, CommentType.PLATE, comment);
 			DataType array = new ArrayDataType(BYTE, dexSharedDataSize, BYTE.getLength());
 			createData(program, address, array);
 			address = address.add(dexSharedDataSize);
@@ -146,7 +140,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 
 		String comment =
 			"verifier_deps_size_ : 0x" + Integer.toHexString(vdexHeader.getVerifierDepsSize());
-		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+		program.getListing().setComment(address, CommentType.PLATE, comment);
 
 		int remainderSize = vdexHeader.getVerifierDepsSize();
 
@@ -183,7 +177,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 		}
 
 		String comment = "quickening_info_size_ : 0x" + Integer.toHexString(quickeningInfoSize);
-		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+		program.getListing().setComment(address, CommentType.PLATE, comment);
 
 		address = address.add(quickeningInfoSize);
 

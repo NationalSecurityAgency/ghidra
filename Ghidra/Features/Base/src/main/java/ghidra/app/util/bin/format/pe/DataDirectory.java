@@ -129,15 +129,15 @@ public abstract class DataDirectory implements PeMarkupable {
 	}
 
 	protected void setPlateComment(Program prog, Address addr, String comment) {
-		prog.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
+		prog.getListing().setComment(addr, CommentType.PLATE, comment);
 	}
 
 	protected void setEolComment(Program prog, Address addr, String comment) {
-		prog.getListing().setComment(addr, CodeUnit.EOL_COMMENT, comment);
+		prog.getListing().setComment(addr, CommentType.EOL, comment);
 	}
 
 	protected void setPreComment(Program prog, Address addr, String comment) {
-		prog.getListing().setComment(addr, CodeUnit.PRE_COMMENT, comment);
+		prog.getListing().setComment(addr, CommentType.PRE, comment);
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -177,7 +177,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		Instruction inst = program.getListing().getInstructionAt(addr(0x1004772));
 		String comment =
 			"This is a very long comment. I want this sentence to wrap to the next line so that I can test wrapping.";
-		inst.setComment(CodeUnit.EOL_COMMENT, comment);
+		inst.setComment(CommentType.EOL, comment);
 		program.endTransaction(id, true);
 		cb.updateNow();
 		Layout l = getLayout(addr(0x1004772));
@@ -209,7 +209,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		Instruction inst = program.getListing().getInstructionAt(addr(0x1004772));
 		String comment =
 			"This is a very long comment. I want this sentence to wrap to the next line so that I can test wrapping.";
-		inst.setComment(CodeUnit.EOL_COMMENT, comment);
+		inst.setComment(CommentType.EOL, comment);
 		program.endTransaction(id, true);
 		Options opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		opt.setBoolean("EOL Comments Field.Enable Word Wrapping", true);

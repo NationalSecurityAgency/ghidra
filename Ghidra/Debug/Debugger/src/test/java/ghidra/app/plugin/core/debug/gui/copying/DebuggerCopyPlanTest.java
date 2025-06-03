@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -714,8 +714,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			Listing listing = view.getListing();
-			listing.setComment(tb.addr(0x55550123), CodeUnit.EOL_COMMENT, "Test EOL Comment");
-			listing.setComment(tb.addr(0x55550321), CodeUnit.PLATE_COMMENT, "Test Plate Comment");
+			listing.setComment(tb.addr(0x55550123), CommentType.EOL, "Test EOL Comment");
+			listing.setComment(tb.addr(0x55550321), CommentType.PLATE, "Test Plate Comment");
 		}
 
 		Address paddr = tb.addr(stSpace, 0x55550000);
@@ -735,8 +735,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		assertEquals(Set.of(tb.addr(stSpace, 0x55550123), tb.addr(stSpace, 0x55550321)), addresses);
 		assertEquals("Test EOL Comment",
-			listing.getComment(CodeUnit.EOL_COMMENT, tb.addr(stSpace, 0x55550123)));
+			listing.getComment(CommentType.EOL, tb.addr(stSpace, 0x55550123)));
 		assertEquals("Test Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, tb.addr(stSpace, 0x55550321)));
+			listing.getComment(CommentType.PLATE, tb.addr(stSpace, 0x55550321)));
 	}
 }

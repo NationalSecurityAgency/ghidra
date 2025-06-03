@@ -187,7 +187,7 @@ public class NoteGnuProperty extends ElfNote {
 				DataType elementDT = getElementDataType(dtm, element);
 				Data elementData = DataUtilities.createData(program, address, elementDT, -1, false,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				listing.setComment(address, CodeUnit.EOL_COMMENT,
+				listing.setComment(address, CommentType.EOL,
 					element.typeName() + "=" + element.value());
 				address = elementData.getMaxAddress().next();
 			}

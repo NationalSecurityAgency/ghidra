@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -325,23 +325,23 @@ public class CodeUnitInfoPasteCmd implements Command<Program> {
 		String[] repeatableComment = info.getRepeatableComment();
 
 		if (plateComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+			String[] oldComment = cu.getCommentAsArray(CommentType.PLATE);
 			cu.setCommentAsArray(CodeUnit.PLATE_COMMENT, appendComment(oldComment, plateComment));
 		}
 		if (preComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+			String[] oldComment = cu.getCommentAsArray(CommentType.PRE);
 			cu.setCommentAsArray(CodeUnit.PRE_COMMENT, appendComment(oldComment, preComment));
 		}
 		if (postComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+			String[] oldComment = cu.getCommentAsArray(CommentType.POST);
 			cu.setCommentAsArray(CodeUnit.POST_COMMENT, appendComment(oldComment, postComment));
 		}
 		if (eolComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.EOL_COMMENT);
+			String[] oldComment = cu.getCommentAsArray(CommentType.EOL);
 			cu.setCommentAsArray(CodeUnit.EOL_COMMENT, appendComment(oldComment, eolComment));
 		}
 		if (repeatableComment != null) {
-			String[] oldComment = cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
+			String[] oldComment = cu.getCommentAsArray(CommentType.REPEATABLE);
 			cu.setCommentAsArray(CodeUnit.REPEATABLE_COMMENT,
 				appendComment(oldComment, repeatableComment));
 		}

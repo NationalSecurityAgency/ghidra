@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.UnsignedLeb128DataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.RefType;
@@ -96,7 +96,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 		landingPadAddr = lpStart.add(getLandingPadOffset());
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(baseAddr, CodeUnit.PLATE_COMMENT, "(LSDA) Call Site Record");
+			new SetCommentCmd(baseAddr, CommentType.PLATE, "(LSDA) Call Site Record");
 		commentCmd.applyTo(program);
 
 		if (program.getMemory().contains(callSiteBaseAddr)) {
@@ -124,7 +124,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 		DataType encodedDt = decoder.getDataType(program);
 
-		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 		return addr.add(encodedLen);
 	}
@@ -141,7 +141,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 		DataType encodedDt = decoder.getDataType(program);
 
-		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 		return addr.add(encodedLen);
 	}
@@ -158,7 +158,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 		DataType encodedDt = decoder.getDataType(program);
 
-		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 		return addr.add(encodedLen);
 	}
@@ -175,7 +175,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 		}
 
 		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 		return addr.add(uleb128.getLength());
 	}
 
