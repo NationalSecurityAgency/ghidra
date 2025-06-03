@@ -403,7 +403,15 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				continue;
 			}
 			// Perhaps wrong type; was saved in older version.
-			Object fallback = ConfigStateField.getState(state, param.type(), param.name());
+			Object fallback = null;
+			try
+			{
+				fallback = ConfigStateField.getState(state, param.type(), param.name());
+			}
+			catch(Exception e)
+			{
+				
+			}
 			if (fallback != null) {
 				args.put(param.name(), ValStr.from(fallback));
 				continue;
