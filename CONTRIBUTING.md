@@ -1,20 +1,20 @@
-# Contributors Guide
+## Review
 
-Ghidra is an open source project. If you are interested in making it better,
-there are many ways you can contribute. For example, you can:
+ We welcome code reviews from anyone. A committer is required to formally
+  accept and merge the changes.
+- Reviewers will be looking for things like threading issues, performance
+  implications, API design, duplication of existing functionality, readability
+  and code style, avoidance of bloat (scope-creep), etc.
+- Reviewers will likely ask questions to better understand your change.
+- Reviewers will make comments about changes to your patch:
+    - MUST means that the change is required
+    - SHOULD means that the change is suggested, further discussion on the
+      subject may be required
+    - COULD means that the change is optional
 
-- Submit a bug report
-- Suggest a new feature
-- Provide feedback by commenting on feature requests/proposals
-- Propose a patch by submitting a pull request
-- Suggest or submit documentation improvements
-- Review outstanding pull requests
-- Answer questions from other users
-- Share the software with other users who are interested
-- Teach others to use the software
-- Package and distribute the software in a downstream community (such as your
-  preferred Linux distribution)
+## Getting Started
 
+Once available, please see the [developer's guide# Contributors Guide
 ## Bugs and Feature Requests
 
 If you believe that you have found a bug or wish to propose a new feature,
@@ -29,13 +29,13 @@ Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
 smooth process when submitting a patch:
 
-- Ensure that the patch compiles and does not break any build-time tests.
-- Be understanding, patient, and friendly; developers may need time to review
+ Ensure that the patch compiles and does not break any build-time tests.
+ Be understanding, patient, and friendly; developers may need time to review
   your submissions before they can take action or respond. This does not mean
   your contribution is not valued. If your contribution has not received a
   response in a reasonable time, consider commenting with a polite inquiry for
   an update.
-- Limit your patches to the smallest reasonable change to achieve your intended
+ Limit your patches to the smallest reasonable change to achieve your intended
   goal. For example, do not make unnecessary indentation changes; but don't go
   out of your way to make the patch so minimal that it isn't easy to read,
   either. Consider the reviewer's perspective.
@@ -44,24 +44,24 @@ smooth process when submitting a patch:
   changes are difficult to review, pollute the git history making it harder 
   to do git forensics on regressions, and will likely conflict with other 
   changes that the Ghidra team is making internally.
-- Avoid "find and replace" changes in your pull request.  While it may be 
+ Avoid "find and replace" changes in your pull request.  While it may be 
   tempting to globally replace calls to deprecated methods or change the style
   of the code to fit your personal preference, these types of seemingly trivial
   changes have likely not already been performed by the Ghidra team for good 
   reason.
-- Focus your patches on bug fixes that were discovered through real-world
+ Focus your patches on bug fixes that were discovered through real-world
   usage and testing, and on improvements that clearly satisfy a need in 
   Ghidra's functionality.  Before you begin implementing, consider first
   opening a dialogue with the Ghidra team to ensure that your efforts will 
   align with the goals of the project.  This will significantly improve the odds
   that your patch gets accepted.
-- Unless it addresses a critical security update, avoid pull requests that update 
+ Unless it addresses a critical security update, avoid pull requests that update 
   jars or other 3rd party libraries.  It is preferred that these changes are made
   internally by the team.  If you have a need for an updated library, please
   submit an issue with your request instead of a pull request.
-- Before submission, please squash your commits to using a message that starts
+ Before submission, please squash your commits to using a message that starts
   with the issue number and a description of the changes.
-- Isolate multiple patches from each other. If you wish to make several
+ Isolate multiple patches from each other. If you wish to make several
   independent patches, do so in separate, smaller pull requests that can be
   reviewed more easily.
 - Be prepared to answer questions from reviewers. They may have further
@@ -69,23 +69,7 @@ smooth process when submitting a patch:
   accept this feedback constructively, and not as a rejection of your proposed
   change.
 
-## Review
-
-- We welcome code reviews from anyone. A committer is required to formally
-  accept and merge the changes.
-- Reviewers will be looking for things like threading issues, performance
-  implications, API design, duplication of existing functionality, readability
-  and code style, avoidance of bloat (scope-creep), etc.
-- Reviewers will likely ask questions to better understand your change.
-- Reviewers will make comments about changes to your patch:
-    - MUST means that the change is required
-    - SHOULD means that the change is suggested, further discussion on the
-      subject may be required
-    - COULD means that the change is optional
-
-## Getting Started
-
-Once available, please see the [developer's guide][devguide] for instructions to set up a suitable development environment.
+][devguide] for instructions to set up a suitable development environment.
 
 ## Timeline and Managing Expectations
 
