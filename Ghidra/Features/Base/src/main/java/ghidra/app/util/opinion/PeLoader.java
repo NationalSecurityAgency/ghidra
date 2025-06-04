@@ -127,7 +127,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
 
 			monitor.setCancelEnabled(false);
-			optionalHeader.processDataDirectories(monitor);
+			optionalHeader.processDataDirectories(log, monitor);
 			monitor.setCancelEnabled(true);
 			optionalHeader.validateDataDirectories(program);
 
