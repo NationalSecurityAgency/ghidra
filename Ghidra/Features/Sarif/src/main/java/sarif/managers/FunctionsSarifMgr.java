@@ -54,22 +54,10 @@ public class FunctionsSarifMgr extends SarifMgr {
 			FID_BOOKMARK_CATEGORY);
 
 	private DtParser dtParser;
-	private Library extenalNamespace;
+	private Library externalNamespace;
 
 	FunctionsSarifMgr(Program program, MessageLog log) {
 		super(KEY, program, log);
-		int txId = program.startTransaction("SARIF FunctionMgr");
-		try {
-			SymbolTable symbolTable = program.getSymbolTable();
-			Symbol extLib = symbolTable.getLibrarySymbol("<EXTERNAL>");
-			if (extLib == null) {
-				extenalNamespace = symbolTable.createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
-			}
-		} catch (Exception e) {
-			log.appendException(e);
-		} finally {
-			program.endTransaction(txId, true);
-		}
 	}
 
 	////////////////////////////
@@ -233,6 +221,24 @@ public class FunctionsSarifMgr extends SarifMgr {
 		return func;
 	}
 
+	private Library getExternalNamespace(Program program, MessageLog log) {
+		if (externalNamespace == null) {
+			int txId = program.startTransaction("SARIF FunctionMgr");
+			try {
+				SymbolTable symbolTable = program.getSymbolTable();
+				Symbol extLib = symbolTable.getLibrarySymbol("<EXTERNAL>");
+				if (extLib == null) {
+					externalNamespace = symbolTable.createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
+				}
+			} catch (Exception e) {
+				log.appendException(e);
+			} finally {
+				program.endTransaction(txId, true);
+			}
+		}
+		return externalNamespace;
+	}
+
 	private void setName(Address entryPoint, Function func, String name, Map<String, Object> result) {
 		SymbolPath path = new SymbolPath(name);
 		if (name != null) {
@@ -248,33 +254,31 @@ public class FunctionsSarifMgr extends SarifMgr {
 		}
 
 		Symbol symbol = func.getSymbol();
-		if (path != null) {
-			try {
-				Namespace ns = NamespaceUtils.getFunctionNamespaceAt(program, path, entryPoint);
-				if (ns == null) {
-					ns = program.getGlobalNamespace();
-					SymbolPath parent = path.getParent();
-					if (parent != null && !parent.getName().equals(ns.getName())) {
-						Boolean isClass = (Boolean) result.get("namespaceIsClass");
-						String source = (String) result.get("sourceType");
-						SourceType sourceType = source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
-						ns = walkNamespace(program.getGlobalNamespace(), parent.getPath() + "::", entryPoint,
-								sourceType, isClass);
-						symbol.setNameAndNamespace(name, ns, getSourceType("DEFAULT"));
-						return;
-					}
+		try {
+			Namespace ns = NamespaceUtils.getFunctionNamespaceAt(program, path, entryPoint);
+			if (ns == null) {
+				ns = program.getGlobalNamespace();
+				SymbolPath parent = path.getParent();
+				if (parent != null && !parent.getName().equals(ns.getName())) {
+					Boolean isClass = (Boolean) result.get("namespaceIsClass");
+					String source = (String) result.get("sourceType");
+					SourceType sourceType = source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
+					ns = walkNamespace(program.getGlobalNamespace(), parent.getPath() + "::", entryPoint,
+							sourceType, isClass);
+					symbol.setNameAndNamespace(name, ns, getSourceType("DEFAULT"));
+					return;
 				}
-				if (path != null && path.getName().contains(Library.UNKNOWN)) {
-					ns = extenalNamespace;
-				}
-				if (ns.getParentNamespace() == null) {
-					symbol.setName(name, getSourceType("DEFAULT"));
-				} else {
-					symbol.setNameAndNamespace(name, ns.getParentNamespace(), getSourceType("DEFAULT")); // symbol.getSource());
-				}
-			} catch (Exception e) {
-				// name may already be set if symbols were loaded...
 			}
+			if (path.getName().contains(Library.UNKNOWN)) {
+				ns = getExternalNamespace(program, log);
+			}
+			if (ns.getParentNamespace() == null) {
+				symbol.setName(name, getSourceType("DEFAULT"));
+			} else {
+				symbol.setNameAndNamespace(name, ns.getParentNamespace(), getSourceType("DEFAULT")); // symbol.getSource());
+			}
+		} catch (Exception e) {
+			// name may already be set if symbols were loaded...
 		}
 	}
 
