@@ -1,0 +1,71 @@
+# Compressed bit manipulation instructions
+# Ref:  https://github.com/riscv/riscv-code-size-reduction/releases
+
+
+cuimm_b: uimm is cop0505 & cop0606 [uimm = (cop0505 << 1) + cop0606;] { local tmp:$(XLEN) = uimm; export tmp; }
+# c.lbu Load unsigned byte, 16-bit encoding
+:c.lbu cr0204s, cuimm_b(cr0709s) is cop0001=0x0 & cr0204s & cuimm_b & cr0709s & cop1012=0 & cop1315=0x4
+{
+	local ea:$(XLEN) = cr0709s + cuimm_b;
+	cr0204s = zext(*[ram]:1 ea);
+}
+
+cuimm_h: uimm is cop0505 [uimm = cop0505 << 1;] { local tmp:$(XLEN) = uimm; export tmp; }
+:c.lhu cr0204s, cuimm_h(cr0709s) is cop0001=0x0 & cr0204s & cuimm_h & cop0606=0 & cr0709s & cop1012=0x1 & cop1315=0x4
+{
+    local ea:$(XLEN) = cr0709s + cuimm_h;
+    cr0204s = zext(*[ram]:2 ea);
+}
+
+:c.lh cr0204s, cuimm_h(cr0709s) is cop0001=0x0 & cr0204s & cuimm_h & cop0606=0x1 & cr0709s & cop1012=0x1 & cop1315=0x4
+{
+    local ea:$(XLEN) = cr0709s + cuimm_h;
+    cr0204s = sext(*[ram]:2 ea);
+}
+
+:c.sb cr0204s, cuimm_b(cr0709s) is cop0001=0x0 & cr0204s & cuimm_b & cr0709s & cop1012=0x2 & cop1315=0x4
+{
+    local ea:$(XLEN) = cr0709s + cuimm_b;
+    *[ram]:1 ea = cr0204s;
+}
+
+:c.sh cr0204s, cuimm_h(cr0709s) is cop0001=0x0 & cr0204s & cuimm_h & cr0709s & cop1012=0x3 & cop1315=0x4
+{
+    local ea:$(XLEN) = cr0709s + cuimm_h;
+    *[ram]:2 ea = cr0204s;
+}
+
+:c.zext.b cr0709s is cop0001=0x1 & cop0204=0 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = zext(cr0709s);
+}
+
+:c.sext.b cr0709s is cop0001=0x1 & cop0204=0x1 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = sext(cr0709s);
+}
+
+:c.zext.h cr0709s is cop0001=0x1 & cop0204=0x2 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = zext(cr0709s);
+}
+
+:c.sext.h cr0709s is cop0001=0x1 & cop0204=0x3 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = sext(cr0709s);
+}
+
+:c.zext.w cr0709s is cop0001=0x1 & cop0204=0x4 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = zext(cr0709s);
+}
+
+:c.not cr0709s is cop0001=0x1 & cop0204=0x5 & cop0506=0x3 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = ~cr0709s;
+}
+
+:c.mul cr0709s, cr0204s is cop0001=0x1 & cr0204s & cop0506=0x2 & cr0709s & cop1012=0x7 & cop1315=0x4
+{
+    cr0709s = cr0709s * cr0204s;
+}

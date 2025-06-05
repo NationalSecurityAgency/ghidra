@@ -72,6 +72,7 @@ src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/retspecial.xml||GHIDRA||||END|
 src/decompile/datatests/retstruct.xml||GHIDRA||||END|
 src/decompile/datatests/revisit.xml||GHIDRA||||END|
+src/decompile/datatests/riscv_isaext_memcpy.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
