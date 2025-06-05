@@ -150,29 +150,29 @@ DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
 
 :LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
 
-:LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst=*:4 imm:8; }
+:LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst = zext(*:4 imm:8); }
 
-:LDABSH dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 imm:8; }
+:LDABSH dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst = zext(*:2 imm:8); }
 
-:LDABSB dst, imm  is imm & dst &  op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 imm:8; }
+:LDABSB dst, imm  is imm & dst &  op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst = zext(*:1 imm:8); }
 
-:LDABSDW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 imm:8; }
+:LDABSDW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst = *:8 imm:8; }
 
-:LDINDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0  { dst=*:4 (src + imm); }
+:LDINDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0  { dst = zext(*:4 (src + imm)); }
 
-:LDINDH src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 (src + imm); }
+:LDINDH src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst = zext(*:2 (src + imm)); }
 
-:LDINDB src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 (src + imm); }
+:LDINDB src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst = zext(*:1 (src + imm)); }
 
-:LDINDDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 (src + imm); }
+:LDINDDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst = *:8 (src + imm); }
 
-:LDXW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 { dst=*:4 (src + off); }
+:LDXW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 { dst = zext(*:4 (src + off)); }
 
-:LDXH dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 { dst=*:2 (src + off); }
+:LDXH dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 { dst = zext(*:2 (src + off)); }
 
-:LDXB dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 { dst=*:1 (src + off); }
+:LDXB dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 { dst = zext(*:1 (src + off)); }
 
-:LDXDW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x1 { dst=*:8 (src + off); }
+:LDXDW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x1 { dst = *:8 (src + off); }
 
 :STW [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x2 { *:4 (dst + off)=imm:4; }
 
