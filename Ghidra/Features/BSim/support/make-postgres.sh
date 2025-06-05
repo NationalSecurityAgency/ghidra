@@ -113,7 +113,7 @@ make distclean
 
 # Configure postgres 
 
-./configure ${POSTGRES_CONFIG_OPTIONS} --prefix=${INSTALL_DIR}
+./configure ${POSTGRES_CONFIG_OPTIONS} --prefix=${INSTALL_DIR} CFLAGS="$(CFLAGS) -std=c17"
 if [ $? != 0 ]; then
 	exit $?
 fi
