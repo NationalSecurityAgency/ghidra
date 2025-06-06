@@ -586,7 +586,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public DataType getDataType(TreePath selectedPath) {
 		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
-
 		if (selectedPath != null) {
 			dialog.setSelectedPath(selectedPath);
 		}
