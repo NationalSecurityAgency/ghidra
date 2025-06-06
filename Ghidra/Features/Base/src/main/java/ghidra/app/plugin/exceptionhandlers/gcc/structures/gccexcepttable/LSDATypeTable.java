@@ -94,8 +94,9 @@ public class LSDATypeTable extends GccAnalysisClass {
 				createAndCommentData(program, addr, encodedDt, comment, CommentType.EOL);
 
 				if (typeRef.getOffset() != 0) {
-					program.getReferenceManager().addMemoryReference(addr, typeRef, RefType.DATA,
-						SourceType.ANALYSIS, 0);
+					program.getReferenceManager()
+							.addMemoryReference(addr, typeRef, RefType.DATA, SourceType.ANALYSIS,
+								0);
 				}
 
 			}

@@ -28,32 +28,33 @@ public class CommentTypeUtils {
 	 * @param defaultCommentType
 	 * @return comment type
 	 */
-	public static int getCommentType(CodeUnit cu, ProgramLocation loc, int defaultCommentType) {
+	public static CommentType getCommentType(CodeUnit cu, ProgramLocation loc,
+			CommentType defaultCommentType) {
 		if (loc instanceof CommentFieldLocation) {
 			CommentFieldLocation cfLoc = (CommentFieldLocation) loc;
 			return cfLoc.getCommentType();
 		}
 		else if (loc instanceof PlateFieldLocation) {
-			return CodeUnit.PLATE_COMMENT;
+			return CommentType.PLATE;
 		}
 		else if (loc instanceof FunctionRepeatableCommentFieldLocation) {
-			return CodeUnit.REPEATABLE_COMMENT;
+			return CommentType.REPEATABLE;
 		}
 		else if (cu != null) {
 			if (cu.getComment(CommentType.PRE) != null) {
-				return CodeUnit.PRE_COMMENT;
+				return CommentType.PRE;
 			}
 			if (cu.getComment(CommentType.POST) != null) {
-				return CodeUnit.POST_COMMENT;
+				return CommentType.POST;
 			}
 			if (cu.getComment(CommentType.EOL) != null) {
-				return CodeUnit.EOL_COMMENT;
+				return CommentType.EOL;
 			}
 			if (cu.getComment(CommentType.PLATE) != null) {
-				return CodeUnit.PLATE_COMMENT;
+				return CommentType.PLATE;
 			}
 			if (cu.getComment(CommentType.REPEATABLE) != null) {
-				return CodeUnit.REPEATABLE_COMMENT;
+				return CommentType.REPEATABLE;
 			}
 		}
 		return defaultCommentType;

@@ -480,18 +480,19 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
+	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		return codeMgr.getCommentHistory(addr, commentType);
 	}
 
 	@Override
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType commentType,
+			AddressSetView addrSet) {
 		return codeMgr.getCommentCodeUnitIterator(commentType, addrSet);
 	}
 
 	@Override
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
-			boolean forward) {
+	public AddressIterator getCommentAddressIterator(CommentType commentType,
+			AddressSetView addrSet, boolean forward) {
 		return codeMgr.getCommentAddressIterator(commentType, addrSet, forward);
 	}
 
@@ -506,7 +507,7 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public String getComment(int commentType, Address address) {
+	public String getComment(CommentType commentType, Address address) {
 		return codeMgr.getComment(commentType, address);
 	}
 
@@ -516,7 +517,7 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public void setComment(Address address, int commentType, String comment) {
+	public void setComment(Address address, CommentType commentType, String comment) {
 		codeMgr.setComment(address, commentType, comment);
 	}
 

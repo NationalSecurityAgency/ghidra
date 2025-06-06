@@ -313,7 +313,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation loc = (CommentFieldLocation) programLoc;
-		if (loc.getCommentType() != CodeUnit.POST_COMMENT) {
+		if (loc.getCommentType() != CommentType.POST) {
 			return null;
 		}
 		return new FieldLocation(index, fieldNum, loc.getRow(), loc.getCharOffset());

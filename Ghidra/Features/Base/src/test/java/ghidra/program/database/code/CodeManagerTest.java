@@ -673,8 +673,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDataContaining() throws Exception {
-		mem.createInitializedBlock("test", addr(0x0), 100, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0x0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 10);
@@ -716,8 +715,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDataBefore() throws Exception {
-		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0, TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 10);
@@ -738,8 +736,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDataBefore2() throws Exception {
-		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0, TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 0x10);
@@ -825,8 +822,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetUndefinedDataAfter() throws Exception {
-		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0, TaskMonitor.DUMMY, false);
 		parseStatic(addr(0x1100), addr(0x1500));
 		Instruction inst = listing.getInstructionContaining(addr(0x1500));
 
@@ -857,8 +853,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetFirstUndefinedData() throws Exception {
-		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0, TaskMonitor.DUMMY, false);
 		parseStatic(addr(0x1100), addr(0x1500));
 		Instruction inst = listing.getInstructionContaining(addr(0x1500));
 
@@ -874,8 +869,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		assertEquals(expectedAddr, data.getMinAddress());
 
 		data = listing.getFirstUndefinedData(
-			new AddressSet(expectedAddr.add(1), expectedAddr.add(500)),
-			TaskMonitor.DUMMY);
+			new AddressSet(expectedAddr.add(1), expectedAddr.add(500)), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(expectedAddr.addNoWrap(1), data.getMinAddress());
 
@@ -909,8 +903,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 	@Test
 	public void testClearProperties() throws Exception {
-		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0, TaskMonitor.DUMMY, false);
 		// addresses 10-19
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
@@ -983,7 +976,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		cu.setComment(CommentType.EOL, "This is a changed comment 3");
 
 		CodeManager cm = ((ProgramDB) program).getCodeManager();
-		CommentHistory[] history = cm.getCommentHistory(addr(0x1000), CodeUnit.EOL_COMMENT);
+		CommentHistory[] history = cm.getCommentHistory(addr(0x1000), CommentType.EOL);
 		assertEquals(3, history.length);
 		assertEquals("This is a changed comment 3", history[0].getComments());
 		assertEquals("This is a changed comment 2", history[1].getComments());

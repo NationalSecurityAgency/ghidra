@@ -550,13 +550,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //            Scalar scalar = (Scalar)data.getValue();
 //            switch ((int)scalar.getValue()) {
 //                case GNU_Constants.VER_NDX_LOCAL:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - local version");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - local version");
 //                    break;
 //                case GNU_Constants.VER_NDX_GLOBAL:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - global version");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - global version");
 //                    break;
 //                default:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - ??");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - ??");
 //                  break;
 //            }
 			}

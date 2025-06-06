@@ -31,7 +31,8 @@ public abstract class FBPT implements StructConverter {
 
 	public abstract List<FBPT_Entry> getEntries();
 
-	public void processFBPT(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+	public void processFBPT(Program program, Address address, TaskMonitor monitor, MessageLog log)
+			throws Exception {
 		FlatProgramAPI api = new FlatProgramAPI(program);
 
 		DataType fbptDataType = toDataType();
@@ -48,7 +49,8 @@ public abstract class FBPT implements StructConverter {
 		processFbPtEntries(program, address, monitor, log);
 	}
 
-	private void processFbPtEntries(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+	private void processFbPtEntries(Program program, Address address, TaskMonitor monitor,
+			MessageLog log) throws Exception {
 		int i = 0;
 		FlatProgramAPI api = new FlatProgramAPI(program);
 		for (FBPT_Entry entry : getEntries()) {

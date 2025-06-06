@@ -105,6 +105,7 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 		CliStreamMetadata metadataStream = metadataRoot.getMetadataStream();
 		InstructionIterator instIter = program.getListing().getInstructions(set, true);
 		while (instIter.hasNext()) {
+			monitor.checkCancelled();
 			try {
 				Instruction inst = instIter.next();
 				/* Base Instructions (Partition II.3) */

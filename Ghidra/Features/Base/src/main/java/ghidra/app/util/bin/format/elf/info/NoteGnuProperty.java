@@ -82,7 +82,8 @@ public class NoteGnuProperty extends ElfNote {
 	/**
 	 * Contains the information of an individual note property. 
 	 */
-	public record NotePropertyElement(int type, String typeName, String value, int length) {}
+	public record NotePropertyElement(int type, String typeName, String value, int length) {
+	}
 
 	private static NotePropertyElement readNextNotePropertyElement(BinaryReader reader, int intSize)
 			throws IOException {

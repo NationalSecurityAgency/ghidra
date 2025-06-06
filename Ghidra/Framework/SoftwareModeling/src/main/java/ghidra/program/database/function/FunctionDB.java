@@ -262,7 +262,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager().getComment(CodeUnit.PLATE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.PLATE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -280,7 +280,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		try {
 			startUpdate();
 			checkDeleted();
-			manager.getCodeManager().setComment(getEntryPoint(), CodeUnit.PLATE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.PLATE, comment);
 		}
 		finally {
 			endUpdate();
@@ -293,8 +293,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager()
-					.getComment(CodeUnit.REPEATABLE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.REPEATABLE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -311,8 +310,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkDeleted();
-			manager.getCodeManager()
-					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.REPEATABLE, comment);
 		}
 		finally {
 			manager.lock.release();

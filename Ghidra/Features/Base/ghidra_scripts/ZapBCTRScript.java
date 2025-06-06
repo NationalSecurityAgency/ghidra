@@ -60,8 +60,8 @@ public class ZapBCTRScript extends GhidraScript {
 		}
 
 		// first try input as class and search for symbol "<class>::__vtbl"
-		List<Symbol> symbols = currentProgram.getSymbolTable().getSymbols("__vtbl",
-			getNamespace(null, classNameOrAddr));
+		List<Symbol> symbols = currentProgram.getSymbolTable()
+				.getSymbols("__vtbl", getNamespace(null, classNameOrAddr));
 		// if symbol found, then vtblAddr is the symbol's address
 		if (symbols.size() == 1) {
 			vtblAddr = symbols.get(0).getAddress();
@@ -100,8 +100,8 @@ public class ZapBCTRScript extends GhidraScript {
 		// insert funcName as EOL comment and
 		// add a mnemonic ref from instAddr to funcAddr
 		listing.setComment(instAddr, CommentType.EOL, funcName);
-		listing.getInstructionAt(instAddr).addMnemonicReference(funcAddr, RefType.COMPUTED_CALL,
-			SourceType.USER_DEFINED);
+		listing.getInstructionAt(instAddr)
+				.addMnemonicReference(funcAddr, RefType.COMPUTED_CALL, SourceType.USER_DEFINED);
 
 		/*  old code that replaces the 'bctr' with a 'bl'
 		int code = 0x48000001 | ((int)displacement & 0x3ffffff);

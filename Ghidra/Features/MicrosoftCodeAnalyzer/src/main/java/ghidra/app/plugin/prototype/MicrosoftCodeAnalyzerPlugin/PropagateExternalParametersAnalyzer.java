@@ -267,8 +267,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 		// use the 'results' to propagate param info to the local variables, data, and params of
 		// the calling function
 		Msg.trace(this, "Processing propagation results - count: " + results.size());
-		for (int i = 0; i < results.size(); i++) {
-			PushedParamInfo paramInfo = results.get(i);
+		for (PushedParamInfo paramInfo : results) {
 			Address paramAddress = paramInfo.getAddress();
 			Instruction instruction = listing.getInstructionAt(paramAddress);
 

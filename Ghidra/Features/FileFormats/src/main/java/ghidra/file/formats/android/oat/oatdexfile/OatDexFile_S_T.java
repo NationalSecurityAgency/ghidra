@@ -59,8 +59,7 @@ public class OatDexFile_S_T extends OatDexFile {
 	private long _offset;
 	private DexHeader dexHeader;
 
-	public OatDexFile_S_T(BinaryReader reader, OatBundle bundle)
-			throws IOException {
+	public OatDexFile_S_T(BinaryReader reader, OatBundle bundle) throws IOException {
 
 		_offset = reader.getPointerIndex();
 

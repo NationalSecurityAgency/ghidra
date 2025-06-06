@@ -202,9 +202,8 @@ public abstract class ArtImageSections {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 
-			for (int i = 0; i < fieldList.size(); ++i) {
+			for (ArtField field : fieldList) {
 				monitor.checkCancelled();
-				ArtField field = fieldList.get(i);
 				DataType dataType = field.toDataType();
 				program.getListing().createData(address, dataType);
 
@@ -221,9 +220,8 @@ public abstract class ArtImageSections {
 		if (section.getSize() > 0) {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
-			for (int i = 0; i < fieldGroupList.size(); ++i) {
+			for (ArtFieldGroup fieldGroup : fieldGroupList) {
 				monitor.checkCancelled();
-				ArtFieldGroup fieldGroup = fieldGroupList.get(i);
 				DataType dataType = fieldGroup.toDataType();
 				program.getListing().createData(address, dataType);
 				if (fieldGroup.getFieldCount() > 0) {
@@ -253,10 +251,9 @@ public abstract class ArtImageSections {
 		if (section.getSize() > 0) {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
-			for (int i = 0; i < methodList.size(); ++i) {
+			for (ArtMethod method : methodList) {
 				monitor.checkCancelled();
 
-				ArtMethod method = methodList.get(i);
 				DataType dataType = method.toDataType();
 				program.getListing().createData(address, dataType);
 				String comment =
@@ -272,10 +269,9 @@ public abstract class ArtImageSections {
 		if (section.getSize() > 0) {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
-			for (int i = 0; i < methodGroupList.size(); ++i) {
+			for (ArtMethodGroup methodGroup : methodGroupList) {
 				monitor.checkCancelled();
 
-				ArtMethodGroup methodGroup = methodGroupList.get(i);
 				DataType dataType = methodGroup.toDataType();
 				program.getListing().createData(address, dataType);
 				if (methodGroup.getMethodCount() > 0) {

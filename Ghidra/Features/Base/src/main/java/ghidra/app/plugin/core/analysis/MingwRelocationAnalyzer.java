@@ -62,9 +62,8 @@ public class MingwRelocationAnalyzer extends AbstractAnalyzer {
 		if (!program.hasExclusiveAccess()) {
 			// Exclusive access required since relocation table lacks merge support
 			if (!alreadyProcessed(program)) {
-				Msg.error(this,
-					NAME + " analyzer disabled; requires exclusive access to " +
-						program.getDomainFile());
+				Msg.error(this, NAME + " analyzer disabled; requires exclusive access to " +
+					program.getDomainFile());
 			}
 			return false;
 		}
@@ -226,11 +225,9 @@ class MinGWPseudoRelocationHandler {
 	static boolean isSupportedProgram(Program program) {
 		Language language = program.getLanguage();
 		int size = language.getLanguageDescription().getSize();
-		return "x86".equals(language.getProcessor().toString()) &&
-			(size == 32 || size == 64) &&
+		return "x86".equals(language.getProcessor().toString()) && (size == 32 || size == 64) &&
 			"windows".equals(program.getCompilerSpec().getCompilerSpecID().toString()) &&
-			CompilerEnum.GCC.label.equals(program.getCompiler()) &&
-			getRDataBlock(program) != null;
+			CompilerEnum.GCC.label.equals(program.getCompiler()) && getRDataBlock(program) != null;
 	}
 
 	private static MemoryBlock getRDataBlock(Program program) {
@@ -251,7 +248,6 @@ class MinGWPseudoRelocationHandler {
 			throw new AssertException("unexpected", e);
 		}
 	}
-
 
 	boolean processRelocations(MessageLog log, TaskMonitor monitor) throws CancelledException {
 
@@ -297,8 +293,8 @@ class MinGWPseudoRelocationHandler {
 		boolean success;
 		switch (version) {
 			case RP_VERSION_V1:
-				success = relocateV1(pdwListBeginAddr, (int) (size / OLD_STYLE_ENTRY_SIZE), log,
-					monitor);
+				success =
+					relocateV1(pdwListBeginAddr, (int) (size / OLD_STYLE_ENTRY_SIZE), log, monitor);
 				break;
 			case RP_VERSION_V2:
 				success = relocateV2(pdwListBeginAddr, (int) (size / NEW_STYLE_ENTRY_HEADER_SIZE),
@@ -369,8 +365,7 @@ class MinGWPseudoRelocationHandler {
 				return existingEntry;
 			}
 
-			Reference ref =
-				program.getReferenceManager().getPrimaryReferenceFrom(iatEntryAddr, 0);
+			Reference ref = program.getReferenceManager().getPrimaryReferenceFrom(iatEntryAddr, 0);
 			if (!ref.isExternalReference()) {
 				return null;
 			}
@@ -380,8 +375,7 @@ class MinGWPseudoRelocationHandler {
 				return null;
 			}
 
-			ExternalLocation extLoc =
-				program.getExternalManager().getExternalLocation(extSym);
+			ExternalLocation extLoc = program.getExternalManager().getExternalLocation(extSym);
 			if (extLoc == null) {
 				return null;
 			}
@@ -583,12 +577,12 @@ class MinGWPseudoRelocationHandler {
 				}
 
 				if (addend != 0) {
-					ElfRelocationHandler.warnExternalOffsetRelocation(program,
-						targetAddr, pointerValue, symbolName, addend, null);
+					ElfRelocationHandler.warnExternalOffsetRelocation(program, targetAddr,
+						pointerValue, symbolName, addend, null);
 					if (!memory.getBlock(targetAddr).isExecute()) {
 						// assume pointer if not in execute block
-						ElfRelocationHandler.applyComponentOffsetPointer(program,
-							targetAddr, addend);
+						ElfRelocationHandler.applyComponentOffsetPointer(program, targetAddr,
+							addend);
 					}
 				}
 			}
@@ -624,8 +618,7 @@ class MinGWPseudoRelocationHandler {
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 		catch (CodeUnitInsertionException e) {
-			log.appendMsg(
-				"Failed to markup Mingw pseudo-relocation List at: " + pdwListBeginAddr);
+			log.appendMsg("Failed to markup Mingw pseudo-relocation List at: " + pdwListBeginAddr);
 		}
 		return true;
 	}
@@ -640,8 +633,8 @@ class MinGWPseudoRelocationHandler {
 		relocHeaderStruct.add(DWordDataType.dataType, "version", null);
 
 		try {
-			DataUtilities.createData(program, relocHeaderAddr, relocHeaderStruct, -1,
-				false, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			DataUtilities.createData(program, relocHeaderAddr, relocHeaderStruct, -1, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 		catch (CodeUnitInsertionException e) {
 			log.appendMsg(

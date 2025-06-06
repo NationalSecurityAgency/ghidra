@@ -167,7 +167,6 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		builder.createReturnInstruction("100e002");
 		builder.createEmptyFunction("call_dest_12", "0x100e020", 10, null);
 
-
 		return builder.getProgram();
 	}
 
@@ -1008,8 +1007,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		assertTrue(cb.goToField(addr("100d000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 		ListingField tf = cb.getCurrentField();
 		//old way of overriding (With RefType.UNCONDITIONAL CALL) does not yield a post comment
-		assertEquals(
-			"-- CALLOTHER(pcodeop_three) Call Override: call_dest_10 (0100d020)",
+		assertEquals("-- CALLOTHER(pcodeop_three) Call Override: call_dest_10 (0100d020)",
 			tf.getText());
 	}
 

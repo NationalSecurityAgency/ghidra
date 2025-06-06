@@ -100,13 +100,15 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 		commentCmd.applyTo(program);
 
 		if (program.getMemory().contains(callSiteBaseAddr)) {
-			program.getReferenceManager().addMemoryReference(callSiteDataAddr, callSiteBaseAddr,
-				RefType.DATA, SourceType.ANALYSIS, 0);
+			program.getReferenceManager()
+					.addMemoryReference(callSiteDataAddr, callSiteBaseAddr, RefType.DATA,
+						SourceType.ANALYSIS, 0);
 		}
 
 		if (program.getMemory().contains(landingPadAddr)) {
-			program.getReferenceManager().addMemoryReference(lpDataAddr, landingPadAddr,
-				RefType.DATA, SourceType.ANALYSIS, 0);
+			program.getReferenceManager()
+					.addMemoryReference(lpDataAddr, landingPadAddr, RefType.DATA,
+						SourceType.ANALYSIS, 0);
 		}
 
 		nextAddress = addr;

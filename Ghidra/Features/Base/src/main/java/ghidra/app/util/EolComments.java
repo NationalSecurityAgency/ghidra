@@ -101,8 +101,7 @@ public class EolComments {
 	}
 
 	private void loadEols() {
-		Collection<String> comments =
-			Arrays.asList(codeUnit.getCommentAsArray(CommentType.EOL));
+		Collection<String> comments = Arrays.asList(codeUnit.getCommentAsArray(CommentType.EOL));
 		addStrings(comments, eols);
 	}
 

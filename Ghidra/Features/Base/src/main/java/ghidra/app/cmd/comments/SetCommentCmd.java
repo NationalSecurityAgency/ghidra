@@ -38,12 +38,9 @@ public class SetCommentCmd implements Command<Program> {
 	 * @param comment comment for code unit
 	 * @deprecated Use {@link #SetCommentCmd(Address, CommentType, String)} instead
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "11.4")
 	public SetCommentCmd(Address addr, int commentType, String comment) {
-		this.address = addr;
-		this.commentType = CommentType.values()[commentType];
-		this.comment = comment;
-		cmdName = comment == null ? "Delete Comment" : "Set Comment";
+		this(addr, CommentType.valueOf(commentType), comment);
 	}
 
 	/**
@@ -132,11 +129,11 @@ public class SetCommentCmd implements Command<Program> {
 	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
 	 * @deprecated Use {@link #createComment(Program, Address, String, CommentType)} instead
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "11.4")
 	public static void createComment(Program program, Address addr, String comment,
 			int commentType) {
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(addr, CommentType.values()[commentType], comment);
+			new SetCommentCmd(addr, CommentType.valueOf(commentType), comment);
 		commentCmd.applyTo(program);
 	}
 
@@ -147,9 +144,7 @@ public class SetCommentCmd implements Command<Program> {
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
 	 * @param comment the comment about the data
-	 * @param commentType the type of comment ({@link CommentType#PLATE}, 
-	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
-	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * @param commentType the type of comment
 	 */
 	public static void createComment(Program program, Address addr, String comment,
 			CommentType commentType) {

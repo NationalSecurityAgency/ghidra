@@ -120,9 +120,8 @@ public class BlockCommentsManager {
 				CommentType.PRE);
 		}
 		for (Map.Entry<Address, String> entry : blockPostComments.entrySet()) {
-			CodeUnit codeUnit = program.getListing()
-					.getCodeUnitContaining(
-						entry.getKey().add(addressDelta));
+			CodeUnit codeUnit =
+				program.getListing().getCodeUnitContaining(entry.getKey().add(addressDelta));
 			if (codeUnit == null) {
 				Msg.warn(this, "PDB error: null Code unit");
 			}

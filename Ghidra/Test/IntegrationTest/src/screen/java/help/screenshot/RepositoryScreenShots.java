@@ -363,8 +363,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0,
-					0x5L);
+				setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -1512,8 +1511,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				ReferenceManager refMgr = program.getReferenceManager();
 				ProgramContext pc = program.getProgramContext();
 				Register regESI = pc.getRegister("ESI");
-				refMgr.addRegisterReference(addr(program, "0x004018e4"), 0, regESI,
-					RefType.READ, SourceType.USER_DEFINED);
+				refMgr.addRegisterReference(addr(program, "0x004018e4"), 0, regESI, RefType.READ,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
@@ -1596,15 +1595,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				ReferenceManager refMgr = program.getReferenceManager();
-				refMgr.addMemoryReference(addr(program, "0x004017db"),
-					addr(program, "0x00401953"), RefType.READ, SourceType.USER_DEFINED, 1);
-				refMgr.addMemoryReference(addr(program, "0x004017db"),
-					addr(program, "0x0040cbc8"), RefType.DATA, SourceType.USER_DEFINED, 1);
-				refMgr.addMemoryReference(addr(program, "0x004017db"),
-					addr(program, "0x004018bc"), RefType.READ_IND, SourceType.USER_DEFINED, 1);
-				refMgr.addExternalReference(addr(program, "0x00401810"), "USER32.DLL",
-					"getMessage", addr(program, "0x1001a11"), SourceType.USER_DEFINED, 0,
-					RefType.DATA);
+				refMgr.addMemoryReference(addr(program, "0x004017db"), addr(program, "0x00401953"),
+					RefType.READ, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x004017db"), addr(program, "0x0040cbc8"),
+					RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x004017db"), addr(program, "0x004018bc"),
+					RefType.READ_IND, SourceType.USER_DEFINED, 1);
+				refMgr.addExternalReference(addr(program, "0x00401810"), "USER32.DLL", "getMessage",
+					addr(program, "0x1001a11"), SourceType.USER_DEFINED, 0, RefType.DATA);
 			}
 
 			@Override
@@ -1612,14 +1610,12 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				ReferenceManager refMgr = program.getReferenceManager();
 				refMgr.addExternalReference(addr(program, "0x004017db"), "USER32.DLL", "printf",
 					addr(program, "0x01234567"), SourceType.USER_DEFINED, 1, RefType.DATA);
-				refMgr.addMemoryReference(addr(program, "0x00401810"),
-					addr(program, "0x00000010"), RefType.CONDITIONAL_JUMP,
-					SourceType.USER_DEFINED, 0);
-				refMgr.addMemoryReference(addr(program, "0x00401810"),
-					addr(program, "0x100190b"), RefType.DATA, SourceType.USER_DEFINED, 0);
-				refMgr.addMemoryReference(addr(program, "0x00401810"),
-					addr(program, "0x100191f"), RefType.CONDITIONAL_JUMP,
-					SourceType.USER_DEFINED, 0);
+				refMgr.addMemoryReference(addr(program, "0x00401810"), addr(program, "0x00000010"),
+					RefType.CONDITIONAL_JUMP, SourceType.USER_DEFINED, 0);
+				refMgr.addMemoryReference(addr(program, "0x00401810"), addr(program, "0x100190b"),
+					RefType.DATA, SourceType.USER_DEFINED, 0);
+				refMgr.addMemoryReference(addr(program, "0x00401810"), addr(program, "0x100191f"),
+					RefType.CONDITIONAL_JUMP, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -1782,9 +1778,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				CodeUnit cu;
 				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-				cu.setComment(CommentType.PRE,
-					"Changed this to a multiple line comment.\n" +
-						"It was necessary for demonstration purposes.");
+				cu.setComment(CommentType.PRE, "Changed this to a multiple line comment.\n" +
+					"It was necessary for demonstration purposes.");
 			}
 		});
 
@@ -1935,7 +1930,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				SourceArchive sourceArchive =
 					dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
 				sourceArchive.setName("TestArchiveOne");
-				
+
 				assertNotNull(sourceArchive);
 				assertEquals("TestArchiveOne", sourceArchive.getName());
 			}
@@ -1947,7 +1942,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				SourceArchive sourceArchive =
 					dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
 				sourceArchive.setName("TestArchiveTwo");
-				
+
 				assertNotNull(sourceArchive);
 				assertEquals("TestArchiveTwo", sourceArchive.getName());
 			}

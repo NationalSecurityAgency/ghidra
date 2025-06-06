@@ -27,8 +27,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 
@@ -129,7 +128,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 	 * @param loc the {@link ProgramLocation} for which to delete the comment
 	 */
 	void deleteComments(Program program, ProgramLocation loc) {
-		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
+		CommentType commentType = CommentTypeUtils.getCommentType(null, loc, CommentType.EOL);
 		SetCommentCmd cmd = new SetCommentCmd(loc.getByteAddress(), commentType, null);
 		tool.execute(cmd, program);
 	}
@@ -138,8 +137,8 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		if (codeUnit == null) {
 			return false;
 		}
-		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.NO_COMMENT);
-		return (commentType != CodeUnit.NO_COMMENT && codeUnit.getComment(commentType) != null);
+		CommentType commentType = CommentTypeUtils.getCommentType(null, loc, null);
+		return (commentType != null && codeUnit.getComment(commentType) != null);
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -151,23 +150,23 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		editAction = CommentsActionFactory.getEditCommentsAction(dialog, name);
 		tool.addAction(editAction);
 		preCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
-			"Set Pre Comment", CodeUnit.PRE_COMMENT);
+			"Set Pre Comment", CommentType.PRE);
 		tool.addAction(preCommentEditAction);
 
 		postCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
-			"Set Post Comment", CodeUnit.POST_COMMENT);
+			"Set Post Comment", CommentType.POST);
 		tool.addAction(postCommentEditAction);
 
 		plateCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
-			"Set Plate Comment", CodeUnit.PLATE_COMMENT);
+			"Set Plate Comment", CommentType.PLATE);
 		tool.addAction(plateCommentEditAction);
 
 		eolCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
-			"Set EOL Comment", CodeUnit.EOL_COMMENT);
+			"Set EOL Comment", CommentType.EOL);
 		tool.addAction(eolCommentEditAction);
 
 		repeatableCommentEditAction = CommentsActionFactory.getSetCommentsAction(dialog, name,
-			"Set Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
+			"Set Repeatable Comment", CommentType.REPEATABLE);
 		tool.addAction(repeatableCommentEditAction);
 
 		deleteAction = new ListingContextAction("Delete Comments", pluginName) {
@@ -215,7 +214,8 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 				else {
 					historyAction.getPopupMenuData().setMenuPath(HISTORY_MENUPATH);
 				}
-				historyAction.setEnabled(CommentTypeUtils.isCommentAllowed(context.getCodeUnit(), loc));
+				historyAction
+						.setEnabled(CommentTypeUtils.isCommentAllowed(context.getCodeUnit(), loc));
 				return true;
 			}
 		};
@@ -227,7 +227,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 	private void showCommentHistory(ListingActionContext context) {
 		CodeUnit cu = context.getCodeUnit();
 		ProgramLocation loc = context.getLocation();
-		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
+		CommentType commentType = CommentTypeUtils.getCommentType(null, loc, CommentType.EOL);
 		CommentHistoryDialog historyDialog = new CommentHistoryDialog(cu, commentType);
 		tool.showDialog(historyDialog, context.getComponentProvider());
 	}
@@ -254,30 +254,33 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		}
 
 		CommentFieldLocation cfLoc = (CommentFieldLocation) loc;
-		int type = cfLoc.getCommentType();
+		CommentType type = cfLoc.getCommentType();
 		switch (type) {
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				action.getPopupMenuData()
 						.setMenuPath(
 							new String[] { "Comments", actionString + " Pre-Comment" + endString });
 				break;
 
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				action.getPopupMenuData()
 						.setMenuPath(new String[] { "Comments",
 							actionString + " Post-Comment" + endString });
 				break;
 
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				action.getPopupMenuData()
 						.setMenuPath(
 							new String[] { "Comments", actionString + " EOL Comment" + endString });
 				break;
 
-			case CodeUnit.REPEATABLE_COMMENT:
+			case REPEATABLE:
 				action.getPopupMenuData()
 						.setMenuPath(new String[] { "Comments",
 							actionString + " Repeatable Comment" + endString });
+				break;
+
+			default:
 				break;
 		}
 	}

@@ -46,14 +46,12 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 	public static final String DESCRIPTION =
 		"Locates and annotates exception-handling infrastructure installed by the GCC compiler";
 
-	protected static final String OPTION_NAME_CREATE_TRY_CATCH_COMMENTS =
-		"Create Try Catch Comments";
-	private static final String OPTION_DESCRIPTION_CREATE_TRY_CATCH_COMMENTS =
+	protected static final String OPTION_NAME_CREATE_TRY_CATCHS = "Create Try Catch Comments";
+	private static final String OPTION_DESCRIPTION_CREATE_TRY_CATCHS =
 		"Selecting this check box causes the analyzer to create comments in the " +
 			"disassembly listing for the try and catch code.";
-	private static final boolean OPTION_DEFAULT_CREATE_TRY_CATCH_COMMENTS_ENABLED = true;
-	private boolean createTryCatchCommentsEnabled =
-		OPTION_DEFAULT_CREATE_TRY_CATCH_COMMENTS_ENABLED;
+	private static final boolean OPTION_DEFAULT_CREATE_TRY_CATCHS_ENABLED = true;
+	private boolean createTryCatchCommentsEnabled = OPTION_DEFAULT_CREATE_TRY_CATCHS_ENABLED;
 
 	private Set<Program> visitedPrograms = new HashSet<>();
 	private AutoAnalysisManagerListener analysisListener =
@@ -304,8 +302,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 		if (csMaxCodeUnit != null) {
 			Address commentAddr = csMaxCodeUnit.getMinAddress();
 			String endTryComment = "} // end try from " + csMinAddr + " to " + csMaxAddr;
-			String existingComment =
-				program.getListing().getComment(CommentType.POST, commentAddr);
+			String existingComment = program.getListing().getComment(CommentType.POST, commentAddr);
 			if (existingComment == null || !existingComment.contains(endTryComment)) {
 				String mergedComment = StringUtilities.mergeStrings(existingComment, endTryComment);
 				SetCommentCmd setCommentCmd =
@@ -350,7 +347,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 //			String mergedComment =
 //				StringUtilities.mergeStrings(existingComment, endCatchComment);
 //			SetCommentCmd setCommentCmd =
-//				new SetCommentCmd(lpMaxAddr, CodeUnit.POST_COMMENT, endCatchComment);
+//				new SetCommentCmd(lpMaxAddr, CommentType.POST, endCatchComment);
 //			setCommentCmd.applyTo(program);
 //		}
 	}
@@ -428,14 +425,14 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		options.registerOption(OPTION_NAME_CREATE_TRY_CATCH_COMMENTS, createTryCatchCommentsEnabled,
-			null, OPTION_DESCRIPTION_CREATE_TRY_CATCH_COMMENTS);
+		options.registerOption(OPTION_NAME_CREATE_TRY_CATCHS, createTryCatchCommentsEnabled, null,
+			OPTION_DESCRIPTION_CREATE_TRY_CATCHS);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		createTryCatchCommentsEnabled = options.getBoolean(OPTION_NAME_CREATE_TRY_CATCH_COMMENTS,
-			createTryCatchCommentsEnabled);
+		createTryCatchCommentsEnabled =
+			options.getBoolean(OPTION_NAME_CREATE_TRY_CATCHS, createTryCatchCommentsEnabled);
 	}
 
 }

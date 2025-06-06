@@ -120,22 +120,22 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 		Address a = addr(0x100101c);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		String[] comment = cu.getCommentAsArray(CommentType.PRE);
-		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
+		locs[0] = new CommentFieldLocation(program, a, null, comment, CommentType.PRE, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
 		comment = cu.getCommentAsArray(CommentType.PRE);
-		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
+		locs[1] = new CommentFieldLocation(program, a, null, comment, CommentType.PRE, 0, 5);
 
 		a = addr(0x100352f);
 		cu = program.getListing().getCodeUnitAt(a);
 		comment = cu.getCommentAsArray(CommentType.EOL);
-		locs[2] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 0, 5);
+		locs[2] = new CommentFieldLocation(program, a, null, comment, CommentType.EOL, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
 		comment = cu.getCommentAsArray(CommentType.EOL);
-		locs[3] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 1, 5);
+		locs[3] = new CommentFieldLocation(program, a, null, comment, CommentType.EOL, 1, 5);
 
 		a = addr(0x10075ff);
 		cu = program.getListing().getCodeUnitAt(a);
@@ -169,12 +169,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 		Address a = addr(0x100101c);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		String[] comment = cu.getCommentAsArray(CommentType.PRE);
-		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
+		locs[0] = new CommentFieldLocation(program, a, null, comment, CommentType.PRE, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
 		comment = cu.getCommentAsArray(CommentType.PRE);
-		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.PRE_COMMENT, 0, 5);
+		locs[1] = new CommentFieldLocation(program, a, null, comment, CommentType.PRE, 0, 5);
 		return locs;
 	}
 
@@ -185,12 +185,12 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 		Address a = addr(0x100352f);
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		String[] comment = cu.getCommentAsArray(CommentType.EOL);
-		locs[0] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 0, 5);
+		locs[0] = new CommentFieldLocation(program, a, null, comment, CommentType.EOL, 0, 5);
 
 		a = addr(0x10030e4);
 		cu = program.getListing().getCodeUnitAt(a);
 		comment = cu.getCommentAsArray(CommentType.EOL);
-		locs[1] = new CommentFieldLocation(program, a, null, comment, CodeUnit.EOL_COMMENT, 1, 5);
+		locs[1] = new CommentFieldLocation(program, a, null, comment, CommentType.EOL, 1, 5);
 		return locs;
 	}
 
@@ -535,8 +535,7 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 	@Override
 	public ProgramLocation[] getLocationsWithLocalLabels() {
 		ProgramLocation[] locs = new ProgramLocation[2];
-		locs[0] =
-			new LabelFieldLocation(program, addr(0x1002d1f), "MyLocal");
+		locs[0] = new LabelFieldLocation(program, addr(0x1002d1f), "MyLocal");
 		locs[1] = new LabelFieldLocation(program, addr(0x1002d2b), "AnotherLocal");
 		return locs;
 	}

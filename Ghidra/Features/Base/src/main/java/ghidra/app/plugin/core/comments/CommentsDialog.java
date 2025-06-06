@@ -37,6 +37,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.CommentType;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.AssertException;
 
 /**
  * Dialog for setting the comments for a CodeUnit.
@@ -90,7 +91,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 	 * @param cu code unit
 	 * @param type comment type
 	 */
-	void showDialog(CodeUnit cu, int type) {
+	void showDialog(CodeUnit cu, CommentType type) {
 		setTitle("Set Comment(s) at Address " + cu.getMinAddress());
 		codeUnit = cu;
 
@@ -134,23 +135,29 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		tool.showDialog(this);
 	}
 
-	void setCommentType(int type) {
+	void setCommentType(CommentType type) {
+		if (type == null) {
+			tab.setSelectedIndex(0);
+			return;
+		}
 		switch (type) {
-			case CodeUnit.EOL_COMMENT:
+			case CommentType.EOL:
 				tab.setSelectedIndex(0);
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case CommentType.PRE:
 				tab.setSelectedIndex(1);
 				break;
-			case CodeUnit.POST_COMMENT:
+			case CommentType.POST:
 				tab.setSelectedIndex(2);
 				break;
-			case CodeUnit.PLATE_COMMENT:
+			case CommentType.PLATE:
 				tab.setSelectedIndex(3);
 				break;
-			case CodeUnit.REPEATABLE_COMMENT:
+			case CommentType.REPEATABLE:
 				tab.setSelectedIndex(4);
 				break;
+			default:
+				throw new AssertException("Unsupported comment type: " + type.name());
 		}
 	}
 

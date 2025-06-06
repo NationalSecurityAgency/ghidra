@@ -844,7 +844,7 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 				cu.setComment(CommentType.PLATE, "Plate Comment");
 				cu.setComment(CommentType.REPEATABLE, "Repeatable Comment");
 			}
-			
+
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
@@ -1079,7 +1079,7 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 				cu.setComment(CommentType.PLATE, "Latest Plate Comment");
 				cu.setComment(CommentType.REPEATABLE, "Latest Repeatable Comment");
 			}
-			
+
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();

@@ -97,7 +97,8 @@ public abstract class FBPK_Partition implements StructConverter {
 	 * @param log the message log
 	 * @throws Exception if any exception occurs during markup
 	 */
-	public void markup(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+	public void markup(Program program, Address address, TaskMonitor monitor, MessageLog log)
+			throws Exception {
 		FlatProgramAPI api = new FlatProgramAPI(program);
 
 		DataType partitionDataType = toDataType();

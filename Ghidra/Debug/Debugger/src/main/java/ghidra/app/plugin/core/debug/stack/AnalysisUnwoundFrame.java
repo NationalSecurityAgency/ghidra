@@ -144,16 +144,14 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 		info.mapSavedRegisters(base, registerMap);
 		Address pcVal = info.computeNextPc(base, state, codeSpace, pc);
 		Address spVal = info.computeNextSp(base);
-		return unwinder.unwind(coordinates, level + 1, pcVal, spVal, state, registerMap,
-			monitor);
+		return unwinder.unwind(coordinates, level + 1, pcVal, spVal, state, registerMap, monitor);
 	}
 
 	@Override
 	protected Address applyBase(long offset) {
 		if (base == null) {
-			throw new UnwindException(
-				"Cannot compute stack address for offset %d.\nFrame error: %s".formatted(offset,
-					info.error().getMessage()),
+			throw new UnwindException("Cannot compute stack address for offset %d.\nFrame error: %s"
+					.formatted(offset, info.error().getMessage()),
 				info.error());
 		}
 		return base.add(offset);
@@ -191,8 +189,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	@Override
 	public String getDescription() {
-		return String.format("%s %s pc=%s sp=%s base=%s",
-			level, info.function(),
+		return String.format("%s %s pc=%s sp=%s base=%s", level, info.function(),
 			pcVal == null ? null : pcVal.toString(false),
 			spVal == null ? null : spVal.toString(false),
 			base == null ? null : base.toString(false));

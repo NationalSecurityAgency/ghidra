@@ -24,17 +24,16 @@ import ghidra.program.model.listing.*;
 public class DeleteExitCommentsScript extends GhidraScript {
 
 	private static String EXIT_COMMENT = " Exit **********\r\n ";
-	/* (non-Javadoc)
-	 * @see ghidra.app.script.GhidraScript#run()
-	 */
+
 	@Override
-    public void run() throws Exception {
+	public void run() throws Exception {
 		Listing listing = currentProgram.getListing();
 		AddressSetView set = currentProgram.getMemory();
 		if (currentSelection != null && !currentSelection.isEmpty()) {
 			set = currentSelection;
 		}
-		int updateCount=0;
+
+		int updateCount = 0;
 		AddressIterator iter = listing.getCommentAddressIterator(CommentType.POST, set, true);
 		while (iter.hasNext()) {
 			Address addr = iter.next();
@@ -46,7 +45,7 @@ public class DeleteExitCommentsScript extends GhidraScript {
 			}
 		}
 		if (updateCount > 0) {
-			String cmt = updateCount > 1? "comments" : "comment";
+			String cmt = updateCount > 1 ? "comments" : "comment";
 			println("Removed " + updateCount + " exit post " + cmt + ".");
 		}
 		else {

@@ -78,8 +78,7 @@ public class LSDATable {
 	 * @param region the region of the program associated with this table
 	 * @throws MemoryAccessException if memory couldn't be accessed for the LSDA table
 	 */
-	public void create(Address tableAddr, RegionDescriptor region)
-			throws MemoryAccessException {
+	public void create(Address tableAddr, RegionDescriptor region) throws MemoryAccessException {
 
 		region.setLSDATable(this);
 

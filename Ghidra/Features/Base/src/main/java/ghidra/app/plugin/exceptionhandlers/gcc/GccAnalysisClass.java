@@ -100,7 +100,7 @@ public abstract class GccAnalysisClass {
 	 * @param addr the address where data is created
 	 * @param dt the type for the data
 	 * @param comment the comment about the data
-	 * @param commentType the {@link CommentType type of comment }
+	 * @param commentType the type of comment
 	 */
 	protected static void createAndCommentData(Program program, Address addr, DataType dt,
 			String comment, CommentType commentType) {

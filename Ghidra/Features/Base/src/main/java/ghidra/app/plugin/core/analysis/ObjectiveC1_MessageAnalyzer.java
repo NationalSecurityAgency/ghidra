@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 	private static final String DESCRIPTION =
-			"An analyzer for extracting _objc_msgSend information.";
+		"An analyzer for extracting _objc_msgSend information.";
 
 	private static final String NAME = "Objective-C Message";
 
@@ -88,7 +88,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 			return;
 		}
 		InstructionIterator instructionIterator =
-				program.getListing().getInstructions(function.getBody(), true);
+			program.getListing().getInstructions(function.getBody(), true);
 		while (instructionIterator.hasNext()) {
 			if (monitor.isCancelled()) {
 				break;
@@ -127,8 +127,8 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 	private boolean isObjcNameMatch(Symbol symbol) {
 		String name = symbol.getName();
 		return name.startsWith(ObjectiveC1_Constants.OBJC_MSG_SEND) ||
-				name.equals(ObjectiveC1_Constants.READ_UNIX2003) ||
-				name.startsWith("thunk" + ObjectiveC1_Constants.OBJC_MSG_SEND);
+			name.equals(ObjectiveC1_Constants.READ_UNIX2003) ||
+			name.startsWith("thunk" + ObjectiveC1_Constants.OBJC_MSG_SEND);
 	}
 
 	private class CurrentState {
@@ -309,7 +309,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 
 	private boolean isClassBlock(MemoryBlock block) {
 		return block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS_REFS) ||
-				block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS);
+			block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS);
 	}
 
 	private boolean isValidInstruction(Instruction instruction) {

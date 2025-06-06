@@ -164,8 +164,8 @@ public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMar
 
 	@Test
 	public void testForceApplyForExcludedPlateComment() throws Exception {
-		genericTestForceApplyForExcludedComment(PlateCommentMarkupType.class,
-			CommentType.PLATE, PLATE_COMMENT);
+		genericTestForceApplyForExcludedComment(PlateCommentMarkupType.class, CommentType.PLATE,
+			PLATE_COMMENT);
 	}
 
 	@Test
@@ -230,7 +230,7 @@ public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMar
 
 	//----------------------------
 
-	protected void checkComments(final CommentType commentType, final Address sourceAddr,
+	protected void checkComments(CommentType commentType, final Address sourceAddr,
 			final String expectedSourceComment, final Address destinationAddr,
 			final String expectedDestinationComment) {
 
@@ -299,27 +299,27 @@ public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMar
 			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			switch (commentType) {
-				case CommentType.PLATE:
+				case PLATE:
 					if (vtMarkupItem.getMarkupType() instanceof PlateCommentMarkupType) {
 						return vtMarkupItem;
 					}
 					continue;
-				case CommentType.PRE:
+				case PRE:
 					if (vtMarkupItem.getMarkupType() instanceof PreCommentMarkupType) {
 						return vtMarkupItem;
 					}
 					continue;
-				case CommentType.EOL:
+				case EOL:
 					if (vtMarkupItem.getMarkupType() instanceof EolCommentMarkupType) {
 						return vtMarkupItem;
 					}
 					continue;
-				case CommentType.REPEATABLE:
+				case REPEATABLE:
 					if (vtMarkupItem.getMarkupType() instanceof RepeatableCommentMarkupType) {
 						return vtMarkupItem;
 					}
 					continue;
-				case CommentType.POST:
+				case POST:
 					if (vtMarkupItem.getMarkupType() instanceof PostCommentMarkupType) {
 						return vtMarkupItem;
 					}

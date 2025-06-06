@@ -50,8 +50,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 
 	public final static String LIB_BOOKMARK_CATEGORY = "Library Identification";
 	public final static String FID_BOOKMARK_CATEGORY = "Function ID Analyzer";
-	public static final Set<String> LIBRARY_BOOKMARK_CATEGORY_STRINGS = Set.of(LIB_BOOKMARK_CATEGORY,
-			FID_BOOKMARK_CATEGORY);
+	public static final Set<String> LIBRARY_BOOKMARK_CATEGORY_STRINGS =
+		Set.of(LIB_BOOKMARK_CATEGORY, FID_BOOKMARK_CATEGORY);
 
 	private DtParser dtParser;
 	private Library externalNamespace;
@@ -65,8 +65,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	////////////////////////////
 
 	@Override
-	protected void readResults(List<Map<String, Object>> list, SarifProgramOptions options, TaskMonitor monitor)
-			throws AddressFormatException, CancelledException {
+	protected void readResults(List<Map<String, Object>> list, SarifProgramOptions options,
+			TaskMonitor monitor) throws AddressFormatException, CancelledException {
 		if (list != null) {
 			monitor.setMessage("Processing " + key + "...");
 			monitor.setMaximum(list.size() * 2);
@@ -83,7 +83,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 				monitor.increment();
 			}
 			monitor.incrementProgress();
-		} else {
+		}
+		else {
 			monitor.setMessage("Skipping over " + key + " ...");
 		}
 	}
@@ -104,7 +105,7 @@ public class FunctionsSarifMgr extends SarifMgr {
 	 * </pre>
 	 * 
 	 * @param result             the parser
-	 * @param overwriteConflicts true to overwrite any conflicts
+	 * @param options
 	 * @param monitor            the task monitor
 	 * @throws AddressFormatException if any address is not parsable
 	 * @throws CancelledException     if the operation is cancelled through the
@@ -112,8 +113,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws AddressFormatException, CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws AddressFormatException, CancelledException {
 
 		DataTypeManager dataManager = listing.getDataTypeManager();
 		BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
@@ -122,10 +123,10 @@ public class FunctionsSarifMgr extends SarifMgr {
 			dtParser = new DtParser(dataManager);
 
 			try {
-				String key = (String) result.get("Message");
+				String msgKey = (String) result.get("Message");
 				boolean isThunk = (boolean) result.get("isThunk");
 				boolean process = (firstPass && !isThunk) || (!firstPass && isThunk);
-				if (!key.equals("Function") || !process) {
+				if (!msgKey.equals("Function") || !process) {
 					return true;
 				}
 
@@ -139,17 +140,20 @@ public class FunctionsSarifMgr extends SarifMgr {
 				for (Symbol symbol : symbols) {
 					SourceType srcType = symbol.getSource();
 					if (!srcType.equals(SourceType.DEFAULT)) {
-						program.getSymbolTable().createLabel(entryPoint, symbol.getName(true), srcType);
+						program.getSymbolTable()
+								.createLabel(entryPoint, symbol.getName(true), srcType);
 					}
 				}
 
 				String source = (String) result.get("sourceType");
-				SourceType sourceType = source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
+				SourceType sourceType =
+					source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
 				String typeInfoComment = setProperties(result, func, entryPoint);
 
 				// Process stack
 				List<Variable> stackParams = new ArrayList<>();
-				List<Map<String, Object>> regVars = (List<Map<String, Object>>) result.get("regVars");
+				List<Map<String, Object>> regVars =
+					(List<Map<String, Object>>) result.get("regVars");
 				for (Map<String, Object> var : regVars) {
 					readRegisterVars(var, func, stackParams);
 				}
@@ -174,16 +178,16 @@ public class FunctionsSarifMgr extends SarifMgr {
 					plist = formalParams;
 				}
 
-				if (plist != null) {
-					updateFunction(func, retImpl, plist, sourceType);
-				}
+				updateFunction(func, retImpl, plist, sourceType);
 
 				postProcess(result, func, stack);
 
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				log.appendException(e);
 			}
-		} finally {
+		}
+		finally {
 			builtInMgr.close();
 		}
 		return true;
@@ -196,21 +200,22 @@ public class FunctionsSarifMgr extends SarifMgr {
 		}
 		Address entryPoint = parseAddress(factory, entryPointStr);
 		if (entryPoint == null) {
-			throw new AddressFormatException("Incompatible Function Entry Point Address: " + entryPointStr);
+			throw new AddressFormatException(
+				"Incompatible Function Entry Point Address: " + entryPointStr);
 		}
 		return entryPoint;
 	}
 
 	private Function createFunction(Map<String, Object> result, boolean isThunk, Address entryPoint)
-			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException,
-			AddressOverflowException {
+			throws InvalidInputException, OverlappingFunctionException, AddressOverflowException {
 		AddressSet body = new AddressSet(entryPoint, entryPoint);
 		getLocations(result, body);
 		Function func = program.getFunctionManager().getFunctionAt(entryPoint);
 		if (func == null) {
 			String source = (String) result.get("sourceType");
 			SourceType sourceType = getSourceType(source);
-			func = program.getFunctionManager().createFunction(null, null, entryPoint, body, sourceType);
+			func = program.getFunctionManager()
+					.createFunction(null, null, entryPoint, body, sourceType);
 		}
 
 		String name = (String) result.get("name");
@@ -221,25 +226,29 @@ public class FunctionsSarifMgr extends SarifMgr {
 		return func;
 	}
 
-	private Library getExternalNamespace(Program program, MessageLog log) {
+	private Library getExternalNamespace() {
 		if (externalNamespace == null) {
 			int txId = program.startTransaction("SARIF FunctionMgr");
 			try {
 				SymbolTable symbolTable = program.getSymbolTable();
 				Symbol extLib = symbolTable.getLibrarySymbol("<EXTERNAL>");
 				if (extLib == null) {
-					externalNamespace = symbolTable.createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
+					externalNamespace =
+						symbolTable.createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				log.appendException(e);
-			} finally {
+			}
+			finally {
 				program.endTransaction(txId, true);
 			}
 		}
 		return externalNamespace;
 	}
 
-	private void setName(Address entryPoint, Function func, String name, Map<String, Object> result) {
+	private void setName(Address entryPoint, Function func, String name,
+			Map<String, Object> result) {
 		SymbolPath path = new SymbolPath(name);
 		if (name != null) {
 			String nss = (String) result.get("namespace");
@@ -262,22 +271,25 @@ public class FunctionsSarifMgr extends SarifMgr {
 				if (parent != null && !parent.getName().equals(ns.getName())) {
 					Boolean isClass = (Boolean) result.get("namespaceIsClass");
 					String source = (String) result.get("sourceType");
-					SourceType sourceType = source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
-					ns = walkNamespace(program.getGlobalNamespace(), parent.getPath() + "::", entryPoint,
-							sourceType, isClass);
+					SourceType sourceType =
+						source.equals("DEFAULT") ? SourceType.IMPORTED : getSourceType(source);
+					ns = walkNamespace(program.getGlobalNamespace(), parent.getPath() + "::",
+						entryPoint, sourceType, isClass);
 					symbol.setNameAndNamespace(name, ns, getSourceType("DEFAULT"));
 					return;
 				}
 			}
 			if (path.getName().contains(Library.UNKNOWN)) {
-				ns = getExternalNamespace(program, log);
+				ns = getExternalNamespace();
 			}
 			if (ns.getParentNamespace() == null) {
 				symbol.setName(name, getSourceType("DEFAULT"));
-			} else {
+			}
+			else {
 				symbol.setNameAndNamespace(name, ns.getParentNamespace(), getSourceType("DEFAULT")); // symbol.getSource());
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			// name may already be set if symbols were loaded...
 		}
 	}
@@ -325,13 +337,19 @@ public class FunctionsSarifMgr extends SarifMgr {
 			for (Variable variable : plist) {
 				arr[i++] = variable;
 			}
-			FunctionUpdateType type = func.hasCustomVariableStorage() ? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
-			func.updateFunction(func.getCallingConventionName(), retImpl, type, true, SourceType.IMPORTED, arr);
-		} catch (DuplicateNameException e) {
-			log.appendMsg("Could not set name of a parameter in function: " + funcDesc(func) + ": " + e.getMessage());
-		} catch (InvalidInputException iie) {
-			log.appendMsg("Bad parameter definition in function: " + funcDesc(func) + ": " + iie.getMessage());
+			FunctionUpdateType type =
+				func.hasCustomVariableStorage() ? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+			func.updateFunction(func.getCallingConventionName(), retImpl, type, true,
+				SourceType.IMPORTED, arr);
+		}
+		catch (DuplicateNameException e) {
+			log.appendMsg("Could not set name of a parameter in function: " + funcDesc(func) +
+				": " + e.getMessage());
+		}
+		catch (InvalidInputException iie) {
+			log.appendMsg("Bad parameter definition in function: " + funcDesc(func) + ": " +
+				iie.getMessage());
 		}
 	}
 
@@ -347,14 +365,15 @@ public class FunctionsSarifMgr extends SarifMgr {
 		if (purgeSize != null) {
 			if (purgeValid == null) {
 				func.setStackPurgeSize((int) (double) purgeSize);
-			} else {
-				func.setStackPurgeSize(purgeValid ? (int) (double) purgeSize : Function.UNKNOWN_STACK_DEPTH_CHANGE);
+			}
+			else {
+				func.setStackPurgeSize(
+					purgeValid ? (int) (double) purgeSize : Function.UNKNOWN_STACK_DEPTH_CHANGE);
 			}
 		}
 	}
 
-	private void createThunk(Map<String, Object> result, Function func)
-			throws InvalidInputException, DuplicateNameException {
+	private void createThunk(Map<String, Object> result, Function func) {
 		String thunkStr = (String) result.get("thunkAddress");
 		if (thunkStr == null) {
 			throw new RuntimeException("No thunk address provided.");
@@ -367,12 +386,14 @@ public class FunctionsSarifMgr extends SarifMgr {
 				thunkFn = (Function) symbol.getObject();
 				func.setThunkedFunction(thunkFn);
 			}
-		} else {
+		}
+		else {
 			thunkFn = program.getFunctionManager().getFunctionAt(thunk);
 			if (thunkFn == null) {
 				CreateFunctionCmd cmd = new CreateFunctionCmd(thunk);
 				if (!cmd.applyTo(program)) {
-					Msg.error(this, "Failed to create function at " + thunk + ": " + cmd.getStatusMsg());
+					Msg.error(this,
+						"Failed to create function at " + thunk + ": " + cmd.getStatusMsg());
 				}
 				thunkFn = cmd.getFunction();
 			}
@@ -380,14 +401,17 @@ public class FunctionsSarifMgr extends SarifMgr {
 		}
 	}
 
-	private void addLocalVar(Function function, Variable v, SourceType sourceType, boolean overwriteConflicts) throws InvalidInputException {
-		VariableUtilities.checkVariableConflict(function, v, v.getVariableStorage(), overwriteConflicts);
+	private void addLocalVar(Function function, Variable v, SourceType sourceType,
+			boolean overwriteConflicts) throws InvalidInputException {
+		VariableUtilities.checkVariableConflict(function, v, v.getVariableStorage(),
+			overwriteConflicts);
 
 		try {
 			function.addLocalVariable(v, sourceType);
-		} catch (DuplicateNameException e) {
-			log.appendMsg("Could not add local variable to function " + funcDesc(function) + ": " + v.getName() + ": "
-					+ e.getMessage());
+		}
+		catch (DuplicateNameException e) {
+			log.appendMsg("Could not add local variable to function " + funcDesc(function) + ": " +
+				v.getName() + ": " + e.getMessage());
 		}
 	}
 
@@ -406,7 +430,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void readStackFrame(Map<String, Object> result, Function func, List<Variable> stackParams, SourceType sourceType) {
+	private void readStackFrame(Map<String, Object> result, Function func,
+			List<Variable> stackParams, SourceType sourceType) {
 		if (func == null) {
 			return;
 		}
@@ -435,7 +460,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void readVariable(Map<String, Object> result, Function function, List<Variable> stackParams, SourceType sourceType) {
+	private void readVariable(Map<String, Object> result, Function function,
+			List<Variable> stackParams, SourceType sourceType) {
 
 		int offset = (int) (double) result.get("offset");
 		int size = (int) (double) result.get("size");
@@ -464,19 +490,22 @@ public class FunctionsSarifMgr extends SarifMgr {
 			if (isParameter) {
 				var = new ParameterImpl(name, dt, offset, program);
 				stackParams.add(var);
-			} else {
+			}
+			else {
 				var = new LocalVariableImpl(name, dt, offset, program);
 				addLocalVar(function, var, sourceType, true);
 			}
 			String regularComment = (String) result.get("comment");
 			var.setComment(regularComment);
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			log.appendException(e);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private DataType readParameter(Map<String, Object> result, Function function, List<Variable> formalParams) {
+	private DataType readParameter(Map<String, Object> result, Function function,
+			List<Variable> formalParams) {
 
 		String name = (String) result.get("name");
 		// int ordinal = (int) (double) result.get("ordinal");
@@ -514,7 +543,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 				formalParams.add(var);
 			}
 			return dt;
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			log.appendException(e);
 			return null;
 		}
@@ -536,7 +566,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 		try {
 			List<String> rnames = (List<String>) result.get("registers");
 			if (rnames != null) {
-				List<Varnode> vnodes = convertRegisterListToVarnodeStorage(rnames, dt.getLength(), offset);
+				List<Varnode> vnodes =
+					convertRegisterListToVarnodeStorage(rnames, dt.getLength(), offset);
 				VariableStorage returnStorage = new VariableStorage(program, vnodes);
 				return new ReturnParameterImpl(dt, returnStorage, true, program);
 			}
@@ -545,7 +576,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 				return new ReturnParameterImpl(dt, offset, program);
 			}
 			return new ReturnParameterImpl(dt, program);
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			log.appendException(e);
 			return null;
 		}
@@ -567,7 +599,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void readRegisterVars(Map<String, Object> result, Function function, List<Variable> stackParams) {
+	private void readRegisterVars(Map<String, Object> result, Function function,
+			List<Variable> stackParams) {
 		try {
 			ProgramContext context = program.getProgramContext();
 			String name = (String) result.get("name");
@@ -580,7 +613,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 			Map<String, Object> type = (Map<String, Object>) result.get("type");
 			DataType dt = findDataType(type);
 			if (dt != null && dt.getLength() > register.getMinimumByteSize()) {
-				log.appendMsg("Data type [" + result.get("type") + "] too large for register [" + registerName + "]");
+				log.appendMsg("Data type [" + result.get("type") + "] too large for register [" +
+					registerName + "]");
 				dt = null;
 			}
 
@@ -589,15 +623,17 @@ public class FunctionsSarifMgr extends SarifMgr {
 			registerParam.setComment(comment);
 
 			stackParams.add(registerParam);
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			log.appendException(e);
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e) {
 			log.appendException(e);
 		}
 	}
 
-	public List<Varnode> convertRegisterListToVarnodeStorage(List<String> registNames, int dataTypeSize,
-			int stackOffset) {
+	public List<Varnode> convertRegisterListToVarnodeStorage(List<String> registNames,
+			int dataTypeSize, int stackOffset) {
 		List<Varnode> results = new ArrayList<>();
 		ProgramContext context = program.getProgramContext();
 		for (String rname : registNames) {
@@ -612,7 +648,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 			dataTypeSize -= bytesUsed;
 		}
 		if (dataTypeSize != 0 && stackOffset >= 0) {
-			results.add(new Varnode(program.getAddressFactory().getStackSpace().getAddress(stackOffset), dataTypeSize));
+			results.add(new Varnode(
+				program.getAddressFactory().getStackSpace().getAddress(stackOffset), dataTypeSize));
 		}
 		return results;
 	}
@@ -621,7 +658,8 @@ public class FunctionsSarifMgr extends SarifMgr {
 	// SARIF WRITE CURRENT DTD //
 	/////////////////////////////
 
-	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor) throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		monitor.setMessage("Writing FUNCTIONS ...");
 
 		List<Function> request = new ArrayList<>();
@@ -633,8 +671,10 @@ public class FunctionsSarifMgr extends SarifMgr {
 		writeAsSARIF(program, request, results);
 	}
 
-	public static void writeAsSARIF(Program program, List<Function> request, JsonArray results) throws IOException {
-		SarifFunctionWriter writer = new SarifFunctionWriter(program.getFunctionManager(), request, null);
+	public static void writeAsSARIF(Program program, List<Function> request, JsonArray results)
+			throws IOException {
+		SarifFunctionWriter writer =
+			new SarifFunctionWriter(program.getFunctionManager(), request, null);
 		new TaskLauncher(new SarifWriterTask("Functions", writer, results), null);
 	}
 

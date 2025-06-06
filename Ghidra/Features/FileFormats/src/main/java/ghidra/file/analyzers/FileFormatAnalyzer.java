@@ -74,8 +74,8 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 	}
 
 	@Override
-	public boolean removed(Program program, AddressSetView set, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	public boolean removed(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+			throws CancelledException {
 		return false;
 	}
 
@@ -151,7 +151,7 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 	}
 
 	protected ProgramFragment createFragment(Program program, String fragmentName, Address start,
-			Address end) throws DuplicateNameException, NotFoundException  {
+			Address end) throws DuplicateNameException, NotFoundException {
 		ProgramModule module = program.getListing().getDefaultRootModule();
 		ProgramFragment fragment = getFragment(module, fragmentName);
 		if (fragment == null) {
@@ -187,7 +187,8 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 
-	protected Data createData(Program program, Address address, DataType datatype) throws CodeUnitInsertionException {
+	protected Data createData(Program program, Address address, DataType datatype)
+			throws CodeUnitInsertionException {
 		if (datatype instanceof StringDataType) {
 			CreateStringCmd cmd = new CreateStringCmd(address);
 			if (!cmd.applyTo(program)) {

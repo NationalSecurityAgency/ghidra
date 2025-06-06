@@ -92,7 +92,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".rsrc", Long.toHexString(0x100A000), 0x5400);
 		builder.createMemory(".bound_import_table", Long.toHexString(0xF0000248), 0xA8);
 		builder.createMemory(".debug_data", Long.toHexString(0xF0001300), 0x1C);
-		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CodeUnit.PRE_COMMENT);
+		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CommentType.PRE);
 		//create and disassemble a function
 		builder.setBytes("0x0100415a",
 			"55 8b ec 83 ec 0c 33 c0 c7 45 f8 01 00 00 00 21 45 fc 39 45 08 c7 45 f4 04" +
@@ -218,7 +218,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PLATE, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
 		triggerEnter(tf);
@@ -226,7 +226,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.PRE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PRE, ((CommentFieldLocation) loc).getCommentType());
 
 		triggerEnter(tf);
 		waitForSearchTasks(dialog);
@@ -246,14 +246,14 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.EOL_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.EOL, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
 		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.POST_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.POST, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
 	}
@@ -287,7 +287,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PLATE, ((CommentFieldLocation) loc).getCommentType());
 
 		triggerEnter(searchButton);
 
@@ -306,7 +306,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.PRE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PRE, ((CommentFieldLocation) loc).getCommentType());
 	}
 
 	@Test
@@ -562,13 +562,11 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
 
 		String signature = ((FunctionSignatureFieldLocation) loc).getSignature();
-		Function function = listing.getFunctionAt(loc.getAddress());
 		ListingHighlightProvider highlightProvider =
 			cbPlugin.getFormatManager().getFormatHighlightProvider();
 
 		FieldPanel fieldPanel = cbPlugin.getFieldPanel();
 		ListingField field = (ListingField) fieldPanel.getCurrentField();
-		FieldFactory factory = field.getFieldFactory();
 		Highlight[] h = highlightProvider.createHighlights(signature, field, -1);
 
 		int numberOfHighlights = h.length;
@@ -596,7 +594,6 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(loc instanceof OperandFieldLocation);
 
 		field = (ListingField) fieldPanel.getCurrentField();
-		factory = field.getFieldFactory();
 		h = highlightProvider.createHighlights(signature, field, -1);
 
 		assertTrue("Did not update highlights for new search.", (numberOfHighlights != h.length));

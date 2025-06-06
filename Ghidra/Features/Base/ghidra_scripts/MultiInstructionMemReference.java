@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,7 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.PartitionCodeSubModel;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
@@ -180,7 +179,8 @@ public class MultiInstructionMemReference extends GhidraScript {
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
 					Address address, int size, DataType dataType, RefType refType) {
 
-				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
+				return super.evaluateReference(context, instr, pcodeop, address, size, dataType,
+					refType);
 			}
 
 			private boolean checkInstructionMatch(final int opIdx, boolean input,
@@ -287,7 +287,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 				}
 				Address lastSetLocation = context.getLastSetLocation(singleRegister, null);
 
-				String comment = instr.getComment(Instruction.EOL_COMMENT);
+				String comment = instr.getComment(CommentType.EOL);
 				if (comment == null) {
 					comment = "";
 				}
@@ -300,7 +300,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 					return false;
 				}
 				comment = (comment.trim().length() == 0 ? markup : comment + "\n" + markup);
-				instr.setComment(Instruction.EOL_COMMENT, comment);
+				instr.setComment(CommentType.EOL, comment);
 				return false;
 			}
 

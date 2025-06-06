@@ -76,7 +76,7 @@ public class LSDAActionTable {
 		monitor.setMessage("Creating LSDA Action Table");
 
 		LSDAActionRecord rec = null;
-		
+
 		while (address.compareTo(maxAddress) <= 0) {
 			rec = new LSDAActionRecord(monitor, program, region, this);
 			rec.create(address);

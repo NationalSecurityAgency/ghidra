@@ -94,8 +94,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		maps.add(postCommentMap);
 		maps.add(eolCommentMap);
 
-		int[] types = new int[] { CodeUnit.PLATE_COMMENT, CodeUnit.PRE_COMMENT,
-			CodeUnit.POST_COMMENT, CodeUnit.EOL_COMMENT };
+		CommentType[] types = new CommentType[] { CommentType.PLATE, CommentType.PRE,
+			CommentType.POST, CommentType.EOL };
 		String[] typeNames = new String[] { "PLATE", "PRE", "POST", "EOL" };
 		int index = 0;
 		for (HashMap<Address, StringBuffer> map : maps) {
@@ -273,7 +273,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			//log.appendMsg("Unable to demangle: "+name);
 		}
 		if (builder.length() > 0) {
-			setComment(CodeUnit.PLATE_COMMENT, address, builder.toString());
+			setComment(CommentType.PLATE, address, builder.toString());
 		}
 	}
 
@@ -295,11 +295,11 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 
 			Address startAddr = addr.add(Conv.intToLong(starts[k]));
 			String cmt = "START-> " + file.getName() + ": " + "?";
-			setComment(CodeUnit.PRE_COMMENT, startAddr, cmt);
+			setComment(CommentType.PRE, startAddr, cmt);
 
 			Address endAddr = addr.add(Conv.intToLong(ends[k]));
 			cmt = "END-> " + file.getName() + ": " + "?";
-			setComment(CodeUnit.PRE_COMMENT, endAddr, cmt);
+			setComment(CommentType.PRE, endAddr, cmt);
 
 			if (monitor.isCancelled()) {
 				return;
@@ -380,8 +380,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol, NTHeader ntHeader,
-			Map<SectionHeader, Address> sectionToAddress, Program program,
-			TaskMonitor monitor) {
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (symbol.getSectionNumber() == 0) {
 			return true;
@@ -453,7 +452,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			if (aux == null) {
 				continue;
 			}
-			setComment(CodeUnit.PRE_COMMENT, address, aux.toString());
+			setComment(CommentType.PRE, address, aux.toString());
 		}
 
 		return true;
@@ -499,54 +498,57 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 
 	private void addLineComment(Address addr, int line) {
 		String cmt = addr + " -> " + "Line #" + line;
-		setComment(CodeUnit.PRE_COMMENT, addr, cmt);
+		setComment(CommentType.PRE, addr, cmt);
 	}
 
-	protected boolean hasComment(int type, Address address) {
+	protected boolean hasComment(CommentType type, Address address) {
 		switch (type) {
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				return plateCommentMap.get(address) != null;
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				return preCommentMap.get(address) != null;
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				return postCommentMap.get(address) != null;
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				return eolCommentMap.get(address) != null;
+			default:
+				throw new IllegalArgumentException("Unsupported comment type: " + type.name());
 		}
-		return false;
 	}
 
-	protected void setComment(int type, Address address, String comment) {
+	protected void setComment(CommentType type, Address address, String comment) {
 		StringBuffer buffer = null;
 		switch (type) {
-			case CodeUnit.PLATE_COMMENT:
+			case CommentType.PLATE:
 				buffer = plateCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					plateCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case CommentType.PRE:
 				buffer = preCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					preCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.POST_COMMENT:
+			case CommentType.POST:
 				buffer = postCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					postCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.EOL_COMMENT:
+			case CommentType.EOL:
 				buffer = eolCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					eolCommentMap.put(address, buffer);
 				}
 				break;
+			default:
+				throw new IllegalArgumentException("Unsupported comment type: " + type.name());
 		}
 		if (buffer != null) {
 			if (buffer.length() > 0) {

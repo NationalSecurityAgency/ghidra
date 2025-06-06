@@ -221,8 +221,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
-				.getDomainObject(this,
-					true, false, TaskMonitor.DUMMY);
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int transactionID = program.startTransaction("test");
 		try {
 			SymbolTable symTable = program.getSymbolTable();
@@ -254,7 +253,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		assertTrue(!df.isCheckedOut());
 
 	}
-	
+
 	@Test
 	public void testCheckInWhileOpen() throws Exception {
 		GTreeNode node = getNode(PROGRAM_A);
@@ -267,15 +266,15 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
-				.getDomainObject(this,
-					true, false, TaskMonitor.DUMMY);
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int transactionID = program.startTransaction("test");
 		try {
 			// Ensure that buffer memory cache has been completely consumed
 			// Max BufferMgr cache size is 256*16KByte=4MByte
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-			program.getMemory().createInitializedBlock("BigBlock", space.getAddress(0x80000000L), 
-				4*1024*1024, (byte)0xff, TaskMonitor.DUMMY, false);
+			program.getMemory()
+					.createInitializedBlock("BigBlock", space.getAddress(0x80000000L),
+						4 * 1024 * 1024, (byte) 0xff, TaskMonitor.DUMMY, false);
 		}
 		finally {
 			program.endTransaction(transactionID, true);

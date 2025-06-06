@@ -18,7 +18,6 @@ package ghidra.trace.database.listing;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -210,8 +209,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 
 		try (Transaction tx = b.startTransaction()) {
 			b.trace.getMemoryManager()
-					.addRegion(".text", Lifespan.nowOn(0),
-						b.range(0x4000, 0x4fff), TraceMemoryFlag.READ);
+					.addRegion(".text", Lifespan.nowOn(0), b.range(0x4000, 0x4fff),
+						TraceMemoryFlag.READ);
 		}
 
 		assertEquals("00004004", ins.getAddressString(false, false));
@@ -364,13 +363,10 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 	}
 
 	@Test
-	public void testDetectNewCommentTypes()
-			throws IllegalArgumentException, IllegalAccessException {
-		for (Field f : CodeUnit.class.getFields()) {
-			if (f.getName().endsWith("_COMMENT")) {
-				if (f.getInt(null) > CodeUnit.REPEATABLE_COMMENT) {
-					fail("It appears a new comment type was added");
-				}
+	public void testDetectNewCommentTypes() {
+		for (CommentType type : CommentType.values()) {
+			if (type.ordinal() > CommentType.REPEATABLE.ordinal()) {
+				fail("It appears a new comment type was added");
 			}
 		}
 	}
@@ -385,7 +381,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		}
 
 		try (Transaction tx = b.startTransaction()) {
-			i4004.setComment(CodeUnit.NO_COMMENT, "Shouldn't work");
+			i4004.setComment(null, "Shouldn't work");
 			fail();
 		}
 		catch (IllegalArgumentException e) {
@@ -408,7 +404,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 
 		assertArrayEquals(EMPTY_STRING_ARRAY, i4004.getCommentAsArray(CommentType.PRE));
 		try (Transaction tx = b.startTransaction()) {
-			i4004.setCommentAsArray(CodeUnit.PRE_COMMENT, new String[] { "My", "Pre", "Comment" });
+			i4004.setCommentAsArray(CommentType.PRE, new String[] { "My", "Pre", "Comment" });
 		}
 		assertEquals("My EOL Comment", i4004.getComment(CommentType.EOL));
 		assertArrayEquals(new String[] { "My", "Pre", "Comment" },
@@ -417,8 +413,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals("My\nPre\nComment", i4004.getComment(CommentType.PRE));
 
 		try (Transaction tx = b.startTransaction()) {
-			i4004.setCommentAsArray(CodeUnit.PRE_COMMENT, null);
-			i4006.setCommentAsArray(CodeUnit.PRE_COMMENT, null); // NOP
+			i4004.setCommentAsArray(CommentType.PRE, null);
+			i4006.setCommentAsArray(CommentType.PRE, null); // NOP
 		}
 		assertNull(i4004.getComment(CommentType.PRE));
 
@@ -444,14 +440,13 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 
 		try (Transaction tx = b.startTransaction()) {
 			commentAdapter.clearComments(Lifespan.nowOn(0), b.range(0x4000, 0x5000),
-				CodeUnit.EOL_COMMENT);
+				CommentType.EOL);
 		}
 		assertNull(i4004.getComment(CommentType.EOL));
 		assertEquals("Get this back in the mix", i4004_10.getComment(CommentType.PRE));
 
 		try (Transaction tx = b.startTransaction()) {
-			commentAdapter.clearComments(Lifespan.nowOn(0), b.range(0x4000, 0x5000),
-				CodeUnit.NO_COMMENT);
+			commentAdapter.clearComments(Lifespan.nowOn(0), b.range(0x4000, 0x5000), null);
 		}
 		assertNull(i4004.getComment(CommentType.EOL));
 		assertNull(i4004_10.getComment(CommentType.PRE));
@@ -579,9 +574,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		DBTraceReference refTo;
 		try (Transaction tx = b.startTransaction()) {
 			refTo = b.trace.getReferenceManager()
-					.addMemoryReference(Lifespan.ALL, b.addr(0x3000),
-						b.addr(0x4004), RefType.COMPUTED_JUMP, SourceType.USER_DEFINED,
-						CodeUnit.MNEMONIC);
+					.addMemoryReference(Lifespan.ALL, b.addr(0x3000), b.addr(0x4004),
+						RefType.COMPUTED_JUMP, SourceType.USER_DEFINED, CodeUnit.MNEMONIC);
 		}
 		assertEquals(Set.of(refTo), set((Iterator<Reference>) i4004.getReferenceIteratorTo()));
 
@@ -636,8 +630,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			thread = b.getOrAddThread("Thread 1", 0);
 			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			data = regCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r4"),
-						LongDataType.dataType);
+					.create(Lifespan.nowOn(0), b.language.getRegister("r4"), LongDataType.dataType);
 			// getForRegister requires unit to match size
 			undReg = regCode.undefinedData().getAt(0, b.language.getRegister("r5").getAddress());
 		}
@@ -832,8 +825,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		try (Transaction tx = b.startTransaction()) {
 			// StringDataType accesses memory via program view, so "block" must exist
 			b.trace.getMemoryManager()
-					.addRegion("myRegion", Lifespan.nowOn(0),
-						b.range(0x4000, 0x4fff), TraceMemoryFlag.READ);
+					.addRegion("myRegion", Lifespan.nowOn(0), b.range(0x4000, 0x4fff),
+						TraceMemoryFlag.READ);
 
 			dl4000 = b.addData(0, b.addr(0x4000), LongDataType.dataType, b.buf(1, 2, 3, 4));
 			dp4006 = b.addData(0, b.addr(0x4006), PointerDataType.dataType,
@@ -970,8 +963,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		try (Transaction tx = b.startTransaction()) {
 			// Disassembler's new cacheing in mem-buffer uses program view, so "block" must exist
 			b.trace.getMemoryManager()
-					.addRegion("myRegion", Lifespan.nowOn(0),
-						b.range(0x4000, 0x4fff), TraceMemoryFlag.READ);
+					.addRegion("myRegion", Lifespan.nowOn(0), b.range(0x4000, 0x4fff),
+						TraceMemoryFlag.READ);
 
 			i4004 = b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xc8, 0x47));
 			assertEquals("add r4,#0x7", i4004.toString());
@@ -1074,8 +1067,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			i4004.addOperandReference(1, b.addr(0x5000), RefType.DATA_IND, SourceType.USER_DEFINED);
 			// TODO: This should probably be default for first/only reference
 			b.trace.getReferenceManager()
-					.getReference(0, b.addr(0x4004), b.addr(0x5000),
-						1)
+					.getReference(0, b.addr(0x4004), b.addr(0x5000), 1)
 					.setPrimary(true);
 		}
 		assertEquals(OperandType.ADDRESS | OperandType.SCALAR, i4004.getOperandType(1));
@@ -1247,8 +1239,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		try (Transaction tx = b.startTransaction()) {
 			// Disassembler's new cacheing in mem-buffer uses program view, so "block" must exist
 			b.trace.getMemoryManager()
-					.addRegion("myRegion", Lifespan.nowOn(0),
-						b.range(0x4000, 0x4fff), TraceMemoryFlag.READ);
+					.addRegion("myRegion", Lifespan.nowOn(0), b.range(0x4000, 0x4fff),
+						TraceMemoryFlag.READ);
 
 			guest = b.trace.getPlatformManager().addGuestPlatform(x86.getDefaultCompilerSpec());
 			guest.addMappedRange(b.addr(0x0000), b.addr(guest, 0x0000), 1L << 32);
@@ -1378,8 +1370,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			thread = b.getOrAddThread("Thread 1", 0);
 			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			dR4 = regCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r4"),
-						myStruct);
+					.create(Lifespan.nowOn(0), b.language.getRegister("r4"), myStruct);
 		}
 		myStruct = (Structure) b.trace.getDataTypeManager().getDataType("/myStruct");
 		myTypedef = (TypeDef) b.trace.getDataTypeManager().getDataType("/myTypedef");
@@ -1603,8 +1594,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		try (Transaction tx = b.startTransaction()) {
 			// StringDataType accesses memory via program view, so "block" must exist
 			b.trace.getMemoryManager()
-					.addRegion("myRegion", Lifespan.nowOn(0),
-						b.range(0x4000, 0x4fff), TraceMemoryFlag.READ);
+					.addRegion("myRegion", Lifespan.nowOn(0), b.range(0x4000, 0x4fff),
+						TraceMemoryFlag.READ);
 
 			d4000 = b.addData(0, b.addr(0x4000), LongDataType.dataType, b.buf(1, 2, 3, 4));
 			d4004 = b.addData(0, b.addr(0x4004), myStruct, b.buf(5, 6, 7, 8, 9));

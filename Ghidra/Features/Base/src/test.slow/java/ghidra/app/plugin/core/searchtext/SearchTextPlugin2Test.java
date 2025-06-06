@@ -83,7 +83,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".rsrc", Long.toHexString(0x100A000), 0x5400);
 		builder.createMemory(".bound_import_table", Long.toHexString(0xF0000248), 0xA8);
 		builder.createMemory(".debug_data", Long.toHexString(0xF0001300), 0x1C);
-		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CodeUnit.PRE_COMMENT);
+		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CommentType.PRE);
 		//create and disassemble a function
 
 		builder.setBytes("0x0100415a",

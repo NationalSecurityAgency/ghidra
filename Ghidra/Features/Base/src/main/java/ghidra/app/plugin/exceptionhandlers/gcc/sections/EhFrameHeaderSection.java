@@ -160,8 +160,8 @@ public class EhFrameHeaderSection {
 		DwarfDecodeContext ctx = new DwarfDecodeContext(program, curAddress, curMemBlock);
 		Address frmPtrAddr = frmPtrDecoder.decodeAddress(ctx);
 
-		program.getReferenceManager().addMemoryReference(curAddress, frmPtrAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(curAddress, frmPtrAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		DataType frmPtrDataType = frmPtrDecoder.getDataType(program);
 
@@ -185,8 +185,8 @@ public class EhFrameHeaderSection {
 	}
 
 	private void createFdeTable(Address curAddress, ExceptionHandlerFrameHeader eh_frame_hdr,
-			int fdeTableCnt, TaskMonitor monitor) throws MemoryAccessException,
-			ExceptionHandlerFrameException {
+			int fdeTableCnt, TaskMonitor monitor)
+			throws MemoryAccessException, ExceptionHandlerFrameException {
 
 		/* Build the Frame Descriptor Entry Table */
 		int fdeTblEnc = eh_frame_hdr.getEh_FrameTableEncoding();

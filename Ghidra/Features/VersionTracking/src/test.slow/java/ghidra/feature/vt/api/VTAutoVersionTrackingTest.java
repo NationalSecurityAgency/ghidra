@@ -224,7 +224,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT which would normally accept the match we blocked
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
 
@@ -276,10 +276,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Now test that the correct matches were created based on the duplicate functions we created
@@ -326,10 +326,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Now test that the correct matches were created based on the duplicate functions we created
@@ -366,10 +366,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -439,10 +439,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -597,10 +597,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -655,10 +655,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run Auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Check that the match we are interested in got accepted
@@ -715,10 +715,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// run Auto VT
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		// Check that the match we are interested in got accepted
@@ -783,7 +783,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		// Now run the AutoVT command with lower confidence thresholds to allow the match we want to
 		// test in as a match
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.5);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 1.0);
 
@@ -850,14 +850,13 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
 		vtOptions.setBoolean(VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION, true);
 		vtOptions.setBoolean(VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION, true);
 		vtOptions.setInt(VTOptionDefines.MIN_VOTES_OPTION, 3);
 		vtOptions.setInt(VTOptionDefines.MAX_CONFLICTS_OPTION, 0);
-		
 
 		runAutoVTCommand(vtOptions);
 
@@ -877,7 +876,6 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 			VTAssociation association = match.getAssociation();
 			int numConflicts = association.getRelatedAssociations().size() - 1;
-
 
 			// if not min vote count or has conflicts - make sure not accepted match
 			if (association.getVoteCount() < 3 || numConflicts > 0) {
@@ -904,11 +902,11 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
 		ToolOptions vtOptions = getVTToolOptions(tool);
-		
+
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
 		vtOptions.setBoolean(VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION, false);
-		
+
 		runAutoVTCommand(vtOptions);
 
 		assertTrue(session.getImpliedMatchSet().getMatchCount() == 0);
@@ -1149,8 +1147,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void runAutoVTCommand(ToolOptions options) {
 
-		AutoVersionTrackingTask task =
-			new AutoVersionTrackingTask(session, options);
+		AutoVersionTrackingTask task = new AutoVersionTrackingTask(session, options);
 		TaskLauncher.launch(task);
 		waitForSession();
 	}
@@ -1162,9 +1159,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 	private VTMatchSet getVTMatchSet(VTSession vtSession, String correlatorName) {
 		List<VTMatchSet> matchSets = vtSession.getMatchSets();
-		Iterator<VTMatchSet> iterator = matchSets.iterator();
-		while (iterator.hasNext()) {
-			VTMatchSet matches = iterator.next();
+		for (VTMatchSet matches : matchSets) {
 			if (matches.getProgramCorrelatorInfo().getName().equals(correlatorName)) {
 				return matches;
 			}
@@ -1178,9 +1173,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		VTMatchSet matches = getVTMatchSet(vtSession, correlatorName);
 
 		Msg.info(this, score + " " + confidence);
-		Iterator<VTMatch> it = matches.getMatches().iterator();
-		while (it.hasNext()) {
-			VTMatch match = it.next();
+		for (VTMatch match : matches.getMatches()) {
 			VTAssociationStatus status = match.getAssociation().getStatus();
 			if (status.equals(VTAssociationStatus.ACCEPTED)) {
 				Msg.info(this,
@@ -1201,9 +1194,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		VTMatchSet matches = getVTMatchSet(vtSession, correlatorName);
 
 		int count = 0;
-		Iterator<VTMatch> it = matches.getMatches().iterator();
-		while (it.hasNext()) {
-			VTMatch match = it.next();
+		for (VTMatch match : matches.getMatches()) {
 			VTAssociationStatus status = match.getAssociation().getStatus();
 			if (status.equals(VTAssociationStatus.ACCEPTED)) {
 				count++;
@@ -1217,9 +1208,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		VTMatchSet matches = getVTMatchSet(vtSession, correlatorName);
 
-		Iterator<VTMatch> it = matches.getMatches().iterator();
-		while (it.hasNext()) {
-			VTMatch match = it.next();
+		for (VTMatch match : matches.getMatches()) {
 			if (match.getSourceAddress().equals(sourceAddress) &&
 				match.getDestinationAddress().equals(destinationAddress)) {
 				return match.getAssociation().getStatus();
@@ -1231,9 +1220,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 	private VTMatch getMatch(VTMatchSet matches, Address sourceAddress,
 			Address destinationAddress) {
 
-		Iterator<VTMatch> it = matches.getMatches().iterator();
-		while (it.hasNext()) {
-			VTMatch match = it.next();
+		for (VTMatch match : matches.getMatches()) {
 			if (match.getSourceAddress().equals(sourceAddress) &&
 				match.getDestinationAddress().equals(destinationAddress)) {
 				return match;

@@ -355,9 +355,8 @@ class ProgramTextWriter {
 			return;
 		}
 
-		int len = options.getAddrWidth() + options.getBytesWidth() +
-			options.getPreMnemonicWidth() + options.getMnemonicWidth() +
-			options.getOperandWidth();
+		int len = options.getAddrWidth() + options.getBytesWidth() + options.getPreMnemonicWidth() +
+			options.getMnemonicWidth() + options.getOperandWidth();
 
 		String fill = genFill(len);
 		for (int i = 0; i < comments.size(); ++i) {

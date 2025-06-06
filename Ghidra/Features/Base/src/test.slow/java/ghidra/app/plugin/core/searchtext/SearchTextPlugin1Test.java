@@ -114,7 +114,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".debug_data", Long.toHexString(0xF0001300), 0x1C);
 		builder.createOverlayMemory("otherOverlay", "OTHER:0", 100);
 
-		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CodeUnit.PRE_COMMENT);
+		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CommentType.PRE);
 		//create and disassemble a function
 		builder.setBytes("0x0100415a",
 			"55 8b ec 83 ec 0c 33 c0 c7 45 f8 01 00 00 00 21 45 fc 39 45 08 c7 45 f4 04" +
@@ -167,7 +167,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 			param, param);
 
 		builder.createComment("otherOverlay:4", "This is a comment in the other overlay",
-			CodeUnit.EOL_COMMENT);
+			CommentType.EOL);
 		return builder.getProgram();
 	}
 
@@ -403,7 +403,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertEquals(getAddr(0x0100416f), loc.getAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.EOL_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.EOL, ((CommentFieldLocation) loc).getCommentType());
 
 		JButton searchButton = (JButton) findButton(dialog.getComponent(), "Next");
 		pressButton(searchButton);
@@ -412,7 +412,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		loc = cbPlugin.getCurrentLocation();
 		assertEquals(getAddr(0x01004178), loc.getAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.REPEATABLE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.REPEATABLE, ((CommentFieldLocation) loc).getCommentType());
 
 		pressButton(searchButton);
 		waitForSearchTasks(dialog);
@@ -422,7 +422,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals("Search result not placed at the matching character position", 15,
 			loc.getCharOffset());
-		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PLATE, ((CommentFieldLocation) loc).getCommentType());
 
 		pressButton(searchButton);
 		waitForSearchTasks(dialog);
@@ -430,7 +430,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		loc = cbPlugin.getCurrentLocation();
 		assertEquals(getAddr(0x01004192), loc.getAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.POST_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.POST, ((CommentFieldLocation) loc).getCommentType());
 
 		pressButton(searchButton);
 		waitForSearchTasks(dialog);
@@ -443,7 +443,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		loc = cbPlugin.getCurrentLocation();
 		assertEquals(getAddr(0x0100415a), loc.getAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
-		assertEquals(CodeUnit.PRE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.PRE, ((CommentFieldLocation) loc).getCommentType());
 	}
 
 	private void programLocationChange2(String buttonText) throws Exception {

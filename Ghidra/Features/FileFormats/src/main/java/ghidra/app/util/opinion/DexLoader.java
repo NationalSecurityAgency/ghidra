@@ -139,10 +139,8 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 	protected void createMethods(Program program, DexHeader header, ClassDefItem item,
 			List<EncodedMethod> methods, TaskMonitor monitor, MessageLog log) throws Exception {
-		for (int i = 0; i < methods.size(); ++i) {
+		for (EncodedMethod encodedMethod : methods) {
 			monitor.checkCancelled();
-
-			EncodedMethod encodedMethod = methods.get(i);
 
 			CodeItem codeItem = encodedMethod.getCodeItem();
 
@@ -165,8 +163,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 	}
 
 	protected void markupMethodLookup(Program program, DexHeader header, TaskMonitor monitor,
-			MessageLog log)
-			throws Exception {
+			MessageLog log) throws Exception {
 
 		monitor.setMessage("DEX: processing methods");
 		monitor.setMaximum(header.getMethodIdsSize());
@@ -198,9 +195,8 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 					DexUtil.createNameSpaceFromMangledClassName(program, className);
 				if (classNameSpace != null) {
 					Address externalAddress = DexUtil.toLookupAddress(program, methodIndex);
-					Symbol methodSymbol =
-						createMethodSymbol(program, externalAddress, methodName, classNameSpace,
-							log);
+					Symbol methodSymbol = createMethodSymbol(program, externalAddress, methodName,
+						classNameSpace, log);
 					if (methodSymbol != null) {
 						String externalName = methodSymbol.getName(true);
 						program.getReferenceManager()

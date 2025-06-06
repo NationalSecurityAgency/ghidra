@@ -439,13 +439,13 @@ public class CliTableMethodDef extends CliAbstractTable {
 				// Create the function, if already created, update the existing function
 				Function func = funcMgr.getFunctionAt(startAddr);
 				if (func == null) {
-					func = funcMgr
-							.createFunction(funcName, startAddr, funcAddrSet, SourceType.ANALYSIS);
+					func = funcMgr.createFunction(funcName, startAddr, funcAddrSet,
+						SourceType.ANALYSIS);
 				}
 				func.setReturnType(returnType, SourceType.ANALYSIS);
-				func.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-					true, SourceType.ANALYSIS, parameters);
-				
+				func.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
+					SourceType.ANALYSIS, parameters);
+
 				markToPreventIncorrectProcessorDisassembly(program, methodRow, startAddr, endAddr);
 			}
 			catch (CodeUnitInsertionException e) {
@@ -503,9 +503,9 @@ public class CliTableMethodDef extends CliAbstractTable {
 	 * @param endAddr end address of the function
 	 * @throws CodeUnitInsertionException couldn't create dagta.
 	 */
-	private void markToPreventIncorrectProcessorDisassembly(Program program, CliMethodDefRow methodRow,
-			Address startAddr, Address endAddr) throws CodeUnitInsertionException {
-		
+	private void markToPreventIncorrectProcessorDisassembly(Program program,
+			CliMethodDefRow methodRow, Address startAddr, Address endAddr)
+			throws CodeUnitInsertionException {
 
 		PrototypeModel cliCallingConvention = program.getLanguage()
 				.getDefaultCompilerSpec()
@@ -520,7 +520,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 				int codeLength = (int) endAddr.subtract(startAddr) + 1;
 				ArrayDataType codeDT = new ArrayDataType(BYTE, codeLength, 1);
 				data = listing.createData(startAddr, codeDT);
-				
+
 				// comment the type of code that should appear here
 				data.setComment(CommentType.PRE,
 					(methodRow.isManaged() ? ".NET CLR Managed Code" : "Native Code"));

@@ -566,7 +566,7 @@ public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testClearComments() throws Exception {
 
 		assertTrue(cb.goToField(addr("0x10022cc"), "Bytes", 0, 4));
-		SetCommentCmd cmd =new SetCommentCmd(addr("0x10022cc"), CommentType.EOL, "my comment");
+		SetCommentCmd cmd = new SetCommentCmd(addr("0x10022cc"), CommentType.EOL, "my comment");
 		applyCmd(program, cmd);
 
 		performAction(clearWithOptionsAction, cb.getProvider(), false);

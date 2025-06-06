@@ -18,168 +18,140 @@
 // function's plate comment. 
 //@category Analysis
 
-
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 
-public class RegisterTouchesPerFunction extends GhidraScript
-{
-	private final static String DIVIDER = "*************************************************************\r\n";
+public class RegisterTouchesPerFunction extends GhidraScript {
 
-    @Override
-    public void run() throws Exception
-    {
-        Listing l = this.currentProgram.getListing();
+	private final static String DIVIDER =
+		"*************************************************************\r\n";
 
-        if (this.askYesNo("Function Analysis - Register Touches",
-                "Analyze complete listing?"))
-        {
-            FunctionIterator fi = l.getFunctions(true);
-            while (fi.hasNext() && !monitor.isCancelled())
-            {
-                doAnalysis(l, fi.next());
-            }
-        }
-        else
-        {
-            doAnalysis(l, l.getFunctionContaining(this.currentAddress));
-        }
-    }
+	@Override
+	public void run() throws Exception {
+		Listing l = this.currentProgram.getListing();
 
-    private void doAnalysis(Listing list, Function func)
-    {
-    	if (func == null) {
-    		println("No function to analyze.");
-    		return;
-    	}
-        HashSet<String> affected, accessed;
-        Vector<String> restored;
-        Stack<String> pushPops;
-        boolean reviewRestored = false;
-        Instruction inst;
-        InstructionIterator iIter;
-        
-        monitor.setMessage("Analyzing registers in " + func.getName());
+		if (this.askYesNo("Function Analysis - Register Touches", "Analyze complete listing?")) {
+			FunctionIterator fi = l.getFunctions(true);
+			while (fi.hasNext() && !monitor.isCancelled()) {
+				doAnalysis(l, fi.next());
+			}
+		}
+		else {
+			doAnalysis(l, l.getFunctionContaining(this.currentAddress));
+		}
+	}
 
-        String comment = list.getComment(CommentType.PLATE, func.getBody().getMinAddress());
+	private void doAnalysis(Listing list, Function func) {
+		if (func == null) {
+			println("No function to analyze.");
+			return;
+		}
+		HashSet<String> affected, accessed;
+		Vector<String> restored;
+		Stack<String> pushPops;
+		boolean reviewRestored = false;
+		Instruction inst;
+		InstructionIterator iIter;
 
-        if (comment != null && comment.indexOf("TOUCHED REGISTER SUMMARY") > -1)
-            return;
+		monitor.setMessage("Analyzing registers in " + func.getName());
 
-        pushPops = new Stack<String>();
-        affected = new HashSet<String>();
-        accessed = new HashSet<String>();
-        restored = new Vector<String>();
+		String comment = list.getComment(CommentType.PLATE, func.getBody().getMinAddress());
+		if (comment != null && comment.indexOf("TOUCHED REGISTER SUMMARY") > -1)
+			return;
 
-        iIter = list.getInstructions(func.getBody(), true);
-        
-        while (iIter.hasNext() && !monitor.isCancelled())
-        {
-            inst = iIter.next();
+		pushPops = new Stack<String>();
+		affected = new HashSet<String>();
+		accessed = new HashSet<String>();
+		restored = new Vector<String>();
 
-            Object o[] = inst.getResultObjects();
-            for (int i = 0; i < o.length; i++)
-            {
-                if (o[i] instanceof Register)
-                {
-                    String name = ((Register) o[i]).getName();
+		iIter = list.getInstructions(func.getBody(), true);
 
-                    if (inst.getMnemonicString().equalsIgnoreCase("pop"))
-                    {
-                        if (!name.equalsIgnoreCase("mult_addr")
-                                && !name.equalsIgnoreCase("sp"))
-                        {
-                            if (pushPops.size() > 0)
-                            {
-                                restored.add(pushPops.pop() + "->" + name);
-                            }
-                            else
-                            {
-                                reviewRestored = true;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        affected.add(name);
-                    }
-                }
-            }
-            o = inst.getInputObjects();
+		while (iIter.hasNext() && !monitor.isCancelled()) {
+			inst = iIter.next();
 
-            for (int i = 0; i < o.length; i++)
-            {
-                if (o[i] instanceof Register)
-                {
-                    String name = ((Register) o[i]).getName();
-                    if (inst.getMnemonicString().equalsIgnoreCase("push"))
-                    {
-                        if (!name.equalsIgnoreCase("mult_addr")
-                                && !name.equalsIgnoreCase("sp"))
-                        {
-                            pushPops.push(name);
-                        }
-                    }
-                    else
-                    {
-                        accessed.add(name);
-                    }
-                }
-            }
-        }
+			Object o[] = inst.getResultObjects();
+			for (Object element : o) {
+				if (element instanceof Register) {
+					String name = ((Register) element).getName();
 
-        StringBuffer buffer = new StringBuffer();
-        if (comment != null) {
-        	buffer.append(comment);
-        	buffer.append("\r\n");
-        	buffer.append(DIVIDER);
-        }
-        buffer.append("TOUCHED REGISTER SUMMARY:\r\n");
-        buffer.append(DIVIDER);
-        buffer.append("Register(s) Affected:\r\n");
-        buffer.append(getString(affected, 8));
-        buffer.append(DIVIDER);
-        buffer.append("Register(s) Accessed:\r\n");
-        buffer.append(getString(accessed, 8));
-        buffer.append(DIVIDER);
-        buffer.append("Register(s) Restored:\r\n");
-        buffer.append(getString(restored, 4));
+					if (inst.getMnemonicString().equalsIgnoreCase("pop")) {
+						if (!name.equalsIgnoreCase("mult_addr") && !name.equalsIgnoreCase("sp")) {
+							if (pushPops.size() > 0) {
+								restored.add(pushPops.pop() + "->" + name);
+							}
+							else {
+								reviewRestored = true;
+							}
+						}
+					}
+					else {
+						affected.add(name);
+					}
+				}
+			}
+			o = inst.getInputObjects();
 
-        if(reviewRestored)
-        {
-        	buffer.append("##Review - due to branches this list may not be accurate\r\n");
-            println(func.getName() + " - Review - due to branches this list may not be accurate");
-        }
-        buffer.append(DIVIDER);
+			for (Object element : o) {
+				if (element instanceof Register) {
+					String name = ((Register) element).getName();
+					if (inst.getMnemonicString().equalsIgnoreCase("push")) {
+						if (!name.equalsIgnoreCase("mult_addr") && !name.equalsIgnoreCase("sp")) {
+							pushPops.push(name);
+						}
+					}
+					else {
+						accessed.add(name);
+					}
+				}
+			}
+		}
 
-        if (pushPops.size() > 0)
-        {
+		StringBuffer buffer = new StringBuffer();
+		if (comment != null) {
+			buffer.append(comment);
+			buffer.append("\r\n");
+			buffer.append(DIVIDER);
+		}
+		buffer.append("TOUCHED REGISTER SUMMARY:\r\n");
+		buffer.append(DIVIDER);
+		buffer.append("Register(s) Affected:\r\n");
+		buffer.append(getString(affected, 8));
+		buffer.append(DIVIDER);
+		buffer.append("Register(s) Accessed:\r\n");
+		buffer.append(getString(accessed, 8));
+		buffer.append(DIVIDER);
+		buffer.append("Register(s) Restored:\r\n");
+		buffer.append(getString(restored, 4));
 
-        	buffer.append("Registers Remaining on Stack:\r\n");
-        	buffer.append("   "+getString(pushPops, 8));
-        }
+		if (reviewRestored) {
+			buffer.append("##Review - due to branches this list may not be accurate\r\n");
+			println(func.getName() + " - Review - due to branches this list may not be accurate");
+		}
+		buffer.append(DIVIDER);
+
+		if (pushPops.size() > 0) {
+			buffer.append("Registers Remaining on Stack:\r\n");
+			buffer.append("   " + getString(pushPops, 8));
+		}
 
 		list.setComment(func.getEntryPoint(), CommentType.PLATE, buffer.toString());
-    }
+	}
 
-    private String getString(Collection<String> c, int itemsPerLine)
-    {
-        TreeSet<Object> ts = new TreeSet<Object>(c);
-        String temp = ts.toString();
-        temp = temp.substring(1, temp.length() - 1);
-        int i = 0;
-        int commaCount = 0;
-        while ((i = temp.indexOf(',', i + 1)) >= 0)
-        {
-            commaCount++;
-            if (commaCount % itemsPerLine == 0)
-                temp = temp.substring(0, i + 1) + "\r\n"
-                        + temp.substring(i + 1).trim();
-        }
+	private String getString(Collection<String> c, int itemsPerLine) {
+		TreeSet<Object> ts = new TreeSet<Object>(c);
+		String temp = ts.toString();
+		temp = temp.substring(1, temp.length() - 1);
+		int i = 0;
+		int commaCount = 0;
+		while ((i = temp.indexOf(',', i + 1)) >= 0) {
+			commaCount++;
+			if (commaCount % itemsPerLine == 0)
+				temp = temp.substring(0, i + 1) + "\r\n" + temp.substring(i + 1).trim();
+		}
 
-        return temp + "\r\n";
-    }
+		return temp + "\r\n";
+	}
 }

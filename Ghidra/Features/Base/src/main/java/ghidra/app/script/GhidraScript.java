@@ -3928,8 +3928,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getRepeatableComment(Address)
 	 */
 	public String getRepeatableCommentAsRendered(Address address) {
-		String comment =
-			currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
+		String comment = currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);

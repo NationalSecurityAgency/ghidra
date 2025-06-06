@@ -1546,30 +1546,30 @@ public class ProgramMerge {
 		}
 
 		String typeStr = "Unknown";
-		int cuCommentType;
+		CommentType cuCommentType;
 		switch (type) {
 			case ProgramMergeFilter.PLATE_COMMENTS:
 				typeStr = "Plate";
-				cuCommentType = CodeUnit.PLATE_COMMENT;
+				cuCommentType = CommentType.PLATE;
 				break;
 			case ProgramMergeFilter.PRE_COMMENTS:
 				typeStr = "Pre";
-				cuCommentType = CodeUnit.PRE_COMMENT;
+				cuCommentType = CommentType.PRE;
 				break;
 			case ProgramMergeFilter.EOL_COMMENTS:
 				typeStr = "EOL";
-				cuCommentType = CodeUnit.EOL_COMMENT;
+				cuCommentType = CommentType.EOL;
 				break;
 			case ProgramMergeFilter.REPEATABLE_COMMENTS:
 				typeStr = "Repeatable";
-				cuCommentType = CodeUnit.REPEATABLE_COMMENT;
+				cuCommentType = CommentType.REPEATABLE;
 				break;
 			case ProgramMergeFilter.POST_COMMENTS:
 				typeStr = "Post";
-				cuCommentType = CodeUnit.POST_COMMENT;
+				cuCommentType = CommentType.POST;
 				break;
 			default:
-				throw new AssertException("Unrecognized comment type: " + type);
+				throw new AssertException("Unsupported comment type: " + type);
 		}
 
 		monitor.setMessage("Applying " + typeStr + " comments...");
@@ -1604,11 +1604,11 @@ public class ProgramMerge {
 	 * <CODE>mergeComments</CODE> merges the comment of the indicated
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to merge (from CodeUnit class).
-	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
+	 * <br>EOL, PRE, POST, REPEATABLE, OR PLATE.
 	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
-	public void mergeComments(int commentType, Address originAddress) {
+	public void mergeComments(CommentType commentType, Address originAddress) {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		String resultComment = resultListing.getComment(commentType, resultAddress);
 		String origComment = originListing.getComment(commentType, originAddress);
@@ -1620,11 +1620,11 @@ public class ProgramMerge {
 	 * <CODE>replaceComment</CODE> replaces the comment of the indicated
 	 * type in program1 with the comment in program2 at the specified address.
 	 * @param commentType comment type to replace (from CodeUnit class).
-	 * <br>EOL_COMMENT, PRE_COMMENT, POST_COMMENT, REPEATABLE_COMMENT, OR PLATE_COMMENT.
+	 * <br>EOL, PRE, POST, REPEATABLE, OR PLATE.
 	 * @param originAddress the address
 	 * This address should be derived from the origin program.
 	 */
-	public void replaceComment(int commentType, Address originAddress) {
+	public void replaceComment(CommentType commentType, Address originAddress) {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		String origComment = originListing.getComment(commentType, originAddress);
 		resultListing.setComment(resultAddress, commentType, origComment);

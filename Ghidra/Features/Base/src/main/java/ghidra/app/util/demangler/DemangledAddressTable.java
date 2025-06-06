@@ -96,9 +96,8 @@ public class DemangledAddressTable extends DemangledObject {
 
 		Listing listing = program.getListing();
 		if (program.getMemory().isExternalBlockAddress(address)) {
-			Msg.warn(this,
-				"Unable to fully apply external demangled Address Table at " + address + ": " +
-					s.getName(true));
+			Msg.warn(this, "Unable to fully apply external demangled Address Table at " + address +
+				": " + s.getName(true));
 			listing.setComment(address, CommentType.EOL,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain

@@ -81,7 +81,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 			address = address.add(vdexHeaderDataType.getLength());
 
 			if (!vdexHeader.isDexHeaderEmbeddedInDataType()) {
-				for (int i = 0; i < vdexHeader.getDexHeaderList().size(); ++i) {
+				for (DexHeader dexHeader : vdexHeader.getDexHeaderList()) {
 					monitor.checkCancelled();
 
 					program.getListing()
@@ -89,7 +89,6 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 					createData(program, address, new DWordDataType());
 					address = address.add(4);
 
-					DexHeader dexHeader = vdexHeader.getDexHeaderList().get(i);
 					DataType dexHeaderDataType = dexHeader.toDataType();
 					createData(program, address, dexHeaderDataType);
 

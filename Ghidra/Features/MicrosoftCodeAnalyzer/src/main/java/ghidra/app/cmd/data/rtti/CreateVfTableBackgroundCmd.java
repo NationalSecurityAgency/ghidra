@@ -120,8 +120,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				String prefixString = ((demangledTypeDescriptor != null)
 						? (demangledTypeDescriptor + Namespace.DELIMITER)
 						: "");
-				data.setComment(CommentType.EOL,
-					"terminator for " + prefixString + VF_TABLE_LABEL);
+				data.setComment(CommentType.EOL, "terminator for " + prefixString + VF_TABLE_LABEL);
 				return true;
 			}
 			return false;
@@ -172,20 +171,22 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (rtti0Model == null) {
 			return true;
 		}
-		
+
 		// Label
 		boolean shouldCreateComment = true;
 		if (applyOptions.shouldCreateLabel()) {
-			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, vfTableAddress, rtti0Model,
-					VF_TABLE_LABEL);
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, vfTableAddress,
+				rtti0Model, VF_TABLE_LABEL);
 		}
 
 		// Plate Comment
 		if (shouldCreateComment) {
 			// comment created if a label was created, or createLabel option off
-			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
-					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-					VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
+			EHDataTypeUtilities
+					.createPlateCommentIfNeeded(program,
+						RttiUtil.CONST_PREFIX + RttiUtil.getDescriptorTypeNamespace(rtti0Model) +
+							Namespace.DELIMITER,
+						VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
 		}
 
 		// Create functions that are referred to by the vf table.
@@ -215,23 +216,23 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (rtti0Model == null) {
 			return true;
 		}
-		
+
 		monitor.checkCancelled();
 
 		// Label
 		boolean shouldCreateComment = true;
 		if (applyOptions.shouldCreateLabel()) {
-			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, metaAddress, rtti0Model,
-					VF_TABLE_LABEL + NAME_SEPARATOR + META_LABEL + "_ptr");
+			shouldCreateComment = RttiUtil.createSymbolFromDemangledType(program, metaAddress,
+				rtti0Model, VF_TABLE_LABEL + NAME_SEPARATOR + META_LABEL + "_ptr");
 		}
 
 		// Plate Comment
 		if (shouldCreateComment) {
 			// comment created if a label was created, or createLabel option off
 			EHDataTypeUtilities.createPlateCommentIfNeeded(
-					program, META_LABEL + " pointer for " +
-						RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-					VF_TABLE_LABEL, null, metaAddress, applyOptions);
+				program, META_LABEL + " pointer for " +
+					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
+				VF_TABLE_LABEL, null, metaAddress, applyOptions);
 		}
 
 		return true;

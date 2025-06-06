@@ -166,8 +166,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					"Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
 				aam.schedule(new PropagateRttiBackgroundCommand(goBinary, markupSession),
 					PROP_RTTI_PRIORITY.priority());
-				Msg.info(this,
-					"Golang symbol analyzer: scheduling closure function fixup");
+				Msg.info(this, "Golang symbol analyzer: scheduling closure function fixup");
 				aam.schedule(new FixClosureFuncArgsBackgroundCommand(goBinary),
 					FIX_CLOSURES_PRIORITY.priority());
 			}
@@ -328,8 +327,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 							: null;
 					String typeStr = typeStructAddr != null
 							? AddressAnnotatedStringHandler.createAddressAnnotationString(
-								typeStructAddr,
-								recvType.getName())
+								typeStructAddr, recvType.getName())
 							: funcDefResult.symbolName().receiverString();
 					markupSession.appendComment(func, "",
 						"Golang method in type %s".formatted(typeStr));
@@ -353,7 +351,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Msg.info(this, "Fixed %d golang function signatures from method info"
 				.formatted(functionSignatureFromMethod));
 	}
-
 
 	private void fixGcWriteBarrierFunctions() {
 		if (GoConstants.GCWRITE_BUFFERED_VERS.contains(goBinary.getGoVer())) {
@@ -390,8 +387,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				func = funcData != null ? funcData.getFunction() : null;
 				if (func != null) {
 					func.updateFunction(ccname, retVal, List.of(),
-						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
-						SourceType.ANALYSIS);
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
 				}
 			}
 		}
@@ -460,9 +456,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		DataType voidPtr = program.getDataTypeManager().getPointer(VoidDataType.dataType);
 
 		GoFuncData duffzeroFuncdata = goBinary.getFunctionByName("runtime.duffzero");
-		Function duffzeroFunc = duffzeroFuncdata != null
-				? funcMgr.getFunctionAt(duffzeroFuncdata.getFuncAddress())
-				: null;
+		Function duffzeroFunc =
+			duffzeroFuncdata != null ? funcMgr.getFunctionAt(duffzeroFuncdata.getFuncAddress())
+					: null;
 		List<Variable> duffzeroParams = regInfo.getDuffzeroParams(program);
 		if (duffzeroFunc != null && !duffzeroParams.isEmpty()) {
 			// NOTE: some go archs don't create duffzero functions.  See
@@ -489,15 +485,14 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 
 			GoFuncData duffcopyFuncdata = goBinary.getFunctionByName("runtime.duffcopy");
-			Function duffcopyFunc = duffcopyFuncdata != null
-					? funcMgr.getFunctionAt(duffcopyFuncdata.getFuncAddress())
-					: null;
+			Function duffcopyFunc =
+				duffcopyFuncdata != null ? funcMgr.getFunctionAt(duffcopyFuncdata.getFuncAddress())
+						: null;
 			if (duffcopyFuncdata != null &&
 				goBinary.hasCallingConvention(GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME)) {
 				try {
-					List<Variable> params =
-						List.of(new ParameterImpl("dest", voidPtr, program),
-							new ParameterImpl("src", voidPtr, program));
+					List<Variable> params = List.of(new ParameterImpl("dest", voidPtr, program),
+						new ParameterImpl("src", voidPtr, program));
 					duffcopyFunc.updateFunction(GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME,
 						new ReturnParameterImpl(VoidDataType.dataType, program), params,
 						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
@@ -672,9 +667,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					func.setName(duffFunc.getName() + "_" + func.getEntryPoint(),
 						SourceType.ANALYSIS);
 					func.setParentNamespace(funcNS);
-					FunctionUpdateType fut = duffFunc.hasCustomVariableStorage()
-							? FunctionUpdateType.CUSTOM_STORAGE
-							: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+					FunctionUpdateType fut =
+						duffFunc.hasCustomVariableStorage() ? FunctionUpdateType.CUSTOM_STORAGE
+								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 					func.updateFunction(ccName, duffFunc.getReturn(),
 						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.ANALYSIS);
 					if (duffComment != null && !duffComment.isBlank()) {
@@ -1079,8 +1074,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 
 		record CallSiteInfo(Reference ref, Function callingFunc, Function calledFunc,
-				Register register,
-				java.util.function.Function<GoType, DataType> returnTypeMapper) {}
+				Register register, java.util.function.Function<GoType, DataType> returnTypeMapper) {
+		}
 
 		private GoRttiMapper goBinary;
 		private Program program;

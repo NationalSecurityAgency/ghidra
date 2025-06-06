@@ -78,15 +78,15 @@ public class DWARFUtil {
 	 */
 	public static Field getStaticFinalFieldWithValue(Class<?> clazz, long value) {
 		Field[] fields = clazz.getDeclaredFields();
-		for (int i = 0; i < fields.length; i++) {
-			if ((!Modifier.isFinal(fields[i].getModifiers())) ||
-				(!Modifier.isStatic(fields[i].getModifiers()))) {
+		for (Field field : fields) {
+			if ((!Modifier.isFinal(field.getModifiers())) ||
+				(!Modifier.isStatic(field.getModifiers()))) {
 				continue;
 			}
 			try {
-				long fieldValue = fields[i].getLong(null);
+				long fieldValue = field.getLong(null);
 				if (fieldValue == value) {
-					return fields[i];
+					return field;
 				}
 			}
 			catch (IllegalArgumentException | IllegalAccessException e) {
@@ -97,10 +97,6 @@ public class DWARFUtil {
 	}
 
 	//--------------------------------------
-
-
-
-
 
 	private static Pattern MANGLED_NESTING_REGEX = Pattern.compile("(.*_Z)?N([0-9]+.*)");
 
@@ -286,8 +282,7 @@ public class DWARFUtil {
 			String memberName = childDIEA.getName();
 			int memberOffset = 0;
 			try {
-				memberOffset =
-					childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
+				memberOffset = childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
 			}
 			catch (DWARFExpressionException | IOException e) {
 				// ignore, leave as default value 0
@@ -359,7 +354,7 @@ public class DWARFUtil {
 				return;
 			}
 		}
-		AppendCommentCmd cmd = new AppendCommentCmd(address, commentType.ordinal(),
+		AppendCommentCmd cmd = new AppendCommentCmd(address, commentType,
 			Objects.requireNonNullElse(prefix, "") + comment, sep);
 		cmd.applyTo(program);
 	}
@@ -398,8 +393,7 @@ public class DWARFUtil {
 		}
 
 		DIEAggregate funcDIEA = paramDIEA.getParent();
-		DWARFAttributeValue dwATObjectPointer =
-			funcDIEA.getAttribute(DW_AT_object_pointer);
+		DWARFAttributeValue dwATObjectPointer = funcDIEA.getAttribute(DW_AT_object_pointer);
 		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
 			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
 			return true;
@@ -442,8 +436,7 @@ public class DWARFUtil {
 	public static ResourceFile getLanguageExternalFile(Language lang, String name)
 			throws IOException {
 		String filename = getLanguageExternalNameValue(lang, name);
-		return filename != null
-				? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
+		return filename != null ? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
 				: null;
 	}
 

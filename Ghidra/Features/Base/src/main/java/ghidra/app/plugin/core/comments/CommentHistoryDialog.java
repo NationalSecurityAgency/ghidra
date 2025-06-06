@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.HelpLocation;
 
 /**
@@ -37,7 +38,7 @@ public class CommentHistoryDialog extends DialogComponentProvider {
 	private CommentHistoryPanel platePanel;
 	private CommentHistoryPanel repeatablePanel;
 
-	CommentHistoryDialog(CodeUnit cu, int initialCommentType) {
+	CommentHistoryDialog(CodeUnit cu, CommentType initialCommentType) {
 		super("Show Comment History");
 		setHelpLocation(new HelpLocation(HelpTopics.COMMENTS, "Show_Comment_History"));
 		addWorkPanel(buildMainPanel(cu, initialCommentType));
@@ -45,7 +46,7 @@ public class CommentHistoryDialog extends DialogComponentProvider {
 		setPreferredSize(500, 300);
 	}
 
-	private JPanel buildMainPanel(CodeUnit cu, int initialCommentType) {
+	private JPanel buildMainPanel(CodeUnit cu, CommentType initialCommentType) {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		tabbedPane = new JTabbedPane();
 		mainPanel.add(tabbedPane);
@@ -55,11 +56,11 @@ public class CommentHistoryDialog extends DialogComponentProvider {
 		// corresponding tab. This will cause a screen reader to read the history for a tab
 		// when it is selected.
 
-		eolPanel = new CommentHistoryPanel(CodeUnit.EOL_COMMENT, cu);
-		prePanel = new CommentHistoryPanel(CodeUnit.PRE_COMMENT, cu);
-		postPanel = new CommentHistoryPanel(CodeUnit.POST_COMMENT, cu);
-		platePanel = new CommentHistoryPanel(CodeUnit.PLATE_COMMENT, cu);
-		repeatablePanel = new CommentHistoryPanel(CodeUnit.REPEATABLE_COMMENT, cu);
+		eolPanel = new CommentHistoryPanel(CommentType.EOL, cu);
+		prePanel = new CommentHistoryPanel(CommentType.PRE, cu);
+		postPanel = new CommentHistoryPanel(CommentType.POST, cu);
+		platePanel = new CommentHistoryPanel(CommentType.PLATE, cu);
+		repeatablePanel = new CommentHistoryPanel(CommentType.REPEATABLE, cu);
 
 		addTab("  EOL Comment    ", eolPanel);
 		addTab("  Pre Comment    ", prePanel);

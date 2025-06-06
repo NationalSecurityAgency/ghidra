@@ -238,8 +238,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 	private void processInterpretor(ElfHeader elf, ByteProvider provider, Program program)
 			throws CancelledException {
-		for (ElfProgramHeader programHeader : elf.getProgramHeaders(
-			ElfProgramHeaderConstants.PT_INTERP)) {
+		for (ElfProgramHeader programHeader : elf
+				.getProgramHeaders(ElfProgramHeaderConstants.PT_INTERP)) {
 			monitor.checkCancelled();
 			long offset = programHeader.getOffset();
 			if (offset == 0) {
@@ -339,8 +339,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		}
 
 		Address refAddr = addr(programLoadHeader.getOffset(dynamicRefAddr));
-		program.getReferenceManager().addMemoryReference(fromAddr, refAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(fromAddr, refAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		try {
 			createLabel(refAddr, "_" + dynamic.getTagAsString(), true, SourceType.ANALYSIS);
