@@ -17,19 +17,12 @@ package sarif.export.extlib;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.google.gson.JsonArray;
 
 import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalManager;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -42,8 +35,8 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 	private ExternalManager externalManager;
 	private SymbolTable symbolTable;
 
-	public SarifClassesNamespaceWriter(ExternalManager externalManager, SymbolTable symbolTable, List<GhidraClass> request, Writer baseWriter)
-			throws IOException {
+	public SarifClassesNamespaceWriter(ExternalManager externalManager, SymbolTable symbolTable,
+			List<GhidraClass> request, Writer baseWriter) throws IOException {
 		super(baseWriter);
 		this.externalManager = externalManager;
 		this.symbolTable = symbolTable;
@@ -56,7 +49,7 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 		root.add("definedData", objects);
 	}
 
-	private void genClasses(TaskMonitor monitor) throws CancelledException, IOException {
+	private void genClasses(TaskMonitor monitor) throws CancelledException {
 		monitor.initialize(classes.size());
 		Iterator<GhidraClass> classNamespaces = symbolTable.getClassNamespaces();
 		while (classNamespaces.hasNext()) {
@@ -73,18 +66,19 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 			path = "";
 		}
 		ExtLibrary lib = new ExtLibrary(clsName, path, SourceType.DEFAULT);
-		SarifObject sarif = new SarifObject(ExternalLibSarifMgr.SUBKEY0, ExternalLibSarifMgr.KEY, getTree(lib), null);
+		SarifObject sarif = new SarifObject(ExternalLibSarifMgr.SUBKEY0, ExternalLibSarifMgr.KEY,
+			getTree(lib), null);
 		objects.add(getTree(sarif));
-		
-		SymbolIterator symbols = symbolTable.getSymbols(cls);
+
 		if (cls.isExternal()) {
+			SymbolIterator symbols = symbolTable.getSymbols(cls);
 			while (symbols.hasNext()) {
 				Symbol sym = symbols.next();
 				ExternalLocation loc = externalManager.getExternalLocation(sym);
 				if (loc != null) {
 					ExtLibraryLocation obj = new ExtLibraryLocation(loc);
-					SarifObject sarif2 = new SarifObject(ExternalLibSarifMgr.SUBKEY1, ExternalLibSarifMgr.KEY, getTree(obj),
-							loc.getAddress(), loc.getAddress());
+					SarifObject sarif2 = new SarifObject(ExternalLibSarifMgr.SUBKEY1,
+						ExternalLibSarifMgr.KEY, getTree(obj), loc.getAddress(), loc.getAddress());
 					objects.add(getTree(sarif2));
 				}
 			}

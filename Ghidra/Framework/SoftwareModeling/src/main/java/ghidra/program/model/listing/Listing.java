@@ -141,8 +141,13 @@ public interface Listing {
 	 * @param addrSet address set
 	 * @return a CodeUnitIterator that returns all code units from the indicated
 	 *         address set that have the specified comment type defined
+	 * @deprecated use {@link #getCommentCodeUnitIterator(CommentType, AddressSetView)}
 	 */
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default CodeUnitIterator getCommentCodeUnitIterator(int commentType,
+			AddressSetView addrSet) {
+		return getCommentCodeUnitIterator(CommentType.valueOf(commentType), addrSet);
+	}
 
 	/**
 	 * Get a forward code unit iterator over code units that have the specified
@@ -153,10 +158,7 @@ public interface Listing {
 	 * @return a CodeUnitIterator that returns all code units from the indicated
 	 *         address set that have the specified comment type defined
 	 */
-	public default CodeUnitIterator getCommentCodeUnitIterator(CommentType type,
-			AddressSetView addrSet) {
-		return getCommentCodeUnitIterator(type.ordinal(), addrSet);
-	}
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType type, AddressSetView addrSet);
 
 	/**
 	 * Get a forward iterator over addresses that have the specified comment
@@ -170,9 +172,11 @@ public interface Listing {
 	 *         address set that have the specified comment type defined
 	 * @deprecated use {@link #getCommentAddressIterator(CommentType, AddressSetView, boolean)}
 	 */
-	@Deprecated
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
-			boolean forward);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default AddressIterator getCommentAddressIterator(int commentType,
+			AddressSetView addrSet, boolean forward) {
+		return getCommentAddressIterator(CommentType.valueOf(commentType), addrSet, forward);
+	}
 
 	/**
 	 * Get a forward iterator over addresses that have the specified comment
@@ -185,10 +189,8 @@ public interface Listing {
 	 * @return an AddressIterator that returns all addresses from the indicated
 	 *         address set that have the specified comment type defined
 	 */
-	public default AddressIterator getCommentAddressIterator(CommentType type,
-			AddressSetView addrSet, boolean forward) {
-		return getCommentAddressIterator(type.ordinal(), addrSet, forward);
-	}
+	public AddressIterator getCommentAddressIterator(CommentType type, AddressSetView addrSet,
+			boolean forward);
 
 	/**
 	 * Get a forward iterator over addresses that have any type of comment.
@@ -213,15 +215,10 @@ public interface Listing {
 	 *             comments supported
 	 * @deprecated use {@link #getComment(CommentType, Address)}
 	 */
-	@Deprecated
-	public String getComment(int commentType, Address address);
-
-	/**
-	 * Get all the comments at the given address.
-	 * @param address the address get comments 
-	 * @return a CodeUnitComments object that has all the comments at the address.
-	 */
-	public CodeUnitComments getAllComments(Address address);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default String getComment(int commentType, Address address) {
+		return getComment(CommentType.valueOf(commentType), address);
+	}
 
 	/**
 	 * Get the comment for the given type at the specified address.
@@ -231,9 +228,14 @@ public interface Listing {
 	 * @return the comment string of the appropriate type or null if no comment
 	 *         of that type exists for this code unit
 	 */
-	public default String getComment(CommentType type, Address address) {
-		return getComment(type.ordinal(), address);
-	}
+	public String getComment(CommentType type, Address address);
+
+	/**
+	 * Get all the comments at the given address.
+	 * @param address the address get comments 
+	 * @return a CodeUnitComments object that has all the comments at the address.
+	 */
+	public CodeUnitComments getAllComments(Address address);
 
 	/**
 	 * Set the comment for the given comment type at the specified address.
@@ -246,8 +248,10 @@ public interface Listing {
 	 *             comments supported
 	 * @deprecated use {@link #setComment(Address, CommentType, String)}
 	 */
-	@Deprecated
-	public void setComment(Address address, int commentType, String comment);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default void setComment(Address address, int commentType, String comment) {
+		setComment(address, CommentType.valueOf(commentType), comment);
+	}
 
 	/**
 	 * Set the comment for the given comment type at the specified address.
@@ -258,9 +262,7 @@ public interface Listing {
 	 * @throws IllegalArgumentException if type is not one of the types of
 	 *             comments supported
 	 */
-	public default void setComment(Address address, CommentType type, String comment) {
-		setComment(address, type.ordinal(), comment);
-	}
+	public void setComment(Address address, CommentType type, String comment);
 
 	/**
 	 * get a CodeUnit iterator that will iterate over the entire address space.
@@ -655,7 +657,7 @@ public interface Listing {
 	 * @param propertyName the property name
 	 * @return PropertyMap the propertyMap object.
 	 */
-	public PropertyMap getPropertyMap(String propertyName);
+	public PropertyMap<?> getPropertyMap(String propertyName);
 
 	/**
 	 * Creates a new Instruction object at the given address. The specified
@@ -1048,8 +1050,21 @@ public interface Listing {
 	 * @param addr address for comments
 	 * @param commentType comment type defined in CodeUnit
 	 * @return array of comment history records
+	 * @deprecated use {@link #getCommentHistory(Address, CommentType)}
 	 */
-	public CommentHistory[] getCommentHistory(Address addr, int commentType);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default CommentHistory[] getCommentHistory(Address addr, int commentType) {
+		return getCommentHistory(addr, CommentType.valueOf(commentType));
+	}
+
+	/**
+	 * Get the comment history for comments at the given address.
+	 * 
+	 * @param addr address for comments
+	 * @param type {@link CommentType comment type}
+	 * @return array of comment history records
+	 */
+	public CommentHistory[] getCommentHistory(Address addr, CommentType type);
 
 	/**
 	 * Returns the number of addresses where at least one comment type has been applied.

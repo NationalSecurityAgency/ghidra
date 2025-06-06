@@ -25,6 +25,7 @@ import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -459,7 +460,7 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
 		Data child = getComponentContaining(0);
 		if (child != null) {
 			// avoid caching issue by maintaining comment at lowest point in data path
@@ -469,7 +470,7 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	public void setComment(int commentType, String comment) {
+	public void setComment(CommentType commentType, String comment) {
 		Data child = getComponentContaining(0);
 		if (child != null) {
 			// avoid caching issue by maintaining comment at lowest point in data path

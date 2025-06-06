@@ -28,7 +28,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TerminatedStringDataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
@@ -226,7 +226,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo for AP_HAL::HAL::Callbacks",
-			program.getListing().getComment(CodeUnit.PLATE_COMMENT, addr("01001000")));
+			program.getListing().getComment(CommentType.PLATE, addr("01001000")));
 
 		Data d = program.getListing().getDefinedDataAt(addr("01001000"));
 		assertNotNull(d);
@@ -259,7 +259,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks",
-			program.getListing().getComment(CodeUnit.PLATE_COMMENT, addr("01001000")));
+			program.getListing().getComment(CommentType.PLATE, addr("01001000")));
 
 		Data d = program.getListing().getDefinedDataAt(addr("01001000"));
 		assertNotNull(d);

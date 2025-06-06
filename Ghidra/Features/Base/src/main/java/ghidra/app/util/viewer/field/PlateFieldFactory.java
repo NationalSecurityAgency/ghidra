@@ -166,9 +166,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 		ListingFieldHighlightFactoryAdapter hlFactory =
 			new ListingFieldHighlightFactoryAdapter(hlProvider);
-		PlateFieldTextField textField =
-			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped,
-				hlFactory);
+		PlateFieldTextField textField = new PlateFieldTextField(elements, this, proxy, startX,
+			width, commentText, isClipped, hlFactory);
 		PlateListingTextField listingField = new PlateListingTextField(proxy, textField, hlFactory);
 		return listingField;
 	}
@@ -180,7 +179,7 @@ public class PlateFieldFactory extends FieldFactory {
 
 		addBlankLines(elements, numberBlankLines, cu);
 
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		return generateFormattedPlateComment(elements, comments, offcutComments, cu.getProgram());
 	}
 
@@ -210,7 +209,7 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		if (comments == null) {
 			return null;
 		}
@@ -256,8 +255,8 @@ public class PlateFieldFactory extends FieldFactory {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
 		}
 		for (String offcut : offcutComments) {
-			AttributedString as = new AttributedString(offcut, CommentColors.OFFCUT,
-				getMetrics(style), false, null);
+			AttributedString as =
+				new AttributedString(offcut, CommentColors.OFFCUT, getMetrics(style), false, null);
 			commentsList.add(new TextFieldElement(as, commentsList.size(), 0));
 		}
 
@@ -503,7 +502,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) proxyObject;
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		RowColLocation dataLocation =
 			((ListingTextField) listingField).screenToDataLocation(row, col);
 
@@ -540,7 +539,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation commentLocation = (CommentFieldLocation) programLoc;
-		if (commentLocation.getCommentType() != CodeUnit.PLATE_COMMENT) {
+		if (commentLocation.getCommentType() != CommentType.PLATE) {
 			return null;
 		}
 
@@ -603,8 +602,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider hsProvider,
-			ToolOptions toolOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hsProvider, ToolOptions toolOptions,
+			ToolOptions fieldOptions) {
 		return new PlateFieldFactory(formatModel, hsProvider, toolOptions, fieldOptions);
 	}
 

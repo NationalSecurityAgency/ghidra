@@ -130,7 +130,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		return cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		return cu.getCommentAsArray(CommentType.PRE);
 	}
 
 	private String[] getAutoPreComments(CodeUnit cu) {
@@ -147,13 +147,13 @@ public class PreCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		int[] cpath = null;
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();
 		}
 		return new CommentFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, comment,
-			CodeUnit.PRE_COMMENT, row, col);
+			CommentType.PRE, row, col);
 	}
 
 	@Override
@@ -164,7 +164,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation loc = (CommentFieldLocation) programLoc;
-		if (loc.getCommentType() != CodeUnit.PRE_COMMENT) {
+		if (loc.getCommentType() != CommentType.PRE) {
 			return null;
 		}
 		return new FieldLocation(index, fieldNum, loc.getRow(), loc.getCharOffset());

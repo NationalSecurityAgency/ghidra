@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -468,7 +468,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 				sb.append("\n");
 			}
 		}
-		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, sb.toString());
+		program.getListing().setComment(addr, CommentType.PLATE, sb.toString());
 	}
 
 	private void appendMethodHandleInfo(StringBuffer sb,
@@ -661,7 +661,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		if (address.getAddressSpace() != program.getAddressFactory().getDefaultAddressSpace()) {
 			return false;
 		}
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.EOL_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.EOL, comment);
 		return cmd.applyTo(program);
 	}
 
@@ -770,7 +770,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		Listing listing = function.getProgram().getListing();
 		Address entryPoint = function.getEntryPoint();
 
-		listing.setComment(entryPoint, CodeUnit.PLATE_COMMENT, sb.toString());
+		listing.setComment(entryPoint, CommentType.PLATE, sb.toString());
 	}
 
 	private boolean hasConstantPoolReference(String mnemonic) {
