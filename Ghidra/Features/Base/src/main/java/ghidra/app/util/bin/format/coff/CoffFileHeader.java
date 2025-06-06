@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,12 +36,21 @@ public class CoffFileHeader implements StructConverter {
 
 	private short f_target_id; // target id (TI-specific)
 
+	private BinaryReader reader;
 	private AoutHeader _aoutHeader;
 	private List<CoffSectionHeader> _sections = new ArrayList<CoffSectionHeader>();
 	private List<CoffSymbol> _symbols = new ArrayList<CoffSymbol>();
 
-	public CoffFileHeader(ByteProvider provider) throws IOException {
-		BinaryReader reader = getBinaryReader(provider);
+	public CoffFileHeader(ByteProvider provider) throws IOException, CoffException {
+
+		// Probe for matches using both little and big endian
+		reader = new BinaryReader(provider, true); // LE
+		if (!isValid()) {
+			reader = new BinaryReader(provider, false); // BE
+			if (!isValid()) {
+				throw new CoffException("Not a valid COFF file");
+			}
+		}
 
 		f_magic = reader.readNextShort();
 		f_nscns = reader.readNextShort();
@@ -54,11 +63,6 @@ public class CoffFileHeader implements StructConverter {
 		if (isCoffLevelOneOrTwo()) {
 			f_target_id = reader.readNextShort();
 		}
-	}
-
-	private static BinaryReader getBinaryReader(ByteProvider provider) {
-		BinaryReader reader = new BinaryReader(provider, true/*COFF is always LE!!!*/);
-		return reader;
 	}
 
 	private boolean isCoffLevelOneOrTwo() {
@@ -165,12 +169,9 @@ public class CoffFileHeader implements StructConverter {
 
 	/**
 	 * Read just the section headers, not including line numbers and relocations
-	 * @param provider
 	 * @throws IOException
 	 */
-	public void parseSectionHeaders(ByteProvider provider) throws IOException {
-		BinaryReader reader = getBinaryReader(provider);
-
+	public void parseSectionHeaders() throws IOException {
 		long originalIndex = reader.getPointerIndex();
 		try {
 			reader.setPointerIndex(sizeof() + f_opthdr);
@@ -190,9 +191,7 @@ public class CoffFileHeader implements StructConverter {
 	 * @param monitor the task monitor
 	 * @throws IOException if an i/o error occurs
 	 */
-	public void parse(ByteProvider provider, TaskMonitor monitor) throws IOException {
-		BinaryReader reader = getBinaryReader(provider);
-
+	public void parse(TaskMonitor monitor) throws IOException {
 		monitor.setMessage("Completing file header parsing...");
 		long originalIndex = reader.getPointerIndex();
 		try {
@@ -279,23 +278,22 @@ public class CoffFileHeader implements StructConverter {
 	 * bytes at the beginning of the given {@link ByteProvider} to make sure the entire file isn't
 	 * all 0's.
 	 * 
-	 * @param provider The {@link ByteProvider} to check
 	 * @return True if this is a is a valid {@link CoffFileHeader}; otherwise, false
 	 * @throws IOException if there was an IO-related issue
 	 */
-	public static boolean isValid(ByteProvider provider) throws IOException {
+	public boolean isValid() throws IOException {
 		final int MIN_BYTE_LENGTH = 22;
 		final int COFF_NULL_SANITY_CHECK_LEN = 64;
 
-		if (provider.length() < MIN_BYTE_LENGTH) {
+		if (reader.length() < MIN_BYTE_LENGTH) {
 			return false;
 		}
 
-		short magic = getBinaryReader(provider).readShort(0);
+		short magic = reader.readShort(0);
 
 		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
-			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
-			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
+			reader.length() > COFF_NULL_SANITY_CHECK_LEN) {
+			byte[] headerBytes = reader.readByteArray(0, COFF_NULL_SANITY_CHECK_LEN);
 			boolean allZeros = true;
 			for (byte b : headerBytes) {
 				allZeros = (b == 0);
