@@ -18,7 +18,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.gccexcepttable;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.RegionDescriptor;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.task.TaskMonitor;
@@ -125,7 +125,8 @@ public class LSDATable {
 			}
 		}
 
-		SetCommentCmd commentCmd = new SetCommentCmd(baseAdress, CodeUnit.PLATE_COMMENT, "Language-Specific Data Area");
+		SetCommentCmd commentCmd =
+			new SetCommentCmd(baseAdress, CommentType.PLATE, "Language-Specific Data Area");
 		commentCmd.applyTo(program);
 
 	}

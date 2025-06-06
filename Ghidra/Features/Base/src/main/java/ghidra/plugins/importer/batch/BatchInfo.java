@@ -335,8 +335,7 @@ public class BatchInfo {
 	private void processFS(GFileSystem fs, GFile startDir, TaskMonitor taskMonitor)
 			throws CancelledException, IOException {
 
-		// TODO: drop FSUtils.listFileSystem and do recursion here.
-		for (GFile file : FSUtilities.listFileSystem(fs, startDir, null, taskMonitor)) {
+		for (GFile file : fs.files(startDir)) {
 			taskMonitor.checkCancelled();
 			FSRL fqFSRL;
 			try {

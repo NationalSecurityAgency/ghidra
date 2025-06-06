@@ -110,13 +110,13 @@ We use these different versions to demonstrate some of the capabilities of BSim.
     The executable-level results are covered in [From Matching Functions to Matching Executables](BSimTutorial_Exe_Results.md).
 1. Right-click on the row of the match and perform the **Compare Functions** action to bring up the side-by-side comparison. 
     - The **Listing View** tab shows the disassembly.
-    - The **Decompiler Diff View** tab shows the decompiled code.
+    - The **Decompiler View** tab shows the decompiled code.
     - Differences in the code are automatically highlighted in cyan.
     - Either view can be toggled between a horizontal split and a vertical split using the drop-down menu. 
 1. Examine the diff views to verify that the match is valid.
 1. Using the **Apply Name** action in the BSim Search Results table, apply the name from the search result to the queried function.
 
-**Note**: We cover the Decompiler Diff View in greater detail and discuss the various "Apply" actions in [Evaluating Matches and Applying Information](BSimTutorial_Evaluating_Matches.md).
+**Note**: We cover the Decompiler View in greater detail and discuss the various "Apply" actions in [Evaluating Matches and Applying Information](BSimTutorial_Evaluating_Matches.md).
 
 ### Exercise: Changes to the Source Code
 
@@ -136,7 +136,7 @@ We use these different versions to demonstrate some of the capabilities of BSim.
 ``<ghidra_install_dir>/GPL/DemanglerGnu/os/mac_arm_64/demangler_gnu_v2_41``.  
     - This executable is based on the same source code as the executable in `example` but compiled for a different architecture.
     - **Note**: this file has the same name as the one we used to populate the BSim database, so you will have to give the resulting Ghidra program a different name or import it into a different directory in your Ghidra project.
-1. Navigate to ``_expandargv`` and issue a BSim query.
+1. Navigate to ``_expandargv`` and issue a BSim query with a similarity bound of 0.5.
 In the decompiler diff view of the single match, what differences do you see regarding ``memmove`` and ``memcpy``?
    <details><summary>In the arm64 version...</summary> In the arm64_version, the compiler replaced these functions with __memmove_chk and __memcpy_chk.  The __chk versions have an extra parameter related to preventing buffer overflows. Neither the names nor the bodies of callees are incorporated into BSim signatures, but the arguments of a call are, so this change partly explains why the BSim vectors are not identical.</details>
 1. Examine the **Listing View** tab and verify that the architectures are indeed different.

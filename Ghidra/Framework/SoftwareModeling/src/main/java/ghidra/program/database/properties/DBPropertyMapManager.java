@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@
 package ghidra.program.database.properties;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import db.*;
 import ghidra.framework.data.OpenMode;
@@ -49,7 +49,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	private AddressMap addrMap;
 	private ChangeManager changeMgr;
 	private PropertiesDBAdapter propertiesDBAdapter;
-	private TreeMap<String, PropertyMapDB<?>> propertyMapCache;
+	private ConcurrentHashMap<String, PropertyMapDB<?>> propertyMapCache;
 	private Lock lock;
 
 	static final int CURRENT_PROPERTIES_TABLE_VERSION = 0;
@@ -70,11 +70,9 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	static final Schema PROPERTIES_SCHEMA;
 
 	static {
-
 		PROPERTIES_SCHEMA = new Schema(CURRENT_PROPERTIES_TABLE_VERSION, StringField.INSTANCE,
 			"Name", new Field[] { ByteField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE },
 			new String[] { "Type", "Object Class", "Version" });
-
 	}
 
 	/**
@@ -100,7 +98,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			dbHandle.createTable(PROPERTIES_TABLE_NAME, PROPERTIES_SCHEMA);
 		}
 		findAdapters(handle);
-		propertyMapCache = new TreeMap<String, PropertyMapDB<?>>();
+		propertyMapCache = new ConcurrentHashMap<String, PropertyMapDB<?>>();
 		loadPropertyMaps(openMode, monitor);
 	}
 
@@ -119,7 +117,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public void invalidateCache(boolean all) throws IOException {
 		lock.acquire();
 		try {
-			propertyMapCache.clear();
+			for (PropertyMapDB<?> map : propertyMapCache.values()) {
+				map.invalidate();
+			}
+			// NOTE: Reconciling maps immediately allows use to reliably use cache without
+			// requiring map re-validation.
 			loadPropertyMaps(null, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
@@ -144,12 +146,23 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			throws VersionException, CancelledException {
 		try {
 			VersionException ve = null;
+			Set<String> oldMapNames = new HashSet<>(propertyMapCache.keySet());
 			RecordIterator iter = propertiesDBAdapter.getRecords();
 			while (iter.hasNext()) {
 				DBRecord rec = iter.next();
-				String name = rec.getKeyField().getString();
 				byte propertyType = rec.getByteValue(PROPERTY_TYPE_COL);
-				PropertyMapDB<?> pm = null;
+				String name = rec.getKeyField().getString();
+				oldMapNames.remove(name);
+
+				// Check for pre-existing map
+				PropertyMapDB<?> pm = propertyMapCache.get(name);
+				if (pm != null) {
+					if (pm.validate(lock)) {
+						continue; // keep the map we already have
+					}
+					propertyMapCache.remove(name);
+				}
+
 				try {
 					switch (propertyType) {
 						case INT_PROPERTY_TYPE:
@@ -208,6 +221,12 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				}
 				propertyMapCache.put(name, pm);
 			}
+
+			// Remove obsolete maps from cache
+			for (String obsoleteMapName : oldMapNames) {
+				propertyMapCache.remove(obsoleteMapName);
+			}
+
 			if (ve != null) {
 				throw ve;
 			}
@@ -333,7 +352,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		finally {
 			lock.release();
 		}
-
 	}
 
 	@Override
@@ -367,7 +385,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		finally {
 			lock.release();
 		}
-
 	}
 
 	/**
@@ -406,7 +423,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		finally {
 			lock.release();
 		}
-
 	}
 
 	/**
@@ -416,14 +432,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public PropertyMap<?> getPropertyMap(String propertyName) {
-		lock.acquire();
-		try {
-			return propertyMapCache.get(propertyName);
-		}
-		finally {
-			lock.release();
-		}
-
+		return propertyMapCache.get(propertyName);
 	}
 
 	/**
@@ -434,19 +443,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public IntPropertyMap getIntPropertyMap(String propertyName) {
-
-		lock.acquire();
-		try {
-			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
-			if (pm == null || pm instanceof IntPropertyMap) {
-				return (IntPropertyMap) pm;
-			}
-			throw new TypeMismatchException("Property " + propertyName + " is not int type");
+		PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
+		if (pm == null || pm instanceof IntPropertyMap) {
+			return (IntPropertyMap) pm;
 		}
-		finally {
-			lock.release();
-		}
-
+		throw new TypeMismatchException("Property " + propertyName + " is not int type");
 	}
 
 	/**
@@ -457,18 +458,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public LongPropertyMap getLongPropertyMap(String propertyName) {
-		lock.acquire();
-		try {
-			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
-			if (pm == null || pm instanceof LongPropertyMap) {
-				return (LongPropertyMap) pm;
-			}
-			throw new TypeMismatchException("Property " + propertyName + " is not long type");
+		PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
+		if (pm == null || pm instanceof LongPropertyMap) {
+			return (LongPropertyMap) pm;
 		}
-		finally {
-			lock.release();
-		}
-
+		throw new TypeMismatchException("Property " + propertyName + " is not long type");
 	}
 
 	/**
@@ -479,18 +473,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public StringPropertyMap getStringPropertyMap(String propertyName) {
-		lock.acquire();
-		try {
-			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
-			if (pm == null || pm instanceof StringPropertyMap) {
-				return (StringPropertyMap) pm;
-			}
-			throw new TypeMismatchException("Property " + propertyName + " is not String type");
-
+		PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
+		if (pm == null || pm instanceof StringPropertyMap) {
+			return (StringPropertyMap) pm;
 		}
-		finally {
-			lock.release();
-		}
+		throw new TypeMismatchException("Property " + propertyName + " is not String type");
 	}
 
 	/**
@@ -501,18 +488,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public ObjectPropertyMap<?> getObjectPropertyMap(String propertyName) {
-		lock.acquire();
-		try {
-			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
-			if (pm == null || pm instanceof ObjectPropertyMap) {
-				return (ObjectPropertyMap<?>) pm;
-			}
-			throw new TypeMismatchException("Property " + propertyName + " is not object type");
-
+		PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
+		if (pm == null || pm instanceof ObjectPropertyMap) {
+			return (ObjectPropertyMap<?>) pm;
 		}
-		finally {
-			lock.release();
-		}
+		throw new TypeMismatchException("Property " + propertyName + " is not object type");
 	}
 
 	/**
@@ -523,17 +503,11 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 */
 	@Override
 	public VoidPropertyMap getVoidPropertyMap(String propertyName) {
-		lock.acquire();
-		try {
-			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
-			if (pm == null || pm instanceof VoidPropertyMap) {
-				return (VoidPropertyMap) pm;
-			}
-			throw new TypeMismatchException("Property " + propertyName + " is not Void type");
+		PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
+		if (pm == null || pm instanceof VoidPropertyMap) {
+			return (VoidPropertyMap) pm;
 		}
-		finally {
-			lock.release();
-		}
+		throw new TypeMismatchException("Property " + propertyName + " is not Void type");
 	}
 
 	@Override
@@ -564,12 +538,15 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public Iterator<String> propertyManagers() {
 		lock.acquire();
 		try {
-			return propertyMapCache.keySet().iterator();
+			// NOTE: infrequent use expected
+			return propertyMapCache.keySet()
+					.stream()
+					.sorted() // Sort keys in natural order
+					.iterator();
 		}
 		finally {
 			lock.release();
 		}
-
 	}
 
 	@Override
@@ -579,7 +556,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				pm.remove(addr);
 			}
-
 		}
 		finally {
 			lock.release();
@@ -621,7 +597,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
 		removeAll(startAddr, endAddr, monitor);
-
 	}
 
 }

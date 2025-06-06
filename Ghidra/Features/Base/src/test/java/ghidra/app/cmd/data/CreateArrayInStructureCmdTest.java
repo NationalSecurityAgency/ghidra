@@ -72,7 +72,7 @@ public class CreateArrayInStructureCmdTest extends AbstractGenericTest {
 
 		Address addr = addr(UNDEFINED_AREA);
 		int structLen = 30;
-		Command cmd = new CreateStructureCmd(addr, structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr, structLen);
 		cmd.applyTo(program);
 
 		DataType dt = new Pointer16DataType(new ByteDataType());
@@ -120,7 +120,7 @@ public class CreateArrayInStructureCmdTest extends AbstractGenericTest {
 		struct1.add(new DWordDataType());
 		struct1.add(new QWordDataType());
 
-		Command cmd = new CreateDataCmd(addr(startOffset + 1), struct1);
+		Command<Program> cmd = new CreateDataCmd(addr(startOffset + 1), struct1);
 		cmd.applyTo(program);
 		Data dataAt = program.getListing().getDataAt(addr(startOffset + 1));
 		struct1 = (Structure) dataAt.getDataType();

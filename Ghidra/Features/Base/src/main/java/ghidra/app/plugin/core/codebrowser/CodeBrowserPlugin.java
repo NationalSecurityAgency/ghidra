@@ -113,9 +113,6 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		}
 	}
 
-	/**
-	 * Interface method called to process a plugin event.
-	 */
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramClosedPluginEvent) {
@@ -150,7 +147,8 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 			ProgramLocation location = evt.getLocation();
 			if (!connectedProvider.setLocation(location)) {
 				if (viewManager != null) {
-					connectedProvider.setView(viewManager.addToView(location));
+					AddressSetView updatedView = viewManager.addToView(location);
+					setView(updatedView);
 					ListingPanel lp = connectedProvider.getListingPanel();
 					lp.goTo(location, true);
 				}
@@ -168,7 +166,7 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		}
 		else if (event instanceof ViewChangedPluginEvent) {
 			AddressSet view = ((ViewChangedPluginEvent) event).getView();
-			viewChanged(view);
+			setView(view);
 		}
 	}
 
@@ -203,7 +201,7 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		ProgramSelection highlight = (ProgramSelection) state[2];
 		ProgramSelection selection = (ProgramSelection) state[3];
 
-		viewChanged((AddressSetView) state[4]);
+		setView((AddressSetView) state[4]);
 
 		if (location != null) {
 			connectedProvider.setLocation(location);

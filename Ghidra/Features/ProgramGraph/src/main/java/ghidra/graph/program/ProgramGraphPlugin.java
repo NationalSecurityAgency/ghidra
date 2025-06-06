@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ import ghidra.util.task.TaskLauncher;
  * the graphs that it generates. This plugin generates several different types of program graphs.
  * Both the "block flow" and "code flow" actions will generate a graph of basic block flows. The only
  * difference is that the "code flow" action generates a graph that
- * displays the assembly for for each basic block, whereas the "block flow" action generates a graph
+ * displays the assembly for each basic block, whereas the "block flow" action generates a graph
  * that displays the symbol or address at the start of the basic block.  This plugin also
  * generates call graphs, using either the default subroutine model or one that the user chooses.
  */

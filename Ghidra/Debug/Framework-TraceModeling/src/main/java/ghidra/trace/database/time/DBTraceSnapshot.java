@@ -27,6 +27,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
@@ -85,7 +86,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			eventThread = manager.threadManager.getThread(threadKey);
 			if (!"".equals(scheduleStr)) {
 				try {
-					schedule = TraceSchedule.parse(scheduleStr);
+					schedule = TraceSchedule.parse(scheduleStr, TimeRadix.DEC);
 				}
 				catch (IllegalArgumentException e) {
 					Msg.error(this, "Could not parse schedule: " + schedule, e);
@@ -205,7 +206,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	public void setSchedule(TraceSchedule schedule) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.schedule = schedule;
-			this.scheduleStr = schedule == null ? "" : schedule.toString();
+			this.scheduleStr = schedule == null ? "" : schedule.toString(TimeRadix.DEC);
 			update(SCHEDULE_COLUMN);
 			manager.notifySnapshotChanged(this);
 		}

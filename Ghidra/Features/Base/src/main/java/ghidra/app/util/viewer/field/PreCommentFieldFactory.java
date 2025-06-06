@@ -130,7 +130,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		return cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		return cu.getCommentAsArray(CommentType.PRE);
 	}
 
 	private String[] getAutoPreComments(CodeUnit cu) {
@@ -147,7 +147,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		String[] comment = cu.getCommentAsArray(CodeUnit.PRE_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.PRE);
 		int[] cpath = null;
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();

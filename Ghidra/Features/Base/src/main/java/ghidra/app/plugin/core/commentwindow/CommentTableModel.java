@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,19 +94,19 @@ class CommentTableModel extends AddressBasedTableModel<CommentRowObject> {
 				continue;
 			}
 
-			if (cu.getComment(CodeUnit.PRE_COMMENT) != null) {
+			if (cu.getComment(CommentType.PRE) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PRE_COMMENT));
 			}
-			if (cu.getComment(CodeUnit.POST_COMMENT) != null) {
+			if (cu.getComment(CommentType.POST) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.POST_COMMENT));
 			}
-			if (cu.getComment(CodeUnit.EOL_COMMENT) != null) {
+			if (cu.getComment(CommentType.EOL) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.EOL_COMMENT));
 			}
-			if (cu.getComment(CodeUnit.PLATE_COMMENT) != null) {
+			if (cu.getComment(CommentType.PLATE) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.PLATE_COMMENT));
 			}
-			if (cu.getComment(CodeUnit.REPEATABLE_COMMENT) != null) {
+			if (cu.getComment(CommentType.REPEATABLE) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CodeUnit.REPEATABLE_COMMENT));
 			}
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -209,7 +209,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 					Parameter param = params[index];
 					DataType dt = param.getDataType();
 					String name = param.getName();
-					SetCommentCmd cmd = new SetCommentCmd(cu.getAddress(), CodeUnit.EOL_COMMENT,
+					SetCommentCmd cmd = new SetCommentCmd(cu.getAddress(), CommentType.EOL,
 						dt.getDisplayName() + " " + name + " for " + externalFunctionName);
 					cmd.applyTo(currentProgram);
 
@@ -310,17 +310,16 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 
 	private void createComment(Address dataAddress, String newComment, PushedParamInfo info) {
 		Listing listing = currentProgram.getListing();
-		String plateComment = listing.getComment(CodeUnit.PLATE_COMMENT, dataAddress);
+		String plateComment = listing.getComment(CommentType.PLATE, dataAddress);
 		if (plateComment == null) {
 			// add a comment
-			SetCommentCmd cmd = new SetCommentCmd(dataAddress, CodeUnit.PLATE_COMMENT, newComment);
+			SetCommentCmd cmd = new SetCommentCmd(dataAddress, CommentType.PLATE, newComment);
 			cmd.applyTo(currentProgram);
 		}
 		else if (!plateComment.contains(info.getCalledFunctionName())) {
 			// update the existing comment
 			String updatedComment = plateComment + "\n" + newComment;
-			SetCommentCmd cmd =
-				new SetCommentCmd(dataAddress, CodeUnit.PLATE_COMMENT, updatedComment);
+			SetCommentCmd cmd = new SetCommentCmd(dataAddress, CommentType.PLATE, updatedComment);
 			cmd.applyTo(currentProgram);
 		}
 	}

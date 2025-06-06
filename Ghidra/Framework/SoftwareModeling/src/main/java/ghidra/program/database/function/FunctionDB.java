@@ -120,33 +120,22 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public boolean isThunk() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			return thunkedFunction != null;
-		}
-		finally {
-			manager.lock.release();
-		}
+		validate(manager.lock);
+		return thunkedFunction != null;
 	}
 
 	@Override
 	public Function getThunkedFunction(boolean recursive) {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (!recursive || thunkedFunction == null) {
-				return thunkedFunction;
-			}
-			FunctionDB endFunction = thunkedFunction;
-			while (endFunction.thunkedFunction != null) {
-				endFunction = endFunction.thunkedFunction;
-			}
-			return endFunction;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (!recursive || localThunkFunc == null) {
+			return localThunkFunc;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB endFunction = localThunkFunc;
+		while ((localThunkFunc = endFunction.thunkedFunction) != null) {
+			endFunction = localThunkFunc;
 		}
+		return endFunction;
 	}
 
 	@Override
@@ -332,14 +321,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public Address getEntryPoint() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			return entryPoint;
-		}
-		finally {
-			manager.lock.release();
-		}
+		validate(manager.lock);
+		return entryPoint;
 	}
 
 	@Override
@@ -378,12 +361,18 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public ReturnParameterDB getReturn() {
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getReturn();
+		}
+		ReturnParameterDB rp = returnParam;
+		if (rp != null) {
+			return rp;
+		}
 		manager.lock.acquire();
 		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getReturn();
-			}
+			// NOTE: lock required to avoid returning null returnParam
 			loadVariables();
 			return returnParam;
 		}
@@ -634,32 +623,22 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 */
 	@Override
 	public StackFrame getStackFrame() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.frame;
-			}
-			return frame;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return thunkedFunction.getStackFrame();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return frame;
 	}
 
 	@Override
 	public int getStackPurgeSize() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getStackPurgeSize();
-			}
-			return rec.getIntValue(FunctionAdapter.STACK_PURGE_COL);
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getStackPurgeSize();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return rec.getIntValue(FunctionAdapter.STACK_PURGE_COL);
 	}
 
 	@Override
@@ -693,20 +672,12 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public boolean isStackPurgeSizeValid() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.isStackPurgeSizeValid();
-			}
-			if (getStackPurgeSize() > 0xffffff) {
-				return false;
-			}
-			return true;
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.isStackPurgeSizeValid();
 		}
-		finally {
-			manager.lock.release();
-		}
+		return getStackPurgeSize() <= 0xffffff;
 	}
 
 	@Override
@@ -2417,18 +2388,13 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 * @return true if the indicated flag is set
 	 */
 	private boolean isFunctionFlagSet(byte functionFlagIndicator) {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.isFunctionFlagSet(functionFlagIndicator);
-			}
-			byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
-			return ((flags & functionFlagIndicator) != 0);
+		validate(manager.lock);
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.isFunctionFlagSet(functionFlagIndicator);
 		}
-		finally {
-			manager.lock.release();
-		}
+		byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
+		return ((flags & functionFlagIndicator) != 0);
 	}
 
 	/**
@@ -2529,29 +2495,20 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public String getCallingConventionName() {
-		manager.lock.acquire();
-		try {
-			if (!checkIsValid()) {
-				return null;
-			}
-			if (thunkedFunction != null) {
-				return thunkedFunction.getCallingConventionName();
-			}
-			byte callingConventionID = rec.getByteValue(FunctionAdapter.CALLING_CONVENTION_ID_COL);
-			if (callingConventionID == DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID) {
-				return Function.UNKNOWN_CALLING_CONVENTION_STRING;
-			}
-			if (callingConventionID == DataTypeManagerDB.DEFAULT_CALLING_CONVENTION_ID) {
-				return Function.DEFAULT_CALLING_CONVENTION_STRING;
-			}
-			return program.getDataTypeManager().getCallingConventionName(callingConventionID);
+		if (!validate(manager.lock)) {
+			return UNKNOWN_CALLING_CONVENTION_STRING;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getCallingConventionName();
 		}
+		byte callingConventionID = rec.getByteValue(FunctionAdapter.CALLING_CONVENTION_ID_COL);
+		// NOTE: If ID is invalid unknown calling convention name will be returned
+		return program.getDataTypeManager().getCallingConventionName(callingConventionID);
 	}
 
 	private String getRealCallingConventionName() {
+		// NOTE: Method only invoked from locked-block
 		if (thunkedFunction != null) {
 			return thunkedFunction.getRealCallingConventionName();
 		}
@@ -2651,21 +2608,18 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public String getCallFixup() {
-		manager.lock.acquire();
-		try {
-			checkIsValid();
-			if (thunkedFunction != null) {
-				return thunkedFunction.getCallFixup();
-			}
-			StringPropertyMap callFixupMap = manager.getCallFixupMap(false);
-			if (callFixupMap == null) {
-				return null;
-			}
-			return callFixupMap.getString(entryPoint);
+		if (!validate(manager.lock)) {
+			return null;
 		}
-		finally {
-			manager.lock.release();
+		FunctionDB localThunkFunc = thunkedFunction;
+		if (localThunkFunc != null) {
+			return localThunkFunc.getCallFixup();
 		}
+		StringPropertyMap callFixupMap = manager.getCallFixupMap(false);
+		if (callFixupMap == null) {
+			return null;
+		}
+		return callFixupMap.getString(entryPoint);
 	}
 
 	@Override

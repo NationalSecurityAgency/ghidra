@@ -88,13 +88,13 @@ public class ClearCmd extends BackgroundCommand<Program> {
 	public boolean applyTo(Program p, TaskMonitor taskMonitor) {
 		this.monitor = taskMonitor;
 		this.program = p;
-		boolean wasEabled = program.isSendingEvents();
+		boolean wasEnabled = program.isSendingEvents();
 		try {
 			program.setEventsEnabled(sendIndividualEvents);
 			return doApplyTo();
 		}
 		finally {
-			program.setEventsEnabled(wasEabled);
+			program.setEventsEnabled(wasEnabled);
 			program = null;
 			monitor = null;
 		}

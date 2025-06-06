@@ -2707,20 +2707,18 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	public void clearData(Set<Long> dataTypeIDs, TaskMonitor monitor) throws CancelledException {
 		lock.acquire();
 		try {
-			List<Address> addrs = new ArrayList<>();
+			List<Address> toClear = new ArrayList<>();
 			RecordIterator it = dataAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				long id = rec.getLongValue(DataDBAdapter.DATA_TYPE_ID_COL);
-				for (long dataTypeID : dataTypeIDs) {
-					if (id == dataTypeID) {
-						addrs.add(addrMap.decodeAddress(rec.getKey()));
-						break;
-					}
+				if (dataTypeIDs.contains(id)) {
+					toClear.add(addrMap.decodeAddress(rec.getKey()));
 				}
 			}
-			for (Address addr : addrs) {
+
+			for (Address addr : toClear) {
 				monitor.checkCancelled();
 				clearCodeUnits(addr, addr, false, monitor);
 			}
@@ -3161,7 +3159,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 // TODO: for now we will assume that all keys within defined memory blocks are known.
 // When a memory block is created, only its start address key is generated, if the
 // block spans a 32-bit boundary, null may be returned for all addresses beyond that
-// boundary.  A recent fix was added to the memory map to ensure ensure that we can
+// boundary.  A recent fix was added to the memory map to ensure that we can
 // handle blocks which are at least 32-bits in size by ensuring that the end address
 // key is also generated.
 			return null;
@@ -3207,8 +3205,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		try {
 			cache.invalidate();
-			lengthMgr.invalidateCache();
-			compositeMgr.invalidateCache();
+			lengthMgr.invalidate();
+			compositeMgr.invalidate();
 			protoMgr.clearCache();
 		}
 		finally {

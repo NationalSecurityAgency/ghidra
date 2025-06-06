@@ -103,8 +103,9 @@ public class CFStringAnalyzer extends AbstractAnalyzer {
 
 				String comment = makeComment(cFString);
 
-				program.getListing().setComment(currentAddress, CodeUnit.REPEATABLE_COMMENT,
-					"\"" + comment + "\",00");
+				program.getListing()
+						.setComment(currentAddress, CommentType.REPEATABLE,
+							"\"" + comment + "\",00");
 
 				if (program.getSymbolTable().getGlobalSymbol(symbolString,
 					currentAddress) != null) {

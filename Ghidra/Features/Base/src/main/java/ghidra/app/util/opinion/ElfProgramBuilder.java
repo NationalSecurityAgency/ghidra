@@ -545,7 +545,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					comment = Long.toHexString(symbols[index].getValue());
 				}
 
-				cu.setComment(CodeUnit.EOL_COMMENT, comment);
+				cu.setComment(CommentType.EOL, comment);
 
 //            Scalar scalar = (Scalar)data.getValue();
 //            switch ((int)scalar.getValue()) {
@@ -837,7 +837,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		createData(interpStrAddr, TerminatedStringDataType.dataType);
-		listing.setComment(interpStrAddr, CodeUnit.EOL_COMMENT, "Initial Elf program interpreter");
+		listing.setComment(interpStrAddr, CommentType.EOL, "Initial Elf program interpreter");
 	}
 
 	private void processImports(TaskMonitor monitor) throws CancelledException {
@@ -1230,7 +1230,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
-				d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
+				d.setComment(CommentType.EOL, programHeaders[i].getComment());
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_NULL) {
 					continue;
 				}
@@ -1301,7 +1301,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (type != null) {
 					comment = comment + " - " + type;
 				}
-				d.setComment(CodeUnit.EOL_COMMENT, comment);
+				d.setComment(CommentType.EOL, comment);
 
 				Address sectionAddr = findLoadAddress(sections[i], 0);
 				if (sectionAddr != null) {
@@ -1340,7 +1340,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				listing.createData(relocTableAddr, dataType);
 			}
 			else {
-				listing.setComment(relocTableAddr, CodeUnit.PRE_COMMENT,
+				listing.setComment(relocTableAddr, CommentType.PRE,
 					"ELF Relocation Table (markup not yet supported)");
 			}
 		}
@@ -2021,14 +2021,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// Add versioned symbol as comment only
 		Address address = s.getAddress();
-		String comment = listing.getComment(CodeUnit.PRE_COMMENT, address);
+		String comment = listing.getComment(CommentType.PRE, address);
 		if (comment == null || comment.length() == 0) {
 			comment = symName;
 		}
 		else {
 			comment += "\n" + symName;
 		}
-		listing.setComment(address, CodeUnit.PRE_COMMENT, comment);
+		listing.setComment(address, CommentType.PRE, comment);
 		setElfSymbolAddress(elfSymbol, address);
 		return true;
 	}
@@ -2499,21 +2499,21 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - nbucket");
+			d.setComment(CommentType.EOL, "Hash Table - nbucket");
 			long nbucket = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - nchain");
+			d.setComment(CommentType.EOL, "Hash Table - nchain");
 			long nchain = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbucket, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - buckets");
+			d.setComment(CommentType.EOL, "Hash Table - buckets");
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nchain, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - chains");
+			d.setComment(CommentType.EOL, "Hash Table - chains");
 		}
 		catch (Exception e) {
 			log("Failed to properly markup Hash table at " + hashTableAddr + ": " + getMessage(e));
@@ -2542,36 +2542,36 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - nbucket");
+			d.setComment(CommentType.EOL, "GNU Hash Table - nbucket");
 			long nbucket = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - symbase");
+			d.setComment(CommentType.EOL, "GNU Hash Table - symbase");
 			long symbolBase = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom_size");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom_size");
 			long bloomSize = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom_shift");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom_shift");
 
 			addr = addr.add(d.getLength());
 			DataType bloomDataType =
 				elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
 			d = listing.createData(addr,
 				new ArrayDataType(bloomDataType, (int) bloomSize, bloomDataType.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom");
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbucket, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - buckets");
+			d.setComment(CommentType.EOL, "GNU Hash Table - buckets");
 
 			addr = addr.add(d.getLength());
-			listing.setComment(addr, CodeUnit.EOL_COMMENT, "GNU Hash Table - chain");
+			listing.setComment(addr, CommentType.EOL, "GNU Hash Table - chain");
 
 			// Rely on dynamic symbol table for number of symbols
 			ElfSymbolTable dynamicSymbolTable = elf.getDynamicSymbolTable();
@@ -2612,30 +2612,30 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// Elf32_Word  ngnusyms;  // number of entries in chains (and xlat); dynsymcount=symndx+ngnusyms
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - ngnusyms");
+			d.setComment(CommentType.EOL, "GNU XHash Table - ngnusyms");
 			long ngnusyms = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  nbuckets;  // number of hash table buckets
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - nbuckets");
+			d.setComment(CommentType.EOL, "GNU XHash Table - nbuckets");
 			long nbuckets = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  symndx;  // number of initial .dynsym entires skipped in chains[] (and xlat[])
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - symndx");
+			d.setComment(CommentType.EOL, "GNU XHash Table - symndx");
 
 			// Elf32_Word  maskwords; // number of ElfW(Addr) words in bitmask
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - maskwords");
+			d.setComment(CommentType.EOL, "GNU XHash Table - maskwords");
 			long maskwords = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  shift2;  // bit shift of hashval for second Bloom filter bit
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - shift2");
+			d.setComment(CommentType.EOL, "GNU XHash Table - shift2");
 
 			// ElfW(Addr)  bitmask[maskwords];  // 2 bit Bloom filter on hashval
 			addr = addr.add(d.getLength());
@@ -2643,22 +2643,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
 			d = listing.createData(addr,
 				new ArrayDataType(bloomDataType, (int) maskwords, bloomDataType.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - bitmask");
+			d.setComment(CommentType.EOL, "GNU XHash Table - bitmask");
 
 			// Elf32_Word  buckets[nbuckets];  // indices into chains[]
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbuckets, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - buckets");
+			d.setComment(CommentType.EOL, "GNU XHash Table - buckets");
 
 			// Elf32_Word  chains[ngnusyms];  // consecutive hashvals in a given bucket; last entry in chain has LSB set
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - chains");
+			d.setComment(CommentType.EOL, "GNU XHash Table - chains");
 
 			// Elf32_Word  xlat[ngnusyms];  // parallel to chains[]; index into .dynsym
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - xlat");
+			d.setComment(CommentType.EOL, "GNU XHash Table - xlat");
 		}
 		catch (Exception e) {
 			log("Failed to properly markup GNU Hash table at " + hashTableAddr + ": " +
@@ -2688,7 +2688,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 			Data structData = array.getComponent(i);
 			if (structData != null) {
-				structData.setComment(CodeUnit.EOL_COMMENT, name);
+				structData.setComment(CommentType.EOL, name);
 			}
 		}
 	}
@@ -2736,7 +2736,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				String comment =
 					dynamicType != null ? (dynamicType.name + " - " + dynamicType.description)
 							: ("DT_0x" + StringUtilities.pad(Integer.toHexString(tagType), '0', 8));
-				dynamicData.setComment(CodeUnit.EOL_COMMENT, comment);
+				dynamicData.setComment(CommentType.EOL, comment);
 
 				Data valueData = dynamicData.getComponent(1);
 
@@ -2749,7 +2749,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						if (dynamicStringTable != null) {
 							String str = dynamicStringTable.readString(elf.getReader(), value);
 							if (str != null && str.length() != 0) {
-								valueData.setComment(CodeUnit.EOL_COMMENT, str);
+								valueData.setComment(CommentType.EOL, str);
 							}
 						}
 					}

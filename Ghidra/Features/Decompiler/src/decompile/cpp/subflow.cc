@@ -2582,7 +2582,7 @@ void SplitDatatype::buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<V
     data.getMerge().registerProtoPartialRoot(rootVn);
 }
 
-/// \brief Build a a series of PTRSUB ops at different offsets, given a root pointer
+/// \brief Build a series of PTRSUB ops at different offsets, given a root pointer
 ///
 /// Offsets and data-types are based on \b dataTypePieces, taking input data-types if \b isInput is \b true,
 /// output data-types otherwise.  The data-types, relative to the root pointer, are assumed to start at

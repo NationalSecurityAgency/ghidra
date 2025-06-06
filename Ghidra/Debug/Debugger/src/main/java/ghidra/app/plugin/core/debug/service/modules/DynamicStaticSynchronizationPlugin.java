@@ -391,6 +391,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 		if (dynamicLoc == null) {
 			return;
 		}
+		currentDynamicLocation = dynamicLoc;
 		firePluginEvent(new TraceLocationPluginEvent(getName(), dynamicLoc));
 	}
 
@@ -412,6 +413,11 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 		if (staticLoc == null) {
 			return;
 		}
+		if (currentStatic != staticLoc.getProgram()) {
+			currentStatic = staticLoc.getProgram();
+			firePluginEvent(new ProgramActivatedPluginEvent(getName(), staticLoc.getProgram()));
+		}
+		currentStaticLocation = staticLoc;
 		firePluginEvent(
 			new ProgramLocationPluginEvent(getName(), staticLoc, staticLoc.getProgram()));
 	}
@@ -434,6 +440,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 					.map(r -> r.getDestinationAddressRange())
 					.collect(AddressCollectors.toAddressSet());
 		ProgramSelection dynamicSel = new ProgramSelection(dynamicAddrs);
+		currentDynamicSelection = dynamicSel;
 		firePluginEvent(new TraceSelectionPluginEvent(getName(), dynamicSel, view));
 		return dynamicSel;
 	}
@@ -456,6 +463,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 						.map(r -> r.getDestinationAddressRange())
 						.collect(AddressCollectors.toAddressSet());
 		ProgramSelection staticSel = new ProgramSelection(staticAddrs);
+		currentStaticSelection = staticSel;
 		firePluginEvent(new ProgramSelectionPluginEvent(getName(), staticSel, currentStatic));
 		return staticSel;
 	}
@@ -573,7 +581,7 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 					if (consoleService != null) {
 						consoleService.log(DebuggerResources.ICON_MODULES, "<html>Program <b>" +
 							HTMLUtilities.escapeHTML(df.getPathname()) +
-							"</b> was created with a different version of Ghidra." +
+							"</b> was imported with a different version of Ghidra." +
 							" It must be opened manually.</html>", ctx);
 					}
 					return;

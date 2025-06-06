@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -494,9 +494,7 @@ public class GProperties {
 	 */
 	public Element saveToXml() {
 		Element root = new Element(propertiesName);
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : map.keySet()) {
 			Object value = map.get(key);
 			Element elem = createElement(key, value);
 			root.addContent(elem);
@@ -638,9 +636,7 @@ public class GProperties {
 		JsonObject types = new JsonObject();
 		JsonObject values = new JsonObject();
 		JsonObject enumClasses = new JsonObject();
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String key = iter.next();
+		for (String key : map.keySet()) {
 			Object value = map.get(key);
 			if (value == null) {
 				types.addProperty(key, "null");
@@ -835,15 +831,22 @@ public class GProperties {
 	}
 
 	/**
-	 * Return the names of the properties in this GProperties.
-	 * @return the names of the properties in this GProperties.
+	 * Returns the name of this GProperties
+	 * @return the name of this GProperties
+	 */
+	public String getName() {
+		return propertiesName;
+	}
+
+	/**
+	 * Return the names of the properties in this GProperties
+	 * @return the names of the properties in this GProperties
 	 */
 	public String[] getNames() {
 		String[] names = new String[map.size()];
 		int idx = 0;
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			names[idx] = iter.next();
+		for (String element : map.keySet()) {
+			names[idx] = element;
 			++idx;
 		}
 		return names;

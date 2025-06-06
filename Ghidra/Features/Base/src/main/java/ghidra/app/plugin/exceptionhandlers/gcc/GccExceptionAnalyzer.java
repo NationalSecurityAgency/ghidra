@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -288,11 +288,11 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 		Address csMaxAddr = callSite.getMaxAddress();
 		String startTryComment = "try { // try from " + csMinAddr + " to " + csMaxAddr +
 			" has its CatchHandler @ " + lpAddr;
-		String existingComment = program.getListing().getComment(CodeUnit.PRE_COMMENT, csMinAddr);
+		String existingComment = program.getListing().getComment(CommentType.PRE, csMinAddr);
 		if (existingComment == null || !existingComment.contains(startTryComment)) {
 			String mergedComment = StringUtilities.mergeStrings(existingComment, startTryComment);
 			SetCommentCmd setCommentCmd =
-				new SetCommentCmd(csMinAddr, CodeUnit.PRE_COMMENT, mergedComment);
+				new SetCommentCmd(csMinAddr, CommentType.PRE, mergedComment);
 			setCommentCmd.applyTo(program);
 		}
 	}
@@ -305,11 +305,11 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 			Address commentAddr = csMaxCodeUnit.getMinAddress();
 			String endTryComment = "} // end try from " + csMinAddr + " to " + csMaxAddr;
 			String existingComment =
-				program.getListing().getComment(CodeUnit.POST_COMMENT, commentAddr);
+				program.getListing().getComment(CommentType.POST, commentAddr);
 			if (existingComment == null || !existingComment.contains(endTryComment)) {
 				String mergedComment = StringUtilities.mergeStrings(existingComment, endTryComment);
 				SetCommentCmd setCommentCmd =
-					new SetCommentCmd(commentAddr, CodeUnit.POST_COMMENT, mergedComment);
+					new SetCommentCmd(commentAddr, CommentType.POST, mergedComment);
 				setCommentCmd.applyTo(program);
 			}
 		}
@@ -322,11 +322,10 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 			typeInfos.stream().map(a -> getCatchParamInfo(a)).collect(Collectors.joining(", "));
 		String startCatchComment =
 			"catch(" + typeString + ") { ... } // from try @ " + csAddr + " with catch @ " + lpAddr;
-		String existingComment = program.getListing().getComment(CodeUnit.PRE_COMMENT, lpAddr);
+		String existingComment = program.getListing().getComment(CommentType.PRE, lpAddr);
 		if (existingComment == null || !existingComment.contains(startCatchComment)) {
 			String mergedComment = StringUtilities.mergeStrings(existingComment, startCatchComment);
-			SetCommentCmd setCommentCmd =
-				new SetCommentCmd(lpAddr, CodeUnit.PRE_COMMENT, mergedComment);
+			SetCommentCmd setCommentCmd = new SetCommentCmd(lpAddr, CommentType.PRE, mergedComment);
 			setCommentCmd.applyTo(program);
 		}
 	}
@@ -346,7 +345,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 //		// TODO If we can determine the length of the catch handler we could mark its end too.
 //		Address lpMaxAddr = ?;
 //		String endCatchComment = "} // end catchHandler()";
-//		String existingComment = program.getListing().getComment(CodeUnit.POST_COMMENT, lpMaxAddr);
+//		String existingComment = program.getListing().getComment(CommentType.POST, lpMaxAddr);
 //		if (existingComment == null || !existingComment.contains(endCatchComment)) {
 //			String mergedComment =
 //				StringUtilities.mergeStrings(existingComment, endCatchComment);

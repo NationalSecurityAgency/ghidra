@@ -514,7 +514,7 @@ public class MachoProgramBuilder {
 					if (!realEntryFound) {
 						program.getSymbolTable().createLabel(addr, "entry", SourceType.IMPORTED);
 						program.getSymbolTable().addExternalEntryPoint(addr);
-						createOneByteFunction("entry", addr);
+						createOneByteFunction(program, "entry", addr);
 						realEntryFound = true;
 					}
 					else {
@@ -684,17 +684,15 @@ public class MachoProgramBuilder {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
+				String name = null;
 				if (symbol != null) {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-					if (name != null && name.length() > 0) {
-						Function stubFunc = createOneByteFunction(name, startAddr);
-						if (stubFunc != null) {
-							ExternalLocation loc = program.getExternalManager()
-									.addExtLocation(Library.UNKNOWN, name, null,
-										SourceType.IMPORTED);
-							stubFunc.setThunkedFunction(loc.createFunction());
-						}
-					}
+					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+				}
+				Function stubFunc = createOneByteFunction(program, name, startAddr);
+				if (stubFunc != null && symbol != null) {
+					ExternalLocation loc = program.getExternalManager()
+							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
+					stubFunc.setThunkedFunction(loc.createFunction());
 				}
 
 				startAddr = startAddr.add(symbolSize);
@@ -968,8 +966,8 @@ public class MachoProgramBuilder {
 				}
 				finally {
 					program.getRelocationTable()
-							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
-								binding.getType(), null, bytes.length, binding.getSymbolName());
+							.add(addr, success ? Status.APPLIED : Status.FAILURE, binding.getType(),
+								null, bytes.length, binding.getSymbolName());
 				}
 			}
 		}
@@ -1283,7 +1281,8 @@ public class MachoProgramBuilder {
 
 			String libraryPath = null;
 
-			if (command instanceof DynamicLibraryCommand dylibCommand) {
+			if (command instanceof DynamicLibraryCommand dylibCommand &&
+				dylibCommand.getCommandType() != LoadCommandTypes.LC_ID_DYLIB) {
 				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
 				libraryPath = dylib.getName().getString();
 			}
@@ -1586,7 +1585,7 @@ public class MachoProgramBuilder {
 		}
 		Register tModeRegister = program.getLanguage().getRegister("TMode");
 		program.getProgramContext().setValue(tModeRegister, address, address, BigInteger.ONE);
-		createOneByteFunction(null, address);
+		createOneByteFunction(program, null, address);
 	}
 
 	private void processLazyPointerSection(AddressSetView set) {
@@ -1640,13 +1639,14 @@ public class MachoProgramBuilder {
 	 * create a one-byte function, so that when the code is analyzed,
 	 * it will be disassembled, and the function created with the correct body.
 	 *
+	 * @param program The {@link Program}
 	 * @param name the name of the function
 	 * @param address location to create the function
 	 * @return If a function already existed at the given address, that function will be returned.
 	 *   Otherwise, the newly created function will be returned.  If there was a problem creating
 	 *   the function, null will be returned.
 	 */
-	Function createOneByteFunction(String name, Address address) {
+	public static Function createOneByteFunction(Program program, String name, Address address) {
 		FunctionManager functionMgr = program.getFunctionManager();
 		Function function = functionMgr.getFunctionAt(address);
 		if (function != null) {
@@ -1861,6 +1861,15 @@ public class MachoProgramBuilder {
 	 */
 	public static void fixupExternalLibrary(Program program, List<String> libraryPaths,
 			int libraryOrdinal, String symbol) throws Exception {
+
+		switch (libraryOrdinal) {
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_SELF:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_WEAK_LOOKUP:
+				return;
+		}
+
 		ExternalManager extManager = program.getExternalManager();
 		int libraryIndex = libraryOrdinal - 1;
 		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {

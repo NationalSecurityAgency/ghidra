@@ -336,6 +336,10 @@ public class DBTraceMemorySpace
 		}*/
 	}
 
+	public void checkStateMapIntegrity() {
+		stateMapSpace.checkIntegrity();
+	}
+
 	@Override
 	// TODO: Ensure a code unit is not having rug taken out from under it?
 	public void setState(long snap, Address start, Address end, TraceMemoryState state) {
@@ -757,7 +761,8 @@ public class DBTraceMemorySpace
 
 		spans: for (Lifespan span : viewport.getOrderedSpans(snap)) {
 			Iterator<AddressRange> arit =
-				getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN).iterator(start, true);
+				getAddressesWithState(span, remains, s -> s == TraceMemoryState.KNOWN)
+						.iterator(start, true);
 			while (arit.hasNext()) {
 				AddressRange rng = arit.next();
 				if (rng.getMinAddress().compareTo(toRead.getMaxAddress()) > 0) {

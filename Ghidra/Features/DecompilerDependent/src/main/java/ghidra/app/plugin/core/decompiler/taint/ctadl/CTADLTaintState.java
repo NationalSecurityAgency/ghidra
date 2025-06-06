@@ -52,17 +52,15 @@ public class CTADLTaintState extends AbstractTaintState {
 		if (!direction.equals(TaintDirection.DEFAULT)) {
 			paramList.add("--compute-slices");
 			switch (taintOptions.getTaintDirection()) {
-				case TaintDirection.BOTH ->
-					paramList.add("all");
-				case TaintDirection.FORWARD ->
-					paramList.add("fwd");
-				case TaintDirection.BACKWARD ->
-					paramList.add("bwd");
+				case TaintDirection.BOTH -> paramList.add("all");
+				case TaintDirection.FORWARD -> paramList.add("fwd");
+				case TaintDirection.BACKWARD -> paramList.add("bwd");
 				default -> {
 					// No action
 				}
 			}
 		}
+		paramList.add("--no-compile-analysis");
 		paramList.add("-j8");
 		paramList.add("--format=" + taintOptions.getTaintOutputForm().toString());
 	}
@@ -105,12 +103,11 @@ public class CTADLTaintState extends AbstractTaintState {
 		return perFunction ? "ExportPCodeForSingleFunction.java" : "ExportPCodeForCTADL.java";
 	}
 
-
 	@Override
 	protected void writeHeader(PrintWriter writer) {
 		writer.println("#include \"pcode/taintquery.dl\"");
 	}
-	
+
 	/*
 	 * NOTE: This is the only method used now for Sources and Sinks.
 	 */
@@ -119,6 +116,7 @@ public class CTADLTaintState extends AbstractTaintState {
 		Boolean allAccess = taintOptions.getTaintUseAllAccess();
 		String method = isSource ? "TaintSource" : "LeakingSink";
 		Address addr = mark.getAddress();
+		boolean functionLevel = mark.getVarnodeAddress() == null;
 
 		if (mark.getFunctionName() == null) {
 			return;
@@ -137,31 +135,45 @@ public class CTADLTaintState extends AbstractTaintState {
 		else {
 
 			HighVariable hv = mark.getHighVariable();
+			String pathConstraint = null;
 			if (hv == null && token instanceof ClangFieldToken ftoken) {
 				ClangVariableToken vtoken = TaintState.getParentToken(ftoken);
 				if (vtoken != null) {
 					hv = vtoken.getHighVariable();
+					pathConstraint = token.getText();
 					token = vtoken;
 				}
 			}
 			writer.println(method + "Vertex(\"" + mark.getLabel() + "\", vn, p) :-");
 			writer.println("\t((HFUNC_NAME(m, \"" + mark.getFunctionName() + "\"),");
 			writer.println("\tCVar_InFunction(vn, m)) ; CVar_isGlobal(vn)),");
-			if (addr != null && addr.getOffset() != 0 && !mark.bySymbol()) {
+			if (!functionLevel && !mark.bySymbol()) {
 				writer.println("\t(PCODE_INPUT(i, _, vn) ; PCODE_OUTPUT(i, vn)),");
 				writer.println("\tPCODE_TARGET(i, " + addr.getOffset() + "),");
 			}
-			if (mark.bySymbol()) {
+			if (mark.bySymbol() && hv != null) {
+				writer.println("\t((SYMBOL_NAME(sym, \"" + token.getText() + "\"),");
+				writer.println("\tSYMBOL_HVAR(sym, hv),");
+				// Note this is an OR
+				writer.println("\tVNODE_HVAR(vn, hv));");
+				writer.println("\tCVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
+					TaintState.varName(token, false) + "\")),");
+			}
+			else if (mark.bySymbol()) {
 				writer.println("\tSYMBOL_NAME(sym, \"" + token.getText() + "\"),");
 				writer.println("\tSYMBOL_HVAR(sym, hv),");
 				writer.println("\tVNODE_HVAR(vn, hv),");
 			}
 			else if (hv != null) {
 				writer.println("\tCVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
-					TaintState.hvarName(token) + "\"),");
+					TaintState.varName(token, false) + "\"),");
 			}
 			else {
-				writer.println("\tCVar_Name(vn, \"" + token.getText() + "\"),");
+				writer.println("\t(CVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
+					TaintState.varName(token, false) + "\");");
+			}
+			if (pathConstraint != null) {
+				writer.println("\tp = \"." + pathConstraint + "\",");
 			}
 			if (!allAccess) {
 				writer.println("\tp = \"\",");
@@ -176,7 +188,7 @@ public class CTADLTaintState extends AbstractTaintState {
 		Boolean allAccess = taintOptions.getTaintUseAllAccess();
 		String method = "TaintSanitizeAll";
 		Address addr = mark.getAddress();
-		// TODO: verify setting entryPoint as addr doesn't break things
+		// NOTE: verify setting entryPoint as addr doesn't break things
 
 		if (mark.getFunctionName() == null) {
 			return;
@@ -191,7 +203,7 @@ public class CTADLTaintState extends AbstractTaintState {
 			writer.println("\tVNODE_PC_ADDRESS(vn, " + addr.getOffset() + "),");
 		}
 		writer.println("\tCVar_SourceInfo(vn, SOURCE_INFO_NAME_KEY, \"" +
-			TaintState.hvarName(mark.getToken()) + "\"),");
+			TaintState.varName(mark.getToken(), false) + "\"),");
 		if (!allAccess) {
 			writer.println("\tp = \"\",");
 		}

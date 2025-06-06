@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramEvent;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -33,7 +32,6 @@ import ghidra.util.exception.InvalidInputException;
  * Symbol data usage:
  *   String stringData - associated program project file path
  */
-
 public class LibrarySymbol extends SymbolDB {
 
 	private LibraryDB library;
@@ -93,6 +91,7 @@ public class LibrarySymbol extends SymbolDB {
 				.setObjChanged(ProgramEvent.EXTERNAL_PATH_CHANGED, getName(), oldPath, newPath);
 	}
 
+	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.LIBRARY;
 	}
@@ -113,14 +112,6 @@ public class LibrarySymbol extends SymbolDB {
 	@Override
 	public boolean isPrimary() {
 		return true;
-	}
-
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
-	public ProgramLocation getProgramLocation() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

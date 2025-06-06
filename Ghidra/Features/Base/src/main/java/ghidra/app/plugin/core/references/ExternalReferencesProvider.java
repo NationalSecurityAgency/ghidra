@@ -212,7 +212,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private void deleteExternalProgram() {
 		ExternalManager externalManager = program.getExternalManager();
 		StringBuilder buf = new StringBuilder();
-		CompoundCmd cmd = new CompoundCmd("Delete External Program Name");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete External Program Name");
 		for (String externalName : getSelectedExternalNames()) {
 			boolean hasLocations = externalManager.getExternalLocations(externalName).hasNext();
 			if (hasLocations) {
@@ -251,7 +251,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			ExternalManager externalManager = program.getExternalManager();
 			String externalLibraryPath = externalManager.getExternalLibraryPath(externalName);
 			if (!pathName.equals(externalLibraryPath)) {
-				Command cmd = new SetExternalNameCmd(externalName, domainFile.getPathname());
+				Command<Program> cmd =
+					new SetExternalNameCmd(externalName, domainFile.getPathname());
 				getTool().execute(cmd, program);
 			}
 		});
@@ -260,7 +261,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	}
 
 	private void clearExternalAssociation() {
-		CompoundCmd cmd = new CompoundCmd("Clear External Program Associations");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Clear External Program Associations");
 		for (String externalName : getSelectedExternalNames()) {
 			cmd.add(new ClearExternalNameCmd(externalName));
 		}
@@ -435,7 +436,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 			rowToHighlightDuringNextReload = newName;
 			String oldName = path.getName();
-			Command cmd = new UpdateExternalNameCmd(oldName, newName, SourceType.USER_DEFINED);
+			Command<Program> cmd =
+				new UpdateExternalNameCmd(oldName, newName, SourceType.USER_DEFINED);
 			if (!tool.execute(cmd, program)) {
 				tool.setStatusInfo(cmd.getStatusMsg());
 			}

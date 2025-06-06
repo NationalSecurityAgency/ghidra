@@ -17,7 +17,11 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 import java.util.Objects;
 
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.framework.options.SaveState;
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Function;
 
 /**
  * A simple object to store various filter settings for the data type provider.
@@ -26,118 +30,176 @@ public class DtFilterState {
 
 	private static final String XML_NAME = "DATA_TYPES_FILTER";
 
-	private boolean showArrays = false;
-	private boolean showEnums = true;
-	private boolean showFunctions = true;
-	private boolean showStructures = true;
-	private boolean showTypedefs = true;
-	private boolean showPointers = false;
-	private boolean showUnions = true;
+	private DtTypeFilter arraysFilter = new DtTypeFilter("Arrays");
+	private DtTypeFilter enumsFilter = new DtTypeFilter("Enums");
+	private DtTypeFilter functionsFilter = new DtTypeFilter("Functions");
+	private DtTypeFilter structuresFilter = new DtTypeFilter("Structures");
+	private DtTypeFilter pointersFilter = new DtTypeFilter("Pointers");
+	private DtTypeFilter unionsFilter = new DtTypeFilter("Unions");
+
+	public DtFilterState() {
+		// these types are off by default, since users typically are not working with them
+		arraysFilter.setTypeActive(false);
+		pointersFilter.setTypeActive(false);
+	}
 
 	public DtFilterState copy() {
 		DtFilterState filterState = new DtFilterState();
-		filterState.setShowArrays(showArrays);
-		filterState.setShowEnums(showEnums);
-		filterState.setShowFunctions(showFunctions);
-		filterState.setShowStructures(showStructures);
-		filterState.setShowTypedefs(showTypedefs);
-		filterState.setShowPointers(showPointers);
-		filterState.setShowUnions(showUnions);
+		filterState.arraysFilter = arraysFilter.copy();
+		filterState.enumsFilter = enumsFilter.copy();
+		filterState.functionsFilter = functionsFilter.copy();
+		filterState.structuresFilter = structuresFilter.copy();
+		filterState.pointersFilter = pointersFilter.copy();
+		filterState.unionsFilter = unionsFilter.copy();
 		return filterState;
 	}
 
-	public boolean isShowPointers() {
-		return showPointers;
+	public boolean isShowArrays() {
+		return arraysFilter.isTypeActive();
 	}
 
-	public void setShowPointers(boolean showPointers) {
-		this.showPointers = showPointers;
+	public DtTypeFilter getArraysFilter() {
+		return arraysFilter;
 	}
 
-	public boolean isShowStructures() {
-		return showStructures;
-	}
-
-	public void setShowStructures(boolean showStructures) {
-		this.showStructures = showStructures;
-	}
-
-	public boolean isShowTypedefs() {
-		return showStructures;
-	}
-
-	public void setShowTypedefs(boolean showTypedefs) {
-		this.showTypedefs = showTypedefs;
+	public void setArraysFilter(DtTypeFilter filter) {
+		this.arraysFilter = filter;
 	}
 
 	public boolean isShowEnums() {
-		return showEnums;
+		return enumsFilter.isTypeActive();
 	}
 
-	public void setShowEnums(boolean showEnums) {
-		this.showEnums = showEnums;
+	public DtTypeFilter getEnumsFilter() {
+		return enumsFilter;
+	}
+
+	public void setEnumsFilter(DtTypeFilter filter) {
+		this.enumsFilter = filter;
 	}
 
 	public boolean isShowFunctions() {
-		return showFunctions;
+		return functionsFilter.isTypeActive();
 	}
 
-	public void setShowFunctions(boolean showFunctions) {
-		this.showFunctions = showFunctions;
+	public DtTypeFilter getFunctionsFilter() {
+		return functionsFilter;
+	}
+
+	public void setFunctionsFilter(DtTypeFilter filter) {
+		this.functionsFilter = filter;
+	}
+
+	public boolean isShowPointers() {
+		return pointersFilter.isTypeActive();
+	}
+
+	public DtTypeFilter getPointersFilter() {
+		return pointersFilter;
+	}
+
+	public void setPointersFilter(DtTypeFilter filter) {
+		this.pointersFilter = filter;
+	}
+
+	public boolean isShowStructures() {
+		return structuresFilter.isTypeActive();
+	}
+
+	public DtTypeFilter getStructuresFilter() {
+		return structuresFilter;
+	}
+
+	public void setStructuresFilter(DtTypeFilter filter) {
+		this.structuresFilter = filter;
 	}
 
 	public boolean isShowUnions() {
-		return showUnions;
+		return unionsFilter.isTypeActive();
 	}
 
-	public void setShowUnions(boolean showUnions) {
-		this.showUnions = showUnions;
+	public DtTypeFilter getUnionsFilter() {
+		return unionsFilter;
 	}
 
-	public boolean isShowArrays() {
-		return showArrays;
+	public void setUnionsFilter(DtTypeFilter filter) {
+		this.unionsFilter = filter;
 	}
 
-	public void setShowArrays(boolean showArrays) {
-		this.showArrays = showArrays;
+	public boolean passesFilters(DataType dt) {
+
+		DataTypeManager dtm = dt.getDataTypeManager();
+		if (dtm instanceof BuiltInDataTypeManager) {
+			// never filter built-in types here; users can filter them using the text filter
+			return true;
+		}
+
+		DataType baseDt = DataTypeUtils.getBaseDataType(dt);
+
+		if (dt instanceof Array) {
+			return passes(arraysFilter, dt);
+		}
+
+		if (dt instanceof Pointer) {
+			return passes(pointersFilter, dt);
+		}
+
+		if (baseDt instanceof Enum) {
+			return passes(enumsFilter, dt);
+		}
+
+		if (baseDt instanceof Function) {
+			return passes(functionsFilter, dt);
+		}
+
+		if (baseDt instanceof Structure) {
+			return passes(structuresFilter, dt);
+		}
+
+		if (baseDt instanceof Union) {
+			return passes(unionsFilter, dt);
+		}
+
+		return true;
 	}
 
-	public void setshowPointers(boolean showPointers) {
-		this.showPointers = showPointers;
+	private boolean passes(DtTypeFilter filter, DataType dt) {
+		if (dt instanceof TypeDef) {
+			return filter.isTypeDefActive();
+		}
+
+		return filter.isTypeActive();
 	}
 
 	public void save(SaveState parentSaveState) {
 
-		SaveState saveState = new SaveState(XML_NAME);
-		saveState.putBoolean("SHOW_ARRAYS", showArrays);
-		saveState.putBoolean("SHOW_ENUMS", showEnums);
-		saveState.putBoolean("SHOW_FUNCTIONS", showFunctions);
-		saveState.putBoolean("SHOW_POINTERS", showPointers);
-		saveState.putBoolean("SHOW_STRUCTURES", showStructures);
-		saveState.putBoolean("SHOW_TYPEDEFS", showTypedefs);
-		saveState.putBoolean("SHOW_UNIONS", showUnions);
+		SaveState ss = new SaveState(XML_NAME);
+		ss.putSaveState(arraysFilter.getName(), arraysFilter.save());
+		ss.putSaveState(enumsFilter.getName(), enumsFilter.save());
+		ss.putSaveState(functionsFilter.getName(), functionsFilter.save());
+		ss.putSaveState(pointersFilter.getName(), pointersFilter.save());
+		ss.putSaveState(structuresFilter.getName(), structuresFilter.save());
+		ss.putSaveState(unionsFilter.getName(), unionsFilter.save());
 
-		parentSaveState.putSaveState(XML_NAME, saveState);
+		parentSaveState.putSaveState(XML_NAME, ss);
 	}
 
 	public void restore(SaveState parentSaveState) {
 
-		parentSaveState.getSaveState(XML_NAME);
-		SaveState saveState = new SaveState();
+		SaveState ss = parentSaveState.getSaveState(XML_NAME);
 
-		showArrays = saveState.getBoolean("SHOW_ARRAYS", false);
-		showEnums = saveState.getBoolean("SHOW_ENUMS", true);
-		showFunctions = saveState.getBoolean("SHOW_FUNCTIONS", true);
-		showPointers = saveState.getBoolean("SHOW_POINTERS", false);
-		showStructures = saveState.getBoolean("SHOW_STRUCTURES", true);
-		showTypedefs = saveState.getBoolean("SHOW_TYPEDEFS", true);
-		showUnions = saveState.getBoolean("SHOW_UNIONS", true);
+		arraysFilter = DtTypeFilter.restore("Arrays", ss.getSaveState("Arrays"));
+		enumsFilter = DtTypeFilter.restore("Enums", ss.getSaveState("Enums"));
+		functionsFilter = DtTypeFilter.restore("Functions", ss.getSaveState("Functions"));
+		pointersFilter = DtTypeFilter.restore("Pointers", ss.getSaveState("Pointers"));
+		structuresFilter = DtTypeFilter.restore("Structures", ss.getSaveState("Structures"));
+		unionsFilter = DtTypeFilter.restore("Unions", ss.getSaveState("Unions"));
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(showArrays, showEnums, showFunctions, showPointers, showStructures,
-			showTypedefs, showUnions);
+		return Objects.hash(arraysFilter, enumsFilter, functionsFilter, pointersFilter,
+			structuresFilter, unionsFilter);
 	}
 
 	@Override
@@ -152,10 +214,12 @@ public class DtFilterState {
 			return false;
 		}
 		DtFilterState other = (DtFilterState) obj;
-		return showArrays == other.showArrays && showEnums == other.showEnums &&
-			showFunctions == other.showFunctions && showPointers == other.showPointers &&
-			showStructures == other.showStructures && showTypedefs == other.showTypedefs &&
-			showUnions == other.showUnions;
+		return Objects.equals(arraysFilter, other.arraysFilter) &&
+			Objects.equals(enumsFilter, other.enumsFilter) &&
+			Objects.equals(functionsFilter, other.functionsFilter) &&
+			Objects.equals(pointersFilter, other.pointersFilter) &&
+			Objects.equals(structuresFilter, other.structuresFilter) &&
+			Objects.equals(unionsFilter, other.unionsFilter);
 	}
 
 }

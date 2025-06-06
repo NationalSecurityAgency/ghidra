@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,7 @@
 
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.util.Arrays;
-import java.util.Objects;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -36,11 +32,11 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import junit.framework.TestCase;
 
 /**
  * <CODE>ProgramDiffTest</CODE> tests the <CODE>ProgramDiff</CODE> class

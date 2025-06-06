@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.datamgr;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.awt.Container;
@@ -165,6 +166,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		myStruct.add(new ByteDataType(), "struct_field_names", null);
 		myStruct.setCategoryPath(cat2Path);
 		builder.addDataType(myStruct);
+
+		TypedefDataType typeDefMyStruct = new TypedefDataType("TypeDefToMyStruct", myStruct);
+		builder.addDataType(typeDefMyStruct);
+
+		Pointer16DataType ptr16 = new Pointer16DataType(new CharDataType());
+		builder.addDataType(ptr16);
+		ArrayDataType charDt = new ArrayDataType(new CharDataType(), 10);
+		builder.addDataType(charDt);
 
 		return builder.getProgram();
 	}
@@ -853,6 +862,25 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
+	public void testAction_FindStructureBySize_Empty() {
+
+		StructureDataType stuct = new StructureDataType("Structure_Empty", 0);
+		builder.addDataType(stuct);
+
+		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
+		assertMatchingStructures(resultsProvider, "Structure_Empty");
+	}
+
+	@Test
 	public void testAction_FindStructureBySize_Ranage() {
 
 		createStructureWithOffset_0x4(); // 6
@@ -893,20 +921,71 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
-	public void testFilter() {
+	public void testFilter_DefaultFilter() {
+
+		DtFilterState filterState = provider.getFilterState();
+		assertFalse(filterState.getArraysFilter().isTypeActive());
+		assertFalse(filterState.getPointersFilter().isTypeActive());
+
+		DataTypeManager[] dtms = plugin.getDataTypeManagers();
+		for (DataTypeManager dtm : dtms) {
+			if (dtm instanceof BuiltInDataTypeManager) {
+				assertAllTypesInTree(dtm);
+			}
+			else {
+				assertNoArrays(dtm);
+				assertNoPointers(dtm);
+			}
+		}
+	}
+
+	@Test
+	public void testFilter_Structures() {
+
+		assertStructures(true);
+		assertType("TypeDefToMyStruct", true);
 
 		// press the filter button
 		DockingActionIf action = getAction(plugin, "Show Filter");
 		performAction(action, provider, false);
 
-		assertStructures(true);
-
 		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
-		setToggleButtonSelected(dialog.getComponent(), "Show Structures", false);
+		setToggleButtonSelected(dialog.getComponent(), "Structures", false);
 		pressButtonByText(dialog, "OK");
 		waitForTree();
 
 		assertStructures(false);
+		assertType("TypeDefToMyStruct", true);
+
+		// Now also turn off typedefs
+		performAction(action, provider, false);
+		dialog = waitForDialogComponent(DtFilterDialog.class);
+		setToggleButtonSelected(dialog.getComponent(), "StructuresTypeDefs", false);
+		pressButtonByText(dialog, "OK");
+		waitForTree();
+
+		assertStructures(false);
+		assertType("TypeDefToMyStruct", false);
+	}
+
+	@Test
+	public void testFilter_Structures_HideTypeDefs() {
+
+		assertStructures(true);
+		assertType("TypeDefToMyStruct", true);
+
+		// press the filter button
+		DockingActionIf action = getAction(plugin, "Show Filter");
+		performAction(action, provider, false);
+		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
+
+		// turn off Structure TypeDefs
+		setToggleButtonSelected(dialog.getComponent(), "StructuresTypeDefs", false);
+		pressButtonByText(dialog, "OK");
+		waitForTree();
+
+		assertStructures(true); // still have structures
+		assertType("TypeDefToMyStruct", false); // no longer have structure typedefs
 	}
 
 	@Test
@@ -916,7 +995,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// press the filter button
 		DtFilterDialog mainDialog = showFilterDialog(provider);
 		boolean isShowingStructures = false;
-		updateFilter(mainDialog, "Show Structures", isShowingStructures);
+		updateFilter(mainDialog, "Structures", isShowingStructures);
 
 		// 
 		// Launch a new data types provider window to verify it has the same settings as the main 
@@ -935,7 +1014,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// now change the new provider's filter for a different option and then make sure that the 
 		// main provider is not changed
-		updateFilter(otherFilterDialog, "Show Functions", false);
+		updateFilter(otherFilterDialog, "Functions", false);
 
 		DtFilterState mainFilterState = runSwing(() -> provider.getFilterState());
 		DtFilterState otherFilterState = runSwing(() -> otherProvider.getFilterState());
@@ -948,11 +1027,11 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	public void testSaveRestoreFilterStates() throws Exception {
 
 		DtFilterDialog dialog = showFilterDialog(provider);
-		boolean isShowingEnums = getFilterState(dialog, "Show Enums");
-		boolean isShowingUnions = getFilterState(dialog, "Show Unions");
+		boolean isShowingEnums = getFilterState(dialog, "Enums");
+		boolean isShowingUnions = getFilterState(dialog, "Unions");
 
-		setToggleButtonSelected(dialog.getComponent(), "Show Enums", !isShowingEnums);
-		setToggleButtonSelected(dialog.getComponent(), "Show Unions", !isShowingUnions);
+		setToggleButtonSelected(dialog.getComponent(), "Enums", !isShowingEnums);
+		setToggleButtonSelected(dialog.getComponent(), "Unions", !isShowingUnions);
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
 
@@ -968,6 +1047,88 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 //==================================================================================================
 // Private methods
 //==================================================================================================
+
+	private void assertNoArrays(DataTypeManager dtm) {
+		Map<String, DataTypeNode> nodesByName = getNodes(dtm);
+		Collection<DataTypeNode> values = nodesByName.values();
+		for (DataTypeNode node : values) {
+			DataType dt = node.getDataType();
+			assertTrue("Found an array in '%s'".formatted(dtm.getName()),
+				!(dt instanceof Array));
+		}
+	}
+
+	private void assertNoPointers(DataTypeManager dtm) {
+		Map<String, DataTypeNode> nodesByName = getNodes(dtm);
+		Collection<DataTypeNode> values = nodesByName.values();
+		for (DataTypeNode node : values) {
+			DataType dt = node.getDataType();
+			assertTrue("Found a pointer in '%s'".formatted(dtm.getName()),
+				!(dt instanceof Pointer));
+		}
+	}
+
+	private void assertAllTypesInTree(DataTypeManager dtm) {
+		Iterator<DataType> types = dtm.getAllDataTypes();
+		Map<String, DataTypeNode> nodesByName = getNodes(dtm);
+		for (DataType dt : CollectionUtils.asIterable(types)) {
+			assertNotNull(
+				"Node not found for type '%s' in dtm '%s'".formatted(dt.getName(), dtm.getName()),
+				nodesByName.get(dt.getName()));
+		}
+	}
+
+	private Map<String, DataTypeNode> getNodes(DataTypeManager dtm) {
+
+		DataTypeArchiveGTree gTree = provider.getGTree();
+		GTreeNode rootNode = gTree.getViewRoot();
+		GTreeNode dtmNode = rootNode.getChild(dtm.getName());
+		assertNotNull(dtmNode);
+
+		expandNode(dtmNode);
+
+		Map<String, DataTypeNode> nodesByName = new HashMap<>();
+		Iterator<GTreeNode> it = dtmNode.iterator(true);
+		for (GTreeNode node : CollectionUtils.asIterable(it)) {
+			if (!(node instanceof DataTypeNode)) {
+				continue;
+			}
+			DataTypeNode dtNode = (DataTypeNode) node;
+			DataType dt = dtNode.getDataType();
+			nodesByName.put(dt.getName(), dtNode);
+		}
+
+		return nodesByName;
+	}
+
+	private void assertType(String name, boolean isShowing) {
+
+		DataType dt = getTypeFromTree(name);
+		if (isShowing) {
+			assertNotNull("Data type not found: '%s'", dt);
+		}
+		else {
+			assertNull(dt);
+		}
+	}
+
+	private DataType getTypeFromTree(String name) {
+		DataTypeArchiveGTree gTree = provider.getGTree();
+		GTreeNode rootNode = gTree.getViewRoot();
+		Iterator<GTreeNode> it = rootNode.iterator(true);
+		for (GTreeNode node : CollectionUtils.asIterable(it)) {
+			if (!(node instanceof DataTypeNode)) {
+				continue;
+			}
+			DataTypeNode dtNode = (DataTypeNode) node;
+			DataType dt = dtNode.getDataType();
+			String dtName = dt.getName();
+			if (dtName.equals(name)) {
+				return dt;
+			}
+		}
+		return null;
+	}
 
 	private boolean getFilterState(DtFilterDialog dialog, String optionName) {
 		return isToggleButttonSelected(dialog.getComponent(), optionName);
@@ -1246,7 +1407,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(action, provider, false);
 
 		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
-		setToggleButtonSelected(dialog.getComponent(), "Show Pointers", true);
+		setToggleButtonSelected(dialog.getComponent(), "Pointers", true);
 		pressButtonByText(dialog, "OK");
 		waitForTree();
 	}

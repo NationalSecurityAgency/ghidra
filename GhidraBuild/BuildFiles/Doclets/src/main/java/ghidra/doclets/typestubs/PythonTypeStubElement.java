@@ -16,22 +16,10 @@
 package ghidra.doclets.typestubs;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.QualifiedNameable;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.WildcardType;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
 
 /**
  * Base class providing access to sanitized names (Python safe).
@@ -313,7 +301,7 @@ abstract class PythonTypeStubElement<T extends Element> {
 	static void addNeededTypes(Set<TypeElement> imports, TypeMirror type) {
 		switch (type.getKind()) {
 			case DECLARED:
-				DeclaredType dt = (DeclaredType) type;;
+				DeclaredType dt = (DeclaredType) type;
 				imports.add((TypeElement) dt.asElement());
 				for (TypeMirror genericType : dt.getTypeArguments()) {
 					addNeededTypes(imports, genericType);

@@ -184,7 +184,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			createFragment(sectionDT.getName(), sectionStart, sectionDT.getLength());
 
 			CodeUnit cu = listing.getCodeUnitAt(addr(offset));
-			cu.setComment(CodeUnit.PLATE_COMMENT,
+			cu.setComment(CommentType.PLATE,
 				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getAddress()));
 
 			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
@@ -203,7 +203,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			}
 
 			cu = listing.getCodeUnitAt(dataStart);
-			cu.setComment(CodeUnit.PRE_COMMENT, sections[i].getNameAsString() + " Size: 0x" +
+			cu.setComment(CommentType.PRE, sections[i].getNameAsString() + " Size: 0x" +
 				Long.toHexString(sections[i].getSize()));
 		}
 	}
@@ -228,7 +228,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		for (int i = 0; i < programHeaders.length; i++) {
 			monitor.checkCancelled();
 			Data d = array.getComponent(i);
-			d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
+			d.setComment(CommentType.EOL, programHeaders[i].getComment());
 
 			Address addr = addr(programHeaders[i].getOffset());
 
@@ -292,7 +292,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 					dynamicType != null ? (dynamicType.name + " - " + dynamicType.description)
 							: ("DT_0x" + StringUtilities.pad(Integer.toHexString(tagType), '0', 8));
 
-				dynamicData.setComment(CodeUnit.EOL_COMMENT, comment);
+				dynamicData.setComment(CommentType.EOL, comment);
 
 				Data valueData = dynamicData.getComponent(1);
 
@@ -323,7 +323,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		if (dynamicStringTable != null) {
 			String str = dynamicStringTable.readString(reader, dynamic.getValue());
 			if (str != null && str.length() != 0) {
-				data.setComment(CodeUnit.EOL_COMMENT, str);
+				data.setComment(CommentType.EOL, str);
 			}
 		}
 	}
@@ -384,7 +384,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 				try {
 					Address currAddr = symbolTableAddr.add(j * symbolTable2.getEntrySize());
-					listing.setComment(currAddr, CodeUnit.EOL_COMMENT,
+					listing.setComment(currAddr, CommentType.EOL,
 						name + " at 0x" + Long.toHexString(symbols[j].getValue()));
 				}
 				catch (Exception e) {
@@ -418,7 +418,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 					createData(relocationTableAddress, dataType);
 				}
 				else {
-					listing.setComment(relocationTableAddress, CodeUnit.PRE_COMMENT,
+					listing.setComment(relocationTableAddress, CommentType.PRE,
 						"ELF Relocation Table (markup not yet supported)");
 				}
 			}

@@ -44,7 +44,8 @@ public interface Structure extends Composite {
 	public DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Gets the first defined component located at or after the specified offset. 
+	 * Gets the first defined component located at or after the specified offset.  If a
+	 * component contains the specified offset that component will be returned.
 	 * Note: The returned component may be a zero-length component.
 	 * 
 	 * @param offset the byte offset into this structure
@@ -436,7 +437,7 @@ public interface Structure extends Composite {
 	 * @throws IllegalArgumentException if amount &lt; 0
 	 */
 	public void growStructure(int amount);
-	
+
 	/**
 	 * Set the size of the structure to the specified byte-length.  If the length is shortened defined
 	 * components will be cleared and removed as required.

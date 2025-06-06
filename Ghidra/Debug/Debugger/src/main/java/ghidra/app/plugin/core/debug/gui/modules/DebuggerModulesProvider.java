@@ -1388,6 +1388,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			List.of(programManager.getAllOpenPrograms()));
 	}
 
+	@Override
 	public void setAutoMapSpec(AutoMapSpec spec) {
 		actionAutoMap.setCurrentActionStateByUserData(spec);
 	}

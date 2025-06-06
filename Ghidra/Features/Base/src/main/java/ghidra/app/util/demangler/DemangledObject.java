@@ -22,8 +22,7 @@ import java.util.regex.Pattern;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -480,7 +479,8 @@ public abstract class DemangledObject implements Demangled {
 			return true; // skip this symbol
 		}
 
-		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		Listing listing = program.getListing();
+		String comment = listing.getComment(CommentType.PLATE, address);
 		String newComment = generatePlateComment();
 		if (comment == null || comment.indexOf(newComment) < 0) {
 			if (comment == null) {
@@ -489,7 +489,7 @@ public abstract class DemangledObject implements Demangled {
 			else {
 				comment = comment + '\n' + newComment;
 			}
-			program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+			listing.setComment(address, CommentType.PLATE, comment);
 		}
 		return true;
 	}

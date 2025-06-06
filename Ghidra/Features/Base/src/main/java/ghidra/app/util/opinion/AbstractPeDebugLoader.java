@@ -482,7 +482,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			Address address = program.getImageBase().add(dd.getAddressOfRawData());
 			try {
 				program.getListing().createData(address, new StringDataType(), actualData.length());
-				program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, "Debug Misc");
+				program.getListing().setComment(address, CommentType.PLATE, "Debug Misc");
 				address = address.add(actualData.length());
 				program.getListing().createData(address, new DWordDataType());
 			}

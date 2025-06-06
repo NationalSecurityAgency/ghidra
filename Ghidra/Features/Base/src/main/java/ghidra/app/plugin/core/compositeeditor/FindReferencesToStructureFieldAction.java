@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.compositeeditor;
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
+import ghidra.app.services.FieldMatcher;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataTypeComponent;
@@ -39,9 +40,6 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (!isEnabledForContext(context)) {
-			return;
-		}
 		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
@@ -50,26 +48,33 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 			return;
 		}
 
-		String fieldName = getFieldName();
+		FieldMatcher fieldMatcher = getFieldMatcher();
 		Composite composite = model.getOriginalComposite();
-		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(composite, fieldName));
+		Swing.runLater(
+			() -> service.findAndDisplayAppliedDataTypeAddresses(composite, fieldMatcher));
 	}
 
-	private String getFieldName() {
+	private FieldMatcher getFieldMatcher() {
 		int[] rows = model.getSelectedComponentRows();
 		if (rows.length == 0) {
 			return null;
 		}
 
 		int row = rows[0];
-		DataTypeComponent dtComponet = model.getComponent(row);
-		String fieldName = dtComponet.getFieldName();
-		return fieldName;
+		DataTypeComponent dtComponent = model.getComponent(row);
+		String fieldName = dtComponent.getFieldName();
+		Composite composite = model.getOriginalComposite();
+		if (fieldName != null) {
+			return new FieldMatcher(composite, fieldName);
+		}
+
+		int offset = dtComponent.getOffset();
+		return new FieldMatcher(composite, offset);
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		setEnabled(false);
+
 		if (hasIncompleteFieldEntry()) {
 			return false;
 		}
@@ -82,12 +87,12 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 			return false; // not sure if this can happen
 		}
 
-		String fieldName = getFieldName();
-		if (fieldName == null) {
+		FieldMatcher fieldMatcher = getFieldMatcher();
+		if (fieldMatcher == null) {
 			return false;
 		}
 
-		updateMenuName(fieldName);
+		updateMenuName(fieldMatcher.getFieldName());
 		return true;
 	}
 

@@ -342,7 +342,8 @@ public abstract class ScriptAttributesParser {
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
 			Map<String, LaunchParameter<?>> parameters, Map<String, TtyCondition> extraTtys,
-			int timeoutMillis, LaunchParameter<?> imageOpt) {}
+			int timeoutMillis, LaunchParameter<?> imageOpt) {
+	}
 
 	/**
 	 * Convert an arguments map into a command line and environment variables

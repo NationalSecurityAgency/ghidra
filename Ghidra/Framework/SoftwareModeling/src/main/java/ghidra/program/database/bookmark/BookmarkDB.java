@@ -76,7 +76,8 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public String getCategory() {
-		return record.getString(BookmarkDBAdapter.CATEGORY_COL);
+		String category = record.getString(BookmarkDBAdapter.CATEGORY_COL);
+		return category != null ? category : ""; // NOTE: Old data may have stored null
 	}
 
 	public void setComment(String comment) {
@@ -92,7 +93,8 @@ public class BookmarkDB extends DatabaseObject implements Bookmark {
 
 	@Override
 	public String getComment() {
-		return record.getString(BookmarkDBAdapter.COMMENT_COL);
+		String comment = record.getString(BookmarkDBAdapter.COMMENT_COL);
+		return comment != null ? comment : ""; // NOTE: Old data may have stored null
 	}
 
 	@Override

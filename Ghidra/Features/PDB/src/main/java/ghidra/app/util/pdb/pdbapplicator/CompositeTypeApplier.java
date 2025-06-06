@@ -186,9 +186,9 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		// Situation is where a parent has a vftptr with a vtshape with one entry.  The child
 		// class defines an additional virtual method, and there is an actual table in memory with
 		// with the appropriate mangled label for this class that has two entries, but the list
-		// here does not have the vftptr, and I believe it was due to the fact that new new method
+		// here does not have the vftptr, and I believe it was due to the fact that the new method
 		// was never called in the code.  Thus... do not count on getting a vtshape in this
-		// situation.  Note that a record of a an appropriate two-entry vtshape was found right
+		// situation.  Note that a record of an appropriate two-entry vtshape was found right
 		// before the class definition, but no pointer to it was created or referred to in the
 		// field list.
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);

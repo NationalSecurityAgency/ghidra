@@ -680,7 +680,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	protected final DomainObjectEventQueues eventQueues;
 	protected EventTranslator eventTranslator;
 	private volatile boolean allAddressesValid;
-	private volatile AddressSetView allAddresses;;
+	private volatile AddressSetView allAddresses;
 
 	protected final DBTraceProgramViewBookmarkManager bookmarkManager;
 	protected final DBTraceProgramViewEquateTable equateTable;
@@ -1467,13 +1467,13 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	public void updateMemoryAddSpaceBlock(AddressSpace space) {
-		// Spaces not not time-bound. No visibility check.
+		// Spaces are not time-bound. No visibility check.
 		memory.updateAddSpaceBlock(space);
 		allAddressesValid = false;
 	}
 
 	public void updateMemoryDeleteSpaceBlock(AddressSpace space) {
-		// Spaces not not time-bound. No visibility check.
+		// Spaces are not time-bound. No visibility check.
 		memory.updateDeleteSpaceBlock(space);
 		allAddressesValid = false;
 	}

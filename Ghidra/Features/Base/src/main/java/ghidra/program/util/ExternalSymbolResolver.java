@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +50,46 @@ public class ExternalSymbolResolver implements Closeable {
 	public static String getRequiredLibraryProperty(int libraryIndex) {
 		return String.format("%s %s]", REQUIRED_LIBRARY_PROPERTY_PREFIX,
 			StringUtilities.pad("" + libraryIndex, ' ', 4));
+	}
+
+	/**
+	 * Returns an ordered list of library names, as specified by the logic/rules of the original
+	 * operating system's loader (eg. Elf / MachO dynamic library loading / symbol resolving
+	 * rules)
+	 * 
+	 * @param program The {@link Program}
+	 * @return list of library names, in original order
+	 */
+	public static List<String> getOrderedRequiredLibraryNames(Program program) {
+		TreeMap<Integer, String> orderLibraryMap = new TreeMap<>();
+		Options options = program.getOptions(Program.PROGRAM_INFO);
+		for (String optionName : options.getOptionNames()) {
+
+			// Legacy programs may have the old "ELF Required Library [" program property, so 
+			// we should not assume that the option name starts exactly with 
+			// REQUIRED_LIBRARY_PROPERTY_PREFIX.  We must deal with a potential substring at the
+			// start of the option name.
+			int prefixIndex = optionName.indexOf(REQUIRED_LIBRARY_PROPERTY_PREFIX);
+			if (prefixIndex == -1 || !optionName.endsWith("]")) {
+				continue;
+			}
+			String libName = options.getString(optionName, null);
+			if (libName == null) {
+				continue;
+			}
+			String indexStr = optionName
+					.substring(prefixIndex + REQUIRED_LIBRARY_PROPERTY_PREFIX.length(),
+						optionName.length() - 1)
+					.trim();
+			try {
+				orderLibraryMap.put(Integer.parseInt(indexStr), libName.trim());
+			}
+			catch (NumberFormatException e) {
+				Msg.error(ExternalSymbolResolver.class,
+					"Program contains invalid property: " + optionName);
+			}
+		}
+		return new ArrayList<>(orderLibraryMap.values());
 	}
 
 	private final ProjectData projectData;
@@ -333,7 +373,7 @@ public class ExternalSymbolResolver implements Closeable {
 		private List<ExtLibInfo> getLibsToSearch() throws CancelledException {
 			List<ExtLibInfo> result = new ArrayList<>();
 			ExternalManager externalManager = program.getExternalManager();
-			for (String libName : getOrderedRequiredLibraryNames()) {
+			for (String libName : getOrderedRequiredLibraryNames(program)) {
 				Library lib = externalManager.getExternalLibrary(libName);
 				String libPath = lib != null ? lib.getAssociatedProgramPath() : null;
 				Program libProg = libPath != null ? getLibraryProgram(libPath) : null;
@@ -409,46 +449,6 @@ public class ExternalSymbolResolver implements Closeable {
 			}
 			return symbolIds;
 		}
-
-		/**
-		 * Returns an ordered list of library names, as specified by the logic/rules of the original
-		 * operating system's loader (eg. Elf / MachO dynamic library loading / symbol resolving
-		 * rules)
-		 *  
-		 * @return list of library names, in original order
-		 */
-		private Collection<String> getOrderedRequiredLibraryNames() {
-			TreeMap<Integer, String> orderLibraryMap = new TreeMap<>();
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			for (String optionName : options.getOptionNames()) {
-
-				// Legacy programs may have the old "ELF Required Library [" program property, so 
-				// we should not assume that the option name starts exactly with 
-				// REQUIRED_LIBRARY_PROPERTY_PREFIX.  We must deal with a potential substring at the
-				// start of the option name.
-				int prefixIndex = optionName.indexOf(REQUIRED_LIBRARY_PROPERTY_PREFIX);
-				if (prefixIndex == -1 || !optionName.endsWith("]")) {
-					continue;
-				}
-				String libName = options.getString(optionName, null);
-				if (libName == null) {
-					continue;
-				}
-				String indexStr = optionName
-						.substring(prefixIndex + REQUIRED_LIBRARY_PROPERTY_PREFIX.length(),
-							optionName.length() - 1)
-						.trim();
-				try {
-					orderLibraryMap.put(Integer.parseInt(indexStr), libName.trim());
-				}
-				catch (NumberFormatException e) {
-					Msg.error(ExternalSymbolResolver.class,
-						"Program contains invalid property: " + optionName);
-				}
-			}
-			return orderLibraryMap.values();
-		}
-
 	}
 
 	/**

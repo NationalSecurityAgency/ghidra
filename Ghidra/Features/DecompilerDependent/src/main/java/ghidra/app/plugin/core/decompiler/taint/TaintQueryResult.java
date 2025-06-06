@@ -28,6 +28,11 @@ import sarif.SarifUtils;
 
 public record TaintQueryResult(String name,String fqname, Address iaddr, Address faddr, List<String> labels, boolean functionLevelResult) {
 
+	// NB: The constructors that follow depend on data generated at different phases in the processing.
+	//   At first blush, it seems obvious that you could combine them by using the location data, accessed
+	//   in the first to derive the LogicalLocation via llocs in SarifUtils.  llocs, however, is likely to
+	//   be stale when applying the SARIF results.
+	
 	public TaintQueryResult(Map<String, Object> result) {
 		this((String) result.get("name"), 
 			(String) result.get("location"),
@@ -42,7 +47,7 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 	public TaintQueryResult(Map<String, Object> result, Run run, LogicalLocation ll) {
 		this(
 			SarifUtils.extractDisplayName(ll),
-			ll.getFullyQualifiedName(), 
+			ll.getDecoratedName(), 
 			(Address) result.get("Address"),
 			(Address) result.get("entry"),
 			new ArrayList<String>(),
@@ -71,55 +76,52 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 		return labels.contains(label);
 	}
 
-	public String matches(ClangToken token) {
+	public String matches(ClangToken token) {		
 		String text = token.getText();
-		Address vaddr = token.getMinAddress();
-		HighVariable hv = token.getHighVariable();
-		ClangToken hvToken = token;
-		if (hv == null && token instanceof ClangFieldToken ftoken) {
-			ClangVariableToken vtoken = TaintState.getParentToken(ftoken);
-			if (vtoken != null) {
-				hv = vtoken.getHighVariable();
-				hvToken = vtoken;
-			}
-		}
-		if (hv == null) {
+		String hvName = TaintState.varName(token, true);
+		if (hvName == null) {
 			return null;
 		}
-		HighFunction hf = hv.getHighFunction();
-		String hvName = TaintState.hvarName(hvToken);
 
-		// Weed-out check
-		if (!fqname.contains(hvName) && !fqname.contains(text)) {
-			return null;
-		}
-		Function function = hf.getFunction();
 		Varnode vn = token.getVarnode();
+		ClangFunction clangFunction = token.getClangFunction();
+		Function function = clangFunction.getHighFunction().getFunction();
 		boolean functionLevelToken = function.isThunk() || (vn == null);
-		if (functionLevelToken || functionLevelResult) {
-			if (!faddr.equals(function.getEntryPoint())) {
-				return null;
-			}
-		}
-		else {
-			// if neither are function-level, the addresses must match
-			// NB: parameter/local use matches on the representative
-			if (!iaddr.equals(vaddr)) {
-				if (!(hv instanceof HighParam) || !iaddr.equals(hv.getRepresentative().getPCAddress())) {
-					return null;
+		if (functionLevelToken) {
+			if (faddr.equals(function.getEntryPoint())) {
+				if (name.endsWith(hvName)) {
+					return hvName;
 				}
 			}
 		}
-		if (hvName.startsWith(":")) { // fqname is FUN@FUN:name:vname
-			if (fqname.endsWith(hvName) || fqname.endsWith(text)) {
-				return hvName;
+		else if (functionLevelResult) {
+			if (faddr.equals(function.getEntryPoint())) {
+				if (name.endsWith(hvName) || name.endsWith(text)) {
+					return hvName;
+				}
 			}
 		}
-		else { // fqname is FUN@FUN:vname:id
-			if (fqname.contains(":" + hvName + ":") || fqname.contains(":" + text + ":")) {
-				return hvName;
+		else {
+			Address vaddr = token.getMinAddress();
+			if (vaddr == null) {
+				HighVariable hv = token.getHighVariable();
+				if (hv instanceof HighParam) {
+					vaddr = hv.getRepresentative().getPCAddress();
+				}
+			}
+			// if neither are function-level, the addresses must match
+			// NB: parameter/local use matches on the representative
+			if (iaddr.equals(vaddr)) {
+				VarnodeAST ast = (VarnodeAST) vn;
+				if (fqname.endsWith(":"+ast.getUniqueId())) {
+					return hvName;
+				}
+				if (fqname.contains(":"+hvName)) {
+					return hvName;
+				}
 			}
 		}
+		
 		return null;
 	}
 

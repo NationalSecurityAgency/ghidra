@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,10 @@ import java.io.RandomAccessFile;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
-import ghidra.util.exception.NotYetImplementedException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to manage loading Portable Executables (PE).
@@ -86,14 +87,14 @@ public class PortableExecutable {
 			}
 
 			try {
-				ntHeader = new NTHeader(reader, dosHeader.e_lfanew(), layout, advancedProcess,
-					parseCliHeaders);
+				ntHeader = new NTHeader(reader, dosHeader.e_lfanew(), layout, parseCliHeaders);
+				if (advancedProcess) {
+					ntHeader.getOptionalHeader()
+							.processDataDirectories(new MessageLog(), TaskMonitor.DUMMY);
+				}
 			}
 			catch (InvalidNTHeaderException e) {
 				Msg.debug(this, "Expected InvalidNTHeaderException, ignoring");
-			}
-			catch (NotYetImplementedException e) {
-				Msg.debug(this, "Expected NotYetImplementedException, ignoring");
 			}
 			catch (ArrayIndexOutOfBoundsException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);

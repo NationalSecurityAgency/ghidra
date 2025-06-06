@@ -873,6 +873,15 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param view the set of address to include in the view.
 	 */
 	public void setView(AddressSetView view) {
+
+		view = ImmutableAddressSet.asImmutable(view);
+
+		AddressIndexMap currentMap = layoutModel.getAddressIndexMap();
+		AddressSetView originalView = currentMap.getOriginalAddressSet();
+		if (view.hasSameAddresses(originalView)) {
+			return;
+		}
+
 		layoutModel.setAddressSet(view);
 		updateProviders();
 	}

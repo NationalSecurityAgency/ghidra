@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,11 +46,12 @@ class EnumDB extends DataTypeDB implements Enum {
 	private EnumDBAdapter adapter;
 	private EnumValueDBAdapter valueAdapter;
 
-	private Map<String, Long> nameMap; // name to value
-	private SortedMap<Long, List<String>> valueMap; // value to names
-	private Map<String, String> commentMap; // name to comment
-	private List<BitGroup> bitGroups;
-	private EnumSignedState signedState = null;
+	// Lazy fields whose initialization is triggered by nameMap=null (see initializeIfNeeded)
+	private Map<String, Long> nameMap; // lazy initialization, name to value
+	private SortedMap<Long, List<String>> valueMap; // lazy initialization, value to names
+	private Map<String, String> commentMap; // lazy initialization, name to comment
+	private List<BitGroup> bitGroups; // lazy initialization
+	private EnumSignedState signedState = null; // lazy initialization
 
 	EnumDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache, EnumDBAdapter adapter,
 			EnumValueDBAdapter valueAdapter, DBRecord record) {
@@ -917,7 +918,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			boolean hasNegativeValues = minValue < 0;
 
 			// check the min and max values in this enum to see if they fit in 1 byte enum, then 
-			// 2 byte enum, then 4 byte enum. If the min min and max values fit, then all other values
+			// 2 byte enum, then 4 byte enum. If the min and max values fit, then all other values
 			// will fit as well
 			for (int size = 1; size < 8; size *= 2) {
 				long minPossible = getMinPossibleValue(size, hasNegativeValues);

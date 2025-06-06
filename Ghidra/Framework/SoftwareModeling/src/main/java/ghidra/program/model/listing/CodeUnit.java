@@ -71,11 +71,6 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	@Deprecated
 	public static final int REPEATABLE_COMMENT = 4;
 
-//	/**
-//	 * Property type for fall through property
-//	 */
-//	public static final int FALL_THROUGH = 4;
-
 	/**
 	 * Any comment property.
 	 */
@@ -105,11 +100,13 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Get the label for this code unit.
+	 * @return the label for this code unit.
 	 */
 	public String getLabel();
 
 	/**
 	 * Get the Symbols for this code unit.
+	 * @return the Symbols for this code unit.
 	 * @throws ConcurrentModificationException if this object is no
 	 * longer valid.
 	 */
@@ -117,6 +114,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Get the Primary Symbol for this code unit.
+	 * @return the Primary Symbol for this code unit.
 	 * @throws ConcurrentModificationException if this object is no
 	 * longer valid.
 	 */
@@ -124,16 +122,19 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Get the starting address for this code unit.
+	 * @return the starting address for this code unit.
 	 */
 	public Address getMinAddress();
 
 	/**
 	 * Get the ending address for this code unit.
+	 * @return the ending address for this code unit.
 	 */
 	public Address getMaxAddress();
 
 	/**
 	 * Get the mnemonic for this code unit, e.g., MOV, JMP
+	 * @return the mnemonic for this code unit, e.g., MOV, JMP
 	 */
 	public String getMnemonicString();
 
@@ -143,7 +144,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @return the comment string of the appropriate type or null if no comment of
-	 * that type exists for this codeunit
+	 * that type exists for this code unit
 	 * @throws IllegalArgumentException if type is not one of the
 	 * three types of comments supported
 	 * @deprecated use {@link #getComment(CommentType)} instead
@@ -250,7 +251,8 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public byte[] getBytes() throws MemoryAccessException;
 
 	/**
-	 * Copies max(buffer.length, code unit length) bytes into buffer starting at location offset in buffer.
+	 * Copies max(buffer.length, code unit length) bytes into buffer starting at the given offset in 
+	 * {@code buffer}.
 	 * @param buffer byte array to copy into
 	 * @param bufferOffset offset in byte array the copy will start
 	 * @throws MemoryAccessException if the full number of bytes could not be read.
@@ -260,6 +262,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	/**
 	 * Returns true if address is contained in the range of this codeUnit
 	 * @param testAddr the address to test.
+	 * @return true if address is contained in the range of this codeUnit
 	 */
 	public boolean contains(Address testAddr);
 
@@ -297,12 +300,14 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	/**
 	 * Get the references for the operand index.
 	 * @param index operand index (0 is the first operand)
+	 * @return the references for the operand index.
 	 */
 	public Reference[] getOperandReferences(int index);
 
 	/**
 	 * Get the primary reference for the operand index.
 	 * @param index operand index (0 is the first operand)
+	 * @return the primary reference for the operand index.
 	 */
 	public Reference getPrimaryReference(int index);
 
@@ -332,15 +337,16 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Get an iterator over all references TO this code unit.
+	 * @return an iterator over all references TO this code unit.
 	 */
 	public ReferenceIterator getReferenceIteratorTo();
 
 	/**
 	 * Returns the program that generated this CodeUnit.
+	 * @return the program that generated this CodeUnit.
 	 */
 	public Program getProgram();
 
-	//////////////////////////////////////////////////////////////////////////
 	/**
 	 * Gets the external reference (if any) at the opIndex
 	 * @param opIndex the operand index to look for external references
@@ -351,6 +357,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	/**
 	 * Remove external reference (if any) at the given opIndex
 	 * opIndex the index of the operand from which to remove any external reference.
+	 * @param opIndex the op index
 	 */
 	public void removeExternalReference(int opIndex);
 
@@ -397,6 +404,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Get the number of operands for this code unit.
+	 * @return the number of operands for this code unit.
 	 */
 	public int getNumOperands();
 
@@ -404,7 +412,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * Get the Address for the given operand index if one exists.  Data
 	 * objects have one operand (the value).
 	 * @param opIndex index of the operand.
-	 * @return An addres if the operand represents a fully qualified
+	 * @return An address if the operand represents a fully qualified
 	 * address (given the context), or if the operand is a Scalar treated
 	 * as an address. Null is returned if no address or scalar exists on that 
 	 * operand.

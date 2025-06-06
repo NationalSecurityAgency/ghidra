@@ -25,6 +25,7 @@ import ghidra.app.plugin.core.datamgr.archive.DefaultDataTypeArchiveService;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.task.TaskMonitor;
 
 // FIXME!! TESTING
 public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
@@ -65,10 +66,35 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 	}
 
 	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(TreePath selectedTreeNode) {
 		if (selectedTreeNode == null) {
 			return null;
 		}
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -88,6 +114,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 			builtInDataTypesManager.getDataTypes(BuiltInSourceArchive.INSTANCE);
 		dataTypes.sort(DataTypeComparator.INSTANCE);
 		return dataTypes;
+	}
+
+	@Override
+	public List<CategoryPath> getSortedCategoryPathList() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

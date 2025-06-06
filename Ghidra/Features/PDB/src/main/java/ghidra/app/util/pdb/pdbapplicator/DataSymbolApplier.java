@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,8 +51,13 @@ public class DataSymbolApplier extends MsSymbolApplier
 		if (applicator.isInvalidAddress(address, symbol.getName())) {
 			return;
 		}
-		// createData() can return false on failure, but we want to put the symbol down regardless
-		createData(address);
+		// Skip placing the vftable data type; we will place a better type later (there is no
+		//  DataSymbol for vbtable)
+		if (!symbol.getName().contains("`vftable'")) {
+			// createData(address) can return false on failure, but we want to put the symbol down
+			//  regardless, so we do not look at the return value and just keep processing
+			createData(address);
+		}
 		Address symbolAddress = applicator.getAddress(symbol);
 		applicator.createSymbol(symbolAddress, symbol.getName(), false);
 	}

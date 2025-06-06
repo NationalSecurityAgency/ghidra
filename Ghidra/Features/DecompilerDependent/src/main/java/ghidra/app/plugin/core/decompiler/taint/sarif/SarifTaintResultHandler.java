@@ -28,6 +28,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramTask;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -62,15 +63,8 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			return;
 		}
 		map.put("type", TaintRule.fromRuleId(ruleId));
-		// TODO: this is a bit weak
-		String label = "UNSPECIFIED";
 		Message msg = result.getMessage();
-		String[] parts = msg.getText().split(":");
-		if (parts.length > 1) {
-			label = parts[1].strip();
-		}
-		map.put("value", label);
-		map.put("comment", result.getMessage().getText());
+		map.put("comment", msg.getText());
 
 		List<Location> locs = result.getLocations();
 		if (locs != null) {
@@ -79,14 +73,20 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		}
 
 		PropertyBag properties = result.getProperties();
+		String label = "UNSPECIFIED";
 		if (properties != null) {
 			Map<String, Object> additionalProperties = properties.getAdditionalProperties();
 			if (additionalProperties != null) {
 				for (Entry<String, Object> entry : additionalProperties.entrySet()) {
 					map.put(entry.getKey(), entry.getValue());
+					if (entry.getKey().equals("taintLabels")) {
+						label = entry.getValue().toString();
+						label = label.substring(1, label.length()-1);
+					}
 				}
 			}
 		}
+		map.put("value", label);
 	}
 
 	@Override
@@ -107,6 +107,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 
 	private void populate(Map<String, Object> map, List<Location> locs) {
 		Location loc = locs.get(0);
+		Program program = controller.getProgram();
 		LogicalLocation ll = SarifUtils.getLogicalLocation(run, loc);
 		if (ll != null) {
 			String name = ll.getName();
@@ -114,19 +115,22 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			String displayName = SarifUtils.extractDisplayName(ll);
 			map.put("originalName", name);
 			map.put("name", displayName);
-			Address faddr = SarifUtils.extractFunctionEntryAddr(controller.getProgram(), fqname);
+			Address faddr = SarifUtils.extractFunctionEntryAddr(program, fqname);
 			if (faddr != null && faddr.getOffset() >= 0) {
 				map.put("entry", faddr);
 				map.put("Address", faddr);
 			}
-			Address addr = SarifUtils.getLocAddress(controller.getProgram(), fqname);
-			if (addr != null) {
-				map.put("Address", addr);
-
-			}
 			map.put("location", fqname);
 			map.put("kind", ll.getKind());
 			map.put("function", SarifUtils.extractFQNameFunction(fqname));
+		}
+		PhysicalLocation pl = loc.getPhysicalLocation();
+		if (pl != null) {
+			Long offset = pl.getAddress().getAbsoluteAddress();
+			Address addr = SarifUtils.getAddress(program, offset);
+			if (addr != null) {
+				map.put("Address", addr);
+			}
 		}
 	}
 
@@ -215,7 +219,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
-				if (kind.equals("instruction") || kind.startsWith("path ")) {
+				if (kind.equals("member") || kind.startsWith("path ")) {
 					getTaintedInstruction(map, r);
 				}
 				if (kind.equals("variable")) {
@@ -309,7 +313,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
-				if (kind.equals("instruction") || kind.startsWith("path ")) {
+				if (kind.equals("member")) {
 					removeTaintedInstruction(map, r);
 				}
 				if (kind.equals("variable")) {

@@ -398,7 +398,7 @@ bool FlowBlock::dominates(const FlowBlock *subBlock) const
 /// We assume the given block has 2 out-edges and that \b this block is immediately reached by
 /// one of these two edges. Some condition holds when traversing the out-edge to \b this, and the complement
 /// of the condition holds for traversing the other out-edge. We verify that the condition holds for
-/// this entire block.  More specifically, we check that that there is no path to \b this through the
+/// this entire block.  More specifically, we check that there is no path to \b this through the
 /// sibling edge, where the complement of the condition holds (unless we loop back through the conditional block).
 /// \param cond is the conditional block with 2 out-edges
 /// \return \b true if the condition holds for this block
@@ -3479,7 +3479,7 @@ void BlockSwitch::addCase(FlowBlock *switchbl,FlowBlock *bl,uint4 gt)
 void BlockSwitch::grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &cs)
 
 {
-  vector<int4> casemap(switchbl->sizeOut(),-1);	// Map from from switchtarget's outindex to position in caseblocks
+  vector<int4> casemap(switchbl->sizeOut(),-1);	// Map from switchtarget's outindex to position in caseblocks
   caseblocks.clear();
   for(int4 i=1;i<cs.size();++i) {
     FlowBlock *casebl = cs[i];

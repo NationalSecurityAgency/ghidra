@@ -107,13 +107,6 @@ public interface StackFrame {
 	 */
 	public int getParameterOffset();
 
-//	/**
-//	 * Set the offset on the stack of the parameters.
-//	 *
-//	 * @param offset the start offset of parameters on the stack
-//	 */
-//	public void setParameterOffset(int offset) throws InvalidInputException;
-
 	/**
 	 * Returns true if specified offset could correspond to a parameter
 	 * @param offset

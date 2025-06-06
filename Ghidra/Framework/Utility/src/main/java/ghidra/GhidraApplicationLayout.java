@@ -113,9 +113,9 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	/**
 	 * Finds the application root directories for this application layout.
 	 *
-	 * @return A collection of the application root directories for this layout.
+	 * @return A {@link SequencedCollection} of the application root directories for this layout.
 	 */
-	protected Collection<ResourceFile> findGhidraApplicationRootDirs() {
+	protected SequencedCollection<ResourceFile> findGhidraApplicationRootDirs() {
 		return ApplicationUtilities.findDefaultApplicationRootDirs();
 	}
 
@@ -133,7 +133,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		}
 
 		ResourceFile dir = applicationRootDirs.iterator().next().getParentFile();
-		if (SystemUtilities.isInDevelopmentMode()) {
+		if (SystemUtilities.isInDevelopmentMode() && applicationRootDirs.size() > 1) {
 			dir = dir.getParentFile();
 		}
 		return dir;

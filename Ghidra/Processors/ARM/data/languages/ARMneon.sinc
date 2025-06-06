@@ -4326,10 +4326,19 @@ define pcodeop VectorCopyNarrow;
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
-:vmrs^COND VRd,fpscr  is COND & ( ($(AMODE) & ARMcond=1 & c1627=0xef1 &     c0011=0xa10) |
-                                ($(TMODE_E) &         thv_c1627=0xef1 & thv_c0011=0xa10)) & fpscr & VRd
+vmrsReg: fpsid is (($(AMODE) & c1619=0) | (TMode=1 & thv_c1619=0)) & fpsid { export fpsid; }
+vmrsReg: fpscr is (($(AMODE) & c1619=1) | (TMode=1 & thv_c1619=1)) & fpscr { export fpscr; }
+vmrsReg: mvfr2 is (($(AMODE) & c1619=5) | (TMode=1 & thv_c1619=5)) & mvfr2 { export mvfr2; }
+vmrsReg: mvfr1 is (($(AMODE) & c1619=6) | (TMode=1 & thv_c1619=6)) & mvfr1 { export mvfr1; }
+vmrsReg: mvfr0 is (($(AMODE) & c1619=7) | (TMode=1 & thv_c1619=7)) & mvfr0 { export mvfr0; }
+vmrsReg: fpexc is (($(AMODE) & c1619=8) | (TMode=1 & thv_c1619=8)) & fpexc { export fpexc; }
+vmrsReg: fpinst is (($(AMODE) & c1619=9) | (TMode=1 & thv_c1619=9)) & fpinst { export mvfr1; }
+vmrsReg: fpinst2 is (($(AMODE) & c1619=0xa) | (TMode=1 & thv_c1619=0xa)) & fpinst2 { export mvfr0; }
+
+:vmrs^COND VRd,vmrsReg  is COND & ( ($(AMODE) & ARMcond=1 & c2027=0xef &     c0011=0xa10) |
+                                ($(TMODE_E) &         thv_c2027=0xef & thv_c0011=0xa10)) & vmrsReg & VRd
 {
-	VRd = fpscr;
+	VRd = vmrsReg;
 }
 
 apsr:   "apsr"  is epsilon {}
@@ -4344,11 +4353,13 @@ apsr:   "apsr"  is epsilon {}
 	OV = $(FPSCR_V);
 }
 
-:vmsr^COND fpscr,VRd  is ( ($(AMODE) & ARMcond=1 & c1627=0xee1 &     c0011=0xa10) |
-                         ($(TMODE_E) &         thv_c1627=0xee1 & thv_c0011=0xa10)
-) & COND & VRd & fpscr
+
+
+:vmsr^COND vmrsReg,VRd  is ( ($(AMODE) & ARMcond=1 & c2027=0xee &     c0011=0xa10) |
+                           ($(TMODE_E) &         thv_c2027=0xee & thv_c0011=0xa10)
+) & COND & VRd & vmrsReg
 {
-	fpscr = VRd;
+	vmrsReg = VRd;
 }
 
 @endif #  VFPv2 || VFPv3 || SIMD

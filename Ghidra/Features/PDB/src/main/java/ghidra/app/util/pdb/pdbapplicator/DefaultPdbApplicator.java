@@ -37,13 +37,14 @@ import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
 import ghidra.app.util.pdb.classtype.ClassTypeManager;
-import ghidra.app.util.pdb.classtype.MsftVxtManager;
+import ghidra.app.util.pdb.classtype.MsVxtManager;
 import ghidra.framework.options.Options;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -207,7 +208,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	// If we have symbols and memory with VBTs in them, then a better VbtManager is created.
-	private MsftVxtManager vxtManager;
+	private MsVxtManager vxtManager;
 	private PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
 
 	//==============================================================================================
@@ -371,7 +372,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			case ALL:
 				processTypes();
 				processSymbols();
-				vxtManager.doTableLayouts(dataTypeManager);
+				vxtManager.createTables(dataTypeManager, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				break;
 			default:
 				throw new PdbException("PDB: Invalid Application Control: " +
@@ -644,8 +645,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		linkerModuleNumber = findLinkerModuleNumber();
 		if (program != null) {
 			// Currently, this must happen after symbolGroups are created.
-			MsftVxtManager msftVxtManager =
-				new MsftVxtManager(getClassTypeManager(), program); // TODO: need to fix MsftVxtManager to work with or without a program!!!!!!!!!!
+			MsVxtManager msftVxtManager = new MsVxtManager(getClassTypeManager(), program);
 			msftVxtManager.createVirtualTables(getRootPdbCategory(), findVirtualTableSymbols(), log,
 				monitor);
 			vxtManager = msftVxtManager;
@@ -900,7 +900,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	/**
-	 * Returns the {@link CategoryPath} for a typedef with with the give {@link SymbolPath} and
+	 * Returns the {@link CategoryPath} for a typedef with the given {@link SymbolPath} and
 	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()}
 	 * except that modeleNumber of 0 represents publics/globals
 	 * @param moduleNumber module number
@@ -1065,7 +1065,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Stores whether the structure referenced by the record number has been filled in such that
 	 * it can be used as a base class
 	 * @param recordNumber record number of type record
-	 * @param dataType the data type to store
 	 */
 	void markFilledInForBase(RecordNumber recordNumber) {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
@@ -1584,7 +1583,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	// Virtual-Base/Function-Table-related methods.
 	//==============================================================================================
-	MsftVxtManager getVxtManager() {
+	MsVxtManager getVxtManager() {
 		return vxtManager;
 	}
 
@@ -2366,7 +2365,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (StringUtils.isBlank(comment)) {
 			return false;
 		}
-		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String plate = program.getListing().getComment(CommentType.PLATE, address);
 		if (plate == null) {
 			plate = "";
 		}
@@ -2377,7 +2376,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			comment += '\n';
 		}
 		plate = comment + plate; // putting new comment at top of existing plate
-		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
+		SetCommentCmd.createComment(program, address, plate, CommentType.PLATE);
 		return true;
 	}
 
@@ -2425,13 +2424,20 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 		}
 
+		boolean existingIsMangled = isMangled(existingSymbol.getName());
+		if (existingIsMangled && !isNewFunctionSignature) {
+			// we don't have a new signature, but the existing symbol is mangled, and thus can
+			// possibly provide it... so do not make new symbol primary
+			return doCreateSymbol(address, symbolPath, false, plateAddition);
+		}
+
 		if (symbolPath.getParent() != null) {
 			// new symbol has non-global namespace
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		// Both existing and new symbols are in global namespace at this point
-		if (isMangled(symbolPath.getName()) && !isMangled(existingSymbol.getName())) {
+		if (isMangled(symbolPath.getName()) && !existingIsMangled) {
 			// new symbol is mangled, but don't override existing one if it is mangled
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}

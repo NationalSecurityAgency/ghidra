@@ -31,12 +31,17 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.DateUtils;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
@@ -46,10 +51,14 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
 		SNAP("Snap", Long.class, SnapshotRow::getSnap, false),
 		TIME("Time", TraceSchedule.class, SnapshotRow::getTime, true),
-		TIMESTAMP("Timestamp", String.class, SnapshotRow::getTimeStamp, true), // TODO: Use Date type here
 		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName, true),
-		SCHEDULE("Schedule", String.class, SnapshotRow::getSchedule, false),
-		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, SnapshotRow::setDescription, true);
+		PC("PC", Address.class, SnapshotRow::getProgramCounter, true),
+		MODULE("Module", String.class, SnapshotRow::getModuleName, true),
+		FUNCTION("Function", ghidra.program.model.listing.Function.class, SnapshotRow::getFunction, true),
+		TIMESTAMP("Timestamp", Date.class, SnapshotRow::getTimeStamp, false),
+		SCHEDULE("Schedule", TraceSchedule.class, SnapshotRow::getSchedule, false),
+		DESCRIPTION("Description", String.class, SnapshotRow::getDescription, //
+				SnapshotRow::setDescription, true);
 
 		private final String header;
 		private final Function<SnapshotRow, ?> getter;
@@ -122,6 +131,9 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
 			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
 			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
+
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
 		}
 
 		private void objectRestored() {
@@ -132,7 +144,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			if (snapshot.getKey() < 0 && hideScratch) {
 				return;
 			}
-			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
+			SnapshotRow row = new SnapshotRow(snapshot, tool);
 			snapshotTableModel.add(row);
 		}
 
@@ -149,12 +161,50 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			}
 			snapshotTableModel.deleteWith(row -> row.getSnapshot() == snapshot);
 		}
+
+		private void valueCreated(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				snapshotTableModel.fireTableDataChanged();
+			}
+		}
+
+		private void valueDeleted(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				snapshotTableModel.fireTableDataChanged();
+			}
+		}
 	}
 
 	final TableCellRenderer styleCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
+		protected String formatNumber(Number value, Settings settings) {
+			return switch (value) {
+				case null -> "";
+				// SNAP is the only column with Long type
+				case Long snap -> getTimeRadix().format(snap);
+				default -> super.formatNumber(value, settings);
+			};
+		}
+
+		@Override
+		protected String getText(Object value) {
+			return switch (value) {
+				case null -> "";
+				case Date date -> DateUtils.formatDateTimestamp(date);
+				case TraceSchedule schedule -> schedule.toString(getTimeRadix());
+				default -> value.toString();
+			};
+		}
+
+		@Override
 		public String getFilterString(Object t, Settings settings) {
-			return t == null ? "<null>" : t.toString();
+			return switch (t) {
+				case null -> "";
+				// SNAP is the only column with Long type
+				case Long snap -> getTimeRadix().format(snap);
+				case Number n -> formatNumber(n, settings);
+				default -> getText(t);
+			};
 		}
 
 		@Override
@@ -175,6 +225,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 	};
 
+	protected final PluginTool tool;
 	protected final SnapshotTableModel snapshotTableModel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
@@ -187,6 +238,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	public DebuggerSnapshotTablePanel(PluginTool tool) {
 		super(new BorderLayout());
+		this.tool = tool;
 		snapshotTableModel = new SnapshotTableModel(tool);
 		snapshotTable = new GTable(snapshotTableModel);
 		snapshotTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -197,23 +249,37 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 		TableColumnModel columnModel = snapshotTable.getColumnModel();
 		TableColumn snapCol = columnModel.getColumn(SnapshotTableColumns.SNAP.ordinal());
-		snapCol.setPreferredWidth(40);
+		snapCol.setPreferredWidth(20);
 		snapCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIME.ordinal());
-		timeCol.setPreferredWidth(40);
+		timeCol.setPreferredWidth(20);
 		timeCol.setCellRenderer(styleCurrentRenderer);
+		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
+		etCol.setPreferredWidth(20);
+		etCol.setCellRenderer(styleCurrentRenderer);
+		TableColumn pcCol = columnModel.getColumn(SnapshotTableColumns.PC.ordinal());
+		pcCol.setPreferredWidth(40);
+		pcCol.setCellRenderer(styleCurrentRenderer);
+		TableColumn moduleCol = columnModel.getColumn(SnapshotTableColumns.MODULE.ordinal());
+		moduleCol.setPreferredWidth(40);
+		moduleCol.setCellRenderer(styleCurrentRenderer);
+		TableColumn functionCol = columnModel.getColumn(SnapshotTableColumns.FUNCTION.ordinal());
+		functionCol.setPreferredWidth(40);
+		functionCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn timeStampCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
 		timeStampCol.setPreferredWidth(200);
 		timeStampCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
-		etCol.setPreferredWidth(40);
-		etCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn schdCol = columnModel.getColumn(SnapshotTableColumns.SCHEDULE.ordinal());
 		schdCol.setPreferredWidth(60);
 		schdCol.setCellRenderer(styleCurrentRenderer);
 		TableColumn descCol = columnModel.getColumn(SnapshotTableColumns.DESCRIPTION.ordinal());
-		descCol.setPreferredWidth(200);
+		descCol.setPreferredWidth(20);
 		descCol.setCellRenderer(styleCurrentRenderer);
+	}
+
+	protected TimeRadix getTimeRadix() {
+		return currentTrace == null ? TimeRadix.DEFAULT
+				: currentTrace.getTimeManager().getTimeRadix();
 	}
 
 	private void addNewListeners() {
@@ -268,7 +334,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		for (TraceSnapshot snapshot : hideScratch
 				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
 				: manager.getAllSnapshots()) {
-			SnapshotRow row = new SnapshotRow(currentTrace, snapshot);
+			SnapshotRow row = new SnapshotRow(snapshot, tool);
 			toAdd.add(row);
 			if (current != DebuggerCoordinates.NOWHERE &&
 				snapshot.getKey() == current.getViewSnap()) {
@@ -289,7 +355,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		Collection<? extends TraceSnapshot> sratch =
 			manager.getSnapshots(Long.MIN_VALUE, true, 0, false);
 		snapshotTableModel.addAll(sratch.stream()
-				.map(s -> new SnapshotRow(currentTrace, s))
+				.map(s -> new SnapshotRow(s, tool))
 				.collect(Collectors.toList()));
 	}
 

@@ -23,16 +23,13 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataTypePath;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramEvent;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.task.SwingUpdateManager;
 
 /**
  * Editor for a Function Stack.
@@ -45,6 +42,31 @@ public class StackEditorProvider
 	private Function function;
 	private StackEditorModel stackModel;
 
+	boolean scheduleRefreshName = false;
+	boolean scheduleReload = false;
+
+	/**
+	 * Delay model update caused by Program change events.
+	 */
+	SwingUpdateManager delayedUpdateMgr = new SwingUpdateManager(200, 200, () -> {
+		try {
+			if (function.isDeleted()) {
+				stackModel.functionChanged(false);
+				return;
+			}
+			if (scheduleRefreshName) {
+				updateTitle();
+			}
+			if (scheduleReload) {
+				stackModel.functionChanged(false);
+			}
+		}
+		finally {
+			scheduleRefreshName = false;
+			scheduleReload = false;
+		}
+	});
+
 	public StackEditorProvider(Plugin plugin, Function function) {
 		super(plugin);
 		this.program = function.getProgram();
@@ -56,7 +78,7 @@ public class StackEditorProvider
 
 		initializeActions();
 		editorPanel = new StackEditorPanel(program, stackModel, this);
-		setTitle(getName() + " - " + getProviderSubTitle(function));
+		updateTitle();
 		plugin.getTool().addComponentProvider(this, true);
 
 		addActionsToTool();
@@ -64,7 +86,14 @@ public class StackEditorProvider
 	}
 
 	@Override
+	protected void updateTitle() {
+		setTabText(function.getName());
+		setTitle(getName() + " - " + getProviderSubTitle(function));
+	}
+
+	@Override
 	public void dispose() {
+		delayedUpdateMgr.dispose();
 		program.removeListener(this);
 		super.dispose();
 	}
@@ -82,6 +111,11 @@ public class StackEditorProvider
 	@Override
 	public String getName() {
 		return "Stack Editor";
+	}
+
+	@Override
+	protected String getDisplayName() {
+		return "stack frame: " + function.getName();
 	}
 
 	@Override
@@ -147,32 +181,6 @@ public class StackEditorProvider
 		return actionMgr.getAllActions();
 	}
 
-	private void refreshName() {
-		StackFrameDataType origDt = stackModel.getOriginalComposite();
-		StackFrameDataType viewDt = stackModel.getEditorStack();
-		String oldName = origDt.getName();
-		String newName = function.getName();
-		if (oldName.equals(newName)) {
-			return;
-		}
-
-		setTitle("Stack Editor: " + newName);
-		try {
-			origDt.setName(newName);
-			if (viewDt.getName().equals(oldName)) {
-				viewDt.setName(newName);
-			}
-		}
-		catch (InvalidNameException e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-		}
-
-		CategoryPath oldCategoryPath = origDt.getCategoryPath();
-		DataTypePath oldDtPath = new DataTypePath(oldCategoryPath, oldName);
-		DataTypePath newDtPath = new DataTypePath(oldCategoryPath, newName);
-		stackModel.dataTypeRenamed(stackModel.getOriginalDataTypeManager(), oldDtPath, newDtPath);
-	}
-
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent event) {
 		if (!isVisible()) {
@@ -181,35 +189,40 @@ public class StackEditorProvider
 
 		int recordCount = event.numRecords();
 		for (int i = 0; i < recordCount; i++) {
+
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
 			EventType eventType = rec.getEventType();
-			if (eventType == DomainObjectEvent.RESTORED) {
-				refreshName();
-				// NOTE: editorPanel should be notified of restored datatype manager via the 
-				// CompositeViewerModel's DataTypeManagerChangeListener restored method
-				return;
+
+			// NOTE: RESTORED event can be ignored here since the model will be notified 
+			// of restored datatype manager via the CompositeViewerModel's 
+			// DataTypeManagerChangeListener restored method.
+
+			if (eventType == DomainObjectEvent.FILE_CHANGED) {
+				scheduleRefreshName = true;
+				delayedUpdateMgr.updateLater();
+				continue;
 			}
 			if (eventType instanceof ProgramEvent type) {
 				switch (type) {
 					case FUNCTION_REMOVED:
 						Function func = (Function) ((ProgramChangeRecord) rec).getObject();
 						if (func == function) {
-							this.dispose();
+							// Close the Editor.
 							tool.setStatusInfo("Stack Editor was closed for " + getName());
+							dispose();
+							return;
 						}
-						return;
+						break;
 					case SYMBOL_RENAMED:
 					case SYMBOL_DATA_CHANGED:
 						Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-						SymbolType symType = sym.getSymbolType();
-						if (symType == SymbolType.LABEL) {
-							if (sym.isPrimary() &&
-								sym.getAddress().equals(function.getEntryPoint())) {
-								refreshName();
-							}
+						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
+							scheduleRefreshName = true;
+							delayedUpdateMgr.updateLater();
 						}
 						else if (inCurrentFunction(rec)) {
-							reloadFunction();
+							scheduleReload = true;
+							delayedUpdateMgr.updateLater();
 						}
 						break;
 					case FUNCTION_CHANGED:
@@ -217,30 +230,20 @@ public class StackEditorProvider
 					case SYMBOL_REMOVED:
 					case SYMBOL_ADDRESS_CHANGED:
 						if (inCurrentFunction(rec)) {
-							reloadFunction();
+							scheduleReload = true;
+							delayedUpdateMgr.updateLater();
 						}
 						break;
 					case SYMBOL_PRIMARY_STATE_CHANGED:
 						sym = (Symbol) ((ProgramChangeRecord) rec).getNewValue();
-						symType = sym.getSymbolType();
-						if (symType == SymbolType.LABEL &&
-							sym.getAddress().equals(function.getEntryPoint())) {
-							refreshName();
+						if (sym.getAddress().equals(function.getEntryPoint())) {
+							scheduleRefreshName = true;
+							delayedUpdateMgr.updateLater();
 						}
 						break;
 					default:
 				}
 			}
-		}
-	}
-
-	private void reloadFunction() {
-		if (!stackModel.hasChanges()) {
-			stackModel.load(function);
-		}
-		else {
-			stackModel.stackChangedExternally(true);
-			editorPanel.setStatus("Stack may have been changed externally--data may be stale.");
 		}
 	}
 

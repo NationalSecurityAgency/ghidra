@@ -25,7 +25,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Processor;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.exception.CancelledException;
@@ -76,8 +76,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 			DataType dataType = cramFsSuper.toDataType();
 			program.getListing().createData(minAddress, dataType);
 			program.getListing()
-					.setComment(minAddress, CodeUnit.PLATE_COMMENT,
-						cramFsSuper.getRoot().toString());
+					.setComment(minAddress, CommentType.PLATE, cramFsSuper.getRoot().toString());
 			int offset = cramFsSuper.getRoot().getOffsetAdjusted();
 
 			for (int i = 0; i < cramFsSuper.getFsid().getFiles() - 1; i++) {
@@ -90,7 +89,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 				if (newInode.isFile()) {
 					Address inodeDataAddress = minAddress.add(newInode.getOffsetAdjusted());
 					program.getListing()
-							.setComment(inodeDataAddress, CodeUnit.PLATE_COMMENT,
+							.setComment(inodeDataAddress, CommentType.PLATE,
 								newInode.getName() + " Data/Bytes\n");
 				}
 
@@ -98,7 +97,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 				program.getListing().createData(inodeAddress, inodeDataType);
 
 				program.getListing()
-						.setComment(inodeAddress, CodeUnit.PLATE_COMMENT,
+						.setComment(inodeAddress, CommentType.PLATE,
 							newInode.getName() + "\n" + newInode.toString());
 
 				offset += inodeDataType.getLength();

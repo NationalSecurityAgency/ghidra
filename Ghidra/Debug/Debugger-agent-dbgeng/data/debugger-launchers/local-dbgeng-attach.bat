@@ -1,4 +1,4 @@
-::@title dbgeng-attach
+::@title dbgeng attach
 ::@desc <html><body width="300px">
 ::@desc   <h3>Attach with <tt>dbgeng</tt> (in a Python interpreter)</h3>
 ::@desc   <p>
@@ -6,7 +6,7 @@
 ::@desc     For setup instructions, press <b>F1</b>.
 ::@desc   </p>
 ::@desc </body></html>
-::@menu-group local
+::@menu-group dbgeng
 ::@icon icon.debugger
 ::@help dbgeng#attach
 ::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."

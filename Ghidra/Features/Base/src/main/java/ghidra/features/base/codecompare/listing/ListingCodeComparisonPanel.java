@@ -394,7 +394,7 @@ public class ListingCodeComparisonPanel
 				.toolBarIcon(NEXT_DIFF_ICON)
 				.toolBarGroup(DIFF_NAVIGATE_GROUP)
 				.keyBinding("ctrl alt N")
-				.validContextWhen(c -> isValidPanelContext(c))
+				.validWhen(c -> isValidPanelContext(c))
 				.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
 				.onAction(c -> nextAreaDiff(true))
 				.build();
@@ -409,7 +409,7 @@ public class ListingCodeComparisonPanel
 				.toolBarIcon(PREVIOUS_DIFF_ICON)
 				.toolBarGroup(DIFF_NAVIGATE_GROUP)
 				.keyBinding("ctrl alt P")
-				.validContextWhen(c -> isValidPanelContext(c))
+				.validWhen(c -> isValidPanelContext(c))
 				.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
 				.onAction(c -> nextAreaDiff(false))
 				.build();

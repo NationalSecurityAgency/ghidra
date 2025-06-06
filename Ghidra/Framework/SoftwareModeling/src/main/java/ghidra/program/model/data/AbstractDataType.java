@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,12 @@
  */
 package ghidra.program.model.data;
 
-import java.net.URL;
 import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Base class for DataType classes. Many of the DataType methods are stubbed out so simple datatype
@@ -66,9 +64,6 @@ public abstract class AbstractDataType implements DataType {
 		return categoryPath;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDataTypeManager()
-	 */
 	@Override
 	public final DataTypeManager getDataTypeManager() {
 		return dataMgr;
@@ -106,11 +101,6 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public URL getDocs() {
-		return null;
-	}
-
-	@Override
 	public String getName() {
 		if (null == addressModel) {
 			return name;
@@ -120,7 +110,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public String getPathName() {
+	public final String getPathName() {
 		return getDataTypePath().getPath();
 	}
 
@@ -161,8 +151,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public void setNameAndCategory(CategoryPath path, String name)
-			throws InvalidNameException, DuplicateNameException {
+	public void setNameAndCategory(CategoryPath path, String name) throws InvalidNameException {
 		// default is immutable
 	}
 
@@ -275,7 +264,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
+	public void setCategoryPath(CategoryPath path) {
 		// not-applicable
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,8 @@
  */
 package ghidra.file.formats.ext4;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -203,7 +202,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 
 	@Override
 	protected boolean setPlateComment( Program program, Address address, String comment ) {
-		SetCommentCmd cmd = new SetCommentCmd( address, CodeUnit.PLATE_COMMENT, comment );
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.PLATE, comment);
 		if ( program.getMemory( ).contains( address ) ) {
 			return cmd.applyTo( program );
 		}

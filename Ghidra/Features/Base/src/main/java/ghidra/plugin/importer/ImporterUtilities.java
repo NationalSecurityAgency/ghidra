@@ -565,4 +565,20 @@ public class ImporterUtilities {
 				.findFirst()
 				.orElse(null);
 	}
+	
+	/**
+	 * Get's the {@link LoadSpec} that was used to import the given {@link Program}
+	 * 
+	 * @param program The {@link Program}
+	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
+	 *   it could not be determined
+	 */
+	public static LoadSpec getLoadSpec(Program program) {
+		ByteProvider provider;
+		if (program == null || (provider = getProvider(program)) == null) {
+			return null;
+		}
+		return getLoadSpec(provider, program);
+	}
+	
 }

@@ -47,7 +47,6 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
@@ -63,28 +62,6 @@ import ghidra.program.model.symbol.Symbol;
 public class VxWorksSymTab_Finder extends GhidraScript {
 
 	boolean debug = false;
-
-	//------------------------------------------------------------------------
-	// getDataTypeManagerByName
-	//
-	// Retrieves data type manager by name.
-	//
-	// Returns:
-	//		Success: DataTypeManager
-	//		Failure: null
-	//------------------------------------------------------------------------
-	private DataTypeManager getDataTypeManagerByName(String name) {
-
-		DataTypeManagerService service = state.getTool().getService(DataTypeManagerService.class);
-
-		// Loop through all managers in the data type manager service
-		for (DataTypeManager manager : service.getDataTypeManagers()) {
-			if (manager.getName().equals(name)) {
-				return manager;
-			}
-		}
-		return null;
-	}
 
 	//------------------------------------------------------------------------
 	// VxSymbol
@@ -159,7 +136,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	private VxSymbol getVxSymbolClass(int type) {
 
 		// Pre-define base data types used to define symbol table entry data type
-		DataTypeManager builtin = getDataTypeManagerByName("BuiltInTypes");
+		BuiltInDataTypeManager builtin = BuiltInDataTypeManager.getDataTypeManager();
 		DataType charType = builtin.getDataType("/char");
 		DataType charPtrType = PointerDataType.getPointer(charType, 4);
 		DataType byteType = builtin.getDataType("/byte");
@@ -415,6 +392,11 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	// Test is weak.
 	//------------------------------------------------------------------------
 	private boolean isSymTblEntry(Address entry, VxSymbol vxSymbol) throws Exception {
+
+		// Make sure there's data for the symbol
+		if (!isAddress(entry.getOffset() + vxSymbol.length() - 1)) {
+			return false;
+		}
 
 		// First dword must be null or a valid ptr (typically into the sym table)
 		long value = getInt(entry) & 0xffffffffL;
@@ -832,7 +814,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 				case 4: // Local .text
 				case 5: // Global .text  
-					
+
 					doLocalDisassemble(symLoc);
 					createFunction(symLoc, symName);
 					if (getFunctionAt(symLoc) != null) {

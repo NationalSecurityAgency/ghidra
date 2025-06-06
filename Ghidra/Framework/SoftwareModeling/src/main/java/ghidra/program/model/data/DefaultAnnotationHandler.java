@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,30 +18,37 @@ package ghidra.program.model.data;
 public class DefaultAnnotationHandler implements AnnotationHandler {
 	private static final String[] FILE_EXTENSIONS = new String[] { "c", "h", "cpp" };
 
+	@Override
 	public String getPrefix(Enum e, String member) {
 		return "";
 	}
 
+	@Override
 	public String getSuffix(Enum e, String member) {
 		return "";
 	}
 
+	@Override
 	public String getPrefix(Composite c, DataTypeComponent dtc) {
 		return "";
 	}
 
+	@Override
 	public String getSuffix(Composite c, DataTypeComponent dtc) {
 		return "";
 	}
 
+	@Override
 	public String getDescription() {
 		return "Default C Annotations";
 	}
 
+	@Override
 	public String getLanguageName() {
 		return "C/C++";
 	}
 
+	@Override
 	public String[] getFileExtensions() {
 		return FILE_EXTENSIONS;
 	}

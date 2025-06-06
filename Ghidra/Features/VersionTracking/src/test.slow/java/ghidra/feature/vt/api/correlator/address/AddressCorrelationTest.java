@@ -268,7 +268,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 				function.setName("MyFunctionAB", SourceType.USER_DEFINED);
 				Listing listing = p.getListing();
 				CodeUnit cu = listing.getCodeUnitAt(function.getEntryPoint());
-				cu.setComment(CodeUnit.EOL_COMMENT, "A sample end of line comment");
+				cu.setComment(CommentType.EOL, "A sample end of line comment");
 			});
 
 			p.addConsumer(vtTestEnv);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,7 +154,7 @@ public interface Enum extends DataType {
 
 	/**
 	 * Returns the smallest length (size in bytes) this enum can be and still represent all of
-	 * it's current values. Note that that this will only return powers of 2 (1,2,4, or 8)
+	 * it's current values. Note that this will only return powers of 2 (1,2,4, or 8)
 	 * @return the smallest length (size in bytes) this enum can be and still represent all of
 	 * it's current values
 	 */

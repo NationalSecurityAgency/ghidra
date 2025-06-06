@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,14 +174,14 @@ public class CodeManagerTest extends AbstractGenericTest {
 		parseStatic(addr(0x2000), addr(0x2003));
 
 		CodeUnit cu = listing.getCodeUnitAt(addr(0x2000));
-		cu.setComment(CodeUnit.EOL_COMMENT, "eol comment");
-		cu.setComment(CodeUnit.PLATE_COMMENT, "plate comment");
+		cu.setComment(CommentType.EOL, "eol comment");
+		cu.setComment(CommentType.PLATE, "plate comment");
 
 		cu = listing.getCodeUnitAt(addr(0x2000));
-		String comment = cu.getComment(CodeUnit.EOL_COMMENT);
+		String comment = cu.getComment(CommentType.EOL);
 		assertNotNull(comment);
 		assertEquals("eol comment", comment);
-		comment = cu.getComment(CodeUnit.PLATE_COMMENT);
+		comment = cu.getComment(CommentType.PLATE);
 		assertNotNull(comment);
 		assertEquals("plate comment", comment);
 	}
@@ -364,30 +364,30 @@ public class CodeManagerTest extends AbstractGenericTest {
 		InstructionIterator iter = listing.getInstructions(true);
 		while (iter.hasNext()) {
 			Instruction inst = iter.next();
-			inst.setComment(CodeUnit.PRE_COMMENT, "pre comment");
-			inst.setComment(CodeUnit.EOL_COMMENT, "eol comment");
+			inst.setComment(CommentType.PRE, "pre comment");
+			inst.setComment(CommentType.EOL, "eol comment");
 
-			assertEquals("pre comment", inst.getComment(CodeUnit.PRE_COMMENT));
-			assertEquals("eol comment", inst.getComment(CodeUnit.EOL_COMMENT));
+			assertEquals("pre comment", inst.getComment(CommentType.PRE));
+			assertEquals("eol comment", inst.getComment(CommentType.EOL));
 		}
 
 		Instruction inst = listing.getInstructionAt(addr(0x2000));
-		assertEquals("pre comment", inst.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("eol comment", inst.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("pre comment", inst.getComment(CommentType.PRE));
+		assertEquals("eol comment", inst.getComment(CommentType.EOL));
 
 		listing.clearComments(addr(0x2000), addr(0x2100));
 
 		inst = listing.getInstructionAfter(addr(0x2000));
-		assertNull(inst.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(inst.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(inst.getComment(CommentType.PRE));
+		assertNull(inst.getComment(CommentType.EOL));
 
 		inst = listing.getInstructionAt(addr(0x2000));
-		assertNull(inst.getComment(CodeUnit.PRE_COMMENT));
-		assertNull(inst.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(inst.getComment(CommentType.PRE));
+		assertNull(inst.getComment(CommentType.EOL));
 
 		inst = listing.getInstructionBefore(addr(0x2000));
-		assertEquals("pre comment", inst.getComment(CodeUnit.PRE_COMMENT));
-		assertEquals("eol comment", inst.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("pre comment", inst.getComment(CommentType.PRE));
+		assertEquals("eol comment", inst.getComment(CommentType.EOL));
 	}
 
 	@Test
@@ -536,7 +536,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		parseStatic(addr(0x1100), addr(0x1200));
 		MemoryBlock block = mem.getBlock(addr(0x1000));
 		CodeUnit cu = listing.getCodeUnitContaining(block.getEnd());
-		cu.setComment(CodeUnit.EOL_COMMENT, "eol comment");
+		cu.setComment(CommentType.EOL, "eol comment");
 		Address oldMin = cu.getMinAddress();
 		Address expectedNewMin = oldMin.addNoWrap(0x8000 - 0x1000);
 
@@ -552,7 +552,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 
 		cu = listing.getCodeUnitContaining(block.getEnd());
 		assertEquals(expectedNewMin, cu.getMinAddress());
-		assertNotNull(cu.getComment(CodeUnit.EOL_COMMENT));
+		assertNotNull(cu.getComment(CommentType.EOL));
 
 		assertEquals(12, cu.getIntProperty("Numbers"));
 		c = (SaveableColor) cu.getObjectProperty("FavoriteColor");
@@ -576,32 +576,32 @@ public class CodeManagerTest extends AbstractGenericTest {
 	public void testCompositeDataComments() throws Exception {
 
 		CodeUnit cu = listing.getCodeUnitAt(addr(0x1741));
-		cu.setComment(CodeUnit.EOL_COMMENT, "eol comment");
-		cu.setComment(CodeUnit.PLATE_COMMENT, "plate comment");
-		cu.setComment(CodeUnit.POST_COMMENT, "post comment");
-		cu.setComment(CodeUnit.PRE_COMMENT, "pre comment");
+		cu.setComment(CommentType.EOL, "eol comment");
+		cu.setComment(CommentType.PLATE, "plate comment");
+		cu.setComment(CommentType.POST, "post comment");
+		cu.setComment(CommentType.PRE, "pre comment");
 
 		Structure struct = new StructureDataType("struct_1", 0);
 		struct.add(DWordDataType.dataType);
 		struct.add(DWordDataType.dataType);
 
 		Data structData = listing.createData(addr(0x1741), struct, struct.getLength());
-		assertEquals("eol comment", structData.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("plate comment", structData.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("post comment", structData.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("pre comment", structData.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals("eol comment", structData.getComment(CommentType.EOL));
+		assertEquals("plate comment", structData.getComment(CommentType.PLATE));
+		assertEquals("post comment", structData.getComment(CommentType.POST));
+		assertEquals("pre comment", structData.getComment(CommentType.PRE));
 
 		Data firstComp = structData.getComponent(0);
-		assertEquals("eol comment", firstComp.getComment(CodeUnit.EOL_COMMENT));
-		assertEquals("plate comment", firstComp.getComment(CodeUnit.PLATE_COMMENT));
-		assertEquals("post comment", firstComp.getComment(CodeUnit.POST_COMMENT));
-		assertEquals("pre comment", firstComp.getComment(CodeUnit.PRE_COMMENT));
+		assertEquals("eol comment", firstComp.getComment(CommentType.EOL));
+		assertEquals("plate comment", firstComp.getComment(CommentType.PLATE));
+		assertEquals("post comment", firstComp.getComment(CommentType.POST));
+		assertEquals("pre comment", firstComp.getComment(CommentType.PRE));
 
-		structData.setComment(CodeUnit.EOL_COMMENT, "EOL");
-		assertEquals("EOL", firstComp.getComment(CodeUnit.EOL_COMMENT));
+		structData.setComment(CommentType.EOL, "EOL");
+		assertEquals("EOL", firstComp.getComment(CommentType.EOL));
 
-		firstComp.setComment(CodeUnit.POST_COMMENT, "POST");
-		assertEquals("POST", structData.getComment(CodeUnit.POST_COMMENT));
+		firstComp.setComment(CommentType.POST, "POST");
+		assertEquals("POST", structData.getComment(CommentType.POST));
 	}
 
 	@Test
@@ -974,13 +974,13 @@ public class CodeManagerTest extends AbstractGenericTest {
 		// to 1-msec to avoid testing delays.
 
 		CodeUnit cu = listing.getCodeUnitAt(addr(0x1000));
-		cu.setComment(CodeUnit.EOL_COMMENT, "This is comment 1");
+		cu.setComment(CommentType.EOL, "This is comment 1");
 
 		Thread.sleep(1);// force a new date to get used
-		cu.setComment(CodeUnit.EOL_COMMENT, "This is a changed comment 2");
+		cu.setComment(CommentType.EOL, "This is a changed comment 2");
 
 		Thread.sleep(1);// force a new date to get used
-		cu.setComment(CodeUnit.EOL_COMMENT, "This is a changed comment 3");
+		cu.setComment(CommentType.EOL, "This is a changed comment 3");
 
 		CodeManager cm = ((ProgramDB) program).getCodeManager();
 		CommentHistory[] history = cm.getCommentHistory(addr(0x1000), CodeUnit.EOL_COMMENT);

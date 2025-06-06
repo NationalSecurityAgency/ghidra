@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,13 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -505,6 +511,25 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	class ForRadixTraceListener extends TraceDomainObjectListener {
+		{
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+		}
+
+		void valueCreated(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				updateSubTitle();
+			}
+		}
+
+		void valueDeleted(TraceObjectValue value) {
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				updateSubTitle();
+			}
+		}
+	}
+
 	protected static String createColoredStyle(String cls, Color color) {
 		if (color == null) {
 			return "";
@@ -524,6 +549,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 		return true;
 	}
+
+	private final TraceDomainObjectListener forRadixTraceListener = new ForRadixTraceListener();
 
 	private final DebuggerPcodeStepperPlugin plugin;
 
@@ -693,18 +720,37 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
+	protected void removeTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().removeListener(forRadixTraceListener);
+		}
+	}
+
+	protected void addTraceListener() {
+		if (current.getTrace() != null) {
+			current.getTrace().addListener(forRadixTraceListener);
+		}
+	}
+
+	protected void updateSubTitle() {
+		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+				: current.getTrace().getTimeManager().getTimeRadix();
+		setSubTitle(current.getTime().toString(radix));
+	}
+
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
 			return;
 		}
+
 		previous = current;
+		removeTraceListener();
 		current = coordinates;
+		addTraceListener();
 
 		doLoadPcodeFrame();
-
-		setSubTitle(current.getTime().toString());
-
+		updateSubTitle();
 		contextChanged();
 	}
 

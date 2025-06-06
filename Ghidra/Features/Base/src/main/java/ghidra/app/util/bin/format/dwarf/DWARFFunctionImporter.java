@@ -507,13 +507,11 @@ public class DWARFFunctionImporter {
 
 	/**
 	 * Move an address range into a fragment.
-	 * @param cu current compile unit
 	 * @param name name of the fragment
-	 * @param start start address of the fragment
-	 * @param end end address of the fragment
-	 * @param fileID offset of the file name in the debug_line section
+	 * @param addrs set of addresses that belong to the item
+	 * @param fileName source filename that contained the item 
 	 */
-	private void moveIntoFragment(String name, AddressSetView range, String fileName) {
+	private void moveIntoFragment(String name, AddressSetView addrs, String fileName) {
 		if (fileName != null) {
 			ProgramModule module = null;
 			int index = rootModule.getIndex(fileName);
@@ -522,7 +520,7 @@ public class DWARFFunctionImporter {
 					module = rootModule.createModule(fileName);
 				}
 				catch (DuplicateNameException e) {
-					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, range),
+					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, addrs),
 						e);
 					return;
 				}
@@ -542,10 +540,12 @@ public class DWARFFunctionImporter {
 						Group[] children = module.getChildren();//TODO add a getChildAt(index) method...
 						frag = (ProgramFragment) children[index];
 					}
-					frag.move(range.getMinAddress(), range.getMaxAddress());
+					for (AddressRange rng : addrs.getAddressRanges()) {
+						frag.move(rng.getMinAddress(), rng.getMaxAddress());
+					}
 				}
 				catch (NotFoundException e) {
-					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, range),
+					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, addrs),
 						e);
 					return;
 				}

@@ -139,7 +139,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 		String[] autoComment = getAutoPostComment(cu);
 		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.POST);
 
-		String[] comments = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.POST);
 		if (comments != null && comments.length > 0 && (cu instanceof Data)) {
 			return getTextField(comments, autoComment, offcutComments, proxy, x, false);
 		}
@@ -291,7 +291,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) obj;
-		String[] comment = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
+		String[] comment = cu.getCommentAsArray(CommentType.POST);
 
 		int[] cpath = null;
 		if (cu instanceof Data) {

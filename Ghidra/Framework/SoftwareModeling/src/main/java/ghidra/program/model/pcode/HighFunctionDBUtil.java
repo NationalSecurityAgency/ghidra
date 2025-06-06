@@ -385,6 +385,44 @@ public class HighFunctionDBUtil {
 		return res;
 	}
 
+	private static Variable getLocalVariable(Function function, VariableStorage storage,
+			Address pcAddr) {
+
+		if (storage.isHashStorage()) {
+
+			long hashVal = storage.getFirstVarnode().getOffset();
+			for (Variable ul : function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
+				// Note: assumes there is only one hash method used for unique locals
+				if (ul.getFirstStorageVarnode().getOffset() == hashVal) {
+					return ul;
+				}
+			}
+			return null;
+		}
+
+		int firstUseOffset = 0;
+		if (pcAddr != null) {
+			firstUseOffset = (int) pcAddr.subtract(function.getEntryPoint());
+		}
+
+		for (Variable otherVar : function.getLocalVariables()) {
+			if (otherVar.getFirstUseOffset() != firstUseOffset) {
+				// other than parameters we will have a hard time identifying
+				// local variable conflicts due to differences in scope (i.e., first-use)
+				continue;
+			}
+
+			VariableStorage otherStorage = otherVar.getVariableStorage();
+			if (otherStorage.intersects(storage)) {
+				if (otherStorage.equals(storage)) {
+					return otherVar;
+				}
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * Low-level routine for clearing any variables in the
 	 * database which conflict with this variable and return
@@ -475,6 +513,42 @@ public class HighFunctionDBUtil {
 			}
 		}
 		return parameters[slot];
+	}
+
+	public static Variable getFunctionVariable(HighSymbol highSymbol) {
+
+		if (highSymbol == null) {
+			return null;
+		}
+
+		HighFunction highFunction = highSymbol.getHighFunction();
+		Function function = highFunction.getFunction();
+		HighVariable highVar = highSymbol.getHighVariable();
+		if (highSymbol.isParameter()) {
+
+			int slot = ((HighParam) highVar).getSlot();
+			Parameter parameter = function.getParameter(slot);
+			return parameter;
+		}
+
+		if (highSymbol.isGlobal()) {
+			return null;
+		}
+
+		VariableStorage storage = highSymbol.getStorage();
+		Address pcAddr = highSymbol.getPCAddress();
+		Variable localVariable = getLocalVariable(function, storage, pcAddr);
+
+		if (!storage.isHashStorage() && highVar != null && highVar.requiresDynamicStorage()) {
+			DynamicEntry entry = DynamicEntry.build(highVar.getRepresentative());
+			storage = entry.getStorage();
+			pcAddr = entry.getPCAdress();	// The address may change from original Varnode
+		}
+
+		if (localVariable != null) {
+			return localVariable;
+		}
+		return null;
 	}
 
 	/**

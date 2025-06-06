@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 
 	/**
 	 * Get the ProjectLocator associated with a local project URL.
-	 * @return project locator object or null if URL supplies a a RepositoryAdapter and/or 
+	 * @return project locator object or null if URL supplies a RepositoryAdapter and/or 
 	 * RepositoryServerAdapter.
 	 */
 	public ProjectLocator getLocalProjectLocator() {
@@ -119,7 +119,7 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	}
 
 	/**
-	 * Connect and establish loca project project data instance.  Opening a project for
+	 * Connect and establish a local project data instance.  Opening a project for
 	 * write access is subject to in-use lock restriction.
 	 * See {@link #getStatusCode()} if null is returned.
 	 * @param readOnlyAccess true if project data should be read-only

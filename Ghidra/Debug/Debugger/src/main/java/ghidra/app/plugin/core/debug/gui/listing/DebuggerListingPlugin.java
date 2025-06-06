@@ -32,11 +32,11 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -180,13 +180,13 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	protected void viewChanged(AddressSetView addrSet) {
+	protected void setView(AddressSetView addrSet) {
 		TraceProgramView view = current.getView();
 		if (view == null) {
-			super.viewChanged(new AddressSet());
+			super.setView(new AddressSet());
 		}
 		else {
-			super.viewChanged(view.getMemory());
+			super.setView(view.getMemory());
 		}
 	}
 
@@ -329,6 +329,11 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
 		connectedProvider.removeTrackingSpecChangeListener(listener);
+	}
+
+	@Override
+	public AutoReadMemorySpec getAutoReadMemorySpec() {
+		return connectedProvider.getAutoReadMemorySpec();
 	}
 
 	@Override

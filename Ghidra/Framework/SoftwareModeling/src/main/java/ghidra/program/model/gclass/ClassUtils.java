@@ -128,6 +128,43 @@ public class ClassUtils {
 		return String.format("%s%08x", VTABLE_PREFIX, ptrOffsetInClass);
 	}
 
+	/**
+	 * Indicates whether a label satisfies the format of a vxtable label
+	 * @param type the data type
+	 * @return {@code true} if is a vxtable label format
+	 */
+	public static boolean isVTable(DataType type) {
+		if (!(type instanceof Structure)) {
+			return false;
+		}
+		String name = type.getName();
+		return validateVtableNameOffset(name) != null;
+	}
+
+	/**
+	 * Validates a Vtable name and returns the encoded offset value
+	 * @param name the name
+	 * @return the offset or {@code null} if invalid name
+	 */
+	private static Integer validateVtableNameOffset(String name) {
+		if (name == null) {
+			return null;
+		}
+		if (!name.startsWith(VTABLE_PREFIX)) {
+			return null;
+		}
+		if (name.length() < VTABLE_PREFIX.length() + 8) {
+			return null;
+		}
+		String sub = name.substring(VTABLE_PREFIX.length(), VTABLE_PREFIX.length() + 8);
+		try {
+			return Integer.parseInt(sub, 16);
+		}
+		catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
 	public static DataType getVftDefaultEntry(DataTypeManager dtm) {
 		return new PointerDataType(dtm);
 	}

@@ -287,7 +287,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testToolTipMaxLines() throws Exception {
 		tool.addPlugin(BookmarkPlugin.class.getName());
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		Address a = addr("0x0100b6db");
 		for (int i = 0; i < 20; i++) {
 			addCmd.add(new BookmarkEditCmd(a, "Type1", "Cat1a", "Cmt1A_" + (i + 1)));

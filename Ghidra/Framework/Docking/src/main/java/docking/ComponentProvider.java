@@ -775,7 +775,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the name of a cascading sub-menu name to use when when showing this provider in the
+	 * Returns the name of a cascading sub-menu name to use when showing this provider in the
 	 * "Window" menu. If the group name is null, the item will appear in the top-level menu.
 	 * @return the menu group for this provider or null if this provider should appear in the
 	 * top-level menu.

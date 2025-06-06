@@ -38,12 +38,20 @@
       <LI>Time - the "time" coordinate for the snapshot. This is the same as the Snap column for
       most snapshots. For <EM>scratch</EM> snapshots, this is the same as the Schedule column.</LI>
 
-      <LI>Timestamp - the "wall-clock" time of the event. If the debugger doesn't give an event
-      time, or the snapshot does not correspond to an event, then it is the snapshot creation
-      time.</LI>
-
       <LI>Event Thread - the thread that caused the event, if applicable. In the case of thread
       creation, this should probably be the spawned thread, not the parent.</LI>
+
+      <LI>PC - the address of the instruction to execute next. Different debuggers may have
+      different subtleties in how the report PC.</LI>
+
+      <LI>Module - the name of the module containing the PC.</LI>
+
+      <LI>Function - the name of the function containing the PC, if Ghidra has the corresponding
+      module image imported, analyzed, and mapped.</LI>
+
+      <LI>Timestamp - the "wall-clock" time of the event. If the debugger doesn't give an event
+      time, or the snapshot does not correspond to an event, then it is the snapshot creation time.
+      <EM>(hidden by default)</EM></LI>
 
       <LI>Schedule - if applicable, a source snap and the stepping schedule which produces this
       snapshot. This always applies to <EM>scratch</EM> snapshots produced by emulation, but may
@@ -101,5 +109,14 @@
     emulated state into the trace's <EM>scratch space</EM>, which comprises all negative snaps.
     Some time-travel capable back ends may also write into scratch space. When this toggle is
     enabled, those scratch snapshots are hidden.</P>
+
+    <H3><A name="radix"></A>Set Time Radix</H3>
+
+    <P>These actions are available when a trace is active. It sets the display radix for snapshot
+    keys and time schedules <EM>throughout the tool</EM>. This is useful to match the display of
+    time coordinates with a back end that supports time travel. Notably, WinDbg TTD uses upper-case
+    hexadecimal for its event sequence numbers. Normally, the back end would set the UI's radix
+    automatically, but in case it does not, or if you'd like to override the radix, these actions
+    are available.</P>
   </BODY>
 </HTML>

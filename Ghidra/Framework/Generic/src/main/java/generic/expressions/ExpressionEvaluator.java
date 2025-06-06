@@ -301,7 +301,7 @@ public class ExpressionEvaluator {
 					continue;
 				}
 
-				// make sure the next element is a value so the the caller can cast without fear
+				// make sure the next element is a value so the caller can cast without fear
 				if (list.get(i + 1) instanceof ExpressionValue) {
 					return i;
 				}

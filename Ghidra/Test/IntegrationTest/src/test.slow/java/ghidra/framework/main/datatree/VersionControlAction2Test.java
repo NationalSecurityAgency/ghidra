@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.task.TaskMonitor;
@@ -446,7 +445,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		Program p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		editProgram(p, program -> {
 			CodeUnit cu = program.getListing().getCodeUnitAt(program.getMinAddress());
-			cu.setComment(CodeUnit.PLATE_COMMENT, "my Plate Comment");
+			cu.setComment(CommentType.PLATE, "my Plate Comment");
 		});
 		p.release(this);
 
@@ -486,6 +485,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 	 * @param icon the icon to get a URL for
 	 * @return the URL for the given icon
 	 */
+	@Override
 	public URL getURL(Icon icon) {
 		if (icon instanceof UrlImageIcon urlIcon) {
 			return urlIcon.getUrl();

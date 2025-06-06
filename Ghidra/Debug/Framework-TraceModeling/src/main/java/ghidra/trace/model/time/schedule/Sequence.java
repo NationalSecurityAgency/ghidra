@@ -18,14 +18,13 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -33,27 +32,28 @@ import ghidra.util.task.TaskMonitor;
  * A sequence of thread steps, each repeated some number of times
  */
 public class Sequence implements Comparable<Sequence> {
-	public static final String SEP = ";";
+	private static final String SEP = ";";
 
 	/**
 	 * Parse (and normalize) a sequence of steps
 	 * 
 	 * <p>
 	 * This takes a semicolon-separated list of steps in the form specified by
-	 * {@link Step#parse(String)}. Each step may or may not specify a thread, but it's uncommon for
-	 * any but the first step to omit the thread. The sequence is normalized as it is parsed, so any
-	 * step after the first that omits a thread will be combined with the previous step. When the
-	 * first step applies to the "last thread," it typically means the "event thread" of the source
-	 * trace snapshot.
+	 * {@link Step#parse(String, TimeRadix)}. Each step may or may not specify a thread, but it's
+	 * uncommon for any but the first step to omit the thread. The sequence is normalized as it is
+	 * parsed, so any step after the first that omits a thread will be combined with the previous
+	 * step. When the first step applies to the "last thread," it typically means the "event thread"
+	 * of the source trace snapshot.
 	 * 
 	 * @param seqSpec the string specification of the sequence
+	 * @param radix the radix
 	 * @return the parsed sequence
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	public static Sequence parse(String seqSpec) {
+	public static Sequence parse(String seqSpec, TimeRadix radix) {
 		Sequence result = new Sequence();
 		for (String stepSpec : seqSpec.split(SEP)) {
-			Step step = Step.parse(stepSpec);
+			Step step = Step.parse(stepSpec, radix);
 			result.advance(step);
 		}
 		return result;
@@ -109,7 +109,11 @@ public class Sequence implements Comparable<Sequence> {
 
 	@Override
 	public String toString() {
-		return StringUtils.join(steps, SEP);
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	public String toString(TimeRadix radix) {
+		return steps.stream().map(s -> s.toString(radix)).collect(Collectors.joining(SEP));
 	}
 
 	/**

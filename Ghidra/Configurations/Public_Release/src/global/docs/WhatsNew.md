@@ -38,7 +38,7 @@ causing a full logout, check if your xorg-server has been updated to at least th
 **NOTE:** Each build distribution will include native components (e.g., decompiler) for at least one
 platform (e.g., Windows x86-64). If you have another platform that is not included in the build
 distribution, you can build native components for your platform directly from the distribution.
-See the *Installation Guide* for additional information. Users running with older shared libraries
+See the *Getting Started* document for additional information. Users running with older shared libraries
 and operating systems (e.g., CentOS 7.x) may also run into compatibility errors when launching 
 native executables such as the Decompiler and GNU Demangler which may necessitate a rebuild of 
 native components.
@@ -67,7 +67,7 @@ up analysis on a given sample and running a Ghidra script locally. It also conta
 to allow the use of CPython 3 from the Ghidra GUI.
 
 To launch Ghidra in PyGhidra mode, run `./support/pyghidra` (or `support\pyghidra.bat`). See the
-*"PyGhidra Mode"* section of the *Installation Guide* and `Ghidra/Features/PyGhidra/README.html`
+*"PyGhidra Mode"* section of the *Getting Started* document and `Ghidra/Features/PyGhidra/README.html`
 for more information.
 
 ## Visual Studio Code
@@ -166,4 +166,4 @@ The Function Graph has had a number of improvements:
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
-[Change History](ChangeHistory.html) file.
+[Change History](ChangeHistory.md) file.

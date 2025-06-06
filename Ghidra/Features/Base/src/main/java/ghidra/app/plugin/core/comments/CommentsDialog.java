@@ -35,6 +35,7 @@ import ghidra.app.util.viewer.field.AnnotatedStringHandler;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.HelpLocation;
 
 /**
@@ -93,11 +94,11 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		setTitle("Set Comment(s) at Address " + cu.getMinAddress());
 		codeUnit = cu;
 
-		preComment = cu.getComment(CodeUnit.PRE_COMMENT);
-		postComment = cu.getComment(CodeUnit.POST_COMMENT);
-		eolComment = cu.getComment(CodeUnit.EOL_COMMENT);
-		plateComment = cu.getComment(CodeUnit.PLATE_COMMENT);
-		repeatableComment = cu.getComment(CodeUnit.REPEATABLE_COMMENT);
+		preComment = cu.getComment(CommentType.PRE);
+		postComment = cu.getComment(CommentType.POST);
+		eolComment = cu.getComment(CommentType.EOL);
+		plateComment = cu.getComment(CommentType.PLATE);
+		repeatableComment = cu.getComment(CommentType.REPEATABLE);
 
 		preComment = (preComment == null) ? "" : preComment;
 		postComment = (postComment == null) ? "" : postComment;

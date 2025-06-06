@@ -507,6 +507,12 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 					throw new IOException(
 						"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
 				}
+				if (pcHeader.getGoVersion().isInvalid()) {
+					// we can get here if the firstmoduledata was located via symbolname instead of
+					// relying on bootstraping via the pcheader
+					Msg.warn(this,
+						"Unknown golang pcheader magic value: 0x%x".formatted(pcHeader.getMagic()));
+				}
 			}
 			addModule(firstModule);
 		}

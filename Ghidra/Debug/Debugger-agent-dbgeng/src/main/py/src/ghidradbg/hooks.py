@@ -511,7 +511,7 @@ def on_breakpoint_hit(*args) -> None:
 @log_errors
 def on_exception(*args) -> None:
     # print("ON_EXCEPTION: args={}".format(args))
-    return DbgEng.DEBUG_STATUS_BREAK
+    return DbgEng.DEBUG_STATUS_NO_CHANGE
 
 
 @util.dbg.eng_thread

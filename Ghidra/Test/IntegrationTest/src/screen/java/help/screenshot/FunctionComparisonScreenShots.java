@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,8 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
-import ghidra.features.codecompare.plugin.*;
+import ghidra.features.codecompare.plugin.FunctionComparisonPlugin;
+import ghidra.features.codecompare.plugin.FunctionComparisonProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
@@ -85,7 +86,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 			Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 			f1.setName("FunctionA", SourceType.USER_DEFINED);
-			sourceListing.setComment(addr(0x004118f0), CodeUnit.PLATE_COMMENT, null);
+			sourceListing.setComment(addr(0x004118f0), CommentType.PLATE, null);
 			sourceListing.clearCodeUnits(addr(0x004119b1), addr(0x004119b4), false);
 			sourceMemory.setByte(addr(0x004119b2), (byte) 0x55);
 			sourceMemory.setByte(addr(0x004119b4), (byte) 0x52);
@@ -93,7 +94,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 			Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 			f2.setName("FunctionB", SourceType.USER_DEFINED);
-			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
+			destListing.setComment(addr(0x004118c0), CommentType.PLATE, null);
 
 			plugin.createComparison(f1, f2);
 			FunctionComparisonProvider provider =

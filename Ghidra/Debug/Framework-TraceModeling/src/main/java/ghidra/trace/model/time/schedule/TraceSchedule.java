@@ -36,6 +36,62 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
 
 	/**
+	 * Format for rendering and parsing snaps and step counts
+	 */
+	public enum TimeRadix {
+		/** Use decimal (default) */
+		DEC("dec", 10, "%d"),
+		/** Use upper-case hexadecimal */
+		HEX_UPPER("HEX", 16, "%X"),
+		/** Use lower-case hexadecimal */
+		HEX_LOWER("hex", 16, "%x");
+
+		/** The default radix (decimal) */
+		public static final TimeRadix DEFAULT = DEC;
+
+		/**
+		 * Get the radix specified by the given string
+		 * 
+		 * @param s the name of the specified radix
+		 * @return the radix
+		 */
+		public static TimeRadix fromStr(String s) {
+			return switch (s) {
+				case "dec" -> DEC;
+				case "HEX" -> HEX_UPPER;
+				case "hex" -> HEX_LOWER;
+				default -> DEFAULT;
+			};
+		}
+
+		public final String name;
+		public final int n;
+		public final String fmt;
+
+		private TimeRadix(String name, int n, String fmt) {
+			this.name = name;
+			this.n = n;
+			this.fmt = fmt;
+		}
+
+		public String format(long time) {
+			return fmt.formatted(time);
+		}
+
+		public long decode(String nm) {
+			if (nm.startsWith("0x") || nm.startsWith("0X") ||
+				nm.startsWith("-0x") || nm.startsWith("-0X")) {
+				return Long.parseLong(nm, 16);
+			}
+			if (nm.startsWith("0n") || nm.startsWith("0N") ||
+				nm.startsWith("-0n") || nm.startsWith("-0N")) {
+				return Long.parseLong(nm, 10);
+			}
+			return Long.parseLong(nm, n);
+		}
+	}
+
+	/**
 	 * Specifies forms of a stepping schedule.
 	 * 
 	 * <p>
@@ -196,14 +252,15 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * <p>
 	 * A schedule consists of a snap, a optional {@link Sequence} of thread instruction-level steps,
 	 * and optional p-code-level steps (pSteps). The form of {@code steps} and {@code pSteps} is
-	 * specified by {@link Sequence#parse(String)}. Each sequence consists of stepping selected
-	 * threads forward, and/or patching machine state.
+	 * specified by {@link Sequence#parse(String, TimeRadix)}. Each sequence consists of stepping
+	 * selected threads forward, and/or patching machine state.
 	 * 
 	 * @param spec the string specification
 	 * @param source the presumed source of the schedule
+	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
-	public static TraceSchedule parse(String spec, Source source) {
+	public static TraceSchedule parse(String spec, Source source, TimeRadix radix) {
 		String[] parts = spec.split(":", 2);
 		if (parts.length > 2) {
 			throw new AssertionError();
@@ -212,7 +269,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		final Sequence ticks;
 		final Sequence pTicks;
 		try {
-			snap = Long.decode(parts[0]);
+			snap = radix.decode(parts[0]);
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -220,7 +277,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (parts.length > 1) {
 			String[] subs = parts[1].split("\\.");
 			try {
-				ticks = Sequence.parse(subs[0]);
+				ticks = Sequence.parse(subs[0], radix);
 			}
 			catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -230,7 +287,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			}
 			else if (subs.length == 2) {
 				try {
-					pTicks = Sequence.parse(subs[1]);
+					pTicks = Sequence.parse(subs[1], radix);
 				}
 				catch (IllegalArgumentException e) {
 					throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -248,13 +305,24 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
-	 * As in {@link #parse(String, Source)}, but assumed abnormal
+	 * As in {@link #parse(String, Source, TimeRadix)}, but assumed abnormal
 	 * 
 	 * @param spec the string specification
+	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
+	public static TraceSchedule parse(String spec, TimeRadix radix) {
+		return parse(spec, Source.INPUT, radix);
+	}
+
+	/**
+	 * As in {@link #parse(String, TimeRadix)}, but with the {@link TimeRadix#DEFAULT} radix.
+	 * 
+	 * @param spec the string specification
+	 * @return the parse sequence
+	 */
 	public static TraceSchedule parse(String spec) {
-		return parse(spec, Source.INPUT);
+		return parse(spec, TimeRadix.DEFAULT);
 	}
 
 	public enum Source {
@@ -318,13 +386,18 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	@Override
 	public String toString() {
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	public String toString(TimeRadix radix) {
 		if (pSteps.isNop()) {
 			if (steps.isNop()) {
-				return Long.toString(snap);
+				return radix.format(snap);
 			}
-			return String.format("%d:%s", snap, steps);
+			return String.format("%s:%s", radix.format(snap), steps.toString(radix));
 		}
-		return String.format("%d:%s.%s", snap, steps, pSteps);
+		return String.format("%s:%s.%s", radix.format(snap), steps.toString(radix),
+			pSteps.toString(radix));
 	}
 
 	/**

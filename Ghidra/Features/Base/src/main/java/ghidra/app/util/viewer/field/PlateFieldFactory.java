@@ -180,7 +180,7 @@ public class PlateFieldFactory extends FieldFactory {
 
 		addBlankLines(elements, numberBlankLines, cu);
 
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		return generateFormattedPlateComment(elements, comments, offcutComments, cu.getProgram());
 	}
 
@@ -210,7 +210,7 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		if (comments == null) {
 			return null;
 		}
@@ -503,7 +503,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) proxyObject;
-		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
 		RowColLocation dataLocation =
 			((ListingTextField) listingField).screenToDataLocation(row, col);
 

@@ -26,7 +26,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitor;
 
 public class DataTypeSymbol {
 	private Symbol sym;			// Traditional symbol object
@@ -151,7 +150,7 @@ public class DataTypeSymbol {
 		}
 
 		// remove unused override signature
-		program.getDataTypeManager().remove(getDataType(), TaskMonitor.DUMMY);
+		program.getDataTypeManager().remove(getDataType());
 	}
 
 	public static DataTypeSymbol readSymbol(String cat, Symbol s) {

@@ -548,7 +548,12 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				Collection<TraceBreakpoint> breakpoints, ControlMode mode) {
 			for (TraceBreakpoint tb : breakpoints) {
 				try {
-					trackTraceBreakpoint(a, tb, mode, false);
+					/**
+					 * Sadly, even something as simple as toggling a breakpoint can cause so many
+					 * events that the manager punts to OBJECT_RESTORED. Thus, we have to set
+					 * forceUpdate here.
+					 */
+					trackTraceBreakpoint(a, tb, mode, true);
 				}
 				catch (TrackedTooSoonException e) {
 					// This can still happen during reload (on OBJECT_RESTORED)

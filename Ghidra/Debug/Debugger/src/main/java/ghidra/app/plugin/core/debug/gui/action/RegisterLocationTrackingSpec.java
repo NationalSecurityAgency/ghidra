@@ -84,8 +84,12 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (value == null) {
 			return null;
 		}
-		// TODO: Action to select the address space
-		// Could use code unit, but that can't specify space, yet, either....
+		/**
+		 * NOTE: I don't think the user needs a way to select the address space. For PC and SP, the
+		 * tracker provides the best default, i.e., the default (code) space and the compiler's
+		 * physical stack space. For watches, I believe the sleigh syntax allows the user to pick,
+		 * but I can't recall testing that.
+		 */
 		return platform.mapGuestToHost(computeDefaultAddressSpace(coordinates)
 				.getAddress(value.getUnsignedValue().longValue(), true));
 	}

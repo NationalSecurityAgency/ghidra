@@ -1,6 +1,5 @@
 AutoMapSpec
-AutoReadMemorySpec
-DebuggerBot
+AutoReadMemorySpecFactory
 DebuggerMappingOpinion
 DebuggerModelFactory
 DebuggerPcodeEmulatorFactory

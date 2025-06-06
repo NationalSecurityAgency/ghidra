@@ -115,7 +115,8 @@ public class LabelMgrPlugin extends Plugin {
 	protected void removeLabelCallback(ListingActionContext context) {
 		Symbol s = getSymbol(context);
 		if (s != null) {
-			Command cmd = new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
+			Command<Program> cmd =
+				new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
 
 			if (!tool.execute(cmd, context.getProgram())) {
 				tool.setStatusInfo(cmd.getStatusMsg());

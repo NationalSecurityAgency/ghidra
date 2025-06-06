@@ -20,6 +20,7 @@ Next, perform the following steps from the Ghidra Code Browser:
 We now populate the database with an executable which is contained in the Ghidra distribution.
 
 1. Import and analyze the executable ``<ghidra_install_dir>/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_41`` using the default analysis options.
+1. Save the analyzed program.
 1. Run the Ghidra script ``AddProgramToH2BSimDatabaseScript.java`` on this program.
     - The script will ask you to select an H2 database file.  Use ``example.mv.db`` in the database directory.
 1. In general you can run this script on other programs to add their signatures to this database, but that's not necessary for the exercises in the next section.

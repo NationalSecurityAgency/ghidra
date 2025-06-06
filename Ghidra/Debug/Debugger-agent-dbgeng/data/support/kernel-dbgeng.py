@@ -17,25 +17,16 @@
 import os
 import sys
 
-home = os.getenv('GHIDRA_HOME')
 
-if os.path.isdir(f'{home}\\ghidra\\.git'):
-    sys.path.append(
-        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
-    sys.path.append(
-        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
-elif os.path.isdir(f'{home}\\.git'):
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
-else:
-    sys.path.append(
-        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\pypkg\\src')
-    sys.path.append(f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\pypkg\\src')
+def append_paths():
+    sys.path.append("../../../Debugger-rmi-trace/data/support")
+    from gmodutils import ghidra_module_pypath
+    sys.path.append(ghidra_module_pypath("Debug/Debugger-rmi-trace"))
+    sys.path.append(ghidra_module_pypath("Debug/Debugger-agent-dbgeng"))
 
 
 def main():
+    append_paths()
     # Delay these imports until sys.path is patched
     from ghidradbg import commands as cmd
     from ghidradbg import util
@@ -59,20 +50,25 @@ def main():
         flags = 2
     args = os.getenv('OPT_KCONNECT_STRING')
     cmd.ghidra_trace_attach_kernel(args, flags, start_trace=False)
-    
+
     # TODO: HACK
     try:
         dbg.wait()
     except KeyboardInterrupt as ki:
         dbg.interrupt()
 
-    #cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
+    # cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
     cmd.ghidra_trace_start("System")
     cmd.ghidra_trace_sync_enable()
-    
-    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)
+
+    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS,
+                     DbgEng.DEBUG_STATUS_BREAK)
     cmd.repl()
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit as x:
+        if x.code != 0:
+            print(f"Exited with code {x.code}")

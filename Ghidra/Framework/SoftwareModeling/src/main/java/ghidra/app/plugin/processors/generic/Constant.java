@@ -24,6 +24,8 @@ public class Constant implements ExpressionValue {
 		val = v;
 	}
 
+	@Override
 	public long longValue(MemBuffer buf, int off) { return val; }
+	@Override
 	public int length(MemBuffer buf, int off) { return 0; }
 }

@@ -1,4 +1,4 @@
-#@title remote gdb
+#@title gdb remote
 #@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
@@ -7,7 +7,7 @@
 #@desc     For setup instructions, press <b>F1</b>. 
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#remote
 #@enum TargetType:str remote extended-remote
@@ -20,42 +20,15 @@
 #@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
-[IO.DirectoryInfo] $repo = "$Env:GHIDRA_HOME\.git"
-[IO.DirectoryInfo] $repoParent = "$Env:GHIDRA_HOME\ghidra\.git"
-if ($repo.Exists) {
-	$pypathGdb =   "$Env:GHIDRA_HOME\Ghidra\Debug\Debugger-agent-gdb\build\pypkg\src"
-	$pypathTrace = "$Env:GHIDRA_HOME\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src"
-}
-elseif ($repoParent.Exists) {
-	$pypathGdb =   "$Env:GHIDRA_HOME\ghidra\Ghidra\Debug\Debugger-agent-gdb\build\pypkg\src"
-	$pypathTrace = "$Env:GHIDRA_HOME\ghidra\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src"
-}
-else {
-	$pypathGdb =   "$Env:GHIDRA_HOME\Ghidra\Debug\Debugger-agent-gdb\pypkg\src"
-	$pypathTrace = "$Env:GHIDRA_HOME\Ghidra\Debug\Debugger-rmi-trace\pypkg\src"
-}
+. ..\support\gdbsetuputils.ps1
+
+$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
 $Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
-$arglist = @()
+$arglist = Compute-Gdb-Remote-Args `
+    -TargetImage $args[0] `
+    -TargetCx "$Env:OPT_TARGET_TYPE $Env:OPT_HOST`:$Env:OPT_PORT" `
+    -RmiAddress "$Env:GHIDRA_TRACE_RMI_ADDR"
 
-$arglist+=("-q")
-$arglist+=("-ex", "`"set pagination off`"")
-$arglist+=("-ex", "`"set confirm off`"")
-$arglist+=("-ex", "`"show version`"")
-$arglist+=("-ex", "`"python import ghidragdb`"")
-$arglist+=("-ex", "`"set architecture $Env:OPT_ARCH`"")
-$arglist+=("-ex", "`"set endian $Env:OPT_ENDIAN`"")
-if ("$($args[0])" -ne "") {
-	$image = $args[0] -replace "\\", "\\\\"
-	$arglist+=("-ex", "`"file '$image'`"")
-}
-$arglist+=("-ex", "`"echo Connecting to $Env:OPT_HOST`:$Env:OPT_PORT... `"")
-$arglist+=("-ex", "`"target $Env:OPT_TARGET_TYPE $Env:OPT_HOST`:$Env:OPT_PORT`"")
-$arglist+=("-ex", "`"ghidra trace connect '$Env:GHIDRA_TRACE_RMI_ADDR'`"")
-$arglist+=("-ex", "`"ghidra trace start`"")
-$arglist+=("-ex", "`"ghidra trace sync-enable`"")
-$arglist+=("-ex", "`"ghidra trace sync-synth-stopped`"")
-$arglist+=("-ex", "`"set confirm on`"")
-$arglist+=("-ex", "`"set pagination on`"")
-
-Start-Process -FilePath $Env:OPT_GDB_PATH -ArgumentList $arglist -NoNewWindow -Wait
+Start-Process -FilePath $arglist[0] -ArgumentList $arglist[1..$arglist.Count] -NoNewWindow -Wait

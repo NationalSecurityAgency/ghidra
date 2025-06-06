@@ -19,8 +19,6 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 
-import javax.swing.JDialog;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,7 +27,6 @@ import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
@@ -425,7 +422,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				// change ArrayStruct
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 			}
 
 			@Override
@@ -617,7 +614,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				// delete Bar from Foo
 				fs.delete(3);
 				// add Foo to Bar
-				dtm.remove(bs, TaskMonitor.DUMMY);
+				dtm.remove(bs);
 
 				// Add s1, s2, s3
 				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
@@ -705,7 +702,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				// delete Bar from Foo
 				foo.delete(3);
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 
 				// Add s1, s2, s3
 				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
@@ -801,7 +798,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				// delete Bar from Foo
 				fs.delete(3);
 				// remove Bar from the data type manager
-				dtm.remove(bs, TaskMonitor.DUMMY);
+				dtm.remove(bs);
 
 				// Add s1, s2, s3
 				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
@@ -945,7 +942,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				// delete Foo from the data type manager
-				dtm.remove(fs, TaskMonitor.DUMMY);
+				dtm.remove(fs);
 			}
 
 			@Override
@@ -954,7 +951,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// delete Foo from the data type manager
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 
 				// Add s1, s2, s3
 				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
@@ -1023,7 +1020,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				// delete Foo from the data type manager
-				dtm.remove(fs, TaskMonitor.DUMMY);
+				dtm.remove(fs);
 			}
 
 			@Override
@@ -1033,7 +1030,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 
 				// delete Foo from the data type manager
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 
 				// Add s1, s2, s3
 				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
@@ -1181,7 +1178,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1296,7 +1293,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1409,7 +1406,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1482,7 +1479,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1579,7 +1576,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1670,7 +1667,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1756,7 +1753,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1838,7 +1835,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override

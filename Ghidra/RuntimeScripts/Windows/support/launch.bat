@@ -127,7 +127,7 @@ echo WARNING: JAVA_HOME environment variable is set to an invalid directory: %JA
 :javaNotFound
 echo.
 echo ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME.
-echo Please refer to the Ghidra Installation Guide's Troubleshooting section.
+echo Please refer to the Getting Started document's Troubleshooting section.
 set ERRORLEVEL=1
 goto exit1
 
@@ -146,7 +146,7 @@ if "%LS_JAVA_HOME%" == "" (
 	if "!LS_JAVA_HOME!" == "" (
 		echo.
 		echo ERROR: Failed to find a supported JDK.
-		echo Please refer to the Ghidra Installation Guide's Troubleshooting section.
+		echo Please refer to the Getting Started document's Troubleshooting section.
 		set ERRORLEVEL=1
 		goto exit1
 	)

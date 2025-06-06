@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ public abstract class DatabaseObject {
 	@SuppressWarnings("rawtypes")
 	private final DBObjectCache cache;
 	private volatile int invalidateCount;
+	private boolean refreshing = false;
 
 	/**
 	 * Constructs a new DatabaseObject and adds it to the specified cache.
@@ -91,6 +92,7 @@ public abstract class DatabaseObject {
 
 	/**
 	 * Returns true if object is currently invalid and must be validated prior to further use. 
+	 * A deleted object will be considered valid since it cannot be refreshed.
 	 * An invalid object may result from a cache invalidation which corresponds to wide-spread 
 	 * record changes.  A common situation where this can occur is an undo/redo operation
 	 * against the underlying database.  The methods {@link #checkIsValid()}, {@link #checkDeleted()},
@@ -128,23 +130,41 @@ public abstract class DatabaseObject {
 	}
 
 	/**
-	 * Check whether this object is still valid. If the object is invalid, the object will attempt
-	 * to refresh itself using the specified record. If the refresh fails, the object will be marked
-	 * as deleted and removed from cache. If this object is already marked as deleted, the record
-	 * can not be used to refresh the object.
+	 * Check whether this object is still valid. If the object is invalid and not deleted, the 
+	 * object will attempt to refresh itself using the specified record. If the refresh fails, 
+	 * the object will be marked as deleted and removed from cache. If this object is already 
+	 * marked as deleted a refresh will not be perormed.
+	 * <P>
+	 * This method may invoke {@link #refresh(DBRecord)} to perform a refresh.  It is important 
+	 * that such a refresh avoid recursing back into this method.
 	 * 
 	 * @param record optional record which may be used to refresh invalid object
-	 * @return true if the object is valid.
+	 * @return true if the object is valid or false if it has been deleted.
 	 */
 	protected boolean checkIsValid(DBRecord record) {
 		if (isInvalid()) {
-			setValid();// prevent checkIsValid recursion during refresh
-			if (!refresh(record)) {
+			if (refreshing) {
+				// NOTE: We need to correct such recursion cases which should be
+				// avoided since object is not in a valid state until refresh completed.
+				return !deleted;
+			}
+			refreshing = true;
+			try {
+				if (refresh(record)) {
+					// Object is valid
+					setValid();
+					return true;
+				}
+
+				// Object has been deleted
 				if (cache != null) {
 					cache.delete(key);
 				}
 				setDeleted();
-				setInvalid();
+				return false;
+			}
+			finally {
+				refreshing = false;
 			}
 		}
 		return !deleted;
@@ -152,14 +172,15 @@ public abstract class DatabaseObject {
 
 	/**
 	 * This method provides a cheap (lock free) way to test if an object is valid. If this object is
-	 * invalid, then the lock will be used to refresh as needed.
+	 * invalid and not deleted, then the lock will be used to refresh as needed.  A deleted object
+	 * will not be refreshed.
 	 * 
 	 * @param lock the lock that will be used if the object needs to be refreshed.
-	 * @return true if object is valid, else false if deleted
+	 * @return true if object is valid or false if deleted
 	 */
 	protected boolean validate(Lock lock) {
 		if (!isInvalid()) {
-			return true;
+			return !deleted;
 		}
 		lock.acquire();
 		try {

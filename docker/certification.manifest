@@ -1,0 +1,4 @@
+##VERSION: 2.0
+Dockerfile||GHIDRA||||END|
+Dockerfile.dockerignore||GHIDRA||||END|
+README.md||GHIDRA||||END|

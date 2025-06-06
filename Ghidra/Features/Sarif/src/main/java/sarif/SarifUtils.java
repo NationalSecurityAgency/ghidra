@@ -349,12 +349,13 @@ public class SarifUtils {
 	}
 
 	public static void validateRun(Run run) {
-		if (!run.equals(currentRun) || llocs == null) {
-			initRun(run);
-		}
+		initRun(run);
 	}
 
 	private static void initRun(Run run) {
+		edgeDescs.clear();
+		edgeSrcs.clear();
+		edgeDsts.clear();
 		currentRun = run;
 		addresses = run.getAddresses();
 		for (com.contrastsecurity.sarif.Address sarifAddr : addresses) {
@@ -424,6 +425,10 @@ public class SarifUtils {
 		if (offset == null) {
 			return null;
 		}
+		return getAddress(program, offset);
+	}
+
+	public static Address getAddress(Program program, Long offset) {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 

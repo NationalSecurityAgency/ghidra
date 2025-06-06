@@ -2450,7 +2450,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	}
 
 	private void setComment(String address, CommentType type, String comment) {
-		applyCmd(program, new SetCommentCmd(addr(address), type.ordinal(), comment));
+		applyCmd(program, new SetCommentCmd(addr(address), type, comment));
 	}
 
 	private void assertNextTokenIndex(int expectedIndex, int line, int... cols) {

@@ -176,8 +176,8 @@ public interface DataTypeComponent {
 	}
 
 	/**
-	 * Returns true if this this component is not defined. It is just a placeholder.
-	 * @return true if this this component is not defined. It is just a placeholder.
+	 * Returns true if this component is not defined. It is just a placeholder.
+	 * @return true if this component is not defined. It is just a placeholder.
 	 */
 	public boolean isUndefined();
 

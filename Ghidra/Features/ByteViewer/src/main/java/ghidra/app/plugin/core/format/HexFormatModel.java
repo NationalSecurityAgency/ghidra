@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +49,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get the name of this formatter.
 	 */
+	@Override
 	public String getName() {
 		return NAME;
 	}
@@ -58,6 +58,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	 * Get the number of bytes to make a unit; in this case, 
 	 * returns 1.
 	 */
+	@Override
 	public int getUnitByteSize() {
 		return unitByteSize;
 	}
@@ -67,6 +68,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	 * unit. 
 	 * @return 2 for number of characters in a unit
 	 */
+	@Override
 	public int getDataUnitSymbolSize() {
 		return symbolSize;
 	}
@@ -74,6 +76,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get number of units in a group.
 	 */
+	@Override
 	public int getGroupSize() {
 		return groupSize;
 	}
@@ -81,6 +84,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Set the number of units in a group.
 	 */
+	@Override
 	public void setGroupSize(int groupSize) {
 		this.groupSize = groupSize;
 		unitByteSize = groupSize;
@@ -98,6 +102,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	 * Returns the byte used to generate the character at a given
 	 * position.
 	 */
+	@Override
 	public int getByteOffset(ByteBlock block, int pos) {
 		if (prefixEnabled) {
 			if (pos <= 3) {
@@ -117,6 +122,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Given the byte offset into a unit, get the column position.
 	 */
+	@Override
 	public int getColumnPosition(ByteBlock block, int byteOffset) {
 		if (prefixEnabled) {
 			return byteOffset * 2 + 2;
@@ -161,6 +167,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
 
@@ -227,6 +234,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Returns true to allow values to be changed.
 	 */
+	@Override
 	public boolean isEditable() {
 		return true;
 	}
@@ -234,6 +242,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get the number of characters separating units for display purposes.
 	 */
+	@Override
 	public int getUnitDelimiterSize() {
 		return 1;
 	}
@@ -252,6 +261,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c)
 			throws ByteBlockAccessException {
 
@@ -287,6 +297,7 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/**
 	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
 	 */
+	@Override
 	public boolean validateBytesPerLine(int bytesPerLine) {
 		return true;
 	}
@@ -315,10 +326,12 @@ public class HexFormatModel implements UniversalDataFormatModel {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
 	 */
+	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Hex");
 	}
 
+	@Override
 	public void dispose() {
 	}
 

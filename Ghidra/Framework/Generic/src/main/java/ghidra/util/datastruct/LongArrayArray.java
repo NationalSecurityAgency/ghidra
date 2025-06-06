@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +110,8 @@ public class LongArrayArray implements Array, Serializable {
      * @param index index of the array to be removed
      * @throws IndexOutOfBoundsException if the index is negative
      */    
-    public void remove(int index) {
+    @Override
+	public void remove(int index) {
         try {
             if (starts[index] > 0) {
                 totalSpaceAllocated -= lengths[index];
@@ -217,14 +217,16 @@ public class LongArrayArray implements Array, Serializable {
     /**
      * Returns the index of the last non-null or non-zero element in the array.
      */
-    public int getLastNonEmptyIndex() {
+    @Override
+	public int getLastNonEmptyIndex() {
         return lastStart;
     }
     /**
      * 
      * @see ghidra.util.datastruct.Array#copyDataTo(int, ghidra.util.datastruct.DataTable, int, int)
      */
-    public void copyDataTo(int index, DataTable table, int toIndex, int toCol) {
+    @Override
+	public void copyDataTo(int index, DataTable table, int toIndex, int toCol) {
     	table.putLongArray(toIndex, toCol, get(index));
     }
 }
