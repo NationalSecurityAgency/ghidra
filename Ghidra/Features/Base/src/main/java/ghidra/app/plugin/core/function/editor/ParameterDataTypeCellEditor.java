@@ -19,7 +19,8 @@ import java.awt.Component;
 import java.awt.event.*;
 import java.util.EventObject;
 
-import javax.swing.*;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
@@ -32,7 +33,6 @@ import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.MessageType;
-import ghidra.util.Swing;
 import ghidra.util.data.DataTypeParser;
 
 class ParameterDataTypeCellEditor extends AbstractCellEditor
@@ -82,18 +82,6 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 			}
 		});
 
-		JButton browseButton = editor.getBrowseButton();
-		browseButton.addActionListener(e -> Swing.runLater(() -> {
-			DataType dataType = service.getDataType((String) null);
-			if (dataType != null) {
-				editor.setCellEditorValue(dataType);
-				editor.stopCellEditing();
-			}
-			else {
-				editor.cancelCellEditing();
-			}
-		}));
-
 		textField.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -114,14 +102,6 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 	 */
 	public DropDownSelectionTextField<DataType> getTextField() {
 		return textField;
-	}
-
-	/**
-	 * @return chooser button '...' associated with the generated component.  Null will 
-	 * be returned if getTableCellEditorComponent method has not yet been invoked. 
-	 */
-	public JButton getChooserButton() {
-		return editor.getBrowseButton();
 	}
 
 	@Override

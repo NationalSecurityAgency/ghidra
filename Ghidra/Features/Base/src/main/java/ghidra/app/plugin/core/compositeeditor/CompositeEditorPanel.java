@@ -43,7 +43,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField;
 import generic.theme.GColor;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.framework.plugintool.Plugin;
@@ -1204,9 +1203,6 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 				}
 			});
 
-			JButton browseButton = editor.getBrowseButton();
-			browseButton.addActionListener(e -> Swing.runLater(() -> stopEdit(tool)));
-
 			textField.addFocusListener(new FocusAdapter() {
 				@Override
 				public void focusGained(FocusEvent e) {
@@ -1215,18 +1211,6 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 				}
 			});
 
-		}
-
-		private void stopEdit(PluginTool tool) {
-			DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
-			DataType dataType = service.getDataType((String) null);
-			if (dataType != null) {
-				editor.setCellEditorValue(dataType);
-				editor.stopCellEditing();
-			}
-			else {
-				editor.cancelCellEditing();
-			}
 		}
 
 		@Override
