@@ -58,6 +58,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolUtilities;
 
 public class VxWorksSymTab_Finder extends GhidraScript {
 
@@ -305,14 +306,14 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	}
 
 	//------------------------------------------------------------------------
-	// isString
+	// isValidSymbolString
 	//
-	// Are the bytes starting at addr a C string?
+	// Are the bytes starting at addr a C string that is a valid symbol?
 	//
 	// Algorithm:  Scan bytes until finding either an invalid char or null.
 	//             If scan stops at null, return true -- else false.
 	//------------------------------------------------------------------------
-	private boolean isString(Address addr) {
+	private boolean isValidSymbolString(Address addr) {
 		byte _byte;
 
 		try {
@@ -322,9 +323,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return false;
 		}
 
-		while (	// May need to add valid character examples here.
-		(_byte == 0x09 || _byte == 0x0a || _byte == 0x0d || (_byte > 0x19 && _byte < 0x80)) &&
-			_byte != 0x00) {
+		while (!SymbolUtilities.isInvalidChar((char) _byte) && _byte != 0x00) {
 
 			if (monitor.isCancelled()) {
 				return false;
@@ -416,7 +415,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return false;
 		}
 		Address symNameAddr = toAddr(value);
-		if (!isString(symNameAddr)) {
+		if (!isValidSymbolString(symNameAddr)) {
 			if (debug) {
 				println("3: " + entry + " --> " + Long.toHexString(value));
 			}
@@ -462,6 +461,43 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			default:
 				return false;
 		}
+	}
+
+	//------------------------------------------------------------------------
+	// isStringPointerTable
+	//
+	// Check to see if the candidate symbol table is just a string pointer
+	// table. 
+	//------------------------------------------------------------------------
+	private boolean isStringPointerTable(Address offset, int table_size) throws Exception {
+		if (debug) {
+			printf("Checking for string pointer table at 0x%x\n", offset.getOffset());
+		}
+		// Skip the first offset in the table because it can be null as a symbol table
+		Address cursor = offset.add(4);
+		long end = offset.add(table_size).getOffset();
+
+		while (cursor.getOffset() < end) {
+			long value = getInt(cursor) & 0xffffffffL;
+			if (isAddress(value)) {
+				if (!isValidSymbolString(toAddr(value))) {
+					if (debug) {
+						printf("Found non-string pointer in table at 0x%x (0x%x)\n", 
+						       cursor.getOffset(), value);
+					}
+					return false;
+				}
+				cursor = cursor.add(4);
+			}
+			else {
+				if (debug) {
+					printf("Found non-address in table at 0x%x", cursor.getOffset());
+				}
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 	//------------------------------------------------------------------------
@@ -521,13 +557,25 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 				}
 				if (i == testLen) {
 					// May have symbol table -- verify length
-					if (getSymTblLen(cursor, vxSymbol) != 0) {
-						printf("\n");
-						System.out.flush();
-						return cursor;	// found  table -- stop searching
+					int table_size = vxSymbol.length() * i;
+					
+					if (!isStringPointerTable(cursor, table_size)) {
+						if (getSymTblLen(cursor, vxSymbol) != 0) {
+							printf("\n");
+							System.out.flush();
+							return cursor;	// found  table -- stop searching
+						}
+						if (debug) {
+							printf("Possible symbol table at " + cursor + " has length error\n");
+						}
 					}
-					if (debug) {
-						printf("Possible symbol table at " + cursor + " has length error\n");
+					else {
+						if (debug) {
+							printf("False-positive: String pointer table at %s, skipping\n", 
+								   cursor.toString());
+						}
+						cursor = cursor.add(table_size);
+						continue;
 					}
 				}
 
