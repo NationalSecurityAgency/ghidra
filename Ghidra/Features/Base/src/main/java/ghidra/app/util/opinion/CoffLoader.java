@@ -96,25 +96,26 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (!CoffFileHeader.isValid(provider)) {
-			return loadSpecs;
-		}
+		try {
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parseSectionHeaders();
 
-		CoffFileHeader header = new CoffFileHeader(provider);
-		header.parseSectionHeaders(provider);
-
-		if (isVisualStudio(header) != isMicrosoftFormat()) {
-			// Only one of the CoffLoader/MSCoffLoader will survive this check
-			return loadSpecs;
+			if (isVisualStudio(header) != isMicrosoftFormat()) {
+				// Only one of the CoffLoader/MSCoffLoader will survive this check
+				return loadSpecs;
+			}
+			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
+			List<QueryResult> results =
+				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
+			for (QueryResult result : results) {
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
+			}
+			if (loadSpecs.isEmpty()) {
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
+			}
 		}
-		String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
-		List<QueryResult> results =
-			QueryOpinionService.query(getName(), header.getMachineName(), secondary);
-		for (QueryResult result : results) {
-			loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
-		}
-		if (loadSpecs.isEmpty()) {
-			loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
+		catch (CoffException e) {
+			// that's ok, probably not a COFF
 		}
 
 		return loadSpecs;
@@ -165,25 +166,23 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			Program program, TaskMonitor monitor, MessageLog log)
 			throws IOException, CancelledException {
 
-		boolean performFakeLinking = performFakeLinking(options);
-
-		CoffFileHeader header = new CoffFileHeader(provider);
-		header.parse(provider, monitor);
-
-		Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
-		Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
-
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		try {
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parse(monitor);
+
+			Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
+			Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
+
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
-				performFakeLinking);
+				performFakeLinking(options));
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
 			markupHeaders(header, program, fileBytes, log, monitor);
 		}
-		catch (AddressOverflowException e) {
+		catch (CoffException | AddressOverflowException e) {
 			throw new IOException(e);
 		}
 	}
