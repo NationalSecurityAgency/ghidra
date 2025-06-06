@@ -1,0 +1,576 @@
+macro Lmwbi(reg) {
+    reg = *mult_addr;
+    mult_addr = mult_addr + 4;
+}
+
+macro Lmwbd(reg) {
+    reg = *mult_addr;
+    mult_addr = mult_addr - 4;
+}
+
+macro Lmwai(reg) {
+    mult_addr = mult_addr + 4;
+    reg = *mult_addr;
+}
+
+macro Lmwad(reg) {
+    mult_addr = mult_addr - 4;
+    reg = *mult_addr;
+}
+
+macro Smwbi(reg) {
+    *mult_addr = reg;
+    mult_addr = mult_addr + 4;
+}
+
+macro Smwbd(reg) {
+    *mult_addr = reg;
+    mult_addr = mult_addr - 4;
+}
+
+macro Smwai(reg) {
+    mult_addr = mult_addr + 4;
+    *mult_addr = reg;
+}
+
+macro Smwad(reg) {
+    mult_addr = mult_addr - 4;
+    *mult_addr = reg;
+}
+
+Lmwbi.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Lmwbi(a0); }
+Lmwbi.a0: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Lmwbi(a1); }
+Lmwbi.a1: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Lmwbi(a2); }
+Lmwbi.a2: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Lmwbi(a3); }
+Lmwbi.a3: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Lmwbi(a4); }
+Lmwbi.a4: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Lmwbi(a5); }
+Lmwbi.a5: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Lmwbi(s0); }
+Lmwbi.s0: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Lmwbi(s1); }
+Lmwbi.s1: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Lmwbi(s2); }
+Lmwbi.s2: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Lmwbi(s3); }
+Lmwbi.s3: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Lmwbi(s4); }
+Lmwbi.s4: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Lmwbi(s5); }
+Lmwbi.s5: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Lmwbi(s6); }
+Lmwbi.s6: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Lmwbi(s7); }
+Lmwbi.s7: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Lmwbi(s8); }
+Lmwbi.s8: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Lmwbi(ta); }
+Lmwbi.ta: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Lmwbi(t0); }
+Lmwbi.t0: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Lmwbi(t1); }
+Lmwbi.t1: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Lmwbi(t2); }
+Lmwbi.t2: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Lmwbi(t3); }
+Lmwbi.t3: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Lmwbi(t4); }
+Lmwbi.t4: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Lmwbi(t5); }
+Lmwbi.t5: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Lmwbi(t6); }
+Lmwbi.t6: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Lmwbi(t7); }
+Lmwbi.t7: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Lmwbi(t8); }
+Lmwbi.t8: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Lmwbi(t9); }
+Lmwbi.t9: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Lmwbi(p0); }
+Lmwbi.p0: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Lmwbi(p1); }
+Lmwbi.p1: is LsmwRb_ & LsmwRe_ { }
+Lmwbi.fp: fp is Enable4_fp=1 & fp { Lmwbi(fp); }
+Lmwbi.fp: is Enable4_fp=0 { }
+Lmwbi.gp: gp is Enable4_gp=1 & gp { Lmwbi(gp); }
+Lmwbi.gp: is Enable4_gp=0 { }
+Lmwbi.lp: lp is Enable4_lp=1 & lp { Lmwbi(lp); }
+Lmwbi.lp: is Enable4_lp=0 { }
+Lmwbi.sp: sp is Enable4_sp=1 & sp { Lmwbi(sp); }
+Lmwbi.sp: is Enable4_sp=0 { }
+
+Lmwbd.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Lmwbd(a0); }
+Lmwbd.a0: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Lmwbd(a1); }
+Lmwbd.a1: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Lmwbd(a2); }
+Lmwbd.a2: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Lmwbd(a3); }
+Lmwbd.a3: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Lmwbd(a4); }
+Lmwbd.a4: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Lmwbd(a5); }
+Lmwbd.a5: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Lmwbd(s0); }
+Lmwbd.s0: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Lmwbd(s1); }
+Lmwbd.s1: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Lmwbd(s2); }
+Lmwbd.s2: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Lmwbd(s3); }
+Lmwbd.s3: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Lmwbd(s4); }
+Lmwbd.s4: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Lmwbd(s5); }
+Lmwbd.s5: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Lmwbd(s6); }
+Lmwbd.s6: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Lmwbd(s7); }
+Lmwbd.s7: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Lmwbd(s8); }
+Lmwbd.s8: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Lmwbd(ta); }
+Lmwbd.ta: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Lmwbd(t0); }
+Lmwbd.t0: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Lmwbd(t1); }
+Lmwbd.t1: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Lmwbd(t2); }
+Lmwbd.t2: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Lmwbd(t3); }
+Lmwbd.t3: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Lmwbd(t4); }
+Lmwbd.t4: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Lmwbd(t5); }
+Lmwbd.t5: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Lmwbd(t6); }
+Lmwbd.t6: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Lmwbd(t7); }
+Lmwbd.t7: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Lmwbd(t8); }
+Lmwbd.t8: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Lmwbd(t9); }
+Lmwbd.t9: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Lmwbd(p0); }
+Lmwbd.p0: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Lmwbd(p1); }
+Lmwbd.p1: is LsmwRb_ & LsmwRe_ { }
+Lmwbd.fp: fp is Enable4_fp=1 & fp { Lmwbd(fp); }
+Lmwbd.fp: is Enable4_fp=0 { }
+Lmwbd.gp: gp is Enable4_gp=1 & gp { Lmwbd(gp); }
+Lmwbd.gp: is Enable4_gp=0 { }
+Lmwbd.lp: lp is Enable4_lp=1 & lp { Lmwbd(lp); }
+Lmwbd.lp: is Enable4_lp=0 { }
+Lmwbd.sp: sp is Enable4_sp=1 & sp { Lmwbd(sp); }
+Lmwbd.sp: is Enable4_sp=0 { }
+
+Lmwai.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Lmwai(a0); }
+Lmwai.a0: is LsmwRb_ & LsmwRe_ { }
+Lmwai.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Lmwai(a1); }
+Lmwai.a1: is LsmwRb_ & LsmwRe_ { }
+Lmwai.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Lmwai(a2); }
+Lmwai.a2: is LsmwRb_ & LsmwRe_ { }
+Lmwai.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Lmwai(a3); }
+Lmwai.a3: is LsmwRb_ & LsmwRe_ { }
+Lmwai.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Lmwai(a4); }
+Lmwai.a4: is LsmwRb_ & LsmwRe_ { }
+Lmwai.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Lmwai(a5); }
+Lmwai.a5: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Lmwai(s0); }
+Lmwai.s0: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Lmwai(s1); }
+Lmwai.s1: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Lmwai(s2); }
+Lmwai.s2: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Lmwai(s3); }
+Lmwai.s3: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Lmwai(s4); }
+Lmwai.s4: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Lmwai(s5); }
+Lmwai.s5: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Lmwai(s6); }
+Lmwai.s6: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Lmwai(s7); }
+Lmwai.s7: is LsmwRb_ & LsmwRe_ { }
+Lmwai.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Lmwai(s8); }
+Lmwai.s8: is LsmwRb_ & LsmwRe_ { }
+Lmwai.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Lmwai(ta); }
+Lmwai.ta: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Lmwai(t0); }
+Lmwai.t0: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Lmwai(t1); }
+Lmwai.t1: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Lmwai(t2); }
+Lmwai.t2: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Lmwai(t3); }
+Lmwai.t3: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Lmwai(t4); }
+Lmwai.t4: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Lmwai(t5); }
+Lmwai.t5: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Lmwai(t6); }
+Lmwai.t6: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Lmwai(t7); }
+Lmwai.t7: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Lmwai(t8); }
+Lmwai.t8: is LsmwRb_ & LsmwRe_ { }
+Lmwai.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Lmwai(t9); }
+Lmwai.t9: is LsmwRb_ & LsmwRe_ { }
+Lmwai.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Lmwai(p0); }
+Lmwai.p0: is LsmwRb_ & LsmwRe_ { }
+Lmwai.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Lmwai(p1); }
+Lmwai.p1: is LsmwRb_ & LsmwRe_ { }
+Lmwai.fp: fp is Enable4_fp=1 & fp { Lmwai(fp); }
+Lmwai.fp: is Enable4_fp=0 { }
+Lmwai.gp: gp is Enable4_gp=1 & gp { Lmwai(gp); }
+Lmwai.gp: is Enable4_gp=0 { }
+Lmwai.lp: lp is Enable4_lp=1 & lp { Lmwai(lp); }
+Lmwai.lp: is Enable4_lp=0 { }
+Lmwai.sp: sp is Enable4_sp=1 & sp { Lmwai(sp); }
+Lmwai.sp: is Enable4_sp=0 { }
+
+Lmwad.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Lmwad(a0); }
+Lmwad.a0: is LsmwRb_ & LsmwRe_ { }
+Lmwad.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Lmwad(a1); }
+Lmwad.a1: is LsmwRb_ & LsmwRe_ { }
+Lmwad.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Lmwad(a2); }
+Lmwad.a2: is LsmwRb_ & LsmwRe_ { }
+Lmwad.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Lmwad(a3); }
+Lmwad.a3: is LsmwRb_ & LsmwRe_ { }
+Lmwad.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Lmwad(a4); }
+Lmwad.a4: is LsmwRb_ & LsmwRe_ { }
+Lmwad.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Lmwad(a5); }
+Lmwad.a5: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Lmwad(s0); }
+Lmwad.s0: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Lmwad(s1); }
+Lmwad.s1: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Lmwad(s2); }
+Lmwad.s2: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Lmwad(s3); }
+Lmwad.s3: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Lmwad(s4); }
+Lmwad.s4: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Lmwad(s5); }
+Lmwad.s5: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Lmwad(s6); }
+Lmwad.s6: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Lmwad(s7); }
+Lmwad.s7: is LsmwRb_ & LsmwRe_ { }
+Lmwad.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Lmwad(s8); }
+Lmwad.s8: is LsmwRb_ & LsmwRe_ { }
+Lmwad.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Lmwad(ta); }
+Lmwad.ta: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Lmwad(t0); }
+Lmwad.t0: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Lmwad(t1); }
+Lmwad.t1: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Lmwad(t2); }
+Lmwad.t2: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Lmwad(t3); }
+Lmwad.t3: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Lmwad(t4); }
+Lmwad.t4: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Lmwad(t5); }
+Lmwad.t5: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Lmwad(t6); }
+Lmwad.t6: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Lmwad(t7); }
+Lmwad.t7: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Lmwad(t8); }
+Lmwad.t8: is LsmwRb_ & LsmwRe_ { }
+Lmwad.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Lmwad(t9); }
+Lmwad.t9: is LsmwRb_ & LsmwRe_ { }
+Lmwad.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Lmwad(p0); }
+Lmwad.p0: is LsmwRb_ & LsmwRe_ { }
+Lmwad.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Lmwad(p1); }
+Lmwad.p1: is LsmwRb_ & LsmwRe_ { }
+Lmwad.fp: fp is Enable4_fp=1 & fp { Lmwad(fp); }
+Lmwad.fp: is Enable4_fp=0 { }
+Lmwad.gp: gp is Enable4_gp=1 & gp { Lmwad(gp); }
+Lmwad.gp: is Enable4_gp=0 { }
+Lmwad.lp: lp is Enable4_lp=1 & lp { Lmwad(lp); }
+Lmwad.lp: is Enable4_lp=0 { }
+Lmwad.sp: sp is Enable4_sp=1 & sp { Lmwad(sp); }
+Lmwad.sp: is Enable4_sp=0 { }
+
+Smwbi.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Smwbi(a0); }
+Smwbi.a0: is LsmwRb_ & LsmwRe_ { }
+Smwbi.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Smwbi(a1); }
+Smwbi.a1: is LsmwRb_ & LsmwRe_ { }
+Smwbi.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Smwbi(a2); }
+Smwbi.a2: is LsmwRb_ & LsmwRe_ { }
+Smwbi.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Smwbi(a3); }
+Smwbi.a3: is LsmwRb_ & LsmwRe_ { }
+Smwbi.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Smwbi(a4); }
+Smwbi.a4: is LsmwRb_ & LsmwRe_ { }
+Smwbi.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Smwbi(a5); }
+Smwbi.a5: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Smwbi(s0); }
+Smwbi.s0: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Smwbi(s1); }
+Smwbi.s1: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Smwbi(s2); }
+Smwbi.s2: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Smwbi(s3); }
+Smwbi.s3: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Smwbi(s4); }
+Smwbi.s4: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Smwbi(s5); }
+Smwbi.s5: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Smwbi(s6); }
+Smwbi.s6: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Smwbi(s7); }
+Smwbi.s7: is LsmwRb_ & LsmwRe_ { }
+Smwbi.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Smwbi(s8); }
+Smwbi.s8: is LsmwRb_ & LsmwRe_ { }
+Smwbi.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Smwbi(ta); }
+Smwbi.ta: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Smwbi(t0); }
+Smwbi.t0: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Smwbi(t1); }
+Smwbi.t1: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Smwbi(t2); }
+Smwbi.t2: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Smwbi(t3); }
+Smwbi.t3: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Smwbi(t4); }
+Smwbi.t4: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Smwbi(t5); }
+Smwbi.t5: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Smwbi(t6); }
+Smwbi.t6: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Smwbi(t7); }
+Smwbi.t7: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Smwbi(t8); }
+Smwbi.t8: is LsmwRb_ & LsmwRe_ { }
+Smwbi.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Smwbi(t9); }
+Smwbi.t9: is LsmwRb_ & LsmwRe_ { }
+Smwbi.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Smwbi(p0); }
+Smwbi.p0: is LsmwRb_ & LsmwRe_ { }
+Smwbi.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Smwbi(p1); }
+Smwbi.p1: is LsmwRb_ & LsmwRe_ { }
+Smwbi.fp: fp is Enable4_fp=1 & fp { Smwbi(fp); }
+Smwbi.fp: is Enable4_fp=0 { }
+Smwbi.gp: gp is Enable4_gp=1 & gp { Smwbi(gp); }
+Smwbi.gp: is Enable4_gp=0 { }
+Smwbi.lp: lp is Enable4_lp=1 & lp { Smwbi(lp); }
+Smwbi.lp: is Enable4_lp=0 { }
+Smwbi.sp: sp is Enable4_sp=1 & sp { Smwbi(sp); }
+Smwbi.sp: is Enable4_sp=0 { }
+
+Smwbd.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Smwbd(a0); }
+Smwbd.a0: is LsmwRb_ & LsmwRe_ { }
+Smwbd.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Smwbd(a1); }
+Smwbd.a1: is LsmwRb_ & LsmwRe_ { }
+Smwbd.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Smwbd(a2); }
+Smwbd.a2: is LsmwRb_ & LsmwRe_ { }
+Smwbd.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Smwbd(a3); }
+Smwbd.a3: is LsmwRb_ & LsmwRe_ { }
+Smwbd.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Smwbd(a4); }
+Smwbd.a4: is LsmwRb_ & LsmwRe_ { }
+Smwbd.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Smwbd(a5); }
+Smwbd.a5: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Smwbd(s0); }
+Smwbd.s0: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Smwbd(s1); }
+Smwbd.s1: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Smwbd(s2); }
+Smwbd.s2: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Smwbd(s3); }
+Smwbd.s3: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Smwbd(s4); }
+Smwbd.s4: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Smwbd(s5); }
+Smwbd.s5: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Smwbd(s6); }
+Smwbd.s6: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Smwbd(s7); }
+Smwbd.s7: is LsmwRb_ & LsmwRe_ { }
+Smwbd.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Smwbd(s8); }
+Smwbd.s8: is LsmwRb_ & LsmwRe_ { }
+Smwbd.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Smwbd(ta); }
+Smwbd.ta: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Smwbd(t0); }
+Smwbd.t0: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Smwbd(t1); }
+Smwbd.t1: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Smwbd(t2); }
+Smwbd.t2: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Smwbd(t3); }
+Smwbd.t3: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Smwbd(t4); }
+Smwbd.t4: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Smwbd(t5); }
+Smwbd.t5: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Smwbd(t6); }
+Smwbd.t6: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Smwbd(t7); }
+Smwbd.t7: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Smwbd(t8); }
+Smwbd.t8: is LsmwRb_ & LsmwRe_ { }
+Smwbd.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Smwbd(t9); }
+Smwbd.t9: is LsmwRb_ & LsmwRe_ { }
+Smwbd.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Smwbd(p0); }
+Smwbd.p0: is LsmwRb_ & LsmwRe_ { }
+Smwbd.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Smwbd(p1); }
+Smwbd.p1: is LsmwRb_ & LsmwRe_ { }
+Smwbd.fp: fp is Enable4_fp=1 & fp { Smwbd(fp); }
+Smwbd.fp: is Enable4_fp=0 { }
+Smwbd.gp: gp is Enable4_gp=1 & gp { Smwbd(gp); }
+Smwbd.gp: is Enable4_gp=0 { }
+Smwbd.lp: lp is Enable4_lp=1 & lp { Smwbd(lp); }
+Smwbd.lp: is Enable4_lp=0 { }
+Smwbd.sp: sp is Enable4_sp=1 & sp { Smwbd(sp); }
+Smwbd.sp: is Enable4_sp=0 { }
+
+Smwai.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Smwai(a0); }
+Smwai.a0: is LsmwRb_ & LsmwRe_ { }
+Smwai.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Smwai(a1); }
+Smwai.a1: is LsmwRb_ & LsmwRe_ { }
+Smwai.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Smwai(a2); }
+Smwai.a2: is LsmwRb_ & LsmwRe_ { }
+Smwai.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Smwai(a3); }
+Smwai.a3: is LsmwRb_ & LsmwRe_ { }
+Smwai.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Smwai(a4); }
+Smwai.a4: is LsmwRb_ & LsmwRe_ { }
+Smwai.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Smwai(a5); }
+Smwai.a5: is LsmwRb_ & LsmwRe_ { }
+Smwai.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Smwai(s0); }
+Smwai.s0: is LsmwRb_ & LsmwRe_ { }
+Smwai.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Smwai(s1); }
+Smwai.s1: is LsmwRb_ & LsmwRe_ { }
+Smwai.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Smwai(s2); }
+Smwai.s2: is LsmwRb_ & LsmwRe_ { }
+Smwai.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Smwai(s3); }
+Smwai.s3: is LsmwRb_ & LsmwRe_ { }
+Smwai.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Smwai(s4); }
+Smwai.s4: is LsmwRb_ & LsmwRe_ { }
+Smwai.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Smwai(s5); }
+Smwai.s5: is LsmwRb_ & LsmwRe_ { }
+Smwai.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Smwai(s6); }
+Smwai.s6: is LsmwRb_ & LsmwRe_ { }
+Smwai.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Smwai(s7); }
+Smwai.s7: is LsmwRb_ & LsmwRe_ { }
+Smwai.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Smwai(s8); }
+Smwai.s8: is LsmwRb_ & LsmwRe_ { }
+Smwai.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Smwai(ta); }
+Smwai.ta: is LsmwRb_ & LsmwRe_ { }
+Smwai.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Smwai(t0); }
+Smwai.t0: is LsmwRb_ & LsmwRe_ { }
+Smwai.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Smwai(t1); }
+Smwai.t1: is LsmwRb_ & LsmwRe_ { }
+Smwai.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Smwai(t2); }
+Smwai.t2: is LsmwRb_ & LsmwRe_ { }
+Smwai.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Smwai(t3); }
+Smwai.t3: is LsmwRb_ & LsmwRe_ { }
+Smwai.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Smwai(t4); }
+Smwai.t4: is LsmwRb_ & LsmwRe_ { }
+Smwai.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Smwai(t5); }
+Smwai.t5: is LsmwRb_ & LsmwRe_ { }
+Smwai.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Smwai(t6); }
+Smwai.t6: is LsmwRb_ & LsmwRe_ { }
+Smwai.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Smwai(t7); }
+Smwai.t7: is LsmwRb_ & LsmwRe_ { }
+Smwai.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Smwai(t8); }
+Smwai.t8: is LsmwRb_ & LsmwRe_ { }
+Smwai.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Smwai(t9); }
+Smwai.t9: is LsmwRb_ & LsmwRe_ { }
+Smwai.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Smwai(p0); }
+Smwai.p0: is LsmwRb_ & LsmwRe_ { }
+Smwai.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Smwai(p1); }
+Smwai.p1: is LsmwRb_ & LsmwRe_ { }
+Smwai.fp: fp is Enable4_fp=1 & fp { Smwai(fp); }
+Smwai.fp: is Enable4_fp=0 { }
+Smwai.gp: gp is Enable4_gp=1 & gp { Smwai(gp); }
+Smwai.gp: is Enable4_gp=0 { }
+Smwai.lp: lp is Enable4_lp=1 & lp { Smwai(lp); }
+Smwai.lp: is Enable4_lp=0 { }
+Smwai.sp: sp is Enable4_sp=1 & sp { Smwai(sp); }
+Smwai.sp: is Enable4_sp=0 { }
+
+Smwad.a0: a0 is LsmwRb_<=0 & LsmwRe_>=0 & a0 { Smwad(a0); }
+Smwad.a0: is LsmwRb_ & LsmwRe_ { }
+Smwad.a1: a1 is LsmwRb_<=1 & LsmwRe_>=1 & a1 { Smwad(a1); }
+Smwad.a1: is LsmwRb_ & LsmwRe_ { }
+Smwad.a2: a2 is LsmwRb_<=2 & LsmwRe_>=2 & a2 { Smwad(a2); }
+Smwad.a2: is LsmwRb_ & LsmwRe_ { }
+Smwad.a3: a3 is LsmwRb_<=3 & LsmwRe_>=3 & a3 { Smwad(a3); }
+Smwad.a3: is LsmwRb_ & LsmwRe_ { }
+Smwad.a4: a4 is LsmwRb_<=4 & LsmwRe_>=4 & a4 { Smwad(a4); }
+Smwad.a4: is LsmwRb_ & LsmwRe_ { }
+Smwad.a5: a5 is LsmwRb_<=5 & LsmwRe_>=5 & a5 { Smwad(a5); }
+Smwad.a5: is LsmwRb_ & LsmwRe_ { }
+Smwad.s0: s0 is LsmwRb_<=6 & LsmwRe_>=6 & s0 { Smwad(s0); }
+Smwad.s0: is LsmwRb_ & LsmwRe_ { }
+Smwad.s1: s1 is LsmwRb_<=7 & LsmwRe_>=7 & s1 { Smwad(s1); }
+Smwad.s1: is LsmwRb_ & LsmwRe_ { }
+Smwad.s2: s2 is LsmwRb_<=8 & LsmwRe_>=8 & s2 { Smwad(s2); }
+Smwad.s2: is LsmwRb_ & LsmwRe_ { }
+Smwad.s3: s3 is LsmwRb_<=9 & LsmwRe_>=9 & s3 { Smwad(s3); }
+Smwad.s3: is LsmwRb_ & LsmwRe_ { }
+Smwad.s4: s4 is LsmwRb_<=10 & LsmwRe_>=10 & s4 { Smwad(s4); }
+Smwad.s4: is LsmwRb_ & LsmwRe_ { }
+Smwad.s5: s5 is LsmwRb_<=11 & LsmwRe_>=11 & s5 { Smwad(s5); }
+Smwad.s5: is LsmwRb_ & LsmwRe_ { }
+Smwad.s6: s6 is LsmwRb_<=12 & LsmwRe_>=12 & s6 { Smwad(s6); }
+Smwad.s6: is LsmwRb_ & LsmwRe_ { }
+Smwad.s7: s7 is LsmwRb_<=13 & LsmwRe_>=13 & s7 { Smwad(s7); }
+Smwad.s7: is LsmwRb_ & LsmwRe_ { }
+Smwad.s8: s8 is LsmwRb_<=14 & LsmwRe_>=14 & s8 { Smwad(s8); }
+Smwad.s8: is LsmwRb_ & LsmwRe_ { }
+Smwad.ta: ta is LsmwRb_<=15 & LsmwRe_>=15 & ta { Smwad(ta); }
+Smwad.ta: is LsmwRb_ & LsmwRe_ { }
+Smwad.t0: t0 is LsmwRb_<=16 & LsmwRe_>=16 & t0 { Smwad(t0); }
+Smwad.t0: is LsmwRb_ & LsmwRe_ { }
+Smwad.t1: t1 is LsmwRb_<=17 & LsmwRe_>=17 & t1 { Smwad(t1); }
+Smwad.t1: is LsmwRb_ & LsmwRe_ { }
+Smwad.t2: t2 is LsmwRb_<=18 & LsmwRe_>=18 & t2 { Smwad(t2); }
+Smwad.t2: is LsmwRb_ & LsmwRe_ { }
+Smwad.t3: t3 is LsmwRb_<=19 & LsmwRe_>=19 & t3 { Smwad(t3); }
+Smwad.t3: is LsmwRb_ & LsmwRe_ { }
+Smwad.t4: t4 is LsmwRb_<=20 & LsmwRe_>=20 & t4 { Smwad(t4); }
+Smwad.t4: is LsmwRb_ & LsmwRe_ { }
+Smwad.t5: t5 is LsmwRb_<=21 & LsmwRe_>=21 & t5 { Smwad(t5); }
+Smwad.t5: is LsmwRb_ & LsmwRe_ { }
+Smwad.t6: t6 is LsmwRb_<=22 & LsmwRe_>=22 & t6 { Smwad(t6); }
+Smwad.t6: is LsmwRb_ & LsmwRe_ { }
+Smwad.t7: t7 is LsmwRb_<=23 & LsmwRe_>=23 & t7 { Smwad(t7); }
+Smwad.t7: is LsmwRb_ & LsmwRe_ { }
+Smwad.t8: t8 is LsmwRb_<=24 & LsmwRe_>=24 & t8 { Smwad(t8); }
+Smwad.t8: is LsmwRb_ & LsmwRe_ { }
+Smwad.t9: t9 is LsmwRb_<=25 & LsmwRe_>=25 & t9 { Smwad(t9); }
+Smwad.t9: is LsmwRb_ & LsmwRe_ { }
+Smwad.p0: p0 is LsmwRb_<=26 & LsmwRe_>=26 & p0 { Smwad(p0); }
+Smwad.p0: is LsmwRb_ & LsmwRe_ { }
+Smwad.p1: p1 is LsmwRb_<=27 & LsmwRe_>=27 & p1 { Smwad(p1); }
+Smwad.p1: is LsmwRb_ & LsmwRe_ { }
+Smwad.fp: fp is Enable4_fp=1 & fp { Smwad(fp); }
+Smwad.fp: is Enable4_fp=0 { }
+Smwad.gp: gp is Enable4_gp=1 & gp { Smwad(gp); }
+Smwad.gp: is Enable4_gp=0 { }
+Smwad.lp: lp is Enable4_lp=1 & lp { Smwad(lp); }
+Smwad.lp: is Enable4_lp=0 { }
+Smwad.sp: sp is Enable4_sp=1 & sp { Smwad(sp); }
+Smwad.sp: is Enable4_sp=0 { }
+
+Lmw.regs: is LsmwBa=0 & LsmwId=0 & Lmwbi.sp & Lmwbi.lp & Lmwbi.gp & Lmwbi.fp & Lmwbi.p1 & Lmwbi.p0 & Lmwbi.t9 & Lmwbi.t8 & Lmwbi.t7 & Lmwbi.t6 & Lmwbi.t5 & Lmwbi.t4 & Lmwbi.t3 & Lmwbi.t2 & Lmwbi.t1 & Lmwbi.t0 & Lmwbi.ta & Lmwbi.s8 & Lmwbi.s7 & Lmwbi.s6 & Lmwbi.s5 & Lmwbi.s4 & Lmwbi.s3 & Lmwbi.s2 & Lmwbi.s1 & Lmwbi.s0 & Lmwbi.a5 & Lmwbi.a4 & Lmwbi.a3 & Lmwbi.a2 & Lmwbi.a1 & Lmwbi.a0 { }
+Lmw.regs: is LsmwBa=0 & LsmwId=1 & Lmwbd.a0 & Lmwbd.a1 & Lmwbd.a2 & Lmwbd.a3 & Lmwbd.a4 & Lmwbd.a5 & Lmwbd.s0 & Lmwbd.s1 & Lmwbd.s2 & Lmwbd.s3 & Lmwbd.s4 & Lmwbd.s5 & Lmwbd.s6 & Lmwbd.s7 & Lmwbd.s8 & Lmwbd.ta & Lmwbd.t0 & Lmwbd.t1 & Lmwbd.t2 & Lmwbd.t3 & Lmwbd.t4 & Lmwbd.t5 & Lmwbd.t6 & Lmwbd.t7 & Lmwbd.t8 & Lmwbd.t9 & Lmwbd.p0 & Lmwbd.p1 & Lmwbd.fp & Lmwbd.gp & Lmwbd.lp & Lmwbd.sp { }
+Lmw.regs: is LsmwBa=1 & LsmwId=0 & Lmwai.sp & Lmwai.lp & Lmwai.gp & Lmwai.fp & Lmwai.p1 & Lmwai.p0 & Lmwai.t9 & Lmwai.t8 & Lmwai.t7 & Lmwai.t6 & Lmwai.t5 & Lmwai.t4 & Lmwai.t3 & Lmwai.t2 & Lmwai.t1 & Lmwai.t0 & Lmwai.ta & Lmwai.s8 & Lmwai.s7 & Lmwai.s6 & Lmwai.s5 & Lmwai.s4 & Lmwai.s3 & Lmwai.s2 & Lmwai.s1 & Lmwai.s0 & Lmwai.a5 & Lmwai.a4 & Lmwai.a3 & Lmwai.a2 & Lmwai.a1 & Lmwai.a0 { }
+Lmw.regs: is LsmwBa=1 & LsmwId=1 & Lmwad.a0 & Lmwad.a1 & Lmwad.a2 & Lmwad.a3 & Lmwad.a4 & Lmwad.a5 & Lmwad.s0 & Lmwad.s1 & Lmwad.s2 & Lmwad.s3 & Lmwad.s4 & Lmwad.s5 & Lmwad.s6 & Lmwad.s7 & Lmwad.s8 & Lmwad.ta & Lmwad.t0 & Lmwad.t1 & Lmwad.t2 & Lmwad.t3 & Lmwad.t4 & Lmwad.t5 & Lmwad.t6 & Lmwad.t7 & Lmwad.t8 & Lmwad.t9 & Lmwad.p0 & Lmwad.p1 & Lmwad.fp & Lmwad.gp & Lmwad.lp & Lmwad.sp { }
+Smw.regs: is LsmwBa=0 & LsmwId=0 & Smwbi.sp & Smwbi.lp & Smwbi.gp & Smwbi.fp & Smwbi.p1 & Smwbi.p0 & Smwbi.t9 & Smwbi.t8 & Smwbi.t7 & Smwbi.t6 & Smwbi.t5 & Smwbi.t4 & Smwbi.t3 & Smwbi.t2 & Smwbi.t1 & Smwbi.t0 & Smwbi.ta & Smwbi.s8 & Smwbi.s7 & Smwbi.s6 & Smwbi.s5 & Smwbi.s4 & Smwbi.s3 & Smwbi.s2 & Smwbi.s1 & Smwbi.s0 & Smwbi.a5 & Smwbi.a4 & Smwbi.a3 & Smwbi.a2 & Smwbi.a1 & Smwbi.a0 { }
+Smw.regs: is LsmwBa=0 & LsmwId=1 & Smwbd.a0 & Smwbd.a1 & Smwbd.a2 & Smwbd.a3 & Smwbd.a4 & Smwbd.a5 & Smwbd.s0 & Smwbd.s1 & Smwbd.s2 & Smwbd.s3 & Smwbd.s4 & Smwbd.s5 & Smwbd.s6 & Smwbd.s7 & Smwbd.s8 & Smwbd.ta & Smwbd.t0 & Smwbd.t1 & Smwbd.t2 & Smwbd.t3 & Smwbd.t4 & Smwbd.t5 & Smwbd.t6 & Smwbd.t7 & Smwbd.t8 & Smwbd.t9 & Smwbd.p0 & Smwbd.p1 & Smwbd.fp & Smwbd.gp & Smwbd.lp & Smwbd.sp { }
+Smw.regs: is LsmwBa=1 & LsmwId=0 & Smwai.sp & Smwai.lp & Smwai.gp & Smwai.fp & Smwai.p1 & Smwai.p0 & Smwai.t9 & Smwai.t8 & Smwai.t7 & Smwai.t6 & Smwai.t5 & Smwai.t4 & Smwai.t3 & Smwai.t2 & Smwai.t1 & Smwai.t0 & Smwai.ta & Smwai.s8 & Smwai.s7 & Smwai.s6 & Smwai.s5 & Smwai.s4 & Smwai.s3 & Smwai.s2 & Smwai.s1 & Smwai.s0 & Smwai.a5 & Smwai.a4 & Smwai.a3 & Smwai.a2 & Smwai.a1 & Smwai.a0 { }
+Smw.regs: is LsmwBa=1 & LsmwId=1 & Smwad.a0 & Smwad.a1 & Smwad.a2 & Smwad.a3 & Smwad.a4 & Smwad.a5 & Smwad.s0 & Smwad.s1 & Smwad.s2 & Smwad.s3 & Smwad.s4 & Smwad.s5 & Smwad.s6 & Smwad.s7 & Smwad.s8 & Smwad.ta & Smwad.t0 & Smwad.t1 & Smwad.t2 & Smwad.t3 & Smwad.t4 & Smwad.t5 & Smwad.t6 & Smwad.t7 & Smwad.t8 & Smwad.t9 & Smwad.p0 & Smwad.p1 & Smwad.fp & Smwad.gp & Smwad.lp & Smwad.sp { }
+Lmwa.regs: is LsmwBa=0 & LsmwId=0 & Lmwbi.sp & Lmwbi.lp & Lmwbi.gp & Lmwbi.fp & Lmwbi.p1 & Lmwbi.p0 & Lmwbi.t9 & Lmwbi.t8 & Lmwbi.t7 & Lmwbi.t6 & Lmwbi.t5 & Lmwbi.t4 & Lmwbi.t3 & Lmwbi.t2 & Lmwbi.t1 & Lmwbi.t0 & Lmwbi.ta & Lmwbi.s8 & Lmwbi.s7 & Lmwbi.s6 & Lmwbi.s5 & Lmwbi.s4 & Lmwbi.s3 & Lmwbi.s2 & Lmwbi.s1 & Lmwbi.s0 & Lmwbi.a5 & Lmwbi.a4 & Lmwbi.a3 & Lmwbi.a2 & Lmwbi.a1 & Lmwbi.a0 { }
+Lmwa.regs: is LsmwBa=0 & LsmwId=1 & Lmwbd.a0 & Lmwbd.a1 & Lmwbd.a2 & Lmwbd.a3 & Lmwbd.a4 & Lmwbd.a5 & Lmwbd.s0 & Lmwbd.s1 & Lmwbd.s2 & Lmwbd.s3 & Lmwbd.s4 & Lmwbd.s5 & Lmwbd.s6 & Lmwbd.s7 & Lmwbd.s8 & Lmwbd.ta & Lmwbd.t0 & Lmwbd.t1 & Lmwbd.t2 & Lmwbd.t3 & Lmwbd.t4 & Lmwbd.t5 & Lmwbd.t6 & Lmwbd.t7 & Lmwbd.t8 & Lmwbd.t9 & Lmwbd.p0 & Lmwbd.p1 & Lmwbd.fp & Lmwbd.gp & Lmwbd.lp & Lmwbd.sp { }
+Lmwa.regs: is LsmwBa=1 & LsmwId=0 & Lmwai.sp & Lmwai.lp & Lmwai.gp & Lmwai.fp & Lmwai.p1 & Lmwai.p0 & Lmwai.t9 & Lmwai.t8 & Lmwai.t7 & Lmwai.t6 & Lmwai.t5 & Lmwai.t4 & Lmwai.t3 & Lmwai.t2 & Lmwai.t1 & Lmwai.t0 & Lmwai.ta & Lmwai.s8 & Lmwai.s7 & Lmwai.s6 & Lmwai.s5 & Lmwai.s4 & Lmwai.s3 & Lmwai.s2 & Lmwai.s1 & Lmwai.s0 & Lmwai.a5 & Lmwai.a4 & Lmwai.a3 & Lmwai.a2 & Lmwai.a1 & Lmwai.a0 { }
+Lmwa.regs: is LsmwBa=1 & LsmwId=1 & Lmwad.a0 & Lmwad.a1 & Lmwad.a2 & Lmwad.a3 & Lmwad.a4 & Lmwad.a5 & Lmwad.s0 & Lmwad.s1 & Lmwad.s2 & Lmwad.s3 & Lmwad.s4 & Lmwad.s5 & Lmwad.s6 & Lmwad.s7 & Lmwad.s8 & Lmwad.ta & Lmwad.t0 & Lmwad.t1 & Lmwad.t2 & Lmwad.t3 & Lmwad.t4 & Lmwad.t5 & Lmwad.t6 & Lmwad.t7 & Lmwad.t8 & Lmwad.t9 & Lmwad.p0 & Lmwad.p1 & Lmwad.fp & Lmwad.gp & Lmwad.lp & Lmwad.sp { }
+Smwa.regs: is LsmwBa=0 & LsmwId=0 & Smwbi.sp & Smwbi.lp & Smwbi.gp & Smwbi.fp & Smwbi.p1 & Smwbi.p0 & Smwbi.t9 & Smwbi.t8 & Smwbi.t7 & Smwbi.t6 & Smwbi.t5 & Smwbi.t4 & Smwbi.t3 & Smwbi.t2 & Smwbi.t1 & Smwbi.t0 & Smwbi.ta & Smwbi.s8 & Smwbi.s7 & Smwbi.s6 & Smwbi.s5 & Smwbi.s4 & Smwbi.s3 & Smwbi.s2 & Smwbi.s1 & Smwbi.s0 & Smwbi.a5 & Smwbi.a4 & Smwbi.a3 & Smwbi.a2 & Smwbi.a1 & Smwbi.a0 { }
+Smwa.regs: is LsmwBa=0 & LsmwId=1 & Smwbd.a0 & Smwbd.a1 & Smwbd.a2 & Smwbd.a3 & Smwbd.a4 & Smwbd.a5 & Smwbd.s0 & Smwbd.s1 & Smwbd.s2 & Smwbd.s3 & Smwbd.s4 & Smwbd.s5 & Smwbd.s6 & Smwbd.s7 & Smwbd.s8 & Smwbd.ta & Smwbd.t0 & Smwbd.t1 & Smwbd.t2 & Smwbd.t3 & Smwbd.t4 & Smwbd.t5 & Smwbd.t6 & Smwbd.t7 & Smwbd.t8 & Smwbd.t9 & Smwbd.p0 & Smwbd.p1 & Smwbd.fp & Smwbd.gp & Smwbd.lp & Smwbd.sp { }
+Smwa.regs: is LsmwBa=1 & LsmwId=0 & Smwai.sp & Smwai.lp & Smwai.gp & Smwai.fp & Smwai.p1 & Smwai.p0 & Smwai.t9 & Smwai.t8 & Smwai.t7 & Smwai.t6 & Smwai.t5 & Smwai.t4 & Smwai.t3 & Smwai.t2 & Smwai.t1 & Smwai.t0 & Smwai.ta & Smwai.s8 & Smwai.s7 & Smwai.s6 & Smwai.s5 & Smwai.s4 & Smwai.s3 & Smwai.s2 & Smwai.s1 & Smwai.s0 & Smwai.a5 & Smwai.a4 & Smwai.a3 & Smwai.a2 & Smwai.a1 & Smwai.a0 { }
+Smwa.regs: is LsmwBa=1 & LsmwId=1 & Smwad.a0 & Smwad.a1 & Smwad.a2 & Smwad.a3 & Smwad.a4 & Smwad.a5 & Smwad.s0 & Smwad.s1 & Smwad.s2 & Smwad.s3 & Smwad.s4 & Smwad.s5 & Smwad.s6 & Smwad.s7 & Smwad.s8 & Smwad.ta & Smwad.t0 & Smwad.t1 & Smwad.t2 & Smwad.t3 & Smwad.t4 & Smwad.t5 & Smwad.t6 & Smwad.t7 & Smwad.t8 & Smwad.t9 & Smwad.p0 & Smwad.p1 & Smwad.fp & Smwad.gp & Smwad.lp & Smwad.sp { }
