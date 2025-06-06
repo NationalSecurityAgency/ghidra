@@ -319,8 +319,8 @@ public class FlatProgramAPI {
 	 * @param bookmarks true if bookmarks should be cleared
 	 * @return true if the address set was successfully cleared
 	 */
-	public final boolean clearListing(AddressSetView set, boolean instructions,
-			boolean data, boolean symbols, boolean comments, boolean properties, boolean functions,
+	public final boolean clearListing(AddressSetView set, boolean instructions, boolean data,
+			boolean symbols, boolean comments, boolean properties, boolean functions,
 			boolean registers, boolean equates, boolean userReferences, boolean analysisReferences,
 			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
 
@@ -358,12 +358,10 @@ public class FlatProgramAPI {
 			long length, boolean overlay) throws Exception {
 		if (input == null) {
 			return currentProgram.getMemory()
-					.createUninitializedBlock(name, start, length,
-						overlay);
+					.createUninitializedBlock(name, start, length, overlay);
 		}
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, length, monitor, overlay);
 	}
 
 	/**
@@ -379,8 +377,7 @@ public class FlatProgramAPI {
 			boolean overlay) throws Exception {
 		ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, bytes.length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, bytes.length, monitor, overlay);
 	}
 
 	/**
@@ -534,7 +531,7 @@ public class FlatProgramAPI {
 	 * @return true if the PLATE comment was successfully set
 	 */
 	public final boolean setPlateComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.PLATE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.PLATE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -545,7 +542,7 @@ public class FlatProgramAPI {
 	 * @return true if the PRE comment was successfully set
 	 */
 	public final boolean setPreComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.PRE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.PRE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -556,7 +553,7 @@ public class FlatProgramAPI {
 	 * @return true if the POST comment was successfully set
 	 */
 	public final boolean setPostComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.POST_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.POST, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -567,7 +564,7 @@ public class FlatProgramAPI {
 	 * @return true if the EOL comment was successfully set
 	 */
 	public final boolean setEOLComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.EOL_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.EOL, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -578,7 +575,7 @@ public class FlatProgramAPI {
 	 * @return true if the repeatable comment was successfully set
 	 */
 	public final boolean setRepeatableComment(Address address, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(address, CodeUnit.REPEATABLE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(address, CommentType.REPEATABLE, comment);
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -593,7 +590,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPlateCommentAsRendered(Address)
 	 */
 	public final String getPlateComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.PLATE, address);
 	}
 
 	/**
@@ -607,7 +604,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPreCommentAsRendered(Address)
 	 */
 	public final String getPreComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.PRE, address);
 	}
 
 	/**
@@ -621,7 +618,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getPostCommentAsRendered(Address)
 	 */
 	public final String getPostComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.POST, address);
 	}
 
 	/**
@@ -634,7 +631,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getEOLCommentAsRendered(Address)
 	 */
 	public final String getEOLComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.EOL, address);
 	}
 
 	/**
@@ -647,7 +644,7 @@ public class FlatProgramAPI {
 	 * @see GhidraScript#getRepeatableCommentAsRendered(Address)
 	 */
 	public final String getRepeatableComment(Address address) {
-		return currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		return currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 	}
 
 	/**
@@ -889,13 +886,13 @@ public class FlatProgramAPI {
 		Address addr = null;
 
 		monitor.setMessage("Searching plate comments...");
-		addr = findComment(CodeUnit.PLATE_COMMENT, text);
+		addr = findComment(CommentType.PLATE, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching pre comments...");
-		addr = findComment(CodeUnit.PRE_COMMENT, text);
+		addr = findComment(CommentType.PRE, text);
 		if (addr != null) {
 			return addr;
 		}
@@ -944,19 +941,19 @@ public class FlatProgramAPI {
 		}
 
 		monitor.setMessage("Searching eol comments...");
-		addr = findComment(CodeUnit.EOL_COMMENT, text);
+		addr = findComment(CommentType.EOL, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching repeatable comments...");
-		addr = findComment(CodeUnit.REPEATABLE_COMMENT, text);
+		addr = findComment(CommentType.REPEATABLE, text);
 		if (addr != null) {
 			return addr;
 		}
 
 		monitor.setMessage("Searching post comments...");
-		addr = findComment(CodeUnit.POST_COMMENT, text);
+		addr = findComment(CommentType.POST, text);
 		if (addr != null) {
 			return addr;
 		}
@@ -1934,8 +1931,7 @@ public class FlatProgramAPI {
 	public final Reference addInstructionXref(Address from, Address to, int opIndex,
 			FlowType type) {
 		return currentProgram.getReferenceManager()
-				.addMemoryReference(from, to, type,
-					SourceType.USER_DEFINED, opIndex);
+				.addMemoryReference(from, to, type, SourceType.USER_DEFINED, opIndex);
 	}
 
 	/**
@@ -2395,8 +2391,7 @@ public class FlatProgramAPI {
 	 */
 	public final Equate getEquate(Instruction instruction, int operandIndex, long value) {
 		return currentProgram.getEquateTable()
-				.getEquate(instruction.getMinAddress(), operandIndex,
-					value);
+				.getEquate(instruction.getMinAddress(), operandIndex, value);
 	}
 
 	/**
@@ -2407,8 +2402,7 @@ public class FlatProgramAPI {
 	 */
 	public final List<Equate> getEquates(Instruction instruction, int operandIndex) {
 		return currentProgram.getEquateTable()
-				.getEquates(instruction.getMinAddress(),
-					operandIndex);
+				.getEquates(instruction.getMinAddress(), operandIndex);
 	}
 
 	/**
@@ -2420,8 +2414,7 @@ public class FlatProgramAPI {
 		Object obj = data.getValue();
 		if (obj instanceof Scalar) {
 			return currentProgram.getEquateTable()
-					.getEquate(data.getMinAddress(), 0,
-						((Scalar) obj).getValue());
+					.getEquate(data.getMinAddress(), 0, ((Scalar) obj).getValue());
 		}
 		return null;
 	}
@@ -2634,7 +2627,7 @@ public class FlatProgramAPI {
 		return folder;
 	}
 
-	private Address findComment(int type, String text) {
+	private Address findComment(CommentType type, String text) {
 		Listing listing = currentProgram.getListing();
 		Memory memory = currentProgram.getMemory();
 		AddressIterator iter = listing.getCommentAddressIterator(type, memory, true);

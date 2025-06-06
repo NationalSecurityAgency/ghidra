@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ class ApplySymbols {
 				if (!"NONAME".equals(name)) {
 					preComment += " (" + name + ")";
 				}
-				PdbUtil.appendComment(program, address, preComment, CodeUnit.PRE_COMMENT);
+				PdbUtil.appendComment(program, address, preComment, CommentType.PRE);
 				continue;
 			}
 
@@ -108,7 +108,7 @@ class ApplySymbols {
 			if (length == 0) {
 				// avoid creating symbol which may correspond to inline function code
 				PdbUtil.appendComment(program, address, "Symbol Ref: {@symbol " + name + "}",
-					CodeUnit.PRE_COMMENT);
+					CommentType.PRE);
 				continue;
 			}
 

@@ -100,7 +100,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		builder.disassemble("0x10029bd", 0xe, true);
 
 		builder.createLabel("0x01001068", "CreateDCW");
-		builder.createComment("0x01001068", "CreateDCW", CodeUnit.EOL_COMMENT);
+		builder.createComment("0x01001068", "CreateDCW", CommentType.EOL);
 		builder.createLabel("0x010010b4", "CreateFileW");
 		builder.createLabel("0x010012bc", "CreateWindowExW");
 
@@ -119,8 +119,8 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 //		dt.add(new BooleanDataType(), "likesCheese", null);
 //		dt.add(new PointerDataType(dt), "next", null);
 
-		builder.createComment("0x01006642", "EOL comment", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01006648", "EOL comment", CodeUnit.EOL_COMMENT);
+		builder.createComment("0x01006642", "EOL comment", CommentType.EOL);
+		builder.createComment("0x01006648", "EOL comment", CommentType.EOL);
 
 		return builder.getProgram();
 	}
@@ -280,9 +280,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -357,9 +357,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -445,9 +445,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -789,7 +789,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		}
 		else if (location instanceof EolCommentFieldLocation) {
 			EolCommentFieldLocation eLoc = (EolCommentFieldLocation) location;
-			assertEquals(CodeUnit.EOL_COMMENT, eLoc.getCommentType());
+			assertEquals(CommentType.EOL, eLoc.getCommentType());
 			String[] comment = eLoc.getComment();
 			for (String element : comment) {
 				if (element.indexOf(text) >= 0) {
@@ -801,7 +801,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		}
 		else if (location instanceof AutomaticCommentFieldLocation) {
 			AutomaticCommentFieldLocation eLoc = (AutomaticCommentFieldLocation) location;
-			assertEquals(CodeUnit.EOL_COMMENT, eLoc.getCommentType());
+			assertEquals(CommentType.EOL, eLoc.getCommentType());
 			String[] comment = eLoc.getComment();
 			for (String element : comment) {
 				if (element.indexOf(text) >= 0) {

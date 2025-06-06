@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,11 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class CommentMarkupType extends VTMarkupType {
 
-	protected abstract int getCodeUnitCommentType();
-
 	public CommentMarkupType(String name) {
 		super(name);
 	}
+
+	protected abstract CommentType getCodeUnitCommentType();
 
 	protected abstract ProgramLocation getLocation(VTAssociation association, Address address,
 			boolean isSource);
@@ -105,7 +105,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 	}
 
 	private String getSourceComment(VTAssociation association, Address sourceAddress) {
-		int commentType = getCodeUnitCommentType();
+		CommentType commentType = getCodeUnitCommentType();
 		Listing sourceListing = getSourceListing(association);
 		return sourceListing.getComment(commentType, sourceAddress);
 	}
@@ -131,7 +131,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 			throw new VersionTrackingApplyException("No value applied");
 		}
 		String originalDestinationComment = originalDestinationValue.getString();
-		int commentType = getCodeUnitCommentType();
+		CommentType commentType = getCodeUnitCommentType();
 		Listing destinationListing = getDestinationListing(markupItem.getAssociation());
 		String comment = destinationListing.getComment(commentType, destinationAddress);
 		if (!StringUtils.equals(originalDestinationComment, comment)) {
@@ -179,7 +179,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 			comment = StringUtilities.mergeStrings(destinationComment, sourceComment);
 		}
 
-		int commentType = getCodeUnitCommentType();
+		CommentType commentType = getCodeUnitCommentType();
 		Listing destinationListing = getDestinationListing(markupItem.getAssociation());
 		destinationListing.setComment(destinationAddress, commentType, comment);
 		return true;
@@ -187,7 +187,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 
 	private String getDestinationComment(VTAssociation association, Address destinationAddress) {
 		if (destinationAddress != null && destinationAddress != Address.NO_ADDRESS) {
-			int commentType = getCodeUnitCommentType();
+			CommentType commentType = getCodeUnitCommentType();
 			Listing destinationListing = getDestinationListing(association);
 			return destinationListing.getComment(commentType, destinationAddress);
 		}

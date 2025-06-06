@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,8 +76,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		r.nextBytes(src);
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 			memory.putBytes(0, tb.addr(0x55550000), ByteBuffer.wrap(src));
 		}
 
@@ -108,8 +108,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 			memory.putBytes(0, tb.addr(0x55550000), ByteBuffer.allocate(4096));
 			memory.setState(0, tb.addr(0x55551000), TraceMemoryState.ERROR);
 		}
@@ -126,11 +126,9 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		IntRangeMap map =
 			program.getIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
-		AddressSet staleSet =
-			map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_STALE.getRGB());
+		AddressSet staleSet = map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_STALE.getRGB());
 		assertEquals(tb.set(tb.range(stSpace, 0x00401001, 0x0040ffff)), staleSet);
-		AddressSet errorSet =
-			map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());
+		AddressSet errorSet = map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());
 		assertEquals(tb.set(tb.range(stSpace, 0x00401000, 0x00401000)), errorSet);
 	}
 
@@ -186,10 +184,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
-				"imm r0, #123",
-				"imm r1, #234",
-				"add r0, r1");
+			InstructionIterator iit =
+				asm.assemble(tb.addr(0x55550000), "imm r0, #123", "imm r1, #234", "add r0, r1");
 			assertTrue(iit.hasNext());
 		}
 
@@ -234,10 +230,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
-				"MOV RAX, 1234",
-				"MOV RCX, 2345",
-				"ADD RAX, RCX");
+			InstructionIterator iit =
+				asm.assemble(tb.addr(0x55550000), "MOV RAX, 1234", "MOV RCX, 2345", "ADD RAX, RCX");
 			assertTrue(iit.hasNext());
 		}
 
@@ -299,8 +293,7 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 				"ADD EAX, ECX");
 			checkCtx = iit.next();
 			*/
-			memory.putBytes(0, tb.addr(0x55550000), tb.buf(
-				0xb8, 0xd2, 0x04, 0x00, 0x00, // MOV EAX,1234
+			memory.putBytes(0, tb.addr(0x55550000), tb.buf(0xb8, 0xd2, 0x04, 0x00, 0x00, // MOV EAX,1234
 				0xb9, 0x29, 0x09, 0x00, 0x00, // MOV ECX,2345
 				0x01, 0xc8 // ADD EAX,ECX
 			));
@@ -487,8 +480,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 			DBTraceNamespaceSymbol global = tb.trace.getSymbolManager().getGlobalNamespace();
 
 			DBTraceLabelSymbolView labels = tb.trace.getSymbolManager().labels();
@@ -558,8 +551,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 
 			DBTraceBreakpointManager breakpoints = tb.trace.getBreakpointManager();
 			breakpoints.placeBreakpoint("[1]", 0, tb.addr(0x55550123), List.of(),
@@ -571,8 +564,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		Address paddr = tb.addr(stSpace, 0x55550000);
 		try (Transaction tx = program.openTransaction("Init")) {
 			program.getMemory()
-					.createInitializedBlock(".text", paddr, 0x10000,
-						(byte) 0, TaskMonitor.DUMMY, false);
+					.createInitializedBlock(".text", paddr, 0x10000, (byte) 0, TaskMonitor.DUMMY,
+						false);
 			// Set up a collision. This is normal with relocations
 			program.getBookmarkManager()
 					.setBookmark(tb.addr(stSpace, 0x55550123), "BreakpointDisabled", "SW_EXECUTE;1",
@@ -611,8 +604,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 
 			BookmarkManager bookmarks = view.getBookmarkManager();
 			bookmarks.defineType("TestType", DebuggerResources.ICON_DEBUGGER, Palette.BLUE, 1);
@@ -622,8 +615,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		Address paddr = tb.addr(stSpace, 0x55550000);
 		try (Transaction tx = program.openTransaction("Init")) {
 			program.getMemory()
-					.createInitializedBlock(".text", paddr, 0x10000,
-						(byte) 0, TaskMonitor.DUMMY, false);
+					.createInitializedBlock(".text", paddr, 0x10000, (byte) 0, TaskMonitor.DUMMY,
+						false);
 
 			AllCopiers.BOOKMARKS.copy(view, tb.range(0x55550000, 0x5555ffff), program, paddr,
 				TaskMonitor.DUMMY);
@@ -659,27 +652,27 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			memory.createRegion(".data", 0, tb.range(0x55560000, 0x5556ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".data", 0, tb.range(0x55560000, 0x5556ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.WRITE);
 
 			ReferenceManager references = view.getReferenceManager();
-			references.addMemoryReference(tb.addr(0x55550123),
-				tb.addr(0x55550321), RefType.COMPUTED_CALL, SourceType.USER_DEFINED, -1);
-			references.addMemoryReference(tb.addr(0x55550123),
-				tb.addr(0x55560321), RefType.READ, SourceType.USER_DEFINED, -1);
-			references.addMemoryReference(tb.addr(0x55560123),
-				tb.addr(0x55550321), RefType.PARAM, SourceType.USER_DEFINED, -1);
-			references.addMemoryReference(tb.addr(0x55560123),
-				tb.addr(0x55560321), RefType.DATA, SourceType.USER_DEFINED, -1);
+			references.addMemoryReference(tb.addr(0x55550123), tb.addr(0x55550321),
+				RefType.COMPUTED_CALL, SourceType.USER_DEFINED, -1);
+			references.addMemoryReference(tb.addr(0x55550123), tb.addr(0x55560321), RefType.READ,
+				SourceType.USER_DEFINED, -1);
+			references.addMemoryReference(tb.addr(0x55560123), tb.addr(0x55550321), RefType.PARAM,
+				SourceType.USER_DEFINED, -1);
+			references.addMemoryReference(tb.addr(0x55560123), tb.addr(0x55560321), RefType.DATA,
+				SourceType.USER_DEFINED, -1);
 		}
 
 		Address paddr = tb.addr(stSpace, 0x55550000);
 		try (Transaction tx = program.openTransaction("Init")) {
 			program.getMemory()
-					.createInitializedBlock(".text", paddr, 0x10000,
-						(byte) 0, TaskMonitor.DUMMY, false);
+					.createInitializedBlock(".text", paddr, 0x10000, (byte) 0, TaskMonitor.DUMMY,
+						false);
 
 			AllCopiers.REFERENCES.copy(view, tb.range(0x55550000, 0x5555ffff), program, paddr,
 				TaskMonitor.DUMMY);
@@ -710,19 +703,19 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 
 			Listing listing = view.getListing();
-			listing.setComment(tb.addr(0x55550123), CodeUnit.EOL_COMMENT, "Test EOL Comment");
-			listing.setComment(tb.addr(0x55550321), CodeUnit.PLATE_COMMENT, "Test Plate Comment");
+			listing.setComment(tb.addr(0x55550123), CommentType.EOL, "Test EOL Comment");
+			listing.setComment(tb.addr(0x55550321), CommentType.PLATE, "Test Plate Comment");
 		}
 
 		Address paddr = tb.addr(stSpace, 0x55550000);
 		try (Transaction tx = program.openTransaction("Init")) {
 			program.getMemory()
-					.createInitializedBlock(".text", paddr, 0x10000,
-						(byte) 0, TaskMonitor.DUMMY, false);
+					.createInitializedBlock(".text", paddr, 0x10000, (byte) 0, TaskMonitor.DUMMY,
+						false);
 
 			AllCopiers.COMMENTS.copy(view, tb.range(0x55550000, 0x5555ffff), program, paddr,
 				TaskMonitor.DUMMY);
@@ -735,8 +728,8 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		assertEquals(Set.of(tb.addr(stSpace, 0x55550123), tb.addr(stSpace, 0x55550321)), addresses);
 		assertEquals("Test EOL Comment",
-			listing.getComment(CodeUnit.EOL_COMMENT, tb.addr(stSpace, 0x55550123)));
+			listing.getComment(CommentType.EOL, tb.addr(stSpace, 0x55550123)));
 		assertEquals("Test Plate Comment",
-			listing.getComment(CodeUnit.PLATE_COMMENT, tb.addr(stSpace, 0x55550321)));
+			listing.getComment(CommentType.PLATE, tb.addr(stSpace, 0x55550321)));
 	}
 }

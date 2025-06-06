@@ -101,8 +101,7 @@ public class EolComments {
 	}
 
 	private void loadEols() {
-		Collection<String> comments =
-			Arrays.asList(codeUnit.getCommentAsArray(CommentType.EOL));
+		Collection<String> comments = Arrays.asList(codeUnit.getCommentAsArray(CommentType.EOL));
 		addStrings(comments, eols);
 	}
 
@@ -118,7 +117,7 @@ public class EolComments {
 		}
 
 		Collection<String> comments =
-			Arrays.asList(codeUnit.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT));
+			Arrays.asList(codeUnit.getCommentAsArray(CommentType.REPEATABLE));
 		addStrings(comments, repeatables);
 	}
 
@@ -582,7 +581,7 @@ public class EolComments {
 		Listing listing = program.getListing();
 
 		// prefer listing comments first since there may not be a code unit at this address
-		String repeatable = listing.getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		String repeatable = listing.getComment(CommentType.REPEATABLE, address);
 		if (repeatable != null) {
 			return StringUtilities.toLines(repeatable);
 		}
@@ -597,7 +596,7 @@ public class EolComments {
 			return f.getRepeatableCommentAsArray();
 		}
 
-		return cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
+		return cu.getCommentAsArray(CommentType.REPEATABLE);
 	}
 
 	/**

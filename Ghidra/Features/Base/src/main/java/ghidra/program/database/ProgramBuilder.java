@@ -933,7 +933,15 @@ public class ProgramBuilder {
 		});
 	}
 
+	@Deprecated(forRemoval = true, since = "11.4")
 	public void createComment(String address, String comment, int commentType) {
+		tx(() -> {
+			Listing listing = program.getListing();
+			listing.setComment(addr(address), commentType, comment);
+		});
+	}
+
+	public void createComment(String address, String comment, CommentType commentType) {
 		tx(() -> {
 			Listing listing = program.getListing();
 			listing.setComment(addr(address), commentType, comment);
@@ -1104,10 +1112,9 @@ public class ProgramBuilder {
 		}
 
 		return tx(() -> {
-			FileBytes fileBytes =
-				program.getMemory()
-						.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
-							TaskMonitor.DUMMY);
+			FileBytes fileBytes = program.getMemory()
+					.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+						TaskMonitor.DUMMY);
 
 			return fileBytes;
 		});

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,6 @@ public class AddressTable {
 		this.skipAmount = skipAmount;
 		this.shiftedAddr = shiftedAddr;
 	}
-	
 
 	/**
 	 * Create a new address table from any remaining table entries starting at startPos
@@ -388,8 +387,7 @@ public class AddressTable {
 
 		Address lastAddress = null;
 		DataType ptrDT = program.getDataTypeManager()
-				.addDataType(
-					PointerDataType.getPointer(null, addrSize), null);
+				.addDataType(PointerDataType.getPointer(null, addrSize), null);
 		for (int i = 0; i < tableSize; i++) {
 			Address loc = tableAddr.add(i * addrSize);
 			try {
@@ -472,8 +470,8 @@ public class AddressTable {
 			if (!flagNewCode || !newCodeFound) {
 				// create a case label
 				if (!ftype.isCall()) {
-					AddLabelCmd lcmd = new AddLabelCmd(target,
-						caseName + Integer.toHexString(i), true, SourceType.ANALYSIS);
+					AddLabelCmd lcmd = new AddLabelCmd(target, caseName + Integer.toHexString(i),
+						true, SourceType.ANALYSIS);
 					switchLabelList.add(lcmd);
 				}
 
@@ -496,7 +494,7 @@ public class AddressTable {
 		}
 
 		if (comment != null) {
-			program.getListing().setComment(topAddress, CodeUnit.EOL_COMMENT, comment);
+			program.getListing().setComment(topAddress, CommentType.EOL, comment);
 		}
 
 		if (flagNewCode && newCodeFound) {
@@ -574,8 +572,9 @@ public class AddressTable {
 		// not putting switch into functions anymore
 		//    program.getSymbolTable().getNamespace(start_inst.getMinAddress());
 		try {
-			space = program.getSymbolTable().createNameSpace(null,
-				"switch_" + start_inst.getMinAddress(), SourceType.ANALYSIS);
+			space = program.getSymbolTable()
+					.createNameSpace(null, "switch_" + start_inst.getMinAddress(),
+						SourceType.ANALYSIS);
 		}
 		catch (DuplicateNameException e) {
 			// just go with default space
@@ -607,8 +606,8 @@ public class AddressTable {
 		}
 
 		// make sure the reference is associated with this symbol
-		Symbol s = program.getSymbolTable().getGlobalSymbol(tableNameLabel.getLabelName(),
-			tableNameLabel.getLabelAddr());
+		Symbol s = program.getSymbolTable()
+				.getGlobalSymbol(tableNameLabel.getLabelName(), tableNameLabel.getLabelAddr());
 		for (int op = 0; op < start_inst.getNumOperands(); op++) {
 			Reference fromRefs[] = start_inst.getOperandReferences(op);
 			for (Reference fromRef : fromRefs) {
@@ -1233,12 +1232,12 @@ public class AddressTable {
 						continue;
 					}
 				}
-				
+
 				// undefined data is OK, could be a pointer
 				if (data.getDataType() instanceof Undefined) {
 					continue;
 				}
-				
+
 				// data intersects, calculate valid entries and stop looking
 				if (pointerSet.intersects(dataAddr, data.getMaxAddress())) {
 					count = (int) (dataAddr.subtract(topAddr) / (addrSize + skipAmount));

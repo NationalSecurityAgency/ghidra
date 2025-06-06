@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createFunction("1001300");
 
 		builder.createLabel("1001400", "bob");
-		builder.createComment("1001400", "my comment", CodeUnit.PLATE_COMMENT);
+		builder.createComment("1001400", "my comment", CommentType.PLATE);
 
 		builder.addBytesReturn("1001500");
 		builder.disassemble("1001500", 4);
@@ -117,7 +117,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		Function function = program.getFunctionManager().getFunctionAt(addr);
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
 
-		tx(program, () -> cu.setComment(CodeUnit.PLATE_COMMENT, null));
+		tx(program, () -> cu.setComment(CommentType.PLATE, null));
 
 		goToService.goTo(addr);
 
@@ -136,8 +136,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		tx(program, () -> {
 			CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-			cu.setCommentAsArray(CodeUnit.PLATE_COMMENT,
-				new String[] { "this is", "a plate comment" });
+			cu.setCommentAsArray(CommentType.PLATE, new String[] { "this is", "a plate comment" });
 			// create a reference to addr
 			ReferenceManager rm = program.getReferenceManager();
 			rm.addMemoryReference(getAddr(0x010023ee), addr, RefType.DATA, SourceType.USER_DEFINED,
@@ -148,7 +147,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Function function = program.getFunctionManager().getFunctionAt(addr);
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
-		String[] plateComments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+		String[] plateComments = cu.getCommentAsArray(CommentType.PLATE);
 
 		goToService.goTo(addr);
 
@@ -172,11 +171,11 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		tx(program, () -> {
 			CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-			cu.setCommentAsArray(CodeUnit.PLATE_COMMENT, new String[] { originalText });
+			cu.setCommentAsArray(CommentType.PLATE, new String[] { originalText });
 			// create a reference to addr
 			program.getReferenceManager()
-					.addMemoryReference(getAddr(0x010023ee), addr,
-						RefType.DATA, SourceType.USER_DEFINED, 0);
+					.addMemoryReference(getAddr(0x010023ee), addr, RefType.DATA,
+						SourceType.USER_DEFINED, 0);
 		});
 
 		cb.updateNow();
@@ -205,7 +204,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		tx(program, () -> {
 			CreateFunctionCmd cmd = new CreateFunctionCmd(addr);
 			cmd.applyTo(program);
-			cu.setComment(CodeUnit.PLATE_COMMENT, null);
+			cu.setComment(CommentType.PLATE, null);
 		});
 
 		cb.updateNow();
@@ -326,7 +325,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 
 			CodeUnit cu = listing.getCodeUnitAt(addr);
-			String[] plates = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
+			String[] plates = cu.getCommentAsArray(CommentType.PLATE);
 			assertTrue("Failed to navigate to plate field at address: " + cu.getMinAddress(),
 				cb.goToField(cu.getMinAddress(), PlateFieldFactory.FIELD_NAME, 1, 1));
 			ListingTextField tf = (ListingTextField) cb.getCurrentField();
@@ -437,8 +436,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		tx(program, () -> {
-			cu.setComment(CodeUnit.PLATE_COMMENT,
-				"this is a comment\ngo to the address 0x010028de");
+			cu.setComment(CommentType.PLATE, "this is a comment\ngo to the address 0x010028de");
 		});
 		assertTrue(cb.goToField(cu.getMinAddress(), PlateFieldFactory.FIELD_NAME, 2, 23));
 		click(cb, 2);
@@ -459,10 +457,8 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		tx(program, () -> {
 			program.getSymbolTable()
-					.createLabel(addr, testName.getMethodName(),
-						SourceType.USER_DEFINED);
-			cu.setComment(CodeUnit.PLATE_COMMENT,
-				"this is a comment\ngo to the address 0x010028de");
+					.createLabel(addr, testName.getMethodName(), SourceType.USER_DEFINED);
+			cu.setComment(CommentType.PLATE, "this is a comment\ngo to the address 0x010028de");
 		});
 
 		int nonCommentHeader = precedingBlankLines + 1; // +1 for the '***' line
@@ -478,7 +474,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testNavigationOnLabel() throws Exception {
 		// add a plate comment that has "entry" in it
 		CodeUnit cu = program.getListing().getCodeUnitAt(getAddr(0x0100292b));
-		tx(program, () -> cu.setComment(CodeUnit.PLATE_COMMENT, "go to entry"));
+		tx(program, () -> cu.setComment(CommentType.PLATE, "go to entry"));
 
 		assertTrue(cb.goToField(cu.getMinAddress(), PlateFieldFactory.FIELD_NAME, 1, 8));
 		click(cb, 2);
@@ -493,7 +489,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(getAddr(0x01001100));
 		tx(program, () -> {
-			cu.setComment(CodeUnit.PLATE_COMMENT, "go to FUN*");
+			cu.setComment(CommentType.PLATE, "go to FUN*");
 		});
 		assertTrue(cb.goToField(cu.getMinAddress(), PlateFieldFactory.FIELD_NAME, 1, 8));
 		click(cb, 2);
@@ -521,7 +517,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(getAddr(0x0100292b));
 		try {
-			cu.setComment(CodeUnit.PLATE_COMMENT, "go to FUN*");
+			cu.setComment(CommentType.PLATE, "go to FUN*");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -591,7 +587,7 @@ public class PlateFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void createPlateComment(CodeUnit cu, String text) {
 		tx(program, () -> {
-			cu.setComment(CodeUnit.PLATE_COMMENT, text);
+			cu.setComment(CommentType.PLATE, text);
 		});
 		cb.updateNow();
 	}

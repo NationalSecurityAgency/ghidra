@@ -341,7 +341,7 @@ public class DBTraceProgramView implements TraceProgramView {
 				return;
 			}
 			queues.fireEvent(
-				new CommentChangeRecord(commentType.ordinal(), range.getX1(), oldValue, newValue));
+				new CommentChangeRecord(commentType, range.getX1(), oldValue, newValue));
 		}
 
 		private void commentEolChanged(TraceAddressSpace space, TraceAddressSnapRange range,

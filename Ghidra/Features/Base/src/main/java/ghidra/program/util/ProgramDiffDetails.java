@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1398,19 +1398,19 @@ public class ProgramDiffDetails {
 	}
 
 	private void addEOLCommentDetails() {
-		hasEolCommentDiffs = addSpecificCommentDetails(CodeUnit.EOL_COMMENT, "EOL-Comment");
+		hasEolCommentDiffs = addSpecificCommentDetails(CommentType.EOL, "EOL-Comment");
 	}
 
 	private void addPreCommentDetails() {
-		hasPreCommentDiffs = addSpecificCommentDetails(CodeUnit.PRE_COMMENT, "Pre-Comment");
+		hasPreCommentDiffs = addSpecificCommentDetails(CommentType.PRE, "Pre-Comment");
 	}
 
 	private void addPostCommentDetails() {
-		hasPostCommentDiffs = addSpecificCommentDetails(CodeUnit.POST_COMMENT, "Post-Comment");
+		hasPostCommentDiffs = addSpecificCommentDetails(CommentType.POST, "Post-Comment");
 	}
 
 	private void addPlateCommentDetails() {
-		hasPlateCommentDiffs = addSpecificCommentDetails(CodeUnit.PLATE_COMMENT, "Plate-Comment");
+		hasPlateCommentDiffs = addSpecificCommentDetails(CommentType.PLATE, "Plate-Comment");
 	}
 
 	/**
@@ -1455,7 +1455,7 @@ public class ProgramDiffDetails {
 
 	private void addRepeatableCommentDetails() {
 		hasRepeatableCommentDiffs =
-			addSpecificCommentDetails(CodeUnit.REPEATABLE_COMMENT, "Repeatable-Comment");
+			addSpecificCommentDetails(CommentType.REPEATABLE, "Repeatable-Comment");
 	}
 
 	/**
@@ -1490,7 +1490,7 @@ public class ProgramDiffDetails {
 		return retString;
 	}
 
-	private boolean addSpecificCommentDetails(int commentType, String commentName) {
+	private boolean addSpecificCommentDetails(CommentType commentType, String commentName) {
 		boolean hasCommentDiff = false;
 		try {
 			for (Address p1Address = minP1Address; p1Address

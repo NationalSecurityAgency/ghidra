@@ -66,7 +66,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPES = CommentTypes.getTypes();
+	private static int[] COMMENT_TYPESx = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -757,7 +757,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (currentLocation instanceof CommentFieldLocation) {
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
-			int commentType = commentFieldLocation.getCommentType();
+			CommentType commentType = commentFieldLocation.getCommentType();
 			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
 			return tool.execute(cmd, currentProgram);
 		}
@@ -802,11 +802,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void setCommentInfo(CodeUnit cu, CodeUnitInfo info) {
-
-		for (int element : COMMENT_TYPES) {
-			String[] comments = cu.getCommentAsArray(element);
+		for (CommentType type : CommentType.values()) {
+			String[] comments = cu.getCommentAsArray(type);
 			if (comments != null && comments.length > 0) {
-				info.setComment(element, comments);
+				info.setComment(type, comments);
 			}
 		}
 	}

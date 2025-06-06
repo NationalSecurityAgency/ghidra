@@ -309,12 +309,11 @@ public class DebuggerCopyPlan {
 					long off = addr.subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					// Ugly, but there's not MAX/MIN_COMMENT_TYPE
-					for (int i = CodeUnit.EOL_COMMENT; i <= CodeUnit.REPEATABLE_COMMENT; i++) {
-						String comment = fromListing.getComment(i, addr);
-						if (comment == null) {
-							continue;
+					for (CommentType type : CommentType.values()) {
+						String comment = fromListing.getComment(type, addr);
+						if (comment != null) {
+							intoListing.setComment(dest, type, comment);
 						}
-						intoListing.setComment(dest, i, comment);
 					}
 				}
 			}
