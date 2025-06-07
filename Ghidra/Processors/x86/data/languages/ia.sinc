@@ -2881,27 +2881,27 @@ with : lockprefx=0 {
                                               Rmr64 = tmp | ((Rmr64 & 0x00000000000000ff) << 56); }
 @endif
 
-:BT Rmr16,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; mod=3 & Rmr16 & Reg16		{ CF = ((Rmr16 >> (Reg16 &  0xf)) & 1) != 0; }
+:BT Rmr16,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; mod=3 & Rmr16 & Reg16		{ CF = ((Rmr16 & (1 << (Reg16 &  0xf)))) != 0; }
 :BT Mem,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; Mem & Reg16 ...		{ local ptr = Mem + (sext(Reg16) s>> 3);
-											  CF = ((*:1 ptr >> (Reg16 & 0x7)) & 1) != 0; }
-:BT Rmr32,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; mod=3 & Rmr32 & Reg32		{ CF = ((Rmr32 >> (Reg32 & 0x1f)) & 1) != 0; }
+											  CF = ((*:1 ptr & (1 << (Reg16 & 0x7)))) != 0; }
+:BT Rmr32,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; mod=3 & Rmr32 & Reg32		{ CF = ((Rmr32 & (1 << (Reg32 & 0x1f)))) != 0; }
 :BT Mem,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; Mem & Reg32 ...		{
 @ifdef IA64
     local ptr = Mem + (sext(Reg32) s>> 3);
 @else
     local ptr = Mem + (Reg32 s>> 3);
 @endif
-    CF = ((*:1 ptr >> (Reg32 & 0x7)) & 1) != 0;
+    CF = ((*:1 ptr & (1 << (Reg32 & 0x7)))) != 0;
 }
 @ifdef IA64
-:BT Rmr64,Reg64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & Rmr64 & Reg64		{ CF = ((Rmr64 >> (Reg64 & 0x3f)) & 1) != 0; }
+:BT Rmr64,Reg64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & Rmr64 & Reg64		{ CF = ((Rmr64 & (1 << (Reg64 & 0x3f)))) != 0; }
 :BT Mem,Reg64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>> 3);
-											  CF = ((*:1 ptr >> (Reg64 & 0x7)) & 1) != 0; }
+											  CF = ((*:1 ptr & (1 << (Reg64 & 0x7)))) != 0; }
 @endif
-:BT rm16,imm8       is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=4 ...); imm8  { CF = ((rm16 >> (imm8 & 0x0f)) & 1) != 0; } 
-:BT rm32,imm8       is vexMode=0 & opsize=1 & byte=0xf; byte=0xba; (rm32 & reg_opcode=4 ...); imm8  { CF = ((rm32 >> (imm8 & 0x1f)) & 1) != 0; }
+:BT rm16,imm8       is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=4 ...); imm8  { CF = ((rm16 & (1 << (imm8 & 0x0f)))) != 0; }
+:BT rm32,imm8       is vexMode=0 & opsize=1 & byte=0xf; byte=0xba; (rm32 & reg_opcode=4 ...); imm8  { CF = ((rm32 & (1 << (imm8 & 0x1f)))) != 0; }
 @ifdef IA64
-:BT rm64,imm8       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=4 ...); imm8  { CF = ((rm64 >> (imm8 & 0x3f)) & 1) != 0; }
+:BT rm64,imm8       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=4 ...); imm8  { CF = ((rm64 & (1 << (imm8 & 0x3f)))) != 0; }
 @endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
