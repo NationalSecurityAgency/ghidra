@@ -1,0 +1,3 @@
+gh repo clone NationalSecurityAgency/ghidra-ghsa-xr8f-8wg9-3r85
+cd ghidra-ghsa-xr8f-8wg9-3r85
+git checkout -b advisory-fix-1
