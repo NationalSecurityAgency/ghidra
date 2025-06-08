@@ -210,14 +210,6 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return POINTER_LABEL_PREFIX;
 		}
 
-		String symName = symbol.getName();
-		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
-		symName = symName.replace(Namespace.DELIMITER, "_");
-
-		if (!symName.startsWith(POINTER_LABEL_PREFIX_U)) {
-			return POINTER_LABEL_PREFIX_U + symName;
-		}
-
 		PointerReferenceClassification pointerClassification =
 			getPointerClassification(program, ref);
 		if (pointerClassification == PointerReferenceClassification.DEEP) {
@@ -226,6 +218,14 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		}
 		if (pointerClassification == PointerReferenceClassification.LOOP) {
 			return POINTER_LOOP_LABEL_PREFIX;// pointer is self referencing
+		}
+
+		String symName = symbol.getName();
+		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
+		symName = symName.replace(Namespace.DELIMITER, "_");
+
+		if (!symName.startsWith(POINTER_LABEL_PREFIX_U)) {
+			return POINTER_LABEL_PREFIX_U + symName;
 		}
 		return POINTER_LABEL_PREFIX_U + symName;
 	}
