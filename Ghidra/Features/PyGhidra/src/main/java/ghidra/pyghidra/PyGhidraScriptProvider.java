@@ -86,13 +86,13 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 			"currentAddress", "currentLocation", "currentSelection",
 			"currentHighlight", "currentProgram", "monitor",
 			"potentialPropertiesFileLocs", "propertiesFileParams",
-			"sourceFile", "state", "writer"
+			"sourceFile", "state", "writer", "errorWriter"
 		},
 		types = {
 			Address.class, ProgramLocation.class, ProgramSelection.class,
 			ProgramSelection.class, Program.class, TaskMonitor.class,
 			List.class, GhidraScriptProperties.class,
-			ResourceFile.class, GhidraState.class, PrintWriter.class
+			ResourceFile.class, GhidraState.class, PrintWriter.class, PrintWriter.class
 		}
 	)
 	final static class PyGhidraGhidraScript extends GhidraScript
@@ -120,13 +120,13 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 			"currentAddress", "currentLocation", "currentSelection",
 			"currentHighlight", "currentProgram", "monitor",
 			"potentialPropertiesFileLocs", "propertiesFileParams",
-			"sourceFile", "state", "writer"
+			"sourceFile", "state", "writer", "errorWriter"
 		},
 		types = {
 			Address.class, ProgramLocation.class, ProgramSelection.class,
 			ProgramSelection.class, Program.class, TaskMonitor.class,
 			List.class, GhidraScriptProperties.class,
-			ResourceFile.class, GhidraState.class, PrintWriter.class
+			ResourceFile.class, GhidraState.class, PrintWriter.class, PrintWriter.class
 		}
 	)
 	final static class PyGhidraHeadlessScript extends HeadlessScript

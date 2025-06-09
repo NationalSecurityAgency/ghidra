@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1610,16 +1610,14 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected class SpyConsole extends ConsoleComponentProvider {
-		protected StringBuffer apiBuffer;
 
 		protected StringWriter outBuffer = new StringWriter();
 		protected StringWriter errBuffer = new StringWriter();
-		protected PrintWriter out = new PrintWriter(outBuffer);
-		protected PrintWriter err = new PrintWriter(errBuffer);
+		protected PrintWriter out = new PrintWriter(outBuffer, true);
+		protected PrintWriter err = new PrintWriter(errBuffer, true);
 
 		SpyConsole() {
 			super(plugin.getTool(), "Spy Console");
-			this.apiBuffer = new StringBuffer();
 		}
 
 		@Override
@@ -1633,25 +1631,24 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		}
 
 		void clear() {
-			apiBuffer = new StringBuffer();
 			outBuffer = new StringWriter();
 			errBuffer = new StringWriter();
 		}
 
 		@Override
 		public void println(String msg) {
-			apiBuffer.append(msg).append('\n');
+			out.println(msg);
 			Msg.trace(this, "Spy Script Console - println(): " + msg);
 		}
 
 		@Override
 		public void addMessage(String originator, String msg) {
-			apiBuffer.append(msg).append('\n');
+			out.println(msg);
 			Msg.trace(this, "Spy Script Console - addMessage(): " + msg);
 		}
 
 		String getApiOutput() {
-			return apiBuffer.toString();
+			return outBuffer.toString();
 		}
 	}
 
