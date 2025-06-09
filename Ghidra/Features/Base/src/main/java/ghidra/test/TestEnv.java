@@ -557,18 +557,18 @@ public class TestEnv {
 		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
-		PrintWriter writer = new PrintWriter(System.out);
+		PrintWriter errWriter = new PrintWriter(System.err);
 		ResourceFile resourceFile = new ResourceFile(scriptFile);
 		GhidraScript script = null;
 		try {
-			script = scriptProvider.getScriptInstance(resourceFile, writer);
+			script = scriptProvider.getScriptInstance(resourceFile, errWriter);
 		}
 		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}
 		if (script == null) {
-			writer.flush();
+			errWriter.flush();
 			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 

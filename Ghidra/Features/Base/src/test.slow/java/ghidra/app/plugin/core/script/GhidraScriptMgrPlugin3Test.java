@@ -100,7 +100,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		String scriptOutput = runSelectedScript(script.getName());
 
 		assertTrue("Script output not generated",
-			scriptOutput.contains("> new scripts are neato!"));
+			scriptOutput.contains("new scripts are neato!"));
 		assertFalse("Script output has value from previous test run - did script not get deleted?",
 			scriptOutput.contains("Value == 3368601"));
 
@@ -135,7 +135,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		String updatedScriptOutput = runSelectedScript(script.getName());
 
 		assertTrue("Script output not updated with new script contents - did recompile work?",
-			StringUtilities.containsAll(updatedScriptOutput, "> new scripts are neato!",
+			StringUtilities.containsAll(updatedScriptOutput, "new scripts are neato!",
 				"Value == 3368601"));
 
 		deleteScriptThroughUI();

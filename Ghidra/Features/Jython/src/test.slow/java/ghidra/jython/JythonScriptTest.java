@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,7 @@ import org.junit.*;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.console.ConsolePlugin;
 import ghidra.app.plugin.core.osgi.BundleHost;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.GhidraState;
+import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
@@ -128,7 +127,7 @@ public class JythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 		JythonScriptProvider scriptProvider = new JythonScriptProvider();
 		PrintWriter writer = new PrintWriter(new ByteArrayOutputStream());
 		JythonScript script = (JythonScript) scriptProvider.getScriptInstance(scriptFile, writer);
-		script.set(state, TaskMonitor.DUMMY, writer);
+		script.set(state, new ScriptControls(writer, writer, TaskMonitor.DUMMY));
 		script.run();
 
 		waitForSwing();
