@@ -24,7 +24,3 @@ eclipse.project.name = 'Processors PA-RISC'
 dependencies {
 	api project(':Base')
 }
-
-sleighCompileOptions = [
-	'-l'
-]
