@@ -195,7 +195,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * three types of comments supported
 	 * @deprecated use {@link #setComment(CommentType, String)} instead
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "11.4")
 	public default void setComment(int commentType, String comment) {
 		setComment(CommentType.valueOf(commentType), comment);
 	}
@@ -216,7 +216,9 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * @param comment an array of strings where each string is a single line of the comment.
 	 * @throws IllegalArgumentException if type is not one of the
 	 * three types of comments supported
+	 * @deprecated use {@link #setCommentAsArray(CommentType, String[])} instead
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public default void setCommentAsArray(int commentType, String[] comment) {
 		setCommentAsArray(CommentType.valueOf(commentType), comment);
 	}
