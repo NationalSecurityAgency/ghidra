@@ -123,9 +123,28 @@ public class SetCommentCmd implements Command<Program> {
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
 	 * @param comment the comment about the data
+	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
+	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
+	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * @deprecated Use {@link #createComment(Program, Address, String, CommentType)} instead
+	 */
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static void createComment(Program program, Address addr, String comment,
+			int commentType) {
+		SetCommentCmd commentCmd =
+			new SetCommentCmd(addr, CommentType.valueOf(commentType), comment);
+		commentCmd.applyTo(program);
+	}
+
+	/**
+	 * Creates the specified comment of the specified type at address.  The current comment of
+	 * this commentType will be cleared.
+	 * 
+	 * @param program the program being analyzed
+	 * @param addr the address where data is created
+	 * @param comment the comment about the data
 	 * @param commentType the type of comment
 	 */
-
 	public static void createComment(Program program, Address addr, String comment,
 			CommentType commentType) {
 		SetCommentCmd commentCmd = new SetCommentCmd(addr, commentType, comment);
