@@ -77,7 +77,7 @@ public class JythonScript extends GhidraScript {
 				interpreter.execFile(jythonScript.getSourceFile(), jythonScript);
 			}
 			else {
-				ghidraScript.execute(scriptState);
+				ghidraScript.execute(scriptState, getControls());
 			}
 
 			if (scriptState == state) {

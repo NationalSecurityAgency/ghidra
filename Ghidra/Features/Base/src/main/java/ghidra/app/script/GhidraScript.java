@@ -275,19 +275,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Execute/run script with the given {@link GhidraState state} and current 
-	 * {@link ScriptControls controls} and {@link #doCleanup} afterwards. 
-	 * <p>
-	 * NOTE: This method is not intended to be called by script writers.
-	 *
-	 * @param runState state object
-	 * @throws Exception if the script excepts
-	 */
-	public final void execute(GhidraState runState) throws Exception {
-		execute(runState, new ScriptControls(writer, errorWriter, decorateOutput, monitor));
-	}
-
-	/**
 	 * Execute/run script with the given {@link GhidraState state} and 
 	 * {@link ScriptControls controls} and {@link #doCleanup} afterwards. 
 	 * <p>
@@ -585,6 +572,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public final GhidraState getState() {
 		updateStateFromVariables();
 		return state;
+	}
+
+	/**
+	 * {@return the current script controls}
+	 */
+	public final ScriptControls getControls() {
+		return new ScriptControls(writer, errorWriter, decorateOutput, monitor);
 	}
 
 	/**
@@ -924,7 +918,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				updateStateFromVariables();
 			}
 
-			script.execute(scriptState);
+			script.execute(scriptState, getControls());
 
 			if (scriptState == state) {
 				loadVariablesFromState();
