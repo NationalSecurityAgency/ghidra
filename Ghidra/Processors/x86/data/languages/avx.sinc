@@ -1766,17 +1766,34 @@ define pcodeop vpcmpistrm_avx ;
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72322
 define pcodeop vpextrb_avx ;
-:VPEXTRB Reg32_m8, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x14; XmmReg1 ... & Reg32_m8; imm8
+:VPEXTRB Rmr32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x14; mod=3 & XmmReg1 & Rmr32 & check_Rmr32_dest; imm8
 {
-	Reg32_m8 = vpextrb_avx( XmmReg1, imm8:1 );
-	# TODO Reg64 = zext(Reg32)
+	local tmp8:1 = imm8;
+	local tmp = XmmReg1 >> (tmp8[0,3]*8);
+	Rmr32 = zext(tmp[0,8]);
+	build check_Rmr32_dest;
+}
+
+:VPEXTRB m8, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x14; (XmmReg1 ... & m8); imm8
+{
+	local tmp8:1 = imm8;
+	local tmp = XmmReg1 >> (tmp8[0,3]*8);
+	m8 = tmp[0,8];
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72326
 define pcodeop vpextrd_avx ;
-:VPEXTRD rm32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & rm32; imm8
+:VPEXTRD Rmr32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; mod=3 & XmmReg1 & Rmr32 & check_Rmr32_dest; imm8
 {
-	rm32 = vpextrd_avx( XmmReg1, imm8:1 );
+	local tmp = XmmReg1 >> (imm8*32);
+	Rmr32 = tmp(0);
+	build check_Rmr32_dest;
+}
+
+:VPEXTRD m32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & m32; imm8
+{
+	local tmp = XmmReg1 >> (imm8*32);
+	m32 = tmp(0);
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72330
@@ -2423,15 +2440,27 @@ define pcodeop vpsubusw_avx ;
 define pcodeop vptest_avx ;
 :VPTEST XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG); byte=0x17; XmmReg1 ... & XmmReg2_m128
 {
-	vptest_avx( XmmReg1, XmmReg2_m128 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = XmmReg2_m128;
+	local val2 = XmmReg1;
+	ZF = (val1 & val2) == 0;
+	CF = (val1 & ~val2) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # PTEST 4-487 PAGE 1607 LINE 83730
 :VPTEST YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG); byte=0x17; YmmReg1 ... & YmmReg2_m256
 {
-	vptest_avx( YmmReg1, YmmReg2_m256 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = YmmReg2_m256;
+	local val2 = YmmReg1;
+	ZF = (val1 & val2) == 0;
+	CF = (val1 & ~val2) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # PUNPCKHBW/PUNPCKHWD/PUNPCKHDQ/PUNPCKHQDQ 4-491 PAGE 1611 LINE 83929
@@ -3007,30 +3036,62 @@ define pcodeop vpermilps_avx ;
 define pcodeop vtestps_avx ;
 :VTESTPS XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x0E; XmmReg1 ... & XmmReg2_m128
 {
-	vtestps_avx( XmmReg1, XmmReg2_m128 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = XmmReg2_m128;
+	local val2 = XmmReg1;
+	local ztest = val1 & val2;
+	ZF = (ztest[31,1] | ztest[63,1] | ztest[95,1] | ztest[127,1]) == 0;
+	local ctest = val1 & ~val2;
+	CF = (ctest[31,1] | ctest[63,1] | ctest[95,1] | ctest[127,1]) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # VTESTPD/VTESTPS 5-560 PAGE 2384 LINE 122260
 :VTESTPS YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x0E; YmmReg1 ... & YmmReg2_m256
 {
-	vtestps_avx( YmmReg1, YmmReg2_m256 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = YmmReg2_m256;
+	local val2 = YmmReg1;
+	local ztest = val1 & val2;
+	ZF = (ztest[31,1] | ztest[63,1] | ztest[95,1] | ztest[127,1] | ztest[160,1] | ztest[191,1] | ztest[224,1] | ztest[255,1]) == 0;
+	local ctest = val1 & ~val2;
+	CF = (ctest[31,1] | ctest[63,1] | ctest[95,1] | ctest[127,1] | ctest[160,1] | ctest[191,1] | ctest[224,1] | ctest[255,1]) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # VTESTPD/VTESTPS 5-560 PAGE 2384 LINE 122263
 define pcodeop vtestpd_avx ;
 :VTESTPD XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x0F; XmmReg1 ... & XmmReg2_m128
 {
-	vtestpd_avx( XmmReg1, XmmReg2_m128 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = XmmReg2_m128;
+	local val2 = XmmReg1;
+	local ztest = val1 & val2;
+	ZF = (ztest[63,1] | ztest[127,1]) == 0;
+	local ctest = val1 & ~val2;
+	CF = (ctest[63,1] | ctest[127,1]) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # VTESTPD/VTESTPS 5-560 PAGE 2384 LINE 122266
 :VTESTPD YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x0F; YmmReg1 ... & YmmReg2_m256
 {
-	vtestpd_avx( YmmReg1, YmmReg2_m256 );
-	# TODO set flags AF, CF, PF, SF, ZF
+	local val1 = YmmReg2_m256;
+	local val2 = YmmReg1;
+	local ztest = val1 & val2;
+	ZF = (ztest[63,1] | ztest[127,1] | ztest[191,1] | ztest[255,1]) == 0;
+	local ctest = val1 & ~val2;
+	CF = (ctest[63,1] | ctest[127,1] | ctest[191,1] | ctest[255,1]) == 0;
+	AF = 0;
+	OF = 0;
+	PF = 0;
+	SF = 0;
 }
 
 # XORPD 5-596 PAGE 2420 LINE 123828
