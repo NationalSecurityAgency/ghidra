@@ -83,22 +83,22 @@ public class StubListing implements Listing {
 	@Override
 	public AddressIterator getCommentAddressIterator(CommentType commentType,
 			AddressSetView addrSet, boolean forward) {
-		throw new UnsupportedOperationException();
+		return AddressIterator.EMPTY_ITERATOR;
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
-		throw new UnsupportedOperationException();
+		return AddressIterator.EMPTY_ITERATOR;
 	}
 
 	@Override
 	public long getCommentAddressCount() {
-		throw new UnsupportedOperationException();
+		return 0;
 	}
 
 	@Override
 	public String getComment(CommentType commentType, Address address) {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
