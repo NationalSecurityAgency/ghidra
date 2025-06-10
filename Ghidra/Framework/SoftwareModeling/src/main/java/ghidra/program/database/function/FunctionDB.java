@@ -49,7 +49,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private ProgramDB program;
 	private Address entryPoint;
-	private Symbol functionSymbol;
+	private FunctionSymbol functionSymbol;
 	private DBRecord rec;
 
 	private FunctionStackFrame frame;
@@ -108,7 +108,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private void init() {
 		thunkedFunction = manager.getThunkedFunction(this);
-		functionSymbol = program.getSymbolTable().getSymbol(key);
+		functionSymbol = (FunctionSymbol) program.getSymbolTable().getSymbol(key);
 		entryPoint = functionSymbol.getAddress();
 	}
 
@@ -974,7 +974,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					symbolMap.put(v.symbol, v);
 				}
 				if (var.getComment() != null) {
-					v.symbol.setSymbolStringData(var.getComment());
+					v.symbol.setSymbolComment(var.getComment());
 				}
 				manager.functionChanged(this, null);
 				return v;
@@ -1667,7 +1667,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					manager.functionChanged(this, PARAMETERS_CHANGED);
 				}
 				if (var.getComment() != null) {
-					p.symbol.setSymbolStringData(var.getComment());
+					p.symbol.setSymbolComment(var.getComment());
 				}
 				updateSignatureSourceAfterVariableChange(source, p.getDataType());
 				return p;

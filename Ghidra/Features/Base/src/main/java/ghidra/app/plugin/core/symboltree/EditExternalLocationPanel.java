@@ -20,7 +20,7 @@ import static ghidra.framework.main.DataTreeDialogType.*;
 import java.awt.*;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -270,8 +270,7 @@ class EditExternalLocationPanel extends JPanel {
 	 * Pop up the data tree dialog so the user can choose the external program.
 	 */
 	private void popupProgramChooser() {
-		DataTreeDialog d =
-			new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
+		DataTreeDialog d = new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
 		final DataTreeDialog dialog = d;
 		d.addOkActionListener(e -> {
 			DomainFile df = dialog.getDomainFile();
@@ -402,10 +401,9 @@ class EditExternalLocationPanel extends JPanel {
 		String locationName = getLocationName();
 		if (locationName != null && locationName.length() > 0) {
 			ExternalManager externalManager = program.getExternalManager();
-			List<ExternalLocation> externalLocations =
+			Set<ExternalLocation> externalLocations =
 				externalManager.getExternalLocations(extLibName, locationName);
-			externalLocations.remove(externalLocation);
-			if (!externalLocations.isEmpty()) {
+			if (externalLocations.size() == 1 && !externalLocations.contains(externalLocation)) {
 				int result = OptionDialog.showYesNoDialog(null, "Duplicate External Name",
 					"Another symbol named '" + locationName + "' already exists in the '" +
 						extLibName + "' library. Are you sure you want to create another?");

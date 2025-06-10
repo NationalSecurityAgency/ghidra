@@ -27,6 +27,26 @@ import ghidra.util.exception.InvalidInputException;
  */
 public interface Namespace {
 
+	/**
+	 * Type of {@link Namespace}.
+	 */
+	public enum Type {
+		NAMESPACE("Namespace"), LIBRARY("Library"), CLASS("Class"), FUNCTION("Function");
+
+		private final String friendlyName;
+
+		private Type(String friendlyName) {
+			this.friendlyName = friendlyName;
+		}
+
+		/**
+		 * {@return a friendly name for use in messages}
+		 */
+		public String friendlyName() {
+			return friendlyName;
+		}
+	}
+
 	static final long GLOBAL_NAMESPACE_ID = 0;
 	/**
 	 * The delimiter that is used to separate namespace nodes in a namespace
@@ -46,6 +66,13 @@ public interface Namespace {
 	 * @return the symbol for this namespace.
 	 */
 	public Symbol getSymbol();
+
+	/**
+	 * {@return the type of namespace, e.g., Library, Class, Namespace, Function}
+	 */
+	public default Type getType() {
+		return Type.NAMESPACE;
+	}
 
 	/**
 	 * Returns true if this namespace is external (i.e., associated with a Library)

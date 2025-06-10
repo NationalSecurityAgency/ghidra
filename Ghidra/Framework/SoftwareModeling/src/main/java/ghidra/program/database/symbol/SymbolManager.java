@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -303,7 +303,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			catch (InvalidInputException e) {
 				Symbol parent =
-					getSymbol(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL));
+					getSymbol(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL));
 				Msg.warn(this, "Variable symbol upgrade problem: " + parent.getName() + ":" +
 					rec.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL));
 			}
@@ -356,7 +356,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 					}
 					catch (InvalidInputException e) {
 						Symbol parent =
-							getSymbol(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL));
+							getSymbol(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL));
 						Msg.warn(this, "Variable symbol upgrade problem: " + parent.getName() +
 							":" + rec.getString(SymbolDatabaseAdapter.SYMBOL_NAME_COL));
 						curVarAddr = null;
@@ -527,8 +527,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			Address address = symbol.getAddress();
 			symbolRemoved(symbol, address, symbol.getName(), oldKey, Namespace.GLOBAL_NAMESPACE_ID,
 				null);
-			DBRecord record = adapter.createSymbol(newName, address, newParentID, SymbolType.LABEL,
-				null, null, null, source, true);
+
+			DBRecord record = adapter.createSymbolRecord(newName, newParentID, address,
+				SymbolType.LABEL, true, source);
+			adapter.updateSymbolRecord(record);
+
 			symbol.setRecord(record);
 			symbolAdded(symbol);
 		}
@@ -571,7 +574,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, name);
 		long addressKey = addrMap.getKey(addr, true);
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, addressKey);
-		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, namespace.getID());
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL, namespace.getID());
 		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, type.getID());
 		if (isPrimary) {
 			rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, addressKey);
@@ -587,19 +590,19 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				addrMap.decodeAddress(record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 		}
 		if (type == SymbolType.CLASS) {
-			return new ClassSymbol(this, cache, addr, record);
+			return new ClassSymbol(this, cache, record); // uses NO_ADDRESS
 		}
 		else if (type == SymbolType.LABEL) {
-			return new CodeSymbol(this, cache, addr, record);
+			return new CodeSymbol(this, cache, addr, record); // uses NO_ADDRESS
 		}
 		else if (type == SymbolType.NAMESPACE) {
-			return new NamespaceSymbol(this, cache, addr, record);
+			return new NamespaceSymbol(this, cache, record);
 		}
 		else if (type == SymbolType.FUNCTION) {
 			return new FunctionSymbol(this, cache, addr, record);
 		}
 		else if (type == SymbolType.LIBRARY) {
-			return new LibrarySymbol(this, cache, addr, record);
+			return new LibrarySymbol(this, cache, record); // uses NO_ADDRESS
 		}
 		else if (type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR) {
 			return new VariableSymbolDB(this, cache, type, variableStorageMgr, addr, record);
@@ -970,12 +973,12 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	@Override
-	public Symbol getLibrarySymbol(String name) {
+	public LibrarySymbol getLibrarySymbol(String name) {
 		lock.acquire();
 		try {
 			for (Symbol s : getSymbols(name)) {
 				if (s.getSymbolType() == SymbolType.LIBRARY) {
-					return s;
+					return (LibrarySymbol) s;
 				}
 			}
 		}
@@ -1109,6 +1112,83 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			lock.release();
 		}
 		return null;
+	}
+
+	/**
+	 * Get all external symbols whose original import name matches the specified extLabel with an
+	 * optional constraint on a matching Library.
+	 * @param library optional Library constraint (may be null to ignore).
+	 * @param extLabel external original import name
+	 * @return external symbol iterator
+	 */
+	public SymbolIterator getExternalSymbolByOriginalImportName(Library library, String extLabel) {
+		if (library != null) {
+			checkValidNamespaceArgument(library);
+		}
+		lock.acquire();
+		try {
+			long matchLibraryId = library != null ? library.getID() : -1;
+			RecordIterator recordIter = adapter.getExternalSymbolsByOriginalImportName(extLabel);
+			return new SymbolRecordConstraintIterator(recordIter, rec -> {
+				if (matchLibraryId > 0) {
+					long parentId = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL);
+					if (parentId == matchLibraryId) {
+						return true;
+					}
+					Symbol s = getSymbol(parentId);
+					Library lib = Library.getContainingLibrary(s);
+					return lib != null && lib.getID() == matchLibraryId;
+				}
+				return true;
+			}, true);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+			return null; // will not occur
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * Get all external symbols whose original import name matches the specified extLabel with an
+	 * optional constraint on a matching Library.
+	 * @param library optional Library constraint (may be null to ignore).
+	 * @param extProgAddr external program memory address
+	 * @return external symbol iterator
+	 */
+	public SymbolIterator getExternalSymbolByMemoryAddress(Library library, Address extProgAddr) {
+		if (extProgAddr == null || !extProgAddr.isLoadedMemoryAddress()) {
+			return SymbolIterator.EMPTY_ITERATOR;
+		}
+		if (library != null) {
+			checkValidNamespaceArgument(library);
+		}
+		lock.acquire();
+		try {
+			long matchLibraryId = library != null ? library.getID() : -1;
+			RecordIterator recordIter = adapter.getExternalSymbolsByMemoryAddress(extProgAddr);
+			return new SymbolRecordConstraintIterator(recordIter, rec -> {
+				if (matchLibraryId > 0) {
+					long parentId = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL);
+					if (parentId == matchLibraryId) {
+						return true;
+					}
+					Symbol s = getSymbol(parentId);
+					Library lib = Library.getContainingLibrary(s);
+					return lib != null && lib.getID() == matchLibraryId;
+				}
+				return true;
+			}, true);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+			return null; // will not occur
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -1804,13 +1884,73 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				return true;
 			}
 
+			lock.acquire();
 			try {
-				lock.acquire();
 				while (nextSymbol == null && (forward ? it.hasNext() : it.hasPrevious())) {
 					DBRecord rec = forward ? it.next() : it.previous();
 					Symbol sym = getSymbol(rec);
 					if (includeDefaultThunks || !isDefaultThunk(sym)) {
 						nextSymbol = sym;
+					}
+				}
+				return nextSymbol != null;
+			}
+			catch (IOException e) {
+				program.dbError(e);
+			}
+			finally {
+				lock.release();
+			}
+			return false;
+		}
+
+		@Override
+		public Symbol next() {
+			if (hasNext()) {
+				Symbol returnedSymbol = nextSymbol;
+				nextSymbol = null;
+				return returnedSymbol;
+			}
+			return null;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Iterator<Symbol> iterator() {
+			return this;
+		}
+	}
+
+	private class SymbolRecordConstraintIterator implements SymbolIterator {
+		private Symbol nextSymbol;
+
+		private final RecordIterator it;
+		private final Predicate<DBRecord> predicate;
+		private final boolean forward;
+
+		SymbolRecordConstraintIterator(RecordIterator it, Predicate<DBRecord> predicate,
+				boolean forward) {
+			this.it = it;
+			this.predicate = predicate;
+			this.forward = forward;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (nextSymbol != null) {
+				return true;
+			}
+
+			lock.acquire();
+			try {
+				while (nextSymbol == null && (forward ? it.hasNext() : it.hasPrevious())) {
+					DBRecord rec = forward ? it.next() : it.previous();
+					if (predicate == null || predicate.test(rec)) {
+						nextSymbol = getSymbol(rec);
 					}
 				}
 				return nextSymbol != null;
@@ -2204,6 +2344,45 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		dynamicSymbolAddressMap = new AddressMapImpl((byte) 0x40, addrMap.getAddressFactory());
 		invalidateCache(true);
 		variableStorageMgr.setLanguage(translator, monitor);
+
+		monitor.setMessage("Translate External Addresses...");
+		try {
+			AddressFactory oldAddrFactory = translator.getOldLanguage().getAddressFactory();
+			SymbolIterator externalSymbols = getExternalSymbols();
+			while (externalSymbols.hasNext()) {
+				monitor.checkCancelled();
+				SymbolDB s = (SymbolDB) externalSymbols.next();
+
+				String extAddrStr =
+					s.record.getString(SymbolDatabaseAdapter.SYMBOL_EXTERNAL_PROG_ADDR_COL);
+				if (extAddrStr == null) {
+					continue;
+				}
+				// skip addresses which do not parse by old language - could be
+				// overlay (although this should generally never occur)
+				Address addr = oldAddrFactory.getAddress(extAddrStr);
+				if (addr == null) {
+					continue;
+				}
+				AddressSpace newAddressSpace =
+					translator.getNewAddressSpace(addr.getAddressSpace().getName());
+				if (newAddressSpace == null || !newAddressSpace.isLoadedMemorySpace()) {
+					// can't really recover from this
+					throw new AssertException(
+						"Failed to map external memory address: " + extAddrStr);
+				}
+				addr = newAddressSpace.getAddress(addr.getOffset());
+				String newAddrStr = addr.toString();
+				if (!newAddrStr.equals(extAddrStr)) {
+					s.record.setString(SymbolDatabaseAdapter.SYMBOL_EXTERNAL_PROG_ADDR_COL,
+						newAddrStr);
+					adapter.updateSymbolRecord(s.record);
+				}
+			}
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
 	}
 
 	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
@@ -2255,6 +2434,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
+		if (!fromAddr.isMemoryAddress() || !toAddr.isMemoryAddress()) {
+			throw new IllegalArgumentException(
+				"moveAddressRange only supported for memory addresses");
+		}
 		if (fromAddr.equals(toAddr)) {
 			return;
 		}
@@ -2274,14 +2457,18 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				if (!range.contains(symbol.getAddress())) {
 					break;
 				}
-				Address newAddress = toAddr.add(symbol.getAddress().subtract(fromAddr));
+				if (!(symbol instanceof MemorySymbol memSym)) {
+					throw new AssertionError(
+						"Unexpected symbol type within memory range: " + symbol.getClass());
+				}
+				Address newAddress = toAddr.add(memSym.getAddress().subtract(fromAddr));
 
 				// any address that has symbols added or removed may have a corrupted primary
 				// (too many or non-existent)
-				primaryFixups.add(symbol.getAddress());
+				primaryFixups.add(memSym.getAddress());
 				primaryFixups.add(newAddress);
 
-				moveSymbolForMemoryBlockMove((SymbolDB) symbol, newAddress);
+				moveSymbolForMemoryBlockMove(memSym, newAddress);
 			}
 			// go back and make sure there is a valid primary symbol at touched addresses
 			fixupPrimarySymbols(primaryFixups);
@@ -2295,17 +2482,17 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	// Since this is a memory block move, the destination range can not contain any functions, but
 	// it may contain labels so we may have to deal with collisions. The other complication we have
 	// to deal with is functions in the moved block that are currently pinned.
-	private void moveSymbolForMemoryBlockMove(SymbolDB symbol, Address newAddress) {
-		Address oldAddress = symbol.getAddress();
+	private void moveSymbolForMemoryBlockMove(MemorySymbol memSymbol, Address newAddress) {
+		Address oldAddress = memSymbol.getAddress();
 
 		// If the symbol is not pinned go ahead and move it. Only wrinkle is that there may
 		// be a matching symbol at the destination. In that unlikely event, remove it, but preserve
 		// its pinned status
-		if (!symbol.isPinned()) {
+		if (!memSymbol.isPinned()) {
 			// if we conflict with a symbol at the destination, delete it (it can't be a function)
 			// and retain its pinned status if it had one.
-			boolean shouldPin = deleteMatchingSymbolAndCheckPinnedStatus(symbol, newAddress);
-			symbol.moveLowLevel(newAddress, null, null, null, shouldPin);
+			boolean shouldPin = deleteMatchingSymbolAndCheckPinnedStatus(memSymbol, newAddress);
+			memSymbol.moveLowLevel(newAddress, null, null, null, shouldPin);
 			moveLabelHistory(oldAddress, newAddress);
 			return;
 		}
@@ -2314,10 +2501,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		// the function symbol, but create a replacement label in the pinned source location. Also,
 		// if there is a primary symbol at the destination, we need to remove it and set the
 		// function's symbol to that name.
-		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
-			String originalName = symbol.getName();
-			Namespace originalNamespace = symbol.getParentNamespace();
-			SourceType originalSource = symbol.getSource();
+		if (memSymbol.getSymbolType() == SymbolType.FUNCTION) {
+			String originalName = memSymbol.getName();
+			Namespace originalNamespace = memSymbol.getParentNamespace();
+			SourceType originalSource = memSymbol.getSource();
 			String newName = "";
 			Namespace newNamespace = namespaceMgr.getGlobalNamespace();
 			SourceType newSource = SourceType.DEFAULT;
@@ -2335,7 +2522,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			try {
 				// so move the symbol to the new address and update namespace, source, and pinned state
-				symbol.moveLowLevel(newAddress, newName, newNamespace, newSource, newPinned);
+				memSymbol.moveLowLevel(newAddress, newName, newNamespace, newSource, newPinned);
 
 				// create a pinned label to replace the pinned function symbol at the source.
 				Symbol newSymbol =
@@ -2444,45 +2631,48 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	public void imageBaseChanged(Address oldBase, Address newBase) {
+		if (!oldBase.isLoadedMemoryAddress() || !newBase.isLoadedMemoryAddress()) {
+			throw new IllegalArgumentException("Loaded memory addresses required");
+		}
 		AddressSpace space = newBase.getAddressSpace();
-		fixupPinnedSymbolsAfterRebase(oldBase, newBase, space.getMinAddress(),
+		fixupPinnedMemorySymbolsAfterRebase(oldBase, newBase, space.getMinAddress(),
 			space.getMaxAddress());
 	}
 
-	private void fixupPinnedSymbolsAfterRebase(Address oldBase, Address base, Address minAddr,
+	private void fixupPinnedMemorySymbolsAfterRebase(Address oldBase, Address base, Address minAddr,
 			Address maxAddr) {
 
-		List<SymbolDB> fixupPinnedSymbols = findPinnedSymbols(minAddr, maxAddr);
+		List<MemorySymbol> fixupPinnedSymbols = findPinnedMemorySymbols(minAddr, maxAddr);
 
 		Set<Address> primaryFixups = new HashSet<>();
-		for (SymbolDB symbol : fixupPinnedSymbols) {
-			Address currentAddress = symbol.getAddress();
+		for (MemorySymbol memSymbol : fixupPinnedSymbols) {
+			Address currentAddress = memSymbol.getAddress();
 			Address beforeBaseChangeAddress = oldBase.addWrap(currentAddress.subtract(base));
 			primaryFixups.add(currentAddress);
 			primaryFixups.add(beforeBaseChangeAddress);
 
 			// see if there is a name collision for the pinned symbol we are about to move back
-			Symbol match =
-				getSymbol(symbol.getName(), beforeBaseChangeAddress, symbol.getParentNamespace());
+			Symbol match = getSymbol(memSymbol.getName(), beforeBaseChangeAddress,
+				memSymbol.getParentNamespace());
 
-			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
-				fixupPinnedFunctionSymbolAfterRebase(symbol, beforeBaseChangeAddress, match);
+			if (memSymbol.getSymbolType() == SymbolType.FUNCTION) {
+				fixupPinnedFunctionSymbolAfterRebase(memSymbol, beforeBaseChangeAddress, match);
 			}
 			else {
-				fixupPinnedLabelSymbolAfterRebase(symbol, beforeBaseChangeAddress, match);
+				fixupPinnedLabelSymbolAfterRebase(memSymbol, beforeBaseChangeAddress, match);
 			}
 		}
 		fixupPrimarySymbols(primaryFixups);
 	}
 
-	private void fixupPinnedLabelSymbolAfterRebase(SymbolDB symbol, Address newAddress,
+	private void fixupPinnedLabelSymbolAfterRebase(MemorySymbol memSymbol, Address newAddress,
 			Symbol match) {
 		if (match != null) {
 			match.setPinned(true);
-			symbol.delete();
+			memSymbol.delete();
 		}
 		else {
-			symbol.moveLowLevel(newAddress, null, null, null, true);
+			memSymbol.moveLowLevel(newAddress, null, null, null, true);
 		}
 	}
 
@@ -2526,14 +2716,18 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-	private List<SymbolDB> findPinnedSymbols(Address minAddr, Address maxAddr) {
-		List<SymbolDB> pinnedSymbols = new ArrayList<>();
+	private List<MemorySymbol> findPinnedMemorySymbols(Address minAddr, Address maxAddr) {
+		List<MemorySymbol> pinnedSymbols = new ArrayList<>();
 		for (Symbol symbol : getSymbolIterator(minAddr, true)) {
-			if (symbol.getAddress().compareTo(maxAddr) > 0) {
+			if (!(symbol instanceof MemorySymbol memSym)) {
+				throw new AssertionError(
+					"Unexpected symbol type within memory range: " + symbol.getClass());
+			}
+			if (memSym.getAddress().compareTo(maxAddr) > 0) {
 				break;
 			}
-			if (symbol.isPinned()) {
-				pinnedSymbols.add((SymbolDB) symbol);
+			if (memSym.isPinned()) {
+				pinnedSymbols.add(memSym);
 			}
 		}
 		return pinnedSymbols;
@@ -2589,16 +2783,24 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try {
 			source = adjustSourceTypeIfNecessary(name, type, source, storage);
 			Address varAddr = variableStorageMgr.getVariableStorageAddress(storage, true);
-			return (VariableSymbolDB) doCreateSpecialSymbol(varAddr, name, function, type, null,
-				Integer.valueOf(firstUseOffsetOrOrdinal), null, source, true);
+			DBRecord record =
+				doCreateBasicSymbolRecord(name, function, varAddr, type, false, source, true);
+			VariableSymbolDB.setRecordFields(record, firstUseOffsetOrOrdinal, null);
+			adapter.updateSymbolRecord(record);
+
+			VariableSymbolDB newSymbol =
+				new VariableSymbolDB(this, cache, type, variableStorageMgr, varAddr, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
 		}
 		catch (IOException e) {
-			dbError(e);
+			program.dbError(e); // will not return
+			return null;
 		}
 		finally {
 			lock.release();
 		}
-		return null;
 	}
 
 	private SourceType adjustSourceTypeIfNecessary(String name, SymbolType type, SourceType source,
@@ -2616,21 +2818,21 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public GhidraClass createClass(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		SymbolDB s = createClassSymbol(name, parent, source, true);
+		ClassSymbol s = createClassSymbol(name, parent, source, true);
 		return new GhidraClassDB(s, namespaceMgr);
 	}
 
 	@Override
 	public Library createExternalLibrary(String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		SymbolDB s = createLibrarySymbol(name, null, source);
+		LibrarySymbol s = createLibrarySymbol(name, null, source);
 		return new LibraryDB(s, namespaceMgr);
 	}
 
 	@Override
 	public Namespace createNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		SymbolDB s = createNamespaceSymbol(name, parent, source, true);
+		NamespaceSymbol s = createNamespaceSymbol(name, parent, source, true);
 		return new NamespaceDB(s, namespaceMgr);
 	}
 
@@ -2657,7 +2859,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			// no duplicate check, since this class name will be set to that of the existing namespace
 			String tempName = "_temp_" + System.nanoTime();
-			SymbolDB classSymbol = createClassSymbol(tempName, namespace.getParentNamespace(),
+			ClassSymbol classSymbol = createClassSymbol(tempName, namespace.getParentNamespace(),
 				originalSource, false /*check for duplicate */);
 			GhidraClassDB classNamespace = new GhidraClassDB(classSymbol, namespaceMgr);
 
@@ -2705,7 +2907,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			// Note: We know there are no namespaces with the name; do we still have to check for
 			//       duplicates?  Assuming yes, as another symbol type may exist with this name.
-			SymbolDB s = createNamespaceSymbol(name, parent, source, true /*check for duplicates*/);
+			NamespaceSymbol s =
+				createNamespaceSymbol(name, parent, source, true /*check for duplicates*/);
 
 			return new NamespaceDB(s, namespaceMgr);
 		}
@@ -2728,10 +2931,27 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 *             or if the given parent namespace is from a different program than that of this 
 	 *             symbol table.
 	 */
-	public SymbolDB createLibrarySymbol(String name, String pathname, SourceType source)
+	public LibrarySymbol createLibrarySymbol(String name, String pathname, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		return doCreateSpecialSymbol(Address.NO_ADDRESS, name, null, SymbolType.LIBRARY, null, null,
-			pathname, source, true);
+		lock.acquire();
+		try {
+			DBRecord record = doCreateBasicSymbolRecord(name, null, Address.NO_ADDRESS,
+				SymbolType.LIBRARY, false, source, true);
+			LibrarySymbol.setRecordFields(record, pathname);
+			adapter.updateSymbolRecord(record);
+
+			LibrarySymbol newSymbol = new LibrarySymbol(this, cache, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (IOException e) {
+			program.dbError(e); // will not return
+			return null;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	/**
@@ -2749,10 +2969,26 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 *             or if the given parent namespace is from a different program than that of this 
 	 *             symbol table.
 	 */
-	SymbolDB createClassSymbol(String name, Namespace parent, SourceType source,
+	ClassSymbol createClassSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
-		return doCreateSpecialSymbol(Address.NO_ADDRESS, name, parent, SymbolType.CLASS, null, null,
-			null, source, true);
+		lock.acquire();
+		try {
+			DBRecord record = doCreateBasicSymbolRecord(name, parent, Address.NO_ADDRESS,
+				SymbolType.CLASS, false, source, checkForDuplicates);
+			adapter.updateSymbolRecord(record);
+
+			ClassSymbol newSymbol = new ClassSymbol(this, cache, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (IOException e) {
+			program.dbError(e); // will not return
+			return null;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	/**
@@ -2770,161 +3006,228 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 *             if the given parent namespace is from a different program than that of this 
 	 *             symbol table.
 	 */
-	SymbolDB createNamespaceSymbol(String name, Namespace parent, SourceType source,
+	NamespaceSymbol createNamespaceSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
-		return doCreateSpecialSymbol(Address.NO_ADDRESS, name, parent, SymbolType.NAMESPACE, null,
-			null, null, source, true);
+		lock.acquire();
+		try {
+			DBRecord record = doCreateBasicSymbolRecord(name, parent, Address.NO_ADDRESS,
+				SymbolType.NAMESPACE, false, source, checkForDuplicates);
+			adapter.updateSymbolRecord(record);
+
+			NamespaceSymbol newSymbol = new NamespaceSymbol(this, cache, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (IOException e) {
+			program.dbError(e); // will not return
+			return null;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
-	private SymbolDB doCreateSpecialSymbol(Address addr, String name, Namespace parent,
-			SymbolType symbolType, Long dataTypeId, Integer variableOffset, String stringData,
-			SourceType source, boolean checkForDuplicates)
+	/**
+	 * Create a basic symbol record with required fields.  Caller is responsible for updating 
+	 * any related optional record fields and then adding to the DB table via the 
+	 * {@link SymbolDatabaseAdapter#updateSymbolRecord(DBRecord)} method.
+	 * @param name symbol name
+	 * @param parent symbol parent namespace (glabel namespace assumed if null)
+	 * @param address symbol address
+	 * @param symbolType symbol type
+	 * @param isPrimary if true, symbol record will be tagged as primary (relavent for label and
+	 * function symbols only).
+	 * @param source symbol source type
+	 * @param checkForDuplicates if true a duplicate name check will be performed within the
+	 * specified parent namespace.
+	 * @return return new record 
+	 * @throws DuplicateNameException if checkForDuplicates is true and name conflicts with 
+	 * another symbol.
+	 * @throws InvalidInputException if name contains invalid characters.
+	 * See {@link SymbolUtilities#validateName(String)}.
+	 */
+	private DBRecord doCreateBasicSymbolRecord(String name, Namespace parent, Address address,
+			SymbolType symbolType, boolean isPrimary, SourceType source, boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException {
 
-		lock.acquire();
-		try {
-			parent = validateNamespace(parent, addr, symbolType);
-			source = validateSource(source, name, addr, symbolType);
-			name = validateName(name, source);
-
-			if (checkForDuplicates) {
-				checkDuplicateSymbolName(addr, name, parent, symbolType);
+		// Only one symbol per external address is allowed
+		if (address.isExternalAddress()) {
+			Symbol primary = getPrimarySymbol(address);
+			if (primary != null) {
+				throw new IllegalArgumentException("external address already used");
 			}
-
-			return doCreateSymbol(name, addr, parent, symbolType, stringData, dataTypeId,
-				variableOffset, source, false);
 		}
-		finally {
-			lock.release();
-		}
-	}
 
-	@Override
-	public Symbol createLabel(Address addr, String name, SourceType source)
-			throws InvalidInputException {
-		return createLabel(addr, name, null, source);
-	}
+		parent = validateNamespace(parent, address, symbolType);
+		source = validateSource(source, name, address, symbolType);
+		name = validateName(name, source);
 
-	@Override
-	public Symbol createLabel(Address addr, String name, Namespace namespace, SourceType source)
-			throws InvalidInputException {
-		if (!addr.isMemoryAddress()) {
-			throw new IllegalArgumentException("Invalid memory address: " + addr);
+		if (checkForDuplicates) {
+			checkDuplicateSymbolName(address, name, parent, symbolType);
 		}
-		return createCodeSymbol(addr, name, namespace, source, null);
+
+		return adapter.createSymbolRecord(name, parent.getID(), address, symbolType, isPrimary,
+			source);
 	}
 
 	/**
-	 * Internal method for creating label symbols.
+	 * Internal method for creating external data/code symbol.
 	 * <p>
-	 * If identical memory symbol already exists it will be returned.
-	 * 
-	 * @param addr the address for the new symbol (memory or external)
-	 * @param name the name of the new symbol
-	 * @param namespace the namespace for the new symbol (null may be specified for global
-	 *            namespace)
-	 * @param source the SourceType of the new symbol
-	 * @param stringData special use depending on the symbol type and whether or not it is external
-	 * @return the new symbol
-	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
-	 *             non-default source. Also thrown if invalid parent namespace is specified.
-	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
-	 *             an invalid address, or if the given parent namespace is from a different 
-	 *             program than that of this symbol table.
-	 */
-	public Symbol createCodeSymbol(Address addr, String name, Namespace namespace,
-			SourceType source, String stringData) throws InvalidInputException {
-		lock.acquire();
-		try {
-			namespace = validateNamespace(namespace, addr, SymbolType.LABEL);
-			source = validateSource(source, name, addr, SymbolType.LABEL);
-			name = validateName(name, source);
-
-			boolean makePrimary = true;
-			if (addr.isMemoryAddress()) {
-
-				Symbol symbol = getSymbol(name, addr, namespace);
-				if (symbol != null) {
-					return symbol;
-				}
-
-				// If there is a default named function, rename it to the new symbol name
-				Symbol functionSymbol = tryUpdatingDefaultFunction(addr, name, namespace, source);
-				if (functionSymbol != null) {
-					return functionSymbol;
-				}
-
-				// if there is a dynamic symbol, delete it and make the new symbol primary.
-				Symbol primary = getPrimarySymbol(addr);
-				if (primary != null && primary.isDynamic()) {
-					deleteDynamicSymbol(primary);
-					primary = null;
-				}
-				makePrimary = (primary == null);
-			}
-			else if (addr.isExternalAddress()) {
-				// TODO: remove support for external symbol creation from this method (see GP-3045)
-				Symbol primary = getPrimarySymbol(addr);
-				if (primary != null) { // only one symbol per external address is allowed
-					throw new IllegalArgumentException("external address already used");
-				}
-			}
-			else {
-				throw new IllegalArgumentException("Invalid memory address: " + addr);
-			}
-
-			return doCreateSymbol(name, addr, namespace, SymbolType.LABEL, stringData, null, null,
-				source, makePrimary);
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	/**
-	 * Internal method for creating function symbols
+	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
 	 * 
 	 * @param addr the address for the new symbol
 	 * @param name the name of the new symbol
 	 * @param namespace the namespace for the new symbol (null may be specified for global
 	 *            namespace)
 	 * @param source the SourceType of the new symbol
-	 * @param stringData special use depending on the symbol type and whether or not it is external.
+	 * @param externalProgramAddress associated external program memory address (may be null) 
+	 * @param originalImportName  original imported name (i.e., mangled name)
 	 * @return the new symbol
+	 * @throws IOException if IO error occurs
 	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
 	 */
-	public Symbol createFunctionSymbol(Address addr, String name, Namespace namespace,
-			SourceType source, String stringData) throws InvalidInputException {
+	public CodeSymbol createExternalCodeSymbol(Address addr, String name, Namespace namespace,
+			SourceType source, String originalImportName, Address externalProgramAddress)
+			throws IOException, InvalidInputException {
+		if (!addr.isExternalAddress()) {
+			throw new IllegalArgumentException("External address required");
+		}
+		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
+			throw new IllegalArgumentException("Memory address required for external program");
+		}
+		try {
+			DBRecord record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.LABEL,
+				true, source, false);
+			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
+			adapter.updateSymbolRecord(record);
+
+			CodeSymbol newSymbol = new CodeSymbol(this, cache, addr, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException("Unexpected", e); // duplicate was avoided by caller
+		}
+	}
+
+	/**
+	 * Internal method for creating external function symbol.
+	 * <p>
+	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
+	 * 
+	 * @param addr the address for the new symbol
+	 * @param name the name of the new symbol
+	 * @param namespace the namespace for the new symbol (null may be specified for global
+	 *            namespace)
+	 * @param source the SourceType of the new symbol
+	 * @param externalProgramAddress associated external program memory address (may be null) 
+	 * @param originalImportName  original imported name (i.e., mangled name)
+	 * @return the new symbol
+	 * @throws IOException if IO error occurs
+	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
+	 */
+	public FunctionSymbol createExternalFunctionSymbol(Address addr, String name,
+			Namespace namespace, SourceType source, String originalImportName,
+			Address externalProgramAddress) throws IOException, InvalidInputException {
+		if (!addr.isExternalAddress()) {
+			throw new IllegalArgumentException("External address required");
+		}
+		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
+			throw new IllegalArgumentException("Memory address required for external program");
+		}
+		try {
+			DBRecord record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.FUNCTION,
+				true, source, false);
+			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
+			adapter.updateSymbolRecord(record);
+
+			FunctionSymbol newSymbol = new FunctionSymbol(this, cache, addr, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException("Unexpected", e); // duplicate was avoided by caller
+		}
+	}
+
+	@Override
+	public Symbol createLabel(Address addr, String name, SourceType source)
+			throws IllegalArgumentException, InvalidInputException {
+		return createLabel(addr, name, null, source);
+	}
+
+	@Override
+	public Symbol createLabel(Address addr, String name, Namespace namespace, SourceType source)
+			throws IllegalArgumentException, InvalidInputException {
+
+		if (!addr.isMemoryAddress()) {
+			throw new IllegalArgumentException("Invalid memory address: " + addr);
+		}
+
+		lock.acquire();
+		try {
+			namespace = validateNamespace(namespace, addr, SymbolType.LABEL);
+			source = validateSource(source, name, addr, SymbolType.LABEL);
+			name = validateName(name, source);
+
+			Symbol symbol = getSymbol(name, addr, namespace);
+			if (symbol != null) {
+				return symbol;
+			}
+
+			// If there is a default named function, rename it to the new symbol name
+			Symbol functionSymbol = tryUpdatingDefaultFunction(addr, name, namespace, source);
+			if (functionSymbol != null) {
+				return functionSymbol;
+			}
+
+			// if there is a dynamic symbol, delete it and make the new symbol primary.
+			Symbol primary = getPrimarySymbol(addr);
+			if (primary != null && primary.isDynamic()) {
+				deleteDynamicSymbol(primary);
+				primary = null;
+			}
+			boolean makePrimary = (primary == null);
+
+			DBRecord record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.LABEL,
+				makePrimary, source, false);
+			adapter.updateSymbolRecord(record);
+
+			CodeSymbol newSymbol = new CodeSymbol(this, cache, addr, record);
+
+			symbolAdded(newSymbol);
+			return newSymbol;
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException("Unexpected", e); // duplicate was avoided above
+		}
+		catch (IOException e) {
+			program.dbError(e);
+			return null; // will not occur
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	public FunctionSymbol createMemoryFunctionSymbol(Address addr, String name, Namespace namespace,
+			SourceType source) throws IOException, InvalidInputException {
+
+		if (!addr.isMemoryAddress()) {
+			throw new IllegalArgumentException("memory address required");
+		}
 
 		namespace = validateNamespace(namespace, addr, SymbolType.FUNCTION);
 		source = validateSource(source, name, addr, SymbolType.FUNCTION);
 		name = validateName(name, source);
 
-		if (addr.isMemoryAddress()) {
-			return doCreateMemoryFunctionSymbol(addr, name, namespace, source, stringData);
-		}
-		else if (addr.isExternalAddress()) {
-			// only one symbol per external address is allowed
-			Symbol primary = getPrimarySymbol(addr);
-			if (primary != null) {
-				throw new IllegalArgumentException("external address already used");
-			}
-		}
-		else {
-			throw new IllegalArgumentException("bad function address");
-		}
-
-		return doCreateSymbol(name, addr, namespace, SymbolType.FUNCTION, stringData, null, null,
-			source, true);
-	}
-
-	private Symbol doCreateMemoryFunctionSymbol(Address addr, String name, Namespace namespace,
-			SourceType source, String stringData) throws InvalidInputException {
-
 		// if there is already a FUNCTION symbol with that name and namespace here, just return it.
 		Symbol matching = getSymbol(name, addr, namespace);
-		if (matching != null && matching.getSymbolType() == SymbolType.FUNCTION) {
-			return matching;
+		if (matching instanceof FunctionSymbol funcSymbol) {
+			return funcSymbol;
 		}
 
 		// if there is another function at the same address, throw InvalidInputException
@@ -2947,14 +3250,25 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		// delete any promoted symbol, dynamic symbol, and make sure all others are not primary
 		cleanUpSymbols(addr, symbolToPromote, primary);
 
-		Symbol symbol = doCreateSymbol(name, addr, namespace, SymbolType.FUNCTION, stringData, null,
-			null, source, true);
-
-		if (needsPinning) {
-			symbol.setPinned(true);
+		DBRecord record;
+		try {
+			record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.FUNCTION, true,
+				source, false);
+			adapter.updateSymbolRecord(record);
+		}
+		catch (DuplicateNameException e) {
+			throw new RuntimeException("Unexpected", e); // duplicate was avoided above
 		}
 
-		return symbol;
+		FunctionSymbol newSymbol = new FunctionSymbol(this, cache, addr, record);
+
+		symbolAdded(newSymbol);
+
+		if (needsPinning) {
+			newSymbol.setPinned(true);
+		}
+
+		return newSymbol;
 	}
 
 	/**
@@ -3009,24 +3323,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		checkAddressAndNameSpaceValidForSymbolType(addr, namespace, type);
 
 		return namespace;
-	}
-
-	private SymbolDB doCreateSymbol(String name, Address addr, Namespace namespace, SymbolType type,
-			String stringData, Long dataTypeId, Integer variableOffset, SourceType source,
-			boolean isPrimary) {
-
-		try {
-			DBRecord record = adapter.createSymbol(name, addr, namespace.getID(), type, stringData,
-				dataTypeId, variableOffset, source, isPrimary);
-
-			SymbolDB newSymbol = makeSymbol(addr, record, type);
-			symbolAdded(newSymbol);
-			return newSymbol;
-		}
-		catch (IOException e) {
-			program.dbError(e);
-		}
-		return null;
 	}
 
 	private String validateName(String name, SourceType source) throws InvalidInputException {
@@ -3171,9 +3467,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	void checkValidNamespaceArgument(Namespace namespace) throws IllegalArgumentException {
 		if (!isMyNamespace(namespace)) {
-			String kind = (namespace instanceof Function) ? "function" : "namespace";
-			throw new IllegalArgumentException(
-				kind + " is from different program instance: " + namespace);
+			throw new IllegalArgumentException(namespace.getType().friendlyName() +
+				" is from a different program instance: " + namespace);
 		}
 	}
 
