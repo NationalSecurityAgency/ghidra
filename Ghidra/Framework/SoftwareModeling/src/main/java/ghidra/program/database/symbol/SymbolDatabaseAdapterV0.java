@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.Set;
 import db.*;
 import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
+import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
@@ -105,7 +106,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		return symbolTable.getKey();
 	}
 
-	private DBRecord convertRecord(DBRecord record) {
+	private DBRecord convertV0Record(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
@@ -118,32 +119,34 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		String symbolName = record.getString(V0_SYMBOL_NAME_COL);
 		rec.setString(SymbolDatabaseAdapter.SYMBOL_NAME_COL, symbolName);
 		long addressKey = record.getLongValue(V0_SYMBOL_ADDR_COL);
-		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL,
-			addressKey);
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, addressKey);
+
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
+
+		long namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL, namespaceId);
+
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,
+			(byte) SourceType.USER_DEFINED.ordinal());
+
+		//
+		// Convert sparse columns
+		//
+
+		Field hash = computeLocatorHash(symbolName, namespaceId, addressKey);
+		rec.setField(SymbolDatabaseAdapter.SYMBOL_HASH_COL, hash);
 
 		boolean isPrimary = record.getBooleanValue(V0_SYMBOL_PRIMARY_COL);
 		if (isPrimary) {
 			rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, addressKey);
 		}
 
-		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
-
-		long namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
-		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, namespaceId);
-
-		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,
-			(byte) SourceType.USER_DEFINED.ordinal());
-
-		Field hash = computeLocatorHash(symbolName, namespaceId, addressKey);
-		rec.setField(SymbolDatabaseAdapter.SYMBOL_HASH_COL, hash);
-
 		return rec;
 	}
 
 	@Override
-	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
-			String stringData, Long dataTypeId, Integer varOffset, SourceType source,
-			boolean isPrimary) throws IOException {
+	DBRecord createSymbolRecord(String name, long namespaceID, Address address,
+			SymbolType symbolType, boolean isPrimary, SourceType source) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -164,7 +167,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 
 	@Override
 	DBRecord getSymbolRecord(long symbolID) throws IOException {
-		return convertRecord(symbolTable.getRecord(symbolID));
+		return convertV0Record(symbolTable.getRecord(symbolID));
 	}
 
 	@Override
@@ -210,8 +213,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward)
-			throws IOException {
+	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
 				SYMBOL_ADDR_COL, addrMap, set, forward));
@@ -240,8 +242,17 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	RecordIterator getSymbolsByNamespace(long id) throws IOException {
+	RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr) throws IOException {
+		return EmptyRecordIterator.INSTANCE; // External symbols were not supported
+	}
 
+	@Override
+	RecordIterator getExternalSymbolsByOriginalImportName(String extLabel) throws IOException {
+		return EmptyRecordIterator.INSTANCE; // External symbols were not supported
+	}
+
+	@Override
+	RecordIterator getSymbolsByNamespace(long id) throws IOException {
 		if (id == Namespace.GLOBAL_NAMESPACE_ID) {
 			return new V0ConvertedRecordIterator(symbolTable.iterator());
 		}
@@ -299,7 +310,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			if (hasNext()) {
 				DBRecord r = rec;
 				rec = null;
-				return convertRecord(r);
+				return convertV0Record(r);
 			}
 			return null;
 		}
@@ -337,8 +348,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		StringField value = new StringField(name);
 		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, value, value, true);
 		long addressKey = addrMap.getKey(address, false);
-		RecordIterator filtered =
-			getNameNamespaceAddressFilterIterator(name, id, addressKey, it);
+		RecordIterator filtered = getNameNamespaceAddressFilterIterator(name, id, addressKey, it);
 		if (filtered.hasNext()) {
 			return filtered.next();
 		}

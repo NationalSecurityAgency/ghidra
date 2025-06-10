@@ -113,9 +113,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            unused flag bits.
 	 * 19-Oct-2023 - version 28   Revised overlay address space table and eliminated min/max.
 	 *                            Multiple blocks are permitted within a single overlay space.
-	 * 13-Dec-2024 - version 29   Added source file manager.                          
+	 * 13-Dec-2024 - version 29   Added source file manager. 
+	 *  3-Jun-2025 - version 30   Symbol Table schema V4 with external symbol data indexing
 	 */
-	static final int DB_VERSION = 29;
+	static final int DB_VERSION = 30;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -2103,7 +2104,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 					monitor.setMessage("Updating symbols...");
 					getSymbolTable().setLanguage(translator, monitor);
-					getExternalManager().setLanguage(translator, monitor);
 					getFunctionManager().setLanguage(translator, monitor);
 				}
 

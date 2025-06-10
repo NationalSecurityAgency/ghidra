@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 			VariableStorageManagerDB variableMgr, Address address, DBRecord record) {
 		super(symbolMgr, cache, SymbolType.GLOBAL_VAR, variableMgr, address, record);
 		if (record.getLongValue(
-			SymbolDatabaseAdapter.SYMBOL_PARENT_COL) != Namespace.GLOBAL_NAMESPACE_ID) {
+			SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL) != Namespace.GLOBAL_NAMESPACE_ID) {
 			throw new AssertException();
 		}
 	}
@@ -57,15 +57,8 @@ public class GlobalVariableSymbolDB extends VariableSymbolDB {
 	}
 
 	@Override
-	public Object getObject() {
-		if (!checkIsValid()) {
-			return null;
-		}
-		VariableStorage storage = getVariableStorage();
-		if (storage == null) {
-			return null;
-		}
-		return storage;
+	public Variable getObject() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

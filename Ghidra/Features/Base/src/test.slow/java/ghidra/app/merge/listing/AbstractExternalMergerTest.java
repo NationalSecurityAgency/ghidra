@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.awt.Window;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.border.Border;
@@ -925,5 +926,34 @@ public abstract class AbstractExternalMergerTest extends AbstractListingMergeMan
 			}
 		}
 		return null;
+	}
+
+	protected void assertHasExtAddresses(Set<ExternalLocation> externalLocations,
+			String... addrStrings) {
+
+		Address[] addrs = new Address[addrStrings.length];
+		for (int i = 0; i < addrs.length; i++) {
+			addrs[i] = addr(resultProgram, addrStrings[i]);
+		}
+		boolean[] foundAddrs = new boolean[addrStrings.length];
+		int count = 0;
+
+		for (ExternalLocation extLoc : externalLocations) {
+			Address addr = extLoc.getAddress();
+
+			boolean found = false;
+			for (int i = 0; i < addrs.length; i++) {
+				if (addrs[i].equals(addr)) {
+					assertFalse("Duplicate ext addr: " + addr, foundAddrs[i]);
+					foundAddrs[i] = true;
+					found = true;
+					++count;
+					break;
+				}
+			}
+			assertTrue("Unexpected extaddr: " + addr, found);
+		}
+
+		assertEquals("Did not find expected ext addrs", addrs.length, count);
 	}
 }

@@ -26,13 +26,9 @@ import ghidra.program.util.LabelFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * Symbols that represent "labels"
- *
- * Symbol data usage:
- *   EXTERNAL:
- *   	String stringData - external memory address/label
+ * Symbols that represent "labels" or external data locations
  */
-public class CodeSymbol extends SymbolDB {
+public class CodeSymbol extends MemorySymbol {
 
 	/**
 	 * Constructs a new CodeSymbol
@@ -75,11 +71,6 @@ public class CodeSymbol extends SymbolDB {
 	}
 
 	@Override
-	public boolean isExternal() {
-		return address.isExternalAddress();
-	}
-
-	@Override
 	public boolean delete() {
 		boolean keepReferences = !isExternal();
 		return delete(keepReferences);
@@ -102,21 +93,6 @@ public class CodeSymbol extends SymbolDB {
 		}
 		finally {
 			lock.release();
-		}
-	}
-
-	@Override
-	public boolean isPinned() {
-		if (!isExternal()) {
-			return doIsPinned();
-		}
-		return false;
-	}
-
-	@Override
-	public void setPinned(boolean pinned) {
-		if (!isExternal()) {
-			doSetPinned(pinned);
 		}
 	}
 
@@ -219,8 +195,8 @@ public class CodeSymbol extends SymbolDB {
 			}
 			return source;
 		}
-		if (newName == null || newName.length() == 0 || SymbolUtilities.isReservedDynamicLabelName(
-			newName, symbolMgr.getProgram().getAddressFactory())) {
+		if (newName == null || newName.length() == 0 || SymbolUtilities
+				.isReservedDynamicLabelName(newName, symbolMgr.getProgram().getAddressFactory())) {
 			return SourceType.DEFAULT;
 		}
 		return source;

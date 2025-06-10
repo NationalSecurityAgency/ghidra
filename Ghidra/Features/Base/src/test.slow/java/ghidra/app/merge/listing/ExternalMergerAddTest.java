@@ -18,6 +18,7 @@ package ghidra.app.merge.listing;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -438,8 +439,11 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
-		List<ExternalLocation> externals = externalManager.getExternalLocations(libname, label);
-		assertEquals(2, externals.size());
+		Set<ExternalLocation> externalLocations =
+			externalManager.getExternalLocations(libname, label);
+		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, address1, address2);
+
 		ExternalLocationIterator loc1It = externalManager.getExternalLocations(addr(address1));
 		assertTrue(loc1It.hasNext());
 		assertEquals(label, loc1It.next().getLabel());
@@ -3403,13 +3407,16 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 
-		List<ExternalLocation> externalLocations2 =
+		Set<ExternalLocation> externalLocations2 =
 			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
+
 	}
 
 	@Test
@@ -3484,13 +3491,15 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		assertTrue(externalManager.contains(libname));
 
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			externalManager.getExternalLocations(libname, label);
 		assertEquals(2, externalLocations.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 
-		List<ExternalLocation> externalLocations2 =
+		Set<ExternalLocation> externalLocations2 =
 			externalManager.getExternalLocations(BLUE_PATH[0], BLUE_PATH[1]);
 		assertEquals(2, externalLocations2.size());
+		assertHasExtAddresses(externalLocations, "00000100", "00000110");
 	}
 
 }

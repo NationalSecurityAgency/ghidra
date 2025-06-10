@@ -387,6 +387,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(addr(0x0100688c), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x01006890), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x01006890), loc.getByteAddress());
@@ -394,11 +395,13 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		MnemonicFieldLocation mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x01006890), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x01006890), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x0100689b), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689b), loc.getByteAddress());
@@ -406,6 +409,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -413,6 +417,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -478,6 +483,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(addr(0x0100688c), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x0100689b), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689b), loc.getByteAddress());
@@ -485,6 +491,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		MnemonicFieldLocation mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -492,6 +499,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -819,6 +827,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 	private void checkTextFound(ArrayList<Address> startList, Class<?> fieldClass) {
 
 		for (Address start : startList) {
+			assertTrue("Search result not found: " + start, searcher.hasNext());
 			ProgramLocation loc = searcher.next().programLocation();
 			assertNotNull(loc);
 			assertTrue(fieldClass.isAssignableFrom(loc.getClass()));

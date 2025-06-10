@@ -81,6 +81,11 @@ public interface Function extends Namespace {
 	public final static int UNKNOWN_STACK_DEPTH_CHANGE = Integer.MAX_VALUE;
 	public final static int INVALID_STACK_DEPTH_CHANGE = Integer.MAX_VALUE - 1;
 
+	@Override
+	default Type getType() {
+		return Type.FUNCTION;
+	}
+
 	/**
 	 * Get the name of this function.
 	 *
