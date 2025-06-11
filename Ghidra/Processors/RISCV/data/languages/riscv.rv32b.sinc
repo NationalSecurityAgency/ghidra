@@ -52,13 +52,13 @@
 #TODO  fix op2026
 :grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
 
-:max  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 unimpl
+:max  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
 :maxu rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
 :min  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
-:minu rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 unimpl
+:minu rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
 :orn  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x20 & rd & rs1 & rs2 unimpl
 
