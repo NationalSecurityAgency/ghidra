@@ -23,8 +23,10 @@ eclipse.project.name = 'Debug ProposedUtils'
 
 // val autoServiceVersion = "1.0-rc5"
 
+def version = getProperty("ghidra.protobuf.java.version")
+
 dependencies {
-	api 'com.google.protobuf:protobuf-java:3.21.8'
+	api "com.google.protobuf:protobuf-java:${version}"
 	api project(':DB')
 	api project(':Project')
 	api project(':SoftwareModeling')
