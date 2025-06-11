@@ -56,9 +56,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.symbol.*;
 
 public class VxWorksSymTab_Finder extends GhidraScript {
 
@@ -553,7 +551,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 				// Determine whether cursor now points to a symbol table
 				int i = 0;
 				for (Address entry = cursor; isSymTblEntry(entry, vxSymbol) &&
-					(i < testLen); entry = entry.add(vxSymbol.length()), i++) {
+					(i < testLen); entry = entry.add(vxSymbol.length())) {
+					i++;
 				}
 				if (i == testLen) {
 					// May have symbol table -- verify length
@@ -636,10 +635,10 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	/**
 	 * Look before/after the table to see if there is a size value there and mark it if it agrees with TableLen
 	 *
-	 * @param symTbl
-	 * @param vxSymbol
-	 * @param tableLen
-	 * @throws Exception
+	 * @param symTbl The symbol table address
+	 * @param vxSymbol The symbol
+	 * @param symTblLen The symbol table length
+	 * @throws Exception if a problem occurred
 	 */
 	private void markSymbolTableLen(Address symTbl, VxSymbol vxSymbol, int symTblLen)
 			throws Exception {
