@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.ExtensionFileFilter;
+import org.apache.commons.io.FilenameUtils;
 
 public class DebugDecompilerAction extends DockingAction {
 
@@ -56,6 +57,10 @@ public class DebugDecompilerAction extends DockingAction {
 		fileChooser.dispose();
 		if (file == null) {
 			return;
+		}
+		// If user did not specify an extension, add .xml
+		if (FilenameUtils.getExtension(file.getPath()).isEmpty()) {
+			file = new File(file.getAbsolutePath() + ".xml");
 		}
 		if (file.exists()) {
 			if (OptionDialog.showYesNoDialog(parentComponent, "Overwrite Existing File?",
