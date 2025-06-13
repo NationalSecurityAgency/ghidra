@@ -16,6 +16,7 @@
 package ghidra.app.util;
 
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 
 /**
  * Class with a convenience method to get an array of the CodeUnit
@@ -42,7 +43,7 @@ public class CommentTypes {
 	}
 
 	/**
-	 * Get an array containing the comment types on a code unit.
+	 * {@return an array containing the comment types on a code unit}
 	 */
 	public static int[] getTypes() {
 		return COMMENT_TYPES;
