@@ -1,0 +1,29 @@
+#####################################################
+#####		 	Extras			#####
+#####################################################
+
+
+# read r0 always return zero
+R0004: _R0004 is _R0004 & _R0004=0	{ local x:4=0; 	export x;	}
+R0004: _R0004 is _R0004			{		export _R0004;	}
+
+R0509: _R0509 is _R0509 & _R0509=0	{ local x:4=0; 	export x;	}
+R0509: _R0509 is _R0509			{		export _R0509;	}
+
+R1620: _R1620 is _R1620 & _R1620=0	{ local x:4=0; 	export x;	}
+R1620: _R1620 is _R1620			{		export _R1620;	}
+
+
+adr9: res is s0008 & op0000
+[ res = (s0008 ^ op0000) + inst_start; ] 
+{ 
+	export *:4 res; 
+}
+
+adr26: res is s0009; op1631 & op1616=0
+[ res = ((s0009 << 16) | op1631) + inst_start; ] 
+{ 
+	export *:4 res;
+}
+
+
