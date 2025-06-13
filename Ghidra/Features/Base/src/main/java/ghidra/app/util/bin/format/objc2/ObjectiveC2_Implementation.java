@@ -21,7 +21,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TypedefDataType;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC2_Implementation implements StructConverter {
@@ -42,7 +41,7 @@ public class ObjectiveC2_Implementation implements StructConverter {
 		}
 		else {
 			if (state.is32bit) {
-				imp = reader.readNextInt() & Conv.INT_MASK;
+				imp = reader.readNextUnsignedInt();
 			}
 			else {
 				imp = reader.readNextLong();
@@ -75,6 +74,7 @@ public class ObjectiveC2_Implementation implements StructConverter {
 	}
 
 	public void applyTo() throws Exception {
+		// do nothing
 	}
 
 }

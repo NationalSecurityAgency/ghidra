@@ -234,7 +234,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 
 				Address address = sectionToAddress.get(fileHeader.getSectionHeader(segVal - 1));
 				if (address != null) {
-					address = address.add(Conv.intToLong(offVal));
+					address = address.add(Integer.toUnsignedLong(offVal));
 
 					try {
 						symTable.createLabel(address, name, SourceType.IMPORTED);
@@ -293,11 +293,11 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 				continue;
 			}
 
-			Address startAddr = addr.add(Conv.intToLong(starts[k]));
+			Address startAddr = addr.add(Integer.toUnsignedLong(starts[k]));
 			String cmt = "START-> " + file.getName() + ": " + "?";
 			setComment(CommentType.PRE, startAddr, cmt);
 
-			Address endAddr = addr.add(Conv.intToLong(ends[k]));
+			Address endAddr = addr.add(Integer.toUnsignedLong(ends[k]));
 			cmt = "END-> " + file.getName() + ": " + "?";
 			setComment(CommentType.PRE, endAddr, cmt);
 
@@ -327,8 +327,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 						return;
 					}
 					if (offsets[j] > 0) {
-						addLineComment(addr.add(Conv.intToLong(offsets[j])),
-							Conv.shortToInt(lineNumbers[j]));
+						addLineComment(addr.add(Integer.toUnsignedLong(offsets[j])),
+							Short.toUnsignedInt(lineNumbers[j]));
 					}
 				}
 			}
@@ -372,7 +372,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 				}
 				else {
 					addLineComment(
-						program.getImageBase().add(Conv.intToLong(lineNumber.getVirtualAddress())),
+						program.getImageBase()
+								.add(Integer.toUnsignedLong(lineNumber.getVirtualAddress())),
 						lineNumber.getLineNumber());
 				}
 			}
@@ -502,18 +503,14 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	protected boolean hasComment(CommentType type, Address address) {
-		switch (type) {
-			case PLATE:
-				return plateCommentMap.get(address) != null;
-			case PRE:
-				return preCommentMap.get(address) != null;
-			case POST:
-				return postCommentMap.get(address) != null;
-			case EOL:
-				return eolCommentMap.get(address) != null;
-			default:
-				throw new IllegalArgumentException("Unsupported comment type: " + type.name());
-		}
+		return switch (type) {
+			case PLATE -> plateCommentMap.get(address) != null;
+			case PRE -> preCommentMap.get(address) != null;
+			case POST -> postCommentMap.get(address) != null;
+			case EOL -> eolCommentMap.get(address) != null;
+			default -> throw new IllegalArgumentException(
+				"Unsupported comment type: " + type.name());
+		};
 	}
 
 	protected void setComment(CommentType type, Address address, String comment) {
@@ -550,11 +547,9 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			default:
 				throw new IllegalArgumentException("Unsupported comment type: " + type.name());
 		}
-		if (buffer != null) {
-			if (buffer.length() > 0) {
-				buffer.append('\n');
-			}
-			buffer.append(comment);
+		if (buffer.length() > 0) {
+			buffer.append('\n');
 		}
+		buffer.append(comment);
 	}
 }

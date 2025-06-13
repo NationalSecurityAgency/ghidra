@@ -17,7 +17,6 @@ package ghidra.app.merge.listing;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
 import java.util.Arrays;
 
 import org.junit.Assert;
@@ -35,10 +34,6 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 
-	/**
-	 *
-	 * @param arg0
-	 */
 	public ExternalProgramMergerTest() {
 		super();
 	}
@@ -422,7 +417,6 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
-					String[] names = program.getExternalManager().getExternalLibraryNames();
 					Reference[] refs =
 						program.getReferenceManager().getReferencesFrom(addr(program, "0x10011e4")); // SetCursor
 					SymbolTable symTab = program.getSymbolTable();

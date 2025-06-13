@@ -18,7 +18,6 @@
 package ghidra.program.util;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 
 /**

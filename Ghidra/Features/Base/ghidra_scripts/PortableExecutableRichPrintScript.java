@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import ghidra.app.util.bin.format.pe.PortableExecutable;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.RichHeader;
 import ghidra.app.util.bin.format.pe.rich.*;
-import ghidra.util.Conv;
 
 public class PortableExecutableRichPrintScript extends GhidraScript {
 
@@ -170,7 +169,7 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 		data[0x3d] = 0;
 
 		for (int i = 0; i < DOSHeader.SIZEOF_DOS_HEADER + programLength; i++) {
-			int b = data[i] & Conv.BYTE_MASK;
+			int b = Byte.toUnsignedInt(data[i]);
 			checksum += rol32(b, (i & 0x1f));
 		}
 		return checksum;

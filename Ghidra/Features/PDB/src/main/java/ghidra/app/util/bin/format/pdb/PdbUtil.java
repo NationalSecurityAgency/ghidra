@@ -23,7 +23,6 @@ import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Conv;
 
 final class PdbUtil {
 
@@ -34,7 +33,7 @@ final class PdbUtil {
 	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, int relativeOffset) {
-		return reladdr(program, relativeOffset & Conv.INT_MASK);
+		return reladdr(program, Integer.toUnsignedLong(relativeOffset));
 	}
 
 	/**

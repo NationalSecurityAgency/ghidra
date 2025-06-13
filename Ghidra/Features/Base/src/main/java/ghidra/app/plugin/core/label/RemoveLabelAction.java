@@ -22,8 +22,6 @@ import javax.swing.KeyStroke;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.symbol.*;
 
 /**

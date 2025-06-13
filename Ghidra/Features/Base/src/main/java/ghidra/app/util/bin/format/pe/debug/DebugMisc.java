@@ -21,7 +21,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -68,7 +67,7 @@ public class DebugMisc implements StructConverter {
 
 		long oldIndex = reader.getPointerIndex();
 
-		long index = debugDir.getPointerToRawData() & Conv.INT_MASK;
+		long index = Integer.toUnsignedLong(debugDir.getPointerToRawData());
 		if (!validator.checkPointer(index)) {
 			Msg.error(this, "Invalid file index " + Long.toHexString(index));
 			return;

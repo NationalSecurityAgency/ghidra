@@ -21,7 +21,6 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 
 /**
@@ -158,13 +157,13 @@ public abstract class RepeatedDynamicDataType extends DynamicDataType {
 		try {
 			switch (terminatorSize) {
 				case 1:
-					test = Conv.byteToLong(memory.getByte(loc));
+					test = Byte.toUnsignedLong(memory.getByte(loc));
 					break;
 				case 2:
-					test = Conv.shortToLong(memory.getShort(loc));
+					test = Short.toUnsignedLong(memory.getShort(loc));
 					break;
 				case 4:
-					test = Conv.intToLong(memory.getInt(loc));
+					test = Integer.toUnsignedLong(memory.getInt(loc));
 					break;
 				case 8:
 					test = memory.getLong(loc);
