@@ -39,7 +39,7 @@
 //		- Modify getVxSymbolClass() to recognize your program's VxWorks
 //		  symbol table entry structure, if necessary
 //
-// @category VxWorks
+// @category Customer Submission.vxWorks
 
 import java.util.List;
 

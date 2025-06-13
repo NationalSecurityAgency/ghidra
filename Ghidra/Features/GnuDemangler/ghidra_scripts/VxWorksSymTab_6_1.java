@@ -42,7 +42,7 @@
 //                          script needs the address of that value to calculate
 //                          the symbol table's start address.
 //
-// @category CustomerSubmission.vxWorks
+// @category Customer Submission.vxWorks
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
