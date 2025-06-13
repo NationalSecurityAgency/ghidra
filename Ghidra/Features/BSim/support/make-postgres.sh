@@ -46,7 +46,7 @@
 #
 #
 
-POSTGRES=postgresql-15.10
+POSTGRES=postgresql-15.13
 POSTGRES_GZ=${POSTGRES}.tar.gz
 POSTGRES_CONFIG_OPTIONS="--disable-rpath --with-openssl"
 
