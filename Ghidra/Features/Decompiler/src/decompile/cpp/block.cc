@@ -3318,7 +3318,10 @@ void BlockWhileDo::finalTransform(Funcdata &data)
     FlowBlock *check = getFrontLeaf();
     if (check == (FlowBlock *)0) return;
     BlockBasic *cond = (BlockBasic *)check->subBlock(0);
-    if (cond->isComplex()) return;
+    // The condition needs to be a 'simple' basic block (i.e. not a list of multiple blocks, or an
+    // if-statement, or something else) and it needs to not be complex (i.e. representable in a
+    // single statement).
+    if (!(subBlock(0)->getType() == t_copy && !cond->isComplex())) return;
 
     // Unmark this block as having overflow syntax
     clearFlag(f_whiledo_overflow);
