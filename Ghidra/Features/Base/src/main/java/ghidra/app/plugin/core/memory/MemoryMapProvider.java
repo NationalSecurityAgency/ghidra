@@ -336,14 +336,16 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
 		tool.addLocalAction(this, action);
 
-		toggleNavigateAction = new ToggleActionBuilder("Memory Map Navigation", plugin.getName())
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.selected(false)
-				.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
-				.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
-					" that contains the current location"))
-				.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
-				.buildAndInstallLocal(this);
+		toggleNavigateAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", plugin.getName())
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.selected(false)
+					.sharedKeyBinding()
+					.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
+					.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
+						" that contains the current location"))
+					.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
+					.buildAndInstallLocal(this);
 	}
 
 	private boolean checkExclusiveAccess() {
