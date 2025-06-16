@@ -90,6 +90,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -155,6 +157,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.5);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 1.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -279,6 +283,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -329,6 +335,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -369,6 +377,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -442,6 +452,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
@@ -600,6 +612,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
 		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		//min was 10 when tests first written but have changed since so now need to set it manually
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
 		runAutoVTCommand(vtOptions);
 
