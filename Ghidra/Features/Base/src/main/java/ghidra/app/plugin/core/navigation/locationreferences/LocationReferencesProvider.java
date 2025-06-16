@@ -18,18 +18,21 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
-import docking.DefaultActionContext;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.table.GTable;
 import generic.theme.GIcon;
+import ghidra.app.cmd.refs.RemoveReferenceCmd;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.GoToService;
+import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -37,6 +40,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
@@ -97,8 +101,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		program.addListener(this);
 
 		setTitle(TITLE_PREFIX_REFERENCES);
-		setHelpLocation(
-			new HelpLocation(locationReferencesPlugin.getName(), "LocationReferencesPlugin"));
+		setHelpLocation(new HelpLocation(getOwner(), "LocationReferencesPlugin"));
 		setWindowMenuGroup("References");
 		setTransient();
 		createView();
@@ -235,7 +238,8 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 
-		homeAction = new DockingAction("Home", locationReferencesPlugin.getName()) {
+		String toolbarGroup = "A";
+		homeAction = new DockingAction("Home", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				goTo(currentLocationDescriptor.getHomeLocation(),
@@ -243,7 +247,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 			}
 		};
 
-		homeAction.setToolBarData(new ToolBarData(HOME_ICON));
+		homeAction.setToolBarData(new ToolBarData(HOME_ICON, toolbarGroup));
 		updateHomeActionState();
 
 		selectionAction =
@@ -256,23 +260,48 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 			}
 		};
 
-		highlightAction.setToolBarData(new ToolBarData(HIGHLIGHT_ICON));
+		highlightAction.setToolBarData(new ToolBarData(HIGHLIGHT_ICON, toolbarGroup));
 		highlightAction.setSelected(true);
 		highlightAction.setDescription("Highlight matches in tool");
 
-		refreshAction = new DockingAction("Refresh", locationReferencesPlugin.getName()) {
+		refreshAction = new DockingAction("Refresh", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				updateManager.updateNow();
 			}
 		};
-		refreshAction.setToolBarData(new ToolBarData(REFRESH_NOT_NEEDED_ICON));
+		refreshAction.setToolBarData(new ToolBarData(REFRESH_NOT_NEEDED_ICON, toolbarGroup));
 		refreshAction.setDescription(
 			"<html>Push at any time to refresh the current table of references.<br>" +
 				"This button is highlighted when the data <i>may</i> be stale.<br>");
 
 		SelectionNavigationAction selectionNavigationAction =
 			new SelectionNavigationAction(locationReferencesPlugin, referencesPanel.getTable());
+
+		//@formatter:off
+		String actionName = "Delete Reference";
+		DockingAction deleteRefAction = new ActionBuilder(actionName, getOwner())
+			.sharedKeyBinding()
+			.toolBarIcon(Icons.DELETE_ICON)
+			.toolBarGroup(toolbarGroup)
+			.enabledWhen(c -> {
+				if (!(c instanceof LocationReferencesProviderContext lrContext)) {
+					return false;
+				}
+
+				if (referencesPanel.isBusy()) {
+					return false;
+				}
+				List<LocationReference> refs = lrContext.getDeletableReferences();
+				return !refs.isEmpty(); 
+			})
+			.onAction(c -> {
+				LocationReferencesProviderContext lrContext = (LocationReferencesProviderContext) c;
+				List<LocationReference> refs = lrContext.getDeletableReferences();
+				deleteRows(refs);
+			})
+			.build();
+		//@formatter:on
 
 		GhidraTable table = referencesPanel.getTable();
 		DockingAction removeItemsAction = new DeleteAction(tool, table);
@@ -281,10 +310,25 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		tool.addLocalAction(this, refreshAction);
 		tool.addLocalAction(this, selectionAction);
 		tool.addLocalAction(this, highlightAction);
+		tool.addLocalAction(this, deleteRefAction);
 		tool.addLocalAction(this, removeItemsAction);
 		tool.addLocalAction(this, selectionNavigationAction);
 
 		setHelpLocation();
+	}
+
+	private void deleteRows(List<LocationReference> refs) {
+
+		CompoundCmd<Program> compoundCmd = new CompoundCmd<>("Delete References");
+		for (LocationReference lr : refs) {
+			Reference ref = lr.getReference();
+			RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
+			compoundCmd.add(cmd);
+		}
+		tool.execute(compoundCmd, program);
+
+		// also remove the object from the table, since they have been deleted
+		referencesPanel.remove(refs);
 	}
 
 	private void updateHomeActionState() {
@@ -300,13 +344,10 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	}
 
 	private void setHelpLocation() {
-		homeAction.setHelpLocation(new HelpLocation(locationReferencesPlugin.getName(), "Home"));
-		refreshAction.setHelpLocation(
-			new HelpLocation(locationReferencesPlugin.getName(), "Refresh"));
-		selectionAction.setHelpLocation(
-			new HelpLocation(locationReferencesPlugin.getName(), "Select"));
-		highlightAction.setHelpLocation(
-			new HelpLocation(locationReferencesPlugin.getName(), "Highlight"));
+		homeAction.setHelpLocation(new HelpLocation(getOwner(), "Home"));
+		refreshAction.setHelpLocation(new HelpLocation(getOwner(), "Refresh"));
+		selectionAction.setHelpLocation(new HelpLocation(getOwner(), "Select"));
+		highlightAction.setHelpLocation(new HelpLocation(getOwner(), "Highlight"));
 	}
 
 	private void goTo(ProgramLocation loc, Program theProgram) {
@@ -318,7 +359,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		final JTable table = referencesPanel.getTable();
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
-				selectionAction.setEnabled(table.getSelectedRowCount() > 0);
+				contextChanged();
 			}
 		});
 
@@ -361,6 +402,15 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	Program getProgram() {
 		return program;
 	}
+
+	GTable getTable() {
+		return referencesPanel.getTable();
+	}
+
+	LocationReferencesPanel getPanel() {
+		return referencesPanel;
+	}
+
 //==================================================================================================
 // Interface methods
 //==================================================================================================
@@ -403,7 +453,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new DefaultActionContext(this, referencesPanel.getTable());
+		return new LocationReferencesProviderContext(this);
 	}
 
 //==================================================================================================
@@ -413,7 +463,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	private class DeleteAction extends DeleteTableRowAction {
 
 		DeleteAction(PluginTool tool, GTable table) {
-			super(table, locationReferencesPlugin.getName());
+			super(table, LocationReferencesProvider.this.getOwner());
 		}
 
 		@Override

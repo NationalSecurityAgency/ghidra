@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import org.junit.Test;

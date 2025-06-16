@@ -1395,7 +1395,7 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		Address[] thunkAddrs = func.getFunctionThunkAddresses();
+		Address[] thunkAddrs = func.getFunctionThunkAddresses(false);
 		if (thunkAddrs == null) {
 			return;
 		}

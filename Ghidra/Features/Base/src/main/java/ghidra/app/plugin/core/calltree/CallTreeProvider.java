@@ -454,7 +454,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		// navigate incoming nodes on selection
 		//
 		navigateIncomingAction =
-			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName()) {
+			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName(),
+				KeyBindingType.SHARED) {
+
 				@Override
 				public void actionPerformed(ActionContext context) {
 					// handled later as we receive events

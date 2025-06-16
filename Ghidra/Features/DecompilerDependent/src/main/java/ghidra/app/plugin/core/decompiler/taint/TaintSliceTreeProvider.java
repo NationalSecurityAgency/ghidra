@@ -86,7 +86,10 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 	private GTree inTree;
 	private GTree outTree;
 	private boolean isPrimary;
-	private enum Condition {IN, OUT, EITHER}
+
+	private enum Condition {
+		IN, OUT, EITHER
+	}
 
 	private SwingUpdateManager reloadUpdateManager = new SwingUpdateManager(500, () -> doUpdate());
 
@@ -286,12 +289,13 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 		//
 		// navigate incoming nodes on selection
 		//
-		navigationIncomingAction = new ToggleActionBuilder("Navigate Incoming Location Changes", ownerName)
+		navigationIncomingAction = new ToggleActionBuilder("Navigate on Incoming Location Changes", ownerName)
 			.description(HTMLUtilities.toHTML("Incoming Navigation" +
 					"<br><br>Toggle <b>On</b>  - change the displayed " +
 					"function on Listing navigation events" +
 					"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events"))
 			.helpLocation(new HelpLocation(ownerName, "Call_Tree_Action_Incoming_Navigation"))
+			.sharedKeyBinding()
 			.toolBarGroup(navigationOptionsToolbarGroup, "2")
 			.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
 			.selected(isPrimary)
@@ -304,7 +308,6 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 		
 		//@formatter:on
 	}
-
 
 	private boolean isValidSelection(ActionContext context) {
 		Object contextObject = context.getContextObject();
@@ -333,7 +336,7 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 		if (contextObject == outTree && cond == Condition.IN) {
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -348,7 +351,7 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 		if (currentFunction == null) {
 			return false;
 		}
-		
+
 		Object contextObject = context.getContextObject();
 		GTree gTree = (GTree) contextObject;
 		TreePath[] selectionPaths = gTree.getSelectionPaths();
@@ -390,7 +393,6 @@ public class TaintSliceTreeProvider extends ComponentProviderAdapter
 		return isValidContextMult(context, Condition.OUT);
 	}
 
-	
 	private void expandToDepth(ActionContext context) {
 		Object contextObject = context.getContextObject();
 		GTree gTree = (GTree) contextObject;
