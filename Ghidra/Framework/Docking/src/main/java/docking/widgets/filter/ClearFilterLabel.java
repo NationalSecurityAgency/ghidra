@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,8 +55,9 @@ public class ClearFilterLabel extends GIconLabel {
 
 		this.textField = textField;
 
-		// pad some to offset from the edge of the text field
-		setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+		// pad some to offset from the edge of the text field; the border width is a bit larger to 
+		// make it easier to hover over this label.  Values were picked through trial-and-error.
+		setBorder(BorderFactory.createEmptyBorder(2, 6, 4, 2));
 
 		textField.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -84,8 +85,12 @@ public class ClearFilterLabel extends GIconLabel {
 		});
 
 		addMouseListener(new MouseAdapter() {
+
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseReleased(MouseEvent e) {
+				// Clear on released instead of clicked to allow for slight movement between the 
+				// press and release.  If the user moves the most while holding down, the drag 
+				// prevents the clicked callback.
 				clearFilter();
 			}
 
@@ -199,9 +204,16 @@ public class ClearFilterLabel extends GIconLabel {
 		Insets textInsets = textField.getInsets();
 		Point location = textBounds.getLocation();
 
-		Dimension size = getPreferredSize();
-		int half = (textBounds.height - size.height) / 2;
-		int y = textBounds.y + half;
+		// For our placement, use the icon size and some padding to keep the icon visually off of
+		// the edges of the text field.  (We do not want to use our actual preferred size, as we 
+		// have made our size larger than this padding so it is easier to click us.)
+		int iconHeight = ICON.getIconHeight();
+		int iconWidth = ICON.getIconWidth();
+		int padding = 4;
+
+		Dimension size = new Dimension(iconWidth + padding, iconHeight + padding);
+		int halfHeight = (textBounds.height - size.height) / 2;
+		int y = textBounds.y + halfHeight;
 
 		int end = location.x + textBounds.width;
 		int x = end - textInsets.right - size.width;
@@ -209,7 +221,8 @@ public class ClearFilterLabel extends GIconLabel {
 		// hide when text is near
 		checkForTouchyText(x);
 
-		setBounds(x, y, size.width, size.height);
+		Dimension preferredSize = getPreferredSize();
+		setBounds(x, y, preferredSize.width, preferredSize.height);
 
 		myParent.validate();
 	}
