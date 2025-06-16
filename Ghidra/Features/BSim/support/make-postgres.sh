@@ -18,11 +18,11 @@
 # This script builds the postgresql server and BSim extension within a
 # GHIDRA installation.
 #
-# The PostgreSQL source distribution file postgresql-15.10.tar.gz must
+# The PostgreSQL source distribution file postgresql-15.13.tar.gz must
 # be placed in the BSim module directory prior to running this script.
 # This file can be downloaded directly from the PostgreSQL website at:
 #
-#   https://www.postgresql.org/ftp/source/v15.10
+#   https://www.postgresql.org/ftp/source/v15.13
 #
 # Within development environments, this script will first check the
 # ghidra.bin repo for this source file.
