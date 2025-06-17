@@ -34,6 +34,7 @@ import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 
@@ -106,7 +107,18 @@ public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin
 				@Override
 				public void actionPerformed(ProgramActionContext context) {
 					Program program = context.getProgram();
-					showAbout(program.getDomainFile(), program.getMetadata());
+					
+					Map<String, String> metadata = program.getMetadata();
+					String cspec = program.getCompilerSpec().getCompilerSpecDescription().getSource();
+					metadata.put("Compiler Spec", cspec);
+					
+					Language language = program.getLanguage();
+					LanguageDescription languageDescription = language.getLanguageDescription();
+					if (languageDescription instanceof SleighLanguageDescription sleighDescription) {
+						metadata.put("Sleigh Spec", sleighDescription.getSlaFile().toString() + "spec");
+						metadata.put("Processor Spec", sleighDescription.getSpecFile().toString());
+					}
+					showAbout(program.getDomainFile(), metadata);
 				}
 
 				@Override
