@@ -1002,7 +1002,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param mangled the mangled string to demangled
 	 * @return a demangled version of the mangled string, or null if it could not be demangled
+	 * @deprecated Use {@link DemanglerUtil#demangle(Program, String, Address)} instead
 	 */
+	@Deprecated(since = "11.5")
 	public String getDemangled(String mangled) {
 		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
 		if (!demangledObjs.isEmpty()) {
