@@ -34,6 +34,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",153);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -766,7 +767,7 @@ uint4 ParamListStandard::assignAddress(Datatype *dt,const PrototypePieces &proto
   return assignAddressFallback(store,dt,false,status,res);
 }
 
-void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListStandard::assignMapRtoL(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
 
 {
   vector<int4> status(numgroup,0);
@@ -790,6 +791,49 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
     if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
   }
+}
+
+void ParamListStandard::assignMapLtoR(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
+{
+  ParameterPieces* hiddenpiece = (res.size() == 2) ? &res.back() : (ParameterPieces*)0;
+
+  vector<int4> status(numgroup,0);
+
+  // allocate storage backwards in temporary results
+  vector<ParameterPieces> tmpres;
+  for(int4 i=proto.intypes.size()-1;i>=0;--i) {
+    tmpres.emplace_back();
+    Datatype *dt = proto.intypes[i];
+    uint4 responseCode = assignAddress(dt,proto,proto.intypes.size()-1-i,typefactory,status,tmpres.back());
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
+      throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+  // add tmpres to res in reverse leaving the hiddenpiece at the end
+  res.resize(res.size() + tmpres.size());
+  reverse_copy(tmpres.begin(),tmpres.end(),res.begin()+1);
+
+  if (hiddenpiece) {	// Check for hidden parameters defined by the output list
+    Datatype *dt = hiddenpiece->type;
+    type_class store;
+    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
+      store = TYPECLASS_HIDDENRET;
+    else
+      store = metatype2typeclass(dt->getMetatype());
+    // Reserve last param for hidden return pointer
+    if (assignAddressFallback(store,dt,false,status,*hiddenpiece) == AssignAction::fail)
+      throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+    hiddenpiece->flags |= ParameterPieces::hiddenretparm;
+  }
+}
+
+void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
+{
+  if (proto.model->getRightToLeft())
+    assignMapRtoL(proto, typefactory, res);
+  else
+    assignMapLtoR(proto, typefactory, res);
 }
 
 /// From among the ParamEntrys matching the given \e group, return the one that best matches
@@ -1566,7 +1610,8 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
-    int4 pointersize = spc->getAddrSize();
+//    int4 pointersize = spc->getAddrSize();
+    int4 pointersize = proto.model->getPointerSize(spc);
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
     if (responseCode == AssignAction::hiddenret_specialreg_void) {
@@ -2323,6 +2368,7 @@ ProtoModel::ProtoModel(Architecture *g)
   injectUponReturn = -1;
   stackgrowsnegative = true;	// Normal stack parameter ordering
   hasThis = false;
+  isRightToLeft = true;
   isConstruct = false;
   isPrinted = true;
   defaultLocalRange();
@@ -2362,6 +2408,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
   if (name == "__thiscall")
     hasThis = true;
   compatModel = &op2;
+  isRightToLeft = op2.isRightToLeft;
 }
 
 ProtoModel::~ProtoModel(void)
@@ -2421,19 +2468,47 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   }
   input->assignMap(proto,*glb->types,res);
 
+  // the following fails with mixed sized pointers (e.g. near & far) for the 'this' & 'hiddenretparm' pieces
   if (hasThis && res.size() > 1) {
     int4 thisIndex = 1;
     if ((res[1].flags & ParameterPieces::hiddenretparm) != 0 && res.size() > 2) {
       if (input->isThisBeforeRetPointer()) {
 					// pointer has been bumped by auto-return-storage
-	res[1].swapMarkup(res[2]);	// must swap markup for slots 1 and 2
+        res[1].swapMarkup(res[2]);	// must swap markup for slots 1 and 2
       }
       else {
-	thisIndex = 2;
+        thisIndex = 2;
       }
     }
     res[thisIndex].flags |= ParameterPieces::isthis;
   }
+}
+
+/// \brief Does \param str end with \param end
+template<typename TString>
+inline bool ends_with(const TString& str, const TString& end) {
+  if (end.size() > str.size()) return false;
+  return std::equal(end.rbegin(), end.rend(), str.rbegin());
+}
+
+/// \brief Used to return the size of a pointer for this model prototype.
+/// @param space is the default AddrSpace
+/// @return size of pointer
+/*
+*/
+int ProtoModel::getPointerSize(const AddrSpace* space) const
+
+{
+//  if (space == (const AddrSpace*)0)
+  //  return -1;
+  int4 pointerSize = (space == (const AddrSpace*)0) ? -1 : space->getAddrSize();
+  if (ends_with<string>(name, "16near")) {
+    pointerSize = 2;
+  }
+  else if (ends_with<string>(name, "16far")) {
+    pointerSize = 4;
+  }
+  return pointerSize;
 }
 
 /// \brief Look up an effect from the given EffectRecord list
@@ -2537,6 +2612,7 @@ void ProtoModel::decode(Decoder &decoder)
   extrapop = -300;
   hasThis = false;
   isConstruct = false;
+  isRightToLeft = false;
   isPrinted = true;
   effectlist.clear();
   injectUponEntry = -1;
@@ -2563,6 +2639,9 @@ void ProtoModel::decode(Decoder &decoder)
     }
     else if (attribId == ATTRIB_CONSTRUCTOR) {
       isConstruct = decoder.readBool();
+    }
+    else if (attribId == ATTRIB_ISRIGHTTOLEFT) {
+      isRightToLeft = decoder.readBool();
     }
     else
       throw LowlevelError("Unknown prototype attribute");
@@ -4039,18 +4118,18 @@ void FuncProto::updateInputTypes(Funcdata &data,const vector<Varnode *> &trialli
       if (vn->isMark()) continue;
       ParameterPieces pieces;
       if (vn->isPersist()) {
-	int4 sz;
-	pieces.addr = data.findDisjointCover(vn, sz);
-	if (sz == vn->getSize())
-	  pieces.type = vn->getHigh()->getType();
-	else
-	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
-	pieces.flags = 0;
+      	int4 sz;
+      	pieces.addr = data.findDisjointCover(vn, sz);
+      	if (sz == vn->getSize())
+      	  pieces.type = vn->getHigh()->getType();
+      	else
+      	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
+        pieces.flags = 0;
       }
       else {
-	pieces.addr = trial.getAddress();
-	pieces.type = vn->getHigh()->getType();
-	pieces.flags = 0;
+      	pieces.addr = trial.getAddress();
+      	pieces.type = vn->getHigh()->getType();
+      	pieces.flags = 0;
       }
       store->setInput(count,"",pieces);
       count += 1;
