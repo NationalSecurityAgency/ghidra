@@ -181,7 +181,10 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 		selectRow(table, 0);
 		assertTrue(runSwing(() -> deleteAction.isEnabled()));
 
-		performAction(deleteAction, table, true);
+		performAction(deleteAction, table, false);
+		DialogComponentProvider dialog = waitForDialogComponent("Delete Xrefs?");
+		pressButtonByText(dialog, "Delete");
+		waitForTableModel(table.getModel());
 
 		assertEquals(0, table.getModel().getRowCount());
 		assertReference("01001009", "01001005", false);
