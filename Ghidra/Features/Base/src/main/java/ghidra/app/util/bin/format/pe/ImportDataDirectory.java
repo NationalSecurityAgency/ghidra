@@ -54,6 +54,29 @@ public class ImportDataDirectory extends DataDirectory {
 	}
 
 	/**
+	 * Safely creates an ImportDescriptor with bounds checking.
+	 * @param reader the binary reader
+	 * @param ptr the pointer to read from
+	 * @return the ImportDescriptor or null if unable to read
+	 */
+	private ImportDescriptor safeCreateImportDescriptor(BinaryReader reader, int ptr) {
+		try {
+			// Check if we have enough bytes left to read the full ImportDescriptor structure
+			if (ptr + ImportDescriptor.SIZEOF > reader.length()) {
+				Msg.warn(this, "Import descriptor at offset 0x" + Integer.toHexString(ptr) +
+					" extends beyond file boundary - possibly truncated or packed PE file");
+				return null;
+			}
+			return new ImportDescriptor(reader, ptr);
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Unable to read import descriptor at offset 0x" + Integer.toHexString(ptr) +
+				": " + e.getMessage() + " - possibly corrupted or packed PE file");
+			return null;
+		}
+	}
+
+	/**
 	 * Returns the array of ImportInfo defined in this import directory.
 	 * @return the array of ImportInfo defined in this import directory
 	 */
@@ -231,7 +254,8 @@ public class ImportDataDirectory extends DataDirectory {
 			return false;
 		}
 
-		ImportDescriptor id = new ImportDescriptor(reader, ptr);
+		ImportDescriptor id = safeCreateImportDescriptor(reader, ptr);
+
 		while (!id.isNullEntry()) {
 
 			ptr += ImportDescriptor.SIZEOF;
@@ -247,8 +271,7 @@ public class ImportDataDirectory extends DataDirectory {
 
 			int tmpPtr = ntHeader.rvaToPointer(id.getName());
 			if (tmpPtr < 0) {
-				//Msg.error(this, "Invalid RVA "+id.getName());
-				id = new ImportDescriptor(reader, ptr);
+				id = safeCreateImportDescriptor(reader, ptr);
 				continue;
 			}
 			String dllName = reader.readAsciiString(tmpPtr);
@@ -266,9 +289,9 @@ public class ImportDataDirectory extends DataDirectory {
 				intptr = ntHeader.rvaToPointer(id.getFirstThunk());
 			}
 			if (intptr < 0) {
-				Msg.error(this, "Invalid RVA " + Integer.toHexString(id.getOriginalFirstThunk()) +
-					" : " + Integer.toHexString(id.getFirstThunk()));
-				id = new ImportDescriptor(reader, ptr);
+    			Msg.error(this, "Invalid RVA " + Integer.toHexString(id.getOriginalFirstThunk()) +
+    				" : " + Integer.toHexString(id.getFirstThunk()));
+				id = safeCreateImportDescriptor(reader, ptr);
 				return false;
 			}
 			int iatptr = ntHeader.rvaToPointer(id.getFirstThunk());
@@ -346,11 +369,8 @@ public class ImportDataDirectory extends DataDirectory {
 				importList.add(
 					new ImportInfo(addr, cmt.toString(), dllName, boundName, id.isBound()));
 			}
-			try {
-				id = new ImportDescriptor(reader, ptr);
-			}
-			catch (IOException e) {
-				// Minimized PE may terminate import descriptors with end-of-file
+			id = safeCreateImportDescriptor(reader, ptr);
+			if (id == null) {
 				break;
 			}
 		}
