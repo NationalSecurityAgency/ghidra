@@ -88,6 +88,10 @@ public class SystemUtilities {
 		}
 		String name = myClass.getName().replace('.', '/') + ".class";
 		URL url = loader.getResource(name);
+		if (url == null) {
+			// Can happen when running as a native image
+			return false;
+		}
 		if (url.getPath().contains("/build/libs")) {
 			return true; // Source repository Gradle JavaExec task mode
 		}
