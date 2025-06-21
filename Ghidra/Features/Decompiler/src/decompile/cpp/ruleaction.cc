@@ -6255,7 +6255,7 @@ void AddTreeState::calcSubtype(void)
     }
     extra = AddrSpace::byteToAddress(extra, ct->getWordSize()); // Convert back to address units
     offset = (offset - extra) & ptrmask;
-    correct = (correct - extra) & ptrmask;
+    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
     isSubtype = true;
   }
   else if (baseType->getMetatype() == TYPE_STRUCT) {
@@ -6272,7 +6272,7 @@ void AddTreeState::calcSubtype(void)
     }
     extra = AddrSpace::byteToAddressInt(extra, ct->getWordSize()); // Convert back to address units
     offset = (offset - extra) & ptrmask;
-    correct = (correct - extra) & ptrmask;
+    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
     if (pRelType != (TypePointerRel *)0 && offset == pRelType->getAddressOffset()) {
       // offset falls within basic ptrto
       if (!pRelType->evaluateThruParent(0)) {	// If we are not representing offset 0 through parent
@@ -6284,7 +6284,7 @@ void AddTreeState::calcSubtype(void)
   }
   else if (baseType->getMetatype() == TYPE_ARRAY) {
     isSubtype = true;
-    correct = (correct - offset) & ptrmask;
+    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
     offset = 0;
   }
   else {
@@ -6294,7 +6294,7 @@ void AddTreeState::calcSubtype(void)
   if (pRelType != (const TypePointerRel *)0) {
     int4 ptrOff = ((TypePointerRel *)ct)->getAddressOffset();
     offset = (offset - ptrOff) & ptrmask;
-    correct = (correct - ptrOff) & ptrmask;
+    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
   }
 }
 
@@ -7079,6 +7079,9 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
   if (basevn->getTypeReadFacing(op)->isPtrsubMatching(val,extra,multiplier))
     return 0;
 
+  // Don't undo PTRSUB with zero offset and no extra - these can be valid pointer operations (e.g., casts)
+  if (val == 0 && extra == 0)
+    return 0;
   data.opSetOpcode(op,CPUI_INT_ADD);
   op->clearStopTypePropagation();
   extra = removeLocalAdds(op->getOut(),data);
