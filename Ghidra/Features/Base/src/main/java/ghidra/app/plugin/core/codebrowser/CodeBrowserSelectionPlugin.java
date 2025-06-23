@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.codebrowser;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -93,7 +95,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
 				.withContext(ListingActionContext.class, true)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.enabledWhen(c -> c.hasSelection())
+				.enabledWhen(c -> hasSelection(c))
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
 						.setSelection(new ProgramSelection()))
 				.buildAndInstall(tool);
@@ -189,6 +191,15 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			tableService.showTableWithMarkers(title + " " + model.getName(), "Selections", model,
 				SearchConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, componentProvider);
 		tableProvider.installRemoveItemsAction();
+	}
+
+	private boolean hasSelection(ListingActionContext c) {
+		if (c.hasSelection()) {
+			return true;
+		}
+
+		String textSelection = ((CodeViewerProvider) c.getComponentProvider()).getTextSelection();
+		return !StringUtils.isBlank(textSelection);
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(Program program,
