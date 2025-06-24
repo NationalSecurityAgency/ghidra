@@ -24,8 +24,7 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.script.GhidraScript;
 import ghidra.machinelearning.functionfinding.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.block.BasicBlockModel;
 
 //NOTE: This script is referenced by name in the help for the 
@@ -131,7 +130,7 @@ public class FindFunctionsRFExampleScript extends GhidraScript {
 			new GetAddressesToClassifyTask(currentProgram, minUndefinedRange);
 		getAddressTask.run(monitor);
 
-		AddressSet toClassify = getAddressTask.getAddressesToClassify();
+		AddressSetView toClassify = getAddressTask.getAddressesToClassify();
 
 		Map<Address, Double> potentialStarts = classifier.classify(toClassify, monitor);
 
