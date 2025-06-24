@@ -187,6 +187,9 @@ public class DtFilterState {
 	public void restore(SaveState parentSaveState) {
 
 		SaveState ss = parentSaveState.getSaveState(XML_NAME);
+		if (ss == null) {
+			return;
+		}
 
 		arraysFilter = DtTypeFilter.restore("Arrays", ss.getSaveState("Arrays"));
 		enumsFilter = DtTypeFilter.restore("Enums", ss.getSaveState("Enums"));
