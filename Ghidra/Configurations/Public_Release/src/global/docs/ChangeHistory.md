@@ -158,7 +158,7 @@
 * _Testing_. Updated pcodetest scripts to Python3. (GP-4995)
 
 ### Notable API Changes
-* _API_. (GP-5458) `GhidraProject.openProject.openProject()` now throws `NotFoundException, NotOwnerException, LockException`.
+* _API_. (GP-5458) `GhidraProject.openProject()` now throws `NotFoundException, NotOwnerException, LockException`.
 * _API_. (GP-5591) Removed unused and unsupported `DataType.getDocs()` method.
 * _Debugger_. (GP-2040) Deleted `AbstractAsyncServer`, `AsyncClaimQueue`, `AsyncLock`, `AsyncLoop`, `AsyncPairingCache`, `AsyncRace`, `AsyncSequence*`, `BitmaskSet`, `DebugByteChannel`, `TypeSpec` and related, without replacements.
 * _Debugger_. (GP-3450) Added `UnwoundFrame.evaluate(Program, Varnode, AddressSetView)`.
