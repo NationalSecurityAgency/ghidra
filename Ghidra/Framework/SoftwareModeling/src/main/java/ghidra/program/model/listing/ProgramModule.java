@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public interface ProgramModule extends Group {
 
 	/**
 	 * Adds the given module as a child of this module.
-	 * <P>
+	 * 
 	 * @param module the module to be added.
 	 * @throws CircularDependencyException thrown if the module being
 	 * added is an ancestor of this module. The module structure of
@@ -83,7 +83,7 @@ public interface ProgramModule extends Group {
 	
 	/**
 	 * Adds the given fragment as a child of this module.
-	 * <P>
+	 * 
 	 * @exception DuplicateGroupException thrown if the fragment being
 	 * added is already a child of this module.	 
 	 */
@@ -92,7 +92,7 @@ public interface ProgramModule extends Group {
 	
 	/**
 	 * Creates a new module and makes it a child of this
-	 * module.<P>
+	 * module.
 	 *
 	 * @param moduleName the name to use for the new module.
 	 * 
@@ -103,7 +103,7 @@ public interface ProgramModule extends Group {
     public ProgramModule createModule(String moduleName)throws DuplicateNameException;
 	
 	/**
-	 * Creates a new fragment and makes it a child of this module.<P>
+	 * Creates a new fragment and makes it a child of this module.
 	 * 
 	 * @param fragmentName the name to use for the new fragment.
 	 * 
@@ -126,7 +126,7 @@ public interface ProgramModule extends Group {
 
 	/**
 	 * Changes the ordering of this module's children by moving
-	 * the child with the given name to position given by index.<P>
+	 * the child with the given name to position given by index.
 	 *
 	 * @param name the name of the child to move.
 	 * @param index the index to move it to.
@@ -145,7 +145,8 @@ public interface ProgramModule extends Group {
 			
 	/**
 	 * Returns whether the given module is a descendant of this
-	 * module.<P>
+	 * module.
+	 * 
 	 * @param module the module to check.
 	 * 
 	 * @return true if the module is a descendant, false otherwise.
@@ -154,7 +155,8 @@ public interface ProgramModule extends Group {
 
 	/**
 	 * Returns whether the given fragment is a descendant of this
-	 * module.<P>
+	 * module.
+	 * 
 	 * @param fragment the fragment to check.
 	 * 
 	 * @return true if the fragment is a descendant, false otherwise.
@@ -165,7 +167,7 @@ public interface ProgramModule extends Group {
 	 * Returns the minimum address of this module which will be the minimum
 	 * address from the set of all fragments which are descendants of this
 	 * module.
-	 * <P>
+	 * 
 	 * @return the minimum address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */
@@ -175,7 +177,7 @@ public interface ProgramModule extends Group {
 	 * Returns the maximum address of this module which will be the maximum
 	 * address from the set of all fragments which are descendants of this
 	 * module.
-	 * <P>
+	 * 
 	 * @return the maximum address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */
@@ -186,7 +188,7 @@ public interface ProgramModule extends Group {
 	 * address of the first descendant fragment which is non-empty. In other
 	 * words this returns the first address for this module as defined by
 	 * the user ordering of the module's children.
-	 * <P>
+	 * 
 	 * @return the first address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */
@@ -197,7 +199,7 @@ public interface ProgramModule extends Group {
 	 * of the last descendant fragment which is non-empty. In other words this
 	 * returns the last address for this module as defined by the user
 	 * ordering of the module's children.
-	 * <P>
+	 * 
 	 * @return the last address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */

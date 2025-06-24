@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.MathUtilities;
 
@@ -112,12 +111,13 @@ public class DefaultModuleMapProposal
 		 * to obtain these.
 		 * 
 		 * @param module the module
+		 * @param snap the first snap
 		 * @param program the matched program
 		 * @param moduleRange a range from the module base the size of the program's image
 		 */
-		protected DefaultModuleMapEntry(TraceModule module, Program program,
+		protected DefaultModuleMapEntry(TraceModule module, long snap, Program program,
 				AddressRange moduleRange) {
-			super(module.getTrace(), module, program, program);
+			super(module.getTrace(), module, snap, program, program);
 			this.moduleRange = moduleRange;
 			this.imageRange = quantize(computeImageRange(program));
 		}
@@ -128,8 +128,8 @@ public class DefaultModuleMapProposal
 		}
 
 		@Override
-		public Lifespan getFromLifespan() {
-			return getModule().getLifespan();
+		public String getModuleName() {
+			return getModule().getName(snap);
 		}
 
 		private long getLength() {
@@ -179,15 +179,17 @@ public class DefaultModuleMapProposal
 	}
 
 	protected final TraceModule module;
+	protected final long snap;
 
 	// indexed by region's offset from module base
 	protected final NavigableMap<Long, ModuleRegionMatcher> matchers = new TreeMap<>();
 	protected AddressRange imageRange;
 	protected AddressRange moduleRange;
 
-	protected DefaultModuleMapProposal(TraceModule module, Program program) {
+	protected DefaultModuleMapProposal(TraceModule module, long snap, Program program) {
 		super(module.getTrace(), program);
 		this.module = module;
+		this.snap = snap;
 		processProgram();
 		processModule();
 	}
@@ -198,7 +200,7 @@ public class DefaultModuleMapProposal
 	}
 
 	private ModuleRegionMatcher getMatcher(long baseOffset) {
-		return matchers.computeIfAbsent(baseOffset, ModuleRegionMatcher::new);
+		return matchers.computeIfAbsent(baseOffset, b -> new ModuleRegionMatcher(snap));
 	}
 
 	private void processProgram() {
@@ -217,15 +219,12 @@ public class DefaultModuleMapProposal
 	 * Must be called after processProgram, so that image size is known
 	 */
 	private void processModule() {
-		moduleRange = quantize(module.getRange());
+		moduleRange = quantize(module.getRange(snap));
 		Address moduleBase = moduleRange.getMinAddress();
-		Lifespan lifespan = module.getLifespan();
 		for (TraceMemoryRegion region : module.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(lifespan, moduleRange)) {
-			Address min = region instanceof TraceObjectMemoryRegion objReg
-					? objReg.getMinAddress(lifespan.lmin())
-					: region.getMinAddress();
+				.getRegionsIntersecting(Lifespan.at(snap), moduleRange)) {
+			Address min = region.getMinAddress(snap);
 			getMatcher(min.subtract(moduleBase)).region = region;
 		}
 	}
@@ -246,7 +245,7 @@ public class DefaultModuleMapProposal
 
 	@Override
 	public Map<TraceModule, ModuleMapEntry> computeMap() {
-		return Map.of(module, new DefaultModuleMapEntry(module, program, moduleRange));
+		return Map.of(module, new DefaultModuleMapEntry(module, snap, program, moduleRange));
 	}
 
 	@Override

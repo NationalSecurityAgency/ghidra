@@ -615,6 +615,24 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTlsInitFunctionFor() throws Exception {
+
+		String mangled = "_ZTH8SomeName";
+		String demangled = process.demangle(mangled);
+
+		assertEquals("TLS init function for SomeName", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "__tls_init", "SomeName");
+
+		DemangledFunction function = (DemangledFunction) object;
+		String plate = function.generatePlateComment();
+		assertEquals("TLS init function for SomeName", plate);
+		assertEquals("SomeName::__tls_init(void)", object.getSignature(false));
+	}
+
+	@Test
 	public void testGuardVariable_WithGuardVariableText() throws Exception {
 
 		String mangled = "_ZGVZN10KDirLister11emitChangesEvE3dot";

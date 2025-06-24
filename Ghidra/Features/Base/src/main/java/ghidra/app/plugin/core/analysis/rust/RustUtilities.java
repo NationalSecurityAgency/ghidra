@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis.rust;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.xml.sax.SAXException;
 
@@ -25,10 +26,14 @@ import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.framework.Application;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.SpecExtension;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Msg;
+import ghidra.util.bytesearch.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.xml.XmlParseException;
 
@@ -36,26 +41,46 @@ import ghidra.xml.XmlParseException;
  * Rust utility functions
  */
 public class RustUtilities {
+
 	/**
 	 * Checks if a given {@link MemoryBlock} contains a Rust signature
-	 * 
+	 * <p>
+	 * This may be used by loaders to determine if a program was compiled with rust.
+	 * If the program is determined to be rust, then the compiler property is set to
+	 * {@link RustConstants#RUST_COMPILER}.
+	 *
+	 * @param program The {@link Program}
 	 * @param block The {@link MemoryBlock} to scan for Rust signatures
+	 * @param monitor The monitor
 	 * @return True if the given {@link MemoryBlock} is not null and contains a Rust signature; 
 	 *   otherwise, false
 	 * @throws IOException if there was an IO-related error
+	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static boolean isRust(MemoryBlock block) throws IOException {
+	public static boolean isRust(Program program, MemoryBlock block, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		if (block == null) {
 			return false;
 		}
-		byte[] bytes = block.getData().readAllBytes();
-		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_1)) {
-			return true;
+
+		// Use a MemoryBytePatternSearch for more efficient byte searching over a list of potential
+		// byte signatures. The below action sets our supplied boolean to true on a match, which we
+		// can later query and use as a return value for this method.
+		GenericMatchAction<AtomicBoolean> action =
+			new GenericMatchAction<AtomicBoolean>(new AtomicBoolean()) {
+			@Override
+			public void apply(Program prog, Address addr, Match match) {
+				getMatchValue().set(true);
+			}
+		};
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Rust signatures");
+		for (byte[] sig : RustConstants.RUST_SIGNATURES) {
+			searcher.addPattern(new GenericByteSequencePattern<AtomicBoolean>(sig, action));
 		}
-		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_2)) {
-			return true;
-		}
-		return false;
+
+		searcher.search(program, new AddressSet(block.getAddressRange()), monitor);
+
+		return action.getMatchValue().get();
 	}
 
 	/**
@@ -98,23 +123,5 @@ public class RustUtilities {
 		}
 
 		return extensionCount;
-	}
-
-	private static boolean containsBytes(byte[] data, byte[] bytes) {
-		for (int i = 0; i < data.length - bytes.length; i++) {
-			boolean isMatch = true;
-			for (int j = 0; j < bytes.length; j++) {
-				if (Byte.compare(data[i + j], bytes[j]) != 0) {
-					isMatch = false;
-					break;
-				}
-			}
-
-			if (isMatch) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }

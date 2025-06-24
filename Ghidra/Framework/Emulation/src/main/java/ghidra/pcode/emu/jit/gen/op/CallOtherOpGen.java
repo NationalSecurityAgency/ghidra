@@ -25,8 +25,10 @@ import org.objectweb.asm.*;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.RetireMode;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
@@ -111,10 +113,10 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 
 		gen.generateRetirePcCtx(() -> {
 			rv.visitLdcInsn(gen.getAddressForOp(op).getOffset());
-		}, gen.getExitContext(op), rv);
+		}, gen.getExitContext(op), RetireMode.SET, rv);
 
 		// []
-		rv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(rv);
 		// [this]
 		gen.requestFieldForUserop(userop).generateLoadCode(gen, rv);
 		// [this,userop]
@@ -217,7 +219,7 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	 * @return true if applicable
 	 */
 	public static boolean canDoDirectInvocation(JitCallOtherOpIf op) {
-		if (!op.userop().isFunctional()) {
+		if (!op.userop().isFunctional() || op.userop().modifiesContext()) {
 			return false;
 		}
 
@@ -238,6 +240,10 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	@Override
 	public void generateRunCode(JitCodeGenerator gen, JitCallOtherOpIf op, JitBlock block,
 			MethodVisitor rv) {
+		if (op.userop().modifiesContext()) {
+			rv.visitLdcInsn(1);
+			RunFixedLocal.CTXMOD.generateStoreCode(rv);
+		}
 		if (canDoDirectInvocation(op)) {
 			generateRunCodeUsingDirectStrategy(gen, op, block, rv);
 		}

@@ -36,7 +36,6 @@ import ghidra.program.model.pcode.Varnode;
  * {@link #lookup(JitVal)} and each output operand {@link VarGen#lookup(JitVar)}. The op generator
  * has already retrieved the {@link JitOp} whose operands are of the {@link JitVal} class.
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>Varnode Type</th>
@@ -119,6 +118,7 @@ public interface ValGen<V extends JitVal> {
 	static <V extends JitVal> ValGen<V> lookup(V v) {
 		return (ValGen<V>) switch (v) {
 			case JitConstVal c -> ConstValGen.GEN;
+			case JitFailVal m -> FailValGen.GEN;
 			case JitVar vv -> VarGen.lookup(vv);
 			default -> throw new AssertionError();
 		};

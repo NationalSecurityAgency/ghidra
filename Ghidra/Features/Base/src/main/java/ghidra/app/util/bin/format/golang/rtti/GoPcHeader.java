@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -47,6 +46,7 @@ public class GoPcHeader {
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
+	public static final int GO_1_20_MAGIC = 0xfffffff1;
 
 	/**
 	 * Returns the {@link Address} (if present) of the go pclntab section or symbol.
@@ -112,15 +112,18 @@ public class GoPcHeader {
 			(byte) 0xff // ptrSize 
 		};
 		Memory memory = programContext.getProgram().getMemory();
-		Address pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, searchMask, true, monitor);
-		if (pcHeaderAddr == null) {
-			return null;
+		Address pcHeaderAddr;
+		while ((pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, searchMask, true, monitor)) != null) {
+			try (MemoryByteProvider bp =
+				new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
+				if (isPcHeader(bp)) {
+					return pcHeaderAddr;
+				}
+			}
+			range = new AddressRangeImpl(pcHeaderAddr.next(), range.getMaxAddress());
 		}
-		try (MemoryByteProvider bp =
-			new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
-			return isPcHeader(bp) ? pcHeaderAddr : null;
-		}
+		return null;
 	}
 
 	/**
@@ -200,20 +203,12 @@ public class GoPcHeader {
 	private long pclnOffset;
 
 	public GoVer getGoVersion() {
-		// TODO: this might be better as a static helper method that can be used by multiple
-		// GoPcHeader struct versions (if necessary)
-		GoVer ver = switch (magic) {
-			case GO_1_2_MAGIC -> GoVer.V1_2;
-			case GO_1_16_MAGIC -> GoVer.V1_16;
-			case GO_1_18_MAGIC -> GoVer.V1_18;
-			default -> GoVer.INVALID;
-		};
-		return ver;
+		return magicToVer(magic);
 	}
 
 	/**
 	 * Returns true if this pcln structure contains a textStart value (only present >= 1.18)
-	 * @return
+	 * @return boolean true if struct has textstart value
 	 */
 	public boolean hasTextStart() {
 		return textStart != 0;
@@ -294,6 +289,10 @@ public class GoPcHeader {
 		return ptrSize;
 	}
 
+	public int getMagic() {
+		return magic;
+	}
+
 	//--------------------------------------------------------------------------------------------
 	record GoVerEndian(GoVer goVer, Endian endian) {
 		GoVerEndian(GoVer goVer, boolean isLittleEndian) {
@@ -303,19 +302,29 @@ public class GoPcHeader {
 
 	private static GoVerEndian readMagic(ByteProvider provider) throws IOException {
 		BinaryReader reader = new BinaryReader(provider, true);
-		int leMagic = reader.readInt(LittleEndianDataConverter.INSTANCE, 0);
-		int beMagic = reader.readInt(BigEndianDataConverter.INSTANCE, 0);
-
-		if (leMagic == GO_1_2_MAGIC || beMagic == GO_1_2_MAGIC) {
-			return new GoVerEndian(GoVer.V1_2, leMagic == GO_1_2_MAGIC);
+		
+		int magicInt = reader.readInt(LittleEndianDataConverter.INSTANCE, 0);
+		GoVer ver = magicToVer(magicInt);
+		if ( ver != GoVer.INVALID ) {
+			return new GoVerEndian(ver, Endian.LITTLE);
 		}
-		else if (leMagic == GO_1_16_MAGIC || beMagic == GO_1_16_MAGIC) {
-			return new GoVerEndian(GoVer.V1_16, leMagic == GO_1_16_MAGIC);
-		}
-		else if (leMagic == GO_1_18_MAGIC || beMagic == GO_1_18_MAGIC) {
-			return new GoVerEndian(GoVer.V1_18, leMagic == GO_1_18_MAGIC);
+		magicInt = reader.readInt(BigEndianDataConverter.INSTANCE, 0);
+		ver = magicToVer(magicInt);
+		if ( ver != GoVer.INVALID ) {
+			return new GoVerEndian(ver, Endian.BIG);
 		}
 		return null;
+	}
+	
+	private static GoVer magicToVer(int magicInt) {
+		return switch ( magicInt ) {
+			case GO_1_2_MAGIC -> new GoVer(1, 2, 0);
+			case GO_1_16_MAGIC -> new GoVer(1, 16, 0);
+			case GO_1_18_MAGIC -> new GoVer(1, 18, 0);
+			case GO_1_20_MAGIC -> new GoVer(1, 20, 0);
+			default -> GoVer.INVALID;
+		};
+		
 	}
 
 }

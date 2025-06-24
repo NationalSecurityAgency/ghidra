@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -384,11 +384,29 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		typeInCellEditor("testName1\n");
 		assertTrue(applyAction.isEnabled());
 
-		// Change name back and apply disables
+		// Attempt use of another default name
+		clickTableCell(getTable(), 0, colNum, 2);
+		assertIsEditingField(0, colNum);
+		selectAllInCellEditor();
+		typeInCellEditor("local_8\n");
+		assertStatus("Cannot set a stack variable name to a default value");
+		assertCellString("testName1", 0, colNum);
+		assertTrue(applyAction.isEnabled());
+
+		// Change name back to original and apply disables
 		clickTableCell(getTable(), 0, colNum, 2);
 		assertIsEditingField(0, colNum);
 		selectAllInCellEditor();
 		typeInCellEditor("local_10\n");
+		assertCellString("local_10", 0, colNum);
+		assertTrue(!applyAction.isEnabled());
+
+		// Change name back to original and apply disables
+		clickTableCell(getTable(), 0, colNum, 2);
+		assertIsEditingField(0, colNum);
+		selectAllInCellEditor();
+		typeInCellEditor("\b\n"); // clear entry
+		assertCellString("local_10", 0, colNum);
 		assertTrue(!applyAction.isEnabled());
 	}
 

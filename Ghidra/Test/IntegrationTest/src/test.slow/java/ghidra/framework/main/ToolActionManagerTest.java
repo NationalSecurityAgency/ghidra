@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.ToolUtils;
@@ -176,7 +176,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String toolNamePrefix = "TestCodeBrowser";
 		final File cbFile = ResourceManager
-			.getResourceFile("defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
+				.getResourceFile("defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
 		assertNotNull(cbFile);
 
 		DockingActionIf importAction = getAction("Import Tool");
@@ -334,7 +334,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// close the VT tool
 		// we first have to close the wizard...
-		final WizardManager wizard = waitForDialogComponent(WizardManager.class);
+		WizardDialog wizard = waitForDialogComponent(WizardDialog.class);
 		runSwing(() -> wizard.close());
 
 		// ...then the tool

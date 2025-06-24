@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.Data;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.task.*;
 
 /**
  * Action for toggling the expanded/collapsed state of an single expandable data element.  This
@@ -56,12 +55,9 @@ public class ToggleExpandCollapseDataAction extends ProgramLocationContextAction
 
 	@Override
 	protected boolean isEnabledForContext(ProgramLocationActionContext context) {
-		Data data = getClosestComponentDataUnit(context.getLocation());
-		if (data == null) {
-			return false;
-		}
-
-		return true;
+		Data cursorData = DataUtilities.getDataAtLocation(context.getLocation());
+		return cursorData != null &&
+			(cursorData.getNumComponents() > 0 || cursorData.getParent() != null);
 	}
 
 	@Override
@@ -70,46 +66,15 @@ public class ToggleExpandCollapseDataAction extends ProgramLocationContextAction
 		ListingModel layoutModel = listingPanel.getListingModel();
 
 		ProgramLocation location = context.getLocation();
-		Data data = getClosestComponentDataUnit(location);
-		new TaskLauncher(new OpenCloseDataTask(data, layoutModel), listingPanel);
+		Data cursorData = DataUtilities.getDataAtLocation(location);
+		Data actionData = cursorData.getNumComponents() > 0 ? cursorData : cursorData.getParent();
+		boolean collapsing = layoutModel.isOpen(actionData);
+		if (collapsing && cursorData != actionData) {
+			ProgramLocation newLoc = new ProgramLocation(context.getProgram(),
+				actionData.getAddress(), actionData.getComponentPath(), null, 0, 0, 0);
+			listingPanel.goTo(newLoc);
+		}
+		layoutModel.toggleOpen(actionData);
 	}
 
-	private Data getClosestComponentDataUnit(ProgramLocation location) {
-		if (location == null) {
-			return null;
-		}
-
-		Data data = DataUtilities.getDataAtLocation(location);
-
-		if (data == null) {
-			return null;
-		}
-
-		if (data.getNumComponents() > 0) {
-			return data;
-		}
-
-		return data.getParent();
-	}
-
-	private static class OpenCloseDataTask extends Task {
-		private ListingModel model;
-		private Data data;
-
-		public OpenCloseDataTask(Data data, ListingModel model) {
-			super("Open/Close Data In Selection", true, true, true, true);
-			this.data = data;
-			this.model = model;
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) {
-			if (!model.isOpen(data)) {
-				model.openData(data);
-			}
-			else {
-				model.closeData(data);
-			}
-		}
-	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,18 @@ import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.pcoderaw.PcodeOpRaw;
 import ghidra.program.model.address.Address;
 
-/// \brief A basic instantiation of a breakpoint table
-///
-/// This object allows breakpoints to registered in the table via either
-///   - registerPcodeCallback()  or
-///   = registerAddressCallback()
-///
-/// Breakpoints are stored in map containers, and the core BreakTable methods
-/// are implemented to search in these containers
+/**
+ * A basic instantiation of a breakpoint table
+ * <p>
+ * This object allows breakpoints to registered in the table via either
+ * <ul>
+ *   <li>registerPcodeCallback()</li>
+ *   <li>registerAddressCallback()</li>
+ * </ul>
+ *
+ * Breakpoints are stored in map containers, and the core BreakTable methods
+ * are implemented to search in these containers
+ */
 public class BreakTableCallBack implements BreakTable {
 
 	public static final String DEFAULT_NAME = "*";
@@ -42,18 +46,22 @@ public class BreakTableCallBack implements BreakTable {
 	private MapSTL<Long, BreakCallBack> pcodeCallback = new ComparableMapSTL<>();
 	private BreakCallBack defaultPcodeCallback;
 
-	/// The break table needs a translator object so user-defined pcode ops can be registered against
-	/// by name.
-	/// \param t is the translator object
+	/**
+	 * The break table needs a translator object so user-defined pcode ops can be registered against
+	 * by name.
+	 * @param language the language
+	 */
 	public BreakTableCallBack(SleighLanguage language) {
 		this.language = language;
 	}
 
-	/// Any time the emulator is about to execute a user-defined pcode op with the given name,
-	/// the indicated breakpoint is invoked first. The break table does \e not assume responsibility
-	/// for freeing the breakpoint object.
-	/// \param name is the name of the user-defined pcode op
-	/// \param func is the breakpoint object to associate with the pcode op
+	/**
+	 * Any time the emulator is about to execute a user-defined pcode op with the given name,
+	 * the indicated breakpoint is invoked first. The break table does not assume responsibility
+	 * for freeing the breakpoint object.
+	 * @param name is the name of the user-defined pcode op
+	 * @param func is the breakpoint object to associate with the pcode op
+	 */
 	public void registerPcodeCallback(String name, BreakCallBack func) {
 		func.setEmulate(emulate);
 		if (DEFAULT_NAME.equals(name)) {
@@ -77,9 +85,11 @@ public class BreakTableCallBack implements BreakTable {
 		throw new LowlevelError("Bad userop name: " + name + "\n" + "Must be one of:\n" + names);
 	}
 
-	/// Unregister the currently registered PcodeCallback handler for the
-	/// specified name
-	/// \param name is the name of the user-defined pcode op
+	/**
+	 * Unregister the currently registered PcodeCallback handler for the
+	 * specified name
+	 * @param name is the name of the user-defined pcode op
+	 */
 	public void unregisterPcodeCallback(String name) {
 		if (DEFAULT_NAME.equals(name)) {
 			defaultPcodeCallback = null;
@@ -95,11 +105,13 @@ public class BreakTableCallBack implements BreakTable {
 		throw new LowlevelError("Bad userop name: " + name);
 	}
 
-	/// Any time the emulator is about to execute (the pcode translation of) a particular machine
-	/// instruction at this address, the indicated breakpoint is invoked first. The break table
-	/// does \e not assume responsibility for freeing the breakpoint object.
-	/// \param addr is the address associated with the breakpoint
-	/// \param func is the breakpoint being registered
+	/**
+	 * Any time the emulator is about to execute (the pcode translation of) a particular machine
+	 * instruction at this address, the indicated breakpoint is invoked first. The break table
+	 * does not assume responsibility for freeing the breakpoint object.
+	 * @param addr is the address associated with the breakpoint
+	 * @param func is the breakpoint being registered
+	 */
 	public void registerAddressCallback(Address addr, BreakCallBack func) {
 		func.setEmulate(emulate);
 		addressCallback.add(addr, func);
@@ -109,8 +121,10 @@ public class BreakTableCallBack implements BreakTable {
 		addressCallback.remove(addr);
 	}
 
-	/// This routine invokes the setEmulate method on each breakpoint currently in the table
-	/// \param emu is the emulator to be associated with the breakpoints
+	/**
+	 * This routine invokes the setEmulate method on each breakpoint currently in the table
+	 * @param emu is the emulator to be associated with the breakpoints
+	 */
 	@Override
 	public void setEmulate(Emulate emu) {
 		// Make sure all callbbacks are aware of new emulator
@@ -129,10 +143,12 @@ public class BreakTableCallBack implements BreakTable {
 		}
 	}
 
-	/// This routine examines the pcode-op based container for any breakpoints associated with the
-	/// given op.  If one is found, its pcodeCallback method is invoked.
-	/// \param curop is pcode op being checked for breakpoints
-	/// \return \b true if the breakpoint exists and returns \b true, otherwise return \b false
+	/**
+	 * This routine examines the pcode-op based container for any breakpoints associated with the
+	 * given op.  If one is found, its pcodeCallback method is invoked.
+	 * @param curop is pcode op being checked for breakpoints
+	 * @return true if the breakpoint exists and returns true, otherwise return false
+	 */
 	@Override
 	public boolean doPcodeOpBreak(PcodeOpRaw curop) {
 		long val = curop.getInput(0).getOffset();
@@ -146,10 +162,12 @@ public class BreakTableCallBack implements BreakTable {
 		return iter.get().second.pcodeCallback(curop);
 	}
 
-	/// This routine examines the address based container for any breakpoints associated with the
-	/// given address. If one is found, its addressCallback method is invoked.
-	/// \param addr is the address being checked for breakpoints
-	/// \return \b true if the breakpoint exists and returns \b true, otherwise return \b false
+	/**
+	 * This routine examines the address based container for any breakpoints associated with the
+	 * given address. If one is found, its addressCallback method is invoked.
+	 * @param addr is the address being checked for breakpoints
+	 * @return true if the breakpoint exists and returns true, otherwise return false
+	 */
 	@Override
 	public boolean doAddressBreak(Address addr) {
 		IteratorSTL<Pair<Address, BreakCallBack>> iter = addressCallback.find(addr);

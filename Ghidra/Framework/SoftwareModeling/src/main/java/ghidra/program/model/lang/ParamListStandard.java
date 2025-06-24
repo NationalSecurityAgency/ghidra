@@ -39,9 +39,11 @@ import ghidra.xml.*;
  */
 public class ParamListStandard implements ParamList {
 
-	protected int numgroup;			// Number of "groups" in this parameter convention
+	protected Language language;		// The language associate with this convention
+	protected int numgroup;				// Number of "groups" in this parameter convention
 //	protected int maxdelay;
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
+	protected boolean autoKilledByCall;	// Is storage in this list automatically "killed by call"
 	protected boolean splitMetatype;	// Are metatyped entries in separate resource sections
 //	protected int[] resourceStart;		// The starting group for each resource section
 	protected ParamEntry[] entry;
@@ -235,6 +237,7 @@ public class ParamListStandard implements ParamList {
 		if (thisbeforeret) {
 			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
+		encoder.writeBool(ATTRIB_KILLEDBYCALL, autoKilledByCall);
 		if (isInput && !splitMetatype) {
 			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
@@ -298,7 +301,7 @@ public class ParamListStandard implements ParamList {
 
 	private void parseGroup(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
 			int groupid, boolean splitFloat) throws XmlParseException {
-		XmlElement el = parser.start("group");
+		XmlElement el = parser.start(ELEM_GROUP.name());
 		int basegroup = numgroup;
 		int count = 0;
 		while (parser.peek().isStart()) {
@@ -324,20 +327,26 @@ public class ParamListStandard implements ParamList {
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
 		ArrayList<ParamEntry> pe = new ArrayList<>();
 		numgroup = 0;
+		language = cspec.getLanguage();
 		spacebase = null;
 		int pointermax = 0;
 		thisbeforeret = false;
+		autoKilledByCall = false;
 		splitMetatype = true;
 		XmlElement mainel = parser.start();
-		String attribute = mainel.getAttribute("pointermax");
+		String attribute = mainel.getAttribute(ATTRIB_POINTERMAX.name());
 		if (attribute != null) {
 			pointermax = SpecXmlUtils.decodeInt(attribute);
 		}
-		attribute = mainel.getAttribute("thisbeforeretpointer");
+		attribute = mainel.getAttribute(ATTRIB_THISBEFORERETPOINTER.name());
 		if (attribute != null) {
 			thisbeforeret = SpecXmlUtils.decodeBoolean(attribute);
 		}
-		attribute = mainel.getAttribute("separatefloat");
+		attribute = mainel.getAttribute(ATTRIB_KILLEDBYCALL.name());
+		if (attribute != null) {
+			autoKilledByCall = SpecXmlUtils.decodeBoolean(attribute);
+		}
+		attribute = mainel.getAttribute(ATTRIB_SEPARATEFLOAT.name());
 		if (attribute != null) {
 			splitMetatype = SpecXmlUtils.decodeBoolean(attribute);
 		}
@@ -347,13 +356,13 @@ public class ParamListStandard implements ParamList {
 			if (!el.isStart()) {
 				break;
 			}
-			if (el.getName().equals("pentry")) {
+			if (el.getName().equals(ELEM_PENTRY.name())) {
 				parsePentry(parser, cspec, pe, numgroup, splitMetatype, false);
 			}
-			else if (el.getName().equals("group")) {
+			else if (el.getName().equals(ELEM_GROUP.name())) {
 				parseGroup(parser, cspec, pe, numgroup, splitMetatype);
 			}
-			else if (el.getName().equals("rule")) {
+			else if (el.getName().equals(ELEM_RULE.name())) {
 				break;
 			}
 		}
@@ -366,7 +375,7 @@ public class ParamListStandard implements ParamList {
 			if (!subId.isStart()) {
 				break;
 			}
-			if (subId.getName().equals("rule")) {
+			if (subId.getName().equals(ELEM_RULE.name())) {
 				ModelRule rule = new ModelRule();
 				rule.restoreXml(parser, this);
 				rules.add(rule);
@@ -447,6 +456,11 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
+	public Language getLanguage() {
+		return language;
+	}
+
+	@Override
 	public AddressSpace getSpacebase() {
 		return spacebase;
 	}
@@ -482,11 +496,48 @@ public class ParamListStandard implements ParamList {
 		if (thisbeforeret != op2.thisbeforeret) {
 			return false;
 		}
+		if (autoKilledByCall != op2.autoKilledByCall) {
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public boolean isThisBeforeRetPointer() {
 		return thisbeforeret;
+	}
+
+	/**
+	 * Extract all ParamEntry that have the given storage class and are single registers.
+	 * @param resType is the given storage class
+	 * @return the array of registers
+	 */
+	public ParamEntry[] extractTiles(StorageClass resType) {
+		ArrayList<ParamEntry> buffer = new ArrayList<>();
+		for (int i = 0; i < entry.length; ++i) {
+			ParamEntry pentry = entry[i];
+			if (!pentry.isExclusion() || pentry.getAllGroups().length != 1 ||
+				pentry.getType() != resType) {
+				continue;
+			}
+			buffer.add(pentry);
+		}
+		ParamEntry[] res = new ParamEntry[buffer.size()];
+		buffer.toArray(res);
+		return res;
+	}
+
+	/**
+	 * If there is a ParamEntry corresponding to the stack resource in this list, return it.
+	 * @return the stack ParamEntry or null
+	 */
+	public ParamEntry extractStack() {
+		for (int i = entry.length - 1; i >= 0; --i) {
+			ParamEntry pentry = entry[i];
+			if (!pentry.isExclusion() && pentry.getSpace().isStackSpace()) {
+				return pentry;
+			}
+		}
+		return null;
 	}
 }

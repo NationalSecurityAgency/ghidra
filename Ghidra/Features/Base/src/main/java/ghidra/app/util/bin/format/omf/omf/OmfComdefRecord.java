@@ -64,7 +64,7 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		for (Reference ref : refs) {
-			struct.add(ref.name.toDataType(), "name", null);
+			struct.add(ref.name.toDataType(), ref.name.getDataTypeSize(), "name", null);
 			struct.add(ref.typeIndex.toDataType(), "type_index", null);
 			struct.add(BYTE, "data_type", null);
 			struct.add(ref.communalLength1.toDataType(), "communal_length", null);

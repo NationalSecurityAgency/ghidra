@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -322,7 +322,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		{
 			JPanel opts = new JPanel();
 			opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
-
+			opts.getAccessibleContext().setAccessibleName("Options");
 			{
 				Box progBox = Box.createHorizontalBox();
 				progBox.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
@@ -336,7 +336,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					syncCbRelocateEnabled(getDestination());
 					reset();
 				});
+				comboDestination.getAccessibleContext().setAccessibleName("Combo Destination");
 				progBox.add(comboDestination);
+				progBox.getAccessibleContext().setAccessibleName("Program Box");
 				opts.add(progBox);
 			}
 
@@ -344,15 +346,16 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				// Avoid Swing's automatic indentation
 				JPanel inner = new JPanel(new BorderLayout());
 				inner.setBorder(BorderFactory.createEmptyBorder(0, GAP, GAP, GAP));
-				cbCapture =
-					new JCheckBox("<html>Read live target's memory");
+				cbCapture = new JCheckBox("<html>Read live target's memory");
 				cbCapture.addActionListener(e -> {
 					if (!isVisible()) {
 						return;
 					}
 					reset();
 				});
+				cbCapture.getAccessibleContext().setAccessibleName("Read Target Memory");
 				inner.add(cbCapture);
+				inner.getAccessibleContext().setAccessibleName("Read Target Memory");
 				opts.add(inner);
 			}
 
@@ -368,7 +371,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbRelocate.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				inner.add(cbRelocate);
+				inner.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				opts.add(inner);
 			}
 
@@ -383,7 +388,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbUseOverlays.getAccessibleContext().setAccessibleName("Use Overlays");
 				inner.add(cbUseOverlays);
+				inner.getAccessibleContext().setAccessibleName("Use Overlays");
 				opts.add(inner);
 			}
 
@@ -391,14 +398,17 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				JPanel panelInclude = new JPanel(new GridLayout(0, 2, GAP, GAP));
 				panelInclude.setBorder(BorderFactory.createTitledBorder("Include:"));
 				JButton buttonSelectNone = new JButton("Select None");
+				buttonSelectNone.getAccessibleContext().setAccessibleName("Select None");
 				buttonSelectNone.addActionListener(e -> plan.selectNone());
 				panelInclude.add(buttonSelectNone);
 				JButton buttonSelectAll = new JButton("Select All");
+				buttonSelectAll.getAccessibleContext().setAccessibleName("Select All");
 				buttonSelectAll.addActionListener(e -> plan.selectAll());
 				panelInclude.add(buttonSelectAll);
 				for (Copier copier : plan.getAllCopiers()) {
 					panelInclude.add(plan.getCheckBox(copier));
 				}
+				panelInclude.getAccessibleContext().setAccessibleName("Include All or None");
 				opts.add(panelInclude);
 			}
 			panel.add(opts, BorderLayout.NORTH);
@@ -410,11 +420,14 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 			table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			tablePanel.add(new JScrollPane(table));
 			filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+			filterPanel.getAccessibleContext().setAccessibleName("Filter");
 			tablePanel.add(filterPanel, BorderLayout.SOUTH);
+			tablePanel.getAccessibleContext().setAccessibleName("Filters");
 			panel.add(tablePanel, BorderLayout.CENTER);
 		}
 
 		panel.setMinimumSize(new Dimension(600, 600));
+		panel.getAccessibleContext().setAccessibleName("Copy Debugger Into Program");
 		addWorkPanel(panel);
 
 		addOKButton();
@@ -433,6 +446,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		resetButton = new JButton("Reset");
 		resetButton.setMnemonic('R');
 		resetButton.setName("Reset");
+		resetButton.getAccessibleContext().setAccessibleName("Reset");
 		resetButton.addActionListener(e -> resetCallback());
 		addButton(resetButton);
 	}
@@ -620,23 +634,26 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 
 	protected String computeRegionString(AddressRange rng) {
 		TraceMemoryManager mm = source.getTrace().getMemoryManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceMemoryRegion> regions =
-			mm.getRegionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName();
+			mm.getRegionsIntersecting(Lifespan.at(snap), rng);
+		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName(snap);
 	}
 
 	protected String computeModulesString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceModule> modules =
-			mm.getModulesIntersecting(Lifespan.at(source.getSnap()), rng);
-		return modules.stream().map(m -> m.getName()).collect(Collectors.joining(","));
+			mm.getModulesIntersecting(Lifespan.at(snap), rng);
+		return modules.stream().map(m -> m.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected String computeSectionsString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceSection> sections =
-			mm.getSectionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return sections.stream().map(s -> s.getName()).collect(Collectors.joining(","));
+			mm.getSectionsIntersecting(Lifespan.at(snap), rng);
+		return sections.stream().map(s -> s.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected void createEntry(Collection<RangeEntry> result, AddressRange srcRange,
@@ -692,10 +709,11 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	protected List<AddressRange> breakRangeByRegions(AddressRange srcRange) {
 		AddressSet remains = new AddressSet(srcRange);
 		List<AddressRange> result = new ArrayList<>();
+		long snap = source.getSnap();
 		for (TraceMemoryRegion region : source.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(Lifespan.at(source.getSnap()), srcRange)) {
-			AddressRange range = region.getRange().intersect(srcRange);
+				.getRegionsIntersecting(Lifespan.at(snap), srcRange)) {
+			AddressRange range = region.getRange(snap).intersect(srcRange);
 			result.add(range);
 			remains.delete(range);
 		}
@@ -709,9 +727,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		List<RangeEntry> result = new ArrayList<>();
 		Set<String> taken = new HashSet<>();
 		collectBlockNames(taken, dest);
-		Collection<MappedAddressRange> mappedSet = staticMappingService
-				.getOpenMappedViews(source.getTrace(), set, source.getSnap())
-				.get(dest);
+		Collection<MappedAddressRange> mappedSet =
+			staticMappingService.getOpenMappedViews(source.getTrace(), set, source.getSnap())
+					.get(dest);
 		if (mappedSet == null) {
 			return;
 		}

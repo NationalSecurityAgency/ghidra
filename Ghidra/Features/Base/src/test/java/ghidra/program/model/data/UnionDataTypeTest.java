@@ -23,9 +23,6 @@ import com.google.common.collect.Sets;
 
 import generic.test.AbstractGenericTest;
 
-/**
- *
- */
 public class UnionDataTypeTest extends AbstractGenericTest {
 
 	private Union union;

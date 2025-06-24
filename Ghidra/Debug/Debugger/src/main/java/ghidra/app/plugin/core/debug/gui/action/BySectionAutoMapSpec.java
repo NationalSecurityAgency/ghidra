@@ -65,11 +65,12 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
+	public String getInfoForObjects(Trace trace, long snap) {
 		return trace.getModuleManager()
 				.getAllSections()
 				.stream()
-				.map(s -> s.getName() + ":" + s.getStart())
+				.filter(s -> s.isValid(snap))
+				.map(s -> s.getName(snap) + ":" + s.getStart(snap))
 				.sorted()
 				.collect(Collectors.joining(","));
 	}
@@ -81,9 +82,9 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
-		Map<?, SectionMapProposal> maps = mappingService
-				.proposeSectionMaps(trace.getModuleManager().getAllModules(), programs);
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
+		Map<?, SectionMapProposal> maps = mappingService.proposeSectionMaps(
+			trace.getModuleManager().getLoadedModules(snap), snap, programs);
 		Collection<SectionMapEntry> entries = MapProposal.flatten(maps.values());
 		entries = MapProposal.removeOverlapping(entries);
 		mappingService.addSectionMappings(entries, monitor, false);

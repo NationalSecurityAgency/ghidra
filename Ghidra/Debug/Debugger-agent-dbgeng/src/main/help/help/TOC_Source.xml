@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="TraceRmiLauncherServicePlugin">
+		<tocdef id="dbgeng" text="WinDbg (dbgeng.dll) Integration"
+			target="help/topics/dbgeng/dbgeng.html">
+
+			<tocdef id="dbgeng_local" text="Local"
+				target="help/topics/dbgeng/dbgeng.html#local" />
+
+			<tocdef id="dbgeng_ext" text="Extended Local"
+				target="help/topics/dbgeng/dbgeng.html#ext" />
+
+			<tocdef id="dbgeng_attach" text="Attach"
+				target="help/topics/dbgeng/dbgeng.html#attach" />
+
+			<tocdef id="dbgeng_remote" text="Remote"
+				target="help/topics/dbgeng/dbgeng.html#remote" />
+
+			<tocdef id="dbgeng_svrcx" text="Process Server"
+				target="help/topics/dbgeng/dbgeng.html#svrcx" />
+
+			<tocdef id="dbgeng_win_kenel" text="Windows Kernel"
+				target="help/topics/dbgeng/dbgeng.html#win_kernel" />
+
+			<tocdef id="dbgeng_ttd" text="TTD (Time-Travel Debugging)"
+				target="help/topics/dbgeng/dbgeng.html#ttd" />
+
+		</tocdef>
+	</tocref>
+</tocroot>

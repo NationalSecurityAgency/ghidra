@@ -25,7 +25,7 @@
 
 test { t ->
 
-	forkEvery 1
+	forkEvery = 1
 	initTestJVM(t, rootProject.ext.testRootDirName)
 
 	// WARNING! WATCH OUT !!
@@ -52,7 +52,7 @@ test { t ->
 }
 
 task integrationTest (type: Test) { t ->
-	group "test"
+	group = "test"
 	dependsOn { project(":FunctionID").unpackFidDatabases }	
 	testClassesDirs = files sourceSets.integrationTest.output.classesDirs
 
@@ -63,7 +63,7 @@ task integrationTest (type: Test) { t ->
 	excludes = ['**/*Suite*']
 
 	// Enable if you want to force Gradle to launch a new JVM for each test.
-	forkEvery 1
+	forkEvery = 1
 
 	initTestJVM(t, rootProject.ext.testRootDirName)
 
@@ -76,13 +76,13 @@ task integrationTest (type: Test) { t ->
 }
 
 task pcodeTest (type: Test) { t ->	
-    group "pcodeTest"	
+    group = "pcodeTest"	
     dependsOn { project(":FunctionID").unpackFidDatabases }	
     testClassesDirs = files sourceSets.pcodeTest.output.classesDirs
 	classpath = sourceSets.pcodeTest.runtimeClasspath
 	
 	// Enable if you want to force Gradle to launch a new JVM for each test.
-    forkEvery 1	
+    forkEvery = 1	
     	
 	initTestJVM(t, rootProject.ext.pcodeTestRootDirName)
 	
@@ -130,7 +130,7 @@ def initTestJVM(Task task, String rootDirName) {
 		mkdir testOutputDir
 	}
 	// If false, testing will halt when an error is found.
-	task.ignoreFailures true
+	task.ignoreFailures = true
 	
 	// If false, then tests are re-run every time, even if no code has changed.
 	task.outputs.upToDateWhen {false}
@@ -139,8 +139,8 @@ def initTestJVM(Task task, String rootDirName) {
 	task.testLogging.showStandardStreams = true
 
     // Min/Max heap size.  These are passed in.
-    task.minHeapSize xms
-    task.maxHeapSize xmx
+    task.minHeapSize = xms
+    task.maxHeapSize = xmx
     	
     task.doFirst {	    	    
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,

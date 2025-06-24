@@ -1,0 +1,503 @@
+@ ["all","Funcs","crypto/tls.(*Conn).loadSession","Results",4]
+  {"DataType":"[]byte","Name":"binderKey"}
++ {"DataType":"error","Name":"err"}
+]
+@ ["all","Funcs","crypto/tls.(*Conn).readHandshake","Params",1]
+  {"DataType":"*crypto/tls.Conn","Name":"c"}
++ {"DataType":"crypto/tls.transcriptHash","Name":"transcript"}
+]
+@ ["all","Funcs","crypto/tls.(*Conn).writeRecord"]
+- {"Flags":4,"Params":[{"DataType":"*crypto/tls.Conn","Name":"c"},{"DataType":"crypto/tls.recordType","Name":"typ"},{"DataType":"[]byte","Name":"data"}],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","crypto/tls.(*certificateMsg).marshal","Results",0,"Name"]
+- "x"
++ ""
+@ ["all","Funcs","crypto/tls.(*certificateMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*certificateMsgTLS13).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*certificateRequestMsg).marshal","Results",0,"Name"]
+- "x"
++ ""
+@ ["all","Funcs","crypto/tls.(*certificateRequestMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*certificateRequestMsgTLS13).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*certificateStatusMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*certificateVerifyMsg).marshal","Results",0,"Name"]
+- "x"
++ ""
+@ ["all","Funcs","crypto/tls.(*certificateVerifyMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*clientHelloMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*clientHelloMsg).marshalWithoutBinders","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*clientHelloMsg).updateBinders","Results",0]
+[
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*clientKeyExchangeMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*encryptedExtensionsMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*endOfEarlyDataMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*finishedMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*helloRequestMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*keyUpdateMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*newSessionTicketMsg).marshal","Results",0,"Name"]
+- "x"
++ ""
+@ ["all","Funcs","crypto/tls.(*newSessionTicketMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*newSessionTicketMsgTLS13).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*serverHelloDoneMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*serverHelloMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*serverKeyExchangeMsg).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*sessionState).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","crypto/tls.(*sessionStateTLS13).marshal","Results",1]
+  {"DataType":"[]byte","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","internal/poll.runtime_pollWaitCanceled","Results",0]
+[
+- {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","mime/multipart.(*Part).populateHeaders","Params",1]
+  {"DataType":"*mime/multipart.Part","Name":"p"}
++ {"DataType":"int64","Name":"maxMIMEHeaderSize"}
++ {"DataType":"int64","Name":"maxMIMEHeaders"}
+]
+@ ["all","Funcs","mime/multipart.(*Reader).nextPart","Params",2]
+  {"DataType":"bool","Name":"rawPart"}
++ {"DataType":"int64","Name":"maxMIMEHeaderSize"}
++ {"DataType":"int64","Name":"maxMIMEHeaders"}
+]
+@ ["all","Funcs","mime/multipart.newPart","Params",2]
+  {"DataType":"bool","Name":"rawPart"}
++ {"DataType":"int64","Name":"maxMIMEHeaderSize"}
++ {"DataType":"int64","Name":"maxMIMEHeaders"}
+]
+@ ["all","Funcs","net/http.cleanHost"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"in"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/textproto.(*Reader).upcomingHeaderNewlines"]
+- {"Flags":4,"Params":[{"DataType":"*net/textproto.Reader","Name":"r"}],"Results":[{"DataType":"int","Name":"n"}],"TypeParams":[]}
+@ ["all","Funcs","runtime.startm","Params",2]
+  {"DataType":"bool","Name":"spinning"}
++ {"DataType":"bool","Name":"lockheld"}
+]
+@ ["all","Funcs","sync/atomic.runtime_procPin","Results",0]
+[
++ {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","time.tzset","Params",1,"Name"]
+- "initEnd"
++ "lastTxSec"
+@ ["all","Funcs","vendor/golang.org/x/net/http2/hpack.(*Decoder).readString","Params",2]
+  {"DataType":"[]byte","Name":"p"}
+- {"DataType":"bool","Name":"wantStr"}
+]
+@ ["all","Funcs","vendor/golang.org/x/net/http2/hpack.(*Decoder).readString","Results",0,"DataType"]
+- "string"
++ "vendor/golang.org/x/net/http2/hpack.undecodedString"
+@ ["all","Funcs","vendor/golang.org/x/net/http2/hpack.(*Decoder).readString","Results",0,"Name"]
+- "s"
++ "u"
+@ ["all","Funcs","crypto/tls.(*Conn).writeChangeCipherRecord"]
++ {"Flags":4,"Params":[{"DataType":"*crypto/tls.Conn","Name":"c"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","crypto/tls.(*Conn).writeHandshakeRecord"]
++ {"Flags":4,"Params":[{"DataType":"*crypto/tls.Conn","Name":"c"},{"DataType":"crypto/tls.handshakeMessage","Name":"msg"},{"DataType":"crypto/tls.transcriptHash","Name":"transcript"}],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","crypto/tls.transcriptMsg"]
++ {"Flags":0,"Params":[{"DataType":"crypto/tls.handshakeMessage","Name":"msg"},{"DataType":"crypto/tls.transcriptHash","Name":"h"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/build.isValidImport"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","internal/platform.MustLinkExternalGo121"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"goos"},{"DataType":"string","Name":"goarch"},{"DataType":"bool","Name":"withCgo"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","mime/multipart.maxMIMEHeaders"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"int64","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","mime/multipart.mimeHeaderSize"]
++ {"Flags":0,"Params":[{"DataType":"net/textproto.MIMEHeader","Name":"h"}],"Results":[{"DataType":"int64","Name":"size"}],"TypeParams":[]}
+@ ["all","Funcs","mime/multipart.readMIMEHeader"]
++ {"Flags":0,"Params":[{"DataType":"*net/textproto.Reader","Name":"r"},{"DataType":"int64","Name":"maxMemory"},{"DataType":"int64","Name":"maxHeaders"}],"Results":[{"DataType":"net/textproto.MIMEHeader","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/mail.readHeader"]
++ {"Flags":0,"Params":[{"DataType":"*net/textproto.Reader","Name":"r"}],"Results":[{"DataType":"map[string][]string","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/textproto.(*Reader).upcomingHeaderKeys"]
++ {"Flags":4,"Params":[{"DataType":"*net/textproto.Reader","Name":"r"}],"Results":[{"DataType":"int","Name":"n"}],"TypeParams":[]}
+@ ["all","Funcs","net/textproto.readMIMEHeader"]
++ {"Flags":0,"Params":[{"DataType":"*net/textproto.Reader","Name":"r"},{"DataType":"int64","Name":"maxMemory"},{"DataType":"int64","Name":"maxHeaders"}],"Results":[{"DataType":"net/textproto.MIMEHeader","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.isSecureMode"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.secure"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","vendor/golang.org/x/net/http2/hpack.(*Decoder).decodeString"]
++ {"Flags":4,"Params":[{"DataType":"*vendor/golang.org/x/net/http2/hpack.Decoder","Name":"d"},{"DataType":"vendor/golang.org/x/net/http2/hpack.undecodedString","Name":"u"}],"Results":[{"DataType":"string","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","go/printer.printer","Fields",17]
+  {"DataType":"*int","Name":"linePtr"}
++ {"DataType":"error","Name":"sourcePosErr"}
+  {"DataType":"[]*go/ast.CommentGroup","Name":"comments"}
+@ ["all","Types","mime/multipart.FileHeader","Fields",5]
+  {"DataType":"string","Name":"tmpfile"}
++ {"DataType":"int64","Name":"tmpoff"}
++ {"DataType":"bool","Name":"tmpshared"}
+]
+@ ["all","Types","mime/multipart.Reader","Fields",1]
+  {"DataType":"*bufio.Reader","Name":"bufReader"}
++ {"DataType":"string","Name":"tempDir"}
+  {"DataType":"*mime/multipart.Part","Name":"currentPart"}
+@ ["all","Types","mime/multipart.sectionReadCloser","Fields",1]
+  {"DataType":"*io.SectionReader","Name":"SectionReader"}
++ {"DataType":"io.Closer","Name":"Closer"}
+]
+@ ["all","Types","crypto/tls.transcriptHash"]
++ {"Kind":"iface"}
+@ ["all","Types","func(error)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","vendor/golang.org/x/net/http2/hpack.undecodedString"]
++ {"Fields":[{"DataType":"bool","Name":"isHuff"},{"DataType":"[]byte","Name":"b"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin","Funcs","runtime.fcntl"]
+- {"Flags":0,"Params":[{"DataType":"int32","Name":"fd"},{"DataType":"int32","Name":"cmd"},{"DataType":"int32","Name":"arg"}],"Results":[{"DataType":"int32","Name":""}],"TypeParams":[]}
+@ ["darwin","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"which"},{"DataType":"*syscall.Rlimit","Name":"lim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["darwin","Funcs","runtime.issetugid"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"int32","Name":""}],"TypeParams":[]}
+@ ["darwin","Funcs","runtime.issetugid_trampoline"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin","Funcs","syscall.setrlimit"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"which"},{"DataType":"*syscall.Rlimit","Name":"lim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-arm64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","syscall.isCapDacOverrideSet"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","syscall.prlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"pid"},{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"newlimit"},{"DataType":"*syscall.Rlimit","Name":"old"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux","Funcs","syscall.rawSetrlimit"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"syscall.Errno","Name":""}],"TypeParams":[]}
+@ ["linux-386","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-386","Funcs","syscall.setrlimit","Params",1,"DataType"]
+- "*syscall.rlimit32"
++ "*syscall.Rlimit"
+@ ["linux-386","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.rlimit32","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-386","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-386","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-386-cgo","Funcs","syscall.setrlimit","Params",1,"DataType"]
+- "*syscall.rlimit32"
++ "*syscall.Rlimit"
+@ ["linux-386-cgo","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.rlimit32","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-amd64","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","syscall.setrlimit"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","syscall.setrlimit"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm","Funcs","syscall.setrlimit","Params",1,"DataType"]
+- "*syscall.rlimit32"
++ "*syscall.Rlimit"
+@ ["linux-arm","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.rlimit32","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm-cgo","Funcs","syscall.setrlimit","Params",1,"DataType"]
+- "*syscall.rlimit32"
++ "*syscall.Rlimit"
+@ ["linux-arm-cgo","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.rlimit32","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Funcs","syscall.setrlimit","Results",0,"Name"]
+- "err"
++ ""
+@ ["linux-arm64","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64","Types","func(string)","Params",0,"Name"]
+- "hostPort"
++ "name"
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","syscall.Setrlimit"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","syscall.setrlimit","Results",0,"Name"]
+- "err"
++ ""
+@ ["linux-arm64-cgo","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","syscall.setrlimit1"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","os.adjustFileLimit"]
+- {"Flags":0,"Params":[{"DataType":"*syscall.Rlimit","Name":"lim"}],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","internal/syscall/unix.HasNonblockFlag"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"flag"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","net.newUnixFile"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"fd"},{"DataType":"string","Name":"name"}],"Results":[{"DataType":"*os.File","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","os.net_newUnixFile"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"fd"},{"DataType":"string","Name":"name"}],"Results":[{"DataType":"*os.File","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","runtime.fcntl"]
++ {"Flags":0,"Params":[{"DataType":"int32","Name":"fd"},{"DataType":"int32","Name":"cmd"},{"DataType":"int32","Name":"arg"}],"Results":[{"DataType":"int32","Name":"ret"},{"DataType":"int32","Name":"errno"}],"TypeParams":[]}
+@ ["unix","Funcs","runtime.initSecureMode"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","runtime.secureEnv"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","runtime.secureFDs"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","syscall.Setrlimit"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"resource"},{"DataType":"*syscall.Rlimit","Name":"rlim"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","syscall.adjustFileLimit"]
++ {"Flags":0,"Params":[{"DataType":"*syscall.Rlimit","Name":"lim"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-386","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-386","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string)","Params",0,"Name"]
+- "hostPort"
++ "name"
+@ ["windows-386-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-386-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-386-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","crypto/internal/nistec.p256OrdReduce"]
++ {"Flags":0,"Params":[{"DataType":"*crypto/internal/nistec.p256OrdElement","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["windows-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string)","Params",0,"Name"]
+- "name"
++ "hostPort"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}

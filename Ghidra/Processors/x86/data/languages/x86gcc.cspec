@@ -48,6 +48,11 @@
         <pentry minsize="5" maxsize="8">
           <addr space="join" piece1="EDX" piece2="EAX"/>
         </pentry>
+        <!-- Any struct type is returned by pointer, regardless of size -->
+        <rule>
+        	<datatype name="struct"/>
+        	<hidden_return/>
+        </rule>
       </output>
       <unaffected>
         <register name="ESP"/>

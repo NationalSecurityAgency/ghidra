@@ -141,12 +141,14 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		comboBox = new GComboBox<>(new String[] { "1", "2", "4", "8" });
 		int pointerSize = defaultAddress.getPointerSize();
 		comboBox.setSelectedItem(Integer.toString(pointerSize));
-
+		comboBox.getAccessibleContext().setAccessibleName("Address");
 		panel.add(new GLabel("Select Data Size (Bytes):", SwingConstants.RIGHT));
 		panel.add(comboBox);
 
 		signedCheckBox = new GCheckBox("Signed Data Value(s)", true);
+		signedCheckBox.getAccessibleContext().setAccessibleName("Signed Data Value");
 		panel.add(signedCheckBox);
+		panel.getAccessibleContext().setAccessibleName("Offset Table");
 		return panel;
 	}
 }

@@ -30,7 +30,208 @@ import ghidra.util.task.TaskMonitor;
  * A sequence of emulator stepping commands, essentially comprising a "point in time."
  */
 public class TraceSchedule implements Comparable<TraceSchedule> {
+	/**
+	 * The initial snapshot (with no steps)
+	 */
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
+
+	/**
+	 * Format for rendering and parsing snaps and step counts
+	 */
+	public enum TimeRadix {
+		/** Use decimal (default) */
+		DEC("dec", 10, "%d"),
+		/** Use upper-case hexadecimal */
+		HEX_UPPER("HEX", 16, "%X"),
+		/** Use lower-case hexadecimal */
+		HEX_LOWER("hex", 16, "%x");
+
+		/** The default radix (decimal) */
+		public static final TimeRadix DEFAULT = DEC;
+
+		/**
+		 * Get the radix specified by the given string
+		 * 
+		 * @param s the name of the specified radix
+		 * @return the radix
+		 */
+		public static TimeRadix fromStr(String s) {
+			return switch (s) {
+				case "dec" -> DEC;
+				case "HEX" -> HEX_UPPER;
+				case "hex" -> HEX_LOWER;
+				default -> DEFAULT;
+			};
+		}
+
+		public final String name;
+		public final int n;
+		public final String fmt;
+
+		private TimeRadix(String name, int n, String fmt) {
+			this.name = name;
+			this.n = n;
+			this.fmt = fmt;
+		}
+
+		public String format(long time) {
+			return fmt.formatted(time);
+		}
+
+		public long decode(String nm) {
+			if (nm.startsWith("0x") || nm.startsWith("0X") ||
+				nm.startsWith("-0x") || nm.startsWith("-0X")) {
+				return Long.parseLong(nm, 16);
+			}
+			if (nm.startsWith("0n") || nm.startsWith("0N") ||
+				nm.startsWith("-0n") || nm.startsWith("-0N")) {
+				return Long.parseLong(nm, 10);
+			}
+			return Long.parseLong(nm, n);
+		}
+	}
+
+	/**
+	 * Specifies forms of a stepping schedule.
+	 * 
+	 * <p>
+	 * Each form defines a set of stepping schedules. It happens that each is a subset of the next.
+	 * A {@link #SNAP_ONLY} schedule is also a {@link #SNAP_ANY_STEPS_OPS} schedule, but not
+	 * necessarily vice versa.
+	 */
+	public enum ScheduleForm {
+		/**
+		 * The schedule consists only of a snapshot. No stepping after.
+		 */
+		SNAP_ONLY {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return schedule.steps.isNop() && schedule.pSteps.isNop();
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and some number of instruction steps on the event
+		 * thread only.
+		 */
+		SNAP_EVT_STEPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				if (!schedule.pSteps.isNop()) {
+					return false;
+				}
+				List<Step> steps = schedule.steps.getSteps();
+				if (steps.isEmpty()) {
+					return true;
+				}
+				if (steps.size() != 1) {
+					return false;
+				}
+				if (!(steps.getFirst() instanceof TickStep ticks)) {
+					return false;
+				}
+				if (ticks.getThreadKey() == -1) {
+					return true;
+				}
+				if (trace == null) {
+					return false;
+				}
+				TraceThread eventThread = schedule.getEventThread(trace);
+				TraceThread thread = ticks.getThread(trace.getThreadManager(), eventThread);
+				if (eventThread != thread) {
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public TraceSchedule validate(Trace trace, TraceSchedule schedule) {
+				if (!schedule.pSteps.isNop()) {
+					return null;
+				}
+				List<Step> steps = schedule.steps.getSteps();
+				if (steps.isEmpty()) {
+					return schedule;
+				}
+				if (steps.size() != 1) {
+					return null;
+				}
+				if (!(steps.getFirst() instanceof TickStep ticks)) {
+					return null;
+				}
+				if (ticks.getThreadKey() == -1) {
+					return schedule;
+				}
+				if (trace == null) {
+					return null;
+				}
+				TraceThread eventThread = schedule.getEventThread(trace);
+				TraceThread thread = ticks.getThread(trace.getThreadManager(), eventThread);
+				if (eventThread != thread) {
+					return null;
+				}
+				return TraceSchedule.snap(schedule.snap).steppedForward(null, ticks.getTickCount());
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and a sequence of instruction steps on any
+		 * threads(s).
+		 */
+		SNAP_ANY_STEPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return schedule.pSteps.isNop();
+			}
+		},
+		/**
+		 * The schedule consists of a snapshot and a sequence of instruction steps then p-code op
+		 * steps on any thread(s).
+		 * 
+		 * <p>
+		 * This is the most capable form supported by {@link TraceSchedule}.
+		 */
+		SNAP_ANY_STEPS_OPS {
+			@Override
+			public boolean contains(Trace trace, TraceSchedule schedule) {
+				return true;
+			}
+		};
+
+		public static final List<ScheduleForm> VALUES = List.of(ScheduleForm.values());
+
+		/**
+		 * Check if the given schedule conforms
+		 * 
+		 * @param trace if available, a trace for determining the event thread
+		 * @param schedule the schedule to test
+		 * @return true if the schedule adheres to this form
+		 */
+		public abstract boolean contains(Trace trace, TraceSchedule schedule);
+
+		/**
+		 * If the given schedule conforms, normalize the schedule to prove it does.
+		 * 
+		 * @param trace if available, a trace for determining the event thread
+		 * @param schedule the schedule to test
+		 * @return the non-null normalized schedule, or null if the given schedule does not conform
+		 */
+		public TraceSchedule validate(Trace trace, TraceSchedule schedule) {
+			if (!contains(trace, schedule)) {
+				return null;
+			}
+			return schedule;
+		}
+
+		/**
+		 * Get the more restrictive of this and the given form
+		 * 
+		 * @param that the other form
+		 * @return the more restrictive form
+		 */
+		public ScheduleForm intersect(ScheduleForm that) {
+			int ord = Math.min(this.ordinal(), that.ordinal());
+			return VALUES.get(ord);
+		}
+	}
 
 	/**
 	 * Create a schedule that consists solely of a snapshot
@@ -51,14 +252,15 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * <p>
 	 * A schedule consists of a snap, a optional {@link Sequence} of thread instruction-level steps,
 	 * and optional p-code-level steps (pSteps). The form of {@code steps} and {@code pSteps} is
-	 * specified by {@link Sequence#parse(String)}. Each sequence consists of stepping selected
-	 * threads forward, and/or patching machine state.
+	 * specified by {@link Sequence#parse(String, TimeRadix)}. Each sequence consists of stepping
+	 * selected threads forward, and/or patching machine state.
 	 * 
 	 * @param spec the string specification
 	 * @param source the presumed source of the schedule
+	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
-	public static TraceSchedule parse(String spec, Source source) {
+	public static TraceSchedule parse(String spec, Source source, TimeRadix radix) {
 		String[] parts = spec.split(":", 2);
 		if (parts.length > 2) {
 			throw new AssertionError();
@@ -67,7 +269,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		final Sequence ticks;
 		final Sequence pTicks;
 		try {
-			snap = Long.decode(parts[0]);
+			snap = radix.decode(parts[0]);
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -75,7 +277,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (parts.length > 1) {
 			String[] subs = parts[1].split("\\.");
 			try {
-				ticks = Sequence.parse(subs[0]);
+				ticks = Sequence.parse(subs[0], radix);
 			}
 			catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -85,7 +287,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			}
 			else if (subs.length == 2) {
 				try {
-					pTicks = Sequence.parse(subs[1]);
+					pTicks = Sequence.parse(subs[1], radix);
 				}
 				catch (IllegalArgumentException e) {
 					throw new IllegalArgumentException(PARSE_ERR_MSG, e);
@@ -103,13 +305,24 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
-	 * As in {@link #parse(String, Source)}, but assumed abnormal
+	 * As in {@link #parse(String, Source, TimeRadix)}, but assumed abnormal
 	 * 
 	 * @param spec the string specification
+	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
+	public static TraceSchedule parse(String spec, TimeRadix radix) {
+		return parse(spec, Source.INPUT, radix);
+	}
+
+	/**
+	 * As in {@link #parse(String, TimeRadix)}, but with the {@link TimeRadix#DEFAULT} radix.
+	 * 
+	 * @param spec the string specification
+	 * @return the parse sequence
+	 */
 	public static TraceSchedule parse(String spec) {
-		return parse(spec, Source.INPUT);
+		return parse(spec, TimeRadix.DEFAULT);
 	}
 
 	public enum Source {
@@ -173,13 +386,18 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	@Override
 	public String toString() {
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	public String toString(TimeRadix radix) {
 		if (pSteps.isNop()) {
 			if (steps.isNop()) {
-				return Long.toString(snap);
+				return radix.format(snap);
 			}
-			return String.format("%d:%s", snap, steps);
+			return String.format("%s:%s", radix.format(snap), steps.toString(radix));
 		}
-		return String.format("%d:%s.%s", snap, steps, pSteps);
+		return String.format("%s:%s.%s", radix.format(snap), steps.toString(radix),
+			pSteps.toString(radix));
 	}
 
 	/**
@@ -256,7 +474,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 *         loading a snapshot
 	 */
 	public boolean isSnapOnly() {
-		return steps.isNop() && pSteps.isNop();
+		return ScheduleForm.SNAP_ONLY.contains(null, this);
 	}
 
 	/**

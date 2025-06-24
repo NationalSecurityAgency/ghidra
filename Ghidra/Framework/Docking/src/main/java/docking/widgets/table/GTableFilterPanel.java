@@ -67,8 +67,8 @@ import utility.function.Callback;
  * <b><u>Important Usage Notes</u></b>
  * <ul>
  *     <li><a id="translation"></a><b>You must translate row values retrieved from the table using
- *     this panel.</b></li>
- *     <p>
+ *     this panel.</b>
+ *     
  *     Since this class wraps the given table with a new model, you must use this class to
  *     translate row number values.  For example, when getting the selected row, the normal Java
  *     code snippet below will give the incorrect value:
@@ -84,18 +84,17 @@ import utility.function.Callback;
  *         int modelRowNumber = tableFilterPanel.getModelRow( selectedRowNumber );  // see {@link #getModelRow(int)}
  *         </span>
  *     </pre>
+ *     </li>
  *
  *     <li><b>This class may set a new model on the given table, which can affect how tables are sized.</b></li>
- *     <p>
- *      If {@link JTable#getAutoCreateColumnsFromModel()} returns true, then the columns will
- *      be recreated and resized when this class is constructed.
+ *     
+ *     <li>If {@link JTable#getAutoCreateColumnsFromModel()} returns true, then the columns will
+ *      be recreated and resized when this class is constructed.</li>
  *     <li>The {@link TableFilter} used by this class will be passed the empty string ("") when
  *     {@link TableFilter#acceptsRow(Object)} is called.</li>
  *     <li><b>You cannot rely on {@link JTable#getRowCount()} to access all of the table data,
- *     since the data may be filtered.</b></li>
- *     <p>
- *     To get a row count that is always all of the model's data, call
- *     {@link #getUnfilteredRowCount()}.
+ *     since the data may be filtered.</b> To get a row count that is always all of the model's \
+ *     data, call {@link #getUnfilteredRowCount()}.</li>
  * </ul>
  *
  * @param <ROW_OBJECT> the row object type for this given table and model

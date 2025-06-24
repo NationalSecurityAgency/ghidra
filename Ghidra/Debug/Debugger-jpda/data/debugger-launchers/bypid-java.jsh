@@ -7,9 +7,9 @@
 //@desc     For setup instructions, press <b>F1</b>.
 //@desc   </p>
 //@desc </body></html>
-//@menu-group attach
+//@menu-group java
 //@icon icon.debugger
-//@help TraceRmiLauncherServicePlugin#java_bypid
+//@help jpda#attach_pid
 //@enum Arch:str JVM Dalvik
 //@env OPT_ARCH:Arch="JVM" "Arch" "Target architecture"
 //@env OPT_PID:str="" "Pid" "The target process id"

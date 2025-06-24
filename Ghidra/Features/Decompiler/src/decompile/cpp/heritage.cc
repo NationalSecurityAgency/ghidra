@@ -1083,7 +1083,7 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
 	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
 	      // This will likely get resolved in the next heritage pass, but we leave the
-	      // spacebaseptr mark on, so that that the indirects don't get removed
+	      // spacebaseptr mark on, so the indirects don't get removed
 	      fd->opMarkSpacebasePtr(op);
 	    }
 	  }
@@ -1470,7 +1470,7 @@ void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode 
       ParamActive *active = fc->getActiveOutput();
       int4 outputCharacter = fc->characterizeAsOutput(transAddr, size);
       if (outputCharacter != ParamEntry::no_containment) {
-	if (effecttype != EffectRecord::killedbycall && fc->isAutoKillByCall())
+	if (effecttype != EffectRecord::killedbycall && fc->isAutoKilledByCall())
 	  effecttype = EffectRecord::killedbycall;
 	if (outputCharacter == ParamEntry::contained_by) {
 	  if (tryOutputOverlapGuard(fc, addr, transAddr, size, write))

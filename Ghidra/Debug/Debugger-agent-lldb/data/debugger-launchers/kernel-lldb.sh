@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title kernel lldb
+#@title lldb kernel (kdp)
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and connect to a remote kernel</h3>
 #@desc   <p>
@@ -22,39 +22,23 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group lldb
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#lldb_kernel
+#@help lldb#macos_kernel
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-lldb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-lldb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-lldb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/lldbsetuputils.sh
 
-if [ -z "$OPT_ARCH" ]
-then
-  archcmd=
-else
-  archcmd=-o "settings set target.default-arch $OPT_ARCH" 
-fi
+pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
-"$OPT_LLDB_PATH" \
-  -o "version" \
-  -o "script import ghidralldb" \
-  $archcmd \
-  -o "kdp-remote $OPT_HOST" \
-  -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -o "ghidra trace start" \
-  -o "ghidra trace sync-enable" \
-  -o "ghidra trace sync-synth-stopped"
+function launch-lldb() {
+	local -a args
+	compute-lldb-remote-args "" "kdp-remote $OPT_HOST" "$GHIDRA_TRACE_RMI_ADDR"
+
+	"${args[@]}"
+}
+launch-lldb

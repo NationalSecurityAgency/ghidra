@@ -394,7 +394,7 @@ public class ListingCodeComparisonPanel
 				.toolBarIcon(NEXT_DIFF_ICON)
 				.toolBarGroup(DIFF_NAVIGATE_GROUP)
 				.keyBinding("ctrl alt N")
-				.validContextWhen(c -> isValidPanelContext(c))
+				.validWhen(c -> isValidPanelContext(c))
 				.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
 				.onAction(c -> nextAreaDiff(true))
 				.build();
@@ -409,7 +409,7 @@ public class ListingCodeComparisonPanel
 				.toolBarIcon(PREVIOUS_DIFF_ICON)
 				.toolBarGroup(DIFF_NAVIGATE_GROUP)
 				.keyBinding("ctrl alt P")
-				.validContextWhen(c -> isValidPanelContext(c))
+				.validWhen(c -> isValidPanelContext(c))
 				.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
 				.onAction(c -> nextAreaDiff(false))
 				.build();
@@ -601,6 +601,8 @@ public class ListingCodeComparisonPanel
 	private void updateProgramViews() {
 		displays.get(LEFT).setProgramView(getProgram(LEFT), getAddresses(LEFT), "listing1");
 		displays.get(RIGHT).setProgramView(getProgram(RIGHT), getAddresses(RIGHT), "listing2");
+		displays.get(LEFT).goTo(comparisonData.get(LEFT).getInitialLocation());
+		displays.get(RIGHT).goTo(comparisonData.get(LEFT).getInitialLocation());
 	}
 
 	private void nextAreaDiff(boolean forward) {

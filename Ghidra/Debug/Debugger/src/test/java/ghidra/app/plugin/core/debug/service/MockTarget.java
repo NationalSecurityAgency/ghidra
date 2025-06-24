@@ -27,14 +27,16 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -71,7 +73,13 @@ public class MockTarget implements Target {
 	}
 
 	@Override
-	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap) {
+		return null;
+	}
+
+	@Override
+	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy) {
 		return Map.of();
 	}
 
@@ -264,5 +272,10 @@ public class MockTarget implements Target {
 
 	@Override
 	public void disconnect() {
+	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
 	}
 }

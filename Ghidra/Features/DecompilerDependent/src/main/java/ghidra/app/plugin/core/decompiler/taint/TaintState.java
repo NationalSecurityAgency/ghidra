@@ -16,27 +16,34 @@
 package ghidra.app.plugin.core.decompiler.taint;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 import com.contrastsecurity.sarif.SarifSchema210;
 
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.decompiler.taint.ctadl.TaintStateCTADL;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * The interface for the methods that collect desired taint information from the decompiler window and store them
  * for construction of queries and indexing.
+ * <p>
+ * NOTE:  ALL TaintState CLASSES MUST END IN "TaintState".  If not,
+ * the ClassSearcher will not find them.
  */
-public interface TaintState {
+public interface TaintState extends ExtensionPoint {
 
 	public enum MarkType {
 		SOURCE, SINK, GATE
@@ -46,9 +53,34 @@ public interface TaintState {
 		SRCSINK, DEFAULT, CUSTOM
 	}
 
-	public static TaintState newInstance(TaintPlugin plugin) {
-		return new TaintStateCTADL(plugin);
+	public enum TaskType {
+		SET_TAINT, SET_DELTA, APPLY_DELTA
 	}
+
+	public static TaintState newInstance(TaintPlugin plugin, String type) {
+		List<Class<? extends TaintState>> list = ClassSearcher.getClasses(TaintState.class)
+				.stream()
+				.toList();
+		Class<?>[] constructorArgumentTypes = {TaintPlugin.class};
+		Object[] args = new Object[1];
+		args[0] = plugin;
+		for (Class<? extends TaintState> clazz : list) {
+			if (clazz.getName().toLowerCase().contains(type)) {
+				try {
+					Constructor<?> constructor = clazz.getConstructor(constructorArgumentTypes);
+					Object obj = constructor.newInstance(plugin);
+					return TaintState.class.cast(obj);
+				}
+				catch (Exception e) {
+					throw new RuntimeException("Unable to instantiate TaintState");
+				}
+			}
+		}
+		Msg.error(plugin, "No match for engine = "+type);
+		return null;
+	}
+
+	public String getName();
 
 	/**
 	 * Perform a Source-Sink query on the index database.
@@ -93,46 +125,89 @@ public interface TaintState {
 
 	public void setCancellation(boolean status);
 
-	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap);
+	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta);
 
 	public Map<Address, Set<TaintQueryResult>> getTaintVarnodeMap();
+
+	public Set<TaintQueryResult> getQuerySet(Address addr);
 
 	public void buildIndex(List<String> param_list, String engine_path, String facts_path,
 			String index_directory);
 
 	public GhidraScript getExportScript(ConsoleService console, boolean perFunction);
 
-	public static String hvarName(ClangToken token) {
-		HighVariable hv = token.getHighVariable();
-		HighFunction hf =
-			(hv == null) ? token.getClangFunction().getHighFunction() : hv.getHighFunction();
-		if (hv == null || hv.getName() == null || hv.getName().equals("UNNAMED")) {
-			SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
-			Varnode rep = hv.getRepresentative();
-			Address addr = rep.getAddress();
-			Symbol symbol = symbolTable.getPrimarySymbol(addr);
-			if (symbol == null) {
-				if (hv instanceof HighLocal) {
-					return addr.toString();
-				}
-				return token.getText();
+	public void setTaskType(TaskType taskType);
+
+	public TaintLabel getLabelForToken(MarkType type, ClangToken token);
+
+	public static String varName(ClangToken token, boolean append) {
+		String tokenText = token.getText();
+		if (token instanceof ClangFieldToken ftoken) {
+			ClangVariableToken vtoken = TaintState.getParentToken(ftoken);
+			if (vtoken == null) {
+				return tokenText;
 			}
-			return symbol.getName();
+			HighVariable hv = vtoken.getHighVariable();
+			Varnode rep = hv.getRepresentative();
+			return rep.getAddress().toString();
+		}
+		
+		HighVariable hv = token.getHighVariable();
+		if (hv != null) {
+			if (hv instanceof HighLocal && token.getVarnode() == null) {
+				int offset = hv.getOffset();
+				Varnode rep = hv.getRepresentative();
+				return rep.getAddress().subtract(offset).toString();
+			}
+			return hvarName(hv);
+		}
+		return tokenText;
+	}
+
+	private static String hvarName(HighVariable hv) {
+		Varnode rep = hv.getRepresentative();
+		if (rep.getAddress().isUniqueAddress()) {
+			HighFunction hf = hv.getHighFunction();
+			DynamicHash dynamicHash = new DynamicHash(rep, hf);
+			return "hv"+Long.toString(dynamicHash.getHash());
+		}
+		if (hv.getName() == null || hv.getName().equals("UNNAMED")) {
+			if (hv instanceof HighConstant || hv instanceof HighOther) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighLocal) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighGlobal) {
+				Function fn = hv.getHighFunction().getFunction();
+				SymbolTable symbolTable = fn.getProgram().getSymbolTable();
+				Address addr = rep.getAddress();
+				Symbol symbol = symbolTable.getPrimarySymbol(addr);
+				if (symbol != null) {
+					return symbol.getName();
+				}
+				return addr.toString();
+			}
+			return null;
 		}
 		return hv.getName();
 	}
 
 	public static ClangVariableToken getParentToken(ClangFieldToken token) {
 		ClangTokenGroup group = (ClangTokenGroup) token.Parent();
-		Iterator<ClangNode> iterator = group.iterator();
+		Iterator<ClangToken> iterator = group.tokenIterator(true);
+		ClangVariableToken parent = null;
 		while (iterator.hasNext()) {
-			ClangNode next = iterator.next();
+			ClangToken next = iterator.next();
 			if (next instanceof ClangVariableToken vtoken) {
-				HighVariable highVariable = vtoken.getHighVariable();
-				if (highVariable == null || highVariable instanceof HighConstant) {
-					continue;
+				parent = vtoken;
+			}
+			if (next instanceof ClangFieldToken ftoken) {
+				if (ftoken.equals(token)) {
+					return parent;
 				}
-				return vtoken;
 			}
 		}
 		return null;

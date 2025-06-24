@@ -210,7 +210,7 @@ if (!"termmines".equals(currentProgram.getName())) {
 	throw new AssertionError("The current program must be termmines");
 }
 
-if (getExecutionState(trace).isRunning()) {
+if (getExecutionState(trace) != TraceExecutionState.STOPPED) {
 	monitor.setMessage("Interrupting target and waiting for STOPPED");
 	interrupt();
 	waitForBreak(3, TimeUnit.SECONDS);

@@ -80,7 +80,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	protected FormatManager formatMgr;
 	protected ViewManagerService viewManager;
 	private MarkerService markerService;
-	protected AddressSetView currentView;
+	protected AddressSetView currentView = ImmutableAddressSet.EMPTY_SET;
 	protected Program currentProgram;
 	private boolean selectionChanging;
 	private MarkerSet currentSelectionMarkers;
@@ -118,20 +118,26 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	protected abstract P createProvider(FormatManager formatManager, boolean isConnected);
 
-	protected void viewChanged(AddressSetView addrSet) {
-		ProgramLocation currLoc = getCurrentLocation();
-		currentView = addrSet;
-		if (addrSet != null && !addrSet.isEmpty()) {
-			connectedProvider.setView(addrSet);
-			if (currLoc != null && addrSet.contains(currLoc.getAddress())) {
-				goTo(currLoc, true);
-			}
-		}
-		else {
-			connectedProvider.setView(new AddressSet());
-		}
-		updateBackgroundColorModel();
+	protected void setView(AddressSetView newView) {
 
+		if (currentView.hasSameAddresses(newView)) {
+			return;
+		}
+
+		ProgramLocation location = getCurrentLocation();
+		currentView = ImmutableAddressSet.asImmutable(newView);
+
+		connectedProvider.setView(currentView);
+
+		if (location != null && currentView.contains(location.getAddress())) {
+			goTo(location, true);
+		}
+
+		viewUpdated();
+	}
+
+	private void viewUpdated() {
+		updateBackgroundColorModel();
 		setHighlight(connectedProvider.getHighlight());
 		setSelection(connectedProvider.getSelection());
 	}
@@ -168,7 +174,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			listingPanel.setBackgroundColorModel(null);
 		}
 
-		// TODO: update all providers, not just the connected provider
+		// Note: this should update all providers, not just the connected provider
 	}
 
 	@Override
@@ -220,14 +226,14 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == ViewManagerService.class && viewManager == null) {
 			viewManager = (ViewManagerService) service;
-			viewChanged(viewManager.getCurrentView());
+			setView(viewManager.getCurrentView());
 		}
 		if (interfaceClass == MarkerService.class && markerService == null) {
 			markerService = tool.getService(MarkerService.class);
 			markerService.addChangeListener(markerChangeListener);
 			updateBackgroundColorModel();
 			if (viewManager != null) {
-				viewChanged(viewManager.getCurrentView());
+				viewUpdated();
 			}
 		}
 		if (interfaceClass == ListingHoverService.class) {
@@ -247,7 +253,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public void serviceRemoved(Class<?> interfaceClass, Object service) {
 		if ((service == viewManager) && (currentProgram != null)) {
 			viewManager = null;
-			viewChanged(currentProgram.getMemory());
+			setView(currentProgram.getMemory());
 		}
 		if (service == markerService) {
 			markerService.removeChangeListener(markerChangeListener);
@@ -338,7 +344,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	@Override
 	public void setListingPanel(ListingPanel lp) {
 		connectedProvider.setOtherPanel(lp);
-		viewChanged(currentView);
+		viewUpdated();
 	}
 
 	@Override
@@ -363,7 +369,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		}
 		if (connectedProvider.getOtherPanel() == lp) {
 			connectedProvider.clearPanel();
-			viewChanged(currentView);
+			viewUpdated();
 		}
 	}
 
@@ -767,7 +773,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
-
 		return Swing
 				.runNow(() -> connectedProvider.getListingPanel().goTo(location, centerOnScreen));
 	}
@@ -858,11 +863,11 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			connectedProvider.updateTitle();
 		}
 
-		if (viewManager != null) {
-			return;
-		}
 		if (ev.contains(DomainObjectEvent.RESTORED)) {
-			viewChanged(currentProgram.getMemory());
+			if (viewManager == null) {
+				setView(currentProgram.getMemory());
+				viewUpdated();
+			}
 		}
 	}
 

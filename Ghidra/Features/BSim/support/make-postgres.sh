@@ -18,11 +18,11 @@
 # This script builds the postgresql server and BSim extension within a
 # GHIDRA installation.
 #
-# The PostgreSQL source distribution file postgresql-15.10.tar.gz must
+# The PostgreSQL source distribution file postgresql-15.13.tar.gz must
 # be placed in the BSim module directory prior to running this script.
 # This file can be downloaded directly from the PostgreSQL website at:
 #
-#   https://www.postgresql.org/ftp/source/v15.10
+#   https://www.postgresql.org/ftp/source/v15.13
 #
 # Within development environments, this script will first check the
 # ghidra.bin repo for this source file.
@@ -46,7 +46,7 @@
 #
 #
 
-POSTGRES=postgresql-15.10
+POSTGRES=postgresql-15.13
 POSTGRES_GZ=${POSTGRES}.tar.gz
 POSTGRES_CONFIG_OPTIONS="--disable-rpath --with-openssl"
 
@@ -55,10 +55,13 @@ echo $DIR
 
 POSTGRES_GZ_PATH=${DIR}/../../../../ghidra.bin/Ghidra/Features/BSim/${POSTGRES_GZ}
 if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
-	POSTGRES_GZ_PATH=${DIR}/support/${POSTGRES_GZ}
+	POSTGRES_GZ_PATH=${DIR}/../../../dependencies/BSim/${POSTGRES_GZ}
 	if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
-		echo "Postgres source bundle not found: ${POSTGRES_GZ_PATH}"
-		exit -1
+		POSTGRES_GZ_PATH=${DIR}/support/${POSTGRES_GZ}
+		if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
+			echo "Postgres source bundle not found: ${POSTGRES_GZ_PATH}"
+			exit -1
+		fi
 	fi
 fi
 
@@ -81,14 +84,26 @@ pushd build/${POSTGRES}
 
 if [ "$OS" = "Darwin" ]; then
 	export MACOSX_DEPLOYMENT_TARGET=10.5
-	export ARCHFLAGS="-arch x86_64"
-	OSDIR=mac_x86_64
+	export ARCHFLAGS="-arch $ARCH"
+	if [ "$ARCH" = "x86_64" ]; then
+		OSDIR="mac_x86_64"
+		HOMEBREW="/usr/local"
+	else
+		OSDIR="mac_arm_64"
+		HOMEBREW="/opt/homebrew"
+	fi
+	POSTGRES_CONFIG_OPTIONS+="--with-includes=${HOMEBREW}/include"
+	POSTGRES_CONFIG_OPTIONS+="--with-libraries=${HOMEBREW}/lib"
 elif [ "$ARCH" = "x86_64" ]; then
-	OSDIR=linux_x86_64
+	OSDIR="linux_x86_64"
+elif [ "$ARCH" = "aarch64" ]; then
+	OSDIR="linux_arm_64"
 else
 	echo "Unsupported platform: $OS $ARCH"
 	exit -1	
 fi
+
+echo "Platform: $OSDIR"
 
 # Install within build/os
 INSTALL_DIR=${DIR}/build/os/${OSDIR}/postgresql

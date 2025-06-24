@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -438,13 +438,13 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public boolean isMemorySpace();
 
 	/**
-	 * Returns true if this space represents represents a Loaded Memory
+	 * Returns true if this space represents a Loaded Memory
 	 * region (e.g., processor RAM).
 	 */
 	public boolean isLoadedMemorySpace();
 
 	/**
-	 * Returns true if this space represents represents a Non-Loaded storage region
+	 * Returns true if this space represents a Non-Loaded storage region
 	 * for retaining non-loaded file data (e.g., OTHER)
 	 */
 	public boolean isNonLoadedMemorySpace();

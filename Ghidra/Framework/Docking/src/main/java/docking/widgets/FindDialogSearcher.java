@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,12 +61,17 @@ public interface FindDialogSearcher {
 	public void highlightSearchResults(SearchLocation location);
 
 	/**
+	 * Clears any active highlights.
+	 */
+	public void clearHighlights();
+
+	/**
 	 * Perform a search for the next item in the given direction starting at the given cursor 
 	 * position.
 	 * @param text the search text.
 	 * @param cursorPosition the current cursor position.
 	 * @param searchForward true if searching forward.
-	 * @param useRegex useRegex true if the search text is a regular expression; false if the texts is
+	 * @param useRegex true if the search text is a regular expression; false if the texts is
 	 * literal text.
 	 * @return the search result or null if no match was found.
 	 */
@@ -82,5 +87,12 @@ public interface FindDialogSearcher {
 	 */
 	public default List<SearchLocation> searchAll(String text, boolean useRegex) {
 		throw new UnsupportedOperationException("Search All is not defined for this searcher");
+	}
+
+	/**
+	 * Disposes this searcher.  This does nothing by default.
+	 */
+	public default void dispose() {
+		// stub
 	}
 }

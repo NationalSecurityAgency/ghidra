@@ -31,6 +31,8 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
 import docking.util.GGlassPaneMessage;
+import docking.widgets.OptionDialog;
+import docking.widgets.OptionDialogBuilder;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
@@ -38,6 +40,7 @@ import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.util.HelpTopics;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.SearchRegion;
+import ghidra.features.base.memsearch.combiner.Combiner;
 import ghidra.features.base.memsearch.matcher.ByteMatcher;
 import ghidra.features.base.memsearch.scan.Scanner;
 import ghidra.features.base.memsearch.searcher.*;
@@ -139,12 +142,12 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		setVisible(true);
 
 		createActions(plugin.getName());
+		setDefaultFocusComponent(searchPanel.getDefaultFocusComponent());
 
 		tool.addContextListener(this);
 		navigatable.addNavigatableListener(this);
 		program.addCloseListener(this);
 		updateTitle();
-
 	}
 
 	public void setSearchInput(String input) {
@@ -274,7 +277,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	 * Performs a scan on the current results, keeping only the results that match the type of scan.
 	 * Note: this method is public to facilitate testing.
 	 * 
-	 * @param scanner the scanner to use to reduce the results. 
+	 * @param scanner the scanner to use to reduce the results.
 	 */
 	public void scan(Scanner scanner) {
 		setBusy(true);
@@ -538,9 +541,43 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 			public void actionPerformed(ActionContext context) {
 				super.actionPerformed(context);
 				updateSubTitle();
+				resultsPanel.itemDeleted();
 			}
 		});
+	}
 
+	@Override
+	public void closeComponent() {
+		doClose(false);
+	}
+
+	private void doClose(boolean force) {
+		if (force) {
+			super.closeComponent();
+			return;
+		}
+
+		if (!canClose()) {
+			return;
+		}
+		super.closeComponent();
+	}
+
+	private boolean canClose() {
+		boolean hasUserChanges = resultsPanel.hasUserChanges();
+		if (!hasUserChanges) {
+			return true;
+		}
+
+		String message = "Close dialog and lost custom search results?";
+		OptionDialogBuilder builder = new OptionDialogBuilder("Close Results Window?", message);
+		int choice = builder.addOption("Yes")
+				.addCancel()
+				.setDefaultButton("Yes")
+				.setMessageType(OptionDialog.QUESTION_MESSAGE)
+				.show(resultsPanel);
+
+		return choice == OptionDialog.OPTION_ONE;
 	}
 
 	@Override
@@ -550,6 +587,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	private void dispose() {
+
 		if (glassPaneMessage != null) {
 			glassPaneMessage.hide();
 			glassPaneMessage = null;
@@ -582,12 +620,12 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 
 	@Override
 	public void navigatableRemoved(Navigatable nav) {
-		closeComponent();
+		doClose(true);
 	}
 
 	@Override
 	public void domainObjectClosed(DomainObject dobj) {
-		closeComponent();
+		doClose(true);
 	}
 
 	Navigatable getNavigatable() {
@@ -637,10 +675,18 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		return resultsPanel.getTableModel().getModelData();
 	}
 
+	public MemorySearchResultsPanel getResultsPanel() {
+		return resultsPanel;
+	}
+
 	public void setSettings(SearchSettings settings) {
 		String converted = searchPanel.convertInput(model.getSettings(), settings);
 		model.setSettings(settings);
 		searchPanel.setSearchInput(converted);
+	}
+
+	public void setSearchCombiner(Combiner combiner) {
+		searchPanel.setSearchCombiner(combiner);
 	}
 
 	public boolean isSearchSelection() {

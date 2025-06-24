@@ -77,6 +77,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		addWorkPanel(buildMainPanel());
 
 		saveButton = new JButton("Save");
+		saveButton.getAccessibleContext().setAccessibleName("Save");
 		saveButton.addActionListener(ev -> save());
 		addButton(saveButton);
 		addCancelButton();
@@ -102,6 +103,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		panel.add(iconPanel, BorderLayout.CENTER);
 		panel.add(iconFieldPanel, BorderLayout.SOUTH);
 		panel.setPreferredSize(new Dimension(400, 300));
+		panel.getAccessibleContext().setAccessibleName("Save Tool Configuration");
 		return panel;
 	}
 
@@ -272,10 +274,11 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 
 		nameField = new JTextField(11);
 		nameField.setName("ToolName");
+		nameField.getAccessibleContext().setAccessibleName("Tool Name");
 
 		namePanel.add(new GLabel("Tool Name:", SwingConstants.RIGHT));
 		namePanel.add(nameField);
-
+		namePanel.getAccessibleContext().setAccessibleName("Tool Field");
 		return namePanel;
 	}
 
@@ -286,6 +289,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconList = new JList<>(iconListModel);
 		iconList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 		iconList.setName("IconList");
+		iconList.getAccessibleContext().setAccessibleName("Icon");
 		iconList.setCellRenderer(new ToolIconUrlRenderer());
 		iconList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		iconList.setSelectedIndex(0);
@@ -297,20 +301,23 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(new TitledBorder("Choose Icon"));
 		panel.add(iconListScrollPane, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Icon");
 		return panel;
 	}
 
 	private JPanel createIconFieldPanel() {
 		iconField = new JTextField(12);
 		iconField.setName("IconName");
+		iconField.getAccessibleContext().setAccessibleName("Icon Name");
 
 		browseButton = new BrowseButton();
-
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		panel.add(new GLabel("Icon Name:"), BorderLayout.WEST);
 		panel.add(iconField, BorderLayout.CENTER);
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Icon Field");
 		return panel;
 	}
 

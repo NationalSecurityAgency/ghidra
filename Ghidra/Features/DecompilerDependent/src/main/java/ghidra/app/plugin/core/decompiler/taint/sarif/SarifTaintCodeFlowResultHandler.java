@@ -41,12 +41,12 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 	}
 
 	@Override
-	public void handle(SarifDataFrame dframe, Run run, Result result, Map<String, Object> map) {
+	public void handle(SarifDataFrame dframe, Run r, Result res, Map<String, Object> map) {
 		this.df = dframe;
 		this.controller = df.getController();
 
-		this.run = run;
-		this.result = result;
+		this.run = r;
+		this.result = res;
 
 		List<Map<String, Object>> tableResults = df.getTableResults();
 		String ruleId = result.getRuleId();
@@ -114,7 +114,7 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 		Location loc = tfl.getLocation();
 		LogicalLocation ll = SarifUtils.getLogicalLocation(run, loc);
 		String name = ll.getName();
-		String fqname = ll.getFullyQualifiedName();
+		String fqname = ll.getDecoratedName();
 		String displayName = SarifUtils.extractDisplayName(ll);
 		map.put("originalName", name);
 		map.put("name", displayName);
@@ -138,7 +138,7 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 				operation = path_index == 1 ? "Source" : "Sink";
 				break;
 
-			case "instruction":
+			case "member":
 				// instruction address.
 				map.put("Address",
 					SarifUtils.extractFQNameAddrPair(controller.getProgram(), fqname).get(1));

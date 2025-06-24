@@ -253,6 +253,10 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	public void dispose() {
+		disconnect(true);
+	}
+
+	void disconnect(boolean dispose) {
 		List<GTreeNode> oldChildren;
 		synchronized (this) {
 			oldChildren = children;
@@ -262,7 +266,10 @@ abstract class CoreGTreeNode implements Cloneable {
 
 		if (oldChildren != null) {
 			for (GTreeNode node : oldChildren) {
-				node.dispose();
+				node.disconnect(dispose);
+				if (dispose) {
+					node.dispose();
+				}
 			}
 			oldChildren.clear();
 		}
@@ -270,23 +277,13 @@ abstract class CoreGTreeNode implements Cloneable {
 
 	/**
 	 * This is used to dispose filtered "clone" nodes. When a filter is applied to the tree,
-	 * the nodes that matched are "shallow" cloned, so when the filter is removed, we don't
-	 * want to do a full dispose on the nodes, just clean up the parent-child references.
+	 * the nodes that matched are "shallow" cloned.  This is effectively a shallow dispose that will
+	 * clean up any children and disconnect this node from the true, but will *not* call dispose(),
+	 * which would affect the original node from which this node was cloned.
 	 */
-	final void disposeClones() {
-		List<GTreeNode> oldChildren;
-		synchronized (this) {
-			oldChildren = children;
-			children = null;
-			parent = null;
-		}
-
-		if (oldChildren != null) {
-			for (GTreeNode node : oldChildren) {
-				node.disposeClones();
-			}
-			oldChildren.clear();
-		}
+	final void disposeClone() {
+		// Do not dispose, as that will affect the clone's source too
+		disconnect(false);
 	}
 
 	/**
@@ -330,7 +327,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	/**
 	 * Returns true if the node is in the process of loading its children.  For nodes
 	 * that directly extend GTreeNode, this is always false.  See {@link GTreeSlowLoadingNode}
-	 * for information on nodes that that can be in the progress of loading.
+	 * for information on nodes that can be in the progress of loading.
 	 * @param childList the list to test.
 	 * @return true if the node is in the progress of loading its children.
 	 */

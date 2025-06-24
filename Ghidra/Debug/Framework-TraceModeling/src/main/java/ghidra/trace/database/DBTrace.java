@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -335,10 +335,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
-	protected DBTraceDataTypeManager createDataTypeManager()
+	protected DBTraceDataTypeManager createDataTypeManager(DBTracePlatformManager platformManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Data Type Manager", (openMode,
-				monitor) -> new DBTraceDataTypeManager(dbh, openMode, rwLock, monitor, this));
+				monitor) -> new DBTraceDataTypeManager(dbh, openMode, rwLock, monitor, this,
+					platformManager.getHostPlatform()));
 	}
 
 	@DependentService
@@ -352,7 +353,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@DependentService
 	protected DBTracePlatformManager createPlatformManager()
 			throws CancelledException, IOException {
-		return createTraceManager("Language Manager",
+		return createTraceManager("Platform Manager",
 			(openMode, monitor) -> new DBTracePlatformManager(dbh, openMode, rwLock, monitor,
 				baseCompilerSpec, this));
 	}
@@ -514,7 +515,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
-	public DBTraceDataTypeManager getDataTypeManager() {
+	public DBTraceDataTypeManager getBaseDataTypeManager() {
 		return dataTypeManager;
 	}
 
@@ -760,8 +761,6 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			}
 		}
 	}
-
-	// TODO: Platform option?
 
 	public void setExecutablePath(String path) {
 		getOptions(TRACE_INFO).setString(EXECUTABLE_PATH, path);

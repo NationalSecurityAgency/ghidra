@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -230,9 +230,14 @@ model {
 				b.cppCompiler.args "/EHsc"
 				b.cppCompiler.define "_SECURE_SCL=0"
 				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
+				b.cppCompiler.args "/W3"
+				b.cppCompiler.args "/O2"
+				b.cppCompiler.args "/Oy"			// Omit frame pointer
+				b.cppCompiler.args "/GL"
 				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
 				// b.cppCompiler.args "/FS"		// for DEBUG, uncomment this line
 				// b.linker.args "/DEBUG"		// for DEBUG, uncomment this line
+				b.linker.args "/LTCG"
 				if (b.targetPlatform.operatingSystem.windows) {
 					b.cppCompiler.define "WINDOWS"
 					b.cppCompiler.define "_WINDOWS"
@@ -246,6 +251,7 @@ model {
 				b.cCompiler.args "/W3"
 				b.cCompiler.args "/O2"
 				b.cCompiler.args "/Oy"			// Omit frame pointer
+				b.cCompiler.args "/GL"
 				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
 				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
 				b.cCompiler.define "ZLIB_WINAPI"

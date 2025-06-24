@@ -39,6 +39,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Msg;
 import ghidra.util.NotOwnerException;
 
@@ -128,11 +129,13 @@ public class DebuggerCoordinates {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof DebuggerCoordinates)) {
+		if (!(obj instanceof DebuggerCoordinates that)) {
 			return false;
 		}
-		DebuggerCoordinates that = (DebuggerCoordinates) obj;
 		if (!Objects.equals(this.trace, that.trace)) {
+			return false;
+		}
+		if (!Objects.equals(this.platform, that.platform)) {
 			return false;
 		}
 		if (!Objects.equals(this.target, that.target)) {
@@ -320,8 +323,9 @@ public class DebuggerCoordinates {
 				return objThread.getCanonicalPath();
 			}
 			TraceStack stack;
+			long snap = time.getSnap();
 			try {
-				stack = thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+				stack = thread.getTrace().getStackManager().getStack(thread, snap, false);
 			}
 			catch (IllegalStateException e) {
 				// Schema does not specify a stack
@@ -330,7 +334,7 @@ public class DebuggerCoordinates {
 			if (stack == null) {
 				return objThread.getCanonicalPath();
 			}
-			TraceStackFrame frame = stack.getFrame(frameLevel, false);
+			TraceStackFrame frame = stack.getFrame(snap, frameLevel, false);
 			if (frame == null) {
 				return objThread.getCanonicalPath();
 			}
@@ -401,14 +405,22 @@ public class DebuggerCoordinates {
 		return new DebuggerCoordinates(trace, platform, target, thread, view, newTime, frame, path);
 	}
 
+	/**
+	 * Get these same coordinates with time replaced by the given schedule
+	 * 
+	 * @param newTime the new schedule
+	 * @return the new coordinates
+	 */
 	public DebuggerCoordinates time(TraceSchedule newTime) {
+		if (Objects.equals(time, newTime)) {
+			return this;
+		}
 		if (trace == null) {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
-		Lifespan threadLifespan = thread == null ? null : thread.getLifespan();
-		TraceThread newThread = threadLifespan != null && threadLifespan.contains(snap) ? thread
-				: resolveThread(trace, target, newTime);
+		boolean isThreadValid = thread == null ? false : thread.isValid(snap);
+		TraceThread newThread = isThreadValid ? thread : resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
@@ -427,7 +439,6 @@ public class DebuggerCoordinates {
 		if (!Objects.equals(this.trace, that.trace)) {
 			return false;
 		}
-
 		if (!Objects.equals(this.platform, that.platform)) {
 			return false;
 		}
@@ -702,7 +713,7 @@ public class DebuggerCoordinates {
 			coordState.putLong(KEY_THREAD_KEY, thread.getKey());
 		}
 		if (time != null) {
-			coordState.putString(KEY_TIME, time.toString());
+			coordState.putString(KEY_TIME, time.toString(TimeRadix.DEC));
 		}
 		if (frame != null) {
 			coordState.putInt(KEY_FRAME, frame);
@@ -775,7 +786,7 @@ public class DebuggerCoordinates {
 		String timeSpec = coordState.getString(KEY_TIME, null);
 		TraceSchedule time;
 		try {
-			time = TraceSchedule.parse(timeSpec);
+			time = TraceSchedule.parse(timeSpec, TimeRadix.DEC);
 		}
 		catch (Exception e) {
 			Msg.error(DebuggerCoordinates.class,

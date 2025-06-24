@@ -28,6 +28,7 @@ import ghidra.debug.api.tracermi.LaunchParameter;
 import ghidra.debug.api.tracermi.TerminalSession;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmiLaunchOffer {
@@ -107,6 +108,13 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
 		if (program != null) {
+			LaunchParameter<?> imageParameter = imageParameter();
+			if (imageParameter != null) {
+				ValStr<?> valStr = args.get(imageParameter.name());
+				if (valStr != null && !valStr.str().contains(program.getName())) {
+					Msg.warn(this, "Possible mismatch for " + program.getName() + ": " + valStr.str());
+				}
+			}
 			env.put("GHIDRA_LANGUAGE_ID", program.getLanguageID().toString());
 		}
 

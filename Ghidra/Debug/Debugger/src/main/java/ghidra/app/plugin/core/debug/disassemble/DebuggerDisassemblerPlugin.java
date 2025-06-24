@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,13 +117,13 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 			// It has never been known up to this snap
 			return null;
 		}
-		TraceMemoryRegion region =
-			memoryManager.getRegionContaining(mrent.getKey().getY1(), start);
-		if (region == null || region.isWrite()) {
+		long ks = mrent.getKey().getY1();
+		TraceMemoryRegion region = memoryManager.getRegionContaining(ks, start);
+		if (region == null || region.isWrite(ks)) {
 			// It could have changed this snap, so unknown
 			return null;
 		}
-		return mrent.getKey().getY1();
+		return ks;
 	}
 
 	/**
@@ -133,8 +133,8 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	 * The view contains the addresses in {@code known | (readOnly & everKnown)}, where {@code
 	 * known} is the set of addresses in the {@link TraceMemoryState#KNOWN} state, {@code readOnly}
 	 * is the set of addresses in a {@link TraceMemoryRegion} having
-	 * {@link TraceMemoryRegion#isWrite()} false, and {@code everKnown} is the set of addresses in
-	 * the {@link TraceMemoryState#KNOWN} state in any previous snapshot.
+	 * {@link TraceMemoryRegion#isWrite(long)} false, and {@code everKnown} is the set of addresses
+	 * in the {@link TraceMemoryState#KNOWN} state in any previous snapshot.
 	 * 
 	 * <p>
 	 * In plainer English, we want addresses that have freshly read bytes right now, or addresses in
@@ -158,7 +158,7 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		}
 		TraceMemoryManager memoryManager = trace.getMemoryManager();
 		AddressSetView readOnly =
-			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
+			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite(ks));
 		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
 			s -> s == TraceMemoryState.KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
@@ -170,6 +170,7 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 
 	CurrentPlatformTraceDisassembleAction actionDisassemble;
 	CurrentPlatformTracePatchInstructionAction actionPatchInstruction;
+	TracePatchDataAction actionPatchData;
 
 	public DebuggerDisassemblerPlugin(PluginTool tool) {
 		super(tool);
@@ -185,9 +186,11 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 	protected void createActions() {
 		actionDisassemble = new CurrentPlatformTraceDisassembleAction(this);
 		actionPatchInstruction = new CurrentPlatformTracePatchInstructionAction(this);
+		actionPatchData = new TracePatchDataAction(this);
 
 		tool.addAction(actionDisassemble);
 		tool.addAction(actionPatchInstruction);
+		tool.addAction(actionPatchData);
 	}
 
 	/**

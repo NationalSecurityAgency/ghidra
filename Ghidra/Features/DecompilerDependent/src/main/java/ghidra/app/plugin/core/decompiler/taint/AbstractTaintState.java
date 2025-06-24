@@ -43,21 +43,25 @@ public abstract class AbstractTaintState implements TaintState {
 
 	public static String ENGINE_NAME = "";
 
-	private Set<TaintLabel> sources = new HashSet<>();
-	private Set<TaintLabel> sinks = new HashSet<>();
-	private Set<TaintLabel> gates = new HashSet<>();
+	protected Set<TaintLabel> sources = new HashSet<>();
+	protected Set<TaintLabel> sinks = new HashSet<>();
+	protected Set<TaintLabel> gates = new HashSet<>();
 
 	// Sets used for highlighting.
-	private AddressSet taintAddressSet = new AddressSet();
-	private Map<Address, Set<TaintQueryResult>> taintVarnodeMap = new HashMap<>();
+	protected AddressSet taintAddressSet = new AddressSet();
+	protected Map<Address, Set<TaintQueryResult>> taintVarnodeMap = new HashMap<>();
 
-	/// private QueryDataFrame currentQueryData;
-	private SarifSchema210 currentQueryData;
+	private AddressSet deltaAddressSet = new AddressSet();
+	private Map<Address, Set<TaintQueryResult>> deltaVarnodeMap = new HashMap<>();
+
+	protected SarifSchema210 currentQueryData;
 
 	protected TaintOptions taintOptions;
-	private TaintPlugin plugin;
-
+	protected TaintPlugin plugin;
+	protected boolean usesIndex = true;
 	private boolean cancellation;
+
+	private TaskType taskType = TaskType.SET_TAINT;
 
 	public AbstractTaintState(TaintPlugin plugin) {
 		this.plugin = plugin;
@@ -70,9 +74,13 @@ public abstract class AbstractTaintState implements TaintState {
 	public abstract void buildIndex(List<String> param_list, String engine_path, String facts_path,
 			String index_path);
 
+	protected abstract void writeHeader(PrintWriter writer);
+
 	protected abstract void writeRule(PrintWriter writer, TaintLabel mark, boolean isSource);
 
 	protected abstract void writeGate(PrintWriter writer, TaintLabel mark);
+
+	protected abstract void writeFooter(PrintWriter writer);
 
 	@Override
 	public boolean wasCancelled() {
@@ -116,6 +124,17 @@ public abstract class AbstractTaintState implements TaintState {
 		marks.add(tlabel);
 		plugin.getTool().contextChanged(plugin.getDecompilerProvider());
 		return tlabel;
+	}
+
+	@Override
+	public TaintLabel getLabelForToken(MarkType type, ClangToken token) {
+		Set<TaintLabel> marks = getTaintLabels(type);
+		for (TaintLabel existingLabel : marks) {
+			if (token.equals(existingLabel.getToken())) {
+				return existingLabel;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -162,7 +181,6 @@ public abstract class AbstractTaintState implements TaintState {
 	 * The artifacts (e.g., sources) that are used in the datalog query are those
 	 * selected by the user via the menu.
 	 * 
-	 * <p>
 	 * @param queryTextFile - file containing the query
 	 * @return success
 	 * @throws Exception - on write
@@ -170,15 +188,13 @@ public abstract class AbstractTaintState implements TaintState {
 	public boolean writeQueryFile(File queryTextFile) throws Exception {
 
 		PrintWriter writer = new PrintWriter(queryTextFile);
-		writer.println("#include \"pcode/taintquery.dl\"");
+		writeHeader(writer);
 
 		for (TaintLabel mark : sources) {
 			if (mark.isActive()) {
 				writeRule(writer, mark, true);
 			}
 		}
-
-		writer.println("");
 
 		for (TaintLabel mark : sinks) {
 			if (mark.isActive()) {
@@ -188,7 +204,6 @@ public abstract class AbstractTaintState implements TaintState {
 		}
 
 		if (!gates.isEmpty()) {
-			writer.println("");
 			for (TaintLabel mark : gates) {
 				if (mark.isActive()) {
 					writeGate(writer, mark);
@@ -196,6 +211,8 @@ public abstract class AbstractTaintState implements TaintState {
 			}
 		}
 
+		writeFooter(writer);
+		
 		writer.flush();
 		writer.close();
 
@@ -217,7 +234,7 @@ public abstract class AbstractTaintState implements TaintState {
 			return false;
 		}
 
-		List<String> param_list = new ArrayList<String>();
+		List<String> paramList = new ArrayList<String>();
 		File queryFile = null;
 		taintOptions = plugin.getOptions();
 
@@ -225,36 +242,38 @@ public abstract class AbstractTaintState implements TaintState {
 
 			// Make sure we can access and execute the engine binary.
 			Path engine = Path.of(taintOptions.getTaintEnginePath());
-			File engine_file = engine.toFile();
+			File engineFile = engine.toFile();
 
-			if (!engine_file.exists() || !engine_file.canExecute()) {
+			if (!engineFile.exists()) {
 				plugin.consoleMessage("The " + getName() + " binary (" +
-					engine_file.getCanonicalPath() + ") cannot be found or executed.");
-				engine_file = getFilePath(taintOptions.getTaintEnginePath(),
+					engineFile.getCanonicalPath() + ") cannot be found or executed.");
+				engineFile = getFilePath(taintOptions.getTaintEnginePath(),
 					"Select the " + getName() + " binary");
-				if (engine_file == null) {
+				if (engineFile == null) {
 					plugin.consoleMessage(
 						"No " + getName() + " engine has been specified; exiting query function.");
 					return false;
 				}
 			}
 
-			plugin.consoleMessage("Using " + getName() + " binary: " + engine_file.toString());
+			plugin.consoleMessage("Using " + getName() + " binary: " + engineFile.toString());
 
-			Path index_directory = Path.of(taintOptions.getTaintOutputDirectory());
+			Path indexDirectory = Path.of(taintOptions.getTaintOutputDirectory());
 			Path indexDBPath = Path.of(taintOptions.getTaintOutputDirectory(),
 				taintOptions.getTaintIndexDBName(program.getName()));
-
 			File indexDBFile = indexDBPath.toFile();
-			plugin.consoleMessage("Attempting to use index: " + indexDBFile.toString());
-
-			if (!indexDBFile.exists()) {
-				plugin.consoleMessage("The index database for the binary named: " +
-					program.getName() + " does not exist; create it first.");
-				return false;
+			
+			if (usesIndex) {
+				plugin.consoleMessage("Attempting to use index: " + indexDBFile.toString());
+	
+				if (!indexDBFile.exists()) {
+					plugin.consoleMessage("The index database for the binary named: " +
+						program.getName() + " does not exist; create it first.");
+					return false;
+				}
+	
+				plugin.consoleMessage("Using index database: " + indexDBFile);
 			}
-
-			plugin.consoleMessage("Using index database: " + indexDBFile);
 
 			switch (queryType) {
 				case SRCSINK:
@@ -277,31 +296,32 @@ public abstract class AbstractTaintState implements TaintState {
 					plugin.consoleMessage("Unknown query type.");
 			}
 
-			buildQuery(param_list, engine, indexDBFile, index_directory.toString());
+			buildQuery(paramList, engine, indexDBFile, indexDirectory.toString());
 
 			if (queryType.equals(QueryType.SRCSINK) || queryType.equals(QueryType.CUSTOM)) {
 				// The datalog that specifies the query.
-				if (queryType.equals(QueryType.CUSTOM)) {
+				if (queryType.equals(QueryType.CUSTOM)) {					
 					Path queryPath = Path.of(taintOptions.getTaintOutputDirectory(),
 						taintOptions.getTaintQueryDLName());
-					queryFile = queryPath.toFile();
+					GhidraFileChooser chooser = new GhidraFileChooser(plugin.getProvider().getComponent());
+					chooser.setCurrentDirectory(queryPath.toFile());
+					queryFile = chooser.getSelectedFile();
+					if (queryFile == null) {
+						return false;
+					}
 				}
-				param_list.add(queryFile.getAbsolutePath());
+				paramList.add(queryFile.getAbsolutePath());
 			}
 
-			Msg.info(this, "Query Param List: " + param_list.toString());
+			Msg.info(this, "Query Param List: " + paramList.toString());
 			try {
-				ProcessBuilder pb = new ProcessBuilder(param_list);
+				ProcessBuilder pb = new ProcessBuilder(paramList);
 				pb.directory(new File(taintOptions.getTaintOutputDirectory()));
 				pb.redirectError(Redirect.INHERIT);
 				Process p = pb.start();
 
-				switch (taintOptions.getTaintOutputForm()) {
-					case "sarif+all":
-						readQueryResultsIntoDataFrame(program, p.getInputStream());
-						break;
-					default:
-				}
+				readQueryResultsIntoDataFrame(program, p.getInputStream());
+
 				// We wait for the process to finish after starting to read the input stream,
 				// otherwise waitFor() might wait for a running process trying to write to 
 				// a filled output buffer. This causes waitFor() to wait indefinitely.
@@ -322,9 +342,10 @@ public abstract class AbstractTaintState implements TaintState {
 	}
 
 	/**
+	 * @param prog current program if needed
 	 * @param is the input stream (SARIF json) from the process builder that runs the engine
 	 */
-	private void readQueryResultsIntoDataFrame(Program program, InputStream is) {
+	protected void readQueryResultsIntoDataFrame(Program prog, InputStream is) {
 
 		StringBuilder sb = new StringBuilder();
 		String line = null;
@@ -401,25 +422,54 @@ public abstract class AbstractTaintState implements TaintState {
 
 	@Override
 	public void setTaintAddressSet(AddressSet aset) {
-		taintAddressSet = aset;
+		switch (taskType) {
+			case SET_TAINT -> taintAddressSet = aset;
+			case SET_DELTA -> deltaAddressSet = aset;
+			case APPLY_DELTA -> {
+				// Empty
+			}
+		}
 	}
 
 	@Override
 	public AddressSet getTaintAddressSet() {
-		return taintAddressSet;
+		return switch(taskType) {
+			case SET_TAINT -> taintAddressSet;
+			case SET_DELTA -> deltaAddressSet;
+			case APPLY_DELTA ->  taintAddressSet.subtract(deltaAddressSet);
+			default -> new AddressSet();
+		};
+	}
+
+	@Override
+	public void setTaskType(TaskType taskType) {
+		this.taskType = taskType;
 	}
 
 	@Override
 	public void augmentAddressSet(ClangToken token) {
 		Address addr = token.getMinAddress();
-		if (addr != null) {
-			taintAddressSet.add(addr);
+		if (addr == null) {
+			return;
+		}
+		switch (taskType) {
+			case SET_TAINT -> taintAddressSet.add(addr);
+			case SET_DELTA -> deltaAddressSet.add(addr);
+			case APPLY_DELTA -> {
+				if (!deltaAddressSet.contains(addr)) {
+					taintAddressSet.add(addr);
+				}
+			}
 		}
 	}
 
 	@Override
-	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap) {
-		taintVarnodeMap = vmap;
+	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta) {
+		switch (delta) {
+			case SET_TAINT -> taintVarnodeMap = vmap;
+			case SET_DELTA -> deltaVarnodeMap = vmap;
+			case APPLY_DELTA -> taintVarnodeMap = vmap;
+		}
 	}
 
 	@Override
@@ -428,10 +478,41 @@ public abstract class AbstractTaintState implements TaintState {
 	}
 
 	@Override
+	public Set<TaintQueryResult> getQuerySet(Address key) {
+		Set<TaintQueryResult> set = new HashSet<>();
+		switch (taskType) {
+			case SET_TAINT -> set = taintVarnodeMap.get(key);
+			case SET_DELTA -> set = deltaVarnodeMap.get(key);
+			case APPLY_DELTA -> {
+				Set<TaintQueryResult> A = taintVarnodeMap.get(key);
+				if (A != null) {
+					set.addAll(A);
+				}
+				Set<TaintQueryResult> B = deltaVarnodeMap.get(key);
+				if (A != null) {
+					set.removeAll(B);
+				}
+			}
+		}
+		return set;
+	}
+
+	@Override
 	public void clearTaint() {
 		Msg.info(this, "TaintState: clearTaint() - clearing address set");
-		taintAddressSet.clear();
-		taintVarnodeMap.clear();
+		switch (taskType) {
+			case SET_TAINT -> {
+				taintAddressSet.clear();
+				taintVarnodeMap.clear();
+			}
+			case SET_DELTA -> {
+				deltaAddressSet.clear();
+				deltaVarnodeMap.clear();
+			}
+			case APPLY_DELTA -> {
+				// EMPTY
+			}
+		}
 	}
 
 	@Override
@@ -469,6 +550,7 @@ public abstract class AbstractTaintState implements TaintState {
 		return plugin.getOptions();
 	}
 
+	@Override
 	public String getName() {
 		return ENGINE_NAME;
 	}

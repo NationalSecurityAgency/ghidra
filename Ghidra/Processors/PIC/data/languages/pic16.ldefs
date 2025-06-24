@@ -23,7 +23,7 @@
             processorspec="pic16f.pspec"
             manualindexfile="../manuals/PIC-16F.idx"
             id="PIC-16:LE:16:PIC-16F">
-    <description>PIC-16F(L)XXX</description>
+    <description>PIC-16(L)FXXX</description>
     <compiler name="default" spec="pic16f.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="pic16fxx"/>
   </language>

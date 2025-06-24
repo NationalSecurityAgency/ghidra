@@ -22,6 +22,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -63,7 +65,7 @@ public record FieldForSpaceIndirect(AddressSpace space) implements InstanceField
 			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, null, null);
 
 		// [...]
-		iv.visitVarInsn(ALOAD, 0);
+		InitFixedLocal.THIS.generateLoadCode(iv);
 		// [...,this]
 		gen.generateLoadJitStateSpace(space, iv);
 		// [...,this,jitspace]
@@ -75,7 +77,7 @@ public record FieldForSpaceIndirect(AddressSpace space) implements InstanceField
 	@Override
 	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
 		// [...]
-		rv.visitVarInsn(ALOAD, 0);
+		RunFixedLocal.THIS.generateLoadCode(rv);
 		// [...,this]
 		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(),
 			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);

@@ -54,6 +54,7 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 
 		JTextField registerField =
 			new JTextField(register.getName() + " (" + register.getBitLength() + ")");
+		registerField.getAccessibleContext().setAccessibleName("Register");
 		registerField.setEditable(false);
 
 		Consumer<Address> addressChangeListener = a -> updateOk();
@@ -61,6 +62,7 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		endAddrField = new AddressInput(program, addressChangeListener);
 
 		registerValueField = new FixedBitSizeValueField(register.getBitLength(), true, false);
+		registerValueField.getAccessibleContext().setAccessibleName("Register Value");
 		startAddrField.setAddress(start);
 		endAddrField.setAddress(end);
 		registerValueField.setValue(value);
@@ -76,7 +78,7 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		panel.add(endAddrField);
 		panel.add(new GLabel("Value:"));
 		panel.add(registerValueField);
-
+		panel.getAccessibleContext().setAccessibleName("Edit Register Value");
 		return panel;
 	}
 

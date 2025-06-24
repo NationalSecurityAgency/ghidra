@@ -38,9 +38,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class SymbolTableCommand extends LoadCommand {
 	private long symoff;
-	private int nsyms;
+	private long nsyms;
 	private long stroff;
-	private int strsize;
+	private long strsize;
 
 	private List<NList> symbols = new ArrayList<NList>();
 
@@ -59,11 +59,11 @@ public class SymbolTableCommand extends LoadCommand {
 		super(loadCommandReader);
 
 		symoff = loadCommandReader.readNextUnsignedInt();
-		nsyms = loadCommandReader.readNextInt();
+		nsyms = checkCount(loadCommandReader.readNextUnsignedInt());
 		stroff = loadCommandReader.readNextUnsignedInt();
-		strsize = loadCommandReader.readNextInt();
+		strsize = loadCommandReader.readNextUnsignedInt();
 
-		List<NList> nlistList = new ArrayList<>(nsyms);
+		List<NList> nlistList = new ArrayList<>((int) nsyms);
 		dataReader.setPointerIndex(header.getStartIndex() + symoff);
 		for (int i = 0; i < nsyms; ++i) {
 			nlistList.add(new NList(dataReader, header.is32bit()));
@@ -98,7 +98,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * An integer indicating the number of entries in the symbol table.
 	 * @return the number of entries in the symbol table
 	 */
-	public int getNumberOfSymbols() {
+	public long getNumberOfSymbols() {
 		return nsyms;
 	}
 
@@ -115,7 +115,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * An integer indicating the size (in bytes) of the string table.
 	 * @return string table size in bytes
 	 */
-	public int getStringTableSize() {
+	public long getStringTableSize() {
 		return strsize;
 	}
 
@@ -174,7 +174,7 @@ public class SymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataSize() {
+	public long getLinkerDataSize() {
 		return NList.getSize(symbols);
 	}
 

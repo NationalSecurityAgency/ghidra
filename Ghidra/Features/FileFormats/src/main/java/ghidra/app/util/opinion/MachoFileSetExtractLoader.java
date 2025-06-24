@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,11 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.formats.ios.fileset.MachoFileSetExtractor;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.listing.Group;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -55,7 +57,8 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
+			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, false, log,
+				monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -70,9 +73,28 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 
 	@Override
 	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor)
+			MessageLog log, Program program, TaskMonitor monitor)
 			throws IOException, LoadException, CancelledException {
-		load(provider, loadSpec, options, program, monitor, messageLog);
+		FSRL fsrl = provider.getFSRL();
+		Group[] children = program.getListing().getDefaultRootModule().getChildren();
+		if (Arrays.stream(children).anyMatch(e -> e.getName().contains(fsrl.getPath()))) {
+			log.appendMsg("%s has already been added".formatted(fsrl.getPath()));
+			return;
+		}
+		try {
+			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, true, log,
+				monitor);
+		}
+		catch (CancelledException e) {
+			return;
+		}
+		catch (IOException e) {
+			throw e;
+		}
+		catch (Exception e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
@@ -102,8 +124,13 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 	}
 
 	@Override
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
+		return false;
+	}
+
+	@Override
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		// Do nothing
 	}

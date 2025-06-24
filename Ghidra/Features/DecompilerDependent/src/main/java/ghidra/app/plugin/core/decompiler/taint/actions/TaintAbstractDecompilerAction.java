@@ -130,17 +130,13 @@ public abstract class TaintAbstractDecompilerAction extends DockingAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
-			return isEnabledForDecompilerContext(decompilerContext);
-		});
+		return isEnabledForDecompilerContext(decompilerContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		decompilerContext.performAction(() -> {
-			decompilerActionPerformed(decompilerContext);
-		});
+		decompilerActionPerformed(decompilerContext);
 	}
 
 	protected Symbol getSymbol(DecompilerActionContext context) {

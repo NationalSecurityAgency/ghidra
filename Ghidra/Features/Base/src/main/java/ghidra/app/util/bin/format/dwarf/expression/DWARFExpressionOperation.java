@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.Arrays;
  * An immutable representation of a single {@link DWARFExpression} instruction and its operands.
  * <p>
  * A DWARF expression operation can take 0, 1, or 2 operands.
- * <p>
  */
 class DWARFExpressionOperation {
 	protected final int offset;
@@ -71,7 +70,7 @@ class DWARFExpressionOperation {
 	 * <p>
 	 * Ie. If this opcode was DW_OP_reg12 (0x5c), and the base op code was DW_OP_reg0 (0x50),
 	 * the result value would be 12.
-	 * <p>
+	 * 
 	 * @param baseOpCode Ordinal value of the opcode that this opcode is being compared ot.
 	 * @return numeric difference between this opcode and the base opcode.
 	 */

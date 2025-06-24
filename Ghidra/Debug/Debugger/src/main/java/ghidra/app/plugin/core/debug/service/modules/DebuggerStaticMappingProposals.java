@@ -72,15 +72,22 @@ public enum DebuggerStaticMappingProposals {
 	}
 
 	protected interface ProposalGenerator<F, T, MP extends MapProposal<?, ?, ?>> {
-		MP proposeMap(F from, T to);
+		MP proposeMap(F from, long snap, T to);
 
-		MP proposeBestMap(F from, Collection<? extends T> tos);
+		MP proposeBestMap(F from, long snap, Collection<? extends T> tos);
 
-		Map<F, MP> proposeBestMaps(Collection<? extends F> froms, Collection<? extends T> tos);
+		Map<F, MP> proposeBestMaps(Collection<? extends F> froms, long snap,
+				Collection<? extends T> tos);
 	}
 
 	protected abstract static class AbstractProposalGenerator //
 	<F, T, J, MP extends MapProposal<?, ?, ?>> {
+		protected final long snap;
+
+		public AbstractProposalGenerator(long snap) {
+			this.snap = snap;
+		}
+
 		protected abstract MP proposeMap(F from, T to);
 
 		protected abstract J computeFromJoinKey(F from);
@@ -133,29 +140,31 @@ public enum DebuggerStaticMappingProposals {
 		}
 
 		@Override
-		public ModuleMapProposal proposeMap(TraceModule from, Program to) {
-			return new DefaultModuleMapProposal(from, to);
+		public ModuleMapProposal proposeMap(TraceModule from, long snap, Program to) {
+			return new DefaultModuleMapProposal(from, snap, to);
 		}
 
 		@Override
-		public ModuleMapProposal proposeBestMap(TraceModule from,
+		public ModuleMapProposal proposeBestMap(TraceModule from, long snap,
 				Collection<? extends Program> tos) {
-			Collection<IndexEntry> entries = indexer.filter(indexer.getBestEntries(from), tos);
-			DomainFile df = indexer.getBestMatch(from, null, entries);
+			Collection<IndexEntry> entries =
+				indexer.filter(indexer.getBestEntries(from, snap), tos);
+			DomainFile df = indexer.getBestMatch(from, snap, null, entries);
 			if (df == null) {
 				return null;
 			}
 			try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(df)) {
-				return proposeMap(from, (Program) peek.object);
+				return proposeMap(from, snap, (Program) peek.object);
 			}
 		}
 
 		@Override
 		public Map<TraceModule, ModuleMapProposal> proposeBestMaps(
-				Collection<? extends TraceModule> froms, Collection<? extends Program> tos) {
+				Collection<? extends TraceModule> froms, long snap,
+				Collection<? extends Program> tos) {
 			Map<TraceModule, ModuleMapProposal> result = new LinkedHashMap<>();
 			for (TraceModule f : froms) {
-				ModuleMapProposal map = proposeBestMap(f, tos);
+				ModuleMapProposal map = proposeBestMap(f, snap, tos);
 				if (map != null) {
 					result.put(f, map);
 				}
@@ -164,16 +173,20 @@ public enum DebuggerStaticMappingProposals {
 		}
 	}
 
-	protected static class SectionMapProposalGenerator
+	public static class SectionMapProposalGenerator
 			extends AbstractProposalGenerator<TraceModule, Program, String, SectionMapProposal> {
+		public SectionMapProposalGenerator(long snap) {
+			super(snap);
+		}
+
 		@Override
 		protected SectionMapProposal proposeMap(TraceModule from, Program to) {
-			return new DefaultSectionMapProposal(from, to);
+			return new DefaultSectionMapProposal(from, snap, to);
 		}
 
 		@Override
 		protected String computeFromJoinKey(TraceModule from) {
-			return getLastLower(from.getName());
+			return getLastLower(from.getName(snap));
 		}
 
 		@Override
@@ -182,14 +195,18 @@ public enum DebuggerStaticMappingProposals {
 		}
 	}
 
-	protected static class RegionMapProposalGenerator extends
+	public static class RegionMapProposalGenerator extends
 			AbstractProposalGenerator<Collection<TraceMemoryRegion>, Program, Set<String>, //
 					RegionMapProposal> {
+
+		public RegionMapProposalGenerator(long snap) {
+			super(snap);
+		}
 
 		@Override
 		protected RegionMapProposal proposeMap(Collection<TraceMemoryRegion> from,
 				Program to) {
-			return new DefaultRegionMapProposal(from, to);
+			return new DefaultRegionMapProposal(from, snap, to);
 		}
 
 		@Override
@@ -206,14 +223,11 @@ public enum DebuggerStaticMappingProposals {
 		}
 	}
 
-	// TODO: Should these also take advantage of the program-module index?
-	protected static final SectionMapProposalGenerator SECTIONS = new SectionMapProposalGenerator();
-	protected static final RegionMapProposalGenerator REGIONS = new RegionMapProposalGenerator();
-
 	public static RegionMapProposal proposeRegionMap(
-			Collection<? extends TraceMemoryRegion> regions,
+			Collection<? extends TraceMemoryRegion> regions, long snap,
 			Collection<? extends Program> programs) {
-		return REGIONS.proposeBestMap(Collections.unmodifiableCollection(regions), programs);
+		return new RegionMapProposalGenerator(snap)
+				.proposeBestMap(Collections.unmodifiableCollection(regions), programs);
 	}
 
 	public static <V, J> Set<Set<V>> groupByComponents(Collection<? extends V> vertices,
@@ -248,8 +262,9 @@ public enum DebuggerStaticMappingProposals {
 		}
 		catch (IllegalArgumentException e) { // Parse error
 			Msg.error(DebuggerStaticMappingProposals.class,
-				"Encountered unparsable path: " + region.getName());
-			key = region.getName(); // Not a great fallback, but it'll have to do
+				"Encountered unparsable path: " + region.getPath());
+			// Path should always parse in object mode. In legacy mode, snap doesn't matter
+			key = region.getName(0); // Not a great fallback, but it'll have to do
 		}
 		return Stream.of(key.split("\\s+"))
 				.filter(n -> n.replaceAll("[0-9A-Fa-f]+", "").length() >= 5)

@@ -139,7 +139,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 	protected abstract void removeTextMapping(T t, Program program) throws Throwable;
 
-	protected abstract void addTargetSoftwareBreakpoint(T t, MR region) throws Throwable;
+	protected abstract void addTargetSoftwareBreakpoint(T t, MR region, int offset, Integer id)
+			throws Throwable;
+
+	protected void addTargetSoftwareBreakpoint(T t, MR region) throws Throwable {
+		addTargetSoftwareBreakpoint(t, region, 0x123, null);
+	}
 
 	protected abstract void removeTargetSoftwareBreakpoint(T t) throws Throwable;
 
@@ -147,7 +152,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 	protected abstract void terminateTarget(T t);
 
-	protected abstract TraceBreakpoint findLoc(Set<TraceBreakpoint> locs, int index);
+	protected abstract TraceBreakpoint findLoc(long snap, Set<TraceBreakpoint> locs, int index);
 
 	protected abstract void handleToggleBreakpointInvocation(T target,
 			TraceBreakpoint expectedBreakpoint,
@@ -1321,6 +1326,44 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 	}
 
 	@Test
+	public void testReuseBreakpointKeyTraceOnly() throws Throwable {
+		createTarget1();
+		Trace trace = getTrace(target1);
+		traceManager.openTrace(trace);
+
+		MR text = addTargetTextRegion(target1);
+		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(breakpointService.changesSettled());
+
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
+
+		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+
+		int id = Integer.parseInt(
+			((TraceObjectBreakpointLocation) Unique.assertOne(lb.getTraceBreakpoints(trace)))
+					.getSpecification()
+					.getObject()
+					.getCanonicalPath()
+					.index());
+
+		// Simulate a step, which should also cause snap advance in target
+		simulateTargetStep(target1);
+
+		CompletableFuture<Void> delete = lb.delete();
+		handleDeleteBreakpointInvocation(target1, Unique.assertOne(lb.getTraceBreakpoints(trace)));
+		waitOn(delete);
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(0, breakpointService.getAllBreakpoints().size());
+
+		addTargetSoftwareBreakpoint(target1, text, 0x128, id);
+		waitOn(breakpointService.changesSettled());
+
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 0x55550128, 1);
+	}
+
+	@Test
 	public void testRecordThenCloseTraceOnly() throws Throwable {
 		createTarget1();
 		Trace trace = getTrace(target1);
@@ -1373,8 +1416,9 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		Set<TraceBreakpoint> locs = lb.getTraceBreakpoints();
 
-		TraceBreakpoint bpt0 = findLoc(locs, 0);
-		TraceBreakpoint bpt1 = findLoc(locs, 1);
+		long snap = getSnap(target1);
+		TraceBreakpoint bpt0 = findLoc(snap, locs, 0);
+		TraceBreakpoint bpt1 = findLoc(snap, locs, 1);
 		CompletableFuture<Void> disable = breakpointService.disableLocs(Set.of(bpt0));
 		handleToggleBreakpointInvocation(target1, bpt0, false);
 		waitOn(disable);
@@ -1440,7 +1484,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(State.MIXED, lbEx.computeState().sameAdddress(lbRw.computeState()));
 	}
 
-	protected void addTextMappingDead(Program p, ToyDBTraceBuilder tb) throws Throwable {
+	protected void addTextMappingDead(long snap, Program p, ToyDBTraceBuilder tb) throws Throwable {
 		addProgramTextBlock(p);
 		try (Transaction tid = tb.startTransaction()) {
 			TraceMemoryRegion textRegion = tb.trace.getMemoryManager()
@@ -1448,8 +1492,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 						tb.range(0x55550000, 0x55550fff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(tb.trace, null, textRegion.getLifespan(),
-					textRegion.getMinAddress()),
+				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(snap),
+					textRegion.getMinAddress(snap)),
 				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000, false);
 		}
 		waitForDomainObject(tb.trace);
@@ -1473,7 +1517,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		intoProject(program);
 		programManager.openProgram(program);
 
-		addTextMappingDead(program, tb);
+		addTextMappingDead(0, program, tb);
 
 		addEnabledProgramBreakpointWithSleigh(program);
 		waitOn(mappingService.changesSettled());
@@ -1489,7 +1533,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		TraceBreakpoint bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
-		assertEquals("r0=0xbeef;", bpt.getEmuSleigh());
+		assertEquals("r0=0xbeef;", bpt.getEmuSleigh(0));
 	}
 
 	@Test
@@ -1508,7 +1552,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
-		addTextMappingDead(program, tb);
+		addTextMappingDead(0, program, tb);
 		waitOn(mappingService.changesSettled());
 		waitOn(breakpointService.changesSettled());
 		lb = Unique.assertOne(
@@ -1521,7 +1565,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		TraceBreakpoint bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
-		assertEquals("r0=0xbeef;", bpt.getEmuSleigh());
+		assertEquals("r0=0xbeef;", bpt.getEmuSleigh(0));
 	}
 
 	@Test
@@ -1545,7 +1589,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
 						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
 						false /* emuEnabled defaults to true */, "");
-			bpt.setEmuSleigh("r0=0xbeef;");
+			bpt.setEmuSleigh(0, "r0=0xbeef;");
 		}
 		waitForDomainObject(tb.trace);
 		waitOn(mappingService.changesSettled());
@@ -1555,7 +1599,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
-		addTextMappingDead(program, tb);
+		addTextMappingDead(0, program, tb);
 		waitOn(mappingService.changesSettled());
 		waitOn(breakpointService.changesSettled());
 
@@ -1600,7 +1644,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 						tb.addr(0x55550123),
 						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
 						false /* emuEnabled defaults to true */, "");
-			bpt.setEmuSleigh("r0=0xbeef;");
+			bpt.setEmuSleigh(0, "r0=0xbeef;");
 			waitForValue(() -> Unique.assertAtMostOne(
 				breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123))));
 

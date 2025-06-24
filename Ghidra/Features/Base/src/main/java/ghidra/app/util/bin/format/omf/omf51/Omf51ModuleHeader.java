@@ -56,7 +56,7 @@ public class Omf51ModuleHeader extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(moduleName.toDataType(), "name", null);
+		struct.add(moduleName.toDataType(), moduleName.getDataTypeSize(), "name", null);
 		struct.add(BYTE, "TRN ID", null);
 		struct.add(BYTE, "padding", null);
 		struct.add(BYTE, "checksum", null);

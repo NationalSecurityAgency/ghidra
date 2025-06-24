@@ -20,7 +20,6 @@ import java.util.Collection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.info.TraceObjectInfo;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * The specification of a breakpoint applied to a target object
@@ -65,11 +64,9 @@ public interface TraceObjectBreakpointSpec extends TraceBreakpoint, TraceObjectI
 	// TODO: Make command list part of the common interface?
 	// TODO: Make condition part of the common interface?
 
-	void setLifespan(Lifespan lifespan) throws DuplicateNameException;
+	Collection<? extends TraceObjectBreakpointLocation> getLocations(long snap);
 
-	Collection<? extends TraceObjectBreakpointLocation> getLocations();
-
-	String getExpression();
+	String getExpression(long snap);
 
 	void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds);
 }

@@ -281,7 +281,7 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override
@@ -329,7 +329,7 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	public record Impl(long lmin, long lmax) implements Lifespan {
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override

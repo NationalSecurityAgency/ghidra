@@ -25,22 +25,27 @@ import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 public class RmiRemoteMethod {
 
 	private final SchemaContext schemaContext;
-	private String name;
-	private String action;
-	private String display;
-	private String description;
-	private RmiRemoteMethodParameter[] params;
-	private TraceObjectSchema schema;
-	private RmiMethods instance;
-	private Method m;
+	private final String name;
+	private final String action;
+	private final String display;
+	private final String description;
+	private final String okText;
+	private final String icon;
+	private final RmiRemoteMethodParameter[] params;
+	private final TraceObjectSchema schema;
+	private final RmiMethods instance;
+	private final Method m;
 
 	public RmiRemoteMethod(SchemaContext schemaContext, String name, String action, String display,
-			String description, TraceObjectSchema schema, RmiMethods instance, Method m) {
+			String description, String okText, String icon, TraceObjectSchema schema,
+			RmiMethods instance, Method m) {
 		this.schemaContext = schemaContext;
 		this.name = name;
 		this.action = action;
 		this.display = display;
 		this.description = description;
+		this.okText = okText;
+		this.icon = icon;
 		this.params = new RmiRemoteMethodParameter[m.getParameterCount()];
 		this.schema = schema;
 		this.instance = instance;
@@ -67,6 +72,14 @@ public class RmiRemoteMethod {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public String getOkText() {
+		return okText;
+	}
+
+	public String getIcon() {
+		return icon;
 	}
 
 	public String getAction() {

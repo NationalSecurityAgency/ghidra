@@ -16,6 +16,7 @@
 package ghidra.trace.model.target.iface;
 
 import ghidra.trace.model.target.info.TraceObjectInfo;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 
 /**
  * An object that can emit events affecting itself and its successors
@@ -28,8 +29,11 @@ import ghidra.trace.model.target.info.TraceObjectInfo;
 	shortName = "event scope",
 	attributes = {
 		TraceObjectEventScope.KEY_EVENT_THREAD,
+		TraceObjectEventScope.KEY_TIME_SUPPORT,
 	},
 	fixedKeys = {})
 public interface TraceObjectEventScope extends TraceObjectInterface {
 	String KEY_EVENT_THREAD = "_event_thread";
+	/** See {@link ScheduleForm} */
+	String KEY_TIME_SUPPORT = "_time_support";
 }

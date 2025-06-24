@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,27 +97,27 @@ public class MemviewProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, zoomOutTAction);
 
 		new ToggleActionBuilder("Toggle Layout", plugin.getName()) //
-			//.menuPath("&Toggle layout") //
-			.toolBarIcon(AbstractRefreshAction.ICON)
-			.helpLocation(new HelpLocation(plugin.getName(), "toggle_layout")) //
-			.onAction(ctx -> performToggleLayout(ctx))
-			.buildAndInstallLocal(this);
+				//.menuPath("&Toggle layout") //
+				.toolBarIcon(AbstractRefreshAction.ICON)
+				.helpLocation(new HelpLocation(plugin.getName(), "toggle_layout")) //
+				.onAction(ctx -> performToggleLayout(ctx))
+				.buildAndInstallLocal(this);
 
 		new ToggleActionBuilder("Toggle Process Trace", plugin.getName()) //
-			//.menuPath("&Toggle layout") //
-			.toolBarIcon(DebuggerResources.ICON_SYNC)
-			.helpLocation(new HelpLocation(plugin.getName(), "toggle_process_trace")) //
-			.onAction(ctx -> performToggleTrace(ctx))
-			.selected(false)
-			.buildAndInstallLocal(this);
+				//.menuPath("&Toggle layout") //
+				.toolBarIcon(DebuggerResources.ICON_SYNC)
+				.helpLocation(new HelpLocation(plugin.getName(), "toggle_process_trace")) //
+				.onAction(ctx -> performToggleTrace(ctx))
+				.selected(false)
+				.buildAndInstallLocal(this);
 
 		new ToggleActionBuilder("Apply Filter To Panel", plugin.getName()) //
-			//.menuPath("&Toggle layout") //
-			.toolBarIcon(DebuggerResources.ICON_FILTER)
-			.helpLocation(new HelpLocation(plugin.getName(), "apply_to_panel")) //
-			.onAction(ctx -> performApplyFilterToPanel(ctx))
-			.selected(true)
-			.buildAndInstallLocal(this);
+				//.menuPath("&Toggle layout") //
+				.toolBarIcon(DebuggerResources.ICON_FILTER)
+				.helpLocation(new HelpLocation(plugin.getName(), "apply_to_panel")) //
+				.onAction(ctx -> performApplyFilterToPanel(ctx))
+				.selected(true)
+				.buildAndInstallLocal(this);
 
 	}
 
@@ -218,7 +218,7 @@ public class MemviewProvider extends ComponentProviderAdapter {
 	public void goTo(int x, int y) {
 		Rectangle bounds = scrollPane.getBounds();
 		scrollPane.getViewport()
-			.scrollRectToVisible(new Rectangle(x, y, bounds.width, bounds.height));
+				.scrollRectToVisible(new Rectangle(x, y, bounds.width, bounds.height));
 		scrollPane.getViewport().doLayout();
 	}
 
@@ -304,6 +304,12 @@ public class MemviewProvider extends ComponentProviderAdapter {
 		Swing.runIfSwingOrRunLater(() -> {
 			memviewTable.reset();
 			memviewPanel.reset();
+		});
+	}
+
+	void fireTableDataChanged() {
+		Swing.runIfSwingOrRunLater(() -> {
+			memviewTable.fireTableDataChanged();
 		});
 	}
 }

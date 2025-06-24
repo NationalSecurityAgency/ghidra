@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
@@ -32,7 +31,6 @@ import ghidra.util.xml.XmlUtilities;
 
 /**
  * Factory class to instantiate and cache {@link DWARFRegisterMappings} objects.
- * <p>
  */
 public class DWARFRegisterMappingsManager {
 	private static final String DWARF_REGISTER_MAPPING_NAME = "DWARF.register.mapping.file";
@@ -54,7 +52,6 @@ public class DWARFRegisterMappingsManager {
 	/**
 	 * Returns a possibly cached {@link DWARFRegisterMappings} object for the
 	 * specified language,
-	 * <p>
 	 * 
 	 * @param lang {@link Language} to get the matching DWARF register mappings
 	 *            for
@@ -79,7 +76,6 @@ public class DWARFRegisterMappingsManager {
 	 * <p>
 	 * Throws {@link IOException} if the lang does not have a mapping or it is
 	 * invalid.
-	 * <p>
 	 * 
 	 * @param lang {@link Language} to read the matching DWARF register mappings
 	 *            for
@@ -118,7 +114,6 @@ public class DWARFRegisterMappingsManager {
 	/**
 	 * Creates a new {@link DWARFRegisterMappings} from the data present in the
 	 * xml element.
-	 * <p>
 	 * 
 	 * @param rootElem JDom XML element containing the &lt;dwarf&gt; root
 	 *            element of the mapping file.

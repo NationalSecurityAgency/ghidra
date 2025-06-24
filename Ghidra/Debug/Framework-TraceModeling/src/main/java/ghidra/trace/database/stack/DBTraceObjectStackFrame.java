@@ -19,7 +19,7 @@ import java.util.*;
 
 import ghidra.framework.model.EventType;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
@@ -117,9 +117,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		try (LockHold hold = object.getTrace().lockRead()) {
 			Address pc = getProgramCounter(snap);
 			return pc == null ? null
-					: object.getTrace()
-							.getCommentAdapter()
-							.getComment(snap, pc, CodeUnit.EOL_COMMENT);
+					: object.getTrace().getCommentAdapter().getComment(snap, pc, CommentType.EOL);
 		}
 	}
 
@@ -130,8 +128,8 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 			TraceObjectValue pcAttr = object.getValue(snap, TraceObjectStackFrame.KEY_PC);
 			object.getTrace()
 					.getCommentAdapter()
-					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(),
-						CodeUnit.EOL_COMMENT, comment);
+					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(), CommentType.EOL,
+						comment);
 		}
 	}
 
@@ -151,22 +149,6 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public Lifespan computeSpan() {
-		Lifespan span = DBTraceObjectInterface.super.computeSpan();
-		if (span != null) {
-			return span;
-		}
-		return getStack().computeSpan();
-	}
-
-	protected long snapFor(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceEvents.VALUE_CREATED) {
-			return TraceEvents.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
-		}
-		return computeMinSnap();
 	}
 
 	protected TraceChangeRecord<?, ?> createChangeRecord() {

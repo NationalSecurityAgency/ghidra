@@ -12,7 +12,8 @@ Ghidra provides an out-of-the box integration with the PyGhidra Python library w
 installation and usage fairly straightforward. This enables the Ghidra GUI and headless Ghidra to
 run GhidraScript's written in native CPython 3, as well as interact with the Ghidra GUI through a 
 built-in REPL. To launch Ghidra in PyGhidra-mode, see Ghidra's latest
-[Installation Guide](https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/InstallationGuide.md#pyghidra-mode). 
+[Getting Started](https://github.com/NationalSecurityAgency/ghidra/blob/stable/GhidraDocs/GettingStarted.md#pyghidra-mode)
+document.
 
 It is also possible (and encouraged!) to use PyGhidra as a standalone Python library for usage 
 in reverse engineering workflows where Ghidra may be one of many components involved. The following 
@@ -54,7 +55,7 @@ def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
 
     :param verbose: Enable verbose output during JVM startup (Defaults to False)
     :param install_dir: The path to the Ghidra installation directory.
-        (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
     :return: The PyGhidraLauncher used to start the JVM
     """
 ```
@@ -106,10 +107,11 @@ def open_program(
         language: str = None,
         compiler: str = None,
         loader: Union[str, JClass] = None,
-        program_name: str = None
+        program_name: str = None,
+        nested_project_location = True
 ) -> ContextManager["FlatProgramAPI"]: # type: ignore
     """
-    Opens given binary path in Ghidra and returns FlatProgramAPI object.
+    Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 
     :param binary_path: Path to binary file, may be None.
     :param project_location: Location of Ghidra project to open/create.
@@ -123,8 +125,13 @@ def open_program(
         (Defaults to the Language's default compiler)
     :param loader: The `ghidra.app.util.opinion.Loader` class to use when importing the program.
         This may be either a Java class or its path. (Defaults to None)
-    :param program_name: The name to of the program to open in Ghidra.
+    :param program_name: The name of the program to open in Ghidra.
         (Defaults to None, which results in the name being derived from "binary_path")
+    :param nested_project_location: If True, assumes "project_location" contains an extra nested 
+        directory named "project_name", which contains the actual Ghidra project files/directories.
+        By default, PyGhidra creates Ghidra projects with this nested layout, but the standalone
+        Ghidra program does not.  Nested project locations are True by default to maintain backwards
+        compatibility with older versions of PyGhidra.
     :return: A Ghidra FlatProgramAPI object.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
@@ -190,6 +197,8 @@ def run_script(
     lang: str = None,
     compiler: str = None,
     loader: Union[str, JClass] = None,
+    program_name = None,
+    nested_project_location = True,
     *,
     install_dir: Path = None
 ):
@@ -213,7 +222,14 @@ def run_script(
         This may be either a Java class or its path. (Defaults to None)
     :param install_dir: The path to the Ghidra installation directory. This parameter is only
         used if Ghidra has not been started yet.
-        (Defaults to the GHIDRA_INSTALL_DIR environment variable)
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
+    :param program_name: The name of the program to open in Ghidra.
+        (Defaults to None, which results in the name being derived from "binary_path")
+    :param nested_project_location: If True, assumes "project_location" contains an extra nested 
+        directory named "project_name", which contains the actual Ghidra project files/directories.
+        By default, PyGhidra creates Ghidra projects with this nested layout, but the standalone
+        Ghidra program does not.  Nested project locations are True by default to maintain backwards
+        compatibility with older versions of PyGhidra.
     :raises ValueError: If the provided language, compiler or loader is invalid.
     :raises TypeError: If the provided loader does not implement `ghidra.app.util.opinion.Loader`.
     """
@@ -309,6 +325,16 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__2.2.0:__
+* [`pyghidra.open_program()`](#pyghidraopen_program) and 
+  [`pyghidra.run_script()`](#pyghidrarun_script) now accept a `nested_project_location` parameter
+  which can be set to `False` to open existing Ghidra projects that were created with the
+  Ghidra GUI.
+* If a Ghidra installation directory is not specified by the `install_dir` parameter or
+  `GHIDRA_INSTALL_DIR` environment variable, PyGhidra will look for a `lastrun` file in the
+  Ghidra user settings parent directory, and use the installation directory it specifies.  The
+  `lastrun` file is created by Ghidra 11.4 and later.
+
 __2.1.0:__
 * [`pyghidra.open_program()`](#pyghidraopen_program) now accepts a `program_name` parameter, which
   can be used to override the program name derived from the `binary_path` parameter.

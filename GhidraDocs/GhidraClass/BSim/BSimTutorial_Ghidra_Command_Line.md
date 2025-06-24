@@ -8,7 +8,7 @@ So we can just build PostgreSQL and harvest the object files we need.
 **Note**: For the tutorial, we continue to use the H2 BSim backend. 
 We do not run any PostgreSQL code, we simply analyze some files produced when building PostgreSQL.
 
-Note that these files must be built on a machine running Linux.
+Note that these files must be built on a machine running Linux or macOS.
 Windows users can build these files in a Linux virtual machine.
 
 To build the files, execute the following commands in a shell: [^1] 
@@ -16,7 +16,7 @@ To build the files, execute the following commands in a shell: [^1]
 [^1]: You may need to install additional packages and/or change some build options in order for PostgreSQL to build successfully. The error messages are generally informative.  See the comments in ``make-postgres.sh``.
 
 ```bash
-cd <ghidra_install_dir>/Features/BSim
+cd <ghidra_install_dir>/Ghidra/Features/BSim
 export CFLAGS="-O2 -g"
 ./support/make-postgres.sh
 mkdir ~/postgres_object_files

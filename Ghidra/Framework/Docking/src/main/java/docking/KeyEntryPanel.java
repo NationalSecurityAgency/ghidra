@@ -50,6 +50,11 @@ public class KeyEntryPanel extends JPanel {
 		add(clearButton);
 	}
 
+	@Override
+	public void requestFocus() {
+		keyEntryField.requestFocus();
+	}
+
 	/**
 	 * Returns the text field used by this class
 	 * @return the text field

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -241,6 +241,7 @@ public interface DebuggerStaticMappingService {
 	 * @param entries the entries to add
 	 * @param monitor a monitor to cancel the operation
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
+	 * @throws CancelledException if the user cancels
 	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
 	 * @throws TraceConflictedMappingException if a conflicting mapping overlaps the source and
 	 *             {@code truncateExisting} is false.
@@ -259,6 +260,7 @@ public interface DebuggerStaticMappingService {
 	 * @param entries the entries to add
 	 * @param monitor a monitor to cancel the operation
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
+	 * @throws CancelledException if the user cancels
 	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
 	 */
 	void addSectionMappings(Collection<SectionMapEntry> entries, TaskMonitor monitor,
@@ -275,6 +277,7 @@ public interface DebuggerStaticMappingService {
 	 * @param entries the entries to add
 	 * @param monitor a monitor to cancel the operation
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
+	 * @throws CancelledException if the user cancels
 	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
 	 */
 	void addRegionMappings(Collection<RegionMapEntry> entries, TaskMonitor monitor,
@@ -421,17 +424,18 @@ public interface DebuggerStaticMappingService {
 	 * The service maintains an index of likely module names to domain files in the active project.
 	 * This will search that index for the module's full file path. Failing that, it will search
 	 * just for the module's file name. Among the programs found, it first prefers those whose
-	 * module name list (see {@link ProgramModuleIndexer#setModulePaths(Program, List)}) include the
-	 * sought module. Then, it prefers those whose executable path (see
-	 * {@link Program#setExecutablePath(String)}) matches the sought module. Finally, it prefers
-	 * matches on the program name and the domain file name. Ties in name matching are broken by
-	 * looking for domain files in the same folders as those programs already mapped into the trace
-	 * in the given address space.
+	 * module name list includes the sought module. Then, it prefers those whose executable path
+	 * (see {@link Program#setExecutablePath(String)}) matches the sought module. Finally, it
+	 * prefers matches on the program name and the domain file name. Ties in name matching are
+	 * broken by looking for domain files in the same folders as those programs already mapped into
+	 * the trace in the given address space.
 	 * 
+	 * @param space the fallback address space if the module is missing its base
 	 * @param module the trace module
+	 * @param snap the snapshot to consider
 	 * @return the, possibly empty, set of probable matches
 	 */
-	DomainFile findBestModuleProgram(AddressSpace space, TraceModule module);
+	DomainFile findBestModuleProgram(AddressSpace space, TraceModule module, long snap);
 
 	/**
 	 * Propose a module map for the given module to the given program
@@ -440,14 +444,15 @@ public interface DebuggerStaticMappingService {
 	 * Note, no sanity check is performed on the given parameters. This will simply propose the
 	 * given module-program pair. It is strongly advised to use
 	 * {@link ModuleMapProposal#computeScore()} to assess the proposal. Alternatively, use
-	 * {@link #proposeModuleMap(TraceModule, Collection)} to have the service select the best-scored
-	 * mapping from a collection of proposed programs.
+	 * {@link #proposeModuleMap(TraceModule, long, Collection)} to have the service select the
+	 * best-scored mapping from a collection of proposed programs.
 	 * 
 	 * @param module the module to consider
+	 * @param snap the source snapshot key
 	 * @param program the destination program to consider
 	 * @return the proposal
 	 */
-	ModuleMapProposal proposeModuleMap(TraceModule module, Program program);
+	ModuleMapProposal proposeModuleMap(TraceModule module, long snap, Program program);
 
 	/**
 	 * Compute the best-scored module map for the given module and programs
@@ -460,10 +465,12 @@ public interface DebuggerStaticMappingService {
 	 * @see ModuleMapProposal#computeScore()
 	 * 
 	 * @param module the module to consider
+	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
 	 * @return the best-scored proposal, or {@code null} if no program is proposed
 	 */
-	ModuleMapProposal proposeModuleMap(TraceModule module, Collection<? extends Program> programs);
+	ModuleMapProposal proposeModuleMap(TraceModule module, long snap,
+			Collection<? extends Program> programs);
 
 	/**
 	 * Compute the "best" map of trace module to program for each given module given a collection of
@@ -476,11 +483,13 @@ public interface DebuggerStaticMappingService {
 	 * {@code null} values.
 	 * 
 	 * @param modules the modules to map
+	 * @param snap the source snapshot key
 	 * @param programs the set of proposed destination programs
 	 * @return the proposal
 	 */
 	Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs);
+			Collection<? extends TraceModule> modules, long snap,
+			Collection<? extends Program> programs);
 
 	/**
 	 * Propose a singleton section map from the given section to the given program memory block
@@ -489,15 +498,17 @@ public interface DebuggerStaticMappingService {
 	 * Note, no sanity check is performed on the given parameters. This will simply give a singleton
 	 * map of the given entry. It is strongly advised to use
 	 * {@link SectionMapProposal#computeScore()} to assess the proposal. Alternatively, use
-	 * {@link #proposeSectionMap(TraceModule, Collection)} to have the service select the
+	 * {@link #proposeSectionMap(TraceModule, long, Collection)} to have the service select the
 	 * best-scored mapping from a collection of proposed programs.
 	 * 
 	 * @param section the section to map
+	 * @param snap the source snapshot key
 	 * @param program the destination program
 	 * @param block the memory block in the destination program
 	 * @return the proposed map
 	 */
-	SectionMapProposal proposeSectionMap(TraceSection section, Program program, MemoryBlock block);
+	SectionMapProposal proposeSectionMap(TraceSection section, long snap, Program program,
+			MemoryBlock block);
 
 	/**
 	 * Propose a section map for the given module to the given program
@@ -506,14 +517,15 @@ public interface DebuggerStaticMappingService {
 	 * Note, no sanity check is performed on the given parameters. This will do its best to map
 	 * sections from the given module to memory blocks in the given program. It is strongly advised
 	 * to use {@link SectionMapProposal#computeScore()} to assess the proposal. Alternatively, use
-	 * {@link #proposeSectionMap(TraceModule, Collection)} to have the service select the
+	 * {@link #proposeSectionMap(TraceModule, long, Collection)} to have the service select the
 	 * best-scored mapping from a collection of proposed programs.
 	 * 
 	 * @param module the module whose sections to map
+	 * @param snap the source snapshot key
 	 * @param program the destination program whose blocks to consider
 	 * @return the proposed map
 	 */
-	SectionMapProposal proposeSectionMap(TraceModule module, Program program);
+	SectionMapProposal proposeSectionMap(TraceModule module, long snap, Program program);
 
 	/**
 	 * Proposed the best-scored section map for the given module and programs
@@ -526,10 +538,11 @@ public interface DebuggerStaticMappingService {
 	 * @see SectionMapProposal#computeScore()
 	 * 
 	 * @param module the module whose sections to map
+	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
 	 * @return the best-scored map, or {@code null} if no program is proposed
 	 */
-	SectionMapProposal proposeSectionMap(TraceModule module,
+	SectionMapProposal proposeSectionMap(TraceModule module, long snap,
 			Collection<? extends Program> programs);
 
 	/**
@@ -543,11 +556,13 @@ public interface DebuggerStaticMappingService {
 	 * {@code null} values.
 	 * 
 	 * @param modules the modules to map
+	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
 	 * @return the composite proposal
 	 */
 	Map<TraceModule, SectionMapProposal> proposeSectionMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs);
+			Collection<? extends TraceModule> modules, long snap,
+			Collection<? extends Program> programs);
 
 	/**
 	 * Propose a singleton region map from the given region to the given program memory block
@@ -556,15 +571,16 @@ public interface DebuggerStaticMappingService {
 	 * Note, no sanity check is performed on the given parameters. This will simply give a singleton
 	 * map of the given entry. It is strongly advised to use
 	 * {@link RegionMapProposal#computeScore()} to assess the proposal. Alternatively, use
-	 * {@link #proposeRegionMap(Collection, Collection)} to have the service select the best-scored
-	 * mapping from a collection of proposed programs.
+	 * {@link #proposeRegionMaps(Collection, long, Collection)} to have the service select the
+	 * best-scored mapping from a collection of proposed programs.
 	 * 
 	 * @param region the region to map
+	 * @param snap the source snapshot key
 	 * @param program the destination program
 	 * @param block the memory block in the destination program
 	 * @return the proposed map
 	 */
-	RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
+	RegionMapProposal proposeRegionMap(TraceMemoryRegion region, long snap, Program program,
 			MemoryBlock block);
 
 	/**
@@ -575,14 +591,16 @@ public interface DebuggerStaticMappingService {
 	 * regions to memory blocks in the given program. For the best results, regions should all
 	 * comprise the same module, and the minimum address among the regions should be the module's
 	 * base address. It is strongly advised to use {@link RegionMapProposal#computeScore()} to
-	 * assess the proposal. Alternatively, use {@link #proposeRegionMap(Collection, Collection)} to
-	 * have the service select the best-scored mapping from a collection of proposed programs.
+	 * assess the proposal. Alternatively, use
+	 * {@link #proposeRegionMaps(Collection, long, Collection)} to have the service select the
+	 * best-scored mapping from a collection of proposed programs.
 	 * 
-	 * @param region the region to map
+	 * @param regions the regions to map
+	 * @param snap the source snapshot key
 	 * @param program the destination program whose blocks to consider
 	 * @return the proposed map
 	 */
-	RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
+	RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions, long snap,
 			Program program);
 
 	/**
@@ -597,11 +615,12 @@ public interface DebuggerStaticMappingService {
 	 * regions into likely modules. For the best results, the minimum address of each module should
 	 * be among the regions.
 	 * 
-	 * @param modules the modules to map
+	 * @param regions the regions to map
+	 * @param snap the source snapshot key
 	 * @param programs a set of proposed destination programs
 	 * @return the composite proposal
 	 */
 	Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
-			Collection<? extends TraceMemoryRegion> regions,
+			Collection<? extends TraceMemoryRegion> regions, long snap,
 			Collection<? extends Program> programs);
 }

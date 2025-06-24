@@ -75,31 +75,34 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	 * prevent to much work from happening too fast.  Also, we perform the work in a bulk task
 	 * so that the tree can benefit from optimizations made by the bulk task.
 	 */
-	private List<GTreeTask> bufferedTasks = new ArrayList<>();
+	private List<AbstractSymbolUpdateTask> bufferedTasks = new ArrayList<>();
 	private Map<Program, GTreeState> treeStateMap = new HashMap<>();
 	private SwingUpdateManager domainChangeUpdateManager = new SwingUpdateManager(1000,
-		AbstractSwingUpdateManager.DEFAULT_MAX_DELAY, "Symbol Tree Provider", () -> {
+		AbstractSwingUpdateManager.DEFAULT_MAX_DELAY, "Symbol Tree Provider - Bulk Update", () -> {
 
 			if (bufferedTasks.isEmpty()) {
 				return;
 			}
 
-			if (bufferedTasks.size() == 1) {
-				//
-				// Single events happen from user operations, like creating namespaces and
-				// rename operations.
-				//
-				// Perform a simple update in the normal fashion (a single, targeted filter
-				// performed when adding changing one symbol is faster than the complete
-				// refilter done by the bulk task below).
-				//
-				tree.runTask(bufferedTasks.remove(0));
+			List<AbstractSymbolUpdateTask> copiedTasks = new ArrayList<>(bufferedTasks);
+			bufferedTasks.clear();
+			tree.runTask(new BulkWorkTask(tree, copiedTasks));
+		});
+
+	// Track the tree state from before undo/redo operations so we can put the user's view back. We
+	// buffer this so the user can perform multiple rapid operations without responding to each one.
+	private GTreeState preRestoreTreeState;
+	private SwingUpdateManager restoredUpdateManager = new SwingUpdateManager(750,
+		AbstractSwingUpdateManager.DEFAULT_MAX_DELAY, "Symbol Tree Provider - Restore", () -> {
+
+			// trigger a delayed refilter to happen after we restore the tree state
+			tree.refilterLater();
+			if (preRestoreTreeState == null) {
 				return;
 			}
 
-			ArrayList<GTreeTask> copiedTasks = new ArrayList<>(bufferedTasks);
-			bufferedTasks.clear();
-			tree.runTask(new BulkWorkTask(tree, copiedTasks));
+			tree.restoreTreeState(preRestoreTreeState);
+			preRestoreTreeState = null;
 		});
 
 	public SymbolTreeProvider(PluginTool tool, SymbolTreePlugin plugin) {
@@ -134,7 +137,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	protected SymbolTreeRootNode createRootNode() {
-		return new SymbolTreeRootNode(program);
+		return new SymbolTreeRootNode(program, getNodeGroupThreshold());
 	}
 
 	private JComponent buildProvider() {
@@ -150,10 +153,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private SymbolGTree createTree(SymbolTreeRootNode rootNode) {
 		if (tree != null) {
-			GTreeNode oldRootNode = tree.getModelRoot();
 			tree.setRootNode(rootNode);
-
-			oldRootNode.removeAll();// assist in cleanup a bit
 			return tree;
 		}
 
@@ -309,6 +309,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 //==================================================================================================
 // Class Methods
 //==================================================================================================
+
+	protected int getNodeGroupThreshold() {
+		return plugin.getNodeGroupThreshold();
+	}
 
 	GTree getTree() {
 		return tree;
@@ -470,9 +474,15 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		// seems safer to cancel an edit rather than to commit it without asking.
 		tree.cancelEditing();
 
+		// preserve the original state to handle multiple undo/redo requests
+		if (preRestoreTreeState == null) {
+			preRestoreTreeState = tree.getTreeState();
+		}
+
+		restoredUpdateManager.updateLater();
+
 		SymbolTreeRootNode node = (SymbolTreeRootNode) tree.getModelRoot();
 		node.setChildren(null);
-		tree.refilterLater();
 	}
 
 	private void symbolChanged(Symbol symbol) {
@@ -491,7 +501,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		addTask(new SymbolRemovedTask(tree, symbol));
 	}
 
-	private void addTask(GTreeTask task) {
+	private void addTask(AbstractSymbolUpdateTask task) {
 		// Note: if we want to call this method from off the Swing thread, then we have to
 		//       synchronize on the list that we are adding to here.
 		Swing.assertSwingThread("Adding tasks must be done on the Swing thread," +
@@ -555,6 +565,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
+		selectSymbol(symbol);
+	}
+
+	public void selectSymbol(Symbol symbol) {
 		SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getViewRoot();
 		tree.runTask(new SearchTask(tree, rootNode, symbol));
 	}
@@ -620,6 +634,11 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private void processSymbolChanged(ProgramChangeRecord pcr) {
 		Symbol symbol = (Symbol) pcr.getObject();
+		Object oldValue = pcr.getOldValue();
+		if (oldValue instanceof Namespace oldNs) {
+			addTask(new SymbolScopeChangedTask(tree, symbol, oldNs));
+			return;
+		}
 		symbolChanged(symbol);
 	}
 
@@ -711,12 +730,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			TreePath[] selectionPaths = tree.getSelectionPaths();
 			doRun(monitor);
-
-			if (selectionPaths.length != 0) {
-				tree.setSelectionPaths(selectionPaths);
-			}
 		}
 
 		@Override
@@ -738,7 +752,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 			// the symbol may have been deleted while we are processing bulk changes
 			if (!symbol.isDeleted()) {
-				GTreeNode newNode = rootNode.symbolAdded(symbol);
+				GTreeNode newNode = rootNode.symbolAdded(symbol, monitor);
 				tree.refilterLater(newNode);
 			}
 		}
@@ -761,9 +775,32 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 			// the symbol may have been deleted while we are processing bulk changes
 			if (!symbol.isDeleted()) {
-				root.symbolAdded(symbol);
+				SymbolNode newNode = root.symbolAdded(symbol, monitor);
+				tree.refilterLater(newNode);
 			}
-			tree.refilterLater();
+		}
+	}
+
+	private class SymbolScopeChangedTask extends AbstractSymbolUpdateTask {
+
+		private Namespace oldNamespace;
+
+		SymbolScopeChangedTask(GTree tree, Symbol symbol, Namespace oldNamespace) {
+			super(tree, symbol);
+			this.oldNamespace = oldNamespace;
+		}
+
+		@Override
+		void doRun(TaskMonitor monitor) throws CancelledException {
+
+			SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
+			root.symbolRemoved(symbol, oldNamespace, monitor);
+
+			// the symbol may have been deleted while we are processing bulk changes
+			if (!symbol.isDeleted()) {
+				SymbolNode newNode = root.symbolAdded(symbol, monitor);
+				tree.refilterLater(newNode);
+			}
 		}
 	}
 
@@ -777,19 +814,21 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		void doRun(TaskMonitor monitor) throws CancelledException {
 			SymbolTreeRootNode root = (SymbolTreeRootNode) tree.getModelRoot();
 			root.symbolRemoved(symbol, symbol.getName(), monitor);
-			tree.refilterLater();
+
+			// Note: turned this off; less tree flashing seems worth having a parent node still in
+			// the tree that doesn't belong
+			// tree.refilterLater();
 		}
 	}
 
 	private class BulkWorkTask extends GTreeBulkTask {
 
-		// somewhat arbitrary max amount of work to perform...at some point it is faster to
-		// just reload the tree
+		// somewhat arbitrary limit to individual tasks... too many, then reload the tree
 		private static final int MAX_TASK_COUNT = 1000;
 
-		private List<GTreeTask> tasks;
+		private List<AbstractSymbolUpdateTask> tasks;
 
-		BulkWorkTask(GTree gTree, List<GTreeTask> tasks) {
+		BulkWorkTask(GTree gTree, List<AbstractSymbolUpdateTask> tasks) {
 			super(gTree);
 			this.tasks = tasks;
 		}
@@ -802,10 +841,15 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				return;
 			}
 
-			for (GTreeTask task : tasks) {
+			GTreeState state = tree.getTreeState();
+			for (AbstractSymbolUpdateTask task : tasks) {
 				monitor.checkCancelled();
 				task.run(monitor);
 			}
+
+			GTreeRestoreTreeStateTask task = new GTreeRestoreTreeStateTask(tree, state);
+			task.run(monitor);
 		}
 	}
+
 }

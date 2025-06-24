@@ -800,7 +800,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run
@@ -822,7 +822,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * The script being run uses the given {@link GhidraState} (e.g., script variables)
 	 * Any changes to the state by the script being run will be reflected in the given state
-	 * object.  If the given object is the current state, the this scripts state may be changed
+	 * object.  If the given object is the current state, this scripts state may be changed
 	 * by the called script.
 	 *
 	 * @param scriptName the name of the script to run
@@ -1515,8 +1515,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentSelection}
 	 * 			variable to the given value and update the GhidraState's selection variable.</li>
 	 * </ol>
-	 * <p>
-	 *
+	 * 
 	 * @param addressSet the set of addresses to include in the selection.  If this value is null,
 	 * the current selection will be cleared and the variables set to null.
 	 */
@@ -1558,7 +1557,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentHighlight}
 	 * 			variable to	the given value and update the GhidraState's highlight variable.</li>
 	 * </ol>
-	 * <p>
 	 *
 	 * @param addressSet the set of addresses to include in the highlight.  If this value is null,
 	 * the current highlight will be cleared and the variables set to null.
@@ -2985,7 +2983,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * Note that in both headless and GUI modes, you may specify "PI" or "E" and get the
 	 * corresponding floating point value to 15 decimal places.
-	 * <p>
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
@@ -3858,7 +3855,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPlateComment(Address)
 	 */
 	public String getPlateCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PLATE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3877,7 +3874,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPreComment(Address)
 	 */
 	public String getPreCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.PRE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.PRE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3895,7 +3892,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getPostComment(Address)
 	 */
 	public String getPostCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.POST_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.POST, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3913,7 +3910,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getEOLComment(Address)
 	 */
 	public String getEOLCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.EOL_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.EOL, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);
@@ -3931,8 +3928,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getRepeatableComment(Address)
 	 */
 	public String getRepeatableCommentAsRendered(Address address) {
-		String comment =
-			currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		String comment = currentProgram.getListing().getComment(CommentType.REPEATABLE, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);

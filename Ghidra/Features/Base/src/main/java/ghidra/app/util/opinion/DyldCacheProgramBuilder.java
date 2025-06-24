@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -143,11 +144,13 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 */
 	private void setDyldCacheEntryPoint(SplitDyldCache splitDyldCache) throws Exception {
 		monitor.initialize(1, "Setting entry pointer base...");
-		Long entryPoint = splitDyldCache.getDyldCacheHeader(0).getEntryPoint();
+		Long entryPoint = !splitDyldCache.getDyldCacheHeader(0).hasAccelerateInfo()
+				? splitDyldCache.getDyldCacheHeader(0).getAccelerateInfoSizeOrDyldInCacheEntry()
+				: null;
 		if (entryPoint != null) {
 			Address entryPointAddr = space.getAddress(entryPoint);
 			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
-			createOneByteFunction("entry", entryPointAddr);
+			createOneByteFunction(program, "entry", entryPointAddr);
 		}
 		else {
 			log.appendMsg("Unable to determine entry point.");
@@ -186,7 +189,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			if (!bookmarkSet) {
 				program.getBookmarkManager()
 						.setBookmark(block.getStart(), BookmarkType.INFO, "Dyld Cache Header",
-							name + " - " + dyldCacheHeader.getUUID());
+							name + " - " +
+								NumericUtilities.convertBytesToString(dyldCacheHeader.getUUID()));
 				bookmarkSet = true;
 			}
 
@@ -478,7 +482,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			DyldCacheProgramBuilder.this.markupHeaders(header, headerAddr);
 
 			if (!name.isEmpty()) {
-				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, path);
+				listing.setComment(headerAddr, CommentType.PLATE, path);
 			}
 		}
 

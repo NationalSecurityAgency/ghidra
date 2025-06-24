@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.*;
 
+import org.junit.After;
 import org.junit.Before;
 
 import db.Transaction;
@@ -39,6 +40,23 @@ public class DebuggerRmiBreakpointsProviderTest
 	public void setUpRmiBreakpointServiceTest() throws Throwable {
 		createRmiConnection();
 		addBreakpointMethods();
+	}
+
+	@After
+	public void tearDownBreakpointTest() {
+		waitForTasks();
+		runSwing(() -> {
+			if (traceManager == null) {
+				return;
+			}
+			traceManager.setSaveTracesByDefault(false);
+		});
+		if (tb3 != null) {
+			if (traceManager != null && traceManager.getOpenTraces().contains(tb3.trace)) {
+				traceManager.closeTraceNoConfirm(tb3.trace);
+			}
+			tb3.close();
+		}
 	}
 
 	@Override

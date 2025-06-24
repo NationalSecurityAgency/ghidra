@@ -182,7 +182,7 @@ int (__stdcall * GetSectionBlock) (
 
  #pragma region Input compatibility macros
 
-// nothing will parse after this line if the this fails
+// nothing will parse after this line if this fails
   #pragma test for, pragma, with, commas outside parens
   
   #pragma region System Family (kernel drivers) with Desktop Family for compat

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,7 +135,6 @@ public class FSUtilities {
 	/**
 	 * Returns a decoded version of the input stream where "%nn" escape sequences are
 	 * replaced with their actual characters, using UTF-8 decoding rules.
-	 * <p>
 	 *
 	 * @param s string with escape sequences in the form "%nn", or null.
 	 * @return string with all escape sequences replaced with native characters, or null if
@@ -203,7 +202,9 @@ public class FSUtilities {
 	 * @return {@link List} of accumulated {@code result}s
 	 * @throws IOException if io error during listing of directories
 	 * @throws CancelledException if user cancels
+	 * @deprecated Use {@link GFileSystem#files(GFile)} instead
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public static List<GFile> listFileSystem(GFileSystem fs, GFile dir, List<GFile> result,
 			TaskMonitor taskMonitor) throws IOException, CancelledException {
 		if (result == null) {
@@ -281,7 +282,7 @@ public class FSUtilities {
 	 * Displays a filesystem related {@link Throwable exception} in the most user-friendly manner
 	 * possible, even if we have to do some hacky things with helping the user with
 	 * crypto problems.
-	 * <p>
+	 * 
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent
@@ -474,7 +475,7 @@ public class FSUtilities {
 	 * <p>
 	 * Handles forward or back slashes as path separator characters in the input, but
 	 * only adds forward slashes when separating the path strings that need a separator.
-	 * <p>
+	 * 
 	 * @param paths vararg list of path strings, empty or null elements are ok and are skipped.
 	 * @return null if all params null, "" empty string if all are empty, or
 	 * "path_element[1]/path_element[2]/.../path_element[N]" otherwise.
@@ -587,19 +588,19 @@ public class FSUtilities {
 	}
 
 	/**
-	 * Helper method to invoke close() on a Closeable without having to catch
+	 * Helper method to invoke close() on a AutoCloseable without having to catch
 	 * an IOException.
 	 * 
-	 * @param c {@link Closeable} to close
+	 * @param c {@link AutoCloseable} to close
 	 * @param msg optional msg to log if exception is thrown, null is okay
 	 */
-	public static void uncheckedClose(Closeable c, String msg) {
+	public static void uncheckedClose(AutoCloseable c, String msg) {
 		try {
 			if (c != null) {
 				c.close();
 			}
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			Msg.warn(FSUtilities.class, Objects.requireNonNullElse(msg, "Problem closing object"),
 				e);
 		}

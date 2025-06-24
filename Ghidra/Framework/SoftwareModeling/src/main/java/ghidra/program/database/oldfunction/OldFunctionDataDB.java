@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.program.database.oldfunction;
 import java.io.IOException;
 import java.util.*;
 
-import db.Field;
 import db.DBRecord;
+import db.Field;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -32,9 +32,6 @@ import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.InvalidInputException;
 
-/**
- *
- */
 class OldFunctionDataDB {
 
 	private AddressMap addrMap;
@@ -50,8 +47,8 @@ class OldFunctionDataDB {
 	private OldStackFrameDB frame;
 	private List<Parameter> regParams;
 
-	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap, DBRecord functionRecord,
-			AddressSetView body) {
+	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap,
+			DBRecord functionRecord, AddressSetView body) {
 
 		this.functionManager = functionManager;
 		this.addrMap = addrMap;
@@ -86,8 +83,7 @@ class OldFunctionDataDB {
 	 */
 	public synchronized String getComment() {
 		CodeUnit cu = program.getCodeManager().getCodeUnitContaining(entryPoint);
-
-		return cu.getComment(CodeUnit.PLATE_COMMENT);
+		return cu.getComment(CommentType.PLATE);
 	}
 
 	/**
@@ -257,17 +253,15 @@ class OldFunctionDataDB {
 		Parameter[] parms = new Parameter[regParams.size() + frame.getParameterCount()];
 		int ordinal = 0;
 
-		Iterator<Parameter> iter = regParams.iterator();
-		while (iter.hasNext()) {
-			Parameter rp = iter.next();
+		for (Parameter rp : regParams) {
 			parms[ordinal++] = rp;
 		}
 
 		try {
 			Variable[] stackParams = frame.getParameters();
-			for (int i = 0; i < stackParams.length; i++) {
-				parms[ordinal++] = new OldFunctionParameter(stackParams[i].getName(), ordinal,
-					stackParams[i].getDataType(), stackParams[i].getVariableStorage(), program,
+			for (Variable stackParam : stackParams) {
+				parms[ordinal++] = new OldFunctionParameter(stackParam.getName(), ordinal,
+					stackParam.getDataType(), stackParam.getVariableStorage(), program,
 					SourceType.USER_DEFINED);
 			}
 		}

@@ -60,8 +60,6 @@ import util.HistoryList;
 public class DataTypesProvider extends ComponentProviderAdapter {
 
 	private static final String TITLE = "Data Type Manager";
-	private static final String POINTER_FILTER_STATE = "PointerFilterState";
-	private static final String ARRAY_FILTER_STATE = "ArrayFilterState";
 	private static final String CONFLICT_RESOLUTION_MODE = "ConflictResolutionMode";
 	private static final String PREVIEW_WINDOW_STATE = "PreviewWindowState";
 	private static final String INCLUDE_DATA_MEMBERS_IN_SEARCH = "DataMembersInSearchState";
@@ -73,7 +71,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private int defaultDividerSize;
 	private JScrollPane previewScrollPane;
 	private JTextPane previewPane;
-
 	private GTreeNode lastPreviewNode;
 	private SwingUpdateManager previewUpdateManager =
 		new SwingUpdateManager(100, () -> updatePreviewPane());
@@ -90,13 +87,13 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private MultiActionDockingAction previousAction;
 
 	private ConflictHandlerModesAction conflictHandlerModesAction;
-	private ToggleDockingAction filterArraysAction;
-	private ToggleDockingAction filterPointersAction;
+	private DtFilterAction filterAction;
 	private ToggleDockingAction previewWindowAction;
 	private ToggleDockingAction includeDataMembersInSearchAction;
 	private FilterOnNameOnlyAction filterOnNameOnlyAction;
 	private boolean includeDataMembersInFilter;
 	private boolean filterOnNameOnly;
+	private DtFilterState filterState = new DtFilterState();
 
 	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName) {
 		this(plugin, providerName, false);
@@ -217,8 +214,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(previousAction);
 		nextAction = new NextPreviousDataTypeAction(this, plugin.getName(), true);
 		addLocalAction(nextAction);
-		addLocalAction(getFilterArraysAction());
-		addLocalAction(getFilterPointersAction());
+		filterAction = new DtFilterAction(plugin);
+		addLocalAction(filterAction);
 		addLocalAction(getConflictHandlerModesAction());
 
 		// toolbar menu
@@ -300,30 +297,13 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return archiveGTree.isFiltered();
 	}
 
-	public boolean isFilteringPointers() {
-		return filterPointersAction.isSelected();
+	public DtFilterState getFilterState() {
+		return filterState;
 	}
 
-	public boolean isFilteringArrays() {
-		return filterArraysAction.isSelected();
-	}
-
-	private ToggleDockingAction getFilterPointersAction() {
-		if (filterPointersAction == null) {
-			filterPointersAction = new FilterPointersAction(plugin);
-			archiveGTree.enablePointerFilter(filterPointersAction.isSelected());
-		}
-
-		return filterPointersAction;
-	}
-
-	private ToggleDockingAction getFilterArraysAction() {
-		if (filterArraysAction == null) {
-			filterArraysAction = new FilterArraysAction(plugin);
-			archiveGTree.enableArrayFilter(filterArraysAction.isSelected());
-		}
-
-		return filterArraysAction;
+	public void setFilterState(DtFilterState filterState) {
+		this.filterState = filterState;
+		archiveGTree.setFilterState(filterState);
 	}
 
 	private ConflictHandlerModesAction getConflictHandlerModesAction() {
@@ -645,8 +625,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	void restore(SaveState saveState) {
-		boolean filterPointers = saveState.getBoolean(POINTER_FILTER_STATE, true);
-		boolean filterArrays = saveState.getBoolean(ARRAY_FILTER_STATE, true);
+
 		ConflictResolutionPolicy conflictMode;
 		try {
 			conflictMode =
@@ -656,12 +635,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		catch (IllegalArgumentException e) {
 			conflictMode = ConflictResolutionPolicy.RENAME_AND_ADD;
 		}
-		getFilterPointersAction().setSelected(filterPointers);
-		getFilterArraysAction().setSelected(filterArrays);
+
 		getConflictHandlerModesAction().setCurrentActionStateByUserData(conflictMode);
 
-		archiveGTree.enableArrayFilter(filterArrays);
-		archiveGTree.enablePointerFilter(filterPointers);
+		filterState = new DtFilterState();
+		filterState.restore(saveState);
+		archiveGTree.setFilterState(filterState);
 
 		boolean previewWindowVisible = saveState.getBoolean(PREVIEW_WINDOW_STATE, false);
 		getPreviewWindowAction().setSelected(previewWindowVisible);
@@ -671,8 +650,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	void save(SaveState saveState) {
-		saveState.putBoolean(POINTER_FILTER_STATE, getFilterPointersAction().isSelected());
-		saveState.putBoolean(ARRAY_FILTER_STATE, getFilterArraysAction().isSelected());
+
+		filterState.save(saveState);
+
 		saveState.putString(CONFLICT_RESOLUTION_MODE,
 			getConflictHandlerModesAction().getCurrentUserData().toString());
 		saveState.putBoolean(PREVIEW_WINDOW_STATE, getPreviewWindowAction().isSelected());
@@ -802,6 +782,45 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	/**
+	 * Selects the given data type category in the tree of data types.  This method will cause the
+	 * data type tree to come to the front, scroll to the category and then to select the tree
+	 * node that represents the category.  If the category is null, the selection is cleared.
+	 *
+	 * @param category the category to select; may be null
+	 */
+	public void setCategorySelected(Category category) {
+		DataTypeArchiveGTree gTree = getGTree();
+		if (category == null) { // clear the selection
+			gTree.clearSelectionPaths();
+			return;
+		}
+
+		DataTypeManager dataTypeManager = category.getDataTypeManager();
+		if (dataTypeManager == null) {
+			return;
+		}
+
+		ArchiveRootNode rootNode = (ArchiveRootNode) gTree.getViewRoot();
+		ArchiveNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
+		if (archiveNode == null) {
+			plugin.setStatus("Cannot find archive '" + dataTypeManager.getName() + "'.  It may " +
+				"be filtered out of view or may have been closed (Data Type Manager)");
+			return;
+		}
+
+		// Note: passing 'true' here forces a load if needed.  This could be slow for programs
+		//       with many types.  If this locks the UI, then put this work into a GTreeTask.
+		CategoryNode node = archiveNode.findCategoryNode(category, true);
+		if (node == null) {
+			return;
+		}
+
+		gTree.setSelectedNode(node);
+		gTree.scrollPathToVisible(node.getTreePath());
+		contextChanged();
+	}
+
+	/**
 	 * Returns a list of all the data types selected in the data types tree
 	 * @return a list of all the data types selected in the data types tree
 	 */
@@ -840,14 +859,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		filterOnNameOnlyAction.setSelected(newValue);
 	}
 
-	public void setFilteringArrays(boolean b) {
-		archiveGTree.enableArrayFilter(b);
-	}
-
-	public void setFilteringPointers(boolean b) {
-		archiveGTree.enablePointerFilter(b);
-	}
-
 	public boolean isIncludeDataMembersInSearch() {
 		return includeDataMembersInFilter;
 	}
@@ -880,7 +891,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		}
 
 		GTreeNode node = (GTreeNode) path.getLastPathComponent();
-		previewPane.setText(node.getToolTip());
+		if (node instanceof DataTypeNode dtNode) {
+			showDataTypePreview(dtNode);
+		}
 	}
 
 	String getPreviewText() {

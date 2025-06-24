@@ -783,7 +783,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		return curThread == null ? "" : curThread.getName();
+		return curThread == null ? "" : curThread.getName(current.getSnap());
 	}
 
 	protected void updateSubTitle() {
@@ -1262,22 +1262,26 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected void displaySelectedRegisters(Set<Register> selected) {
 		List<Register> regs = current.getPlatform().getLanguage().getRegisters();
+		List<RegisterRow> toDelete = new ArrayList<>();
 		for (Iterator<Entry<Register, RegisterRow>> it = regMap.entrySet().iterator(); it
 				.hasNext();) {
 			Map.Entry<Register, RegisterRow> ent = it.next();
 			if (!selected.contains(ent.getKey())) {
-				regsTableModel.delete(ent.getValue());
+				toDelete.add(ent.getValue());
 				it.remove();
 			}
 		}
+		regsTableModel.deleteWith(toDelete::contains);
 
+		List<RegisterRow> toAdd = new ArrayList<>();
 		for (Register reg : selected) {
 			regMap.computeIfAbsent(reg, r -> {
 				RegisterRow row = new RegisterRow(this, regs.indexOf(reg), reg);
-				regsTableModel.add(row);
+				toAdd.add(row);
 				return row;
 			});
 		}
+		regsTableModel.addAll(toAdd);
 	}
 
 	protected CompletableFuture<Void> loadRegistersAndValues() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,16 +25,17 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerTraceFileActionContext;
-import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
@@ -101,23 +102,37 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 				.buildAndInstall(tool);
 		actionCloseAllTraces = CloseAllTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty())
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty())
 				.onAction(c -> traceManager.closeAllTraces())
 				.buildAndInstall(tool);
 		actionCloseOtherTraces = CloseOtherTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> traceManager.getOpenTraces().size() > 1 && c.getTrace() != null)
+				.popupWhen(c -> traceManager != null && traceManager.getOpenTraces().size() > 1 &&
+					c.getTrace() != null)
 				.onAction(c -> traceManager.closeOtherTraces(c.getTrace()))
 				.buildAndInstall(tool);
 		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && targetService != null)
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty() &&
+					targetService != null)
 				.onAction(c -> traceManager.closeDeadTraces())
 				.buildAndInstall(tool);
 	}
 
 	private String getNameForTrace(Trace trace) {
-		return DomainObjectDisplayUtils.getTabText(trace);
+		String name = DomainObjectDisplayUtils.getTabText(trace);
+		DebuggerCoordinates current =
+			traceManager == null ? DebuggerCoordinates.NOWHERE : traceManager.getCurrentFor(trace);
+		if (current == DebuggerCoordinates.NOWHERE) {
+			// NOTE: Could use view's snap and time table's schedule, but not worth it.
+			return name + " (?)";
+		}
+		TimeRadix radix = trace.getTimeManager().getTimeRadix();
+		String schedule = current.getTime().toString(radix);
+		if (schedule.length() > 15) {
+			schedule = "..." + schedule.substring(schedule.length() - 12);
+		}
+		return name + " (" + schedule + ")";
 	}
 
 	private Icon getIconForTrace(Trace trace) {
@@ -179,6 +194,7 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 			Trace trace = evt.getActiveCoordinates().getTrace();
 			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
 				selectTab(trace);
+				refreshTab(trace);
 			}
 		}
 		else if (event instanceof TraceClosedPluginEvent evt) {
@@ -198,6 +214,9 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 
 	private void traceTabSelected(Trace newTrace) {
 		cbCoordinateActivation.invoke(() -> {
+			if (traceManager == null) {
+				return;
+			}
 			traceManager.activateTrace(newTrace);
 		});
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -389,6 +389,13 @@ public class DWARFFunction {
 					Msg.warn(this,
 						"DWARF: unable to create function not contained within loaded memory: %s@%s"
 								.formatted(name, address));
+					return false;
+				}
+
+				if (currentProgram.getListing().getDefinedDataAt(address) != null) {
+					getProgram().logWarningAt(address, name.getName(),
+						"DWARF: unable to create function at location that is marked as data: %s"
+								.formatted(name.getName()));
 					return false;
 				}
 

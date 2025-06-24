@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
  * <p>
  * This class also provides filename 'unique-ifying' (per directory) where an auto-incrementing
  * number will be added to a file's filename if it is not unique in the directory.
- * <p>
+ * 
  * @param <METADATATYPE> the filesystem specific native file object that the user of this
  * class wants to be able to correlate with Ghidra {@link GFile} instances.
  */
@@ -63,7 +63,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Creates a new {@link FileSystemIndexHelper} for the specified {@link GFileSystem}.
 	 * <p>
 	 * A "root" directory GFile will be auto-created for the filesystem.
-	 * <p>
+	 * 
 	 * @param fs the {@link GFileSystem} that this index will be for.
 	 * @param fsFSRL the {@link FSRLRoot fsrl} of the filesystem itself.
 	 * (this parameter is explicitly passed here so there is no possibility of trying to call
@@ -138,7 +138,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#getListing(GFile)} interface.
+	 * Mirrors {@link GFileSystem#getListing(GFile)} interface.
 	 *
 	 * @param directory {@link GFile} directory to get the list of child files that have been
 	 * added to this index, null means root directory
@@ -156,7 +156,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 *
 	 * @param path path and filename of a file to find
 	 * @return {@link GFile} instance or null if no file was added to the index at that path
@@ -166,7 +166,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface, with additional parameters to
+	 * Mirrors {@link GFileSystem#lookup(String)} interface, with additional parameters to
 	 * control the lookup.
 	 * 
 	 * @param baseDir optional starting directory to perform lookup
@@ -283,7 +283,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param path string path and filename of the file being added to the index.  Back
 	 * slashes are normalized to forward slashes
@@ -318,7 +317,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param filename the new file's name
 	 * @param parent the new file's parent directory
@@ -346,7 +344,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param path string path and filename of the file being added to the index.  Back
 	 * slashes are normalized to forward slashes
@@ -384,7 +381,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Filenames that are not unique in their directory will have a "[nnn]"
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
-	 * <p>
 	 * 
 	 * @param filename the new file's name
 	 * @param parent the new file's parent directory
@@ -476,7 +472,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Superfluous slashes in the original filename (ie. name/sub//subafter_extra_slash) will
 	 * be represented as empty string elements in the nameparts array and will be skipped
 	 * as if they were not there.
-	 * <p>
+	 * 
 	 * @param nameparts String[] containing the elements of a path
 	 * for them
 	 * @param nameComp optional comparator that will compare names, usually case-sensitive vs case
@@ -527,7 +523,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 	/**
 	 * Creates a new GFile instance, using per-filesystem custom logic.
-	 * <p>
 	 *
 	 * @param parentFile the parent file of the new instance.  Never null.
 	 * @param name the name of the file

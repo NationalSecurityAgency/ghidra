@@ -60,6 +60,7 @@ import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -943,14 +944,14 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	public void selectAll() {
 		listingPanel.getFieldPanel().requestFocus();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(),
+		ProgramSelection sel = new ProgramSelection(
 			listingPanel.getAddressIndexMap().getOriginalAddressSet());
 		doSetSelection(sel);
 	}
 
 	public void selectComplement() {
 		AddressSet complement = listingPanel.selectComplement();
-		ProgramSelection sel = new ProgramSelection(program.getAddressFactory(), complement);
+		ProgramSelection sel = new ProgramSelection(complement);
 		doSetSelection(sel);
 	}
 
@@ -958,25 +959,26 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return fieldNavigator;
 	}
 
-	public void setView(AddressSetView view) {
+	void setView(AddressSetView view) {
+
 		// If we are using a MultiListingLayoutModel then adjust the view address set.
 		AddressSetView adjustedView = view;
 
 		if (multiModel != null) {
-			if ((program != null) && view.contains(new AddressSet(program.getMemory()))) {
-				Program otherProgram = otherPanel.getProgram();
+			Program otherProgram = otherPanel.getProgram();
+			Memory memory = program.getMemory();
+			if (view.contains(memory)) {
 				adjustedView = ProgramMemoryComparator.getCombinedAddresses(program, otherProgram);
 			}
+
 			multiModel.setAddressSet(adjustedView);
+
+			// convert the view addresses to ones compatible with the otherPanel's model
+			AddressSet diffAddrs = DiffUtility.getCompatibleAddressSet(adjustedView, otherProgram);
+			otherPanel.setView(diffAddrs);
 		}
 
 		listingPanel.setView(adjustedView);
-		if (otherPanel != null) {
-			// Convert the view addresses to ones compatible with the otherPanel's model.
-			AddressSet compatibleAddressSet =
-				DiffUtility.getCompatibleAddressSet(adjustedView, otherPanel.getProgram());
-			otherPanel.setView(compatibleAddressSet);
-		}
 	}
 
 	@Override

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghidradrgn"
+version = "11.4"
+authors = [
+  { name="Ghidra Development Team" },
+]
+description = "Ghidra's Plugin for drgn"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "ghidratrace==11.4",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
+"Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"

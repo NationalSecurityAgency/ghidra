@@ -275,6 +275,9 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(space, false);
 			waitForPass(() -> assertEquals("1234",
 				regs.getValue(lastSnap(conn), tb.reg("RAX")).getUnsignedValue().toString(16)));
+
+			assertEquals(List.of("0x1234"),
+				tb.objValues(lastSnap(conn), "Inferiors[1].Threads[1].Stack[0].Registers.rax"));
 		}
 	}
 

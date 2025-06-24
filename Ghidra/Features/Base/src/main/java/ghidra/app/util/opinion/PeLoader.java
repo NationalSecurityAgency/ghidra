@@ -254,7 +254,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				dt = section.toDataType();
 				DataUtilities.createData(program, start, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				setComment(CodeUnit.EOL_COMMENT, start, section.getName());
+				setComment(CommentType.EOL, start, section.getName());
 				start = start.add(dt.getLength());
 			}
 		}
@@ -383,7 +383,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			Address address = space.getAddress(addr);
 
-			setComment(CodeUnit.PRE_COMMENT, address, importInfo.getComment());
+			setComment(CommentType.PRE, address, importInfo.getComment());
 
 			Data data = listing.getDefinedDataAt(address);
 			if (data != null && data.isPointer()) {
@@ -547,7 +547,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 
 			Address address = space.getAddress(export.getAddress());
-			setComment(CodeUnit.PRE_COMMENT, address, export.getComment());
+			setComment(CommentType.PRE, address, export.getComment());
 			symTable.addExternalEntryPoint(address);
 
 			String name = export.getName();
@@ -713,9 +713,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
 						if (block != null) {
-							MemoryBlock paddingBlock =
-								MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
-									address, dataSize, "", "", r, w, x, log);
+							MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
+								false, sectionName, address, dataSize, "", "", r, w, x, log);
 							if (paddingBlock != null) {
 								try {
 									prog.getMemory().join(block, paddingBlock);
@@ -832,7 +831,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private Address getILEntryPoint(OptionalHeader optionalHeader) {
 		// Check to see if this binary has a COMDescriptorDataDirectory in it. If so,
 		// it might be a .NET binary, and if it is and only has a managed code entry point
-		// the value at entry is actually a table index and and row index that we parse in
+		// the value at entry is actually a table index and a row index that we parse in
 		// the ImageCor20Header class. Use that to create the entry label instead later.
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
@@ -975,18 +974,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 			DOSHeader dh = pe.getDOSHeader();
 
 			// Check for Rust.  Program object is required, which may be null.
-			if (program != null && RustUtilities.isRust(program.getMemory().getBlock(".rdata"))) {
-				try {
-					int extensionCount = RustUtilities.addExtensions(program, monitor,
-						RustConstants.RUST_EXTENSIONS_WINDOWS);
-					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+			try {
+				if (program != null && RustUtilities.isRust(program,
+					program.getMemory().getBlock(".rdata"), monitor)) {
+					try {
+						int extensionCount = RustUtilities.addExtensions(program, monitor,
+							RustConstants.RUST_EXTENSIONS_WINDOWS);
+						log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+					}
+					catch (IOException e) {
+						log.appendMsg("Rust error: " + e.getMessage());
+					}
+					return CompilerEnum.Rustc;
 				}
-				catch (IOException e) {
-					log.appendMsg("Rust error: " + e.getMessage());
-				}
-				return CompilerEnum.Rustc;
 			}
-			
+			catch (CancelledException e) {
+				// Move on
+			}
+
 			// Check for Swift
 			List<String> sectionNames =
 				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())

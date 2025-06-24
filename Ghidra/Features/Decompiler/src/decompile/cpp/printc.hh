@@ -211,7 +211,7 @@ protected:
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot);
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
@@ -361,7 +361,7 @@ public:
 ///
 /// When a variable has TypePointerRel as its data-type, PTRSUB acts relative to the \e parent
 /// data-type.  We print a specific token to indicate this relative shift is happening.
-/// \param op is is the PTRSUB op
+/// \param op is the PTRSUB op
 inline void PrintC::pushTypePointerRel(const PcodeOp *op)
 
 {

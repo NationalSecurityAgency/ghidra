@@ -35,8 +35,6 @@ import docking.dnd.GClipboard;
 import docking.widgets.OptionDialog;
 import generic.Unique;
 import ghidra.app.plugin.assembler.*;
-import ghidra.app.plugin.core.assembler.AssemblerPlugin;
-import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
@@ -465,7 +463,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 	@Test
 	public void testPatchDataActionInDynamicListingEmu() throws Throwable {
-		AssemblerPlugin assemblerPlugin = addPlugin(tool, AssemblerPlugin.class);
+		DebuggerDisassemblerPlugin disassemblerPlugin =
+			addPlugin(tool, DebuggerDisassemblerPlugin.class);
 
 		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
@@ -482,8 +481,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		}
 
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(assemblerPlugin, listingProvider, view);
+		DebuggerDisassemblerPluginTestHelper helper =
+			new DebuggerDisassemblerPluginTestHelper(disassemblerPlugin, listingProvider, view);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.util.*;
 
 import ghidra.framework.model.*;
 import ghidra.framework.model.TransactionInfo.Status;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -192,9 +191,11 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	/**
-	 * Returns the undo stack depth.
-	 * (The number of items on the undo stack)
+	 * Returns the undo stack depth (The number of items on the undo stack).
+	 * 
+	 * <p>
 	 * This method is for JUnits.
+	 * 
 	 * @return the undo stack depth
 	 */
 	@Override
@@ -333,7 +334,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	void notifyStartTransaction(TransactionInfo tx) {
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (TransactionListener listener : transactionListeners) {
 				listener.transactionStarted(domainObj, tx);
 				listener.undoStackChanged(domainObj);
@@ -342,7 +343,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	void notifyEndTransaction() {
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (TransactionListener listener : transactionListeners) {
 				listener.transactionEnded(domainObj);
 				listener.undoStackChanged(domainObj);
@@ -351,7 +352,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	void notifyUndoStackChanged() {
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (TransactionListener listener : transactionListeners) {
 				listener.undoStackChanged(domainObj);
 			}
@@ -359,7 +360,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	void notifyUndoRedo() {
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (TransactionListener listener : transactionListeners) {
 				listener.undoRedoOccurred(domainObj);
 				listener.undoStackChanged(domainObj);

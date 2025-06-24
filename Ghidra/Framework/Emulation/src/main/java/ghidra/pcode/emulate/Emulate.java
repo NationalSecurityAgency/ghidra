@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,27 +33,28 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-/// \brief A SLEIGH based implementation of the Emulate interface
-///
-/// This implementation uses a Translate object to translate machine instructions into
-/// pcode and caches pcode ops for later use by the emulator.  The pcode is cached as soon
-/// as the execution address is set, either explicitly, or via branches and fallthrus.  There
-/// are additional methods for inspecting the pcode ops in the current instruction as a sequence.
 
+/**
+ * A SLEIGH based implementation of the Emulate interface
+ * <p>
+ * This implementation uses a Translate object to translate machine instructions into
+ * pcode and caches pcode ops for later use by the emulator.  The pcode is cached as soon
+ * as the execution address is set, either explicitly, or via branches and fallthrus.  There
+ * are additional methods for inspecting the pcode ops in the current instruction as a sequence.
+ */
 public class Emulate {
 
 	private MemoryState memstate; // the memory state of the emulator.
 	private UniqueMemoryBank uniqueBank;
 
-	private BreakTable breaktable; ///< The table of breakpoints
-	private Address current_address; ///< Address of current instruction being executed
+	private BreakTable breaktable; // The table of breakpoints
+	private Address current_address; // Address of current instruction being executed
 	private Address last_execute_address;
 	private volatile EmulateExecutionState executionState = EmulateExecutionState.STOPPED;
 	private RuntimeException faultCause;
-	private int current_op; ///< Index of current pcode op within machine instruction
-	private int last_op; /// index of last pcode op executed
-	private int instruction_length; ///< Length of current instruction in bytes (must include any delay slots)
+	private int current_op; // Index of current pcode op within machine instruction
+	private int last_op; // index of last pcode op executed
+	private int instruction_length; // Length of current instruction in bytes (must include any delay slots)
 
 	private final SleighLanguage language;
 	private final AddressFactory addrFactory;
@@ -62,7 +63,7 @@ public class Emulate {
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
 	private Instruction pseudoInstruction;
-	private PcodeOp[] pcode; ///< The cache of current pcode ops
+	private PcodeOp[] pcode; // The cache of current pcode ops
 
 	private RegisterValue nextContextRegisterValue = null;
 
@@ -70,9 +71,13 @@ public class Emulate {
 
 	private EmulateInstructionStateModifier instructionStateModifier;
 
-	/// \param t is the SLEIGH translator
-	/// \param s is the MemoryState the emulator should manipulate
-	/// \param b is the table of breakpoints the emulator should invoke
+	/**
+	 * Creates a new {@link Emulate} object
+	 * 
+	 * @param lang is the SLEIGH language
+	 * @param s is the MemoryState the emulator should manipulate
+	 * @param b is the table of breakpoints the emulator should invoke
+	 */
 	public Emulate(SleighLanguage lang, MemoryState s, BreakTable b) {
 		memstate = s;
 		this.language = lang;
@@ -134,29 +139,35 @@ public class Emulate {
 		return language;
 	}
 
-	/// Since the emulator can single step through individual pcode operations, the machine state
-	/// may be halted in the \e middle of a single machine instruction, unlike conventional debuggers.
-	/// This routine can be used to determine if execution is actually at the beginning of a machine
-	/// instruction.
-	/// \return \b true if the next pcode operation is at the start of the instruction translation
+	/**
+	 * Since the emulator can single step through individual pcode operations, the machine state
+	 * may be halted in the middle of a single machine instruction, unlike conventional debuggers.
+	 * This routine can be used to determine if execution is actually at the beginning of a machine
+	 * instruction.
+	 * @return true if the next pcode operation is at the start of the instruction translation
+	 */
 	public boolean isInstructionStart() {
 		return executionState == EmulateExecutionState.STOPPED ||
 			executionState == EmulateExecutionState.BREAKPOINT;
 	}
 
 	/**
-	 * @return the current emulator execution state
+	 * {@return the current emulator execution state}
 	 */
 	public EmulateExecutionState getExecutionState() {
 		return executionState;
 	}
 
-	/// \return the currently executing machine address
+	/**
+	 * {@return the currently executing machine address}
+	 */
 	public Address getExecuteAddress() {
 		return current_address;
 	}
 
-	/// \return the last address 
+	/**
+	 * {@return the last address}
+	 */
 	public Address getLastExecuteAddress() {
 		return last_execute_address;
 	}
@@ -291,8 +302,10 @@ public class Emulate {
 		pseudoInstruction = null;
 	}
 
-	/// Update the iterator into the current pcode cache, and if necessary, generate
-	/// the pcode for the fallthru instruction and reset the iterator.
+	/**
+	 * Update the iterator into the current pcode cache, and if necessary, generate
+	 * the pcode for the fallthru instruction and reset the iterator.
+	 */
 	public void fallthruOp() {
 		current_op += 1;
 		if (current_op >= pcode.length) {
@@ -318,8 +331,11 @@ public class Emulate {
 		}
 	}
 
-	/// Since the full instruction is cached, we can do relative branches properly
-	/// \param op is the particular branch op being executed
+	/**
+	 * Since the full instruction is cached, we can do relative branches properly
+	 * 
+	 * @param op is the particular branch op being executed
+	 */
 	public void executeBranch(PcodeOpRaw op) {
 		Address destaddr = op.getInput(0).getAddress();
 		if (destaddr.getAddressSpace().isConstantSpace()) {
@@ -338,10 +354,14 @@ public class Emulate {
 		}
 	}
 
-	/// Give instuctionStateModifier first shot at executing custom pcodeop,
-	/// if not supported look for a breakpoint for the given user-defined op and invoke it.
-	/// If it doesn't exist, or doesn't replace the action, throw an exception
-	/// \param op is the particular user-defined op being executed
+	/**
+	 * Give instuctionStateModifier first shot at executing custom pcodeop,
+	 * if not supported look for a breakpoint for the given user-defined op and invoke it.
+	 * If it doesn't exist, or doesn't replace the action, throw an exception
+	 * 
+	 * @param op is the particular user-defined op being executed
+	 * @throws UnimplementedCallOtherException
+	 */
 	public void executeCallother(PcodeOpRaw op) throws UnimplementedCallOtherException {
 		if ((instructionStateModifier == null || !instructionStateModifier.executeCallOther(op)) &&
 			!breaktable.doPcodeOpBreak(op)) {
@@ -352,9 +372,12 @@ public class Emulate {
 		fallthruOp();
 	}
 
-	/// Set the current execution address and cache the pcode translation of the machine instruction
-	/// at that address
-	/// \param addr is the address where execution should continue
+	/**
+	 * Set the current execution address and cache the pcode translation of the machine instruction
+	 * at that address
+	 * 
+	 * @param addr is the address where execution should continue
+	 */
 	public void setExecuteAddress(Address addr) {
 		if (addr != null && addr.equals(current_address)) {
 			return;
@@ -370,11 +393,18 @@ public class Emulate {
 		faultCause = null;
 	}
 
-	/// This routine executes an entire machine instruction at once, as a conventional debugger step
-	/// function would do.  If execution is at the start of an instruction, the breakpoints are checked
-	/// and invoked as needed for the current address.  If this routine is invoked while execution is
-	/// in the middle of a machine instruction, execution is continued until the current instruction
-	/// completes.
+	/**
+	 * This routine executes an entire machine instruction at once, as a conventional debugger step
+	 * function would do.  If execution is at the start of an instruction, the breakpoints are checked
+	 * and invoked as needed for the current address.  If this routine is invoked while execution is
+	 * in the middle of a machine instruction, execution is continued until the current instruction
+	 * completes.
+	 * @param stopAtBreakpoint 
+	 * @param monitor 
+	 * @throws CancelledException 
+	 * @throws LowlevelError 
+	 * @throws InstructionDecodeException 
+	 */
 	public void executeInstruction(boolean stopAtBreakpoint, TaskMonitor monitor)
 			throws CancelledException, LowlevelError, InstructionDecodeException {
 		if (monitor == null) {
@@ -427,14 +457,18 @@ public class Emulate {
 			throw e;
 		}
 	}
-
-	/// \return the memory state object which this emulator uses
+	
+	/**
+	 * {@return the memory state object which this emulator uses}
+	 */
 	public MemoryState getMemoryState() {
 		return memstate;
 	}
 
-	/// This method executes a single pcode operation, the current one (returned by getCurrentOp()).
-	/// The MemoryState of the emulator is queried and changed as needed to accomplish this.
+	/**
+	 * This method executes a single pcode operation, the current one (returned by getCurrentOp()).
+	 * The MemoryState of the emulator is queried and changed as needed to accomplish this.
+	 */
 	private void executeCurrentOp() throws LowlevelError {
 
 		if (current_op >= pcode.length) {
@@ -541,8 +575,10 @@ public class Emulate {
 		}
 	}
 
-	/// This routine performs a standard pcode \b load operation on the memory state
-	/// \param op is the particular \e load op being executed
+	/**
+	 * This routine performs a standard pcode load operation on the memory state
+	 * @param op is the particular load op being executed
+	 */
 	public void executeLoad(PcodeOpRaw op) {
 
 		AddressSpace space =
@@ -564,8 +600,10 @@ public class Emulate {
 		}
 	}
 
-	/// This routine performs a standard pcode \b store operation on the memory state
-	/// \param op is the particular \e store op being executed
+	/**
+	 * This routine performs a standard pcode store operation on the memory state
+	 * @param op is the particular store op being executed
+	 */
 	public void executeStore(PcodeOpRaw op) {
 
 		AddressSpace space =
@@ -586,36 +624,46 @@ public class Emulate {
 		}
 	}
 
-	/// This routine performs a standard pcode \b branch \b indirect operation on the memory state
-	/// \param op is the particular \e branchind op being executed
+	/**
+	 * This routine performs a standard pcode branch indirect operation on the memory state
+	 * @param op is the particular branchind op being executed
+	 */
 	public void executeBranchind(PcodeOpRaw op) {
 		long offset = memstate.getValue(op.getInput(0));
 		AddressSpace space = op.getAddress().getAddressSpace();
 		setCurrentAddress(space.getTruncatedAddress(offset, true));
 	}
 
-	/// This routine performs a standard pcode \b call operation on the memory state
-	/// \param op is the particular \e call op being executed
+	/**
+	 * This routine performs a standard pcode call operation on the memory state
+	 * @param op is the particular call op being executed
+	 */
 	public void executeCall(PcodeOpRaw op) {
 		setCurrentAddress(op.getInput(0).getAddress());
 	}
 
-	/// This routine performs a standard pcode \b call \b indirect operation on the memory state
-	/// \param op is the particular \e callind op being executed
+	/**
+	 * This routine performs a standard pcode call indirect operation on the memory state
+	 * @param op is the particular  callind op being executed
+	 */
 	public void executeCallind(PcodeOpRaw op) {
 		executeBranchind(op); // same behavior as branch indirect
 	}
 
-	/// This kind of pcode op should not come up in ordinary emulation, so this routine
-	/// throws an exception.
-	/// \param op is the particular \e multiequal op being executed
+	/**
+	 * This kind of pcode op should not come up in ordinary emulation, so this routine
+	 * throws an exception.
+	 * @param op is the particular multiequal op being executed
+	 */
 	public void executeMultiequal(PcodeOpRaw op) {
 		throw new LowlevelError("MULTIEQUAL appearing in unheritaged code?");
 	}
 
-	/// This kind of pcode op should not come up in ordinary emulation, so this routine
-	/// throws an exception.
-	/// \param op is the particular \e indirect op being executed
+	/**
+	 * This kind of pcode op should not come up in ordinary emulation, so this routine
+	 * throws an exception.
+	 * @param op is the particular indirect op being executed
+	 */
 	public void executeIndirect(PcodeOpRaw op) {
 		throw new LowlevelError("INDIRECT appearing in unheritaged code?");
 	}

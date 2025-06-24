@@ -44,8 +44,6 @@ public abstract class AbstractStackEditorProviderTest extends AbstractStackEdito
 		env.showTool();
 	}
 
-	
-
 //==================================================================================================
 // Private Methods
 //==================================================================================================	
@@ -140,7 +138,7 @@ public abstract class AbstractStackEditorProviderTest extends AbstractStackEdito
 		Parameter parameter = function.getParameter(parameterIndex);
 		SetVariableNameCmd cmd =
 			new SetVariableNameCmd(parameter, newName, SourceType.USER_DEFINED);
-		applyCmd(program, cmd);
+		program.withTransaction("Rename Parameter", () -> cmd.applyTo(program)); // avoid blocking
 		return parameter;
 	}
 

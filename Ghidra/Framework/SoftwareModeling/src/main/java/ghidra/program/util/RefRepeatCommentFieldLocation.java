@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.program.util;
 
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -45,7 +45,7 @@ public class RefRepeatCommentFieldLocation extends CommentFieldLocation {
 	public RefRepeatCommentFieldLocation(Program program, Address addr, int[] componentPath,
 			String[] comment, int row, int charOffset, int currentCommentRow,
 			Address refRepeatAddress) {
-		super(program, addr, componentPath, comment, CodeUnit.EOL_COMMENT, row, charOffset);
+		super(program, addr, componentPath, comment, CommentType.EOL, row, charOffset);
 		this.currentCommentRow = currentCommentRow;
 		this.refRepeatAddress = refRepeatAddress;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import javax.swing.border.LineBorder;
 
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import functioncalls.plugin.FcgOptions;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.Gui;
@@ -94,6 +95,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	private Paint outPaint;
 
 	private FcgLevel level;
+	private FcgOptions options;
 
 	/**
 	 * Constructor
@@ -101,11 +103,13 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	 * @param function the function represented by this vertex
 	 * @param level the level of this vertex
 	 * @param expansionListener the listener for expanding connections to this vertex
+	 * @param options the tool options
 	 */
 	public FcgVertex(Function function, FcgLevel level,
-			FcgVertexExpansionListener expansionListener) {
+			FcgVertexExpansionListener expansionListener, FcgOptions options) {
 		this.function = function;
 		this.level = level;
+		this.options = options;
 		Objects.requireNonNull(expansionListener);
 
 		toggleInsButton.addActionListener(e -> {
@@ -154,8 +158,13 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		createPaints();
 
 		// init the components
-		String truncated = StringUtilities.trimMiddle(getName(), MAX_NAME_LENGTH);
-		nameLabel.setText(truncated);
+		boolean truncate = options.useTruncatedFunctionNames();
+		String name = getName();
+		if (truncate) {
+			name = StringUtilities.trimMiddle(getName(), MAX_NAME_LENGTH);
+		}
+
+		nameLabel.setText(name);
 		buildVertexShape();
 
 		// calculate the needed size

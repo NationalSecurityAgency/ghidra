@@ -43,6 +43,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int MAX_PARAM_OFFSET = 2048;        // max size of param reference space
 	private static final int MAX_LOCAL_OFFSET = -(64 * 1024);  // max size of local reference space
 
+	private final static String X86_NAME = "x86";
+	
 	private boolean dontCreateNewVariables = false;
 
 	private final boolean forceProcessing;
@@ -53,6 +55,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private Program program;
 	private Register stackReg;
 	private int purge = 0;
+	
+	private boolean isX86 = false;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
 
@@ -101,6 +105,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	@Override
 	public boolean applyTo(Program p, TaskMonitor monitor) {
 		program = p;
+		
+		isX86 = checkForX86(p);
 
 		int count = 0;
 		long numAddresses = entryPoints.getNumAddresses();
@@ -136,6 +142,11 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 			return false;
 		}
 		return true;
+	}
+
+	private boolean checkForX86(Program p) {
+		return program.getLanguage().getProcessor().equals(
+			Processor.findOrPossiblyCreateProcessor(X86_NAME)) && program.getDefaultPointerSize() <= 32;
 	}
 
 	/**
@@ -245,7 +256,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	 * 
 	 * @param func - function to analyze stack pointer references
 	 */
-	private int createStackPointerVariables(Function func, TaskMonitor monitor)
+	private int createStackPointerVariables(final Function func, TaskMonitor monitor)
 			throws CancelledException {
 		// check if this is a jump thunk through a function pointer
 //		if (checkThunk(func, monitor)) {
@@ -271,7 +282,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 			@Override
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 				if (instr.getFlowType().isTerminal()) {
-					RegisterValue value = context.getRegisterValue(stackReg, instr.getMaxAddress());
+					RegisterValue value = context.getRegisterValue(stackReg);
 					if (value != null) {
 						BigInteger signedValue = value.getSignedValue();
 						if (signedValue != null) {
@@ -279,7 +290,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 						}
 					}
 				}
-				if (instr.getMnemonicString().equals("LEA")) {
+				if (isX86 && instr.getMnemonicString().equals("LEA")) {
 					Register destReg = instr.getRegister(0);
 					if (destReg != null) {
 						Varnode value = context.getRegisterVarnodeValue(destReg);
@@ -320,18 +331,17 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 					if (opIndex == -1) {
 						return;
 					}
+					// if restoring the same value into the register, don't record the reference
 					// TODO: Dirty Dirty nasty Hack for POP EBP problem, only very few cases of this!
-					if (instr.getMnemonicString().equals("POP")) {
+					if (isX86 && instr.getMnemonicString().equals("POP")) {
 						Register reg = instr.getRegister(opIndex);
 						if (reg != null && reg.getName().contains("BP")) {
 							return;
 						}
 					}
-					long extendedOffset =
-						extendOffset(address.getOffset(), stackReg.getBitLength());
-					Function func =
-						program.getFunctionManager().getFunctionContaining(instr.getMinAddress());
-					defineFuncVariable(func, instr, opIndex, (int) extendedOffset, sortedVariables);
+					long extendedOffset = extendOffset(address.getOffset(), stackReg.getBitLength());
+					
+					defineFuncVariable(symEval, func, instr, opIndex, (int) extendedOffset, sortedVariables);
 				}
 			}
 
@@ -342,9 +352,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 		};
 
 		// set the stack pointer to be tracked
-		symEval.setRegister(func.getEntryPoint(), stackReg);
+		Address entryPoint = func.getEntryPoint();
+		symEval.setRegister(entryPoint, stackReg);
 
-		symEval.flowConstants(func.getEntryPoint(), func.getBody(), eval, true, monitor);
+		symEval.flowConstants(entryPoint, func.getBody(), eval, true, monitor);
 
 		if (sortedVariables.size() != 0) {
 
@@ -623,11 +634,11 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 //		return true;
 //	}
 
-	private void defineFuncVariable(Function func, Instruction instr, int opIndex, int stackOffset,
+	private void defineFuncVariable(SymbolicPropogator symEval, Function func, Instruction instr, int opIndex, int stackOffset,
 			List<Variable> sortedVariables) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
-		int refSize = getRefSize(instr, opIndex);
+		int refSize = getRefSize(symEval, instr, opIndex);
 		try {
 			// don't create crazy offsets
 			if (stackOffset > MAX_PARAM_OFFSET || stackOffset < MAX_LOCAL_OFFSET) {
@@ -660,15 +671,16 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 
 	/**
 	 * Look at the result register to try and figure out stack access size.
+	 * @param symEval 
 	 * 
 	 * @param instr instruction being analyzed
 	 * @param opIndex operand that has a stack reference.
 	 * 
 	 * @return size of value referenced on the stack
 	 */
-	private int getRefSize(Instruction instr, int opIndex) {
+	private int getRefSize(SymbolicPropogator symEval, Instruction instr, int opIndex) {
 		if (instr.getProgram().getLanguage().supportsPcode()) {
-			PcodeOp[] pcode = instr.getPcode();
+			PcodeOp[] pcode = symEval.getInstructionPcode(instr);
 			for (int i = pcode.length - 1; i >= 0; i--) {
 				if (pcode[i].getOpcode() == PcodeOp.LOAD) {
 					Varnode out = pcode[i].getOutput();
@@ -810,7 +822,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 			offset = minOffset;
 		}
 		else {
-			dt = Undefined.getUndefinedDataType(size);
+			dt = Undefined.getUndefinedDataType(refSize);
 		}
 
 		Variable var;

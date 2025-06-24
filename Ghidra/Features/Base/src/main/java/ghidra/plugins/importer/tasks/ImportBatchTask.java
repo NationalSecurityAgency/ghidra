@@ -62,7 +62,7 @@ public class ImportBatchTask extends Task {
 	/**
 	 * Start a Batch Import session with an already populated {@link BatchInfo}
 	 * instance.
-	 * <p>
+	 * 
 	 * @param batchInfo {@link BatchInfo} state object
 	 * @param destFolder {@link DomainFolder} where to place imported files
 	 * @param programManager {@link ProgramManager} to use when opening newly imported files, null ok

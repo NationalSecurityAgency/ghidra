@@ -49,8 +49,8 @@ public class GolangElfInfoProducer implements ElfInfoProducer {
 	private ElfLoadHelper elfLoadHelper;
 
 	@Override
-	public void init(ElfLoadHelper elfLoadHelper) {
-		this.elfLoadHelper = elfLoadHelper;
+	public void init(ElfLoadHelper newElfLoadHelper) {
+		this.elfLoadHelper = newElfLoadHelper;
 	}
 
 	@Override

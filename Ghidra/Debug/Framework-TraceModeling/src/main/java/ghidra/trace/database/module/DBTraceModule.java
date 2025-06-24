@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.trace.database.module;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
 
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -87,8 +88,8 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 	}
 
 	@Override
-	public DBTraceSection addSection(String sectionPath, String sectionName, AddressRange range)
-			throws DuplicateNameException {
+	public DBTraceSection addSection(long snap, String sectionPath, String sectionName,
+			AddressRange range) throws DuplicateNameException {
 		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
 			return space.manager.doAddSection(this, sectionPath, sectionName, range);
 		}
@@ -102,7 +103,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
 			if (Objects.equals(this.name, name)) {
 				return;
@@ -114,14 +115,14 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 	}
 
 	@Override
-	public String getName() {
+	public String getName(long snap) {
 		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
 			return name;
 		}
 	}
 
 	@Override
-	public void setRange(AddressRange range) {
+	public void setRange(long snap, AddressRange range) {
 		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
 			if (this.range.equals(range)) {
 				return;
@@ -132,111 +133,98 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 	}
 
 	@Override
-	public void setBase(Address base) {
-		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
-			setRange(DBTraceUtils.toRange(base, range.getMaxAddress()));
+	public AddressRange getRange(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return range;
 		}
 	}
 
 	@Override
-	public Address getBase() {
+	public void setBase(long snap, Address base) {
+		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
+			setRange(snap, DBTraceUtils.toRange(base, range.getMaxAddress()));
+		}
+	}
+
+	@Override
+	public Address getBase(long snap) {
 		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
 			return range.getMinAddress();
 		}
 	}
 
 	@Override
-	public void setMaxAddress(Address max) {
+	public void setMaxAddress(long snap, Address max) {
 		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
-			setRange(DBTraceUtils.toRange(range.getMinAddress(), max));
+			setRange(snap, DBTraceUtils.toRange(range.getMinAddress(), max));
 		}
 	}
 
 	@Override
-	public Address getMaxAddress() {
+	public Address getMaxAddress(long snap) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return range.getMaxAddress();
 		}
 	}
 
 	@Override
-	public void setLength(long length) throws AddressOverflowException {
+	public void setLength(long snap, long length) throws AddressOverflowException {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			Address base = range.getMinAddress();
-			setRange(DBTraceUtils.toRange(base, base.addNoWrap(length - 1)));
+			setRange(snap, DBTraceUtils.toRange(base, base.addNoWrap(length - 1)));
 		}
 	}
 
 	@Override
-	public long getLength() {
+	public long getLength(long snap) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return range.getLength();
 		}
 	}
 
 	@Override
-	public void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
-		Lifespan oldLifespan;
-		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
-			space.manager.checkModulePathConflicts(this, path, newLifespan);
-			ArrayList<? extends DBTraceSection> sections = new ArrayList<>(getSections());
-			for (DBTraceSection traceSection : sections) {
-				space.manager.checkSectionPathConflicts(traceSection, traceSection.getPath(),
-					newLifespan);
-			}
-			oldLifespan = this.lifespan;
-			doSetLifespan(newLifespan);
-			for (DBTraceSection traceSection : sections) {
-				traceSection.doSetLifespan(newLifespan);
-			}
-		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_LIFESPAN_CHANGED,
-			null, this, oldLifespan, newLifespan));
+	public Collection<? extends DBTraceSection> getSections(long snap) {
+		return getAllSections();
 	}
 
 	@Override
-	public Lifespan getLifespan() {
-		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
-			return lifespan;
-		}
-	}
-
-	@Override
-	public void setLoadedSnap(long loadedSnap) throws DuplicateNameException {
-		setLifespan(Lifespan.span(loadedSnap, getUnloadedSnap()));
-	}
-
-	@Override
-	public long getLoadedSnap() {
-		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
-			return lifespan.lmin();
-		}
-	}
-
-	@Override
-	public void setUnloadedSnap(long unloadedSnap) throws DuplicateNameException {
-		setLifespan(Lifespan.span(getLoadedSnap(), unloadedSnap));
-	}
-
-	@Override
-	public long getUnloadedSnap() {
-		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
-			return lifespan.lmax();
-		}
-	}
-
-	@Override
-	public Collection<? extends DBTraceSection> getSections() {
+	public Collection<? extends DBTraceSection> getAllSections() {
 		return space.manager.doGetSectionsByModuleId(getKey());
 	}
 
 	@Override
-	public TraceSection getSectionByName(String sectionName) {
+	public TraceSection getSectionByName(long snap, String sectionName) {
 		return space.manager.doGetSectionByName(getKey(), sectionName);
 	}
 
 	@Override
 	public void delete() {
 		space.manager.doDeleteModule(this);
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
+			if (snap <= lifespan.lmin()) {
+				space.manager.doDeleteModule(this);
+			}
+			else if (snap <= lifespan.lmax()) {
+				doSetLifespan(lifespan.withMax(snap - 1));
+			}
+		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return lifespan.intersects(span);
+		}
 	}
 }

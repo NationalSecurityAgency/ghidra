@@ -9,6 +9,7 @@
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />
         </PACKAGE>
+	<PACKAGE NAME="BSim" />
         <ROOT_NODE X_POS="409" Y_POS="179" WIDTH="1637" HEIGHT="931" EX_STATE="0" FOCUSED_OWNER="CodeBrowserPlugin" FOCUSED_NAME="Listing" FOCUSED_TITLE="Listing: ">
             <SPLIT_NODE WIDTH="1621" HEIGHT="816" DIVIDER_LOCATION="148" ORIENTATION="VERTICAL">
                 <COMPONENT_NODE TOP_INFO="0">

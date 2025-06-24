@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
@@ -63,7 +63,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
-	protected final DBTraceDataTypeManager dataTypeManager;
+	protected final DBTracePlatformManager platformManager;
 	protected final DBTraceReferenceManager referenceManager;
 	protected final AddressRange all;
 
@@ -99,7 +99,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
-		this.dataTypeManager = manager.dataTypeManager;
+		this.platformManager = manager.platformManager;
 		this.referenceManager = manager.referenceManager;
 		this.all = new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress());
 
@@ -335,7 +335,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 				if (reApply) {
 					try {
 						definedData.create(Lifespan.span(unitStartSnap, unitEndSnap),
-							unit.getAddress(), dataType, unit.getLength());
+							unit.getAddress(), unit.getPlatform(), dataType, unit.getLength());
 					}
 					catch (CodeUnitInsertionException e) {
 						throw new AssertionError(e);

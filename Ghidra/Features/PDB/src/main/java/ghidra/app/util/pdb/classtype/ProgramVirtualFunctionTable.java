@@ -16,18 +16,23 @@
 package ghidra.app.util.pdb.classtype;
 
 import java.util.List;
+import java.util.TreeMap;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.gclass.ClassID;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 
 /**
  * Manages virtual function table lookups.
  */
 public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 
-	private Memory memory;
+	private Program program;
 	private Address address;
 	private int defaultEntrySize; // Might go away, as would constructor param
 	private String mangledName;
@@ -36,22 +41,23 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 	 * Constructor
 	 * @param owner the owner class
 	 * @param parentage the parentage for the table
-	 * @param memory the program memory
+	 * @param program the program
 	 * @param address the address of the table in memory
 	 * @param defaultEntrySize the default entry size
 	 * @param mangledName the mangled name for the table
 	 */
-	public ProgramVirtualFunctionTable(ClassID owner, List<ClassID> parentage, Memory memory,
+	public ProgramVirtualFunctionTable(ClassID owner, List<ClassID> parentage, Program program,
 			Address address, int defaultEntrySize, String mangledName) {
 		super(owner, parentage);
 		if (defaultEntrySize != 4 && defaultEntrySize != 8) {
 			throw new IllegalArgumentException(
 				"Invalid size (" + defaultEntrySize + "): must be 4 or 8.");
 		}
-		this.memory = memory;
+		this.program = program;
 		this.address = address;
 		this.defaultEntrySize = defaultEntrySize;
 		this.mangledName = mangledName;
+		entriesByTableIndex = new TreeMap<>();
 	}
 
 	/**
@@ -66,17 +72,49 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 	 * Returns the mangled name
 	 * @return the mangled name
 	 */
-	String getMangledName() {
+	public String getMangledName() {
 		return mangledName;
 	}
 
 	@Override
-	public Address getAddress(int ordinal) throws PdbException {
-		throw new UnsupportedOperationException();
+	protected VirtualFunctionTableEntry getNewEntry(SymbolPath originalMethodPath,
+			SymbolPath overrideMethodPath, Pointer functionPointer) {
+		return new VirtualFunctionTableEntry(originalMethodPath, overrideMethodPath,
+			functionPointer);
 	}
 
 	@Override
-	public SymbolPath getPath(int index) throws PdbException {
-		throw new UnsupportedOperationException();
+	public Address getAddress(int ordinal) throws PdbException {
+		Memory memory = program.getMemory();
+		Address entryAddress = address.add(ordinal * defaultEntrySize);
+		try {
+			long offset =
+				(defaultEntrySize == 4) ? Integer.toUnsignedLong(memory.getInt(entryAddress))
+						: memory.getLong(entryAddress);
+			if (offset == 0L) {
+				return null;
+			}
+			Address result = address.getNewAddress(offset, false);
+			return result;
+		}
+		catch (MemoryAccessException e) {
+			throw new PdbException(
+				"MemoryAccessException while trying to parse virtual function table entry at address: " +
+					entryAddress);
+		}
 	}
+
+	private VirtualFunctionTableEntry entry(int tableIndex) {
+		return (VirtualFunctionTableEntry) entriesByTableIndex.get(tableIndex);
+	}
+
+	private VirtualFunctionTableEntry existing(int tableIndex) throws PdbException {
+		VirtualFunctionTableEntry entry = entry(tableIndex);
+		if (entry == null) {
+			throw new PdbException(
+				"No entry in Virtual Function Table for table offset: " + tableIndex);
+		}
+		return entry;
+	}
+
 }

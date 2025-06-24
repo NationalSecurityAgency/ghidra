@@ -54,11 +54,11 @@ CopySpec yajswCopySpec = copySpec {
 }
 // Unpack YAJSW archive into build/data for development use
 task yajswDevUnpack(type:Copy) {
-	description "Unpack YAJSW archive for development use"
-	group "Development Preparation"
+	description = "Unpack YAJSW archive for development use"
+	group = "Development Preparation"
 
 	with yajswCopySpec
-	destinationDir file("build/data")
+	destinationDir = file("build/data")
 }
 /*********************************************************************************
  * CLASSPATH FRAGMENT FILE: Production
@@ -76,13 +76,15 @@ task yajswDevUnpack(type:Copy) {
  *		3. Put the path in the output file.
  *********************************************************************************/
 task generateGhidraServerClasspath {
-	description "Generate a configuration fragment for the Ghidra Server's classpath (release)"
+	description = "Generate a configuration fragment for the Ghidra Server's classpath (release)"
 		
 	File outfile = file("${buildDir}/classpath.frag")
 	outputs.file outfile
 	
 	// Force the task to be executed every time by setting to false.
 	outputs.upToDateWhen { false }
+	
+	def p = project
 	
 	doLast {		
 		outfile.parentFile.mkdirs()
@@ -91,8 +93,8 @@ task generateGhidraServerClasspath {
 			configurations.runGhidraServer.each { jarFile ->	
 				File distPath = file("/")
 				String resPath
-				for (Configuration conf : project.getConfigurations()) {
-					resPath = findJarInDistribution(project, conf, jarFile)
+				for (Configuration conf : p.getConfigurations()) {
+					resPath = findJarInDistribution(p, conf, jarFile)
 					if (resPath != null) {
 						out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${resPath}")
 						break
@@ -136,7 +138,7 @@ rootProject.assembleDistribution {
  *
  *********************************************************************************/
 task generateDevGhidraServerClasspath {
-	description "Generate a configuration fragment for the Ghidra Server's classpath (development)"
+	description = "Generate a configuration fragment for the Ghidra Server's classpath (development)"
 
 	File outfile = file("${buildDir}/dev-meta/classpath.frag")
 	outputs.file outfile
@@ -260,8 +262,7 @@ def String searchFilesForJar (proj, conf, jar) {
 	String resolution = null
 	
 	if (conf.isCanBeResolved()) {
-		ResolvedConfiguration rc = conf.getResolvedConfiguration()
-		rc.getFiles().each { f ->
+		conf.getFiles().each { f ->
 			if (jar.equals(f)) {
 				resolution = rootProject.relativePath(proj.projectDir) + "/lib/" + f.name		
 			}
@@ -287,7 +288,9 @@ def String searchDependenciesForJar (proj, conf, jarFile) {
 	
 	Set<ProjectDependency> projectDependencies = conf.getAllDependencies().withType(ProjectDependency) 
 	for (ProjectDependency dependency : projectDependencies) {
-		Project dependencyProject = dependency.getDependencyProject()
+		Project dependencyProject = dependency.metaClass.respondsTo(dependency, "getPath")
+			? proj.project(dependency.path)
+			: dependency.getDependencyProject() // Remove this case after upgrading to 8.11 or later
 		Configuration depProjectConf = dependencyProject.getConfigurations().getByName(conf.getName())
 		relPath = findJarInDistribution(dependencyProject, depProjectConf, jarFile);
 		if (relPath != null) {

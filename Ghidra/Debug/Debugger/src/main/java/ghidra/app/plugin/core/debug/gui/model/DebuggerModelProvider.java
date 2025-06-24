@@ -55,6 +55,7 @@ import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -541,7 +542,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 					.map(n -> n.getValue())
 					.filter(o -> o != null) // Root for no trace would return null
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, objectsTreePanel);
+				DebuggerModelProvider.this, objectsTreePanel, current.getSnap());
 		}
 	}
 
@@ -610,7 +611,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> r.getValue())
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, elementsTablePanel);
+				DebuggerModelProvider.this, elementsTablePanel, current.getSnap());
 		}
 	}
 
@@ -664,7 +665,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> Objects.requireNonNull(r.getPath().getLastEntry()))
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, attributesTablePanel);
+				DebuggerModelProvider.this, attributesTablePanel, current.getSnap());
 		}
 	}
 
@@ -767,29 +768,34 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (target == null) {
 			return;
 		}
-		Map<String, ActionEntry> actions = target.collectActions(ActionName.REFRESH,
-			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel));
-		for (ActionEntry ent : actions.values()) {
-			if (ent.requiresPrompt()) {
-				continue;
-			}
-			if (path.getLastPathComponent() instanceof AbstractNode node) {
-				/**
-				 * This pending node does not duplicate what the lazy node already does. For all
-				 * it's concerned, once it has loaded the entries from the database, it is done.
-				 * This task asks the target to update that database, so it needs its own indicator.
-				 */
-				PendingNode pending = new PendingNode();
-				node.addNode(0, pending);
-				CompletableFuture<Void> future =
-					TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
-				future.handle((__, ex) -> {
-					node.removeNode(pending);
-					return null;
-				});
-				return;
-			}
+		ActionEntry ent = target.collectActions(ActionName.REFRESH,
+			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel,
+				current.getSnap()),
+			ObjectArgumentPolicy.CONTEXT_ONLY)
+				.values()
+				.stream()
+				.filter(e -> !e.requiresPrompt())
+				.sorted(Comparator.comparing(e -> -e.specificity()))
+				.findFirst()
+				.orElse(null);
+		if (ent == null) {
+			// Fail silently. It's common for nodes to not have a refresh action.
+			return;
 		}
+		AbstractNode node = (AbstractNode) path.getLastPathComponent();
+		/**
+		 * This pending node does not duplicate what the lazy node already does. For all it's
+		 * concerned, once it has loaded the entries from the database, it is done. This task asks
+		 * the target to update that database, so it needs its own indicator.
+		 */
+		PendingNode pending = new PendingNode();
+		node.addNode(0, pending);
+		CompletableFuture<Void> future =
+			TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
+		future.handle((__, ex) -> {
+			node.removeNode(pending);
+			return null;
+		});
 	}
 
 	@Override

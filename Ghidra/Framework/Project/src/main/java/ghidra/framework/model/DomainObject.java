@@ -408,7 +408,6 @@ public interface DomainObject {
 	/**
 	 * Performs the given callback inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something
@@ -438,7 +437,6 @@ public interface DomainObject {
 	/**
 	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something

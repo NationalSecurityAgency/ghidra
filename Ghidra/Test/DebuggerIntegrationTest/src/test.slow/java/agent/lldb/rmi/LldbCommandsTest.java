@@ -167,10 +167,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace stop
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
-		DomainFile df = env.getProject().getProjectData().getFile("/New Traces/lldb/expPrint");
-		assertNotNull(df);
-		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
-		assertFalse(df.isOpen());
+		// NOTE: Given the 'quit' command, I'm not sure this assertion is checking anything.
+		waitDomainObjectClosed("/New Traces/lldb/expPrint");
 	}
 
 	@Test
@@ -270,6 +268,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
+		waitDomainObjectClosed("/New Traces/no-save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -286,6 +285,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr, getSpecimenPrint()));
+		waitDomainObjectClosed("/New Traces/save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -587,7 +587,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
 				ghidra trace insert-obj Test.Objects[1]
-				ghidra trace set-snap 1
+				ghidra trace new-snap 1 "Next"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				kill
@@ -805,7 +805,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace set-value Test.Objects[1] [1] 10
 				ghidra trace set-value Test.Objects[1] [2] 20
 				ghidra trace set-value Test.Objects[1] [3] 30
-				ghidra trace set-snap 10
+				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
 				kill
@@ -1172,8 +1172,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modExpPrint =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("expPrint")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("expPrint")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase(SNAP)));
 		}
 	}
 

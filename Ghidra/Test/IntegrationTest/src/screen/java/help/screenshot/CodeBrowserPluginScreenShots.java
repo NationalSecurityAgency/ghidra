@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.listingpanel.OverviewProvider;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 
 public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 
@@ -253,7 +253,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		setToolSize(1000, 800);
 
 		positionListingTop(0x040364c);
-		createComment(0x403653, CodeUnit.PRE_COMMENT, "PUSH some stuff");
+		createComment(0x403653, CommentType.PRE, "PUSH some stuff");
 
 		positionCursor(0x0403653, MnemonicFieldFactory.FIELD_NAME);
 		middleClickCursor();
@@ -366,7 +366,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		waitForBusyTool(tool);
 	}
 
-	private void createComment(long address, int commentType, String comment) {
+	private void createComment(long address, CommentType commentType, String comment) {
 		goToListing(address);
 		SetCommentCmd cmd = new SetCommentCmd(addr(address), commentType, comment);
 		tool.execute(cmd, program);

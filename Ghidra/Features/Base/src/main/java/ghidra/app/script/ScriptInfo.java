@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,7 @@ package ghidra.app.script;
 import static ghidra.util.HTMLUtilities.*;
 
 import java.io.*;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +64,7 @@ public class ScriptInfo {
 	private String[] category = new String[0];
 	private KeyStroke keyBinding;
 	private String keybindingErrorMessage;
-	private String[] menupath = new String[0];
+	private String[] menupath = null;
 	private String toolbar;
 	private ImageIcon toolbarImage;
 	private String importpackage;
@@ -91,7 +90,7 @@ public class ScriptInfo {
 		author = null;
 		category = new String[0];
 		keyBinding = null;
-		menupath = new String[0];
+		menupath = null;
 		toolbar = null;
 		toolbarImage = null;
 		importpackage = null;
@@ -459,7 +458,25 @@ public class ScriptInfo {
 	 */
 	public String[] getMenuPath() {
 		parseHeader();
+		if (menupath == null) {
+			List<String> list = new ArrayList<>();
+			list.add("Scripts");
+			for (String name : category) {
+				list.add(name);
+			}
+			list.add(getNameNoExtension());
+			menupath = list.toArray(new String[list.size()]);
+		}
 		return menupath;
+	}
+
+	private String getNameNoExtension() {
+		String name = getName();
+		int lastIndex = name.lastIndexOf(".");
+		if (lastIndex > 0) {
+			name = name.substring(0, lastIndex);
+		}
+		return name;
 	}
 
 	/**

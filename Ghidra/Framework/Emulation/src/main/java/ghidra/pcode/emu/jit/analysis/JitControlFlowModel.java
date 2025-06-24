@@ -350,7 +350,7 @@ public class JitControlFlowModel {
 	 * external) that leave each block. We then compute all the branches (internal) that enter each
 	 * block and the associated flows in both directions.
 	 */
-	public static class BlockSplitter {
+	public abstract static class BlockSplitter {
 		private final PcodeProgram program;
 
 		private final Map<PcodeOp, Branch> branches = new HashMap<>();
@@ -372,6 +372,8 @@ public class JitControlFlowModel {
 		public BlockSplitter(PcodeProgram program) {
 			this.program = program;
 		}
+
+		protected abstract IntBranch newFallthroughIntBranch(PcodeOp from, PcodeOp to);
 
 		/**
 		 * Notify the splitter of the given branches before analysis
@@ -418,7 +420,8 @@ public class JitControlFlowModel {
 				return;
 			}
 			if (needsFallthrough(lastBlock)) {
-				lastBlock.branchesFrom.add(new IntBranch(lastBlock.getCode().getLast(), op, true));
+				lastBlock.branchesFrom
+						.add(newFallthroughIntBranch(lastBlock.getCode().getLast(), op));
 			}
 			lastBlock = null;
 		}
@@ -536,7 +539,13 @@ public class JitControlFlowModel {
 	 * @return the resulting blocks, keyed by {@link JitBlock#first()}
 	 */
 	protected SequencedMap<PcodeOp, JitBlock> analyze() {
-		BlockSplitter splitter = new BlockSplitter(passage);
+		BlockSplitter splitter = new BlockSplitter(passage) {
+			@Override
+			protected IntBranch newFallthroughIntBranch(PcodeOp from, PcodeOp to) {
+				// Decoder should already have inserted fall-through protectors
+				return new RIntBranch(from, to, true, Reachability.WITHOUT_CTXMOD);
+			}
+		};
 		splitter.addBranches(passage.getBranches().values());
 		return splitter.splitBlocks();
 	}

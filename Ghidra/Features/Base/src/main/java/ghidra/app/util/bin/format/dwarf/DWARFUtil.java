@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,8 +57,8 @@ public class DWARFUtil {
 	 * Returns the field name of a final static variable in class <code>clazz</code>
 	 * which holds a specific value.
 	 * <p>
-	 * Can be thought of as an enum numeric value to to name lookup.
-	 * <p>
+	 * Can be thought of as an enum numeric value to do a name lookup.
+	 * 
 	 * @param clazz
 	 * @param value
 	 * @return
@@ -78,15 +78,15 @@ public class DWARFUtil {
 	 */
 	public static Field getStaticFinalFieldWithValue(Class<?> clazz, long value) {
 		Field[] fields = clazz.getDeclaredFields();
-		for (int i = 0; i < fields.length; i++) {
-			if ((!Modifier.isFinal(fields[i].getModifiers())) ||
-				(!Modifier.isStatic(fields[i].getModifiers()))) {
+		for (Field field : fields) {
+			if ((!Modifier.isFinal(field.getModifiers())) ||
+				(!Modifier.isStatic(field.getModifiers()))) {
 				continue;
 			}
 			try {
-				long fieldValue = fields[i].getLong(null);
+				long fieldValue = field.getLong(null);
 				if (fieldValue == value) {
-					return fields[i];
+					return field;
 				}
 			}
 			catch (IllegalArgumentException | IllegalAccessException e) {
@@ -98,10 +98,6 @@ public class DWARFUtil {
 
 	//--------------------------------------
 
-
-
-
-
 	private static Pattern MANGLED_NESTING_REGEX = Pattern.compile("(.*_Z)?N([0-9]+.*)");
 
 	/**
@@ -110,7 +106,7 @@ public class DWARFUtil {
 	 * <p>
 	 * For example, "_ZN19class1_inline_funcs3fooEv" -&gt;
 	 * [19 chars]'class1_inline_funcs', [3 chars]'foo'
-	 * <p>
+	 * 
 	 * @param s
 	 * @return
 	 */
@@ -143,7 +139,7 @@ public class DWARFUtil {
 
 	/**
 	 * Try to find gnu mangled name nesting info in a DIE's children's linkage strings.
-	 * <p>
+	 * 
 	 * @param die
 	 * @return a list of string of nesting names, ending with what should be the DIE parameter's
 	 * name.
@@ -175,7 +171,7 @@ public class DWARFUtil {
 	 * <p>
 	 * operator&lt;() and operator&lt;&lt;() are handled so their angle brackets
 	 * don't trigger the template start/end angle bracket incorrectly.
-	 * <p>
+	 * 
 	 * @param name symbol name with C++ template portions
 	 * @return base portion of the symbol name without template portion
 	 */
@@ -193,7 +189,7 @@ public class DWARFUtil {
 
 	/**
 	 * Creates a name for anon types based on their position in their parent's childList.
-	 * <p>
+	 * 
 	 * @param diea the die aggregate.
 	 * @return the anonymous name of the die aggregate.
 	 */
@@ -286,8 +282,7 @@ public class DWARFUtil {
 			String memberName = childDIEA.getName();
 			int memberOffset = 0;
 			try {
-				memberOffset =
-					childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
+				memberOffset = childDIEA.parseDataMemberOffset(DW_AT_data_member_location, 0);
 			}
 			catch (DWARFExpressionException | IOException e) {
 				// ignore, leave as default value 0
@@ -346,7 +341,7 @@ public class DWARFUtil {
 		dtc.setComment(prev + description);
 	}
 
-	public static void appendComment(Program program, Address address, int commentType,
+	public static void appendComment(Program program, Address address, CommentType commentType,
 			String prefix, String comment, String sep) {
 		if (comment == null || comment.isBlank()) {
 			return;
@@ -398,8 +393,7 @@ public class DWARFUtil {
 		}
 
 		DIEAggregate funcDIEA = paramDIEA.getParent();
-		DWARFAttributeValue dwATObjectPointer =
-			funcDIEA.getAttribute(DW_AT_object_pointer);
+		DWARFAttributeValue dwATObjectPointer = funcDIEA.getAttribute(DW_AT_object_pointer);
 		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
 			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
 			return true;
@@ -442,8 +436,7 @@ public class DWARFUtil {
 	public static ResourceFile getLanguageExternalFile(Language lang, String name)
 			throws IOException {
 		String filename = getLanguageExternalNameValue(lang, name);
-		return filename != null
-				? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
+		return filename != null ? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
 				: null;
 	}
 
@@ -468,7 +461,7 @@ public class DWARFUtil {
 	 * Returns a value specified in a {@link Language} definition via a
 	 * <pre>&lt;external_name tool="<b>name</b>" name="<b>value</b>"/&gt;</pre>
 	 * entry.
-	 * <p>
+	 * 
 	 * @param lang {@link Language} to query
 	 * @param name name of the value
 	 * @return String value

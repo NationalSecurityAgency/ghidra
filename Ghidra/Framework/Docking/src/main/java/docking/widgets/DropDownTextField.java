@@ -91,6 +91,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	private boolean consumeEnterKeyPress = true; // consume Enter presses by default
 	private boolean ignoreEnterKeyPress = false; // do not ignore enter by default
 	private boolean ignoreCaretChanges;
+	private boolean showMachingListOnEmptyText;
 
 	// We use an update manager to buffer requests to update the matches.  This allows us to be
 	// more responsive when the user is attempting to type multiple characters
@@ -350,7 +351,13 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	// for testing so that we can override, otherwise would be private
 	protected List<T> getMatchingData(String searchText) {
-		if (searchText == null || searchText.length() == 0) {
+		if (searchText == null) {
+			return Collections.emptyList();
+		}
+
+		// By default we do not show the matches list is empty.  This seems less noisy.  Some  
+		// clients would rather have empty text show all available choices.
+		if (searchText.isEmpty() && !showMachingListOnEmptyText) {
 			return Collections.emptyList();
 		}
 
@@ -370,6 +377,29 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 			return false;
 		}
 		return matchingWindow.isShowing();
+	}
+
+	/**
+	 * Shows the matching list.  This can be used to show all data when the user has not typed any
+	 * text.
+	 */
+	public void showMatchingList() {
+
+		//
+		//  We temporarily enable this list to show for empty text, even if the text is not empty.
+		// This handles the default setting, which has this feature off.  We can refactor this class
+		// to allow us to make a direct call instead of using this temporary setting.  This seems
+		// simple enough for now.
+		//
+		boolean restore = showMachingListOnEmptyText;
+		try {
+			showMachingListOnEmptyText = true;
+			pendingTextUpdate = pendingTextUpdate != null ? pendingTextUpdate : getText();
+			updateManager.updateNow();
+		}
+		finally {
+			showMachingListOnEmptyText = restore;
+		}
 	}
 
 	/**
@@ -403,6 +433,15 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	 */
 	public void setIgnoreEnterKeyPress(boolean ignore) {
 		this.ignoreEnterKeyPress = ignore;
+	}
+
+	/**
+	 * Allows this text field to show all potential matches when the text of the field is empty.
+	 * The default is false.
+	 * @param show true to allow the list to be shown
+	 */
+	public void setShowMatchingListOnEmptyText(boolean show) {
+		this.showMachingListOnEmptyText = show;
 	}
 
 	/**

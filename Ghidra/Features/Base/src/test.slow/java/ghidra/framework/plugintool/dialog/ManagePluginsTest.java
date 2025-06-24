@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTableFilterPanel;
@@ -95,10 +96,12 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testActionEnablement() {
-		performAction(managePluginsDialog.getSaveAction(), true);
+		DockingAction saveAction = managePluginsDialog.getSaveAction();
+		performAction(saveAction, true);
+		assertFalse(saveAction.isEnabledForContext(managePluginsDialog.getActionContext(null)));
 
-		assertFalse(managePluginsDialog.getSaveAction().isEnabled());
-		assertTrue(managePluginsDialog.getSaveAsAction().isEnabled());
+		DockingAction saveAsAction = managePluginsDialog.getSaveAsAction();
+		assertTrue(saveAsAction.isEnabledForContext(managePluginsDialog.getActionContext(null)));
 	}
 
 	@Test
@@ -144,7 +147,8 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTasks();
 
 		assertTrue(tool.hasConfigChanged());
-		assertTrue(managePluginsDialog.getSaveAction().isEnabled());
+		DockingAction action = managePluginsDialog.getSaveAction();
+		assertTrue(action.isEnabledForContext(managePluginsDialog.getActionContext(null)));
 		assertTrue(
 			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 	}
@@ -152,10 +156,11 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testRemovePlugin() throws Exception {
 		tool.setConfigChanged(false);
-		SwingUtilities.invokeLater(() -> pluginManagerComponent.manageAllPlugins());
+		runSwingLater(() -> pluginManagerComponent.manageAllPlugins());
 		pluginModel.removePlugin(PluginDescription.getPluginDescription(EquateTablePlugin.class));
 		assertTrue(tool.hasConfigChanged());
-		assertTrue(managePluginsDialog.getSaveAction().isEnabled());
+		DockingAction action = managePluginsDialog.getSaveAction();
+		assertTrue(action.isEnabledForContext(managePluginsDialog.getActionContext(null)));
 		assertFalse(
 			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 

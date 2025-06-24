@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.AlignedStructurePacker.StructurePackResult;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
@@ -654,7 +653,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		repack(false);
 		notifySizeChanged();
 	}
-	
+
 	@Override
 	public void growStructure(int amount) {
 		if (amount < 0) {
@@ -1296,80 +1295,50 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		int n = components.size();
 		for (int i = n - 1; i >= 0; i--) {
 			DataTypeComponentImpl dtc = components.get(i);
-			boolean removeBitFieldComponent = false;
 			if (dtc.isBitFieldComponent()) {
+				// Do not allow bitfield to be destroyed
+				// If base type is removed - revert to primitive type
 				BitFieldDataType bitfieldDt = (BitFieldDataType) dtc.getDataType();
-				removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
+				if (bitfieldDt.getBaseDataType() == dt &&
+					updateBitFieldDataType(dtc, dt, bitfieldDt.getPrimitiveBaseDataType())) {
+					changed = true;
+				}
 			}
-			if (removeBitFieldComponent || dtc.getDataType() == dt) {
-				dt.removeParent(this);
-// FIXME: Consider replacing with undefined type instead of removing (don't remove bitfield)
-				components.remove(i);
-				shiftOffsets(i, dtc.getLength() - 1, 0);
-				--numComponents; // may be revised by repack
+			else if (dtc.getDataType() == dt) {
+				setComponentDataType(dtc, BadDataType.dataType, i);
 				changed = true;
 			}
 		}
-		if (changed) {
+		// Should be no impact for non-packed
+		if (changed && !isPackingEnabled()) {
 			repack(true);
 		}
 	}
 
 	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType replacementDt)
-			throws IllegalArgumentException {
-		DataType newDt = replacementDt;
+	public void dataTypeReplaced(DataType oldDt, DataType newDt) throws IllegalArgumentException {
+		DataType replacementDt = newDt;
 		try {
-			validateDataType(replacementDt);
+			replacementDt = validateDataType(replacementDt); // blocks DEFAULT use for packed
 			replacementDt = replacementDt.clone(dataMgr);
 			checkAncestry(replacementDt);
 		}
 		catch (Exception e) {
-			// TODO: should we use Undefined1 instead to avoid cases where
-			// DEFAULT datatype can not be used (bitfield, aligned structure, etc.)
-			// TODO: failing silently is rather hidden
-			replacementDt = DataType.DEFAULT;
+			// Handle bad replacement with use of undefined component
+			replacementDt = isPackingEnabled() ? Undefined1DataType.dataType : DataType.DEFAULT;
 		}
 
 		boolean changed = false;
 		for (int i = components.size() - 1; i >= 0; i--) {
-
 			DataTypeComponentImpl comp = components.get(i);
-
-			boolean remove = false;
 			if (comp.isBitFieldComponent()) {
-				try {
-					changed |= updateBitFieldDataType(comp, oldDt, replacementDt);
-				}
-				catch (InvalidDataTypeException e) {
-					Msg.error(this,
-						"Invalid bitfield replacement type " + newDt.getName() +
-							", removing bitfield " + comp.getDataType().getName() + ": " +
-							getPathName());
-					remove = true;
-				}
+				changed |= updateBitFieldDataType(comp, oldDt, replacementDt);
 			}
 			else if (comp.getDataType() == oldDt) {
-				if (replacementDt == DEFAULT && isPackingEnabled()) {
-					Msg.error(this,
-						"Invalid replacement type " + newDt.getName() + ", removing component " +
-							comp.getDataType().getName() + ": " + getPathName());
-					remove = true;
-				}
-				else {
-					setComponentDataType(comp, replacementDt, i);
-					changed = true;
-				}
-			}
-			if (remove) {
-				// error case - remove component
-				oldDt.removeParent(this);
-				components.remove(i);
-				shiftOffsets(i, comp.getLength() - 1, 0); // ordinals only
+				setComponentDataType(comp, replacementDt, i);
 				changed = true;
 			}
 		}
-
 		if (changed) {
 			repack(false);
 			notifySizeChanged(); // also handles alignment change

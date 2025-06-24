@@ -39,8 +39,6 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * <p>
  * If the filename can be recovered from the embedded metadata, it will be used as the
  * name of the singleton file, otherwise the name "gzip_decompressed" will be used.
- * <p>
- *
  */
 @FileSystemInfo(type = "gzip", description = "GZIP", priority = FileSystemInfo.PRIORITY_LOW, factory = GZipFileSystemFactory.class)
 public class GZipFileSystem implements GFileSystem {

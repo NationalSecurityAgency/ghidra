@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,7 +140,8 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(), threadManager.getLiveThreads(-1));
 		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(0));
 		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(9));
-		// NB. Destruction is excluded
-		assertEquals(Set.of(thread1), threadManager.getLiveThreads(10));
+		// NB. Destruction is included
+		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(10));
+		assertEquals(Set.of(thread1), threadManager.getLiveThreads(11));
 	}
 }

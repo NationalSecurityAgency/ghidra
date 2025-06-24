@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.program.database.properties;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -32,6 +33,24 @@ import ghidra.util.task.TaskMonitor;
  * int type and stored with a database table.
  */
 public class IntPropertyMapDB extends PropertyMapDB<Integer> implements IntPropertyMap {
+
+	/**
+	 * A single non-capturing lambda record reader function is used to avoid the possibility of 
+	 * multiple synthetic class instantiations.
+	 */
+	private Function<Long, Integer> valueReader = addrKey -> {
+		Table table = propertyTable;
+		DBRecord rec = null;
+		try {
+			if (table != null) {
+				rec = table.getRecord(addrKey);
+			}
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		return rec != null ? rec.getIntValue(PROPERTY_VALUE_COL) : null;
+	};
 
 	/**
 	 * Construct a integer property map.
@@ -58,27 +77,22 @@ public class IntPropertyMapDB extends PropertyMapDB<Integer> implements IntPrope
 	public void add(Address addr, int value) {
 		lock.acquire();
 		try {
+			checkDeleted();
 			Integer oldValue = null;
-
-			long key = addrMap.getKey(addr, true);
-
+			long addrKey = addrMap.getKey(addr, true);
 			if (propertyTable == null) {
 				createTable(IntField.INSTANCE);
 			}
 			else {
-				oldValue = (Integer) cache.get(key);
+				oldValue = cache.get(addrKey);
 				if (oldValue == null) {
-					DBRecord rec = propertyTable.getRecord(key);
-					if (rec != null) {
-						oldValue = rec.getIntValue(PROPERTY_VALUE_COL);
-					}
+					oldValue = valueReader.apply(addrKey);
 				}
 			}
-			DBRecord rec = schema.createRecord(key);
-
+			DBRecord rec = schema.createRecord(addrKey);
 			rec.setIntValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
-			cache.put(key, value);
+			cache.put(addrKey, value);
 
 			changeMgr.setPropertyChanged(name, addr, oldValue, value);
 		}
@@ -92,44 +106,25 @@ public class IntPropertyMapDB extends PropertyMapDB<Integer> implements IntPrope
 
 	@Override
 	public int getInt(Address addr) throws NoValueException {
-		if (propertyTable == null) {
+		Integer value = get(addr);
+		if (value == null) {
 			throw NO_VALUE_EXCEPTION;
 		}
-
-		lock.acquire();
-		try {
-			long key = addrMap.getKey(addr, false);
-			if (key == AddressMap.INVALID_ADDRESS_KEY) {
-				return 0;
-			}
-			Object obj = cache.get(key);
-			if (obj != null) {
-				return ((Integer) obj).intValue();
-			}
-
-			DBRecord rec = propertyTable.getRecord(key);
-			if (rec == null) {
-				throw NO_VALUE_EXCEPTION;
-			}
-			return rec.getIntValue(PROPERTY_VALUE_COL);
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		finally {
-			lock.release();
-		}
-		return 0;
+		return value;
 	}
 
 	@Override
 	public Integer get(Address addr) {
-		try {
-			return getInt(addr);
-		}
-		catch (NoValueException e) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
+		long addrKey = addrMap.getKey(addr, false);
+		if (addrKey == AddressMap.INVALID_ADDRESS_KEY) {
+			return null;
+		}
+		return cache.computeIfAbsent(addrKey, valueReader);
 	}
 
 }

@@ -212,8 +212,8 @@ def main() -> None:
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog=Path(__file__).name)
     parser.add_argument('install_dir', metavar='<install dir>', help='Ghidra installation directory')
-    parser.add_argument('-c', '--console', action='store_true', help='Force console launch')
-    parser.add_argument('-d', '--dev', action='store_true', help='Ghidra development mode')
+    parser.add_argument('--console', action='store_true', help='Force console launch')
+    parser.add_argument('--dev', action='store_true', help='Ghidra development mode')
     parser.add_argument('-H', '--headless', action='store_true', help='Ghidra headless mode')
     args, remaining = parser.parse_known_args()
     
@@ -253,6 +253,7 @@ def main() -> None:
         offer_venv: bool = False
         if in_venv():
             # If we are already in a virtual environment, assume that's where the user wants to be
+            python_cmd = get_venv_exe(Path(sys.prefix))
             print(f'Using active virtual environment: {sys.prefix}')
         elif os.path.isdir(venv_dir):
             # If the Ghidra user settings venv exists, use that

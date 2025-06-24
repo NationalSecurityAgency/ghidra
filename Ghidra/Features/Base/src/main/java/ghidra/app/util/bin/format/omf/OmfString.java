@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package ghidra.app.util.bin.format.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.PascalString255DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -54,6 +55,13 @@ public class OmfString implements StructConverter {
 		return str;
 	}
 
+	/**
+	 * {@return the length (in bytes) of this data type}
+	 */
+	public int getDataTypeSize() {
+		return BYTE.getLength() + length;
+	}
+
 	@Override
 	public String toString() {
 		return str;
@@ -65,10 +73,6 @@ public class OmfString implements StructConverter {
 			return BYTE;
 		}
 
-		StructureDataType struct = new StructureDataType("OmfString", 0);
-		struct.add(BYTE, "length", "");
-		struct.add(new StringDataType(), length, "str", null);
-		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
-		return struct;
+		return new PascalString255DataType();
 	}
 }

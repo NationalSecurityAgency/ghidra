@@ -27,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A class to represent the 
  * <code>IMAGE_BOUND_FORWARDER_REF</code>
  * data structure defined in <b><code>winnt.h</code></b>.
- * <p>
  * <pre>
  * typedef struct _IMAGE_BOUND_FORWARDER_REF {
  *     DWORD   TimeDateStamp;

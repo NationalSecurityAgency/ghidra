@@ -50,10 +50,10 @@ public class DecoderForOneStride {
 		 * Check whether the result falls through, accumulate its instructions and ops, and apply
 		 * any control-flow effects.
 		 * 
-		 * @return true if the result falls through.
+		 * @return the reachability of the fall-through flow
 		 * @see DecoderExecutor#checkFallthroughAndAccumulate(PcodeProgram)
 		 */
-		boolean checkFallthroughAndAccumulate() {
+		Reachability checkFallthroughAndAccumulate() {
 			return executor.checkFallthroughAndAccumulate(program);
 		}
 
@@ -123,9 +123,10 @@ public class DecoderForOneStride {
 		 * exit branch.
 		 */
 		if (decoder.thread.hasEntry(at)) {
-			ExitPcodeOp exitOp = new ExitPcodeOp(at);
+			ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
 			opsForStride.add(exitOp);
-			passage.otherBranches.put(exitOp, new ExtBranch(exitOp, at));
+			passage.otherBranches.put(exitOp,
+				new RExtBranch(exitOp, at, Reachability.WITHOUT_CTXMOD));
 			return null;
 		}
 
@@ -163,19 +164,43 @@ public class DecoderForOneStride {
 
 			StepResult result = stepAddrCtx(at);
 
-			if (result == null || !result.checkFallthroughAndAccumulate()) {
+			if (result == null) {
+				return toStride();
+			}
+
+			Reachability reach = result.checkFallthroughAndAccumulate();
+			if (reach == null) {
 				return toStride();
 			}
 
 			AddrCtx next = result.next();
 			if (at.equals(next)) {
 				// Would happen because of inject without control flow
-				ExitPcodeOp exitOp = new ExitPcodeOp(at);
+				ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
 				opsForStride.add(exitOp);
-				passage.otherBranches.put(exitOp, new ExtBranch(exitOp, at));
+				passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
 				return toStride();
 			}
 			at = next;
+
+			switch (reach) {
+				case WITHOUT_CTXMOD -> {
+					continue;
+				}
+				case WITH_CTXMOD -> {
+					// Looks like the without-control-flow case, but at has advanced
+					ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
+					opsForStride.add(exitOp);
+					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
+					return toStride();
+				}
+				case MAYBE_CTXMOD -> {
+					ExitPcodeOp exitOp = ExitPcodeOp.cond(at);
+					opsForStride.add(exitOp);
+					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
+					continue;
+				}
+			}
 		}
 
 		/**

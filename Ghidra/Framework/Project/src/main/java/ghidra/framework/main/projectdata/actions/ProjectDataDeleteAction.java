@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,8 +76,11 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 
 		String message = getMessage(fileCount, files);
 		OptionDialogBuilder builder = new OptionDialogBuilder("Confirm Delete", message);
-		builder.addOption("OK").addCancel().setMessageType(OptionDialog.QUESTION_MESSAGE);
-		return builder.show(parent) != OptionDialog.CANCEL_OPTION;
+		int choice = builder.addOption("OK")
+				.addCancel()
+				.setMessageType(OptionDialog.QUESTION_MESSAGE)
+				.show(parent);
+		return choice != OptionDialog.CANCEL_OPTION;
 	}
 
 	private String getMessage(int fileCount, Set<DomainFile> selectedFiles) {

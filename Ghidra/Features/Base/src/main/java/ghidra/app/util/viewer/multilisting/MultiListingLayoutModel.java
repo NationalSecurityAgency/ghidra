@@ -80,7 +80,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	/**
 	 * Returns the ListingLayoutModel for the i'th program.
 	 * @param index the index of program for which to return a listing model
-	 * @return the the ListingLayoutModel for the i'th program.
+	 * @return the ListingLayoutModel for the i'th program.
 	 */
 	public ListingModel getAlignedModel(int index) {
 		return alignedModels[index];
@@ -139,7 +139,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	}
 
 	class AlignedModel implements ListingModel {
-		private int modelID;
+		private final int modelID;
 
 		AlignedModel(int modelID) {
 			this.modelID = modelID;
@@ -175,14 +175,18 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 		 *         <code>address</code> is null
 		 */
 		private Address getNextAddress(Address address, boolean after) {
+
+			// Assume only a single external location is ever displayed within a panel
+			if (address.isExternalAddress()) {
+				return null;
+			}
+
 			Address nextAddress = null; // Next address for this model
 			Program program = getProgram();
 			Program primaryProgram = models[0].getProgram();
 			Address primaryModelAddress = (program == primaryProgram) ? address
 					: SimpleDiffUtility.getCompatibleAddress(program, address, primaryProgram);
 
-			// If address is an external from the other model, then we may not be able to get 
-			// an equivalent address in the primary model (i.e. primaryModelAddress may be null)
 			if (primaryModelAddress == null) {
 				return null;
 			}
@@ -217,11 +221,24 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 			return nextAddress;
 		}
 
+		private Address lastAddress;
+		private Address lastCachedPrimaryModelAddress;
+
 		@Override
 		public Layout getLayout(Address thisModelAddress, boolean isGapAddress) {
-			Address primaryModelAddress = (modelID == 0) ? thisModelAddress
-					: SimpleDiffUtility.getCompatibleAddress(getProgram(), thisModelAddress,
-						models[0].getProgram());
+
+			Address primaryModelAddress;
+			if (thisModelAddress.equals(lastAddress)) {
+				primaryModelAddress = lastCachedPrimaryModelAddress;
+			}
+			else {
+				primaryModelAddress = (modelID == 0) ? thisModelAddress
+						: SimpleDiffUtility.getCompatibleAddress(getProgram(), thisModelAddress,
+							models[0].getProgram());
+				lastAddress = thisModelAddress;
+				lastCachedPrimaryModelAddress = primaryModelAddress;
+			}
+
 			MultiLayout ml = getMultiLayout(primaryModelAddress, isGapAddress);
 			if (ml != null) {
 				return ml.getLayout(modelID);
@@ -353,7 +370,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	 * primary program and listingModel
 	 */
 	public void setAddressSet(AddressSetView view) {
-		primaryAddrSet = view;
+		primaryAddrSet = ImmutableAddressSet.asImmutable(view);
 		modelSizeChanged();
 	}
 }

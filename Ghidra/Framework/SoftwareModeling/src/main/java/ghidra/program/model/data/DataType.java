@@ -317,17 +317,6 @@ public interface DataType {
 	public void setDescription(String description) throws UnsupportedOperationException;
 
 	/**
-	 * The getDocs method should provide a URL pointing to extended documentation for this DataType
-	 * if it exists.
-	 * <p>
-	 * A typical use would be to return a URL pointing to the programmers reference for this
-	 * instruction or a page describing this data structure.
-	 *
-	 * @return null - there is no URL documentation for this prototype.
-	 */
-	public URL getDocs();
-
-	/**
 	 * Returns the interpreted data value as an instance of the 
 	 * {@link #getValueClass(Settings) advertised value class}.
 	 * <p>

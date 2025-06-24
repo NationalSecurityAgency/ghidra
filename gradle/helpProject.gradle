@@ -229,8 +229,8 @@ tasks.register('cleanHelp') {
 // Task for calling the java help indexer, which creates a searchable index of the help contents
 tasks.register('indexHelp', JavaExec) {
 
-	group "private"
-	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
+	group = "private"
+	description = "indexes the helps files for this module.  [gradle/helpProject.gradle]"
 
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
@@ -287,7 +287,7 @@ tasks.register('indexHelp', JavaExec) {
 // Task for building Markdown in src/global/docs to HTML
 //      - the files generated will be placed in a build directory usable during development mode
 tasks.register('buildGlobalMarkdown') {
-	group "private"	
+	group = "private"	
 	dependsOn ':MarkdownSupport:classes'
 	
 	FileTree markdownFiles = this.project.fileTree('src/global/docs') {
@@ -298,15 +298,17 @@ tasks.register('buildGlobalMarkdown') {
 	
 	inputs.files markdownFiles  
 	
+	def markdownProject = project(':MarkdownSupport')
+	
 	doFirst {
 		markdownFiles.each { f ->
 			def htmlName = f.name[0..-3] + "html"
-			javaexec {
-				classpath = project(':MarkdownSupport').sourceSets.main.runtimeClasspath
+			providers.javaexec {
+				classpath = markdownProject.sourceSets.main.runtimeClasspath
 				mainClass = 'ghidra.markdown.MarkdownToHtml'
 				args f
 				args file("build/src/global/docs/${htmlName}")
-			}
+			}.result.get()
 		}
 	}
 }
@@ -320,7 +322,7 @@ tasks.register('buildGlobalMarkdown') {
 //				- the <Module>-help.jar file in development mode
 tasks.register('buildHelpFiles', JavaExec) { 
 
-	group "private"	
+	group = "private"	
 
 	dependsOn 'indexHelp'
 
@@ -423,12 +425,12 @@ tasks.register('buildHelpFiles', JavaExec) {
  */
 tasks.register('buildHelp', Jar) {
 
-	group rootProject.GHIDRA_GROUP
-	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
+	group = rootProject.GHIDRA_GROUP
+	description = "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
 
 	dependsOn tasks.named('buildHelpFiles')
 	dependsOn tasks.named('buildGlobalMarkdown')
-    duplicatesStrategy 'exclude'
+    duplicatesStrategy = 'exclude'
     
 	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
@@ -441,8 +443,8 @@ tasks.register('buildHelp', Jar) {
 // Task for finding unused images that are not referenced from Ghidra help files 
 tasks.register('findUnusedHelp', JavaExec) {
 
-	group "private"
-	description "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
+	group = "private"
+	description = "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
 
 	File helpRootDir = file('src/main/help/help')	
 	inputs.dir helpRootDir
@@ -465,7 +467,7 @@ tasks.register('findUnusedHelp', JavaExec) {
 
 // include the help into the module's jar
 jar {
-    duplicatesStrategy 'exclude'
+    duplicatesStrategy = 'exclude'
 	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 }

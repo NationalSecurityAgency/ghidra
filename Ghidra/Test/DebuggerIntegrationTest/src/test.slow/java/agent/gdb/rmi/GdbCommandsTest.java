@@ -48,7 +48,8 @@ import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -159,7 +160,6 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testStopTrace() throws Exception {
-		// TODO: This test assumes gdb and the target file bash are x86-64
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -168,10 +168,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace stop
 				quit
 				""".formatted(PREAMBLE, addr));
-		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/gdb/bash");
-		assertNotNull(dfBash);
-		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
-		assertFalse(dfBash.isOpen());
+		// NOTE: Given the 'quit' command, I'm not sure this assertion is checking anything.
+		waitDomainObjectClosed("/New Traces/gdb/bash");
 	}
 
 	@Test
@@ -277,6 +275,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
+		waitDomainObjectClosed("/New Traces/no-save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -293,6 +292,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace save
 				quit
 				""".formatted(PREAMBLE, addr));
+		waitDomainObjectClosed("/New Traces/save");
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -583,6 +583,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testRemoveObj() throws Exception {
+		// Must give 1 for new-snap, since snap 0 was never created
 		runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -590,7 +591,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
 				ghidra trace insert-obj Test.Objects[1]
-				ghidra trace set-snap 1
+				ghidra trace new-snap 1 "Snap 1"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				quit
@@ -778,7 +779,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace set-value Test.Objects[1] [1] '"A"'
 				ghidra trace set-value Test.Objects[1] [2] '"B"'
 				ghidra trace set-value Test.Objects[1] [3] '"C"'
-				ghidra trace set-snap 10
+				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
 				kill
@@ -1131,8 +1132,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("bash")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("bash")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 		}
 	}
 

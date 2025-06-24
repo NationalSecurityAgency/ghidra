@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,8 @@ import ghidra.xml.*;
 public class ConsumeExtra extends AssignAction {
 
 	private StorageClass resourceType;	// The other resource list to consume from
-	private int firstIter;				// Iterator to first element in the resource list
 	private boolean matchSize;			// false, if side-effect only consumes a single register
+	private ParamEntry[] tiles;			// Registers that can be consumed
 
 	/**
 	 * Cache specific ParamEntry needed by the action.
@@ -48,18 +48,10 @@ public class ConsumeExtra extends AssignAction {
 	 * @throws InvalidInputException if it cannot find the configured ParamEntry objects
 	 */
 	private void initializeEntries() throws InvalidInputException {
-		firstIter = -1;
-		for (int i = 0; i < resource.getNumParamEntry(); ++i) {
-			ParamEntry entry = resource.getEntry(i);
-			if (entry.isExclusion() && entry.getType() == resourceType &&
-				entry.getAllGroups().length == 1) {
-				firstIter = i;	// First matching resource size
-				break;
-			}
-		}
-		if (firstIter == -1) {
+		tiles = resource.extractTiles(resourceType);
+		if (tiles.length == 0) {
 			throw new InvalidInputException(
-				"Could not find matching resources for action: consumeextra");
+				"Could not find matching resources for action: consume_extra");
 		}
 	}
 
@@ -88,9 +80,17 @@ public class ConsumeExtra extends AssignAction {
 			return false;
 		}
 		ConsumeExtra otherAction = (ConsumeExtra) op;
-		if (firstIter != otherAction.firstIter || matchSize != otherAction.matchSize ||
+		if (matchSize != otherAction.matchSize ||
 			resourceType != otherAction.resourceType) {
 			return false;
+		}
+		if (tiles.length != otherAction.tiles.length) {
+			return false;
+		}
+		for (int i = 0; i < tiles.length; ++i) {
+			if (!tiles[i].isEquivalent(otherAction.tiles[i])) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -98,18 +98,11 @@ public class ConsumeExtra extends AssignAction {
 	@Override
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
-		int iter = firstIter;
-		int endIter = resource.getNumParamEntry();
+		int iter = 0;
 		int sizeLeft = dt.getLength();
-		while (sizeLeft > 0 && iter != endIter) {
-			ParamEntry entry = resource.getEntry(iter);
+		while (sizeLeft > 0 && iter != tiles.length) {
+			ParamEntry entry = tiles[iter];
 			++iter;
-			if (!entry.isExclusion()) {
-				break;		// Reached end of resource list
-			}
-			if (entry.getType() != resourceType || entry.getAllGroups().length != 1) {
-				continue;		// Not a single register in desired list
-			}
 			if (status[entry.getGroup()] != 0) {
 				continue;		// Already consumed
 			}

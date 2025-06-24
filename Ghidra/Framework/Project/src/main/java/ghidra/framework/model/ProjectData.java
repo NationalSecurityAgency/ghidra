@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.framework.model;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 
 import ghidra.framework.client.RepositoryAdapter;
@@ -30,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  * The ProjectData interface provides access to all the data files and folders
  * in a project.
  */
-public interface ProjectData {
+public interface ProjectData extends Iterable<DomainFile> {
 
 	/**
 	 * @return local storage implementation class
@@ -141,7 +142,7 @@ public interface ProjectData {
 
 	/**
 	 * Sync the Domain folder/file structure with the underlying file structure.
-	 * @param force if true all folders will be be visited and refreshed, if false
+	 * @param force if true all folders will be visited and refreshed, if false
 	 * only those folders previously visited will be refreshed.
 	 */
 	public void refresh(boolean force);
@@ -224,4 +225,8 @@ public interface ProjectData {
 	 */
 	public URL getLocalProjectURL();
 
+	@Override
+	public default Iterator<DomainFile> iterator() {
+		return new ProjectDataUtils.DomainFileIterator(getRootFolder());
+	}
 }

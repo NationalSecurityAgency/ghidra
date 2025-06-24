@@ -373,8 +373,10 @@ public class DWARFVariable {
 					return false;
 				}
 
-				type = prog.getDwarfDTM().getPtrTo(type);
-				setRegisterStorage(List.of(exprEvaluator.getLastRegister()));
+				if (exprEvaluator.getLastRegister() != null) {
+					type = prog.getDwarfDTM().getPtrTo(type);
+					setRegisterStorage(List.of(exprEvaluator.getLastRegister()));
+				}
 			}
 			else if (exprEvaluator.isStackRelative()) {
 				if (exprEvaluator.isDeref()) {

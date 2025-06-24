@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,28 +75,39 @@ public class StubListing implements Listing {
 	}
 
 	@Override
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType commentType,
+			AddressSetView addrSet) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
-			boolean forward) {
-		throw new UnsupportedOperationException();
+	public AddressIterator getCommentAddressIterator(CommentType commentType,
+			AddressSetView addrSet, boolean forward) {
+		return AddressIterator.EMPTY_ITERATOR;
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
+		return AddressIterator.EMPTY_ITERATOR;
+	}
+
+	@Override
+	public long getCommentAddressCount() {
+		return 0;
+	}
+
+	@Override
+	public String getComment(CommentType commentType, Address address) {
+		return null;
+	}
+
+	@Override
+	public CodeUnitComments getAllComments(Address address) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public String getComment(int commentType, Address address) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setComment(Address address, int commentType, String comment) {
+	public void setComment(Address address, CommentType commentType, String comment) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -471,7 +482,7 @@ public class StubListing implements Listing {
 	}
 
 	@Override
-	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
+	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		throw new UnsupportedOperationException();
 	}
 

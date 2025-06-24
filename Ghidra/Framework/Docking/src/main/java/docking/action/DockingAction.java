@@ -691,7 +691,7 @@ public abstract class DockingAction implements DockingActionIf {
 	 * <P>
 	 * If this is set, then the action will only be added to windows that have providers
 	 * that can produce an ActionContext that is appropriate for this action.
-	 * <P>
+	 * 
 	 * @param addToWindowContextClass the ActionContext class required to be producible by a
 	 * provider that is hosted in that window before this action is added to that
 	 * window.
@@ -703,7 +703,7 @@ public abstract class DockingAction implements DockingActionIf {
 
 	/**
 	 * Tells this action to add itself to all windows
-	 * <P>
+	 * 
 	 * @param b to add to all windows or not
 	 */
 	public void setAddToAllWindows(boolean b) {

@@ -452,6 +452,12 @@ public class ToolOptions extends AbstractOptions {
 		return true;
 	}
 
+	@Override
+	public void dispose() {
+		super.dispose();
+		listeners.clear();
+	}
+
 	private class NotifyListenersRunnable implements Runnable {
 		private String optionName;
 		private Object oldValue;

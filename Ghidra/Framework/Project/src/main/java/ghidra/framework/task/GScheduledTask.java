@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +19,6 @@ package ghidra.framework.task;
  * Class for tracking scheduled GTasks.  When tasks are scheduled, they are assigned to a GTaskGroup,
  * given a priority, assigned a one-up ID, given a GTaskMonitor.  This class is used to keep all
  * that information together.
- * <p>
  */
 public class GScheduledTask implements Comparable<GScheduledTask> {
 	private static long nextID = 1;  // Used so that tasks of equal priority are sorted in the order

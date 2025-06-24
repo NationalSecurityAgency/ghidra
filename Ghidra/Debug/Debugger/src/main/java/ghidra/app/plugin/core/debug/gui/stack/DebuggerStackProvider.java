@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,6 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 import javax.swing.*;
-
-import org.apache.commons.lang3.ArrayUtils;
 
 import docking.ActionContext;
 import docking.WindowPosition;
@@ -84,7 +82,6 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	private final JPanel mainPanel = new JPanel(new BorderLayout());
 
 	/*testing*/ DebuggerStackPanel panel;
-	/*testing*/ DebuggerLegacyStackPanel legacyPanel;
 
 	DockingAction actionUnwindStack;
 
@@ -109,7 +106,6 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	protected void buildMainPanel() {
 		panel = new DebuggerStackPanel(this);
 		mainPanel.add(panel);
-		legacyPanel = new DebuggerLegacyStackPanel(plugin, this);
 	}
 
 	protected void createActions() {
@@ -130,13 +126,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		final ActionContext context;
-		if (Trace.isLegacy(current.getTrace())) {
-			context = legacyPanel.getActionContext();
-		}
-		else {
-			context = panel.getActionContext();
-		}
+		final ActionContext context = panel.getActionContext();
 		if (context != null) {
 			return context;
 		}
@@ -145,7 +135,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		return curThread == null ? "" : curThread.getName();
+		return curThread == null ? "" : curThread.getName(current.getSnap());
 	}
 
 	protected void updateSubTitle() {
@@ -160,31 +150,13 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 		current = coordinates;
 
-		if (Trace.isLegacy(coordinates.getTrace())) {
-			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacyPanel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyPanel) == -1) {
-				mainPanel.remove(panel);
-				mainPanel.add(legacyPanel);
-				mainPanel.validate();
-			}
-		}
-		else {
-			legacyPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			panel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), panel) == -1) {
-				mainPanel.remove(legacyPanel);
-				mainPanel.add(panel);
-				mainPanel.validate();
-			}
-		}
+		panel.coordinatesActivated(coordinates);
 		updateSubTitle();
 	}
 
 	public void traceClosed(Trace trace) {
 		if (trace == current.getTrace()) {
 			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacyPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 		}
 	}
 }

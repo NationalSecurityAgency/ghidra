@@ -28,6 +28,11 @@ import sarif.SarifUtils;
 
 public record TaintQueryResult(String name,String fqname, Address iaddr, Address faddr, List<String> labels, boolean functionLevelResult) {
 
+	// NB: The constructors that follow depend on data generated at different phases in the processing.
+	//   At first blush, it seems obvious that you could combine them by using the location data, accessed
+	//   in the first to derive the LogicalLocation via llocs in SarifUtils.  llocs, however, is likely to
+	//   be stale when applying the SARIF results.
+	
 	public TaintQueryResult(Map<String, Object> result) {
 		this((String) result.get("name"), 
 			(String) result.get("location"),
@@ -41,22 +46,14 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 
 	public TaintQueryResult(Map<String, Object> result, Run run, LogicalLocation ll) {
 		this(
-			SarifUtils.extractDisplayName(fqnFromLoc(run, ll)),
-			fqnFromLoc(run, ll).getFullyQualifiedName(), 
+			SarifUtils.extractDisplayName(ll),
+			ll.getDecoratedName(), 
 			(Address) result.get("Address"),
 			(Address) result.get("entry"),
 			new ArrayList<String>(),
 			(Address) result.get("Address") == null);
 		String value = (String) result.get("value");
 		addLabel(value);
-	}
-
-	private static LogicalLocation fqnFromLoc(Run run, LogicalLocation ll) {
-		String fqn = ll.getFullyQualifiedName();
-		if (fqn == null) {
-			ll = SarifUtils.getLogicalLocation(run, ll.getIndex());
-		}
-		return ll;
 	}
 
 	public String getLabel() {
@@ -79,52 +76,52 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 		return labels.contains(label);
 	}
 
-	public String matches(ClangToken token) {
+	public String matches(ClangToken token) {		
 		String text = token.getText();
-		Address vaddr = token.getMinAddress();
-		HighVariable hv = token.getHighVariable();
-		ClangToken hvToken = token;
-		if (hv == null && token instanceof ClangFieldToken ftoken) {
-			ClangVariableToken vtoken = TaintState.getParentToken(ftoken);
-			if (vtoken != null) {
-				hv = vtoken.getHighVariable();
-				hvToken = vtoken;
+		String hvName = TaintState.varName(token, true);
+		if (hvName == null) {
+			return null;
+		}
+
+		Varnode vn = token.getVarnode();
+		ClangFunction clangFunction = token.getClangFunction();
+		Function function = clangFunction.getHighFunction().getFunction();
+		boolean functionLevelToken = function.isThunk() || (vn == null);
+		if (functionLevelToken) {
+			if (faddr.equals(function.getEntryPoint())) {
+				if (name.endsWith(hvName)) {
+					return hvName;
+				}
 			}
 		}
-		if (hv == null) {
-			return null;
-		}
-		HighFunction hf = hv.getHighFunction();
-		String hvName = TaintState.hvarName(hvToken);
-
-		// Weed-out check
-		if (!fqname.contains(hvName) && !fqname.contains(text)) {
-			return null;
-		}
-		Function function = hf.getFunction();
-		Varnode vn = token.getVarnode();
-		boolean functionLevelToken = function.isThunk() || (vn == null);
-		if (functionLevelToken || functionLevelResult) {
-			if (!faddr.equals(function.getEntryPoint())) {
-				return null;
+		else if (functionLevelResult) {
+			if (faddr.equals(function.getEntryPoint())) {
+				if (name.endsWith(hvName) || name.endsWith(text)) {
+					return hvName;
+				}
 			}
 		}
 		else {
+			Address vaddr = token.getMinAddress();
+			if (vaddr == null) {
+				HighVariable hv = token.getHighVariable();
+				if (hv instanceof HighParam) {
+					vaddr = hv.getRepresentative().getPCAddress();
+				}
+			}
 			// if neither are function-level, the addresses must match
-			if (!iaddr.equals(vaddr)) {
-				return null;
+			// NB: parameter/local use matches on the representative
+			if (iaddr.equals(vaddr)) {
+				VarnodeAST ast = (VarnodeAST) vn;
+				if (fqname.endsWith(":"+ast.getUniqueId())) {
+					return hvName;
+				}
+				if (fqname.contains(":"+hvName)) {
+					return hvName;
+				}
 			}
 		}
-		if (hvName.startsWith(":")) { // fqname is FUN@FUN:name:vname
-			if (fqname.endsWith(hvName) || fqname.endsWith(text)) {
-				return hvName;
-			}
-		}
-		else { // fqname is FUN@FUN:vname:id
-			if (fqname.contains(":" + hvName + ":") || fqname.contains(":" + text + ":")) {
-				return hvName;
-			}
-		}
+		
 		return null;
 	}
 

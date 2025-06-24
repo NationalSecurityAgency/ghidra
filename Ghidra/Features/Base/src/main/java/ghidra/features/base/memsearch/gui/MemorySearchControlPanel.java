@@ -274,6 +274,10 @@ class MemorySearchControlPanel extends JPanel {
 		searchButton.setSelectedStateByClientData(combiner);
 	}
 
+	void setSearchCombiner(Combiner combiner) {
+		searchButton.setSelectedStateByClientData(combiner);
+	}
+
 	private void adjustLocationForCaretPosition(Point location) {
 		JTextField textField = searchInputField.getTextField();
 		Caret caret = textField.getCaret();
@@ -457,4 +461,7 @@ class MemorySearchControlPanel extends JPanel {
 		}
 	}
 
+	Component getDefaultFocusComponent() {
+		return searchInputField;
+	}
 }

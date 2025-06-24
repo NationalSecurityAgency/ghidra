@@ -1,0 +1,82 @@
+@ ["all","Types","func(error)","Params",0,"Name"]
+- ""
++ "err"
+@ ["all","Types","func(string, []interface {})","Params",0,"Name"]
+- "format"
++ ""
+@ ["all","Types","func(string, []interface {})","Params",1,"Name"]
+- "args"
++ ""
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"

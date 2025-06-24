@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -71,6 +70,18 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@FieldMapping
 	private long edata;
+
+	@FieldMapping
+	private long bss;
+
+	@FieldMapping
+	private long ebss;
+
+	@FieldMapping
+	private long noptrbss;
+
+	@FieldMapping
+	private long enoptrbss;
 
 	@FieldMapping
 	@MarkupReference
@@ -160,6 +171,18 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		Address dataStart = programContext.getCodeAddress(data);
 		Address dataEnd = programContext.getCodeAddress(edata);
 		return new AddressRangeImpl(dataStart, dataEnd);
+	}
+
+	public AddressRange getUninitializedDataRange() {
+		Address rangeStart = programContext.getCodeAddress(bss);
+		Address rangeEnd = programContext.getCodeAddress(ebss);
+		return new AddressRangeImpl(rangeStart, rangeEnd);
+	}
+
+	public AddressRange getUninitializedNoPtrDataRange() {
+		Address rangeStart = programContext.getCodeAddress(noptrbss);
+		Address rangeEnd = programContext.getCodeAddress(enoptrbss);
+		return new AddressRangeImpl(rangeStart, rangeEnd);
 	}
 
 	/**
@@ -328,8 +351,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
-		typeLinks.markupArray("moduledata.typeLinks", null, programContext.getInt32DT(), false,
-			session);
+		typeLinks.markupArray("moduledata.typeLinks", null,
+			programContext.getGoTypes().getInt32DT(), false, session);
 		typeLinks.markupElementReferences(4, getTypeList(), session);
 
 		itablinks.markupArray("moduledata.itablinks", null, GoItab.class, true, session);
@@ -344,7 +367,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		subSlice.markupArrayElements(GoFunctabEntry.class, session);
 
 		Structure textsectDT =
-			programContext.getGhidraDataType("runtime.textsect", Structure.class);
+			programContext.getGoTypes().getGhidraDataType("runtime.textsect", Structure.class);
 		if (textsectDT != null) {
 			textsectmap.markupArray("runtime.textsectionmap", null, textsectDT, false, session);
 		}
@@ -388,27 +411,6 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		catch (IOException e) {
 			Msg.warn(this, "Failed when marking up string table at: " + addr, e);
 		}
-	}
-
-	/**
-	 * Returns an iterator that walks all the types contained in this module
-	 * 
-	 * @return iterator that walks all the types contained in this module
-	 * @throws IOException if error reading data
-	 */
-	@Markup
-	public Iterator<GoType> iterateTypes() throws IOException {
-		return getTypeList().stream()
-				.map(addr -> {
-					try {
-						return programContext.getGoType(addr);
-					}
-					catch (IOException e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull)
-				.iterator();
 	}
 
 	/**
@@ -470,16 +472,21 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		int ptrSize = context.getPtrSize();
 		byte[] searchBytes = new byte[ptrSize];
 		context.getDataConverter().putValue(pcHeaderAddress.getOffset(), ptrSize, searchBytes, 0);
-		Address moduleAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
-			searchBytes, null, true, monitor);
-		if (moduleAddr == null) {
-			return null;
+
+		Address moduleAddr;
+		while ((moduleAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, null, true, monitor)) != null) {
+
+			GoModuledata moduleData = context.readStructure(GoModuledata.class, moduleAddr);
+
+			// Verify that we read a good GoModuledata struct by comparing some of its values to
+			// the pclntab structure.
+			if (moduleData.matchesPcHeader(pcHeader)) {
+				return moduleData;
+			}
+			range = new AddressRangeImpl(moduleAddr.next(), range.getMaxAddress());
 		}
-
-		GoModuledata moduleData = context.readStructure(GoModuledata.class, moduleAddr);
-
-		// Verify that we read a good GoModuledata struct by comparing some of its values to
-		// the pclntab structure.
-		return moduleData.matchesPcHeader(pcHeader) ? moduleData : null;
+		return null;
 	}
+
 }

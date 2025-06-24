@@ -23,10 +23,12 @@ import com.contrastsecurity.sarif.*;
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.plugin.core.decompiler.taint.*;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramTask;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -49,27 +51,20 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 	}
 
 	@Override
-	public void handle(SarifDataFrame dframe, Run run, Result result, Map<String, Object> map) {
+	public void handle(SarifDataFrame dframe, Run r, Result res, Map<String, Object> map) {
 		this.df = dframe;
 		this.controller = df.getController();
 
-		this.run = run;
-		this.result = result;
+		this.run = r;
+		this.result = res;
 
 		String ruleId = result.getRuleId();
 		if (ruleId == null || ruleId.equals("C0001")) {
 			return;
 		}
 		map.put("type", TaintRule.fromRuleId(ruleId));
-		// TODO: this is a bit weak
-		String label = "UNSPECIFIED";
 		Message msg = result.getMessage();
-		String[] parts = msg.getText().split(":");
-		if (parts.length > 1) {
-			label = parts[1].strip();
-		}
-		map.put("value", label);
-		map.put("comment", result.getMessage().getText());
+		map.put("comment", msg.getText());
 
 		List<Location> locs = result.getLocations();
 		if (locs != null) {
@@ -78,14 +73,20 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		}
 
 		PropertyBag properties = result.getProperties();
+		String label = "UNSPECIFIED";
 		if (properties != null) {
 			Map<String, Object> additionalProperties = properties.getAdditionalProperties();
 			if (additionalProperties != null) {
 				for (Entry<String, Object> entry : additionalProperties.entrySet()) {
 					map.put(entry.getKey(), entry.getValue());
+					if (entry.getKey().equals("taintLabels")) {
+						label = entry.getValue().toString();
+						label = label.substring(1, label.length()-1);
+					}
 				}
 			}
 		}
+		map.put("value", label);
 	}
 
 	@Override
@@ -106,6 +107,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 
 	private void populate(Map<String, Object> map, List<Location> locs) {
 		Location loc = locs.get(0);
+		Program program = controller.getProgram();
 		LogicalLocation ll = SarifUtils.getLogicalLocation(run, loc);
 		if (ll != null) {
 			String name = ll.getName();
@@ -113,19 +115,22 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			String displayName = SarifUtils.extractDisplayName(ll);
 			map.put("originalName", name);
 			map.put("name", displayName);
-			Address faddr = SarifUtils.extractFunctionEntryAddr(controller.getProgram(), fqname);
+			Address faddr = SarifUtils.extractFunctionEntryAddr(program, fqname);
 			if (faddr != null && faddr.getOffset() >= 0) {
 				map.put("entry", faddr);
 				map.put("Address", faddr);
 			}
-			Address addr = SarifUtils.getLocAddress(controller.getProgram(), fqname);
-			if (addr != null) {
-				map.put("Address", addr);
-
-			}
 			map.put("location", fqname);
 			map.put("kind", ll.getKind());
 			map.put("function", SarifUtils.extractFQNameFunction(fqname));
+		}
+		PhysicalLocation pl = loc.getPhysicalLocation();
+		if (pl != null) {
+			Long offset = pl.getAddress().getAbsoluteAddress();
+			Address addr = SarifUtils.getAddress(program, offset);
+			if (addr != null) {
+				map.put("Address", addr);
+			}
 		}
 	}
 
@@ -199,6 +204,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 	private class ApplyTaintViaVarnodesTask extends ProgramTask {
 
 		private SarifResultsTableProvider tableProvider;
+		protected TaskType taskType = TaskType.SET_TAINT;
 
 		protected ApplyTaintViaVarnodesTask(SarifResultsTableProvider provider) {
 			super(provider.getController().getProgram(), "ApplyTaintViaVarnodesTask", true, true,
@@ -213,7 +219,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
-				if (kind.equals("instruction") || kind.startsWith("path ")) {
+				if (kind.equals("member") || kind.startsWith("path ")) {
 					getTaintedInstruction(map, r);
 				}
 				if (kind.equals("variable")) {
@@ -224,7 +230,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			PluginTool tool = tableProvider.getController().getPlugin().getTool();
 			TaintService service = tool.getService(TaintService.class);
 			if (service != null) {
-				service.setVarnodeMap(map, true);
+				service.setVarnodeMap(map, true, taskType);
 			}
 		}
 
@@ -240,17 +246,19 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			Address faddr = (Address) r.get("entry");
 			String fqname = (String) r.get("location");
 			Set<TaintQueryResult> vset = getSet(map, faddr);
-			String edgeId = SarifUtils.getEdge(fqname);
-			if (edgeId != null) {
-				String srcId = SarifUtils.getEdgeSource(edgeId);
-				LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
-				for (LogicalLocation lloc : srcNodes) {
-					vset.add(new TaintQueryResult(r, run, lloc));
-				}
-				String dstId = SarifUtils.getEdgeDest(edgeId);
-				LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
-				for (LogicalLocation lloc : dstNodes) {
-					vset.add(new TaintQueryResult(r, run, lloc));
+			Set<String> edgeIds = SarifUtils.getEdgeSet(fqname);
+			if (edgeIds != null) {
+				for (String edgeId : edgeIds) {
+					String srcId = SarifUtils.getEdgeSource(edgeId);
+					LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
+					for (LogicalLocation lloc : srcNodes) {
+						vset.add(new TaintQueryResult(r, run, lloc));
+					}
+					String dstId = SarifUtils.getEdgeDest(edgeId);
+					LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
+					for (LogicalLocation lloc : dstNodes) {
+						vset.add(new TaintQueryResult(r, run, lloc));
+					}
 				}
 			}
 		}
@@ -305,7 +313,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
-				if (kind.equals("instruction") || kind.startsWith("path ")) {
+				if (kind.equals("member")) {
 					removeTaintedInstruction(map, r);
 				}
 				if (kind.equals("variable")) {
@@ -318,7 +326,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 				}
 			}
 
-			service.setVarnodeMap(map, false);
+			service.setVarnodeMap(map, false, TaskType.SET_TAINT);
 			service.setAddressSet(set, false);
 		}
 
@@ -336,19 +344,21 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		Address faddr = (Address) r.get("entry");
 		String fqname = (String) r.get("location");
 		Set<TaintQueryResult> vset = getSet(map, faddr);
-		String edgeId = SarifUtils.getEdge(fqname);
-		if (edgeId != null) {
-			String srcId = SarifUtils.getEdgeSource(edgeId);
-			LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
-			for (LogicalLocation lloc : srcNodes) {
-				TaintQueryResult res = new TaintQueryResult(r, run, lloc);
-				vset.remove(res);
-			}
-			String dstId = SarifUtils.getEdgeDest(edgeId);
-			LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
-			for (LogicalLocation lloc : dstNodes) {
-				TaintQueryResult res = new TaintQueryResult(r, run, lloc);
-				vset.remove(res);
+		Set<String> edgeIds = SarifUtils.getEdgeSet(fqname);
+		if (edgeIds != null) {
+			for (String edgeId : edgeIds) {
+				String srcId = SarifUtils.getEdgeSource(edgeId);
+				LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
+				for (LogicalLocation lloc : srcNodes) {
+					TaintQueryResult res = new TaintQueryResult(r, run, lloc);
+					vset.remove(res);
+				}
+				String dstId = SarifUtils.getEdgeDest(edgeId);
+				LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
+				for (LogicalLocation lloc : dstNodes) {
+					TaintQueryResult res = new TaintQueryResult(r, run, lloc);
+					vset.remove(res);
+				}
 			}
 			map.put(faddr, vset);
 		}
@@ -363,4 +373,68 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		return vset;
 	}
 
+	// Saving these for later - on the fence re use case
+	/*
+	DockingAction applyDelta = new DockingAction("Apply delta", getKey()) {
+		@Override
+		public void actionPerformed(ActionContext context) {
+			provider.filterTable.getTable().selectAll();
+			TaskLauncher.launch(new ApplyDeltaViaVarnodesTask(provider));
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isEnabled;
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			return isEnabled;
+		}
+	};
+	applyDelta.setDescription("Apply delta");
+	applyDelta.setToolBarData(new ToolBarData(Icons.COLLAPSE_ALL_ICON));
+	provider.addLocalAction(applyDelta);
+
+	DockingAction initDelta = new DockingAction("Set base for delta", getKey()) {
+		@Override
+		public void actionPerformed(ActionContext context) {
+			TaskLauncher.launch(new SetDeltaBaseTask(provider));
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isEnabled;
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			return isEnabled;
+		}
+	};
+	initDelta.setDescription("Initialize delta");
+	initDelta.setToolBarData(new ToolBarData(Icons.INFO_ICON));
+	provider.addLocalAction(initDelta);
+	*/
+
+	/*
+	private class ApplyDeltaViaVarnodesTask extends ApplyTaintViaVarnodesTask {
+		
+		protected ApplyDeltaViaVarnodesTask(SarifResultsTableProvider provider) {
+			super(provider);
+			this.delta = TaskType.APPLY_DELTA;
+		}
+		
+	}
+	
+	private class SetDeltaBaseTask extends ApplyTaintViaVarnodesTask {
+		
+		protected SetDeltaBaseTask(SarifResultsTableProvider provider) {
+			super(provider);
+			this.delta = TaskType.SET_DELTA;
+		}
+		
+	}
+	*/
+	
 }

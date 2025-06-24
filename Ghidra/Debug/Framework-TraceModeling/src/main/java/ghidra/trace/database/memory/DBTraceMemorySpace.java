@@ -336,6 +336,10 @@ public class DBTraceMemorySpace
 		}*/
 	}
 
+	public void checkStateMapIntegrity() {
+		stateMapSpace.checkIntegrity();
+	}
+
 	@Override
 	// TODO: Ensure a code unit is not having rug taken out from under it?
 	public void setState(long snap, Address start, Address end, TraceMemoryState state) {
@@ -585,6 +589,9 @@ public class DBTraceMemorySpace
 
 	protected void doPutFutureBytes(OffsetSnap loc, ByteBuffer buf, int dstOffset, int maxLen,
 			OutSnap lastSnap, Set<TraceAddressSnapRange> changed) throws IOException {
+		if (loc.snap == Lifespan.DOMAIN.lmax()) {
+			return;
+		}
 		// NOTE: Do not leave the buffer advanced from here
 		int pos = buf.position();
 		// exclusive?
@@ -616,7 +623,7 @@ public class DBTraceMemorySpace
 			}
 		}
 		if (!remaining.isEmpty()) {
-			lastSnap.snap = Long.MAX_VALUE;
+			lastSnap.snap = Lifespan.DOMAIN.lmax();
 			for (AddressRange rng : remaining) {
 				changed.add(
 					new ImmutableTraceAddressSnapRange(rng, Lifespan.nowOnMaybeScratch(loc.snap)));
@@ -653,8 +660,8 @@ public class DBTraceMemorySpace
 		int pos = buf.position();
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 
-			ByteBuffer oldBytes = ByteBuffer.allocate(buf.remaining());
-			getBytes(snap, start, oldBytes);
+			ByteBuffer oldBuf = ByteBuffer.allocate(buf.remaining());
+			getBytes(snap, start, oldBuf);
 
 			OutSnap lastSnap = new OutSnap(snap);
 			Set<TraceAddressSnapRange> changed = new HashSet<>();
@@ -665,16 +672,18 @@ public class DBTraceMemorySpace
 
 				// Read back the written bytes and fire event
 				byte[] bytes = new byte[result];
+				byte[] oldBytes = new byte[result];
 				buf.get(pos, bytes);
+				oldBuf.get(0, oldBytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
 				trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, this, tasr,
-					oldBytes.array(), bytes));
+					oldBytes, bytes));
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(this, false);
 				if (codeSpace != null) {
-					codeSpace.bytesChanged(changed, snap, start, oldBytes.array(), bytes);
+					codeSpace.bytesChanged(changed, snap, start, oldBytes, bytes);
 				}
 				// Clear program view caches
 				trace.updateViewsBytesChanged(tasr.getRange());
@@ -752,7 +761,8 @@ public class DBTraceMemorySpace
 
 		spans: for (Lifespan span : viewport.getOrderedSpans(snap)) {
 			Iterator<AddressRange> arit =
-				getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN).iterator(start, true);
+				getAddressesWithState(span, remains, s -> s == TraceMemoryState.KNOWN)
+						.iterator(start, true);
 			while (arit.hasNext()) {
 				AddressRange rng = arit.next();
 				if (rng.getMinAddress().compareTo(toRead.getMaxAddress()) > 0) {

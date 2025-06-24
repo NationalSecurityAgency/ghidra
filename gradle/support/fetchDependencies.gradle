@@ -68,6 +68,12 @@ ext.deps = [
 		destination: FLAT_REPO_DIR
 	],
 	[
+		name: "dbgmodel.tlb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/Debugger/dbgmodel.tlb",
+		sha256: "8cf5f3a2eb81160aa349056a5ca4c2c726b1b6e98bf3097cd4135147163343c7",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
 		name: "AXMLPrinter2.jar",
 		url: "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar",
 		sha256: "00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d",
@@ -80,9 +86,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: "postgresql-15.10.tar.gz",
-		url: "https://ftp.postgresql.org/pub/source/v15.10/postgresql-15.10.tar.gz",
-		sha256: "173366605259a83dc189c4327ff4c37254afed65b4f866cbd8a5ef2ea449e8f3",
+		name: "postgresql-15.13.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.gz",
+		sha256: "afdc22b0a6e5bec7b65723756b90d44ea911e61b2f7b01c4dc5524ab813b4d89",
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[

@@ -99,7 +99,7 @@ public class ExtractedMacho {
 						symbolTable.addSymbols(getExtraSymbols());
 					}
 					long offset = cmd.getLinkerDataOffset();
-					int size = cmd.getLinkerDataSize();
+					long size = cmd.getLinkerDataSize();
 					if (offset == 0 || size == 0) {
 						continue;
 					}
@@ -281,37 +281,23 @@ public class ExtractedMacho {
 	 * @throws IOException If there was an IO-related issue performing the fix-up
 	 */
 	private void fixupLoadCommands() throws IOException {
-		for (LoadCommand cmd : machoHeader.getLoadCommands()) {
+		for (LoadCommand lc : machoHeader.getLoadCommands()) {
 			if (monitor.isCancelled()) {
 				break;
 			}
-			switch (cmd.getCommandType()) {
-				case LoadCommandTypes.LC_SEGMENT:
-					fixupSegment((SegmentCommand) cmd, false);
-					break;
-				case LoadCommandTypes.LC_SEGMENT_64:
-					fixupSegment((SegmentCommand) cmd, true);
-					break;
-				case LoadCommandTypes.LC_SYMTAB:
-					fixupSymbolTable((SymbolTableCommand) cmd);
-					break;
-				case LoadCommandTypes.LC_DYSYMTAB:
-					fixupDynamicSymbolTable((DynamicSymbolTableCommand) cmd);
-					break;
-				case LoadCommandTypes.LC_DYLD_INFO:
-				case LoadCommandTypes.LC_DYLD_INFO_ONLY:
-					fixupDyldInfo((DyldInfoCommand) cmd);
-					break;
-				case LoadCommandTypes.LC_CODE_SIGNATURE:
-				case LoadCommandTypes.LC_SEGMENT_SPLIT_INFO:
-				case LoadCommandTypes.LC_FUNCTION_STARTS:
-				case LoadCommandTypes.LC_DATA_IN_CODE:
-				case LoadCommandTypes.LC_DYLIB_CODE_SIGN_DRS:
-				case LoadCommandTypes.LC_OPTIMIZATION_HINT:
-				case LoadCommandTypes.LC_DYLD_EXPORTS_TRIE:
-				case LoadCommandTypes.LC_DYLD_CHAINED_FIXUPS:
-					fixupLinkEditData((LinkEditDataCommand) cmd);
-					break;
+			switch (lc) {
+				case SegmentCommand cmd -> fixupSegment(cmd);
+				case SymbolTableCommand cmd -> fixupSymbolTable(cmd);
+				case DynamicSymbolTableCommand cmd -> fixupDynamicSymbolTable(cmd);
+				case DyldInfoCommand cmd -> fixupDyldInfo(cmd);
+				case LinkEditDataCommand cmd -> fixupLinkEditData(cmd);
+				case CorruptLoadCommand cmd -> throw new IOException(
+					"Error fixing corrupt %s at 0x%x".formatted(
+						LoadCommandTypes.getLoadCommandName(cmd.getCommandType()),
+						cmd.getStartIndex()));
+				default -> {
+					// Do nothing
+				}
 			}
 		}
 	}
@@ -321,11 +307,11 @@ public class ExtractedMacho {
 	 * for the newly packed Mach-O
 	 * 
 	 * @param segment The segment to fix-up
-	 * @param is64bit True if the segment is 64-bit; false if 32-bit
 	 * @throws IOException If there was an IO-related issue performing the fix-up
 	 */
-	private void fixupSegment(SegmentCommand segment, boolean is64bit) throws IOException {
+	private void fixupSegment(SegmentCommand segment) throws IOException {
 		long adjustment = packedSegmentAdjustments.getOrDefault(segment, 0);
+		boolean is64bit = !segment.is32bit();
 
 		set(segment.getStartIndex() + (is64bit ? 0x18 : 0x18), segment.getVMaddress(),
 			is64bit ? 8 : 4);

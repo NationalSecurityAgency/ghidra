@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,19 @@ import java.util.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.program.model.address.*;
+import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointManager;
-import ghidra.trace.model.memory.TraceMemoryManager;
-import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.thread.*;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
@@ -80,6 +84,11 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointChanged);
 
 		listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+
+		listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+		listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+
+		listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 	}
 
 	public MemviewProvider getProvider() {
@@ -91,60 +100,83 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	}
 
 	private void threadChanged(TraceThread thread) {
-		if (!trackThreads || !trackTrace) {
+		if (!trackThreads || !trackTrace || !(thread instanceof TraceObjectThread objThread)) {
 			return;
 		}
 		AddressFactory factory = thread.getTrace().getBaseAddressFactory();
 		AddressSpace defaultSpace = factory.getDefaultAddressSpace();
 		Long threadId = thread.getKey();
+
 		AddressRange rng = rng(defaultSpace, threadId, threadId);
-		MemoryBox box = new MemoryBox("Thread " + thread.getName(), MemviewBoxType.THREAD, rng,
-			thread.getLifespan());
-		updateList.add(box);
+		TraceObject obj = objThread.getObject();
+		obj.getCanonicalParents(Lifespan.ALL).forEach(p -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Thread " + thread.getName(p.getMinSnap()),
+				MemviewBoxType.THREAD, rng, p.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
 	private void regionChanged(TraceMemoryRegion region) {
-		if (!trackRegions || !trackTrace) {
+		if (!trackRegions || !trackTrace ||
+			!(region instanceof TraceObjectMemoryRegion objRegion)) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Region " + region.getName(), MemviewBoxType.VIRTUAL_ALLOC,
-			region.getRange(), region.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = objRegion.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceObjectMemoryRegion.KEY_RANGE, true).forEach(v -> {
+			if (region.getName(v.getMinSnap()).equals("full memory")) {
+				return;
+			}
+			MemoryBox box = new MemoryBox(currentTrace, "Region " + region.getName(v.getMinSnap()),
+				MemviewBoxType.REGION, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
 	private void moduleChanged(TraceModule module) {
-		if (!trackModules || !trackTrace) {
+		if (!trackModules || !trackTrace || !(module instanceof TraceObjectModule objModule)) {
 			return;
 		}
-		AddressRange range = module.getRange();
-		if (range == null) {
-			return;
-		}
-		MemoryBox box = new MemoryBox("Module " + module.getName(), MemviewBoxType.MODULE, range,
-			module.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = objModule.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceObjectModule.KEY_RANGE, true).forEach(v -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Module " + module.getName(v.getMinSnap()),
+				MemviewBoxType.MODULE, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
 	private void sectionChanged(TraceSection section) {
-		if (!trackSections || !trackTrace) {
+		if (!trackSections || !trackTrace || !(section instanceof TraceObjectSection objSection)) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Section " + section.getName(), MemviewBoxType.IMAGE,
-			section.getRange(), section.getModule().getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = objSection.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceObjectSection.KEY_RANGE, true).forEach(v -> {
+			MemoryBox box = new MemoryBox(currentTrace, "Module " + section.getName(v.getMinSnap()),
+				MemviewBoxType.IMAGE, v.castValue(), v.getLifespan());
+			updateList.add(box);
+		});
 		updateLabelDebouncer.contact(null);
 	}
 
 	private void breakpointChanged(TraceBreakpoint bpt) {
-		if (!trackBreakpoints || !trackTrace) {
+		if (!trackBreakpoints || !trackTrace ||
+			!(bpt instanceof TraceObjectBreakpointLocation objBpt)) {
 			return;
 		}
-		MemoryBox box = new MemoryBox("Breakpoint " + bpt.getName(), MemviewBoxType.BREAKPOINT,
-			bpt.getRange(), bpt.getLifespan());
-		updateList.add(box);
+
+		TraceObject obj = objBpt.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					MemoryBox box =
+						new MemoryBox(currentTrace, "Module " + bpt.getName(v.getMinSnap()),
+							MemviewBoxType.BREAKPOINT, v.castValue(), v.getLifespan());
+					updateList.add(box);
+				});
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -153,9 +185,29 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			return;
 		}
 		Lifespan lifespan = range.getLifespan();
-		MemoryBox box = new MemoryBox("BytesChanged " + range.description(),
+		MemoryBox box = new MemoryBox(currentTrace, "BytesChanged " + range.description(),
 			MemviewBoxType.WRITE_MEMORY, range.getRange(), lifespan);
 		updateList.add(box);
+		updateLabelDebouncer.contact(null);
+	}
+
+	private void valueCreated(TraceObjectValue value) {
+		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+			provider.fireTableDataChanged();
+		}
+	}
+
+	private void valueDeleted(TraceObjectValue value) {
+		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+			provider.fireTableDataChanged();
+		}
+	}
+
+	private void objectRestored(DomainObjectChangeRecord domainObjectChangeRecord) {
+		if (!trackTrace) {
+			return;
+		}
+		processTrace(currentTrace);
 		updateLabelDebouncer.contact(null);
 	}
 
@@ -187,6 +239,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			removeListener();
 		}
 		current = coordinates;
+		currentTrace = current.getTrace();
 		if (doListeners) {
 			addListener();
 		}
@@ -227,7 +280,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 	private void processTrace(Trace trace) {
 		updateList.clear();
-		provider.reset();
+		//provider.reset();
 		if (!provider.isVisible()) {
 			return;
 		}
@@ -238,7 +291,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		TraceModuleManager moduleManager = trace.getModuleManager();
 		for (TraceModule module : moduleManager.getAllModules()) {
 			moduleChanged(module);
-			Collection<? extends TraceSection> sections = module.getSections();
+			Collection<? extends TraceSection> sections = module.getAllSections();
 			for (TraceSection section : sections) {
 				sectionChanged(section);
 			}

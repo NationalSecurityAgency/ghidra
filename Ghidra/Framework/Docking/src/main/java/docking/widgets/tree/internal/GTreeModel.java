@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,20 +125,25 @@ public class GTreeModel implements TreeModel {
 				"GTreeModel.fireNodeStructuredChanged() must be " + "called from the AWT thread");
 
 			// If the tree is filtered and this is called on the original node, we have to
-			// translate the node to a view node (one the jtree knows).
+			// translate the node to a view node (one the tree knows).
 			GTreeNode viewNode = convertToViewNode(changedNode);
 			if (viewNode == null) {
 				return;
 			}
 
 			if (viewNode != changedNode) {
-				// This means we are filtered and since the original node's children are invalid,
-				// then the filtered children are invalid also. So clear out the children by
-				// setting an empty list as we don't want to trigger the node to regenerate its
-				// children which happens if you set the children to null.
+				// The only time this can happen is when the tree is filtered.  In this case, the
+				// view node will be a clone of the changed node.   We need to update the cloned 
+				// node to signal that the children have changed.  If we set the children to null,
+				// then they will get reloaded when we fire the event.  Instead, if we set the 
+				// children to the empty list, the node will simply think there are no children and
+				// it will not get reloaded.
 				//
-				// This won't cause a second event to the jtree because we are protected
-				// by the isFiringNodeStructureChanged variable
+				// After the events have been fired, there will eventually be a refilter operation 
+				// to update the view node with the correct children for the active filter.
+				//
+				// Note: this won't cause a second event to the tree because we are protected by 
+				// the isFiringNodeStructureChanged flag at the top of this method.
 				viewNode.setChildren(Collections.emptyList());
 			}
 

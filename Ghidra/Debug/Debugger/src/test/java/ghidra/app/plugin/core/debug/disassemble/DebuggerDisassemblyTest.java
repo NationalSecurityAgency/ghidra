@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
@@ -65,8 +66,8 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.iface.TraceObjectEnvironment;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -228,7 +229,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceStackManager manager = tb.trace.getStackManager();
 			TraceStack stack = manager.getStack(thread, snap, true);
-			TraceStackFrame frame = stack.getFrame(0, true);
+			TraceStackFrame frame = stack.getFrame(snap, 0, true);
 			frame.setProgramCounter(Lifespan.nowOn(snap), tb.addr(offset));
 		}
 	}
@@ -288,7 +289,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is that the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});
@@ -323,7 +324,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is that the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});
@@ -345,6 +346,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testAutoDisassembleReDisassembleX8664OffcutByProgEmu() throws Throwable {
+		addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		createProgram(getSLEIGH_X86_64_LANGUAGE());
@@ -361,6 +363,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		tb.trace.release(this);
 		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
 
+		programManager.openProgram(program);
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 
@@ -371,7 +374,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is that the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});

@@ -42,8 +42,9 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -55,6 +56,7 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	public static final SchemaContext SCHEMA_CTX = xmlSchema("""
 			<context>
 			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='EventScope' />
 			        <attribute name='Processes' schema='ProcessContainer' />
 			    </schema>
 			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
@@ -213,6 +215,66 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 				"Activate a frame", PrimitiveTraceObjectSchema.VOID,
 				new TestRemoteParameter("frame", new SchemaName("Frame"), true, null, "Frame",
 					"The frame to activate"));
+
+		rmiCx.getMethods().add(rmiMethodActivateProcess);
+		rmiCx.getMethods().add(rmiMethodActivateThread);
+		rmiCx.getMethods().add(rmiMethodActivateFrame);
+	}
+
+	protected void addActivateWithSnapMethods() {
+		rmiMethodActivateProcess =
+			new TestRemoteMethod("activate_process", ActionName.ACTIVATE, "Activate Process",
+				"Activate a process", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
+					"The process to activate"),
+				new TestRemoteParameter("snap", PrimitiveTraceObjectSchema.LONG, false, null,
+					"Time", "The snapshot to activate"));
+
+		rmiMethodActivateThread =
+			new TestRemoteMethod("activate_thread", ActionName.ACTIVATE, "Activate Thread",
+				"Activate a thread", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
+					"The thread to activate"),
+				new TestRemoteParameter("snap", PrimitiveTraceObjectSchema.LONG, false, null,
+					"Time", "The snapshot to activate"));
+
+		rmiMethodActivateFrame =
+			new TestRemoteMethod("activate_frame", ActionName.ACTIVATE, "Activate Frame",
+				"Activate a frame", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("frame", new SchemaName("Frame"), true, null, "Frame",
+					"The frame to activate"),
+				new TestRemoteParameter("snap", PrimitiveTraceObjectSchema.LONG, false, null,
+					"Time", "The snapshot to activate"));
+
+		rmiCx.getMethods().add(rmiMethodActivateProcess);
+		rmiCx.getMethods().add(rmiMethodActivateThread);
+		rmiCx.getMethods().add(rmiMethodActivateFrame);
+	}
+
+	protected void addActivateWithTimeMethods() {
+		rmiMethodActivateProcess =
+			new TestRemoteMethod("activate_process", ActionName.ACTIVATE, "Activate Process",
+				"Activate a process", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
+					"The process to activate"),
+				new TestRemoteParameter("time", PrimitiveTraceObjectSchema.STRING, false, null,
+					"Time", "The schedule to activate"));
+
+		rmiMethodActivateThread =
+			new TestRemoteMethod("activate_thread", ActionName.ACTIVATE, "Activate Thread",
+				"Activate a thread", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
+					"The thread to activate"),
+				new TestRemoteParameter("time", PrimitiveTraceObjectSchema.STRING, false, null,
+					"Time", "The schedule to activate"));
+
+		rmiMethodActivateFrame =
+			new TestRemoteMethod("activate_frame", ActionName.ACTIVATE, "Activate Frame",
+				"Activate a frame", PrimitiveTraceObjectSchema.VOID,
+				new TestRemoteParameter("frame", new SchemaName("Frame"), true, null, "Frame",
+					"The frame to activate"),
+				new TestRemoteParameter("time", PrimitiveTraceObjectSchema.STRING, false, null,
+					"Time", "The schedule to activate"));
 
 		rmiCx.getMethods().add(rmiMethodActivateProcess);
 		rmiCx.getMethods().add(rmiMethodActivateThread);
@@ -486,8 +548,16 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 		}
 	}
 
-	protected TraceObject findAndCreateFreeBreakpointSpec(TraceObjectManager objs) {
+	protected TraceObject findAndCreateFreeBreakpointSpec(TraceObjectManager objs, Integer id) {
 		KeyPath brkConPath = KeyPath.parse("Processes[1].Breakpoints");
+		if (id != null) {
+			KeyPath path = brkConPath.index(id);
+			TraceObject exists = objs.getObjectByCanonicalPath(path);
+			if (exists != null) {
+				return exists;
+			}
+			return objs.createObject(path);
+		}
 		for (int i = 1; i < 10; i++) {
 			KeyPath path = brkConPath.index(i);
 			TraceObject exists = objs.getObjectByCanonicalPath(path);
@@ -499,9 +569,9 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	}
 
 	protected TraceObject addBreakpointAndLoc(TraceObjectManager objs, Lifespan lifespan,
-			AddressRange range, Set<TraceBreakpointKind> kinds) {
+			AddressRange range, Set<TraceBreakpointKind> kinds, Integer id) {
 		try (Transaction tx = objs.getTrace().openTransaction("Add breakpoint")) {
-			TraceObject spec = findAndCreateFreeBreakpointSpec(objs);
+			TraceObject spec = findAndCreateFreeBreakpointSpec(objs, id);
 
 			spec.setAttribute(lifespan, "_kinds", TraceBreakpointKindSet.encode(kinds));
 			spec.setAttribute(lifespan, "_expr", "*0x" + range.getMinAddress());
@@ -515,5 +585,10 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			loc.insert(lifespan, ConflictResolution.DENY);
 			return spec;
 		}
+	}
+
+	protected TraceObject addBreakpointAndLoc(TraceObjectManager objs, Lifespan lifespan,
+			AddressRange range, Set<TraceBreakpointKind> kinds) {
+		return addBreakpointAndLoc(objs, lifespan, range, kinds, null);
 	}
 }

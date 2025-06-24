@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	}
 
 	@Override
-	public SymbolNode symbolAdded(Symbol symbol) {
+	public SymbolNode symbolAdded(Symbol symbol, TaskMonitor monitor) {
 		if (!isLoaded()) {
 			return null;
 		}
@@ -111,21 +111,35 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 			return null;
 		}
 
+		// only allow functions in the global namespace; others live in the Namespaces category
+		if (!isGlobalFunction(symbol)) {
+			return null;
+		}
+
 		// variables and parameters will be beneath function nodes, and our parent method
 		// will find them
 		if (isVariableParameterOrCodeSymbol(symbol)) {
-			return super.symbolAdded(symbol);
+			return super.symbolAdded(symbol, monitor);
 		}
 
 		// this namespace will be beneath function nodes, and our parent method will find them
 		if (isChildNamespaceOfFunction(symbol)) {
-			return super.symbolAdded(symbol);
+			return super.symbolAdded(symbol, monitor);
 		}
 
 		// ...otherwise, we have a function and we need to add it as a child of our parent node
 		SymbolNode newNode = SymbolNode.createNode(symbol, program);
 		doAddNode(this, newNode);
 		return newNode;
+	}
+
+	private boolean isGlobalFunction(Symbol symbol) {
+		SymbolType type = symbol.getSymbolType();
+		if (type != SymbolType.FUNCTION) {
+			return false;
+		}
+		Namespace namespace = symbol.getParentNamespace();
+		return namespace == globalNamespace;
 	}
 
 	private boolean isChildNamespaceOfFunction(Symbol symbol) {
@@ -151,7 +165,15 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 
 	@Override
 	protected boolean supportsSymbol(Symbol symbol) {
-		if (super.supportsSymbol(symbol)) {
+		if (symbol.isExternal()) {
+			return false;
+		}
+
+		// Note: we say that we support function symbol types, even though we do not include 
+		// functions that live in non-global namespaces.   This allows functions that are moved to
+		// be removed from this category.
+		SymbolType type = symbol.getSymbolType();
+		if (type == SymbolType.FUNCTION) {
 			return true;
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,7 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
-import docking.Tool;
 import docking.action.*;
-import docking.actions.PopupActionProvider;
 import generic.theme.GColor;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.*;
@@ -88,8 +86,7 @@ import ghidra.util.Msg;
 		DebuggerLogicalBreakpointService.class,
 		MarkerService.class,
 	})
-public class DebuggerBreakpointMarkerPlugin extends Plugin
-		implements PopupActionProvider {
+public class DebuggerBreakpointMarkerPlugin extends Plugin {
 
 	private static final Color COLOR_BREAKPOINT_ENABLED_MARKER =
 		new GColor("color.debugger.plugin.resources.breakpoint.marker.enabled");
@@ -818,14 +815,20 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		this.autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		updateDebouncer.addListener(__ -> SwingUtilities.invokeLater(() -> updateAllMarks()));
-
-		tool.addPopupActionProvider(this);
 	}
 
 	@Override
 	protected void init() {
 		super.init();
 		createActions();
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+		if (markerService != null) {
+			markerService.setMarkerClickedListener(null);
+		}
 	}
 
 	@AutoOptionConsumed(
@@ -1041,7 +1044,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 		this.breakpointService = breakpointService;
 		if (this.breakpointService != null) {
-			breakpointService.addChangeListener(updateMarksListener);
+			this.breakpointService.addChangeListener(updateMarksListener);
 			updateAllMarks();
 		}
 	}
@@ -1087,11 +1090,6 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		actionClearBreakpoint = new ClearBreakpointAction();
 
 		tool.setMenuGroup(new String[] { SetBreakpointAction.NAME }, SetBreakpointAction.GROUP);
-	}
-
-	@Override
-	public List<DockingActionIf> getPopupActions(Tool __, ActionContext context) {
-		return List.of(); // TODO: Actions by individual breakpoint?
 	}
 
 	@Override

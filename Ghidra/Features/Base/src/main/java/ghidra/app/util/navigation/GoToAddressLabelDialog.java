@@ -55,11 +55,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private static final String FILE_OFFSET_ANCHOR_NAME = "GoTo_File_Offset";
 	private static final int DEFAULT_MAX_GOTO_ENTRIES = 10;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Instance fields                                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	private Plugin plugin;
 	private JPanel mainPanel;
@@ -79,11 +79,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 
 	private JCheckBox includeDynamicBox;
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Constructor                                                      //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	public GoToAddressLabelDialog(GoToService gotoService, Plugin plugin) {
 		super(DIALOG_TITLE, true, true, true, true);
@@ -268,11 +268,11 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		saveState.putBoolean("INCLUDE_DYNAMIC", includeDynamicBox.isSelected());
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 	//                                                                  //
 	// Overridden GhidraDialog methods                                  //
 	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	//--------------------------------------------------------------------
 
 	@Override
 	public final void okCallback() {
@@ -325,7 +325,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	public void maxEntrysChanged() {
 		truncateHistoryAsNeeded();
@@ -347,7 +347,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
+	//-------------------------------------------------------------------------------------
 
 	private void addToHistory(String input) {
 		history.remove(input);

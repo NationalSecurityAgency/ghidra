@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -558,7 +558,7 @@ public interface LogicalBreakpoint {
 		}
 
 		/**
-		 * Get the desired state were the the logical breakpoint to be toggled
+		 * Get the desired state were the logical breakpoint to be toggled
 		 * 
 		 * <p>
 		 * The expected "action" when toggling a breakpoint may vary depending on whether or not the

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,13 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import docking.ActionContext;
 import ghidra.app.context.NavigatableActionContext;
-import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.async.AsyncUtils;
-import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -46,7 +42,6 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -184,81 +179,6 @@ public abstract class AbstractTarget implements Target {
 			}
 		}
 		return null;
-	}
-
-	protected abstract Map<String, ActionEntry> collectAddressActions(
-			ProgramLocationActionContext context);
-
-	protected Map<String, ActionEntry> collectAllActions(ActionContext context) {
-		return Stream.of(
-			collectResumeActions(context),
-			collectInterruptActions(context),
-			collectKillActions(context),
-			collectStepIntoActions(context),
-			collectStepOverActions(context),
-			collectStepOutActions(context),
-			collectStepExtActions(context),
-			collectRefreshActions(context),
-			collectToggleActions(context))
-				.flatMap(m -> m.entrySet().stream())
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-	}
-
-	protected abstract Map<String, ActionEntry> collectResumeActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectInterruptActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectKillActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectStepIntoActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectStepOverActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectStepOutActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectStepExtActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectRefreshActions(ActionContext context);
-
-	protected abstract Map<String, ActionEntry> collectToggleActions(ActionContext context);
-
-	@Override
-	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
-		if (name == null) {
-			if (context instanceof ProgramLocationActionContext ctx) {
-				return collectAddressActions(ctx);
-			}
-			return collectAllActions(context);
-		}
-		else if (ActionName.RESUME.equals(name)) {
-			return collectResumeActions(context);
-		}
-		else if (ActionName.INTERRUPT.equals(name)) {
-			return collectInterruptActions(context);
-		}
-		else if (ActionName.KILL.equals(name)) {
-			return collectKillActions(context);
-		}
-		else if (ActionName.STEP_INTO.equals(name)) {
-			return collectStepIntoActions(context);
-		}
-		else if (ActionName.STEP_OVER.equals(name)) {
-			return collectStepOverActions(context);
-		}
-		else if (ActionName.STEP_OUT.equals(name)) {
-			return collectStepOutActions(context);
-		}
-		else if (ActionName.STEP_EXT.equals(name)) {
-			return collectStepExtActions(context);
-		}
-		else if (ActionName.REFRESH.equals(name)) {
-			return collectRefreshActions(context);
-		}
-		else if (ActionName.TOGGLE.equals(name)) {
-			return collectToggleActions(context);
-		}
-		Msg.warn(this, "Unrecognized action name: " + name);
-		return Map.of();
 	}
 
 	protected static <T> T doSync(String name, Supplier<CompletableFuture<T>> supplier)

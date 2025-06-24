@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,7 +101,7 @@ public class DockingHelpBroker extends GHelpBroker {
 	@Override
 	protected void installHelpSearcher(JHelp jHelp, HelpModel helpModel) {
 		helpModel.addHelpModelListener(helpModelListener);
-		new HelpViewSearcher(jHelp, helpModel);
+		new HelpViewSearcher(jHelp);
 	}
 
 	@Override
@@ -142,7 +142,7 @@ public class DockingHelpBroker extends GHelpBroker {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					reloadHelpPage(getCurrentURL());
+					reloadHelpPage(getCurrentURL(), true);
 				}
 			};
 			toolbar.add(new JButton(refreshAction));
@@ -150,8 +150,8 @@ public class DockingHelpBroker extends GHelpBroker {
 	}
 
 	@Override // opened access
-	protected void reloadHelpPage(URL url) {
-		super.reloadHelpPage(url);
+	protected void reloadHelpPage(URL url, boolean preserveLocation) {
+		super.reloadHelpPage(url, preserveLocation);
 	}
 
 //=================================================================================================
@@ -233,7 +233,7 @@ public class DockingHelpBroker extends GHelpBroker {
 	 *       then just give up.
 	 *
 	 * @param area the area to call out
-	 * @param callCount the number number of times this method has already been called
+	 * @param callCount the number of times this method has already been called
 	 */
 	private void doCalloutReference(final Rectangle area, int callCount) {
 

@@ -155,126 +155,133 @@ public class ConstantPropogationReferenceTest extends AbstractGenericTest {
 				return super.evaluateContextBefore(context, instr);
 			}
 
-			private Varnode regValue(VarnodeContext context, String regName) {
-				return context.getRegisterVarnodeValue(context.getRegister(regName));
-			}
-
 			@Override
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 				String loc = instr.getMinAddress().toString();
 				Varnode registerVarnode;
+				Long constVal;
+				boolean isBad = false;
 
-				switch (loc) {
-					case "00001010":
-						// gp should be 0x14 + t9 offset space
-						registerVarnode = regValue(context, "gp");
-						assertTrue("symbolic value", context.isSymbol(registerVarnode));
-						assertEquals("(t9, 0x13b334, 4)", registerVarnode.toString());
-						// S3 should be S3 at entry
-						registerVarnode = regValue(context, "s3");
-						assertTrue("register s3", context.isRegister(registerVarnode));
-						assertEquals("s3", context.getRegister(registerVarnode).getName());
-						break;
-					case "0000102c":
-						// s1 restored from space 0x10(s0) space
-						registerVarnode = regValue(context, "s1");
-						assertTrue("constant value", registerVarnode.isConstant());
-						assertEquals("(const, 0xa0b0c0d, 4)", registerVarnode.toString());
-						break;
-					case "00001030":
-						// s1 restored from space 0x10(a1) space
-						registerVarnode = regValue(context, "s1");
-						assertTrue("symbolic value", registerVarnode.isConstant());
-						assertEquals("(const, 0x12344567, 4)", registerVarnode.toString());
-						break;
-					case "00001034":
-						// s1 restored from space 0x10(sp) space
-						registerVarnode = regValue(context, "s1");
-						assertTrue("symbolic value", context.isSymbol(registerVarnode));
-						assertEquals("(t9, 0x13b334, 4)", registerVarnode.toString());
-						break;
-					case "00001038":
-						// s1 restored from space 0x10(s2) space
-						registerVarnode = regValue(context, "s1");
-						//assertTrue("Still s1", registerVarnode.isRegister());
-						boolean isBad = false;
-						try {
-							context.getConstant(registerVarnode, null);
-						}
-						catch (NotFoundException e) {
-							isBad = true;
-						}
-						assertTrue("Can get constant value", isBad);
-						break;
-					case "00001040":
-						// s1 restored from space 0x10(s2) space - stored a3
-						registerVarnode = regValue(context, "s1");
-						assertTrue("register s3", registerVarnode.isRegister());
-						assertEquals("s3", context.getRegister(registerVarnode).getName());
-
-						Address lastSetLocation = context.getLastSetLocation(
-							context.getRegisterVarnode(context.getRegister("s2")), null);
-						assertEquals("s2 last set", null, lastSetLocation);
-						break;
-					case "00001048":
-						// s1 restored from space 0x10(s2) after s2 has been set again
-						// it should no longer be s3 that was stored in another s2 relative space
-						registerVarnode = regValue(context, "s1");
-						//assertTrue("Still s1", registerVarnode.isRegister());
-						isBad = false;
-						try {
-							context.getConstant(registerVarnode, null);
-						}
-						catch (NotFoundException e) {
-							isBad = true;
-						}
-						assertTrue("Can get constant value", isBad);
-						break;
-					case "0000104c":
-						// s1 restored from space 0x10(s2) after s2 has been set again
-						// it should no longer be s3 that was stored in another s2 relative space
-						registerVarnode = regValue(context, "s2");
-						//assertTrue("Still s2", registerVarnode.isRegister());
-						isBad = false;
-						try {
-							context.getConstant(registerVarnode, null);
-						}
-						catch (NotFoundException e) {
-							isBad = true;
-						}
-						assertTrue("Can get constant value", isBad);
-						lastSetLocation = context.getLastSetLocation(
-							context.getRegisterVarnode(context.getRegister("s2")), null);
-						assertEquals("s2 last set", 0x104fL, lastSetLocation.getOffset());
-						break;
-					case "00001054":
-						// s1 restored from space 0x10(s2) after s2 has been set again
-						// it should no longer be s3 that was stored in another s2 relative space
-						registerVarnode = regValue(context, "s1");
-						//assertTrue("Still s1", registerVarnode.isRegister());
-						//assertEquals(context.getRegister(registerVarnode).getName(),"s1");
-						isBad = false;
-						try {
-							context.getConstant(registerVarnode, null);
-						}
-						catch (NotFoundException e) {
-							isBad = true;
-						}
-						assertTrue("Can get constant value", isBad);
-						break;
+				switch(loc) {
+				case "00001010":
+					// gp should be 0x14 + t9 offset space
+					registerVarnode = regValue(context,"gp");
+					assertTrue("symbolic value", context.isSymbol(registerVarnode));
+					assertEquals("(t9, 0x13b334, 4)", registerVarnode.toString());
+					// S3 should be S3 at entry
+					registerVarnode = regValue(context,"s3");
+					assertTrue("register s3", context.isRegister(registerVarnode));
+					assertEquals("s3", context.getRegister(registerVarnode).getName());
+					break;
+				case "0000102c":
+					// s1 restored from space 0x10(s0) space
+					registerVarnode = regValue(context,"s1");
+					assertTrue("constant value", registerVarnode.isConstant());
+					assertEquals("(const, 0xa0b0c0d, 4)", registerVarnode.toString());
+					break;
+				case "00001030":
+					// s1 restored from space 0x10(a1) space
+					registerVarnode = regValue(context,"s1");
+					assertTrue("symbolic value", registerVarnode.isConstant());
+					assertEquals("(const, 0x12344567, 4)", registerVarnode.toString());
+					break;
+				case "00001034":
+					// s1 restored from space 0x10(sp) space
+					registerVarnode = regValue(context,"s1");
+					assertTrue("symbolic value", context.isSymbol(registerVarnode));
+					assertEquals("(t9, 0x13b334, 4)", registerVarnode.toString());
+					break;
+				case "00001038":
+					// s1 restored from space 0x10(s2) space
+					registerVarnode = regValue(context,"s1");
+					//assertTrue("Still s1", registerVarnode.isRegister());
+					constVal = context.getConstant(registerVarnode, null);
+					isBad = constVal == null;
+					assertTrue("Can get constant value", isBad);
+					break;
+				case "00001040":
+					// s1 restored from space 0x10(s2) space - stored a3
+					registerVarnode = regValue(context,"s1");
+					assertTrue("register s3", registerVarnode.isRegister());
+					assertEquals("s3", context.getRegister(registerVarnode).getName());
+					
+					Address lastSetLocation = context.getLastSetLocation(context.getRegisterVarnode(context.getRegister("s2")), null);
+					assertEquals("s2 last set", null, lastSetLocation);
+					break;
+				case "00001048":
+					// s1 restored from space 0x10(s2) after s2 has been set again
+					// it should no longer be s3 that was stored in another s2 relative space
+					registerVarnode = regValue(context,"s1");
+					//assertTrue("Still s1", registerVarnode.isRegister());
+					constVal = context.getConstant(registerVarnode, null);
+					isBad = constVal == null;
+					assertTrue("Can get constant value", isBad);
+					break;
+				case "0000104c":
+					// s1 restored from space 0x10(s2) after s2 has been set again
+					// it should no longer be s3 that was stored in another s2 relative space
+					registerVarnode = regValue(context,"s2");
+					//assertTrue("Still s2", registerVarnode.isRegister());
+					constVal = context.getConstant(registerVarnode, null);
+					isBad = constVal == null;					
+					assertTrue("Can get constant value", isBad);
+					lastSetLocation = context.getLastSetLocation(context.getRegisterVarnode(context.getRegister("s2")), null);
+					assertEquals("s2 last set", 0x104cL, lastSetLocation.getOffset());
+					break;
+				case "00001054":
+					// s1 restored from space 0x10(s2) after s2 has been set again
+					// it should no longer be s3 that was stored in another s2 relative space
+					registerVarnode = regValue(context,"s1");
+					//assertTrue("Still s1", registerVarnode.isRegister());
+					//assertEquals(context.getRegister(registerVarnode).getName(),"s1");
+					constVal = context.getConstant(registerVarnode, null);
+					isBad = constVal == null;
+					assertTrue("Can get constant value", isBad);
+					break;
 				}
 				return super.evaluateContext(context, instr);
 			}
 		};
 
 		setRegister(addr("0x1000"), "s1", 0);
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program,true);
 
 		Function func = program.getFunctionManager().getFunctionAt(builder.addr(0x1000));
 
 		symEval.flowConstants(codeStart, func.getBody(), eval, true, TaskMonitor.DUMMY);
-
-		Value registerValue = symEval.getRegisterValue(addr("0x1010"), null);
+		
+		Value registerValue;
+		
+		// get gp at start of instruction
+		registerValue = regValue(symEval, addr("0x1010"), "gp");
+		assertNotNull(registerValue);
+		assertTrue(registerValue.isRegisterRelativeValue());
+		assertEquals(registerValue.getRelativeRegister().getName(), "t9");
+		assertEquals(registerValue.getValue(), 0x13b334L);
+		
+		// get s1 at start of instruction
+		registerValue = regValue(symEval, addr("0x1034"), "s1");
+		assertNotNull(registerValue);
+		assertFalse(registerValue.isRegisterRelativeValue());
+		assertEquals(registerValue.getValue(), 0x12344567L);
+		
+		// get s1 at end of instruction
+		registerValue = regEndValue(symEval, addr("0x1034"), "s1");
+		assertNotNull(registerValue);
+		assertTrue(registerValue.isRegisterRelativeValue());
+		assertEquals(registerValue.getRelativeRegister().getName(), "t9");
+		assertEquals(registerValue.getValue(), 0x13b334L);
+		
+		// get sp at end of instruction
+		registerValue = regValue(symEval, addr("0x1058"), "sp");
+		assertNotNull(registerValue);
+		assertTrue(registerValue.isRegisterRelativeValue());
+		assertEquals(registerValue.getRelativeRegister().getName(), "sp");
+		assertEquals(-32, registerValue.getValue());
+		
+		// TODO: should be 0 at end
+		// registerValue = regEndValue(symEval, addr("0x1058"), "sp");
+		// assertEquals(0, registerValue.getValue());
 	}
 
 	@Test
@@ -541,6 +548,22 @@ public class ConstantPropogationReferenceTest extends AbstractGenericTest {
 		ProgramContext context = program.getProgramContext();
 		Register gp = context.getRegister(regname);
 		context.setRegisterValue(a, a.add(12), new RegisterValue(gp, BigInteger.valueOf(value)));
+	}
+	
+	private Varnode regValue(VarnodeContext context, String regName) {
+		return context.getRegisterVarnodeValue(context.getRegister(regName));
+	}
+	
+	private Value regValue(SymbolicPropogator symEval, Address addr, String regName) {
+		ProgramContext context = program.getProgramContext();
+		Register reg = context.getRegister(regName);
+		return symEval.getRegisterValue(addr, reg);
+	}
+	
+	private Value regEndValue(SymbolicPropogator symEval, Address addr, String regName) {
+		ProgramContext context = program.getProgramContext();
+		Register reg = context.getRegister(regName);
+		return symEval.getEndRegisterValue(addr, reg);
 	}
 
 	private Address addr(String address) {

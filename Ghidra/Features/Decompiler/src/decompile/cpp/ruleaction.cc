@@ -2797,6 +2797,16 @@ void RuleBooleanDedup::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_BOOL_OR);
 }
 
+/// \brief Determine if the two given boolean Varnodes always contain matching values
+///
+/// The boolean values can either always be equal or can always be complements of each other, and
+/// \b true will be returned.  In this case \b isFlip passes back \b false if the values are always equal
+/// or passes back \b true if the values are complements.  The method returns \b false if the values are
+/// uncorrelated.
+/// \param leftVn is the first given boolean Varnode to compare
+/// \param rightVn is the second given boolean Varnode to compare
+/// \param isFlip will pass back the type of correlation
+/// \return \b true if the Varnodes are correlated and \b false otherwise
 bool RuleBooleanDedup::isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip)
 
 {
@@ -6166,7 +6176,7 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
 
 /// Recursively walk the sub-tree from the given root.
 /// Terms that are a \e multiple of the base data-type size are accumulated either in
-/// the the sum of constant multiples or the container of non-constant multiples.
+/// the sum of constant multiples or the container of non-constant multiples.
 /// Terms that are a \e non-multiple are accumulated either in the sum of constant
 /// non-multiples or the container of non-constant non-multiples. The constant
 /// non-multiples are counted twice, once in the sum, and once in the container.
@@ -9245,12 +9255,16 @@ bool RuleConditionalMove::gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,Fl
   return true;
 }
 
-/// Reproduce the bolean expression resulting in the given Varnode.
+/// \brief Construct the expression after the merge
+///
+/// Reproduce the boolean expression resulting in the given Varnode.
 /// Either reuse the existing Varnode or reconstruct it,
 /// making sure the expression does not depend on data in the branch.
+/// \param vn is the given boolean Varnode at the base of the expression
+/// \param ops is the set of PcodeOps in the expression
 /// \param insertop is point at which any reconstruction should be inserted
 /// \param data is the function being analyzed
-/// \return the Varnode representing the boolean expression
+/// \return the Varnode representing the (possible reproduced) boolean expression
 Varnode *RuleConditionalMove::constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data)
 
 {

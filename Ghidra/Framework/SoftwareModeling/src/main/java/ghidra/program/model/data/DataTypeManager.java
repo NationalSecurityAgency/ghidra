@@ -309,7 +309,14 @@ public interface DataTypeManager {
 	public void removeInvalidatedListener(InvalidatedListener listener);
 
 	/**
-	 * Remove the given datatype from this manager
+	 * Remove the given datatype from this manager.
+	 * <br>
+	 * NOTE: Any use of the specified datatype within a {@link FunctionDefinition} will be 
+	 * converted to the {@link DataType#DEFAULT default 'undefined' datatype}.  Any use within
+	 * a {@link Structure} or {@link Union} will be converted to the {@link BadDataType} as
+	 * a placeholder to retain the component's field name and length (the comment will be prefixed
+	 * with a message indicating the remval of the old datatype.
+	 * 
 	 * @param dataType the dataType to be removed
 	 * @param monitor the task monitor
 	 * @return true if the data type existed and was removed
@@ -406,7 +413,6 @@ public interface DataTypeManager {
 	/**
 	 * Performs the given callback inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something
@@ -436,7 +442,6 @@ public interface DataTypeManager {
 	/**
 	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something

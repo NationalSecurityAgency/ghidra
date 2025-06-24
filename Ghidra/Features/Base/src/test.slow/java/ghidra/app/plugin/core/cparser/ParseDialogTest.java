@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
@@ -115,20 +116,21 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		JButton parseToFileButton = findButtonByText(dialog, "Parse to File...");
 		assertNotNull(parseToFileButton);
 
+		ActionContext context = dialog.getActionContext(null);
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
-		assertTrue(saveAsAction.isEnabled());
+		assertTrue(saveAsAction.isEnabledForContext(context));
 
 		DockingActionIf saveAction = getAction(dialog, "Save Profile");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(context));
 
 		DockingActionIf clearAction = getAction(dialog, "Clear Profile");
-		assertTrue(clearAction.isEnabled());
+		assertTrue(clearAction.isEnabledForContext(context));
 
 		DockingActionIf deleteAction = getAction(dialog, "Delete Profile");
-		assertFalse(deleteAction.isEnabled());
+		assertFalse(deleteAction.isEnabledForContext(context));
 
 		DockingActionIf refreshAction = getAction(dialog, "Refresh User Profiles");
-		assertTrue(refreshAction.isEnabled());
+		assertTrue(refreshAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -137,10 +139,10 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		addSourceFile("c:\\temp\\fred.h");
 
 		DockingActionIf saveAction = getAction(dialog, "Save Profile");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(dialog.getActionContext(null)));
 
 		DockingActionIf saveAsAction = getAction(dialog, "Save Profile As");
-		assertTrue(saveAsAction.isEnabled());
+		assertTrue(saveAsAction.isEnabledForContext(dialog.getActionContext(null)));
 	}
 
 	@Test
@@ -344,7 +346,7 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void readDefaultParseProfileFile() throws Exception {
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		List<String> pathList = new ArrayList<>();
 
 		ResourceFile profileFile = getPrfFile();
@@ -356,17 +358,16 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		// read paths
 		while ((line = br.readLine()) != null && line.trim().length() > 0) {
 			line = line.trim();
-			
+
 			pathList.add(line);
 		}
-	
+
 		// read options
 		while ((line = br.readLine()) != null && line.trim().length() > 0) {
 			line = line.trim();
-			
+
 			buffy.append(line + "\n");
-		}		
-		
+		}
 
 		paths = pathList;
 		defaultPrfOptions = buffy.toString();

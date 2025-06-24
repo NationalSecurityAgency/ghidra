@@ -180,6 +180,7 @@ public class JitCompiler {
 	 * In production, this should be empty.
 	 */
 	public static final EnumSet<Diag> ENABLE_DIAGNOSTICS = EnumSet.noneOf(Diag.class);
+
 	/**
 	 * Exclude a given address offset from ASM's {@link ClassWriter#COMPUTE_MAXS} and
 	 * {@link ClassWriter#COMPUTE_FRAMES}.

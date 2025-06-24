@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -44,7 +45,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.BasicAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
@@ -52,8 +53,7 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
-import ghidra.debug.api.action.LocationTrackingSpec;
-import ghidra.debug.api.action.LocationTrackingSpecFactory;
+import ghidra.debug.api.action.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -69,8 +69,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.util.InvalidNameException;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -308,6 +307,25 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 				return false;
 			}
 		}, () -> lastError.get().getMessage());
+	}
+
+	public static void waitForPass(Object originator, Runnable runnable, long duration,
+			TimeUnit unit) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < unit.toMillis(duration)) {
+			try {
+				waitForPass(runnable);
+				break;
+			}
+			catch (Throwable e) {
+				Msg.warn(originator, "Long wait: " + e);
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException e1) {
+				}
+			}
+		}
 	}
 
 	public static <T> T waitForPass(Supplier<T> supplier) {
@@ -581,15 +599,15 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 	}
 
 	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
+		return AutoReadMemorySpecFactory.fromConfigName(name);
 	}
 
 	protected final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.NONE.getConfigName());
 	protected final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VISIBLE.getConfigName());
 	protected final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+		getAutoReadMemorySpec(BasicAutoReadMemorySpec.VIS_RO_ONCE.getConfigName());
 
 	protected TestEnv env;
 	protected PluginTool tool;

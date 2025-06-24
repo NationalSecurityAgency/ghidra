@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
+
 import docking.widgets.tree.GTreeNode;
 import ghidra.formats.gfilesystem.*;
 import ghidra.util.exception.CancelledException;
@@ -40,15 +42,20 @@ public class FSBRootNode extends FSBNode {
 	private FSBFileNode prevNode;
 	private FSBRootNode modelNode;
 	private boolean cryptoStatusUpdated;
+	private Icon icon;
 
 	FSBRootNode(FileSystemRef fsRef) {
 		this(fsRef, null);
 	}
 
 	FSBRootNode(FileSystemRef fsRef, FSBFileNode prevNode) {
+		super(FSBComponentProvider.getDescriptiveFSName(fsRef.getFilesystem()));
+
 		this.fsRef = fsRef;
 		this.prevNode = prevNode;
 		this.modelNode = this;
+		this.icon = FSBComponentProvider.getFSIcon(fsRef.getFilesystem(), prevNode == null,
+			FSBIcons.getInstance());
 	}
 
 	@Override
@@ -67,6 +74,11 @@ public class FSBRootNode extends FSBNode {
 	@Override
 	public void init(TaskMonitor monitor) throws CancelledException {
 		setChildren(generateChildren(monitor));
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		return icon;
 	}
 
 	public void setCryptoStatusUpdated(boolean cryptoStatusUpdated) {
@@ -116,13 +128,6 @@ public class FSBRootNode extends FSBNode {
 		if (cryptoStatusUpdated) {
 			// do something to refresh children's status that may have been affected by crypto update 
 		}
-	}
-
-	@Override
-	public String getName() {
-		return modelNode.fsRef != null && !modelNode.fsRef.isClosed()
-				? modelNode.fsRef.getFilesystem().getName()
-				: " Missing ";
 	}
 
 	@Override
@@ -176,10 +181,6 @@ public class FSBRootNode extends FSBNode {
 		return fsRef != null
 				? fsRef.getFilesystem().getRootDir().getFSRL().getFS().getContainer()
 				: null;
-	}
-
-	public String getContainerName() {
-		return prevNode != null ? prevNode.getName() : "/";
 	}
 
 	private List<GFile> splitGFilePath(GFile f) {

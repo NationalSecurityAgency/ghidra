@@ -60,15 +60,14 @@ public class OperandLabelDialog extends DialogComponentProvider {
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		label = new GDLabel("Label: ");
-
 		myChoice = new GhidraComboBox<>();
 		myChoice.setName("MYCHOICE");
 		myChoice.setEditable(true);
 		myChoice.addActionListener(ev -> okCallback());
-
+		myChoice.getAccessibleContext().setAccessibleName("My Choice");
 		mainPanel.add(label);
 		mainPanel.add(myChoice);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Operand Label");
 		return mainPanel;
 	}
 

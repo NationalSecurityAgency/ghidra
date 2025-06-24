@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,10 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -55,7 +54,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 			FunctionCallGraphPlugin.class.getSimpleName());
 
 	private FcgProvider provider;
-	private VisualGraphOptions vgOptions = new VisualGraphOptions();
+	private FcgOptions fcgOptions = new FcgOptions();
 
 	// enough time for users to click around without the graph starting its work
 	private static final int MIN_UPDATE_DELAY = 750;
@@ -83,8 +82,8 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		HelpLocation help = new HelpLocation(getName(), "Options");
 
 		Options callGraphOptions = options.getOptions(NAME);
-		vgOptions.registerOptions(callGraphOptions, help);
-		vgOptions.loadOptions(callGraphOptions);
+		fcgOptions.registerOptions(callGraphOptions, help);
+		fcgOptions.loadOptions(callGraphOptions);
 		provider.optionsChanged();
 	}
 
@@ -93,7 +92,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 			Object newValue) throws OptionsVetoException {
 
 		Options callGraphOptions = options.getOptions(NAME);
-		vgOptions.loadOptions(callGraphOptions);
+		fcgOptions.loadOptions(callGraphOptions);
 		provider.optionsChanged();
 	}
 
@@ -128,7 +127,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		}
 
 		// do later so the current event processing can finish
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			goTo.goTo(location);
 		});
 	}
@@ -168,7 +167,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		return currentLocation;
 	}
 
-	VisualGraphOptions getOptions() {
-		return vgOptions;
+	FcgOptions getOptions() {
+		return fcgOptions;
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,11 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class ThreadStateHeader implements StructConverter {
 	private int flavor;
-	private int count;
+	private long count;
 
 	ThreadStateHeader(BinaryReader reader) throws IOException {
 		flavor = reader.readNextInt();
-		count = reader.readNextInt();
+		count = reader.readNextUnsignedInt();
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class ThreadStateHeader implements StructConverter {
 	 * Returns the count of longs in thread state.
 	 * @return the count of longs in thread state
 	 */
-	public int getCount() {
+	public long getCount() {
 		return count;
 	}
 

@@ -20,9 +20,6 @@ import java.io.IOException;
 import db.*;
 import ghidra.util.exception.VersionException;
 
-/**
- *
- */
 class ArrayDBAdapterV0 extends ArrayDBAdapter {
 
 	private static final int VERSION = 0;

@@ -16,82 +16,27 @@
 //Decompile the function at the cursor and its callees, then output facts files corresponding to the pcodes
 //@category PCode
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
+import java.lang.Enum;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import ghidra.app.decompiler.DecompInterface;
-import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.decompiler.DecompileResults;
-import ghidra.app.decompiler.parallel.DecompileConfigurer;
-import ghidra.app.decompiler.parallel.DecompilerCallback;
-import ghidra.app.decompiler.parallel.ParallelDecompiler;
+import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.parallel.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.graph.GDirectedGraph;
-import ghidra.graph.GEdge;
-import ghidra.graph.GVertex;
-import ghidra.graph.GraphFactory;
+import ghidra.graph.*;
 import ghidra.graph.algo.DepthFirstSorter;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.data.AbstractFloatDataType;
-import ghidra.program.model.data.AbstractIntegerDataType;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.BooleanDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.Union;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.FunctionPrototype;
-import ghidra.program.model.pcode.HighConstant;
-import ghidra.program.model.pcode.HighFunction;
-import ghidra.program.model.pcode.HighGlobal;
-import ghidra.program.model.pcode.HighLocal;
-import ghidra.program.model.pcode.HighOther;
-import ghidra.program.model.pcode.HighSymbol;
-import ghidra.program.model.pcode.HighVariable;
-import ghidra.program.model.pcode.PcodeBlock;
-import ghidra.program.model.pcode.PcodeBlockBasic;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOpAST;
-import ghidra.program.model.pcode.SequenceNumber;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.pcode.VarnodeAST;
-import ghidra.program.model.symbol.ExternalReference;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.ThunkReference;
+import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
 class PcodeBlockBasicVertex implements GVertex {
@@ -178,7 +123,7 @@ enum PredicateFile {
 	PROTO_HAS_THIS("PROTO_HAS_THIS"), PROTO_CALLING_CONVENTION("PROTO_CALLING_CONVENTION"),
 	PROTO_RETTYPE("PROTO_RETTYPE"), PROTO_PARAMETER("PROTO_PARAMETER"), PROTO_PARAMETER_COUNT("PROTO_PARAMETER_COUNT"),
 	PROTO_PARAMETER_DATATYPE("PROTO_PARAMETER_DATATYPE"), SYMBOL_HVAR("SYMBOL_HVAR"), SYMBOL_HFUNC("SYMBOL_HFUNC"),
-	DATA_STRING("DATA_STRING"), VTABLE("VTABLE"), SYMBOL_NAME("SYMBOL_NAME"), PROGRAM_FILE("PROGRAM_FILE");
+	DATA_STRING("DATA_STRING"), VTABLE("VTABLE"), SYMBOL_NAME("SYMBOL_NAME"), PROGRAM_FILE("PROGRAM_FILE"), OFFSET_INDEX("OFFSET_INDEX");
 
 	private final String name;
 
@@ -327,10 +272,22 @@ class Database {
 	}
 }
 
+
+class ItemCounter {
+    private final ConcurrentHashMap<String, Integer> seenItems = new ConcurrentHashMap<>();
+    private final AtomicInteger counter = new AtomicInteger(3);
+
+    public int getUniqueNumber(String item) {
+        // Check if the item has been seen
+        return seenItems.computeIfAbsent(item, key -> counter.incrementAndGet());
+    }
+}
+
 class HighFunctionExporter {
 	private final Database db = new Database();
 	private final Set<String> types = new HashSet<String>();
 	private Set<String> varnodes = new HashSet<String>();
+	private ItemCounter offsets = new ItemCounter();
 	private final HashMap<String, PredicateFile> componentPredicates = new HashMap<String, PredicateFile>();
 	private Map<HighVariable, VarnodeAST> extraGlobals = new HashMap<HighVariable, VarnodeAST>();
 	private final Writer debug;
@@ -366,7 +323,7 @@ class HighFunctionExporter {
 		varnodes = new HashSet<String>();
 		extraGlobals = new HashMap<HighVariable, VarnodeAST>();
 
-// TODO: This should only be done once if dumping the entire program
+		// NOTE: This should only be done once if dumping the entire program
 		SymbolIterator externalSymbols = f.getProgram().getSymbolTable().getSymbols(f.getName());
 		while (externalSymbols.hasNext()) {
 			Symbol next = externalSymbols.next();
@@ -434,8 +391,6 @@ class HighFunctionExporter {
 	}
 
 	private BigInteger readInteger(Program program, Address addr, int size) {
-		//AddressFactory addrFactory = program.getAddressFactory();
-		//int spaceID = addr.getAddressSpace().getSpaceID();
 		try {
 			byte[] dest = new byte[size];
 			program.getMemory().getBytes(addr, dest, 0, size);
@@ -524,15 +479,6 @@ class HighFunctionExporter {
 		}
 	}
 
-//	private void initializeSet(SymbolTable table) {
-//		vtables.clear();
-//		SymbolIterator iter = table.getSymbols("vtable");
-//		while (iter.hasNext()) {
-//			Symbol sym2 = iter.next();
-//			vtables.add(sym2.getAddress());
-//		}
-//	}
-
 	private HighFunction getHighFunction(DecompileResults res, Function func, DecompInterface decompiler) {
 		HighFunction high = res.getHighFunction();
 		if (high == null) {
@@ -556,6 +502,11 @@ class HighFunctionExporter {
 
 	private void export(PredicateFile pfile, String key, String value) {
 		db.add(pfile, key, value);
+	}
+
+	@SuppressWarnings("unused")
+	private void export(PredicateFile pfile, String key, String val1, String val2) {
+		db.add(pfile, key, val1, val2);
 	}
 
 	@SuppressWarnings("unused")
@@ -640,6 +591,8 @@ class HighFunctionExporter {
 		export(PredicateFile.VNODE_OFFSET, id, Long.toHexString(offset));
 		// if (offset < Long.MAX_VALUE && offset > Long.MIN_VALUE) {
 		exportL(PredicateFile.VNODE_OFFSET_N, id, offset);
+                export(PredicateFile.OFFSET_INDEX, String.valueOf(offset),
+                    String.valueOf(offsets.getUniqueNumber(String.valueOf(offset))));
 		// }
 		export(PredicateFile.VNODE_SIZE, id, Integer.toString(vn.getSize()));
 		export(PredicateFile.VNODE_SPACE, id, vn.getAddress().getAddressSpace().getName());
@@ -970,12 +923,7 @@ class HighFunctionExporter {
 	}
 
 	private String vnodeID(HighFunction hfn, VarnodeAST vn) {
-		HighVariable hv = vn.getHigh();
-		if (hv == null) {
-			return hfuncID(hfn) + SEP + Integer.toString(vn.getUniqueId());
-		} else {
-			return hfuncID(hfn) + SEP + hvarName(hfn, hv) + SEP + Integer.toString(vn.getUniqueId());
-		}
+		return hfuncID(hfn) + SEP + Integer.toString(vn.getUniqueId());
 	}
 
 	private String hvarID(HighFunction hfn, HighVariable hv) {
@@ -983,20 +931,35 @@ class HighFunctionExporter {
 	}
 
 	private String hvarName(HighFunction hf, HighVariable hv) {
+		Varnode rep = hv.getRepresentative();
+		if (rep.getAddress().isUniqueAddress()) {
+			DynamicHash dynamicHash = new DynamicHash(rep, hf);
+			return "hv"+Long.toString(dynamicHash.getHash());
+		}
 		if (hv.getName() == null || hv.getName().equals("UNNAMED")) {
-			SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
-			Varnode rep = hv.getRepresentative();
-			Address addr = rep.getAddress();
-			if (extraGlobals.containsKey(hv)) {
-				VarnodeAST vn = extraGlobals.get(hv);
-				addr = addr.getNewAddress(vn.getOffset());
-			}
-			Symbol symbol = symbolTable.getPrimarySymbol(addr);
-			if (symbol == null) {
+			if (hv instanceof HighConstant || hv instanceof HighOther) {
+				Address addr = rep.getAddress();
 				return addr.toString();
 			}
-			export(PredicateFile.HVAR_CLASS, hfuncID(hf) + SEP + symbol.getName(), "global");
-			return symbol.getName();
+			if (hv instanceof HighLocal) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighGlobal) {
+				SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
+				Address addr = rep.getAddress();
+				if (extraGlobals.containsKey(hv)) {
+					VarnodeAST vn = extraGlobals.get(hv);
+					addr = addr.getNewAddress(vn.getOffset());
+				}
+				Symbol symbol = symbolTable.getPrimarySymbol(addr);
+				if (symbol != null) {
+					export(PredicateFile.HVAR_CLASS, hfuncID(hf) + SEP + symbol.getName(), "global");
+					return symbol.getName();
+				}
+				return addr.toString();
+			}
+			return null;
 		}
 		return hv.getName();
 	}
@@ -1038,50 +1001,6 @@ class HighFunctionExporter {
 		// db.add(PredicateFile.PcodeOps, s);
 	}
 }
-
-//class ResultWriter implements Runnable {
-//	BlockingQueue<DecompileResults> q = new ArrayBlockingQueue<>(50);
-//	
-//	HighFunctionExporter ex;
-//	DecompilerConfigurer configurer;
-//	
-//	boolean shutDown = false;
-//
-//	private TaskMonitor monitor;
-//	
-//	public ResultWriter(HighFunctionExporter ex, DecompilerConfigurer configurer, TaskMonitor tMonitor) {
-//		this.ex = ex;
-//		this.configurer = configurer;
-//		this.monitor = tMonitor;
-//	}
-//	
-//	BlockingQueue<DecompileResults> getQueue() {
-//		return q;
-//	}
-//
-//	@Override
-//	public void run() {
-//        try {
-//        	int count = 0;
-//            while(!(shutDown && q.isEmpty())){
-//            	monitor.checkCancelled();
-//            	DecompileResults results = q.take();
-//
-//            	ex.processFunction(results, results.getFunction(), configurer.getInteface());
-//            	
-//            	count++;
-//            	if (count > 50) {
-//                  ex.writeFacts();
-//            		count = 0;
-//            	}
-//            }
-//        } catch (InterruptedException | IOException | CancelledException e) {}
-//	}
-//	
-//	public void done() {
-//		shutDown = true;
-//	}
-//}
 
 public class ExportPCodeForCTADL extends GhidraScript {
 

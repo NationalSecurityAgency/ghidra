@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -713,7 +713,7 @@ public:
 
   /// \brief Restore attributes for \b this from a parent element that is not a Scope
   ///
-  /// Attributes are read from the (already opened) element, prior to reading reading the
+  /// Attributes are read from the (already opened) element, prior to reading the
   /// \<scope> element specific to \b this Scope
   /// \param decoder is the stream decoder
   virtual void decodeWrappingAttributes(Decoder &decoder) {}

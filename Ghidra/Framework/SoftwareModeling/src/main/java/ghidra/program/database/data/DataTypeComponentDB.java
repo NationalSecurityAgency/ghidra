@@ -36,8 +36,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	private final ComponentDBAdapter adapter;
 	private final DBRecord record; // null record -> immutable component
 	private final CompositeDB parent;
-
-	private DataType cachedDataType; // required for bit-fields during packing process
+	private final DataType cachedDataType; // used by immutable defined component (no record)
 
 	private int ordinal;
 	private int offset;
@@ -56,9 +55,15 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	 */
 	DataTypeComponentDB(DataTypeManagerDB dataMgr, CompositeDB parent, int ordinal, int offset,
 			DataType datatype, int length) {
-		this(dataMgr, parent, ordinal, offset);
+		this.dataMgr = dataMgr;
+		this.parent = parent;
 		this.cachedDataType = datatype;
+
+		this.ordinal = ordinal;
+		this.offset = offset;
 		this.length = length;
+		this.record = null;
+		this.adapter = null;
 	}
 
 	/**
@@ -73,6 +78,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		this.dataMgr = dataMgr;
 		this.parent = parent;
 		this.ordinal = ordinal;
+		this.cachedDataType = null;
+
 		this.offset = offset;
 		this.length = 1;
 		this.record = null;
@@ -90,11 +97,13 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			DBRecord record) {
 		this.dataMgr = dataMgr;
 		this.adapter = adapter;
+		this.cachedDataType = null;
 		this.record = record;
+
 		this.parent = parent;
-		ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
-		offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
-		length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
+		this.ordinal = record.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL);
+		this.offset = record.getIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL);
+		this.length = record.getIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL);
 		if (isZeroBitFieldComponent()) {
 			length = 0; // previously stored as 1, force to 0
 		}
@@ -227,35 +236,10 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
 		if (record != null) {
-			name = checkFieldName(name);
-			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			String fieldName = cleanupFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
 			updateRecord(true);
 		}
-	}
-
-	private void checkDuplicateName(String name) throws DuplicateNameException {
-		DataTypeComponentImpl.checkDefaultFieldName(name);
-		for (DataTypeComponent comp : parent.getDefinedComponents()) {
-			if (comp == this) {
-				continue;
-			}
-			if (name.equals(comp.getFieldName())) {
-				throw new DuplicateNameException("Duplicate field name: " + name);
-			}
-		}
-	}
-
-	private String checkFieldName(String name) throws DuplicateNameException {
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-				name = null;
-			}
-			else {
-				checkDuplicateName(name);
-			}
-		}
-		return name;
 	}
 
 	@Override
@@ -431,9 +415,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			if (StringUtils.isBlank(comment)) {
 				comment = null;
 			}
-			// TODO: Need to check field name and throw DuplicateNameException
-			// name = checkFieldName(name);
-			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			String fieldName = cleanupFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
 			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataMgr.getResolvedID(dt));
 			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 			updateRecord(false);
@@ -455,11 +438,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		return InternalDataTypeComponent.toString(this);
 	}
 
-	/**
-	 * Determine if component is an undefined filler component
-	 * @return true if undefined filler component, else false
-	 */
-	boolean isUndefined() {
+	@Override
+	public boolean isUndefined() {
 		return record == null && cachedDataType == null;
 	}
 

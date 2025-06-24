@@ -1,5 +1,6 @@
 <context>
 	<schema name="DbgRoot" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="EventScope" />
 		<attribute name="Sessions" schema="SessionContainer" required="yes" fixed="yes" />
 		<attribute name="Settings" schema="ANY" />
 		<attribute name="State" schema="ANY" />
@@ -16,7 +17,6 @@
 	</schema>
 	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Activatable" />
-		<interface name="EventScope" />
 		<interface name="FocusScope" />
 		<interface name="Aggregate" />
 		<element schema="VOID" />

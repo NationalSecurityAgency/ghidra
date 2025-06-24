@@ -26,7 +26,6 @@ import ghidra.program.model.symbol.*;
  * <P>
  * For example, if a SymbolPath is constructed with "foo::bar::baz", then "baz" is the
  * name of a symbol in the "bar" namespace, which is in the "foo" namespace.
- * <P>
  * <UL>
  * <LI>{@link #getName()} will return "baz".</LI>
  * <LI>{@link #getParentPath()} will return "foo:bar".</LI>

@@ -20,12 +20,10 @@ import static docking.KeyBindingPrecedence.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
-import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.menu.keys.MenuKeyProcessor;
 import ghidra.util.bean.GGlassPane;
@@ -57,7 +55,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 * <b>Posterity Note:</b> While debugging we will not get a KeyEvent.KEY_RELEASED event if
 	 * the focus changes from the application to the debugger tool.
 	 */
-	private DockingKeyBindingAction inProgressAction;
+	private ExecutableAction inProgressAction;
 
 	/**
 	 * Provides the current focus owner.  This allows for dependency injection.
@@ -110,6 +108,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 */
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
+
 		if (blockKeyInput(event)) {
 			return true; // let NO events through!
 		}
@@ -119,37 +118,59 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return true;
 		}
 
+		// Special case for when we use one of our built-in menu navigation actions. We ignore 
+		// docking actions if a menu is open (this is done in action.getEnabledState()).
 		if (MenuKeyProcessor.processMenuKeyEvent(event)) {
 			return true;
 		}
 
-		DockingKeyBindingAction action = getDockingKeyBindingActionForEvent(event);
+		DockingKeyBindingAction action = getActionForEvent(event);
 		if (action == null) {
 			return false; // let the normal event flow continue
 		}
 
 		// *Special*, System key bindings--these can always be processed and are a higher priority
-		if (processSystemActionPrecedence(action, event)) {
+		Component focusOwner = focusProvider.getFocusOwner();
+		ExecutableAction executableAction = action.getExecutableAction(focusOwner);
+		if (processSystemActionPrecedence(executableAction, event)) {
 			return true;
-		}
-
-		// some known special cases that we don't wish to process
-		if (!isValidContextForAction(event, action)) {
-			return false;
 		}
 
 		if (willBeHandledByTextComponent(event)) {
 			return false;
 		}
 
-		KeyBindingPrecedence keyBindingPrecedence = getValidKeyBindingPrecedence(action);
-		if (keyBindingPrecedence == null) {
-			// Odd Code: we use the precedence as a signal to say that, when it is null, there
-			//           are no valid bindings to be processed.  We used to have a isValidContext()
-			//           method on the action, but it repeated the involved work that is done
-			//           in getKeyBindingPrecedence(), which is needed below.  So, just use the
-			//           one call for both purposes.
+		// Let client programming have the first chance to process the event.  Any key listeners and 
+		// actions registered on the focused component are allowed to process the event before our
+		// action system.  This allows clients to perform custom event processing without the action
+		// system interfering.
+		if (processComponentKeyListeners(event)) {
+			return true;
+		}
+
+		// If there is a registered Java action, let the normal Java event flow process the event.
+		// (This will only work as expected if the Java action is registered for key pressed events.
+		// If it is registered for released events, and we have a valid and enabled docking action,
+		// then the docking action will take precedence, since docking actions are always registered
+		// for key pressed events.)
+		if (hasJavaAction(event)) {
 			return false;
+		}
+
+		if (!executableAction.isValid()) {
+			// The action is not currently valid for the given focus owner.  Let all key strokes go
+			// to Java when we have no valid context.  This allows keys like Escape to work on Java
+			// widgets.
+			return false;
+		}
+
+		if (!executableAction.isEnabled()) {
+			// The action is valid, but is not enabled.  At this point we know that the focused 
+			// component has no key listeners interested in this event and that the focused 
+			// component has no action bindings either.   Stop all further processing for this 
+			// event to maintain predictable behavior.
+			executableAction.reportNotEnabled(focusOwner);
+			return true;
 		}
 
 		// Process the key event in precedence order.
@@ -157,20 +178,11 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		// Finally, if the exception statement is reached, then someone has added a new level
 		// of precedence that this algorithm has not taken into account!
 		// @formatter:off
-		return processKeyListenerPrecedence(action, keyBindingPrecedence, event) ||
-			   processComponentActionMapPrecedence(action, keyBindingPrecedence, event) ||
-			   processActionAtPrecedence(DefaultLevel, keyBindingPrecedence, action, event) ||
+		return processActionAtPrecedence(KeyListenerLevel, executableAction, event) ||
+			   processActionAtPrecedence(ActionMapLevel, executableAction, event) ||
+			   processActionAtPrecedence(DefaultLevel, executableAction, event) ||
 			   throwAssertException();
 		// @formatter:on
-	}
-
-	private KeyBindingPrecedence getValidKeyBindingPrecedence(DockingKeyBindingAction action) {
-
-		if (action instanceof MultipleKeyAction) {
-			MultipleKeyAction multiAction = (MultipleKeyAction) action;
-			return multiAction.geValidKeyBindingPrecedence(focusProvider.getFocusOwner());
-		}
-		return action.getKeyBindingPrecedence();
 	}
 
 	/**
@@ -211,56 +223,13 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	private boolean actionInProgress(KeyEvent event) {
 		boolean wasInProgress = inProgressAction != null;
 		if (event.getID() == KeyEvent.KEY_RELEASED) {
-			DockingKeyBindingAction action = inProgressAction;
+			ExecutableAction action = inProgressAction;
 			inProgressAction = null;
-			KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
-
-			// note: this call has no effect if 'action' is null
-			Object source = event.getSource();
-			int modifiersEx = event.getModifiersEx();
-			SwingUtilities.notifyAction(action, keyStroke, event, source, modifiersEx);
-
-		}
-		return wasInProgress;
-	}
-
-	private boolean isValidContextForAction(KeyEvent event, DockingKeyBindingAction kbAction) {
-		Window activeWindow = focusProvider.getActiveWindow();
-		if (!(activeWindow instanceof DockingDialog dialog)) {
-			return true; // allow all non-dialog windows to process events
-		}
-
-		// The choice to ignore modal dialogs was made long ago.  We cannot remember why the
-		// choice was made, but speculate that odd things can happen when keybindings are
-		// processed with modal dialogs open.  For now, do not let key bindings get processed
-		// for modal dialogs.  This can be changed in the future if needed.
-		if (!dialog.isModal()) {
-			return true;
-		}
-
-		// Allow modal dialogs to process their own actions
-		DialogComponentProvider provider = dialog.getComponent();
-		List<DockingActionIf> actions = kbAction.getValidActions(event.getSource());
-		if (actions.isEmpty()) {
-			return false; // no actions; not a valid key stroke for this dialog
-		}
-		for (DockingActionIf action : actions) {
-			if (!isAllowedDialogAction(provider, action)) {
-				return false;
+			if (action != null) {
+				action.execute();
 			}
 		}
-
-		return true; // all actions belong to the active dialog; this is a valid action
-	}
-
-	private boolean isAllowedDialogAction(DialogComponentProvider provider,
-			DockingActionIf action) {
-
-		if (action instanceof ComponentBasedDockingAction) {
-			return true; // these actions work on low-level components, which may live in dialogs
-		}
-
-		return provider.isDialogKeyBindingAction(action);
+		return wasInProgress;
 	}
 
 	private boolean isSettingKeyBindings(KeyEvent event) {
@@ -355,7 +324,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		throw new AssertException("New precedence added to KeyBindingPrecedence?");
 	}
 
-	private boolean processSystemActionPrecedence(DockingKeyBindingAction action,
+	private boolean processSystemActionPrecedence(ExecutableAction executableAction,
 			KeyEvent event) {
 
 		if (isSettingKeyBindings(event)) {
@@ -364,54 +333,20 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
-		if (!action.isSystemKeybindingPrecedence()) {
+		KeyBindingPrecedence precedence = executableAction.getKeyBindingPrecedence();
+		if (precedence != SystemActionsLevel) {
 			return false;
 		}
 
-		if (inProgressAction != null) {
-			return true;
-		}
-
-		inProgressAction = action; // this will be handled on the release
+		inProgressAction = executableAction; // this will be handled on the release
 		return true;
 	}
 
-	private boolean processKeyListenerPrecedence(DockingKeyBindingAction action,
-			KeyBindingPrecedence keyBindingPrecedence, KeyEvent e) {
-		if (processActionAtPrecedence(KeyBindingPrecedence.KeyListenerLevel, keyBindingPrecedence,
-			action, e)) {
-			return true;
-		}
+	private boolean processActionAtPrecedence(KeyBindingPrecedence keyBindingPrecedence,
+			ExecutableAction action, KeyEvent event) {
 
-		// O.K., there is an action for the KeyStroke, but before we process it, we have to
-		// check the proper ordering of key events (see method JavaDoc)
-		if (processComponentKeyListeners(e)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean processComponentActionMapPrecedence(DockingKeyBindingAction action,
-			KeyBindingPrecedence keyBindingPrecedence, KeyEvent event) {
-
-		if (processActionAtPrecedence(ActionMapLevel, keyBindingPrecedence, action, event)) {
-			return true;
-		}
-
-		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
-		if (processInputAndActionMaps(event, keyStroke)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean processActionAtPrecedence(KeyBindingPrecedence precedence,
-			KeyBindingPrecedence keyBindingPrecedence, DockingKeyBindingAction action,
-			KeyEvent event) {
-
-		if (keyBindingPrecedence != precedence) {
+		KeyBindingPrecedence actionPrecedence = action.getKeyBindingPrecedence();
+		if (keyBindingPrecedence != actionPrecedence) {
 			return false;
 		}
 
@@ -453,9 +388,11 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	// note: this code is taken from the JComponent method:
 	// protected boolean processKeyBinding(KeyStroke, KeyEvent, int, boolean )
 	//
-	// returns true if there is a focused component that has an action for the given keystroke
+	// returns true if there is a focused component that has an action for the given event
 	// and it processes that action.
-	private boolean processInputAndActionMaps(KeyEvent keyEvent, KeyStroke keyStroke) {
+	private boolean hasJavaAction(KeyEvent event) {
+
+		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 		Component focusOwner = focusProvider.getFocusOwner();
 		if (focusOwner == null || !focusOwner.isEnabled() || !(focusOwner instanceof JComponent)) {
 			return false;
@@ -463,16 +400,11 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		JComponent jComponent = (JComponent) focusOwner;
 		Action action = getJavaActionForComponent(jComponent, keyStroke);
-		if (action != null) {
-			return SwingUtilities.notifyAction(action, keyStroke, keyEvent, keyEvent.getSource(),
-				keyEvent.getModifiersEx());
-		}
-		return false;
+		return action != null && action.isEnabled();
 	}
 
 	private Action getJavaActionForComponent(JComponent jComponent, KeyStroke keyStroke) {
-		// first see if there is a Java key binding for when the component is in the focused
-		// window...
+		// first see if there is a Java key binding for when the component is focused...
 		Action action = KeyBindingUtils.getAction(jComponent, keyStroke, JComponent.WHEN_FOCUSED);
 		if (action != null) {
 			return action;
@@ -491,7 +423,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 * @param event The key event to check.
 	 * @return An action, if one is available for the given key event, in the current context.
 	 */
-	private DockingKeyBindingAction getDockingKeyBindingActionForEvent(KeyEvent event) {
+	private DockingKeyBindingAction getActionForEvent(KeyEvent event) {
 		DockingWindowManager activeManager = getActiveDockingWindowManager();
 		if (activeManager == null) {
 			return null;

@@ -34,6 +34,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.ConsoleService;
@@ -89,16 +90,69 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	private TaintDecompilerMarginProvider taintDecompMarginProvider;
 
 	public static enum Highlighter {
-		ALL("Taint Variables"), LABELS("Taint Labels"), DEFAULT("Default");
+		ALL("all", "variables"), LABELS("labels", "labels"), DEFAULT("default", "default");
 
-		private String name;
+		private String label;
+		private String optionString;
 
-		private Highlighter(String name) {
-			this.name = name;
+		private Highlighter(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
 		}
 
-		public String getName() {
-			return this.name;
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	public static enum TaintFormat {
+		ALL("all", "sarif+all"), 
+		GRAPHS("graphs", "sarif+graphs"), 
+		INSTS("insts", "sarif+instructions"),
+		PATHS("paths", "sarif"),
+		NONE("none", "none");
+
+		private String label;
+		private String optionString;
+
+		private TaintFormat(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	public static enum TaintDirection {
+		BOTH("all", "both"), FORWARD("fwd", "forward"), BACKWARD("bwd", "backward"), DEFAULT("auto", "auto");
+
+		private String label;
+		private String optionString;
+
+		private TaintDirection(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
 		}
 	}
 
@@ -124,7 +178,6 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintPlugin(PluginTool tool) {
 		super(tool);
-		state = TaintState.newInstance(this);
 		taintProvider = new TaintProvider(this);
 		taintDecompMarginProvider = new TaintDecompilerMarginProvider(this);
 		createActions();
@@ -302,9 +355,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				GhidraState ghidraState = new GhidraState(tool, null, currentProgram,
 					currentLocation, currentHighlight, currentHighlight);
 				GhidraScript exportScript = state.getExportScript(consoleService, false);
-				RunPCodeExportScriptTask export_task =
-					new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
-				tool.execute(export_task);
+				if (exportScript != null) {
+					RunPCodeExportScriptTask export_task =
+						new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
+					tool.execute(export_task);
+				}
 			}
 
 			@Override
@@ -380,6 +435,10 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintState getTaintState() {
 		return state;
+	}
+
+	public void setTaintState(TaintState state) {
+		this.state = state;
 	}
 
 	public TaintProvider getProvider() {
@@ -638,12 +697,12 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	@Override
-	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear) {
+	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear, TaskType delta) {
 		if (clear) {
 			taintProvider.clearTaint();
 		}
-		state.setTaintVarnodeMap(vmap);
-		taintProvider.setTaint();
+		state.setTaintVarnodeMap(vmap, delta);
+		taintProvider.setTaint(delta);
 	}
 
 	@Override

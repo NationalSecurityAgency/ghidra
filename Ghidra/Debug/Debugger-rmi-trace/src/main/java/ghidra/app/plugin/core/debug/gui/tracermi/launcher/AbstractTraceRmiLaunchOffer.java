@@ -190,7 +190,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			return false;
 		}
 
-		if (spec.performMapping(mappingService, trace, List.of(program), monitor)) {
+		long snap = connection.getLastSnapshot(trace);
+		if (spec.performMapping(mappingService, trace, snap, List.of(program), monitor)) {
 			return true;
 		}
 
@@ -206,7 +207,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			return true; // Probably shouldn't happen, but if it does, say "success"
 		}
 		ProgramLocation probe = new ProgramLocation(program, probeAddress);
-		long snap = connection.getLastSnapshot(trace);
+
 		return mappingService.getOpenMappedLocation(trace, probe, snap) != null;
 	}
 
@@ -223,8 +224,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected void saveState(SaveState state) {
+		plugin.writeToolLaunchConfig(getConfigName(), state);
 		if (program == null) {
-			plugin.writeToolLaunchConfig(getConfigName(), state);
 			return;
 		}
 		plugin.writeProgramLaunchConfig(program, getConfigName(), state);
@@ -401,21 +402,30 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				args.put(param.name(), param.decode(str));
 				continue;
 			}
-			// Perhaps wrong type; was saved in older version.
-			Object fallback = ConfigStateField.getState(state, param.type(), param.name());
-			if (fallback != null) {
-				args.put(param.name(), ValStr.from(fallback));
-				continue;
+			// NB: This code handles parameters formatted via a previous version.
+			//   The try-catch was introduced to avoid NPEs from null file paths
+			try {
+				// Perhaps wrong type; was saved in older version.
+				Object fallback = ConfigStateField.getState(state, param.type(), param.name());
+				if (fallback != null) {
+					args.put(param.name(), ValStr.from(fallback));
+					continue;
+				}
+				Msg.warn(this, "Could not load saved launcher arg '%s' (%s)".formatted(param.name(),
+					param.display()));
 			}
-			Msg.warn(this, "Could not load saved launcher arg '%s' (%s)".formatted(param.name(),
-				param.display()));
+			catch (Exception e) {
+				Msg.warn(this, "Could not load saved launcher arg '%s' (%s) - %s".formatted(param.name(),
+					param.display(), e.getMessage()));
+			}
 		}
 		return args;
 	}
 
 	protected SaveState loadState(boolean forPrompt) {
+		SaveState state = plugin.readToolLaunchConfig(getConfigName());
 		if (program == null) {
-			return plugin.readToolLaunchConfig(getConfigName());
+			return state;
 		}
 		return plugin.readProgramLaunchConfig(program, getConfigName(), forPrompt);
 	}
@@ -532,7 +542,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
 			SocketAddress address) throws Exception;
 
-	static class NoStaticMappingException extends Exception {
+	public static class NoStaticMappingException extends Exception {
 		public NoStaticMappingException(String message) {
 			super(message);
 		}

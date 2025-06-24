@@ -47,12 +47,13 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
@@ -503,7 +504,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		TraceMemoryRegion region = Unique.assertOne(tb.trace.getMemoryManager().getAllRegions());
-		assertEquals(tb.range(0, 0xfff), region.getRange());
+		assertEquals(tb.range(0, 0xfff), region.getRange(0));
 	}
 
 	@Test

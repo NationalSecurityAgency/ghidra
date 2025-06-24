@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,26 +232,26 @@ class SymbolTreeTestUtils {
 
 		selectNode(parenGTreeNode);
 		int childCount = parenGTreeNode.getChildCount();
-		int index = parenGTreeNode.getIndexInParent();
-		GTreeNode pNode = parenGTreeNode.getParent();
+		int parentIndex = parenGTreeNode.getIndexInParent();
+		GTreeNode grandParentNode = parenGTreeNode.getParent();
 
 		AbstractDockingTest.performAction(action, getSymbolTreeContext(), false);
 		waitForSwing();
 		waitForTree();
 		program.flushEvents();
 
-		if (pNode != null) {
-			// re-acquire parent
-			parenGTreeNode = pNode.getChild(index);
+		if (grandParentNode != null) {
+			parenGTreeNode = grandParentNode.getChild(parentIndex);
 		}
-		GTreeNode node = parenGTreeNode.getChild(childCount > 0 ? childCount - 1 : 0);
+
+		GTreeNode newNode = parenGTreeNode.getChild(childCount > 0 ? childCount - 1 : 0);
 
 		waitForTree();
 
 		runSwing(() -> tree.stopEditing());
 		waitForCondition(() -> !tree.isEditing());
 
-		rename(node, newName);
+		rename(newNode, newName);
 		return parenGTreeNode.getChild(newName);
 	}
 
@@ -271,6 +271,11 @@ class SymbolTreeTestUtils {
 		GTreeNode root = tree.getViewRoot();
 		List<GTreeNode> topLevelNodes = root.getChildren();
 		topLevelNodes.forEach(n -> tree.collapseAll(n));
+		waitForTree();
+	}
+
+	void expandTree() {
+		tree.expandAll();
 		waitForTree();
 	}
 

@@ -50,7 +50,7 @@
 
 <tocroot>
     <tocref id="Program Annotation">
-        <tocdef id="SARIF" sortgroup="q" text="SARIF" target="help/topics/Sarif/SARIF.htm" >
+        <tocdef id="SARIF" sortgroup="s" text="SARIF" target="help/topics/Sarif/SARIF.htm" >
         </tocdef>
     </tocref>
 </tocroot>

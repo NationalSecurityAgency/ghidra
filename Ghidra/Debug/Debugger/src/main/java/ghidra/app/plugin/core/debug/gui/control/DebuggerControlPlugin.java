@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,7 @@ import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -282,12 +283,16 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void addTargetStepExtActions(Target target) {
-		for (ActionEntry entry : target.collectActions(ActionName.STEP_EXT, context).values()) {
+		for (ActionEntry entry : target
+				.collectActions(ActionName.STEP_EXT, context,
+					ObjectArgumentPolicy.CURRENT_AND_RELATED)
+				.values()) {
 			if (entry.requiresPrompt()) {
 				continue;
 			}
 			actionsTargetStepExt.add(TargetStepExtAction.builder(entry.display(), this)
 					.description(entry.details())
+					.toolBarIcon(entry.icon())
 					.enabledWhen(ctx -> entry.isEnabled())
 					.onAction(ctx -> TargetActionTask.runAction(tool, entry.display(), entry))
 					.build());
