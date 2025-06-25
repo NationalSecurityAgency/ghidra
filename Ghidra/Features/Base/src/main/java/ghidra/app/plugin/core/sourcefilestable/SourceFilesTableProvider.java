@@ -234,7 +234,7 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 
 		new ActionBuilder("View Source File", getName())
 				.popupMenuPath("View Source File")
-				.description("View the SourceFile")
+				.description("View the Source File")
 				.helpLocation(
 					new HelpLocation(sourceFilesTablePlugin.getName(), "View_Source_File"))
 				.withContext(SourceFilesTableActionContext.class)
