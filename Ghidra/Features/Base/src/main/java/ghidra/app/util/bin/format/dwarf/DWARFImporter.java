@@ -22,7 +22,9 @@ import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileInfo;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLineProgramExecutor;
 import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.framework.store.LockException;
@@ -211,23 +213,58 @@ public class DWARFImporter {
 		Program ghidraProgram = prog.getGhidraProgram();
 		long maxLength = prog.getImportOptions().getMaxSourceMapEntryLength();
 		List<DWARFCompilationUnit> compUnits = prog.getCompilationUnits();
-		monitor.initialize(compUnits.size(), "DWARF: Reading Source Map Info");
+		monitor.initialize(compUnits.size(), "DWARF: Reading Source Information");
 		SourceFileManager sourceManager = ghidraProgram.getSourceFileManager();
+
+		// add all the source files and read the source map entries
+		Map<SourceFileInfo, SourceFile> sourceFileInfoToSourceFile = new HashMap<>();
+		Set<SourceFileInfo> badSourceFileInfo = new HashSet<>();
 		List<SourceFileAddr> sourceInfo = new ArrayList<>();
 		for (DWARFCompilationUnit cu : compUnits) {
-			monitor.increment();
+			DWARFLine dLine = cu.getLine();
+			monitor.increment(1);
+			for (int i = 0; i < dLine.getNumFiles(); ++i) {
+				String filePath = dLine.getFilePath(i, true);
+				if (filePath == null) {
+					continue;
+				}
+				byte[] md5 = dLine.getFile(i).getMD5();
+				SourceFileInfo sfi = new SourceFileInfo(filePath, md5);
+				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
+					continue;
+				}
+				if (badSourceFileInfo.contains(sfi)) {
+					continue;
+				}
+				try {
+					String path = SourceFileUtils.normalizeDwarfPath(filePath,
+						DEFAULT_COMPILATION_DIR);
+					SourceFileIdType type =
+						md5 == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
+					SourceFile sFile = new SourceFile(path, type, md5);
+					sourceManager.addSourceFile(sFile);
+					sourceFileInfoToSourceFile.put(sfi, sFile);
+				}
+				catch (IllegalArgumentException e) {
+					String errorString = "Exception creating source file: " + e.getMessage();
+					if (numSourceLineErrorReports++ < MAX_NUM_SOURCE_LINE_ERROR_REPORTS) {
+						Msg.error(this, errorString);
+					}
+					badSourceFileInfo.add(sfi);
+					continue;
+				}
+			}
 			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
 		}
+
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Sorting " + sourceInfo.size() + " entries");
 		sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
 		monitor.setIndeterminate(false);
 		monitor.initialize(sourceInfo.size(), "DWARF: Applying Source Map Info");
-		Map<SourceFileAddr, SourceFile> sfasToSourceFiles = new HashMap<>();
-		Set<SourceFileAddr> badSfas = new HashSet<>();
-		AddressSet warnedAddresses = new AddressSet();
 
-		for (int i = 0; i < sourceInfo.size() - 1; i++) {
+		AddressSet warnedAddresses = new AddressSet();
+		for (int i = 0; i < sourceInfo.size(); i++) {
 			monitor.increment(1);
 			SourceFileAddr sfa = sourceInfo.get(i);
 			if (SOURCEFILENAMES_IGNORE.contains(sfa.fileName()) ||
@@ -238,7 +275,8 @@ public class DWARFImporter {
 			if (sfa.fileName() == null) {
 				continue;
 			}
-			if (badSfas.contains(sfa)) {
+			SourceFileInfo sfi = new SourceFileInfo(sfa.fileName(), sfa.md5());
+			if (badSourceFileInfo.contains(sfi)) {
 				continue;
 			}
 
@@ -281,27 +319,7 @@ public class DWARFImporter {
 				}
 			}
 
-			SourceFile source = sfasToSourceFiles.get(sfa);
-			if (source == null) {
-				try {
-					String path = SourceFileUtils.normalizeDwarfPath(sfa.fileName(),
-						DEFAULT_COMPILATION_DIR);
-					SourceFileIdType type =
-						sfa.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
-					source = new SourceFile(path, type, sfa.md5());
-					sourceManager.addSourceFile(source);
-					sfasToSourceFiles.put(sfa, source);
-				}
-				catch (IllegalArgumentException e) {
-					String errorString = "Exception creating source file: " + e.getMessage();
-					if (numSourceLineErrorReports++ < MAX_NUM_SOURCE_LINE_ERROR_REPORTS) {
-						reportError(errorString, addr);
-					}
-					badSfas.add(sfa);
-					continue;
-				}
-			}
-
+			SourceFile source = sourceFileInfoToSourceFile.get(sfi);
 			try {
 				sourceManager.addSourceMapEntry(source, sfa.lineNum(), addr, length);
 			}
