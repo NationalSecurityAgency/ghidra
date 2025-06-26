@@ -553,6 +553,16 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	private void invalidateCacheActivated(ActionContext ignored) {
+		invalidateCache();
+	}
+
+	private void configureEmulatorActivated(DebuggerPcodeEmulatorFactory factory) {
+		// TODO: Pull up config page. Tool Options? Program/Trace Options?
+		setEmulatorFactory(factory);
+	}
+
+	@Override
+	public void invalidateCache() {
 		DebuggerCoordinates current = traceManager.getCurrent();
 		Trace trace = current.getTrace();
 		long version = trace.getEmulatorCacheVersion();
@@ -564,11 +574,6 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		// NB. Success should already display on screen, since it's current.
 		// Failure should be reported by tool's task manager.
 		traceManager.materialize(current);
-	}
-
-	private void configureEmulatorActivated(DebuggerPcodeEmulatorFactory factory) {
-		// TODO: Pull up config page. Tool Options? Program/Trace Options?
-		setEmulatorFactory(factory);
 	}
 
 	@Override

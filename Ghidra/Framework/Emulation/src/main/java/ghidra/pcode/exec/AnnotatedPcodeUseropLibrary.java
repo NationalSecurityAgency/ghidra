@@ -444,7 +444,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			public <T> Object convert(Varnode vn, PcodeExecutor<T> executor) {
 				PcodeExecutorStatePiece<T, T> state = executor.getState();
 				PcodeArithmetic<T> arithmetic = executor.getArithmetic();
-				return arithmetic.toBoolean(state.getVar(vn, executor.getReason()), Purpose.OTHER);
+				return arithmetic.isTrue(state.getVar(vn, executor.getReason()), Purpose.OTHER);
 			}
 		}
 
