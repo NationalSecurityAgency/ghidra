@@ -53,9 +53,9 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.*;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -79,7 +79,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 	protected Register r0;
 	protected Register r1;
-	protected TraceObjectThread thread;
+	protected TraceThread thread;
 
 	@Before
 	public void setUpWatchesProviderTest() throws Exception {
@@ -100,7 +100,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
-			thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+			thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		}
 
 		// TODO: This seems to hold up the task manager.
@@ -117,7 +117,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		}
 	}
 
-	private void setRegisterValues(TraceObjectThread thread) {
+	private void setRegisterValues(TraceThread thread) {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			TraceMemorySpace regVals =
@@ -318,7 +318,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 						tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
 						TraceMemoryFlag.EXECUTE);
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 1);
 		}
 		waitForDomainObject(tb.trace);
@@ -566,7 +566,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 						tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
 						TraceMemoryFlag.EXECUTE);
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 1);
 
 			tb.obj("Processes[1].Threads[1].Stack[0].Registers[r1]").delete();
@@ -606,7 +606,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		runSwing(() -> row.setRawValueString("0x1234"));
 
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0", 0x1234);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
@@ -661,7 +661,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 	protected void setupUnmappedDataSection() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
-			TraceMemoryOperations mem = tb.trace.getMemoryManager();
+			TraceMemoryManager mem = tb.trace.getMemoryManager();
 			mem.createRegion("Processes[1].Memory[bin:.data]", 0, tb.range(0x00600000, 0x0060ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
@@ -678,7 +678,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		intoProject(program);
 
 		try (Transaction tx = tb.startTransaction()) {
-			TraceMemoryOperations mem = tb.trace.getMemoryManager();
+			TraceMemoryManager mem = tb.trace.getMemoryManager();
 			mem.createRegion("Processes[1].Memory[bin:.data]", 0, tb.range(0x55750000, 0x5575ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}

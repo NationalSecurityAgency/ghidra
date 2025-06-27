@@ -226,7 +226,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public int size() {
 		int sum = 0;
-		for (DBTraceCodeSpace space : manager.getActiveMemorySpaces()) {
+		for (DBTraceCodeSpace space : manager.getActiveSpaces()) {
 			sum += getView(space).size();
 		}
 		return sum;

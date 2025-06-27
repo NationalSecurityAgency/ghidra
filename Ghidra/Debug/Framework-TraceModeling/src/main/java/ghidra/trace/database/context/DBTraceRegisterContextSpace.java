@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,6 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.*;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -79,8 +78,6 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected final DBTraceRegisterContextManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -91,13 +88,10 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		new HashMap<>();
 
 	public DBTraceRegisterContextSpace(DBTraceRegisterContextManager manager, DBHandle dbh,
-			AddressSpace space, DBTraceSpaceEntry ent, TraceThread thread)
-			throws VersionException, IOException {
+			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -105,8 +99,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		registerStore = factory.getOrCreateCachedStore(
-			DBTraceUtils.tableName(TABLE_NAME, space, ent.getThreadKey(), ent.getFrameLevel()),
+		registerStore = factory.getOrCreateCachedStore(DBTraceUtils.tableName(TABLE_NAME, space),
 			DBTraceRegisterEntry.class, DBTraceRegisterEntry::new, true);
 
 		loadRegisterValueMaps();
@@ -126,27 +119,17 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
+	public DBTrace getTrace() {
+		return trace;
+	}
+
+	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
 	}
 
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	protected long getThreadKey() {
-		TraceThread thread = getThread();
-		return thread == null ? -1 : thread.getKey();
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
-	}
-
 	protected String tableName(Language language, Register register) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, getThreadKey(), getFrameLevel()) + "_" +
+		return DBTraceUtils.tableName(TABLE_NAME, space) + "_" +
 			language.getLanguageID().getIdAsString() + "_" + register.getName();
 	}
 
@@ -154,9 +137,9 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			Pair<Language, Register> lr) throws VersionException {
 		String name = tableName(lr.getLeft(), lr.getRight());
 		try {
-			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace.getStoreFactory(),
-				lock, space, thread, frameLevel, DBTraceRegisterContextEntry.class,
-				DBTraceRegisterContextEntry::new);
+			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace,
+				trace.getStoreFactory(), lock, space,
+				DBTraceRegisterContextEntry.class, DBTraceRegisterContextEntry::new);
 		}
 		catch (IOException e) {
 			manager.dbError(e);

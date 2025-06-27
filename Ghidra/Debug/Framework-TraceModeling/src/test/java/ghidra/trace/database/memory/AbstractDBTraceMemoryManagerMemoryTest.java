@@ -37,6 +37,11 @@ import ghidra.util.task.TaskMonitor;
 public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		extends AbstractDBTraceMemoryManagerTest {
 
+	@Override
+	protected String getCtxXml() {
+		return CTX_XML_REGS_PER_FRAME; // per-whatever is not under test here, so just pick one
+	}
+
 	@Test
 	public void testSetState() {
 		try (Transaction tx = b.startTransaction()) {

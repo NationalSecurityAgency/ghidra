@@ -29,13 +29,14 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.*;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemory;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.trace.model.thread.TraceObjectProcess;
+import ghidra.trace.model.thread.TraceProcess;
 
-public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceObjectMemoryRegion> {
+public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceMemoryRegion> {
 
 	private static class RegionKeyColumn extends TraceValueKeyColumn {
 		@Override
@@ -66,7 +67,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionStartColumn extends AbstractTraceValueObjectAddressColumn {
 		public RegionStartColumn() {
-			super(TraceObjectMemoryRegion.KEY_RANGE);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -82,7 +83,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionEndColumn extends AbstractTraceValueObjectAddressColumn {
 		public RegionEndColumn() {
-			super(TraceObjectMemoryRegion.KEY_RANGE);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -98,7 +99,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class RegionLengthColumn extends AbstractTraceValueObjectLengthColumn {
 		public RegionLengthColumn() {
-			super(TraceObjectMemoryRegion.KEY_RANGE);
+			super(TraceMemoryRegion.KEY_RANGE);
 		}
 
 		@Override
@@ -120,7 +121,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionReadColumn extends RegionFlagColumn {
 		public RegionReadColumn() {
-			super(TraceObjectMemoryRegion.KEY_READABLE);
+			super(TraceMemoryRegion.KEY_READABLE);
 		}
 
 		@Override
@@ -131,7 +132,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionWriteColumn extends RegionFlagColumn {
 		public RegionWriteColumn() {
-			super(TraceObjectMemoryRegion.KEY_WRITABLE);
+			super(TraceMemoryRegion.KEY_WRITABLE);
 		}
 
 		@Override
@@ -142,7 +143,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public static class RegionExecuteColumn extends RegionFlagColumn {
 		public RegionExecuteColumn() {
-			super(TraceObjectMemoryRegion.KEY_EXECUTABLE);
+			super(TraceMemoryRegion.KEY_EXECUTABLE);
 		}
 
 		@Override
@@ -174,7 +175,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	protected static ModelQuery successorRegions(TraceObjectSchema rootSchema, KeyPath path) {
 		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TraceObjectMemoryRegion.class, path, true));
+		return new ModelQuery(schema.searchFor(TraceMemoryRegion.class, path, true));
 	}
 
 	protected Set<TraceMemoryRegion> getSelectedRegions(DebuggerObjectActionContext ctx) {
@@ -182,7 +183,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	public DebuggerRegionsPanel(DebuggerRegionsProvider provider) {
-		super(provider.plugin, provider, TraceObjectMemoryRegion.class);
+		super(provider.plugin, provider, TraceMemoryRegion.class);
 	}
 
 	@Override
@@ -194,14 +195,14 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	protected ModelQuery computeQuery(TraceObject object) {
 		TraceObjectSchema rootSchema = object.getRoot().getSchema();
 		KeyPath seedPath = object.getCanonicalPath();
-		KeyPath processPath = rootSchema.searchForAncestor(TraceObjectProcess.class, seedPath);
+		KeyPath processPath = rootSchema.searchForAncestor(TraceProcess.class, seedPath);
 		if (processPath != null) {
 			ModelQuery result = successorRegions(rootSchema, processPath);
 			if (!result.isEmpty()) {
 				return result;
 			}
 		}
-		KeyPath memoryPath = rootSchema.searchForSuitable(TraceObjectMemory.class, seedPath);
+		KeyPath memoryPath = rootSchema.searchForSuitable(TraceMemory.class, seedPath);
 		if (memoryPath != null) {
 			ModelQuery result = successorRegions(rootSchema, memoryPath);
 			if (!result.isEmpty()) {

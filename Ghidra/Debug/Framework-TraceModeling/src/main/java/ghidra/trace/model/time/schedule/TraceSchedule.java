@@ -530,10 +530,9 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public TraceThread getLastThread(Trace trace) {
 		long lastKey = getLastThreadKey();
-		if (lastKey == -1) {
-			return getEventThread(trace);
-		}
-		return trace.getThreadManager().getThread(lastKey);
+		return Step.requireThread(
+			lastKey == -1 ? getEventThread(trace) : trace.getThreadManager().getThread(lastKey),
+			lastKey);
 	}
 
 	/**

@@ -29,8 +29,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceExecutionState;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -617,12 +616,12 @@ public interface Target {
 	 * @param breakpoint the breakpoint
 	 * @return true if valid
 	 */
-	boolean isBreakpointValid(TraceBreakpoint breakpoint);
+	boolean isBreakpointValid(TraceBreakpointLocation breakpoint);
 
 	/**
-	 * @see #deleteBreakpoint(TraceBreakpoint)
+	 * @see #deleteBreakpoint(TraceBreakpointCommon)
 	 */
-	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpoint breakpoint);
+	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpointCommon breakpoint);
 
 	/**
 	 * Delete the given breakpoint from the target
@@ -633,12 +632,13 @@ public interface Target {
 	 * 
 	 * @param breakpoint the breakpoint to delete
 	 */
-	void deleteBreakpoint(TraceBreakpoint breakpoint);
+	void deleteBreakpoint(TraceBreakpointCommon breakpoint);
 
 	/**
-	 * @see #toggleBreakpoint(TraceBreakpoint, boolean)
+	 * @see #toggleBreakpoint(TraceBreakpointLocation, boolean)
 	 */
-	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpoint breakpoint, boolean enabled);
+	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpointCommon breakpoint,
+			boolean enabled);
 
 	/**
 	 * Toggle the given breakpoint on the target
@@ -651,7 +651,7 @@ public interface Target {
 	 * @param breakpoint the breakpoint to toggle
 	 * @param enabled true to enable, false to disable
 	 */
-	void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled);
+	void toggleBreakpoint(TraceBreakpointCommon breakpoint, boolean enabled);
 
 	/**
 	 * @see #forceTerminate()

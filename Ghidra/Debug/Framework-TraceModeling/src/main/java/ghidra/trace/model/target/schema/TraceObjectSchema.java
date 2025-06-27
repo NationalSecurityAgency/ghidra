@@ -21,11 +21,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.memory.TraceObjectRegisterContainer;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.memory.TraceRegisterContainer;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.iface.TraceObjectAggregate;
+import ghidra.trace.model.target.iface.TraceAggregate;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.schema.DefaultTraceObjectSchema.DefaultAttributeSchema;
@@ -555,7 +555,7 @@ public interface TraceObjectSchema {
 
 			@Override
 			public boolean descendAttributes(SearchEntry ent) {
-				return ent.schema.getInterfaces().contains(TraceObjectAggregate.class);
+				return ent.schema.getInterfaces().contains(TraceAggregate.class);
 			}
 
 			@Override
@@ -599,7 +599,7 @@ public interface TraceObjectSchema {
 			if (!visited.add(sch)) {
 				return;
 			}
-			if (requireAggregate && !sch.getInterfaces().contains(TraceObjectAggregate.class)) {
+			if (requireAggregate && !sch.getInterfaces().contains(TraceAggregate.class)) {
 				return;
 			}
 			SchemaContext ctx = sch.getContext();
@@ -1009,18 +1009,17 @@ public interface TraceObjectSchema {
 	 * 
 	 * <p>
 	 * This places some conventional restrictions / expectations on models where registers are given
-	 * on a frame-by-frame basis. The schema should present the {@link TraceObjectRegisterContainer}
-	 * as the same object or a successor to {@link TraceObjectStackFrame}, which must in turn be a
-	 * successor to {@link TraceObjectStack}. The frame level (an index) must be in the path from
-	 * stack to frame. There can be no wildcards between the frame and the register container. For
-	 * example, the container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers},
-	 * where {@code n} is the frame level. {@code Threads[1].Stack} would have the
-	 * {@link TraceObjectStack} interface, {@code Threads[1].Stack[0]} would have the
-	 * {@link TraceObjectStackFrame} interface, and {@code Threads[1].Stack[0].Registers} would have
-	 * the {@link TraceObjectRegisterContainer} interface. Note it is not sufficient for
-	 * {@link TraceObjectRegisterContainer} to be a successor of {@link TraceObjectStack} with a
-	 * single index between. There <em>must</em> be an intervening {@link TraceObjectStackFrame},
-	 * and the frame level (index) must precede it.
+	 * on a frame-by-frame basis. The schema should present the {@link TraceRegisterContainer}
+	 * as the same object or a successor to {@link TraceStackFrame}, which must in turn be a
+	 * successor to {@link TraceStack}. The frame level (an index) must be in the path from stack to
+	 * frame. There can be no wildcards between the frame and the register container. For example,
+	 * the container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
+	 * {@code n} is the frame level. {@code Threads[1].Stack} would have the {@link TraceStack}
+	 * interface, {@code Threads[1].Stack[0]} would have the {@link TraceStackFrame} interface, and
+	 * {@code Threads[1].Stack[0].Registers} would have the {@link TraceRegisterContainer}
+	 * interface. Note it is not sufficient for {@link TraceRegisterContainer} to be a
+	 * successor of {@link TraceStack} with a single index between. There <em>must</em> be an
+	 * intervening {@link TraceStackFrame}, and the frame level (index) must precede it.
 	 * 
 	 * @param frameLevel the frame level. May be ignored if not applicable
 	 * @param path the path of the seed object relative to the root
@@ -1028,16 +1027,16 @@ public interface TraceObjectSchema {
 	 *         {@link PathFilter#NONE}
 	 */
 	default PathFilter searchForRegisterContainer(int frameLevel, KeyPath path) {
-		KeyPath simple = searchForSuitable(TraceObjectRegisterContainer.class, path);
+		KeyPath simple = searchForSuitable(TraceRegisterContainer.class, path);
 		if (simple != null) {
 			return PathFilter.pattern(simple);
 		}
-		KeyPath stackPath = searchForSuitable(TraceObjectStack.class, path);
+		KeyPath stackPath = searchForSuitable(TraceStack.class, path);
 		if (stackPath == null) {
 			return PathFilter.NONE;
 		}
 		PathPattern framePatternRelStack =
-			getSuccessorSchema(stackPath).searchFor(TraceObjectStackFrame.class, false)
+			getSuccessorSchema(stackPath).searchFor(TraceStackFrame.class, false)
 					.getSingletonPattern();
 		if (framePatternRelStack == null) {
 			return PathFilter.NONE;
@@ -1053,7 +1052,7 @@ public interface TraceObjectSchema {
 			KeyPath framePathRelStack =
 				framePatternRelStack.applyKeys(index).getSingletonPath();
 			KeyPath framePath = stackPath.extend(framePathRelStack);
-			KeyPath regsPath = searchForSuitable(TraceObjectRegisterContainer.class, framePath);
+			KeyPath regsPath = searchForSuitable(TraceRegisterContainer.class, framePath);
 			if (regsPath != null) {
 				patterns.add(new PathPattern(regsPath));
 			}
@@ -1065,11 +1064,11 @@ public interface TraceObjectSchema {
 	 * Compute the frame level of the object at the given path relative to this schema
 	 * 
 	 * <p>
-	 * If there is no {@link TraceObjectStackFrame} in the path, this will return 0 since it is not
+	 * If there is no {@link TraceStackFrame} in the path, this will return 0 since it is not
 	 * applicable to the object. If there is a stack frame in the path, this will examine its
-	 * ancestry, up to and excluding the {@link TraceObjectStack} for an index. If there isn't a
-	 * stack in the path, it is assumed to be an ancestor of this schema, meaning the examination
-	 * will exhaust the ancestry provided in the path. If no index is found, an exception is thrown,
+	 * ancestry, up to and excluding the {@link TraceStack} for an index. If there isn't a stack in
+	 * the path, it is assumed to be an ancestor of this schema, meaning the examination will
+	 * exhaust the ancestry provided in the path. If no index is found, an exception is thrown,
 	 * because the frame level is applicable, but couldn't be computed from the path given. In that
 	 * case, the client should include more ancestry in the path. Ideally, this is invoked relative
 	 * to the root schema.
@@ -1079,11 +1078,11 @@ public interface TraceObjectSchema {
 	 * @throws IllegalArgumentException if frame level is applicable but not given in the path
 	 */
 	default int computeFrameLevel(KeyPath path) {
-		KeyPath framePath = searchForAncestor(TraceObjectStackFrame.class, path);
+		KeyPath framePath = searchForAncestor(TraceStackFrame.class, path);
 		if (framePath == null) {
 			return 0;
 		}
-		KeyPath stackPath = searchForAncestor(TraceObjectStack.class, framePath);
+		KeyPath stackPath = searchForAncestor(TraceStack.class, framePath);
 		for (int i = stackPath == null ? 0 : stackPath.size(); i < framePath.size(); i++) {
 			String key = framePath.key(i);
 			if (KeyPath.isIndex(key)) {

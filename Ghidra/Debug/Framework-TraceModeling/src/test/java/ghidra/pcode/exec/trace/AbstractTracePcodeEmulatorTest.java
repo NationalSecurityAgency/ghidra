@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,11 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryManager;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
@@ -38,6 +40,13 @@ public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegr
 			List<String> assembly) throws Throwable {
 		return initTrace(tb, tb.range(0x00400000, 0x0040ffff), tb.range(0x00100000, 0x0010ffff),
 			stateInit, assembly);
+	}
+
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.useRegistersPerFrame()
+				.noRegisterGroups()
+				.build();
 	}
 
 	/**
@@ -52,6 +61,8 @@ public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegr
 	 * memory where it was assembled.
 	 * 
 	 * @param tb the trace builder
+	 * @param text the range of the .text section
+	 * @param stack the range allocated for the stack
 	 * @param stateInit Sleigh source to execute to initialize the trace state before emulation
 	 * @param assembly lines of assembly to place starting at {@code 0x00400000}
 	 * @return a new trace thread, whose register state is initialized as specified
@@ -62,10 +73,12 @@ public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegr
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.getOrAddThread("Thread1", 0);
-			mm.addRegion("Regions[bin:.text]", Lifespan.nowOn(0), text,
+			tb.createRootObject(buildContext(), "Target");
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
+			mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0), text,
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			mm.addRegion("Regions[stack1]", Lifespan.nowOn(0), stack,
+			mm.addRegion("Memory[stack1]", Lifespan.nowOn(0), stack,
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			Iterator<Instruction> block = assembly.isEmpty() ? Collections.emptyIterator()

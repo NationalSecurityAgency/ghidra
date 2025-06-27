@@ -48,6 +48,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.listing.DBTraceInstruction;
 import ghidra.trace.database.listing.DBTraceInstructionsMemoryView;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -59,16 +60,16 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.stack.*;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.iface.TraceObjectEnvironment;
+import ghidra.trace.model.target.iface.TraceEnvironment;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
@@ -162,12 +163,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			sel, null);
 	}
 
-	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
+	protected TraceThread createPolyglotTrace(String arch, long offset,
 			Supplier<ByteBuffer> byteSupplier) throws Exception {
 		return createPolyglotTrace(arch, offset, byteSupplier, true);
 	}
 
-	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
+	protected TraceThread createPolyglotTrace(String arch, long offset,
 			Supplier<ByteBuffer> byteSupplier, boolean pcInStack) throws Exception {
 		createAndOpenTrace("DATA:BE:64:default");
 
@@ -179,13 +180,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertEquals(ctx.getSchema(new SchemaName("Environment")), env.getSchema());
 			Lifespan zeroOn = Lifespan.nowOn(0);
 			env.insert(zeroOn, ConflictResolution.DENY);
-			env.setAttribute(zeroOn, TraceObjectEnvironment.KEY_DEBUGGER, "test");
-			env.setAttribute(zeroOn, TraceObjectEnvironment.KEY_ARCH, arch);
+			env.setAttribute(zeroOn, TraceEnvironment.KEY_DEBUGGER, "test");
+			env.setAttribute(zeroOn, TraceEnvironment.KEY_ARCH, arch);
 
 			DBTraceObject objBinText =
 				objects.createObject(KeyPath.parse("Targets[0].Memory[bin:.text]"));
-			TraceObjectMemoryRegion binText =
-				objBinText.queryInterface(TraceObjectMemoryRegion.class);
+			TraceMemoryRegion binText = objBinText.queryInterface(TraceMemoryRegion.class);
 			binText.addFlags(zeroOn, Set.of(TraceMemoryFlag.EXECUTE));
 			binText.setRange(zeroOn, tb.range(offset, offset + 0xffff));
 			// TODO: Why doesn't setRange work after insert?
@@ -196,16 +196,16 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 				DBTraceObject objFrame = objects
 						.createObject(KeyPath.parse("Targets[0].Threads[0].Stack[0]"));
 				objFrame.insert(zeroOn, ConflictResolution.DENY);
-				TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
+				TraceStackFrame frame = objFrame.queryInterface(TraceStackFrame.class);
 				frame.setProgramCounter(zeroOn, tb.addr(offset));
 			}
 			else {
 				objects.createObject(
 					KeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
 						.insert(zeroOn, ConflictResolution.DENY);
-				TraceObjectThread thread = objects
-						.getObjectByCanonicalPath(KeyPath.parse("Targets[0].Threads[0]"))
-						.queryInterface(TraceObjectThread.class);
+				TraceThread thread =
+					objects.getObjectByCanonicalPath(KeyPath.parse("Targets[0].Threads[0]"))
+							.queryInterface(TraceThread.class);
 				traceManager.activateThread(thread);
 				DBTraceMemorySpace regs =
 					Objects.requireNonNull(memory.getMemoryRegisterSpace(thread, true));
@@ -218,14 +218,14 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			ByteBuffer bytes = byteSupplier.get();
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
-		TraceObjectThread thread =
+		TraceThread thread =
 			objects.getObjectByCanonicalPath(KeyPath.parse("Targets[0].Threads[0]"))
-					.queryInterface(TraceObjectThread.class);
+					.queryInterface(TraceThread.class);
 		traceManager.activateThread(thread);
 		return thread;
 	}
 
-	protected void setLegacyProgramCounterInStack(long offset, TraceThread thread, long snap) {
+	protected void setProgramCounterInStack(long offset, TraceThread thread, long snap) {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceStackManager manager = tb.trace.getStackManager();
 			TraceStack stack = manager.getStack(thread, snap, true);
@@ -234,7 +234,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
-	protected void setLegacyProgramCounterInRegs(long offset, TraceThread thread, long snap) {
+	protected void setProgramCounterInRegs(long offset, TraceThread thread, long snap) {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
@@ -243,11 +243,19 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
-	protected void createLegacyTrace(String langID, long offset, Supplier<ByteBuffer> byteSupplier)
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
+	protected void createTrace(String langID, long offset, Supplier<ByteBuffer> byteSupplier)
 			throws Throwable {
 		createAndOpenTrace(langID);
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion("Memory[bin:.text]", 0, tb.range(offset, offset + 0xffff),
 				Set.of(TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ));
@@ -275,27 +283,27 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testAutoDisasembleReDisasembleX8664Offcut() throws Throwable {
 		enableAutoDisassembly();
-		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+		createTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
 		}
 
-		setLegacyProgramCounterInStack(0x00400000, thread, 0);
+		setProgramCounterInStack(0x00400000, thread, 0);
 
 		waitForPass(() -> {
 			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is that the
-			 * JMP gets deleted after the update to PC.
+			 * proceed to the following instructions. I don't really care, since the test is that
+			 * the JMP gets deleted after the update to PC.
 			 */
 		});
 
 		// The jump will advance one byte. Just simulate that by updating the stack and/or regs
-		setLegacyProgramCounterInStack(0x00400001, thread, 1);
+		setProgramCounterInStack(0x00400001, thread, 1);
 		traceManager.activateSnap(1);
 
 		waitForPass(() -> {
@@ -310,22 +318,23 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	public void testAutoDisassembleReDisassembleX8664OffcutByEmulation() throws Throwable {
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		enableAutoDisassembly();
-		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+		createTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.getOrAddThread("Thread 1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 		}
 
-		setLegacyProgramCounterInRegs(0x00400000, thread, 0);
+		setProgramCounterInRegs(0x00400000, thread, 0);
 
 		waitForPass(() -> {
 			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is that the
-			 * JMP gets deleted after the update to PC.
+			 * proceed to the following instructions. I don't really care, since the test is that
+			 * the JMP gets deleted after the update to PC.
 			 */
 		});
 
@@ -374,8 +383,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is that the
-			 * JMP gets deleted after the update to PC.
+			 * proceed to the following instructions. I don't really care, since the test is that
+			 * the JMP gets deleted after the update to PC.
 			 */
 		});
 
@@ -411,12 +420,13 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testCurrentDisassembleActionHostArm() throws Throwable {
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
 
 		// Fabricate the cpsr so that ARM is used. Otherwise, it will assume Cortex-M, so THUMB
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(tb.language.getRegister("cpsr"), BigInteger.ZERO));
@@ -442,12 +452,13 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testCurrentDisassembleActionHostThumb() throws Throwable {
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x70, 0x47));
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x70, 0x47));
 
 		// Fabricate the cpsr so that THUMB is used, even though we could omit as in Cortex-M
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0,
@@ -474,7 +485,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testCurrentDisassembleActionGuestArm() throws Throwable {
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -510,7 +521,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testCurrentDisassembleActionGuestThumb() throws Throwable {
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x70, 0x47));
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -557,7 +568,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testFixedDisassembleActionsHostArm() throws Throwable {
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
 		Address start = tb.addr(0x00400000);
 
 		// Ensure the mapper is added to the trace
@@ -573,7 +584,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testFixedDisassembleActionsGuestArm() throws Throwable {
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
 		Address start = tb.addr(0x00400000);
 
@@ -590,7 +601,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testFixedDisassembleActionsGuestThumb() throws Throwable {
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x70, 0x47));
 		Address start = tb.addr(0x00400000);
 
@@ -610,7 +621,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
@@ -638,7 +649,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		// Don't cheat here and choose v8T!
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00));
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
@@ -669,7 +680,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
@@ -699,7 +710,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		TraceObjectThread thread =
+		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
@@ -749,7 +760,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf());
+		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
@@ -768,7 +779,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		TraceObjectThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
+		TraceThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
@@ -787,7 +798,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Assemble actions will think read-only otherwise
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		TraceObjectThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
+		TraceThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 

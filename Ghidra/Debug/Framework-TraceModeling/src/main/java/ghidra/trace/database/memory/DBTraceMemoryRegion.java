@@ -15,282 +15,336 @@
  */
 package ghidra.trace.database.memory;
 
-import java.io.IOException;
 import java.util.*;
 
-import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.memory.*;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.database.DBCachedObjectStore;
-import ghidra.util.database.DBObjectColumn;
-import ghidra.util.database.annot.*;
-import ghidra.util.exception.DuplicateNameException;
 
-@DBAnnotatedObjectInfo(version = 0)
-public class DBTraceMemoryRegion
-		extends AbstractDBTraceAddressSnapRangePropertyMapData<DBTraceMemoryRegion>
-		implements TraceMemoryRegion {
-	public static final String TABLE_NAME = "MemoryRegions";
+public class DBTraceMemoryRegion implements TraceMemoryRegion, DBTraceObjectInterface {
 
-	public static final String PATH_COLUMN_NAME = "Path";
-	public static final String NAME_COLUMN_NAME = "Name";
-	public static final String FLAGS_COLUMN_NAME = "Flags";
-
-	@DBAnnotatedColumn(PATH_COLUMN_NAME)
-	static DBObjectColumn PATH_COLUMN;
-	@DBAnnotatedColumn(NAME_COLUMN_NAME)
-	static DBObjectColumn NAME_COLUMN;
-	@DBAnnotatedColumn(FLAGS_COLUMN_NAME)
-	static DBObjectColumn FLAGS_COLUMN;
-
-	static String tableName(AddressSpace space, long threadKey) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, 0);
-	}
-
-	@DBAnnotatedField(column = PATH_COLUMN_NAME, indexed = true)
-	private String path;
-	@DBAnnotatedField(column = NAME_COLUMN_NAME)
-	private String name;
-	@DBAnnotatedField(column = FLAGS_COLUMN_NAME)
-	private byte flagsByte = 0;
-
-	private final DBTraceMemorySpace space;
-
-	private final EnumSet<TraceMemoryFlag> flags = EnumSet.noneOf(TraceMemoryFlag.class);
-
-	public DBTraceMemoryRegion(DBTraceMemorySpace space,
-			DBTraceAddressSnapRangePropertyMapTree<DBTraceMemoryRegion, DBTraceMemoryRegion> tree,
-			DBCachedObjectStore<?> store, DBRecord record) {
-		super(tree, store, record);
-		this.space = space;
-	}
-
-	@Override
-	protected void fresh(boolean created) throws IOException {
-		super.fresh(created);
-		if (created) {
-			return;
+	protected record Keys(Set<String> all, String range, String display,
+			Set<String> flags) {
+		static Keys fromSchema(TraceObjectSchema schema) {
+			String keyRange = schema.checkAliasedAttribute(KEY_RANGE);
+			String keyDisplay = schema.checkAliasedAttribute(KEY_DISPLAY);
+			String keyReadable = schema.checkAliasedAttribute(KEY_READABLE);
+			String keyWritable = schema.checkAliasedAttribute(KEY_WRITABLE);
+			String keyExecutable = schema.checkAliasedAttribute(KEY_EXECUTABLE);
+			return new Keys(Set.of(keyRange, keyDisplay, keyReadable, keyWritable, keyExecutable),
+				keyRange, keyDisplay, Set.of(keyReadable, keyWritable, keyExecutable));
 		}
-		flags.clear();
-		TraceMemoryFlag.fromBits(flags, flagsByte);
-	}
 
-	@Override
-	protected void setRecordValue(DBTraceMemoryRegion value) {
-		// Nothing. The value is the record.
-	}
-
-	@Override
-	protected DBTraceMemoryRegion getRecordValue() {
-		return this;
-	}
-
-	void set(String path, String name, Collection<TraceMemoryFlag> flags) {
-		this.path = path;
-		this.name = name;
-		this.flagsByte = 0;
-		this.flags.clear();
-		for (TraceMemoryFlag f : flags) {
-			this.flagsByte |= f.getBits();
-			this.flags.add(f);
+		public boolean isRange(String key) {
+			return range.equals(key);
 		}
-		update(PATH_COLUMN, NAME_COLUMN, FLAGS_COLUMN);
+
+		public boolean isDisplay(String key) {
+			return display.equals(key);
+		}
+
+		public boolean isFlag(String key) {
+			return flags.contains(key);
+		}
 	}
 
-	@SuppressWarnings("hiding")
-	protected void checkOverlapConflicts(Lifespan lifespan, AddressRange range)
-			throws TraceOverlappedRegionException {
-		Collection<? extends DBTraceMemoryRegion> overlapConflicts =
-			space.getRegionsIntersecting(lifespan, range);
-		for (TraceMemoryRegion c : overlapConflicts) {
-			if (c == this) {
-				continue;
+	protected class RegionChangeTranslator extends Translator<TraceMemoryRegion> {
+		private static final Map<TraceObjectSchema, Keys> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Keys keys;
+
+		protected RegionChangeTranslator(DBTraceObject object, TraceMemoryRegion iface) {
+			super(KEY_RANGE, object, iface);
+			TraceObjectSchema schema = object.getSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, Keys::fromSchema);
 			}
-			throw new TraceOverlappedRegionException(overlapConflicts);
+		}
+
+		@Override
+		protected TraceEvent<TraceMemoryRegion, Void> getAddedType() {
+			return TraceEvents.REGION_ADDED;
+		}
+
+		@Override
+		protected TraceEvent<TraceMemoryRegion, Lifespan> getLifespanChangedType() {
+			return TraceEvents.REGION_LIFESPAN_CHANGED;
+		}
+
+		@Override
+		protected TraceEvent<TraceMemoryRegion, Void> getChangedType() {
+			return TraceEvents.REGION_CHANGED;
+		}
+
+		@Override
+		protected boolean appliesToKey(String key) {
+			return keys.all.contains(key);
+		}
+
+		@Override
+		protected TraceEvent<TraceMemoryRegion, Void> getDeletedType() {
+			return TraceEvents.REGION_DELETED;
+		}
+
+		@Override
+		protected void emitExtraAdded() {
+			updateViewsAdded();
+		}
+
+		@Override
+		protected void emitExtraLifespanChanged(Lifespan oldLifespan, Lifespan newLifespan) {
+			updateViewsLifespanChanged(oldLifespan, newLifespan);
+		}
+
+		@Override
+		protected void emitExtraValueChanged(Lifespan lifespan, String key, Object oldValue,
+				Object newValue) {
+			updateViewsValueChanged(lifespan, key, oldValue, newValue);
+		}
+
+		@Override
+		protected void emitExtraDeleted() {
+			updateViewsDeleted();
 		}
 	}
 
-	@SuppressWarnings("hiding")
-	protected void checkPathConflicts(Lifespan lifespan, String path)
-			throws DuplicateNameException {
-		Collection<TraceMemoryRegion> pathConflicts =
-			space.manager.getRegionsWithPathInLifespan(lifespan, path);
-		for (TraceMemoryRegion c : pathConflicts) {
-			if (c == this) {
-				continue;
-			}
-			throw new DuplicateNameException(
-				"Only one region with a given path may occupy the same snap");
-		}
+	private final DBTraceObject object;
+	private final RegionChangeTranslator translator;
+
+	public DBTraceMemoryRegion(DBTraceObject object) {
+		this.object = object;
+
+		translator = new RegionChangeTranslator(object, this);
 	}
 
 	@Override
-	public DBTrace getTrace() {
-		return space.trace;
+	public Trace getTrace() {
+		return object.getTrace();
 	}
 
 	@Override
 	public String getPath() {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return path;
-		}
+		return object.getCanonicalPath().toString();
+	}
+
+	@Override
+	public void setName(Lifespan lifespan, String name) {
+		object.setValue(lifespan, TraceObjectInterface.KEY_DISPLAY, name);
 	}
 
 	@Override
 	public void setName(long snap, String name) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			this.name = name;
-			update(NAME_COLUMN);
-			space.trace.updateViewsChangeRegionBlockName(this);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setName(Lifespan.nowOn(snap), name);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override
 	public String getName(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return name;
+		String key = object.getCanonicalPath().key();
+		String index = KeyPath.parseIfIndex(key);
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_DISPLAY, String.class, index);
+	}
+
+	@Override
+	public void setRange(Lifespan lifespan, AddressRange newRange) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.setValue(lifespan, KEY_RANGE, newRange);
 		}
 	}
 
 	@Override
-	public void setRange(long snap, AddressRange newRange) throws TraceOverlappedRegionException {
-		AddressRange oldRange;
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			if (range.equals(newRange)) {
-				return;
-			}
-			oldRange = range;
-			checkOverlapConflicts(lifespan, newRange);
-			doSetRange(newRange);
-			space.trace.updateViewsChangeRegionBlockRange(this, oldRange, newRange);
+	public void setRange(long snap, AddressRange newRange) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setRange(Lifespan.nowOn(snap), newRange);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override
 	public AddressRange getRange(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return range;
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, snap, KEY_RANGE, AddressRange.class,
+				null);
 		}
 	}
 
 	@Override
-	public void setMinAddress(long snap, Address min) throws TraceOverlappedRegionException {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			setRange(snap, DBTraceUtils.toRange(min, range.getMaxAddress()));
+	public void setMinAddress(long snap, Address min) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setRange(Lifespan.nowOn(snap), DBTraceUtils.toRange(min, getMaxAddress(snap)));
 		}
 	}
 
 	@Override
 	public Address getMinAddress(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return range.getMinAddress();
-		}
+		AddressRange range = getRange(snap);
+		return range == null ? null : range.getMinAddress();
 	}
 
 	@Override
-	public void setMaxAddress(long snap, Address max) throws TraceOverlappedRegionException {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			setRange(snap, DBTraceUtils.toRange(range.getMinAddress(), max));
+	public void setMaxAddress(long snap, Address max) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setRange(Lifespan.nowOn(snap), DBTraceUtils.toRange(getMinAddress(snap), max));
 		}
 	}
 
 	@Override
 	public Address getMaxAddress(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return range.getMaxAddress();
-		}
+		AddressRange range = getRange(snap);
+		return range == null ? null : range.getMaxAddress();
 	}
 
 	@Override
-	public void setLength(long snap, long length)
-			throws AddressOverflowException, TraceOverlappedRegionException {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			Address minAddress = range.getMinAddress();
-			setRange(snap, DBTraceUtils.toRange(minAddress, minAddress.addNoWrap(length - 1)));
+	public void setLength(long snap, long length) throws AddressOverflowException {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setRange(Lifespan.nowOn(snap), new AddressRangeImpl(getMinAddress(snap), length));
 		}
 	}
 
 	@Override
 	public long getLength(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return range.getLength();
+		AddressRange range = getRange(snap);
+		return range == null ? 0 : range.getLength();
+	}
+
+	protected static String keyForFlag(TraceMemoryFlag flag) {
+		return switch (flag) {
+			case READ -> KEY_READABLE;
+			case WRITE -> KEY_WRITABLE;
+			case EXECUTE -> KEY_EXECUTABLE;
+			case VOLATILE -> KEY_VOLATILE;
+			default -> throw new AssertionError();
+		};
+	}
+
+	@Override
+	public void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			for (TraceMemoryFlag flag : TraceMemoryFlag.values()) {
+				object.setValue(lifespan, keyForFlag(flag), flags.contains(flag));
+			}
+		}
+	}
+
+	@Override
+	public void addFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			for (TraceMemoryFlag flag : flags) {
+				object.setValue(lifespan, keyForFlag(flag), true);
+			}
+		}
+	}
+
+	@Override
+	public void clearFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			for (TraceMemoryFlag flag : flags) {
+				object.setValue(lifespan, keyForFlag(flag), false);
+			}
 		}
 	}
 
 	@Override
 	public void setFlags(long snap, Collection<TraceMemoryFlag> flags) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			this.flagsByte = TraceMemoryFlag.toBits(flags);
-			this.flags.clear();
-			this.flags.addAll(flags);
-			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setFlags(Lifespan.nowOn(snap), flags);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
-	@SuppressWarnings("hiding")
 	@Override
 	public void addFlags(long snap, Collection<TraceMemoryFlag> flags) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			this.flagsByte |= TraceMemoryFlag.toBits(flags);
-			this.flags.addAll(flags);
-			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			addFlags(Lifespan.nowOn(snap), flags);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
-	@SuppressWarnings("hiding")
 	@Override
 	public void clearFlags(long snap, Collection<TraceMemoryFlag> flags) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			this.flagsByte &= ~TraceMemoryFlag.toBits(flags);
-			this.flags.removeAll(flags);
-			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			clearFlags(Lifespan.nowOn(snap), flags);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override
 	public Set<TraceMemoryFlag> getFlags(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return Set.copyOf(flags);
+		EnumSet<TraceMemoryFlag> result = EnumSet.noneOf(TraceMemoryFlag.class);
+		for (TraceMemoryFlag flag : TraceMemoryFlag.values()) {
+			TraceObjectValue value = object.getValue(snap, keyForFlag(flag));
+			if (value != null && value.getValue() == Boolean.TRUE) {
+				result.add(flag);
+			}
 		}
+		return result;
 	}
 
 	@Override
 	public void delete() {
-		space.deleteRegion(this);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.ALL);
+		}
 	}
 
 	@Override
 	public void remove(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			if (snap <= lifespan.lmin()) {
-				space.deleteRegion(this);
-			}
-			else if (snap <= lifespan.lmax()) {
-				doSetLifespan(lifespan.withMax(snap - 1));
-			}
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return lifespan.contains(snap);
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public TraceObject getObject() {
+		return object;
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		return translator.translate(rec);
+	}
+
+	protected void updateViewsAdded() {
+		object.getTrace().updateViewsAddRegionBlock(this);
+	}
+
+	protected void updateViewsLifespanChanged(Lifespan oldLifespan, Lifespan newLifespan) {
+		object.getTrace().updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
+	}
+
+	protected void updateViewsValueChanged(Lifespan lifespan, String key, Object oldValue,
+			Object newValue) {
+		DBTrace trace = object.getTrace();
+		if (translator.keys.isRange(key)) {
+			// NB. old/newValue are null here. The CREATED event just has the new entry.
+			trace.updateViewsRefreshBlocks();
 		}
+		else if (translator.keys.isDisplay(key)) {
+			trace.updateViewsChangeRegionBlockName(this);
+		}
+		else if (translator.keys.isFlag(key)) {
+			trace.updateViewsChangeRegionBlockFlags(this, lifespan);
+		}
+	}
+
+	protected void updateViewsDeleted() {
+		object.getTrace().updateViewsDeleteRegionBlock(this);
 	}
 }

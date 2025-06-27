@@ -100,6 +100,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		createAndOpenTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
 		waitForSwing();
@@ -130,6 +131,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		createAndOpenTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(0, 3, true);

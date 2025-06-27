@@ -294,7 +294,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 */
 	protected void clearContext(Lifespan span, AddressRange range) {
 		DBTraceRegisterContextSpace ctxSpace =
-			space.trace.getRegisterContextManager().get(space, false);
+			space.trace.getRegisterContextManager().get(space.space, false);
 		if (ctxSpace == null) {
 			return;
 		}
@@ -339,8 +339,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		cacheForContaining.notifyEntryRemoved(unit.getLifespan(), unit.getRange(), unit);
 		cacheForSequence.notifyEntryRemoved(unit.getLifespan(), unit.getRange(), unit);
 		space.undefinedData.invalidateCache();
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.CODE_REMOVED, space, unit.getBounds(), unit, null));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_REMOVED, space.space,
+			unit.getBounds(), unit, null));
 	}
 
 	/**
@@ -353,8 +353,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		cacheForContaining.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		cacheForSequence.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		space.undefinedData.invalidateCache();
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_LIFESPAN_CHANGED, space,
-			unit, oldSpan, unit.getLifespan()));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_LIFESPAN_CHANGED,
+			space.space, unit, oldSpan, unit.getLifespan()));
 	}
 
 	/**

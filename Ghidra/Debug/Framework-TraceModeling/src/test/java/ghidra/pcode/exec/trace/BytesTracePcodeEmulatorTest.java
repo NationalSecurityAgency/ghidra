@@ -37,18 +37,15 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.target.DBTraceObjectManager;
-import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.NumericUtilities;
 
+@SuppressWarnings("javadoc")
 public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
 
 	/**
@@ -891,9 +888,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			TraceThread thread;
 			TraceGuestPlatform x64;
 			try (Transaction tx = tb.startTransaction()) {
-				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
-				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+				tb.createRootObject();
 				thread = tb.getOrAddThread("Targets[0].Threads[0]", 0);
 
 				mm.addRegion("Targets[0].Memory[bin:.text]", Lifespan.nowOn(0),

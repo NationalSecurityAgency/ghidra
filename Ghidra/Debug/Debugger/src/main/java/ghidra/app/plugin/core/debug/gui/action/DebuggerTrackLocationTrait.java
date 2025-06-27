@@ -40,11 +40,13 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 
@@ -60,10 +62,12 @@ public class DebuggerTrackLocationTrait {
 
 		public ForTrackingListener() {
 			listenFor(TraceEvents.BYTES_CHANGED, this::registersChanged);
-			listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
+			//listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
 		}
 
-		private void registersChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registersChanged(AddressSpace space, TraceAddressSnapRange range,
 				byte[] oldValue, byte[] newValue) {
 			if (current.getView() == null || spec == null) {
 				// Should only happen during transitional times, if at all.
@@ -81,6 +85,42 @@ public class DebuggerTrackLocationTrait {
 				return;
 			}
 			if (!tracker.affectedByStackChange(stack, current)) {
+				return;
+			}
+			doTrack(TrackCause.DB_CHANGE);
+		}
+
+		private void valueCreated(TraceObjectValue value) {
+			if (!value.getLifespan().contains(current.getSnap())) {
+				return;
+			}
+			if (!value.getEntryKey().equals(TraceStackFrame.KEY_PC)) {
+				return;
+			}
+			TraceStackFrame frame = value.getParent().queryInterface(TraceStackFrame.class);
+			if (frame == null) {
+				return;
+			}
+			if (!tracker.affectedByStackChange(frame.getStack(), current)) {
+				return;
+			}
+			doTrack(TrackCause.DB_CHANGE);
+		}
+
+		private void valueLifespanChanged(TraceObjectValue value, Lifespan oldLife,
+				Lifespan newLife) {
+			long snap = current.getSnap();
+			if (oldLife.contains(snap) == newLife.contains(snap)) {
+				return;
+			}
+			if (!value.getEntryKey().equals(TraceStackFrame.KEY_PC)) {
+				return;
+			}
+			TraceStackFrame frame = value.getParent().queryInterface(TraceStackFrame.class);
+			if (frame == null) {
+				return;
+			}
+			if (!tracker.affectedByStackChange(frame.getStack(), current)) {
 				return;
 			}
 			doTrack(TrackCause.DB_CHANGE);
@@ -296,6 +336,9 @@ public class DebuggerTrackLocationTrait {
 			}
 			trackedLocation = newLocation;
 			locationTracked();
+		}
+		catch (TraceClosedException ex) {
+			// Silently continue
 		}
 		catch (Throwable ex) {
 			Msg.error(this, "Error while computing location: " + ex);

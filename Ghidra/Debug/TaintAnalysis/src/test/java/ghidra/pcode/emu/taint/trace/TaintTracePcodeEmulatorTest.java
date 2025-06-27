@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.emu.taint.trace;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -36,7 +37,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.taint.model.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
-import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
@@ -45,9 +45,6 @@ import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
 
 public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
@@ -299,9 +296,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			TraceThread thread;
 			TraceGuestPlatform x64;
 			try (Transaction tx = tb.startTransaction()) {
-				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
-				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+				tb.createRootObject();
 				thread = tb.getOrAddThread("Targets[0].Threads[0]", 0);
 
 				x64 = tb.trace.getPlatformManager()

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.map;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -81,15 +81,15 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 		protected void loadSpaces() throws VersionException, IOException {
 			try (Transaction tx = this.openTransaction("Create Tables")) {
-				this.space1 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space2 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
-					MyEntry::new);
-				this.space3 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), null, 0, AltEntry.class,
-					AltEntry::new);
+				this.space1 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space2 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				this.space3 =
+					new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", null, factory,
+						getReadWriteLock(), toy.getDefaultSpace(), AltEntry.class, AltEntry::new);
 			}
 		}
 
@@ -224,11 +224,6 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	public void testGetAddressSpace() {
 		assertEquals(toy.getDefaultSpace(), obj.space1.getAddressSpace());
-	}
-
-	@Test
-	public void testGetThread() {
-		assertNull(obj.space1.getThread());
 	}
 
 	@Test

@@ -38,7 +38,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<FlatDebuggerRmiAPI> {
@@ -74,7 +73,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 			objs.createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 2);
 			addMemoryRegion(objs, Lifespan.nowOn(0), tb.range(0x00400000, 0x00400fff), ".text",
 				"rx");
@@ -201,8 +200,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	protected void runTestStep(Predicate<TraceThread> step, Supplier<TestRemoteMethod> method)
 			throws Throwable {
 		createTarget();
-		TraceObjectThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+		TraceThread thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		traceManager.activateThread(thread);
 		waitForSwing();
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,9 @@ import org.junit.*;
 import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 
 public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -82,12 +84,20 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 		assertNull(found);
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.useRegistersPerFrame()
+				.noRegisterGroups()
+				.build();
+	}
+
 	@Test
 	public void testGetRegisterBookmarkById() throws Exception {
 		// TODO: Should I check that bookmarks in register spaces are enclosed by the corresponding thread's lifespan?
 		DBTraceBookmark bm;
 		try (Transaction tx = b.startTransaction()) {
-			bm = b.addRegisterBookmark(0, "Thread1", "r4", "Test Type", "Cat1", "Test comment");
+			b.createRootObject(buildContext(), "Target");
+			bm = b.addRegisterBookmark(0, "Threads[1]", "r4", "Test Type", "Cat1", "Test comment");
 		}
 		long id = bm.getId();
 
@@ -98,7 +108,10 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testGetCategoriesForType() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
-			TraceThread thread = b.trace.getThreadManager().createThread("Thread1", 0);
+			b.createRootObject(buildContext(), "Target");
+
+			TraceThread thread = b.trace.getThreadManager().createThread("Threads[1]", 0);
+			b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 			DBTraceBookmarkSpace rSpace = manager.getBookmarkRegisterSpace(thread, true);
 
 			DBTraceBookmarkType type = b.getOrAddBookmarkType("Test Type");
@@ -111,9 +124,12 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 			assertEquals(Set.of("Cat1"), manager.getCategoriesForType(type));
 			assertEquals(Set.of(), rSpace.getCategoriesForType(type));
 
-			b.addRegisterBookmark(0, "Thread1", "r4", "Test Type", "Cat2", "Second");
+			b.addRegisterBookmark(0, "Threads[1]", "r4", "Test Type", "Cat2", "Second");
 			assertEquals(Set.of("Cat1", "Cat2"), type.getCategories());
-			assertEquals(Set.of("Cat1"), manager.getCategoriesForType(type));
+			assertEquals(Set.of("Cat1", "Cat2"), manager.getCategoriesForType(type));
+			assertEquals(Set.of("Cat1"),
+				manager.getBookmarkSpace(b.language.getDefaultSpace(), false)
+						.getCategoriesForType(type));
 			assertEquals(Set.of("Cat2"), rSpace.getCategoriesForType(type));
 		}
 	}
@@ -121,6 +137,8 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testGetBookmarksForType() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject(buildContext(), "Target");
+
 			DBTraceBookmarkType type = b.getOrAddBookmarkType("Test Type");
 			assertFalse(type.hasBookmarks());
 			assertEquals(0, type.countBookmarks());
@@ -131,7 +149,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 			assertEquals(Set.of(bm1), new HashSet<>(type.getBookmarks()));
 
 			DBTraceBookmark bm2 =
-				b.addRegisterBookmark(0, "Thread1", "r4", "Test Type", "Cat2", "Second");
+				b.addRegisterBookmark(0, "Threads[1]", "r4", "Test Type", "Cat2", "Second");
 			assertTrue(type.hasBookmarks());
 			assertEquals(2, type.countBookmarks());
 			assertEquals(Set.of(bm1, bm2), new HashSet<>(type.getBookmarks()));

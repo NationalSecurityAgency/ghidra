@@ -41,7 +41,8 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.MathUtilities;
 import ghidra.util.UnionAddressSetView;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace>
@@ -86,13 +87,7 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	@Override
 	protected DBTraceMemorySpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceMemorySpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceMemorySpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceMemorySpace(this, dbh, space, ent, thread);
+		return new DBTraceMemorySpace(this, dbh, space, ent);
 	}
 
 	@Override
@@ -134,108 +129,53 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	@Override
 	public TraceMemoryRegion addRegion(String path, Lifespan lifespan, AddressRange range,
-			Collection<TraceMemoryFlag> flags)
-			throws TraceOverlappedRegionException, DuplicateNameException {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager().addMemoryRegion(path, lifespan, range, flags);
-		}
-		try {
-			return delegateWrite(range.getAddressSpace(),
-				m -> m.addRegion(path, lifespan, range, flags));
-		}
-		catch (TraceOverlappedRegionException | DuplicateNameException e) {
-			throw e;
-		}
-		catch (UsrException e) {
-			throw new AssertionError(e); // Should never happen
-		}
+			Collection<TraceMemoryFlag> flags) throws TraceOverlappedRegionException {
+		return trace.getObjectManager().addMemoryRegion(path, lifespan, range, flags);
 	}
 
 	@Override
 	public Collection<? extends TraceMemoryRegion> getAllRegions() {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager().getAllObjects(TraceObjectMemoryRegion.class);
-		}
-		return delegateCollection(getActiveMemorySpaces(), m -> m.getAllRegions());
+		return trace.getObjectManager().getAllObjects(TraceMemoryRegion.class);
 	}
 
 	@Override
 	public TraceMemoryRegion getLiveRegionByPath(long snap, String path) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager()
-					.getObjectByPath(snap, path, TraceObjectMemoryRegion.class);
-		}
-		// Not efficient, but I don't anticipate many regions
-		return delegateFirst(getActiveMemorySpaces(), m -> m.getLiveRegionByPath(snap, path));
+		return trace.getObjectManager().getObjectByPath(snap, path, TraceMemoryRegion.class);
 	}
 
 	@Override
 	public TraceMemoryRegion getRegionContaining(long snap, Address address) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager()
-					.getObjectContaining(snap, address, TraceObjectMemoryRegion.KEY_RANGE,
-						TraceObjectMemoryRegion.class);
-		}
-		return delegateRead(address.getAddressSpace(), m -> m.getRegionContaining(snap, address));
+		return trace.getObjectManager()
+				.getObjectContaining(snap, address, TraceMemoryRegion.KEY_RANGE,
+					TraceMemoryRegion.class);
 	}
 
 	@Override
 	public Collection<? extends TraceMemoryRegion> getRegionsIntersecting(Lifespan lifespan,
 			AddressRange range) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager()
-					.getObjectsIntersecting(lifespan, range,
-						TraceObjectMemoryRegion.KEY_RANGE, TraceObjectMemoryRegion.class);
-		}
-		return delegateRead(range.getAddressSpace(), m -> m.getRegionsIntersecting(lifespan, range),
-			Collections.emptyList());
+		return trace.getObjectManager()
+				.getObjectsIntersecting(lifespan, range, TraceMemoryRegion.KEY_RANGE,
+					TraceMemoryRegion.class);
 	}
 
 	@Override
 	public Collection<? extends TraceMemoryRegion> getRegionsAtSnap(long snap) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager().getObjectsAtSnap(snap, TraceObjectMemoryRegion.class);
-		}
-		return delegateCollection(memSpaces.values(), m -> m.getRegionsAtSnap(snap));
-	}
-
-	public Collection<TraceMemoryRegion> getRegionsWithPathInLifespan(Lifespan lifespan,
-			String regionPath) {
-		// Not efficient, but I don't anticipate many regions
-		Collection<TraceMemoryRegion> result = new HashSet<>();
-		for (DBTraceMemorySpace m : getActiveMemorySpaces()) {
-			for (TraceMemoryRegion region : m.getRegionsIntersecting(lifespan, new AddressRangeImpl(
-				m.getAddressSpace().getMinAddress(), m.getAddressSpace().getMaxAddress()))) {
-				if (regionPath.equals(region.getPath())) {
-					result.add(region);
-				}
-			}
-		}
-		return Collections.unmodifiableCollection(result);
+		return trace.getObjectManager().getObjectsAtSnap(snap, TraceMemoryRegion.class);
 	}
 
 	@Override
 	public AddressSetView getRegionsAddressSet(long snap) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager()
-					.getObjectsAddressSet(snap, TraceObjectMemoryRegion.KEY_RANGE,
-						TraceObjectMemoryRegion.class, r -> true);
-		}
-		return new UnionAddressSetView(
-			getActiveMemorySpaces().stream().map(m -> m.getRegionsAddressSet(snap)).toList());
+		return trace.getObjectManager()
+				.getObjectsAddressSet(snap, TraceMemoryRegion.KEY_RANGE,
+					TraceMemoryRegion.class, r -> true);
 	}
 
 	@Override
 	public AddressSetView getRegionsAddressSetWith(long snap,
 			Predicate<TraceMemoryRegion> predicate) {
-		if (trace.getObjectManager().hasSchema()) {
-			return trace.getObjectManager()
-					.getObjectsAddressSet(snap, TraceObjectMemoryRegion.KEY_RANGE,
-						TraceObjectMemoryRegion.class, predicate);
-		}
-		return new UnionAddressSetView(getActiveMemorySpaces().stream()
-				.map(m -> m.getRegionsAddressSetWith(snap, predicate))
-				.toList());
+		return trace.getObjectManager()
+				.getObjectsAddressSet(snap, TraceMemoryRegion.KEY_RANGE,
+					TraceMemoryRegion.class, predicate);
 	}
 
 	@Override
@@ -295,13 +235,13 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	@Override
 	public AddressSetView getAddressesWithState(Lifespan snap, AddressSetView set,
 			Predicate<TraceMemoryState> predicate) {
-		return delegateAddressSet(getActiveMemorySpaces(),
+		return delegateAddressSet(getActiveSpaces(),
 			m -> m.getAddressesWithState(snap, set, predicate));
 	}
 
 	@Override
 	public AddressSetView getAddressesWithState(long snap, Predicate<TraceMemoryState> predicate) {
-		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+		return new UnionAddressSetView(getActiveSpaces().stream()
 				.map(m -> m.getAddressesWithState(snap, predicate))
 				.toList());
 	}
@@ -309,7 +249,7 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	@Override
 	public AddressSetView getAddressesWithState(Lifespan lifespan,
 			Predicate<TraceMemoryState> predicate) {
-		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+		return new UnionAddressSetView(getActiveSpaces().stream()
 				.map(m -> m.getAddressesWithState(lifespan, predicate))
 				.toList());
 	}
@@ -374,8 +314,12 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	@Override
 	public MemBuffer getBufferAt(long snap, Address start, ByteOrder byteOrder) {
-		// TODO: if null, return buffer of limitless 0s?
-		return delegateRead(start.getAddressSpace(), m -> m.getBufferAt(snap, start, byteOrder));
+		MemBuffer buffer =
+			delegateRead(start.getAddressSpace(), m -> m.getBufferAt(snap, start, byteOrder));
+		if (buffer == null) {
+			return new DBTraceEmptyMemBuffer(trace, start, byteOrder);
+		}
+		return buffer;
 	}
 
 	@Override
@@ -395,34 +339,6 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public Collection<? extends DBTraceMemoryRegion> getRegionsAdded(long from, long to) {
-		if (from == to) {
-			return Collections.emptySet();
-		}
-		Collection<DBTraceMemoryRegion> result = new ArrayList<>();
-		for (DBTraceMemorySpace space : memSpaces.values()) {
-			result.addAll(
-				space.regionMapSpace.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
-						.values());
-		}
-		return result;
-	}
-
-	@Override
-	public Collection<? extends DBTraceMemoryRegion> getRegionsRemoved(long from, long to) {
-		if (from == to) {
-			return Collections.emptySet();
-		}
-		Collection<DBTraceMemoryRegion> result = new ArrayList<>();
-		for (DBTraceMemorySpace space : memSpaces.values()) {
-			result.addAll(space.regionMapSpace
-					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
-					.values());
-		}
-		return result;
-	}
-
-	@Override
 	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStateChanges(long from,
 			long to) {
 		if (from == to) {
@@ -430,7 +346,7 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		}
 		Lifespan between = from < to ? Lifespan.span(from + 1, to) : Lifespan.span(to + 1, from);
 		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> result = new ArrayList<>();
-		for (DBTraceMemorySpace space : memSpaces.values()) {
+		for (DBTraceMemorySpace space : spaces.values()) {
 			AddressRange rng =
 				new AddressRangeImpl(space.space.getMinAddress(), space.space.getMaxAddress());
 			result.addAll(

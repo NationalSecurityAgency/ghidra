@@ -39,10 +39,12 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 
 @Category(NightlyCategory.class)
 public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
@@ -78,6 +80,13 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		select(listingProvider, set);
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	@Test
 	public void testActionCopyIntoCurrentProgramWithoutRelocationCreateBlocks() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
@@ -89,8 +98,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 
 		createAndOpenTrace();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+					.createRegion("Memory[.text]", 0, tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
@@ -139,18 +149,19 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		}
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			mm.createRegion("Memory[.text]", 0, tb.range(0x00400000, 0x0040ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			mm.putBytes(0, tb.addr(0x00401234), tb.buf(1, 2, 3, 4));
 
 			// This region should be excluded, since it cannot be mapped identically into 32-bits
-			mm.createRegion("lib:.text", 0, tb.range(0x7fff00400000L, 0x7fff0040ffffL),
+			mm.createRegion("Memory[lib:.text]", 0, tb.range(0x7fff00400000L, 0x7fff0040ffffL),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			// This region should be partially excluded, because 32-bits
 			// This is not likely to ever happen in practice, but be prepared
-			mm.createRegion(".straddle", 0, tb.range(0xfffff000L, 0x100000fffL),
+			mm.createRegion("Memory[.straddle]", 0, tb.range(0xfffff000L, 0x100000fffL),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
@@ -211,8 +222,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		intoProject(tb.trace);
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
+					.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
@@ -273,8 +285,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		intoProject(tb.trace);
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
+					.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
@@ -335,8 +348,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		createAndOpenTrace();
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
+					.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
@@ -377,11 +391,12 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 		createAndOpenTrace();
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
+					.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			tb.trace.getMemoryManager()
-					.createRegion(".data", 0, tb.range(0x55560000, 0x5556ffff),
+					.createRegion("Memory[.data]", 0, tb.range(0x55560000, 0x5556ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 		traceManager.activateTrace(tb.trace);

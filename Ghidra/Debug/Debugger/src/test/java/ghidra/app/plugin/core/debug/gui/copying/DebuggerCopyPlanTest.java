@@ -34,8 +34,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.AllCopiers;
 import ghidra.app.util.viewer.listingpanel.PropertyBasedBackgroundColorModel;
 import ghidra.program.database.IntRangeMap;
-import ghidra.program.disassemble.Disassembler;
-import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -75,9 +73,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		byte src[] = new byte[0x10000];
 		r.nextBytes(src);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			memory.putBytes(0, tb.addr(0x55550000), ByteBuffer.wrap(src));
 		}
 
@@ -107,9 +106,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.STATE.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			memory.putBytes(0, tb.addr(0x55550000), ByteBuffer.allocate(4096));
 			memory.setState(0, tb.addr(0x55551000), TraceMemoryState.ERROR);
 		}
@@ -182,10 +182,14 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		AddressRange trng = tb.range(0x55550000, 0x5555ffff);
 		Assembler asm = Assemblers.getAssembler(view);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			InstructionIterator iit =
-				asm.assemble(tb.addr(0x55550000), "imm r0, #123", "imm r1, #234", "add r0, r1");
+			memory.createRegion("Memory[.text]", 0, trng,
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
+				"imm r0, #123",
+				"imm r1, #234",
+				"add r0, r1");
 			assertTrue(iit.hasNext());
 		}
 
@@ -228,10 +232,14 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		AddressRange trng = tb.range(0x55550000, 0x5555ffff);
 		Assembler asm = Assemblers.getAssembler(view);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			InstructionIterator iit =
-				asm.assemble(tb.addr(0x55550000), "MOV RAX, 1234", "MOV RCX, 2345", "ADD RAX, RCX");
+			memory.createRegion("Memory[.text]", 0, trng,
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
+				"MOV RAX, 1234",
+				"MOV RCX, 2345",
+				"ADD RAX, RCX");
 			assertTrue(iit.hasNext());
 		}
 
@@ -272,7 +280,7 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.INSTRUCTIONS.isAvailable(view, program));
 
 		AddressRange trng = tb.range(0x55550000, 0x5555ffff);
-		// Assembler asm = Assemblers.getAssembler(view);
+		Assembler asm = Assemblers.getAssembler(view);
 
 		Register contextReg = tb.language.getContextBaseRegister();
 		Register longMode = tb.language.getRegister("longMode");
@@ -281,26 +289,17 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		rv = rv.assign(longMode, BigInteger.ZERO);
 		Instruction checkCtx;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, trng,
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			tb.trace.getRegisterContextManager().setValue(tb.language, rv, Lifespan.nowOn(0), trng);
 
-			// TODO: Once GP-1426 is resolved, use the assembler
-			/*
 			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
 				"MOV EAX, 1234",
 				"MOV ECX, 2345",
 				"ADD EAX, ECX");
 			checkCtx = iit.next();
-			*/
-			memory.putBytes(0, tb.addr(0x55550000), tb.buf(0xb8, 0xd2, 0x04, 0x00, 0x00, // MOV EAX,1234
-				0xb9, 0x29, 0x09, 0x00, 0x00, // MOV ECX,2345
-				0x01, 0xc8 // ADD EAX,ECX
-			));
-			Disassembler
-					.getDisassembler(view, TaskMonitor.DUMMY, DisassemblerMessageListener.IGNORE)
-					.disassemble(tb.addr(0x55550000), tb.set(tb.range(0x55550000, 0x5555000b)));
-			checkCtx = tb.trace.getCodeManager().instructions().getAt(0, tb.addr(0x55550000));
 		}
 		// Sanity pre-check
 		RegisterValue insCtx = checkCtx.getRegisterValue(contextReg);
@@ -352,8 +351,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		AddressRange trng = tb.range(0x55560000, 0x5556ffff);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".data", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			memory.createRegion("Memory[.data]", 0, trng,
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			tb.addData(0, tb.addr(0x55560000), ByteDataType.dataType, tb.buf(0x12));
 			tb.addData(0, tb.addr(0x55560001), ShortDataType.dataType, tb.buf(0x12, 0x34));
 			tb.addData(0, tb.addr(0x55560003), IntegerDataType.dataType,
@@ -412,8 +413,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 
 		AddressRange trng = tb.range(0x55560000, 0x5556ffff);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".data", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			memory.createRegion("Memory[.data]", 0, trng,
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			tb.addData(0, tb.addr(0x55560000), ByteDataType.dataType, tb.buf(0x12));
 			tb.addData(0, tb.addr(0x55560001), ShortDataType.dataType, tb.buf(0x12, 0x34));
 			tb.addData(0, tb.addr(0x55560003), IntegerDataType.dataType,
@@ -479,21 +482,20 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.LABELS.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			DBTraceNamespaceSymbol global = tb.trace.getSymbolManager().getGlobalNamespace();
 
 			DBTraceLabelSymbolView labels = tb.trace.getSymbolManager().labels();
-			labels.create(0, null, tb.addr(0x55550000), "test_label1", global, SourceType.IMPORTED);
-			labels.create(0, null, tb.addr(0x55550005), "test_label2", global,
-				SourceType.USER_DEFINED);
+			labels.create(0, tb.addr(0x55550000), "test_label1", global, SourceType.IMPORTED);
+			labels.create(0, tb.addr(0x55550005), "test_label2", global, SourceType.USER_DEFINED);
 			DBTraceNamespaceSymbolView namespaces = tb.trace.getSymbolManager().namespaces();
 			DBTraceNamespaceSymbol testNs = namespaces.add("test_ns", global, SourceType.ANALYSIS);
 			DBTraceNamespaceSymbol testNsChild =
 				namespaces.add("test_ns_child", testNs, SourceType.USER_DEFINED);
-			labels.create(0, null, tb.addr(0x55550800), "test_label3", testNsChild,
-				SourceType.ANALYSIS);
+			labels.create(0, tb.addr(0x55550800), "test_label3", testNsChild, SourceType.ANALYSIS);
 		}
 
 		Address paddr = tb.addr(stSpace, 0x00400000);
@@ -550,14 +552,15 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.BREAKPOINTS.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			DBTraceBreakpointManager breakpoints = tb.trace.getBreakpointManager();
-			breakpoints.placeBreakpoint("[1]", 0, tb.addr(0x55550123), List.of(),
+			breakpoints.placeBreakpoint("Breakpoints[1]", 0, tb.addr(0x55550123), List.of(),
 				Set.of(TraceBreakpointKind.SW_EXECUTE), true, "Test-1");
-			breakpoints.placeBreakpoint("[2]", 0, tb.addr(0x55550321), List.of(),
+			breakpoints.placeBreakpoint("Breakpoints[2]", 0, tb.addr(0x55550321), List.of(),
 				Set.of(TraceBreakpointKind.SW_EXECUTE), false, "Test-2");
 		}
 
@@ -603,9 +606,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.BOOKMARKS.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			BookmarkManager bookmarks = view.getBookmarkManager();
 			bookmarks.defineType("TestType", DebuggerResources.ICON_DEBUGGER, Palette.BLUE, 1);
@@ -651,11 +655,12 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.REFERENCES.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
-			memory.createRegion(".data", 0, tb.range(0x55560000, 0x5556ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.WRITE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.data]", 0, tb.range(0x55560000, 0x5556ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
 			ReferenceManager references = view.getReferenceManager();
 			references.addMemoryReference(tb.addr(0x55550123), tb.addr(0x55550321),
@@ -702,9 +707,10 @@ public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 		assertTrue(AllCopiers.COMMENTS.isAvailable(view, program));
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
-			memory.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff), TraceMemoryFlag.READ,
-				TraceMemoryFlag.EXECUTE);
+			memory.createRegion("Memory[.text]", 0, tb.range(0x55550000, 0x5555ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			Listing listing = view.getListing();
 			listing.setComment(tb.addr(0x55550123), CommentType.EOL, "Test EOL Comment");

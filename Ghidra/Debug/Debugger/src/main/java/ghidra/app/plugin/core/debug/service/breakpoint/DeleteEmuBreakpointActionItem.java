@@ -19,20 +19,20 @@ import java.util.concurrent.CompletableFuture;
 
 import db.Transaction;
 import ghidra.async.AsyncUtils;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
-public record DeleteEmuBreakpointActionItem(TraceBreakpoint bpt, long snap)
+public record DeleteEmuBreakpointActionItem(TraceBreakpointLocation loc, long snap)
 		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
 		try (Transaction tx =
-			bpt.getTrace().openTransaction("Delete Emulated Breakpoint")) {
-			String emuName = PlaceEmuBreakpointActionItem.createName(bpt.getMinAddress(snap));
-			if (bpt.getPath().contains(emuName)) {
-				bpt.delete();
+			loc.getTrace().openTransaction("Delete Emulated Breakpoint")) {
+			String emuName = PlaceEmuBreakpointActionItem.createName(loc.getMinAddress(snap));
+			if (loc.getPath().contains(emuName)) {
+				loc.delete();
 			}
 			else {
-				bpt.setEmuEnabled(snap, false);
+				loc.setEmuEnabled(snap, false);
 			}
 		}
 		return AsyncUtils.nil();
