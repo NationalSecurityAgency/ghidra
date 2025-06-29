@@ -661,9 +661,9 @@ public class Cie extends GccAnalysisClass {
 			"(CIE Augmentation Data) Personality Function Pointer (" + personalityFuncAddr + ")",
 			CommentType.EOL);
 
-		program.getReferenceManager().addMemoryReference(
-			augmentationDataAddr.add(augmentationDataIndex), personalityFuncAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(augmentationDataAddr.add(augmentationDataIndex),
+					personalityFuncAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 		return personalityDecodeContext;
 	}
 

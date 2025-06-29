@@ -15,14 +15,13 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_MessageReference implements StructConverter {
 	public static final String NAME = "message_ref";
@@ -40,7 +39,7 @@ public class ObjectiveC2_MessageReference implements StructConverter {
 		this._state = state;
 
 		if (state.is32bit) {
-			implementation = reader.readNextInt() & Conv.INT_MASK;
+			implementation = reader.readNextUnsignedInt();
 		}
 		else {
 			implementation = reader.readNextLong();

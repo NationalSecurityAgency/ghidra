@@ -153,8 +153,8 @@ class DebugUtils {
 			program.getIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
 		if (map == null && create) {
 			try {
-				map = program.createIntRangeMap(
-					PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
+				map = program
+						.createIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
 			}
 			catch (DuplicateNameException e) {
 				// can't happen since we just checked for it!

@@ -39,7 +39,8 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -59,7 +60,7 @@ public final class ObjectiveC1_Utilities {
 	 */
 	public static long readNextIndex(BinaryReader reader, boolean is32bit) throws IOException {
 		if (is32bit) {
-			return reader.readNextInt() & Conv.INT_MASK;
+			return reader.readNextUnsignedInt();
 		}
 		return reader.readNextLong();
 	}

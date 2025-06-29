@@ -247,7 +247,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		String comment2 =
 			"I want this sentence to wrap to the next line so that I can test wrapping.";
 		String[] comments = new String[] { comment1, comment2 };
-		inst.setCommentAsArray(CodeUnit.EOL_COMMENT, comments);
+		inst.setCommentAsArray(CommentType.EOL, comments);
 		program.endTransaction(id, true);
 		Options opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		opt.setBoolean("EOL Comments Field.Enable Word Wrapping", true);
@@ -284,7 +284,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		String comment2 =
 			"I want this sentence to wrap to the next line so that I can test wrapping.";
 		String[] comments = new String[] { comment1, comment2 };
-		inst.setCommentAsArray(CodeUnit.EOL_COMMENT, comments);
+		inst.setCommentAsArray(CommentType.EOL, comments);
 		program.endTransaction(id, true);
 //		Options opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 //		opt.putBoolean("test", "EOL Comments Field.Enable Word Wrapping", true);

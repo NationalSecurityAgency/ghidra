@@ -24,17 +24,16 @@ import ghidra.program.model.listing.*;
 public class DeleteDeadDefaultPlatesScript extends GhidraScript {
 
 	private static String DEAD_PLATE = " DEAD";
-	/* (non-Javadoc)
-	 * @see ghidra.app.script.GhidraScript#run()
-	 */
+
 	@Override
-    public void run() throws Exception {
+	public void run() throws Exception {
 		Listing listing = currentProgram.getListing();
 		AddressSetView set = currentProgram.getMemory();
 		if (currentSelection != null && !currentSelection.isEmpty()) {
 			set = currentSelection;
 		}
-		int updateCount=0;
+
+		int updateCount = 0;
 		AddressIterator iter = listing.getCommentAddressIterator(CommentType.PLATE, set, true);
 		while (iter.hasNext()) {
 			Address addr = iter.next();
@@ -48,7 +47,7 @@ public class DeleteDeadDefaultPlatesScript extends GhidraScript {
 			}
 		}
 		if (updateCount > 0) {
-			String cmt = updateCount > 1? "comments" : "comment";
+			String cmt = updateCount > 1 ? "comments" : "comment";
 			println("Removed " + updateCount + " default plate " + cmt + ".");
 		}
 		else {

@@ -39,7 +39,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	public static final String POINTER_NAME = "pointer";
 	public static final String POINTER_LABEL_PREFIX = "PTR";
 	public static final String POINTER_LABEL_PREFIX_U = POINTER_LABEL_PREFIX + "_";
-	public static final String POINTER_LOOP_LABEL_PREFIX = "PTR_LOOP";
+	public static final String POINTER_LOOP_LABEL = "PTR_LOOP";
 	public static final String NOT_A_POINTER = "NaP";
 
 	// NOTE: order dictates auto-name attribute ordering (order should not be changed)
@@ -200,14 +200,29 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 		Reference ref = refMgr.getPrimaryReferenceFrom(fromAddr, 0);
-		if (ref == null || ref.getToAddress().equals(fromAddr)) {
+		if (ref == null) {
 			return POINTER_LABEL_PREFIX;
 		}
 
 		Symbol symbol = program.getSymbolTable().getSymbol(ref);
 		if (symbol == null) {
-			// unexpected
+			// unexpected since we have a reference to the location
 			return POINTER_LABEL_PREFIX;
+		}
+		if (symbol.getSource() != SourceType.DEFAULT) {
+			return POINTER_LABEL_PREFIX_U + symbol.getName();
+		}
+
+		// Check for deep pointers or recursive conditions
+		PointerReferenceClassification pointerClassification =
+			getPointerClassification(program, ref);
+		if (pointerClassification == PointerReferenceClassification.DEEP) {
+			// multi-level pointer exceeds depth limit of 2
+			return POINTER_LABEL_PREFIX_U + POINTER_LABEL_PREFIX;
+		}
+		if (pointerClassification == PointerReferenceClassification.LOOP) {
+			// multi-level pointer is self referencing
+			return POINTER_LOOP_LABEL;
 		}
 
 		String symName = symbol.getName();
@@ -218,22 +233,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return POINTER_LABEL_PREFIX_U + symName;
 		}
 
-		PointerReferenceClassification pointerClassification =
-			getPointerClassification(program, ref);
-		if (pointerClassification == PointerReferenceClassification.DEEP) {
-			// pointer exceed depth limit of 2
-			return POINTER_LABEL_PREFIX_U + POINTER_LABEL_PREFIX;
-		}
-		if (pointerClassification == PointerReferenceClassification.LOOP) {
-			return POINTER_LOOP_LABEL_PREFIX;// pointer is self referencing
-		}
 		return POINTER_LABEL_PREFIX_U + symName;
 	}
 
 	private enum PointerReferenceClassification {
 		// NORMAL - use recursive name generation (e.g., PTR_PTR_BYTE)
 		NORMAL,
-		// LOOP - references loop back - use label prefix PTR_LOOP
+		// LOOP - self-reference - use label prefix PTR_LOOP
 		LOOP,
 		// DEEP - references are too deep - use simple default label prefix
 		DEEP
@@ -246,11 +252,14 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Set<Address> refAddrs = new HashSet<>();
 		refAddrs.add(fromAddr);
-		int depth = 0;
+		if (fromAddr.equals(ref.getToAddress())) {
+			return PointerReferenceClassification.LOOP;
+		}
+		int depth = 1;
 		while (ref != null && ref.isMemoryReference()) {
 			Address toAddr = ref.getToAddress();
 			if (!refAddrs.add(toAddr)) {
-				return PointerReferenceClassification.LOOP;
+				break;
 			}
 			if (++depth > 2) {
 				return PointerReferenceClassification.DEEP;

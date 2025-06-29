@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class JythonScript extends GhidraScript {
 		ResourceFile scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
 		if (scriptSource != null) {
 			GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
-			GhidraScript ghidraScript = provider.getScriptInstance(scriptSource, writer);
+			GhidraScript ghidraScript = provider.getScriptInstance(scriptSource, errorWriter);
 			if (ghidraScript == null) {
 				throw new IllegalArgumentException("Script does not exist: " + scriptName);
 			}
@@ -72,12 +72,12 @@ public class JythonScript extends GhidraScript {
 			}
 
 			if (ghidraScript instanceof JythonScript) {
-				ghidraScript.set(scriptState, monitor, writer);
+				ghidraScript.set(scriptState);
 				JythonScript jythonScript = (JythonScript) ghidraScript;
 				interpreter.execFile(jythonScript.getSourceFile(), jythonScript);
 			}
 			else {
-				ghidraScript.execute(scriptState, monitor, writer);
+				ghidraScript.execute(scriptState, getControls());
 			}
 
 			if (scriptState == state) {

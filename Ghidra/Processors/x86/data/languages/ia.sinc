@@ -1167,87 +1167,87 @@ m80fp: "extended double ptr" Mem    is Mem      { export *:10 Mem; }
 ## VSIB
 ##
 
-vaddr32x: [Base + Xmm_vsib*ss]					is mod=0 & r_m=4; Xmm_vsib & Base & ss					{ }
-vaddr32x: [Xmm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Xmm_vsib & base=5 & ss;	simm32_32	{ }
-vaddr32x: [Base + Xmm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Xmm_vsib & Base & ss;		simm8_32	{ }
-vaddr32x: [Base + Xmm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Xmm_vsib & Base & ss;		simm32_32	{ }
+vaddr32x: [Base + Xmm_vsib*ss]					is mod=0 & r_m=4; Xmm_vsib & Base & ss					{ local tmp=zext(Base)+Xmm_vsib*ss; export tmp; }
+vaddr32x: [Xmm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Xmm_vsib & base=5 & ss;	simm32_32	{ local tmp=zext(simm32_32)+Xmm_vsib*ss; export tmp; }
+vaddr32x: [Base + Xmm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Xmm_vsib & Base & ss;		simm8_32	{ local tmp=zext(Base)+zext(simm8_32)+Xmm_vsib*ss; export tmp; }
+vaddr32x: [Base + Xmm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Xmm_vsib & Base & ss;		simm32_32	{ local tmp=zext(Base)+zext(simm32_32)+Xmm_vsib*ss; export tmp; }
 
-vaddr32y: [Base + Ymm_vsib*ss]					is mod=0 & r_m=4; Ymm_vsib & Base & ss					{ }
-vaddr32y: [Ymm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Ymm_vsib & base=5 & ss;	simm32_32	{ }
-vaddr32y: [Base + Ymm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Ymm_vsib & Base & ss;		simm8_32	{ }
-vaddr32y: [Base + Ymm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Ymm_vsib & Base & ss;		simm32_32	{ }
+vaddr32y: [Base + Ymm_vsib*ss]					is mod=0 & r_m=4; Ymm_vsib & Base & ss					{ local tmp=zext(Base)+Ymm_vsib*ss; export tmp; }
+vaddr32y: [Ymm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Ymm_vsib & base=5 & ss;	simm32_32	{ local tmp=zext(simm32_32)+Ymm_vsib*ss; export tmp; }
+vaddr32y: [Base + Ymm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Ymm_vsib & Base & ss;		simm8_32	{ local tmp=zext(Base)+zext(simm8_32)+Ymm_vsib*ss; export tmp; }
+vaddr32y: [Base + Ymm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Ymm_vsib & Base & ss;		simm32_32	{ local tmp=zext(Base)+zext(simm32_32)+Ymm_vsib*ss; export tmp; }
 
-vaddr32z: [Base + Zmm_vsib*ss]					is mod=0 & r_m=4; Zmm_vsib & Base & ss					{ }
-vaddr32z: [Zmm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Zmm_vsib & base=5 & ss;	simm32_32	{ }
-vaddr32z: [Base + Zmm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Zmm_vsib & Base & ss;		simm8_32	{ }
-vaddr32z: [Base + Zmm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Zmm_vsib & Base & ss;		simm32_32	{ }
+vaddr32z: [Base + Zmm_vsib*ss]					is mod=0 & r_m=4; Zmm_vsib & Base & ss					{ local tmp=zext(Base)+Zmm_vsib*ss; export tmp; }
+vaddr32z: [Zmm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Zmm_vsib & base=5 & ss;	simm32_32	{ local tmp=zext(simm32_32)+Zmm_vsib*ss; export tmp; }
+vaddr32z: [Base + Zmm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Zmm_vsib & Base & ss;		simm8_32	{ local tmp=zext(Base)+zext(simm8_32)+Zmm_vsib*ss; export tmp; }
+vaddr32z: [Base + Zmm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Zmm_vsib & Base & ss;		simm32_32	{ local tmp=zext(Base)+zext(simm32_32)+Zmm_vsib*ss; export tmp; }
 
 @ifdef IA64
-vaddr64x: [Base64 + Xmm_vsib*ss]				is mod=0 & r_m=4; Xmm_vsib & Base64 & ss				{ }
-vaddr64x: [Xmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Xmm_vsib & base64=5 & ss;	simm32_64	{ }
-vaddr64x: [Base64 + Xmm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Xmm_vsib & Base64 & ss;	simm8_64	{ }
-vaddr64x: [Base64 + Xmm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Xmm_vsib & Base64 & ss;	simm32_64	{ }
+vaddr64x: [Base64 + Xmm_vsib*ss]				is mod=0 & r_m=4; Xmm_vsib & Base64 & ss				{ local tmp=zext(Base64)+Xmm_vsib*ss; export tmp; }
+vaddr64x: [Xmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Xmm_vsib & base64=5 & ss;	simm32_64	{ local tmp=zext(simm32_64)+Xmm_vsib*ss; export tmp; }
+vaddr64x: [Base64 + Xmm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Xmm_vsib & Base64 & ss;	simm8_64	{ local tmp=zext(Base64)+zext(simm8_64)+Xmm_vsib*ss; export tmp; }
+vaddr64x: [Base64 + Xmm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Xmm_vsib & Base64 & ss;	simm32_64	{ local tmp=zext(Base64)+zext(simm32_64)+Xmm_vsib*ss; export tmp; }
 
-vaddr64y: [Base64 + Ymm_vsib*ss]				is mod=0 & r_m=4; Ymm_vsib & Base64 & ss				{ }
-vaddr64y: [Ymm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Ymm_vsib & base64=5 & ss;	simm32_64	{ }
-vaddr64y: [Base64 + Ymm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Ymm_vsib & Base64 & ss;	simm8_64	{ }
-vaddr64y: [Base64 + Ymm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Ymm_vsib & Base64 & ss;	simm32_64	{ }
+vaddr64y: [Base64 + Ymm_vsib*ss]				is mod=0 & r_m=4; Ymm_vsib & Base64 & ss				{ local tmp=zext(Base64)+Ymm_vsib*ss; export tmp; }
+vaddr64y: [Ymm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Ymm_vsib & base64=5 & ss;	simm32_64	{ local tmp=zext(simm32_64)+Ymm_vsib*ss; export tmp; }
+vaddr64y: [Base64 + Ymm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Ymm_vsib & Base64 & ss;	simm8_64	{ local tmp=zext(Base64)+zext(simm8_64)+Ymm_vsib*ss; export tmp; }
+vaddr64y: [Base64 + Ymm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Ymm_vsib & Base64 & ss;	simm32_64	{ local tmp=zext(Base64)+zext(simm32_64)+Ymm_vsib*ss; export tmp; }
 
-vaddr64z: [Base64 + Zmm_vsib*ss]				is mod=0 & r_m=4; Zmm_vsib & Base64 & ss				{ }
-vaddr64z: [Zmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Zmm_vsib & base64=5 & ss;	simm32_64	{ }
-vaddr64z: [Base64 + Zmm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Zmm_vsib & Base64 & ss;	simm8_64	{ }
-vaddr64z: [Base64 + Zmm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Zmm_vsib & Base64 & ss;	simm32_64	{ }
+vaddr64z: [Base64 + Zmm_vsib*ss]				is mod=0 & r_m=4; Zmm_vsib & Base64 & ss				{ local tmp=zext(Base64)+Zmm_vsib*ss; export tmp; }
+vaddr64z: [Zmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Zmm_vsib & base64=5 & ss;	simm32_64	{ local tmp=zext(simm32_64)+Zmm_vsib*ss; export tmp; }
+vaddr64z: [Base64 + Zmm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Zmm_vsib & Base64 & ss;	simm8_64	{ local tmp=zext(Base64)+zext(simm8_64)+Zmm_vsib*ss; export tmp; }
+vaddr64z: [Base64 + Zmm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Zmm_vsib & Base64 & ss;	simm32_64	{ local tmp=zext(Base64)+zext(simm32_64)+Zmm_vsib*ss; export tmp; }
 @endif
 
 
-vMem32x: segWide^vaddr32x	is addrsize=1 & segWide; vaddr32x       			{ }
-vMem32x: segWide^vaddr32x	is addrsize=1 & segWide & highseg=1; vaddr32x 		{ }
+vMem32x: segWide^vaddr32x	is addrsize=1 & segWide; vaddr32x					{ export vaddr32x; }
+vMem32x: segWide^vaddr32x	is addrsize=1 & segWide & highseg=1; vaddr32x		{ export vaddr32x; }
 
-vMem32y: segWide^vaddr32y	is addrsize=1 & segWide; vaddr32y       			{ }
-vMem32y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y 		{ }
+vMem32y: segWide^vaddr32y	is addrsize=1 & segWide; vaddr32y					{ export vaddr32y; }
+vMem32y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y		{ export vaddr32y; }
 
-vMem32z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z       			{ }
-vMem32z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z 		{ }
+vMem32z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z					{ export vaddr32z; }
+vMem32z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z 		{ export vaddr32z; }
 
 @ifdef IA64
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem32x: segWide^vaddr64x	is addrsize=2 & segWide; vaddr64x             		{ }
-vMem32x: segWide^vaddr64x	is addrsize=2 & segWide & highseg=1; vaddr64x 		{ }
+vMem32x: segWide^vaddr64x	is addrsize=2 & segWide; vaddr64x             		{ export vaddr64x; }
+vMem32x: segWide^vaddr64x	is addrsize=2 & segWide & highseg=1; vaddr64x 		{ export vaddr64x; }
 
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem32y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ }
-vMem32y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ }
+vMem32y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ export vaddr64y; }
+vMem32y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ export vaddr64y; }
 
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem32z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ }
-vMem32z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ }
+vMem32z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ export vaddr64z; }
+vMem32z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ export vaddr64z;}
 
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem64x: segWide^vaddr32x	is addrsize=1 & segWide; vaddr32x 					{ }
-vMem64x: segWide^vaddr32x	is addrsize=1 & segWide & highseg=1; vaddr32x		{ }
+vMem64x: segWide^vaddr32x	is addrsize=1 & segWide; vaddr32x 					{ export vaddr32x; }
+vMem64x: segWide^vaddr32x	is addrsize=1 & segWide & highseg=1; vaddr32x		{ export vaddr32x; }
 
-vMem64x: segWide^vaddr64x	is addrsize=2 & segWide; vaddr64x             		{ }
-vMem64x: segWide^vaddr64x	is addrsize=2 & segWide & highseg=1; vaddr64x 		{ }
-
-#      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
-#      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem64y: segWide^vaddr32y	is addrsize=1 & segWide; vaddr32y 					{ }
-vMem64y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y		{ }
-
-vMem64y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ }
-vMem64y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ }
+vMem64x: segWide^vaddr64x	is addrsize=2 & segWide; vaddr64x             		{ export vaddr64x; }
+vMem64x: segWide^vaddr64x	is addrsize=2 & segWide & highseg=1; vaddr64x 		{ export vaddr64x; }
 
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
-vMem64z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z 					{ }
-vMem64z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z		{ }
+vMem64y: segWide^vaddr32y	is addrsize=1 & segWide; vaddr32y 					{ export vaddr32y; }
+vMem64y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y		{ export vaddr32y; }
 
-vMem64z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ }
-vMem64z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ }
+vMem64y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ export vaddr64y; }
+vMem64y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ export vaddr64y; }
+
+#      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
+#      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
+vMem64z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z 					{ export vaddr32z; }
+vMem64z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z		{ export vaddr32z; }
+
+vMem64z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ export vaddr64z; }
+vMem64z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ export vaddr64z; }
 @endif
 
 
@@ -1262,14 +1262,14 @@ d_vm64y: "dword ptr "^vMem64y is vMem64y { }
 @endif
 
 
-q_vm32x: "qword ptr "^vMem32x is vMem32x { }
+q_vm32x: "qword ptr "^vMem32x is vMem32x { export vMem32x; }
 # not used q_vm32y: "qword ptr "^vMem32y is vMem32y { }
 # not used q_vm32z: "qword ptr "^vMem32z is vMem32z { }
 
 @ifdef IA64
-q_vm64x: "qword ptr "^vMem64x is vMem64x { }
-q_vm64y: "qword ptr "^vMem64y is vMem64y { }
-q_vm64z: "qword ptr "^vMem64z is vMem64z { }
+q_vm64x: "qword ptr "^vMem64x is vMem64x { export vMem64x; }
+q_vm64y: "qword ptr "^vMem64y is vMem64y { export vMem64y; }
+q_vm64z: "qword ptr "^vMem64z is vMem64z { export vMem64z; }
 @endif
 
 x_vm32x: "xmmword ptr "^vMem32x is vMem32x { export vMem32x; }
@@ -1277,9 +1277,9 @@ y_vm32y: "ymmword ptr "^vMem32y is vMem32y { export vMem32y; }
 z_vm32z: "zmmword ptr "^vMem32z is vMem32z { export vMem32z; }
 
 @ifdef IA64
-x_vm64x: "xmmword ptr "^vMem64x is vMem64x { }
-y_vm64y: "ymmword ptr "^vMem64y is vMem64y { }
-z_vm64z: "zmmword ptr "^vMem64z is vMem64z { }
+x_vm64x: "xmmword ptr "^vMem64x is vMem64x { export vMem64x; }
+y_vm64y: "ymmword ptr "^vMem64y is vMem64y { export vMem64y; }
+z_vm64z: "zmmword ptr "^vMem64z is vMem64z { export vMem64z; }
 @endif
 
 Reg32_m8:     Rmr32     is mod=3 & Rmr32                     { export Rmr32; }

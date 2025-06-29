@@ -40,7 +40,6 @@ public class LSDAHeader extends GccAnalysisClass {
 
 	static final int OMITTED_ENCODING_TYPE = 0xFF;
 
-
 	/* Class Members */
 	private RegionDescriptor region;
 

@@ -15,123 +15,129 @@
  */
 package ghidra.app.plugin.core.comments;
 
-import ghidra.app.context.*;
-import ghidra.framework.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
-import ghidra.util.*;
+import java.awt.event.KeyEvent;
 
-import java.awt.event.*;
-
-import docking.*;
+import docking.ActionContext;
 import docking.action.*;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.framework.PluggableServiceRegistry;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
+import ghidra.program.util.*;
+import ghidra.util.HelpLocation;
 
 public class CommentsActionFactory {
-    static {
-        PluggableServiceRegistry.registerPluggableService(CommentsActionFactory.class, new CommentsActionFactory());
-    }
+	static {
+		PluggableServiceRegistry.registerPluggableService(CommentsActionFactory.class,
+			new CommentsActionFactory());
+	}
 
-    public static DockingAction getSetCommentsAction(CommentsDialog dialog,
-            String name, String actionName, int commentType) {
-        CommentsActionFactory factory = PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
-        return factory.doGetSetCommentsAction(dialog, name, actionName, commentType);
-    }
+	public static DockingAction getSetCommentsAction(CommentsDialog dialog, String name,
+			String actionName, CommentType commentType) {
+		CommentsActionFactory factory =
+			PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
+		return factory.doGetSetCommentsAction(dialog, name, actionName, commentType);
+	}
 
-    public static DockingAction getEditCommentsAction(CommentsDialog dialog,
-            String name) {
-        CommentsActionFactory factory = PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
-        return factory.doGetEditCommentsAction(dialog, name);
-    }
+	public static DockingAction getEditCommentsAction(CommentsDialog dialog, String name) {
+		CommentsActionFactory factory =
+			PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
+		return factory.doGetEditCommentsAction(dialog, name);
+	}
 
-    public static boolean isCommentSupported(ProgramLocation loc) {
-        CommentsActionFactory factory = PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
-        return factory.doIsCommentSupported(loc);
+	public static boolean isCommentSupported(ProgramLocation loc) {
+		CommentsActionFactory factory =
+			PluggableServiceRegistry.getPluggableService(CommentsActionFactory.class);
+		return factory.doIsCommentSupported(loc);
 
-    }
+	}
 
-    protected DockingAction doGetSetCommentsAction(CommentsDialog dialog,
-            String name, String actionName, int commentType) {
-        return new SetCommentsAction(dialog, name, actionName, commentType);
-    }
+	protected DockingAction doGetSetCommentsAction(CommentsDialog dialog, String name,
+			String actionName, CommentType commentType) {
+		return new SetCommentsAction(dialog, name, actionName, commentType);
+	}
 
-    protected DockingAction doGetEditCommentsAction(CommentsDialog dialog,
-            String name) {
-        return new EditCommentsAction(dialog, name);
-    }
+	protected DockingAction doGetEditCommentsAction(CommentsDialog dialog, String name) {
+		return new EditCommentsAction(dialog, name);
+	}
 
-    protected boolean doIsCommentSupported(ProgramLocation loc) {
-        if (loc == null || loc.getAddress() == null) {
-            return false;
-        }
-        return ((loc instanceof CodeUnitLocation) || ((loc instanceof FunctionLocation) && !(loc instanceof VariableLocation)));
-    }
+	protected boolean doIsCommentSupported(ProgramLocation loc) {
+		if (loc == null || loc.getAddress() == null) {
+			return false;
+		}
+		return ((loc instanceof CodeUnitLocation) ||
+			((loc instanceof FunctionLocation) && !(loc instanceof VariableLocation)));
+	}
 
-    private static class SetCommentsAction extends DockingAction {
-        private final CommentsDialog dialog;
-        private final int commentType;
+	private static class SetCommentsAction extends DockingAction {
+		private final CommentsDialog dialog;
+		private final CommentType commentType; // may be null for Generic Comment
 
-        SetCommentsAction(CommentsDialog dialog, String name,
-                String actionName, int commentType) {
-            super(actionName, name);
-            this.dialog = dialog;
-            this.commentType = commentType;
-            setPopupMenuData(new MenuData(new String[] { "Comments",
-                    actionName + "..." }, "comments"));
-            setHelpLocation(new HelpLocation("CommentsPlugin", "Edit_Comments"));
-        }
+		SetCommentsAction(CommentsDialog dialog, String name, String actionName,
+				CommentType commentType) {
+			super(actionName, name);
+			this.dialog = dialog;
+			this.commentType = commentType;
+			setPopupMenuData(
+				new MenuData(new String[] { "Comments", actionName + "..." }, "comments"));
+			setHelpLocation(new HelpLocation("CommentsPlugin", "Edit_Comments"));
+		}
 
-        protected int getEditCommentType(ActionContext context) {
-            return commentType;
-        }
+		/**
+		 * {@return comment type or null for Generic Comment}
+		 * @param context action context
+		 */
+		protected CommentType getEditCommentType(ActionContext context) {
+			return commentType;
+		}
 
-        @Override
-        public void actionPerformed(ActionContext context) {
-            CodeUnit cu = getCodeUnit(context);
-            int type = getEditCommentType(context);
-            dialog.showDialog(cu, type);
-        }
+		@Override
+		public void actionPerformed(ActionContext context) {
+			CodeUnit cu = getCodeUnit(context);
+			CommentType type = getEditCommentType(context);
+			dialog.showDialog(cu, type);
+		}
 
-        @Override
-        public boolean isEnabledForContext(ActionContext actionContext) {
-            ProgramLocation loc = getLocationForContext(actionContext);
-            if (!isCommentSupported(loc)) {
-                return false;
-            }
-            return CommentTypeUtils.isCommentAllowed(getCodeUnit(actionContext), loc);
-        }
+		@Override
+		public boolean isEnabledForContext(ActionContext actionContext) {
+			ProgramLocation loc = getLocationForContext(actionContext);
+			if (!isCommentSupported(loc)) {
+				return false;
+			}
+			return CommentTypeUtils.isCommentAllowed(getCodeUnit(actionContext), loc);
+		}
 
-        @Override
-        public boolean isValidContext(ActionContext context) {
-            return (context instanceof ListingActionContext);
-        }
+		@Override
+		public boolean isValidContext(ActionContext context) {
+			return (context instanceof ListingActionContext);
+		}
 
-        protected CodeUnit getCodeUnit(ActionContext actionContext) {
-            ProgramLocationActionContext context = (ProgramLocationActionContext) actionContext;
-            return context.getCodeUnit();
-        }
+		protected CodeUnit getCodeUnit(ActionContext actionContext) {
+			ProgramLocationActionContext context = (ProgramLocationActionContext) actionContext;
+			return context.getCodeUnit();
+		}
 
-        protected ProgramLocation getLocationForContext(
-                ActionContext actionContext) {
-            ProgramLocationActionContext context = (ProgramLocationActionContext) actionContext;
-            return context.getLocation();
-        }
-    }
+		protected ProgramLocation getLocationForContext(ActionContext actionContext) {
+			ProgramLocationActionContext context = (ProgramLocationActionContext) actionContext;
+			return context.getLocation();
+		}
+	}
 
-    private static class EditCommentsAction extends SetCommentsAction {
-        // Edit Comments Action info
-        private final static String[] EDIT_MENUPATH = new String[] {
-                "Comments", "Set..." };
+	private static class EditCommentsAction extends SetCommentsAction {
+		// Edit Comments Action info
+		private final static String[] EDIT_MENUPATH = new String[] { "Comments", "Set..." };
 
-        EditCommentsAction(CommentsDialog dialog, String name) {
-            super(dialog, name, "Edit Comments", CodeUnit.NO_COMMENT);
-            setPopupMenuData(new MenuData(EDIT_MENUPATH, "comments"));
-            setKeyBindingData(new KeyBindingData(KeyEvent.VK_SEMICOLON, 0));
-        }
+		EditCommentsAction(CommentsDialog dialog, String name) {
+			super(dialog, name, "Edit Comments", null);
+			setPopupMenuData(new MenuData(EDIT_MENUPATH, "comments"));
+			setKeyBindingData(new KeyBindingData(KeyEvent.VK_SEMICOLON, 0));
+		}
 
-        @Override
-        protected int getEditCommentType(ActionContext context) {
-            CodeUnit cu = getCodeUnit(context);
-            return CommentTypeUtils.getCommentType(cu, getLocationForContext(context), CodeUnit.NO_COMMENT);
-        }
-    }
+		@Override
+		protected CommentType getEditCommentType(ActionContext context) {
+			CodeUnit cu = getCodeUnit(context);
+			return CommentTypeUtils.getCommentType(cu, getLocationForContext(context), null);
+		}
+	}
 }

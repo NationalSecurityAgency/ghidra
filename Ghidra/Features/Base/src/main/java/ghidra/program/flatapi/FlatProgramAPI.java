@@ -319,8 +319,8 @@ public class FlatProgramAPI {
 	 * @param bookmarks true if bookmarks should be cleared
 	 * @return true if the address set was successfully cleared
 	 */
-	public final boolean clearListing(AddressSetView set, boolean instructions,
-			boolean data, boolean symbols, boolean comments, boolean properties, boolean functions,
+	public final boolean clearListing(AddressSetView set, boolean instructions, boolean data,
+			boolean symbols, boolean comments, boolean properties, boolean functions,
 			boolean registers, boolean equates, boolean userReferences, boolean analysisReferences,
 			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
 
@@ -358,12 +358,10 @@ public class FlatProgramAPI {
 			long length, boolean overlay) throws Exception {
 		if (input == null) {
 			return currentProgram.getMemory()
-					.createUninitializedBlock(name, start, length,
-						overlay);
+					.createUninitializedBlock(name, start, length, overlay);
 		}
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, length, monitor, overlay);
 	}
 
 	/**
@@ -379,8 +377,7 @@ public class FlatProgramAPI {
 			boolean overlay) throws Exception {
 		ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 		return currentProgram.getMemory()
-				.createInitializedBlock(name, start, input, bytes.length,
-					monitor, overlay);
+				.createInitializedBlock(name, start, input, bytes.length, monitor, overlay);
 	}
 
 	/**
@@ -1940,8 +1937,7 @@ public class FlatProgramAPI {
 	public final Reference addInstructionXref(Address from, Address to, int opIndex,
 			FlowType type) {
 		return currentProgram.getReferenceManager()
-				.addMemoryReference(from, to, type,
-					SourceType.USER_DEFINED, opIndex);
+				.addMemoryReference(from, to, type, SourceType.USER_DEFINED, opIndex);
 	}
 
 	/**
@@ -2401,8 +2397,7 @@ public class FlatProgramAPI {
 	 */
 	public final Equate getEquate(Instruction instruction, int operandIndex, long value) {
 		return currentProgram.getEquateTable()
-				.getEquate(instruction.getMinAddress(), operandIndex,
-					value);
+				.getEquate(instruction.getMinAddress(), operandIndex, value);
 	}
 
 	/**
@@ -2413,8 +2408,7 @@ public class FlatProgramAPI {
 	 */
 	public final List<Equate> getEquates(Instruction instruction, int operandIndex) {
 		return currentProgram.getEquateTable()
-				.getEquates(instruction.getMinAddress(),
-					operandIndex);
+				.getEquates(instruction.getMinAddress(), operandIndex);
 	}
 
 	/**
@@ -2426,8 +2420,7 @@ public class FlatProgramAPI {
 		Object obj = data.getValue();
 		if (obj instanceof Scalar) {
 			return currentProgram.getEquateTable()
-					.getEquate(data.getMinAddress(), 0,
-						((Scalar) obj).getValue());
+					.getEquate(data.getMinAddress(), 0, ((Scalar) obj).getValue());
 		}
 		return null;
 	}

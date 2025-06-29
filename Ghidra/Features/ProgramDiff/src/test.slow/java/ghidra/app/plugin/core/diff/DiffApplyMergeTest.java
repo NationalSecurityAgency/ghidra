@@ -173,13 +173,8 @@ public class DiffApplyMergeTest extends DiffApplyTestAdapter {
 			setDiffSelection(as);
 			apply();
 
-			// Check the results. We should have both tags now in the target program
-			// (Program 1), so check the number of tags and make sure the names are
-			// correct.
-			Iterator<FunctionTag> iter = f1.getTags().iterator();
 			List<String> tagNames = new ArrayList<>();
-			while (iter.hasNext()) {
-				FunctionTag tag = iter.next();
+			for (FunctionTag tag : f1.getTags()) {
 				tagNames.add(tag.getName());
 			}
 			assertEquals(tagNames.size(), 2);

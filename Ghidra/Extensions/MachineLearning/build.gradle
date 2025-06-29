@@ -21,12 +21,13 @@ apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Xtra MachineLearning'
 
+def protobufVersion = getProperty("ghidra.protobuf.java.version")
+
 dependencies {
 	api project(':Base')
 
     api "com.oracle.labs.olcut:olcut-config-protobuf:5.2.0" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     api ("com.oracle.labs.olcut:olcut-core:5.2.0") {exclude group: "org.jline"}
-    api "com.google.protobuf:protobuf-java:3.21.8"   //only needed for running junits
     api "org.tribuo:tribuo-classification-core:4.2.0"
     api "org.tribuo:tribuo-classification-tree:4.2.0"
     api "org.tribuo:tribuo-common-tree:4.2.0"
@@ -36,10 +37,5 @@ dependencies {
     api ("org.tribuo:tribuo-util-onnx:4.2.0") //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     
     testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
-    
+    testImplementation "com.google.protobuf:protobuf-java:${protobufVersion}"
 }
-
-
-
-
-

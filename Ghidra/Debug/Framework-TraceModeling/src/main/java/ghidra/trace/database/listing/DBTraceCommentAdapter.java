@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import db.DBRecord;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Listing;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -52,8 +52,6 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceCommentAdapter
 		extends DBTraceAddressSnapRangePropertyMap<DBTraceCommentEntry, DBTraceCommentEntry> {
 	protected static final String[] EMPTY_STRING_ARRAY = new String[] {};
-	protected static final int MIN_COMMENT_TYPE = CodeUnit.EOL_COMMENT;
-	protected static final int MAX_COMMENT_TYPE = CodeUnit.REPEATABLE_COMMENT;
 
 	/**
 	 * A comment entry
@@ -136,15 +134,16 @@ public class DBTraceCommentAdapter
 	 * @param commentType the type of comment as in {@link Listing#setComment(Address, int, String)}
 	 * @param comment the comment
 	 */
-	public void setComment(Lifespan lifespan, Address address, int commentType, String comment) {
-		if (commentType < MIN_COMMENT_TYPE || commentType > MAX_COMMENT_TYPE) {
-			throw new IllegalArgumentException("commentType");
+	public void setComment(Lifespan lifespan, Address address, CommentType commentType,
+			String comment) {
+		if (commentType == null) {
+			throw new IllegalArgumentException("null commentType");
 		}
 		String oldValue = null;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery
 					.intersecting(new AddressRangeImpl(address, address), lifespan)).values()) {
-				if (entry.type == commentType) {
+				if (entry.type == commentType.ordinal()) {
 					if (entry.getLifespan().contains(lifespan.lmin())) {
 						oldValue = entry.comment;
 					}
@@ -153,7 +152,7 @@ public class DBTraceCommentAdapter
 			}
 			if (comment != null) {
 				DBTraceCommentEntry entry = put(address, lifespan, null);
-				entry.set((byte) commentType, comment);
+				entry.set((byte) commentType.ordinal(), comment);
 			}
 		}
 		trace.setChanged(new TraceChangeRecord<TraceAddressSnapRange, String>(
@@ -190,11 +189,11 @@ public class DBTraceCommentAdapter
 	 * @param commentType the type of comment
 	 * @return the comment text
 	 */
-	public String getComment(long snap, Address address, int commentType) {
+	public String getComment(long snap, Address address, CommentType commentType) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery.at(address, snap))
 					.values()) {
-				if (entry.type != commentType) {
+				if (entry.type != commentType.ordinal()) {
 					continue;
 				}
 				return entry.comment;
@@ -208,13 +207,13 @@ public class DBTraceCommentAdapter
 	 * 
 	 * @param span the lifespan fo the box
 	 * @param range the address range of the box
-	 * @param commentType a comment type to clear, or {@link CodeUnit#NO_COMMENT} to clear all.
+	 * @param commentType a comment type to clear, or null to clear all.
 	 */
-	public void clearComments(Lifespan span, AddressRange range, int commentType) {
+	public void clearComments(Lifespan span, AddressRange range, CommentType commentType) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceCommentEntry entry : reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-				if (commentType == CodeUnit.NO_COMMENT || entry.type == commentType) {
+				if (commentType == null || entry.type == commentType.ordinal()) {
 					makeWay(entry, span);
 				}
 			}

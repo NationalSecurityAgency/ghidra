@@ -138,7 +138,7 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	public Object getObject() {
+	public Variable getObject() {
 		FunctionDB func = getFunction();
 		if (func != null) {
 			return func.getVariable(this);
@@ -159,13 +159,12 @@ public class VariableSymbolDB extends SymbolDB {
 
 	public FunctionDB getFunction() {
 		return (FunctionDB) symbolMgr.getFunctionManager()
-				.getFunction(
-					getParentNamespace().getID());
+				.getFunction(getParentNamespace().getID());
 	}
 
 	@Override
 	public ProgramLocation getProgramLocation() {
-		Variable var = (Variable) getObject();
+		Variable var = getObject();
 		if (var != null) {
 			return new VariableNameFieldLocation(var.getProgram(), var, 0);
 		}
@@ -311,7 +310,7 @@ public class VariableSymbolDB extends SymbolDB {
 		try {
 			checkIsValid();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
-			return rm.getReferencesTo((Variable) getObject());
+			return rm.getReferencesTo(getObject());
 		}
 		finally {
 			lock.release();
@@ -319,12 +318,82 @@ public class VariableSymbolDB extends SymbolDB {
 	}
 
 	@Override
-	public boolean hasMultipleReferences() {
-		return getReferences(null).length > 1;
-	}
-
-	@Override
 	public boolean hasReferences() {
 		return getReferences(null).length != 0;
+	}
+
+	/**
+	 * gets the generic symbol data 2 data.
+	 * @return the symbol data
+	 */
+	protected int getVariableOffset() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (record != null) {
+				return record.getIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL);
+			}
+			return 0;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * Sets the symbol's variable offset. For parameters, this is the ordinal, for locals, it is 
+	 * the first use offset
+	 * @param offset the value to set as the symbols variable offset. 
+	 */
+	public void setVariableOffset(int offset) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			if (record != null) {
+				record.setIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL, offset);
+				updateRecord();
+				symbolMgr.symbolDataChanged(this);
+			}
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * {@return variable symbol comment}
+	 */
+	public String getSymbolComment() {
+		validate(lock);
+		return record.getString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL);
+	}
+
+	/**
+	 * Update variable symbol comment (no change event is issued)
+	 * @param comment variable comment
+	 */
+	public void setSymbolComment(String comment) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			record.setString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL, comment);
+			updateRecord();
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * Update variable symbol record fields
+	 * @param record variable symbol record
+	 * @param firstUseOffsetOrOrdinal first use offset or param ordinal (ignored if null)
+	 * @param comment variable comment
+	 */
+	static void setRecordFields(DBRecord record, Integer firstUseOffsetOrOrdinal, String comment) {
+		if (firstUseOffsetOrOrdinal != null) {
+			record.setIntValue(SymbolDatabaseAdapter.SYMBOL_VAROFFSET_COL, firstUseOffsetOrOrdinal);
+		}
+		record.setString(SymbolDatabaseAdapter.SYMBOL_COMMENT_COL, comment);
 	}
 }

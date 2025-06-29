@@ -49,7 +49,6 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		String tmpString = "\nScript: AutoRenameSimpleLabels() \n";
 
 		//get listing of symbols
 		SymbolIterator iter = currentProgram.getSymbolTable().getAllSymbols(true);
@@ -147,15 +146,13 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 
 				// now also propogate the repeatable comment up as well
 
-				String comment = currentProgram.getListing().getComment(CommentType.REPEATABLE,
-					operand_addr);
-				if (comment != null) {
-					if (currentProgram.getListing().getComment(CommentType.REPEATABLE,
-						startAddr) == null) {
-						//println("updating comment for " + operand +" is " + comment);
-						currentProgram.getListing()
-								.setComment(startAddr, CommentType.REPEATABLE, comment);
-					}
+				String comment =
+					currentProgram.getListing().getComment(CommentType.REPEATABLE, operand_addr);
+				if (comment != null && currentProgram.getListing()
+						.getComment(CommentType.REPEATABLE, startAddr) == null) {
+					//println("updating comment for " + operand +" is " + comment);
+					currentProgram.getListing()
+							.setComment(startAddr, CommentType.REPEATABLE, comment);
 				}
 			}
 		}

@@ -35,8 +35,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		super();
 	}
 
-@Test
-    public void testMergeCommentsLatest() throws Exception {
+	@Test
+	public void testMergeCommentsLatest() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
@@ -127,8 +127,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("Latest Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
 	}
 
-@Test
-    public void testMergeCommentsMy() throws Exception {
+	@Test
+	public void testMergeCommentsMy() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
@@ -220,8 +220,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
 	}
 
-@Test
-    public void testMergeCommentsBoth() throws Exception {
+	@Test
+	public void testMergeCommentsBoth() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
@@ -296,8 +296,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			"Plate Comment");
 
 		// Repeatable Comment @ 100284a
-		assertEquals(
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
+		assertEquals(listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
 			"Repeatable Comment");
 
 		// Latest has comment
@@ -318,8 +317,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			cu.getComment(CommentType.REPEATABLE));
 	}
 
-@Test
-    public void testMergeCommentsAskUser() throws Exception {
+	@Test
+	public void testMergeCommentsAskUser() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
@@ -400,8 +399,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			"Plate Comment");
 
 		// Repeatable Comment @ 100284a
-		assertEquals(
-			listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
+		assertEquals(listing.getCodeUnitAt(addr("0x100284a")).getComment(CommentType.REPEATABLE),
 			"Repeatable Comment");
 
 		// Latest has comment
@@ -418,8 +416,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testDeleteMy() throws Exception {
+	@Test
+	public void testDeleteMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -453,8 +451,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertNull(cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testDeleteLatest() throws Exception {
+	@Test
+	public void testDeleteLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -488,8 +486,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertNull(cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testDeleteBoth() throws Exception {
+	@Test
+	public void testDeleteBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -530,8 +528,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertNull(cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testChangeLatestDeleteMyPickLatest() throws Exception {
+	@Test
+	public void testChangeLatestDeleteMyPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -577,8 +575,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("Latest Post Comment", cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testChangeLatestDeleteMyPickMy() throws Exception {
+	@Test
+	public void testChangeLatestDeleteMyPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -624,8 +622,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertNull(cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testChangeMyDeleteLatestPickLatest() throws Exception {
+	@Test
+	public void testChangeMyDeleteLatestPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -671,8 +669,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertNull(cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testChangeMyDeleteLatestPickMy() throws Exception {
+	@Test
+	public void testChangeMyDeleteLatestPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -718,8 +716,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testAddUnInitNoConflict() throws Exception {
+	@Test
+	public void testAddUnInitNoConflict() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -784,8 +782,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testAddUnInitWithConflict() throws Exception {
+	@Test
+	public void testAddUnInitWithConflict() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -874,8 +872,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("My Repeatable Comment", cu.getComment(CommentType.REPEATABLE));
 		assertEquals("My Post Comment", cu.getComment(CommentType.POST));
 		cu = listing.getCodeUnitAt(addr("0x1008608"));
-		assertEquals("Latest Plate Comment\nMy Plate Comment",
-			cu.getComment(CommentType.PLATE));
+		assertEquals("Latest Plate Comment\nMy Plate Comment", cu.getComment(CommentType.PLATE));
 		assertEquals("Latest Pre Comment\nMy Pre Comment", cu.getComment(CommentType.PRE));
 		assertEquals("Latest EOL Comment\nMy EOL Comment", cu.getComment(CommentType.EOL));
 		assertEquals("Latest Repeatable Comment\nMy Repeatable Comment",
@@ -883,8 +880,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("Latest Post Comment\nMy Post Comment", cu.getComment(CommentType.POST));
 	}
 
-@Test
-    public void testAddCommentInsideCodeUnit() throws Exception {
+	@Test
+	public void testAddCommentInsideCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -930,8 +927,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("Pre", listing.getComment(CommentType.PRE, addr("0x10065e3")));
 		assertEquals("Post", listing.getComment(CommentType.POST, addr("0x10065e3")));
 		assertEquals("Plate", listing.getComment(CommentType.PLATE, addr("0x10065e3")));
-		assertEquals("Repeatable",
-			listing.getComment(CommentType.REPEATABLE, addr("0x10065e3")));
+		assertEquals("Repeatable", listing.getComment(CommentType.REPEATABLE, addr("0x10065e3")));
 
 		cu = listing.getCodeUnitContaining(addr("0x10065e9"));
 		assertEquals(addr("0x10065e8"), cu.getMinAddress());
@@ -941,12 +937,11 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals("Pre2", listing.getComment(CommentType.PRE, addr("0x10065e9")));
 		assertEquals("Post2", listing.getComment(CommentType.POST, addr("0x10065e9")));
 		assertEquals("Plate2", listing.getComment(CommentType.PLATE, addr("0x10065e9")));
-		assertEquals("Repeatable2",
-			listing.getComment(CommentType.REPEATABLE, addr("0x10065e9")));
+		assertEquals("Repeatable2", listing.getComment(CommentType.REPEATABLE, addr("0x10065e9")));
 	}
 
-@Test
-    public void testChangeLatestCommentInsideMyCodeUnit() throws Exception {
+	@Test
+	public void testChangeLatestCommentInsideMyCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -965,8 +960,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 			}
 		});
 
@@ -982,23 +976,20 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertTrue(cu instanceof Instruction);
 		assertEquals("New EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
 		assertEquals("New Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
-		assertEquals("New Post Comment",
-			listing.getComment(CommentType.POST, addr("0x1002040")));
-		assertEquals("New Plate Comment",
-			listing.getComment(CommentType.PLATE, addr("0x1002040")));
+		assertEquals("New Post Comment", listing.getComment(CommentType.POST, addr("0x1002040")));
+		assertEquals("New Plate Comment", listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
 			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
-@Test
-    public void testChangeMyCommentInsideLatestCodeUnit() throws Exception {
+	@Test
+	public void testChangeMyCommentInsideLatestCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 			}
 
 			@Override
@@ -1027,16 +1018,14 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertTrue(cu instanceof Instruction);
 		assertEquals("New EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
 		assertEquals("New Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
-		assertEquals("New Post Comment",
-			listing.getComment(CommentType.POST, addr("0x1002040")));
-		assertEquals("New Plate Comment",
-			listing.getComment(CommentType.PLATE, addr("0x1002040")));
+		assertEquals("New Post Comment", listing.getComment(CommentType.POST, addr("0x1002040")));
+		assertEquals("New Plate Comment", listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
 			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
-@Test
-    public void testRemoveCommentInsideMyCodeUnit() throws Exception {
+	@Test
+	public void testRemoveCommentInsideMyCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -1050,8 +1039,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, null);
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 			}
 		});
 
@@ -1073,8 +1061,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
-@Test
-    public void testRemoveCommentInsideLatestCodeUnit() throws Exception {
+	@Test
+	public void testRemoveCommentInsideLatestCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -1082,8 +1070,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				Listing listing = program.getListing();
 				listing.setComment(addr(program, "0x1002040"), CommentType.POST, null);
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 			}
 
 			@Override
@@ -1111,8 +1098,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
-@Test
-    public void testChangeCommentInsideMyCodeUnit() throws Exception {
+	@Test
+	public void testChangeCommentInsideMyCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -1141,15 +1128,15 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 				listing.setComment(addr(program, "0x1002040"), CommentType.REPEATABLE,
 					"New Repeatable Comment");
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 			}
 		});
 
 		executeMerge(ASK_USER);
 		chooseVerticalCheckBoxes(new String[] { LATEST_CHECK_BOX_NAME }); // Pre
 		chooseVerticalCheckBoxes(new String[] { CHECKED_OUT_CHECK_BOX_NAME }); // EOL
-		chooseVerticalCheckBoxes(new String[] { LATEST_CHECK_BOX_NAME, CHECKED_OUT_CHECK_BOX_NAME }); // Post
+		chooseVerticalCheckBoxes(
+			new String[] { LATEST_CHECK_BOX_NAME, CHECKED_OUT_CHECK_BOX_NAME }); // Post
 		waitForMergeCompletion();
 
 		Listing listing = resultProgram.getListing();
@@ -1160,26 +1147,23 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		assertEquals(2, cu.getLength());
 		assertTrue(cu instanceof Instruction);
 		assertEquals("My EOL Comment", listing.getComment(CommentType.EOL, addr("0x1002040")));
-		assertEquals("Latest Pre Comment",
-			listing.getComment(CommentType.PRE, addr("0x1002040")));
+		assertEquals("Latest Pre Comment", listing.getComment(CommentType.PRE, addr("0x1002040")));
 		assertEquals("Latest Post Comment\nMy Post Comment",
 			listing.getComment(CommentType.POST, addr("0x1002040")));
-		assertEquals("New Plate Comment",
-			listing.getComment(CommentType.PLATE, addr("0x1002040")));
+		assertEquals("New Plate Comment", listing.getComment(CommentType.PLATE, addr("0x1002040")));
 		assertEquals("New Repeatable Comment",
 			listing.getComment(CommentType.REPEATABLE, addr("0x1002040")));
 	}
 
-@Test
-    public void testChangeCommentInsideLatestCodeUnit() throws Exception {
+	@Test
+	public void testChangeCommentInsideLatestCodeUnit() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				Listing listing = program.getListing();
 				disassemble(program,
-					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")),
-					false);
+					new AddressSet(addr(program, "0x100203e"), addr(program, "0x1002043")), false);
 				listing.setComment(addr(program, "0x1002040"), CommentType.EOL, "New EOL Comment");
 				listing.setComment(addr(program, "0x1002040"), CommentType.PRE, "New Pre Comment");
 				listing.setComment(addr(program, "0x1002040"), CommentType.POST,
@@ -1206,7 +1190,8 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		chooseVerticalCheckBoxes(new String[] { LATEST_CHECK_BOX_NAME }); // Plate
 		chooseVerticalCheckBoxes(new String[] { CHECKED_OUT_CHECK_BOX_NAME }); // Repeatable
-		chooseVerticalCheckBoxes(new String[] { LATEST_CHECK_BOX_NAME, CHECKED_OUT_CHECK_BOX_NAME }); // Post
+		chooseVerticalCheckBoxes(
+			new String[] { LATEST_CHECK_BOX_NAME, CHECKED_OUT_CHECK_BOX_NAME }); // Post
 		waitForMergeCompletion();
 
 		Listing listing = resultProgram.getListing();

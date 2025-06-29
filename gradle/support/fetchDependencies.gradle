@@ -86,9 +86,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: "postgresql-15.10.tar.gz",
-		url: "https://ftp.postgresql.org/pub/source/v15.10/postgresql-15.10.tar.gz",
-		sha256: "173366605259a83dc189c4327ff4c37254afed65b4f866cbd8a5ef2ea449e8f3",
+		name: "postgresql-15.13.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.gz",
+		sha256: "afdc22b0a6e5bec7b65723756b90d44ea911e61b2f7b01c4dc5524ab813b4d89",
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
@@ -164,9 +164,9 @@ ext.deps = [
 		destination: FID_DIR
 	],
 	[
-		name: "protobuf-3.20.3-py2.py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/8d/14/619e24a4c70df2901e1f4dbc50a6291eb63a759172558df326347dce1f0d/protobuf-3.20.3-py2.py3-none-any.whl",
-		sha256: "a7ca6d488aa8ff7f329d4c545b2dbad8ac31464f1d8b1c87ad1346717731e4db",
+		name: "protobuf-6.31.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/ee/01/1ed1d482960a5718fd99c82f6d79120181947cfd4667ec3944d448ed44a3/protobuf-6.31.0-py3-none-any.whl",
+		sha256: "6ac2e82556e822c17a8d23aa1190bbc1d06efb9c261981da95c71c9da09e9e23",
 		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
 	],
 	[

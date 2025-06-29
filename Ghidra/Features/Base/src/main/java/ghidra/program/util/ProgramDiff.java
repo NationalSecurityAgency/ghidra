@@ -643,32 +643,32 @@ public class ProgramDiff {
 			case ProgramDiffFilter.EOL_COMMENT_DIFFS:
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.EOL_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.EOL, addrs,
+					new CommentTypeComparator(CommentType.EOL), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.REPEATABLE, addrs,
+					new CommentTypeComparator(CommentType.REPEATABLE), monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PRE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PRE, addrs,
+					new CommentTypeComparator(CommentType.PRE), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.POST_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.POST, addrs,
+					new CommentTypeComparator(CommentType.POST), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, addrs,
-					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PLATE, addrs,
+					new CommentTypeComparator(CommentType.PLATE), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -926,32 +926,32 @@ public class ProgramDiff {
 			case ProgramDiffFilter.EOL_COMMENT_DIFFS:
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.EOL_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.EOL, checkAddressSet,
+					new CommentTypeComparator(CommentType.EOL), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.REPEATABLE, checkAddressSet,
+					new CommentTypeComparator(CommentType.REPEATABLE), monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PRE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PRE, checkAddressSet,
+					new CommentTypeComparator(CommentType.PRE), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.POST_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.POST, checkAddressSet,
+					new CommentTypeComparator(CommentType.POST), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
-				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
+				as = getCommentDiffs(CommentType.PLATE, checkAddressSet,
+					new CommentTypeComparator(CommentType.PLATE), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -1773,7 +1773,7 @@ public class ProgramDiff {
 	 * Determines the code unit addresses where there are differences of the
 	 * indicated type between program1 and program2.
 	 * @param cuiType the type of difference on the code unit. These are defined
-	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT_PROPERTY).
+	 * in <CODE>CodeUnit</CODE>. (i.e. CommentType.EOL_PROPERTY).
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
 	 * @param c the comparator to use for determining where the differences are.
@@ -1798,7 +1798,7 @@ public class ProgramDiff {
 	 * Determines the code unit addresses where there are comment differences of the
 	 * indicated type between program1 and program2.
 	 * @param commentType the type of comment. These are defined
-	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT).
+	 * in <CODE>CodeUnit</CODE>. (i.e. CommentType.EOL).
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
 	 * @param c the comparator to use for determining where the differences are.
@@ -1810,7 +1810,7 @@ public class ProgramDiff {
 	 * The addresses in this address set are derived from program1.
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
-	private AddressSet getCommentDiffs(int commentType, AddressSetView addressSet,
+	private AddressSet getCommentDiffs(CommentType commentType, AddressSetView addressSet,
 			CommentTypeComparator c, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter1 = listing1.getCommentAddressIterator(commentType, addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
@@ -2638,13 +2638,13 @@ public class ProgramDiff {
 	private class CommentTypeComparator extends ProgramDiffComparatorImpl<Address> {
 		/**
 		 * the type of comment to compare
-		 * <br>CodeUnit.PLATE_COMMENT
-		 * <br>CodeUnit.PRE_COMMENT
-		 * <br>CodeUnit.EOL_COMMENT
-		 * <br>CodeUnit.REPEATABLE_COMMENT
-		 * <br>CodeUnit.POST_COMMENT
+		 * <br>CommentType.PLATE
+		 * <br>CommentType.PRE
+		 * <br>CommentType.EOL
+		 * <br>CommentType.REPEATABLE
+		 * <br>CommentType.POST
 		 */
-		int type;
+		CommentType type;
 		private Listing comparatorListing1;
 		private Listing comparatorListing2;
 
@@ -2652,7 +2652,7 @@ public class ProgramDiff {
 		 * Generic constructor for comparing program differences.
 		 * @param type the comment type
 		 */
-		private CommentTypeComparator(int type) {
+		private CommentTypeComparator(CommentType type) {
 			this.type = type;
 			comparatorListing1 = program1.getListing();
 			comparatorListing2 = program2.getListing();

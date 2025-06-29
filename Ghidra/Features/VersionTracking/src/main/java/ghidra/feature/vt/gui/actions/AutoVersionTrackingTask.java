@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -235,7 +235,6 @@ public class AutoVersionTrackingTask extends Task {
 			monitor.doIncrementProgress();
 		}
 
-
 		// This is the first of the "speculative" post-correlator match algorithm. The correlator
 		// returns all duplicate function instruction matches so there will always be more
 		// than one possible match for each function. The compare mechanism used by the
@@ -255,7 +254,7 @@ public class AutoVersionTrackingTask extends Task {
 			// if Auto VT min function length for dupe matches is different than current
 			// exact instruction match setting temporarily change it for auto VT run
 			int dupFunctionMinLen =
-				toolOptions.getInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
+				toolOptions.getInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 25);
 
 			vtOptions.setInt(
 				ExactMatchInstructionsProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE,
@@ -279,9 +278,10 @@ public class AutoVersionTrackingTask extends Task {
 			toolOptions.getBoolean(VTOptionDefines.RUN_REF_CORRELATORS_OPTION, true);
 		if (runRefCorrelators) {
 
-			double minScore = toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.95);
-			double minConf = toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
-
+			double minScore =
+				toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.95);
+			double minConf =
+				toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
 
 			// Get the number of data and function matches
 			int numDataMatches = getNumberOfDataMatches(monitor);
@@ -497,32 +497,31 @@ public class AutoVersionTrackingTask extends Task {
 			int minVoteCountNeeded, int maxConflictsAllowed,
 			TaskMonitor monitor) throws CancelledException {
 
-
 		Set<VTMatch> goodImpliedMatches = new HashSet<>();
 
 		for (VTMatch match : matchesToProcess) {
-				monitor.checkCancelled();
+			monitor.checkCancelled();
 
-				VTAssociation association = match.getAssociation();
+			VTAssociation association = match.getAssociation();
 
-				// skip if already accepted or blocked match
-				if (association.getStatus() != VTAssociationStatus.AVAILABLE) {
-					continue;
-				}
+			// skip if already accepted or blocked match
+			if (association.getStatus() != VTAssociationStatus.AVAILABLE) {
+				continue;
+			}
 
-				// skip if there are any conflicting associations
-				int numConflicts = association.getRelatedAssociations().size() - 1;
-				if (numConflicts > maxConflictsAllowed) {
-					continue;
-				}
+			// skip if there are any conflicting associations
+			int numConflicts = association.getRelatedAssociations().size() - 1;
+			if (numConflicts > maxConflictsAllowed) {
+				continue;
+			}
 
-				int voteCount = association.getVoteCount();
+			int voteCount = association.getVoteCount();
 
-				if (voteCount >= minVoteCountNeeded) {
-					goodImpliedMatches.add(match);
-				}
+			if (voteCount >= minVoteCountNeeded) {
+				goodImpliedMatches.add(match);
+			}
 
-				monitor.incrementProgress();
+			monitor.incrementProgress();
 		}
 
 		return goodImpliedMatches;
@@ -893,7 +892,6 @@ public class AutoVersionTrackingTask extends Task {
 		return null;
 	}
 
-
 	/**
 	 * From the given related association, ie a group of src/dest pairs of functions with identical
 	 *  instructions, use operand information to find any unique matches in the set. 
@@ -907,7 +905,6 @@ public class AutoVersionTrackingTask extends Task {
 			Collection<VTAssociation> relatedAssociations, TaskMonitor monitor)
 			throws CancelledException {
 
-
 		// create function to operand map maps for each source and destination function
 		// in the given related associations (src/dst function pairs)
 		Map<Function, Map<Long, Map<Integer, Object>>> sourceFunctionsMap =
@@ -915,7 +912,6 @@ public class AutoVersionTrackingTask extends Task {
 
 		Map<Function, Map<Long, Map<Integer, Object>>> destFunctionsMap =
 			createFunctionsMap(relatedAssociations, false, monitor);
-
 
 		// only functions with scalar or address operands are mapped so the lists could be
 		// empty if there are functions with no operand info to be mapped
@@ -1031,7 +1027,6 @@ public class AutoVersionTrackingTask extends Task {
 		}
 		return functionsMap;
 	}
-
 
 	/**
 	 * Using the given source function's map and a list of destination function maps, and a list 
@@ -1214,7 +1209,6 @@ public class AutoVersionTrackingTask extends Task {
 	 */
 	private boolean hasAnyAssociations(Address source, Address dest) {
 
-
 		Collection<VTAssociation> sourceAssociations = session.getAssociationManager()
 				.getRelatedAssociationsBySourceAddress(source);
 
@@ -1261,7 +1255,6 @@ public class AutoVersionTrackingTask extends Task {
 			throws CancelledException {
 
 		Map<Long, Map<Integer, Object>> offsetToOperandsMap = new HashMap<>();
-		
 
 		Program program = function.getProgram();
 
@@ -1278,7 +1271,7 @@ public class AutoVersionTrackingTask extends Task {
 			if (map.keySet().isEmpty()) {
 				continue;
 			}
-			
+
 			// get offset from top of function to use in function to operandMap map
 			// can be positive or negative offset (positive means instruction address is after 
 			// the entry address, negative means instruction address is before entry address)

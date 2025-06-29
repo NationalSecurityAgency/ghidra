@@ -621,8 +621,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 			SourceType.USER_DEFINED, 0, false);
 		tool.execute(addRefCmd, program);
 
-		SetCommentCmd commentRefCmd = new SetCommentCmd(otherRefAddress,
-			CommentType.REPEATABLE, "Mem ref line1.\n" + "");
+		SetCommentCmd commentRefCmd =
+			new SetCommentCmd(otherRefAddress, CommentType.REPEATABLE, "Mem ref line1.\n" + "");
 		tool.execute(commentRefCmd, program);
 
 		// these values are all DEFAULT, by default; set them in case that changes in the future

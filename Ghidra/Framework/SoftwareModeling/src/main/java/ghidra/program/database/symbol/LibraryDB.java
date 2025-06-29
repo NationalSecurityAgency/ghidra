@@ -27,7 +27,7 @@ import ghidra.util.exception.InvalidInputException;
  * Object to represent an external library.
  */
 class LibraryDB implements Library {
-	private SymbolDB symbol;
+	private LibrarySymbol symbol;
 	private NamespaceManager namespaceMgr;
 
 	/**
@@ -35,62 +35,46 @@ class LibraryDB implements Library {
 	 * @param symbol the library symbol.
 	 * @param namespaceMgr the namespace manager
 	 */
-	LibraryDB(SymbolDB symbol, NamespaceManager namespaceMgr) {
+	LibraryDB(LibrarySymbol symbol, NamespaceManager namespaceMgr) {
 		this.symbol = symbol;
 		this.namespaceMgr = namespaceMgr;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getSymbol()
-	 */
 	@Override
 	public Symbol getSymbol() {
 		return symbol;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getName()
-	 */
 	@Override
 	public String getName() {
 		return symbol.getName();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getID()
-	 */
 	@Override
 	public long getID() {
 		return symbol.getID();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getParentNamespace()
-	 */
 	@Override
 	public Namespace getParentNamespace() {
 		return symbol.getParentNamespace();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getBody()
-	 */
 	@Override
 	public AddressSetView getBody() {
 		return namespaceMgr.getAddressSet(this);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#getName(boolean)
-	 */
 	@Override
 	public String getName(boolean includeNamespacePath) {
 		return symbol.getName(includeNamespacePath);
 	}
 
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+	@Override
+	public int hashCode() {
+		return symbol.hashCode();
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -104,18 +88,15 @@ class LibraryDB implements Library {
 		return symbol == lib.symbol;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Namespace#setParentNamespace(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
-	public void setParentNamespace(Namespace parentNamespace) throws DuplicateNameException,
-			InvalidInputException, CircularDependencyException {
+	public void setParentNamespace(Namespace parentNamespace)
+			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 		symbol.setNamespace(parentNamespace);
 	}
 
 	@Override
 	public String getAssociatedProgramPath() {
-		return symbol.getSymbolStringData();
+		return symbol.getExternalLibraryPath();
 	}
 
 	@Override

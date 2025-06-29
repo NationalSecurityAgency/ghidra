@@ -120,8 +120,8 @@ public abstract class DataDirectory implements PeMarkupable {
 	}
 
 	protected void createDirectoryBookmark(Program program, Address addr) {
-		program.getBookmarkManager().setBookmark(addr, BookmarkType.INFO, "PE Header",
-			getDirectoryName());
+		program.getBookmarkManager()
+				.setBookmark(addr, BookmarkType.INFO, "PE Header", getDirectoryName());
 	}
 
 	protected void setBookmark(Program prog, Address addr, String comment) {

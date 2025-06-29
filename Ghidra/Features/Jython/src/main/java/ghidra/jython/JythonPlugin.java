@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.app.plugin.core.interpreter.*;
 import ghidra.app.script.GhidraState;
+import ghidra.app.script.ScriptControls;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
@@ -232,7 +233,7 @@ public class JythonPlugin extends ProgramPlugin
 		interactiveScript.set(
 			new GhidraState(tool, tool.getProject(), getCurrentProgram(), getProgramLocation(),
 				getProgramSelection(), getProgramHighlight()),
-			interactiveTaskMonitor, new PrintWriter(getConsole().getStdOut()));
+			new ScriptControls(console, interactiveTaskMonitor));
 		interpreter.injectScriptHierarchy(interactiveScript);
 		interactiveTaskMonitor = new JythonInteractiveTaskMonitor(console.getStdOut());
 
@@ -288,7 +289,7 @@ public class JythonPlugin extends ProgramPlugin
 		interactiveScript.set(
 			new GhidraState(tool, tool.getProject(), currentProgram, currentLocation,
 				currentSelection, currentHighlight),
-			interactiveTaskMonitor, console.getOutWriter());
+			new ScriptControls(console, interactiveTaskMonitor));
 
 		return interpreter.getCommandCompletions(cmd, includeBuiltins, caretPos);
 	}
@@ -377,7 +378,7 @@ public class JythonPlugin extends ProgramPlugin
 		}
 
 		public JythonInteractiveTaskMonitor(OutputStream stdout) {
-			this(new PrintWriter(stdout));
+			this(new PrintWriter(stdout, true));
 		}
 
 		@Override

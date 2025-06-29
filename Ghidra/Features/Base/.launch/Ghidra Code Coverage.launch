@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/Framework Utility/src/main/java/ghidra/Ghidra.java"/>
     </listAttribute>
@@ -28,6 +29,6 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="_Integration Test"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.GhidraRun"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="_Integration Test"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Dsun.java2d.pmoffscreen=false&#13;&#10;-Dsun.java2d.xrender=true&#13;&#10;-Dsun.java2d.d3d=false&#13;&#10;-Xdock:name=&quot;Ghidra&quot;&#13;&#10;-Dvisualvm.display.name=Ghidra&#13;&#10;-Dpython.console.encoding=UTF-8"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Dsun.java2d.pmoffscreen=false&#13;&#10;-Dsun.java2d.xrender=true&#13;&#10;-Dsun.java2d.d3d=false&#13;&#10;-Xdock:name=&quot;Ghidra&quot;&#13;&#10;-Dvisualvm.display.name=Ghidra&#13;&#10;-Dpython.console.encoding=UTF-8&#13;&#10;-Djavax.xml.accessExternalDTD=&#13;&#10;-Djavax.xml.accessExternalSchema=&#13;&#10;-Djavax.xml.accessExternalStylesheet="/>
     <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Framework Utility}"/>
 </launchConfiguration>

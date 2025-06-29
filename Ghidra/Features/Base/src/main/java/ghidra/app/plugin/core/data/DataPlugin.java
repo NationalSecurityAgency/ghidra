@@ -844,8 +844,15 @@ public class DataPlugin extends Plugin implements DataService {
 
 	private boolean canEditField(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
-		int[] componentPath = location.getComponentPath();
-		return componentPath != null && componentPath.length > 0;
+		int[] path = location.getComponentPath();
+		if (path == null || path.length == 0) {
+			return false;
+		}
+
+		Program program = context.getProgram();
+		Address address = location.getAddress();
+		DataTypeComponent dtc = DataTypeUtils.getDataTypeComponent(program, address, path);
+		return dtc != null;
 	}
 
 	private void editField(ListingActionContext context) {
@@ -856,10 +863,6 @@ public class DataPlugin extends Plugin implements DataService {
 		int[] path = location.getComponentPath();
 
 		DataTypeComponent dtc = DataTypeUtils.getDataTypeComponent(program, address, path);
-		if (dtc == null) {
-			return;
-		}
-
 		DataType parent = dtc.getParent();
 		Composite composite = (Composite) parent;
 		int ordinal = dtc.getOrdinal();

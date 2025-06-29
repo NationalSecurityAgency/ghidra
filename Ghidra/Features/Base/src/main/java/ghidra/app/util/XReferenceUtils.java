@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,28 @@
  */
 package ghidra.app.util;
 
-import java.util.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
 
+import java.util.*;
+import java.util.function.Supplier;
+
+import javax.swing.Icon;
+import javax.swing.JTable;
+
+import docking.ActionContext;
+import docking.action.*;
 import docking.action.builder.ToggleActionBuilder;
+import docking.widgets.OptionDialog;
+import docking.widgets.OptionDialogBuilder;
+import ghidra.app.cmd.refs.RemoveReferenceCmd;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.query.TableService;
+import ghidra.framework.cmd.CompoundCmd;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataUtilities;
@@ -30,15 +46,17 @@ import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.ReferencesFromTableModel;
 import ghidra.util.table.field.ReferenceEndpoint;
+import resources.Icons;
 import resources.ResourceManager;
 
 public class XReferenceUtils {
 
 	private static final String X_REFS_TO = "XRefs to ";
 
-	// Methods in this class treat -1 as a key to return all references and
-	// not cap the result set.
+	// Methods in this class treat -1 as a key to return all references and not cap the result set.
 	private final static int ALL_REFS = -1;
+
+	private static OptionDialog promptToDeleteXrefsDialog;
 
 	/**
 	 * Returns an array containing the first <b><code>max</code></b>
@@ -69,13 +87,15 @@ public class XReferenceUtils {
 		}
 
 		// Check for thunk reference
-		Function func = program.getFunctionManager().getFunctionAt(minAddress);
-		if (func != null) {
-			Address[] thunkAddrs = func.getFunctionThunkAddresses();
-			if (thunkAddrs != null) {
-				for (Address thunkAddr : thunkAddrs) {
-					xrefs.add(new ThunkReference(thunkAddr, func.getEntryPoint()));
-				}
+		Function function = program.getFunctionManager().getFunctionAt(minAddress);
+		if (function == null) {
+			return xrefs;
+		}
+
+		Address[] thunkAddrs = function.getFunctionThunkAddresses(false);
+		if (thunkAddrs != null) {
+			for (Address thunkAddr : thunkAddrs) {
+				xrefs.add(new ThunkReference(thunkAddr, function.getEntryPoint()));
 			}
 		}
 		return xrefs;
@@ -203,9 +223,28 @@ public class XReferenceUtils {
 	 * @param service the service needed to show the table
 	 * @param location the location for which to find references
 	 * @param xrefs the xrefs to show
+	 * @deprecated use {@link #showXrefs(Navigatable, ServiceProvider, TableService, 
+	 * 	ProgramLocation, Supplier)}.  That method takes a supplier that can regenerate the current
+	 *  xrefs for the table.
 	 */
+	@Deprecated(since = "11.5", forRemoval = true)
 	public static void showXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
 			TableService service, ProgramLocation location, Collection<Reference> xrefs) {
+
+		showXrefs(navigatable, serviceProvider, service, location, () -> xrefs);
+	}
+
+	/**
+	 * Shows all xrefs to the given location in a new table.
+	 * 
+	 * @param navigatable the navigatable used for navigation from the table
+	 * @param serviceProvider the service provider needed to wire navigation
+	 * @param service the service needed to show the table
+	 * @param location the location for which to find references
+	 * @param xrefs a supplier of the xrefs to show
+	 */
+	public static void showXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
+			TableService service, ProgramLocation location, Supplier<Collection<Reference>> xrefs) {
 
 		Address address = location.getAddress();
 		Program program = location.getProgram();
@@ -223,25 +262,144 @@ public class XReferenceUtils {
 		String title = generateXRefTitle(location);
 		TableComponentProvider<ReferenceEndpoint> provider =
 			service.showTable(title, "Xrefs", model, "Xrefs", navigatable);
+
+		// 
+		// Add Actions
+		// 
 		provider.installRemoveItemsAction();
 
-		if (function != null) {
-			//@formatter:off
-			String actionName = "Show Thunk Xrefs";
-			new ToggleActionBuilder(actionName, provider.getActionOwner())
-				.toolBarIcon(ResourceManager.loadImage("images/ThunkFunction.gif"))
-				.toolBarGroup("A")
-				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, actionName))
-				.selected(false)
-				.onAction(c -> {
-					((FunctionXrefsTableModel) model).toggleShowAllThunkXRefs();
-				})
-				.buildAndInstallLocal(provider);
-			//@formatter:on
+		installRefreshAction(provider, model);
 
+		if (function != null) {
+			installShowThunksAction(provider, model);
+		}
+
+		DeleteXrefsAction deleteAction = new DeleteXrefsAction(provider, model, program);
+		provider.addLocalAction(deleteAction);
+	}
+
+	private static void installShowThunksAction(
+			TableComponentProvider<ReferenceEndpoint> provider,
+			ReferencesFromTableModel model) {
+
+		//@formatter:off
+		String actionName = "Show Thunk Xrefs";
+		new ToggleActionBuilder(actionName, provider.getActionOwner())
+			.toolBarIcon(ResourceManager.loadImage("images/ThunkFunction.gif"))
+			.toolBarGroup("A")
+			.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, actionName))
+			.selected(false)
+			.onAction(c -> {
+				((FunctionXrefsTableModel) model).toggleShowAllThunkXRefs();
+			})
+			.buildAndInstallLocal(provider);
+		//@formatter:on
+	}
+
+	private static void installRefreshAction(TableComponentProvider<ReferenceEndpoint> provider,
+			ReferencesFromTableModel model) {
+
+		Icon REFRESH_NOT_NEEDED_ICON = ResourceManager.getDisabledIcon(Icons.REFRESH_ICON, 60);
+		DockingAction refreshAction = new DockingAction("Refresh", provider.getActionOwner()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				getToolBarData().setIcon(REFRESH_NOT_NEEDED_ICON);
+				model.reload();
+			}
+		};
+		HelpLocation hl = new HelpLocation(HelpTopics.CODE_BROWSER, refreshAction.getName());
+		refreshAction.setHelpLocation(hl);
+		refreshAction.setToolBarData(new ToolBarData(REFRESH_NOT_NEEDED_ICON, "A"));
+		refreshAction.setDescription(
+			"<html>Push at any time to refresh the current table of references.<br>" +
+				"This button is highlighted when the data <i>may</i> be stale.<br>");
+
+		// Add a listener to 
+		DomainObjectListener listener = new DomainObjectListenerBuilder(model)
+				.any(RESTORED, REFERENCE_ADDED, REFERENCE_REMOVED)
+				.call(() -> {
+					// signal that the data in the table does not match the program
+					refreshAction.getToolBarData().setIcon(Icons.REFRESH_ICON);
+				})
+				.build();
+		provider.setProgramListener(listener);
+		provider.addLocalAction(refreshAction);
+	}
+
+	// Note: this action lives in this class so that the action can hold a reference to a domain
+	// object listener.  The action will hold a reference so that as long as the the provider is 
+	// around, the action will also be around to hold a reference to the listener.
+	private static class DeleteXrefsAction extends DockingAction {
+
+		private TableComponentProvider<ReferenceEndpoint> provider;
+		private Program program;
+		private ReferencesFromTableModel tableModel;
+
+		public DeleteXrefsAction(TableComponentProvider<ReferenceEndpoint> provider,
+				ReferencesFromTableModel tableModel, Program program) {
+			super("Delete Reference", provider.getActionOwner(), KeyBindingType.SHARED);
+			this.provider = provider;
+			this.tableModel = tableModel;
+			this.program = program;
+
+			setToolBarData(new ToolBarData(Icons.DELETE_ICON, "A"));
+			setHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, getName()));
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext c) {
+			Object object = c.getContextObject();
+			if (!(object instanceof JTable table)) {
+				return false;
+			}
+			if (tableModel.isBusy()) {
+				return false;
+			}
+			return table.getSelectedRowCount() > 0;
+		}
+
+		@Override
+		public void actionPerformed(ActionContext c) {
+			Object object = c.getContextObject();
+			JTable table = (JTable) object;
+			int[] rows = table.getSelectedRows();
+			PluginTool tool = provider.getTool();
+			deleteXrefs(tool, program, tableModel, rows);
+		}
+
+	}
+
+	private static void deleteXrefs(PluginTool tool, Program program,
+			ReferencesFromTableModel tableModel, int[] rows) {
+
+		if (promptToDeleteXrefsDialog == null) {
+			promptToDeleteXrefsDialog =
+				new OptionDialogBuilder("Delete Xrefs?",
+					"Do you wish to permanently delete the selected xrefs?")
+							.addOption("Delete")
+							.addCancel()
+							.addDontShowAgainOption()
+							.build();
+		}
+
+		int choice = promptToDeleteXrefsDialog.show();
+		if (choice != OptionDialog.YES_OPTION) {
 			return;
 		}
 
+		List<ReferenceEndpoint> deletedRowObjects = new ArrayList<>();
+		CompoundCmd<Program> compoundCmd = new CompoundCmd<>("Delete References");
+		for (int row : rows) {
+			ReferenceEndpoint endpoint = tableModel.getRowObject(row);
+			deletedRowObjects.add(endpoint);
+			Reference ref = endpoint.getReference();
+			RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
+			compoundCmd.add(cmd);
+		}
+		tool.execute(compoundCmd, program);
+
+		// also remove the object from the table, since they have been deleted
+		deletedRowObjects.forEach(ro -> tableModel.removeObject(ro));
 	}
 
 	private static String generateXRefTitle(ProgramLocation location) {

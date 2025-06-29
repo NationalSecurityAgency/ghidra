@@ -138,8 +138,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			throws CancelledException, IOException {
 		try {
 
-			ReferenceManager refMgr = program.getReferenceManager();
-
 			LongPropertyMapDB oldFallFroms = new LongPropertyMapDB(dbHandle, OpenMode.UPGRADE, this,
 				null, addrMap, "FallFroms", monitor);
 
@@ -940,7 +938,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 *
 	 * @return the property map object associated to the property name
 	 */
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		return propertyMapMgr.getPropertyMap(propertyName);
 	}
 
@@ -1144,7 +1142,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 		else {
 			// Possibly a user-defined property.
-			PropertyMapDB pm = (PropertyMapDB) propertyMapMgr.getPropertyMap(property);
+			PropertyMapDB<?> pm = (PropertyMapDB<?>) propertyMapMgr.getPropertyMap(property);
 			if (pm != null) {
 				try {
 					AddressKeyIterator iter = pm.getAddressKeyIterator(start, end, forward);
@@ -1215,7 +1213,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			}
 		}
 		// Possibly a user-defined property.
-		PropertyMapDB pm = (PropertyMapDB) propertyMapMgr.getPropertyMap(property);
+		PropertyMapDB<?> pm = (PropertyMapDB<?>) propertyMapMgr.getPropertyMap(property);
 		if (pm != null) {
 			try {
 				AddressKeyIterator iter = pm.getAddressKeyIterator(addrSetView, forward);
@@ -1234,7 +1232,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param set address set (null for all defined memory)
 	 * @return code unit iterator
 	 */
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView set) {
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType commentType,
+			AddressSetView set) {
 		CodeUnitIterator it = getCodeUnitIterator(CodeUnit.COMMENT_PROPERTY, set, true);
 		return new CommentTypeFilterIterator(it, commentType);
 	}
@@ -1260,7 +1259,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param forward true to iterate in the direction of increasing addresses.
 	 * @return address iterator
 	 */
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView set,
+	public AddressIterator getCommentAddressIterator(CommentType commentType, AddressSetView set,
 			boolean forward) {
 		if (set != null && set.isEmpty()) {
 			return AddressIterator.EMPTY_ITERATOR;
@@ -3280,19 +3279,18 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	/**
 	 * Get the comment for the given type at the specified address.
 	 *
-	 * @param commentType either EOL_COMMENT, PRE_COMMENT, POST_COMMENT, PLATE_COMMENT, or 
-	 * REPEATABLE_COMMENT
+	 * @param commentType {@link CommentType comment type}
 	 * @param address the address of the comment.
 	 * @return the comment string of the appropriate type or null if no comment of that type exists 
 	 * for this code unit
 	 * @throws IllegalArgumentException if type is not one of the types of comments supported
 	 */
-	public String getComment(int commentType, Address address) {
+	public String getComment(CommentType commentType, Address address) {
 		try {
 			long addr = addrMap.getKey(address, false);
 			DBRecord commentRec = getCommentAdapter().getRecord(addr);
 			if (commentRec != null) {
-				return commentRec.getString(commentType);
+				return commentRec.getString(commentType.ordinal());
 			}
 		}
 		catch (IOException e) {
@@ -3334,7 +3332,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param comment comment to set at the address
 	 * @throws IllegalArgumentException if type is not one of the types of comments supported
 	 */
-	public void setComment(Address address, int commentType, String comment) {
+	public void setComment(Address address, CommentType commentType, String comment) {
 		CodeUnit cu = getCodeUnitAt(address);
 		if (cu != null) {
 			cu.setComment(commentType, comment);
@@ -3343,18 +3341,19 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		try {
 			long addr = addrMap.getKey(address, true);
+
 			DBRecord commentRec = getCommentAdapter().getRecord(addr);
 			if (commentRec == null) {
 				if (comment == null) {
 					return;
 				}
-				commentRec = getCommentAdapter().createRecord(addr, commentType, comment);
+				commentRec = getCommentAdapter().createRecord(addr, commentType.ordinal(), comment);
 				sendNotification(address, commentType, null, comment);
 				return;
 			}
 
-			String oldValue = commentRec.getString(commentType);
-			commentRec.setString(commentType, comment);
+			String oldValue = commentRec.getString(commentType.ordinal());
+			commentRec.setString(commentType.ordinal(), comment);
 			sendNotification(address, commentType, oldValue, comment);
 
 			for (int i = 0; i < CommentsDBAdapter.COMMENT_COL_COUNT; i++) {
@@ -3373,12 +3372,13 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 	}
 
-	void sendNotification(Address address, int commentType, String oldValue, String newValue) {
+	void sendNotification(Address address, CommentType commentType, String oldValue,
+			String newValue) {
 		createCommentHistoryRecord(address, commentType, oldValue, newValue);
 		program.setChanged(new CommentChangeRecord(commentType, address, oldValue, newValue));
 	}
 
-	void createCommentHistoryRecord(Address address, int commentType, String oldComment,
+	void createCommentHistoryRecord(Address address, CommentType commentType, String oldComment,
 			String newComment) {
 		if (oldComment == null) {
 			oldComment = "";
@@ -3393,8 +3393,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		long addr = addrMap.getKey(address, true);
 		try {
 			for (StringDiff diff : diffs) {
-				historyAdapter.createRecord(addr, (byte) commentType, diff.start, diff.end,
-					diff.text, date);
+				historyAdapter.createRecord(addr, (byte) commentType.ordinal(), diff.start,
+					diff.end, diff.text, date);
 			}
 		}
 		catch (IOException e) {
@@ -3409,7 +3409,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param commentType comment type
 	 * @return zero length array if no history exists
 	 */
-	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
+	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		lock.acquire();
 		try {
 
@@ -3454,12 +3454,13 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	// note: you must have the lock when calling this method
-	private List<DBRecord> getHistoryRecords(Address addr, int commentType) throws IOException {
+	private List<DBRecord> getHistoryRecords(Address addr, CommentType commentType)
+			throws IOException {
 		RecordIterator it = historyAdapter.getRecordsByAddress(addr);
 		List<DBRecord> list = new ArrayList<>();
 		while (it.hasNext()) {
 			DBRecord rec = it.next();
-			if (rec.getByteValue(CommentHistoryAdapter.HISTORY_TYPE_COL) == commentType) {
+			if (rec.getByteValue(CommentHistoryAdapter.HISTORY_TYPE_COL) == commentType.ordinal()) {
 				list.add(rec);
 			}
 		}
@@ -3480,10 +3481,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		return records.subList(0, records.size());
 	}
 
-	private String getComment(Address addr, int commentType) throws IOException {
+	private String getComment(Address addr, CommentType commentType) throws IOException {
 		DBRecord record = commentAdapter.getRecord(addrMap.getKey(addr, false));
 		if (record != null) {
-			return record.getString(commentType);
+			return record.getString(commentType.ordinal());
 		}
 		return "";
 	}
@@ -3523,16 +3524,16 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		RecordIterator iter = commentAdapter.getRecords(start, end, true);
 		while (iter.hasNext()) {
 			DBRecord rec = iter.next();
-			addCommentHistoryRecord(rec, CodeUnit.PRE_COMMENT);
-			addCommentHistoryRecord(rec, CodeUnit.POST_COMMENT);
-			addCommentHistoryRecord(rec, CodeUnit.EOL_COMMENT);
-			addCommentHistoryRecord(rec, CodeUnit.PLATE_COMMENT);
-			addCommentHistoryRecord(rec, CodeUnit.REPEATABLE_COMMENT);
+			addCommentHistoryRecord(rec, CommentType.PRE);
+			addCommentHistoryRecord(rec, CommentType.POST);
+			addCommentHistoryRecord(rec, CommentType.EOL);
+			addCommentHistoryRecord(rec, CommentType.PLATE);
+			addCommentHistoryRecord(rec, CommentType.REPEATABLE);
 		}
 	}
 
-	private void addCommentHistoryRecord(DBRecord commentRec, int commentType) {
-		String comment = commentRec.getString(commentType);
+	private void addCommentHistoryRecord(DBRecord commentRec, CommentType commentType) {
+		String comment = commentRec.getString(commentType.ordinal());
 		if (comment != null) {
 			createCommentHistoryRecord(addrMap.decodeAddress(commentRec.getKey()), commentType,
 				comment, "");

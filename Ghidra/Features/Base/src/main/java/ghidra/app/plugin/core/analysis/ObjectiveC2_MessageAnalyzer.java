@@ -196,8 +196,8 @@ public class ObjectiveC2_MessageAnalyzer extends AbstractAnalyzer {
 			}
 
 			if (currentClass != null && currentMethod != null) {
-				instruction.setComment(CommentType.EOL, "[" + currentClass + " " +
-					currentMethod + "]");
+				instruction.setComment(CommentType.EOL,
+					"[" + currentClass + " " + currentMethod + "]");
 				break;
 			}
 		}

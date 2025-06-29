@@ -149,6 +149,8 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 		setPreviewPaneAttributes();
 		initDataList();
+
+		getAccessibleContext().setAccessibleName("Data Type Editor");
 	}
 
 	protected ListSelectionModel createListSelectionModel() {

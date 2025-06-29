@@ -15,16 +15,15 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_InstanceVariable implements StructConverter {
 	private ObjectiveC2_State _state;
@@ -39,7 +38,7 @@ public class ObjectiveC2_InstanceVariable implements StructConverter {
 		this._state = state;
 
 		if (state.is32bit) {
-			offset = reader.readNextInt() & Conv.INT_MASK;
+			offset = reader.readNextUnsignedInt();
 		}
 		else {
 			offset = reader.readNextLong();

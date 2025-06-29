@@ -1768,7 +1768,7 @@ public class VarnodeContext implements ProcessorContext {
 	public RegisterValue getRegisterValue(Register register) {
 		Varnode regVnode = trans.getVarnode(register);
 		Varnode value = this.getValue(regVnode, false, null);
-		if (isConstant(value)) {
+		if (value != null && isConstant(value)) {
 			return new RegisterValue(register, BigInteger.valueOf(value.getOffset()));
 		}
 		return null;
@@ -1836,6 +1836,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if  the varnode is a symbolic location
 	 */
 	public boolean isSymbol(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return isSymbolicSpace(varnode.getAddress().getAddressSpace());
 	}
 
@@ -1846,6 +1849,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if the varnode is associated with a register
 	 */
 	public boolean isRegister(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return varnode.isRegister() || trans.getRegister(varnode) != null;
 	}
 
@@ -1856,6 +1862,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		if (varnode.isConstant()) {
 			return true;
 		}
@@ -1869,6 +1878,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isBadAddress(Varnode v) {
+		if (v == null) {
+			return false;
+		}
 		return v.getAddress().equals(BAD_ADDRESS) || v.getSpace() == BAD_OFFSET_SPACEID;
 	}
 
@@ -1878,11 +1890,14 @@ public class VarnodeContext implements ProcessorContext {
 	 * Suspect constants act like constants, but are in a Suspicious
 	 * address space instead of the constant space.
 	 * 
-	 * @param val1 varnode to check
+	 * @param varnode varnode to check
 	 * @return true if varnode is a suspect constant
 	 */
-	public boolean isSuspectConstant(Varnode val1) {
-		return val1.getSpace() == SUSPECT_OFFSET_SPACEID;
+	public boolean isSuspectConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
+		return varnode.getSpace() == SUSPECT_OFFSET_SPACEID;
 	}
 
 	/**
@@ -1893,6 +1908,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if this varnode is stored in the symbolic stack space
 	 */
 	public boolean isStackSymbolicSpace(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		// symbolic spaces are off of a register, find the space
 		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 

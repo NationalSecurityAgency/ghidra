@@ -236,8 +236,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			return;
 		}
 
-		TraceCodeSpace code =
-			thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
+		TraceCodeSpace code = thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
 		code.definedUnits().clear(Lifespan.nowOn(tick), reg, TaskMonitor.DUMMY);
 		code.definedData().create(Lifespan.nowOn(tick), reg, PointerDataType.dataType);
 	}
@@ -344,20 +343,16 @@ public class PopulateDemoTrace extends GhidraScript {
 			 */
 			mainLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400000),
-						"main", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400000), "main", global, SourceType.USER_DEFINED);
 			cloneLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400060),
-						"clone", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400060), "clone", global, SourceType.USER_DEFINED);
 			childLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400034),
-						"child", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400034), "child", global, SourceType.USER_DEFINED);
 			exitLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400061),
-						"exit", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400061), "exit", global, SourceType.USER_DEFINED);
 
 			/**
 			 * Note the use of getProgramView as a means of using components intended for Program
@@ -502,10 +497,10 @@ public class PopulateDemoTrace extends GhidraScript {
 			regs2.putBytes(snap, reg("RSP"),
 				buf.clear().putLong(STACK2_BOTTOM + stack2offset).flip());
 			regs2.putBytes(snap, reg("RAX"), buf.clear().putLong(1).flip());
-			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset), buf.clear()
-					.putLong(
-						mainInstructions.get(pc2 = pc1).getAddress().getOffset())
-					.flip());
+			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset),
+				buf.clear()
+						.putLong(mainInstructions.get(pc2 = pc1).getAddress().getOffset())
+						.flip());
 
 			placeRegUnits(snap, thread1);
 			placeRegUnits(snap, thread2);

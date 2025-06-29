@@ -39,8 +39,8 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		super();
 	}
 
-@Test
-    public void testFindAndApplyMarkupItem_Merge_WithNonNullDestinationValue() throws Exception {
+	@Test
+	public void testFindAndApplyMarkupItem_Merge_WithNonNullDestinationValue() throws Exception {
 		String sourceComment = "Hi mom merge";
 		String destinationComment = "Hi dad merge";
 		String appliedComment = destinationComment + '\n' + sourceComment;
@@ -50,15 +50,14 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		setComment(sourceProgram, sourceComment, commentAddress);
 		setComment(destinationProgram, destinationComment, commentAddress);
 
-		CommentValidator validator =
-			new CommentValidator("0x01002cf5", "0x01002cf5", commentAddress, sourceComment,
-				destinationComment, appliedComment, CodeUnit.EOL_COMMENT,
-				CommentChoices.APPEND_TO_EXISTING);
+		CommentValidator validator = new CommentValidator("0x01002cf5", "0x01002cf5",
+			commentAddress, sourceComment, destinationComment, appliedComment, CommentType.EOL,
+			CommentChoices.APPEND_TO_EXISTING);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
-@Test
-    public void testFindAndApplyMarkupItem_Merge_WithNullDestinationValue() throws Exception {
+	@Test
+	public void testFindAndApplyMarkupItem_Merge_WithNullDestinationValue() throws Exception {
 		String sourceComment = "Hi mom merge";
 		String destinationComment = null;
 		String appliedComment = sourceComment;
@@ -68,15 +67,14 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		setComment(sourceProgram, sourceComment, commentAddress);
 		setComment(destinationProgram, destinationComment, commentAddress);
 
-		CommentValidator validator =
-			new CommentValidator("0x01002cf5", "0x01002cf5", commentAddress, sourceComment,
-				destinationComment, appliedComment, CodeUnit.EOL_COMMENT,
-				CommentChoices.APPEND_TO_EXISTING);
+		CommentValidator validator = new CommentValidator("0x01002cf5", "0x01002cf5",
+			commentAddress, sourceComment, destinationComment, appliedComment, CommentType.EOL,
+			CommentChoices.APPEND_TO_EXISTING);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
-@Test
-    public void testFindAndApplyMarkupItem_Replace_WithNonNullDestinationValue() throws Exception {
+	@Test
+	public void testFindAndApplyMarkupItem_Replace_WithNonNullDestinationValue() throws Exception {
 		String sourceComment = "Hi mom merge";
 		String destinationComment = "Hi dad merge";
 		String appliedComment = sourceComment;
@@ -86,15 +84,14 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		setComment(sourceProgram, sourceComment, commentAddress);
 		setComment(destinationProgram, destinationComment, commentAddress);
 
-		CommentValidator validator =
-			new CommentValidator("0x01002cf5", "0x01002cf5", commentAddress, sourceComment,
-				destinationComment, appliedComment, CodeUnit.EOL_COMMENT,
-				CommentChoices.OVERWRITE_EXISTING);
+		CommentValidator validator = new CommentValidator("0x01002cf5", "0x01002cf5",
+			commentAddress, sourceComment, destinationComment, appliedComment, CommentType.EOL,
+			CommentChoices.OVERWRITE_EXISTING);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
-@Test
-    public void testFindAndApplyMarkupItem_Replace_WithNullDestinationValue() throws Exception {
+	@Test
+	public void testFindAndApplyMarkupItem_Replace_WithNullDestinationValue() throws Exception {
 		String sourceComment = "Hi mom merge";
 		String destinationComment = null;
 		String appliedComment = sourceComment;
@@ -104,15 +101,14 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		setComment(sourceProgram, sourceComment, commentAddress);
 		setComment(destinationProgram, destinationComment, commentAddress);
 
-		CommentValidator validator =
-			new CommentValidator("0x01002cf5", "0x01002cf5", commentAddress, sourceComment,
-				destinationComment, appliedComment, CodeUnit.EOL_COMMENT,
-				CommentChoices.OVERWRITE_EXISTING);
+		CommentValidator validator = new CommentValidator("0x01002cf5", "0x01002cf5",
+			commentAddress, sourceComment, destinationComment, appliedComment, CommentType.EOL,
+			CommentChoices.OVERWRITE_EXISTING);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
-@Test
-    public void testFindAndApplyMarkupItem_IgnoreAction() throws Exception {
+	@Test
+	public void testFindAndApplyMarkupItem_IgnoreAction() throws Exception {
 		String sourceComment = "Hi mom merge";
 		String destinationComment = null;
 		String appliedComment = destinationComment; // the comment is not applied
@@ -124,7 +120,7 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 
 		CommentValidator validator =
 			new CommentValidator("0x01002cf5", "0x01002cf5", commentAddress, sourceComment,
-				destinationComment, appliedComment, CodeUnit.EOL_COMMENT, CommentChoices.EXCLUDE);
+				destinationComment, appliedComment, CommentType.EOL, CommentChoices.EXCLUDE);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
@@ -156,12 +152,12 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 		private final String sourceComment;
 		private final String destinationComment;
 		private final String appliedComment;
-		private final int commentType;
+		private final CommentType commentType;
 		private CommentChoices commentChoice;
 
 		CommentValidator(String sourceFunctionAddress, String destinationFunctionAddress,
 				Address commentAddress, String sourceComment, String destinationComment,
-				String appliedComment, int commentType, CommentChoices commentChoice) {
+				String appliedComment, CommentType commentType, CommentChoices commentChoice) {
 			this.commentChoice = commentChoice;
 			this.sourceFunctionAddress = addr(sourceFunctionAddress, sourceProgram);
 			this.destinationFunctionAddress = addr(destinationFunctionAddress, destinationProgram);
@@ -242,15 +238,15 @@ public class CommentMarkupItemTest extends AbstractVTMarkupItemTest {
 
 		private String getOptionName() {
 			switch (commentType) {
-				case CodeUnit.EOL_COMMENT:
+				case EOL:
 					return VTOptionDefines.END_OF_LINE_COMMENT;
-				case CodeUnit.PLATE_COMMENT:
+				case PLATE:
 					return VTOptionDefines.PLATE_COMMENT;
-				case CodeUnit.POST_COMMENT:
+				case POST:
 					return VTOptionDefines.POST_COMMENT;
-				case CodeUnit.PRE_COMMENT:
+				case PRE:
 					return VTOptionDefines.PRE_COMMENT;
-				case CodeUnit.REPEATABLE_COMMENT:
+				case REPEATABLE:
 					return VTOptionDefines.REPEATABLE_COMMENT;
 				default:
 					return null;

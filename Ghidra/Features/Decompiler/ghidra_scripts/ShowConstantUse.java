@@ -329,8 +329,8 @@ public class ShowConstantUse extends GhidraScript {
 					ResourceFile scriptSource = GhidraScriptUtil.findScriptByName(name);
 					if (scriptSource != null) {
 						GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
-						GhidraScript script = provider.getScriptInstance(scriptSource, writer);
-						script.execute(scriptState, monitor, writer);
+						GhidraScript script = provider.getScriptInstance(scriptSource, errorWriter);
+						script.execute(scriptState, getControls());
 						return;
 					}
 				}

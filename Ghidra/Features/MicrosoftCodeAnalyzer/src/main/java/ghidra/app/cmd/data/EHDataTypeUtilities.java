@@ -276,7 +276,6 @@ public class EHDataTypeUtilities {
 		// Make sure we have underscores in name
 		dataTypeName = SymbolUtilities.replaceInvalidChars(dataTypeName, true);
 
-
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {

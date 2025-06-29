@@ -16,7 +16,8 @@
 package ghidra.program.database.oldfunction;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import db.DBRecord;
 import db.Field;
@@ -47,8 +48,8 @@ class OldFunctionDataDB {
 	private OldStackFrameDB frame;
 	private List<Parameter> regParams;
 
-	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap, DBRecord functionRecord,
-			AddressSetView body) {
+	OldFunctionDataDB(OldFunctionManager functionManager, AddressMap addrMap,
+			DBRecord functionRecord, AddressSetView body) {
 
 		this.functionManager = functionManager;
 		this.addrMap = addrMap;
@@ -83,7 +84,6 @@ class OldFunctionDataDB {
 	 */
 	public synchronized String getComment() {
 		CodeUnit cu = program.getCodeManager().getCodeUnitContaining(entryPoint);
-
 		return cu.getComment(CommentType.PLATE);
 	}
 
@@ -254,17 +254,15 @@ class OldFunctionDataDB {
 		Parameter[] parms = new Parameter[regParams.size() + frame.getParameterCount()];
 		int ordinal = 0;
 
-		Iterator<Parameter> iter = regParams.iterator();
-		while (iter.hasNext()) {
-			Parameter rp = iter.next();
+		for (Parameter rp : regParams) {
 			parms[ordinal++] = rp;
 		}
 
 		try {
 			Variable[] stackParams = frame.getParameters();
-			for (int i = 0; i < stackParams.length; i++) {
-				parms[ordinal++] = new OldFunctionParameter(stackParams[i].getName(), ordinal,
-					stackParams[i].getDataType(), stackParams[i].getVariableStorage(), program,
+			for (Variable stackParam : stackParams) {
+				parms[ordinal++] = new OldFunctionParameter(stackParam.getName(), ordinal,
+					stackParam.getDataType(), stackParam.getVariableStorage(), program,
 					SourceType.USER_DEFINED);
 			}
 		}

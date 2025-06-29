@@ -40,13 +40,10 @@ public class LibrarySymbol extends SymbolDB {
 	 * Constructs a new Library Symbol
 	 * @param symbolMgr the symbol manager
 	 * @param cache symbol object cache
-	 * @param address the address for this symbol
 	 * @param record the record for this symbol
 	 */
-	public LibrarySymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			DBRecord record) {
-		super(symbolMgr, cache, address, record);
-
+	public LibrarySymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, DBRecord record) {
+		super(symbolMgr, cache, Address.NO_ADDRESS, record);
 	}
 
 	@Override
@@ -82,16 +79,6 @@ public class LibrarySymbol extends SymbolDB {
 	}
 
 	@Override
-	public void setSymbolStringData(String newPath) {
-		String oldPath = getSymbolStringData();
-
-		super.setSymbolStringData(newPath);
-
-		symbolMgr.getProgram()
-				.setObjChanged(ProgramEvent.EXTERNAL_PATH_CHANGED, getName(), oldPath, newPath);
-	}
-
-	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.LIBRARY;
 	}
@@ -102,11 +89,20 @@ public class LibrarySymbol extends SymbolDB {
 	}
 
 	@Override
-	public Object getObject() {
-		if (library == null) {
-			library = new LibraryDB(this, symbolMgr.getProgram().getNamespaceManager());
+	public Library getObject() {
+		lock.acquire();
+		try {
+			if (!checkIsValid()) {
+				return null;
+			}
+			if (library == null) {
+				library = new LibraryDB(this, symbolMgr.getProgram().getNamespaceManager());
+			}
+			return library;
 		}
-		return library;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -118,5 +114,39 @@ public class LibrarySymbol extends SymbolDB {
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
 			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+	}
+
+	/**
+	 * {@return the library program path within the project (may be null)}
+	 */
+	public String getExternalLibraryPath() {
+		validate(lock);
+		return record.getString(SymbolDatabaseAdapter.SYMBOL_LIBPATH_COL);
+	}
+
+	/**
+	 * Set the library program path within the project.
+	 * @param libraryPath library program path or null to clear
+	 */
+	public void setExternalLibraryPath(String libraryPath) {
+
+		String oldPath = getExternalLibraryPath();
+
+		lock.acquire();
+		try {
+			checkDeleted();
+			setRecordFields(record, libraryPath);
+			updateRecord();
+		}
+		finally {
+			lock.release();
+		}
+
+		symbolMgr.getProgram()
+				.setObjChanged(ProgramEvent.EXTERNAL_PATH_CHANGED, getName(), oldPath, libraryPath);
+	}
+
+	static void setRecordFields(DBRecord record, String libraryPath) {
+		record.setString(SymbolDatabaseAdapter.SYMBOL_LIBPATH_COL, libraryPath);
 	}
 }

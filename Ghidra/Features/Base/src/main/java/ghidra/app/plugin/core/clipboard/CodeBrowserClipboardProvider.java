@@ -48,8 +48,6 @@ import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.AddressSourceInfo;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -66,7 +64,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPES = CommentTypes.getTypes();
+	private static int[] COMMENT_TYPESx = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -736,7 +734,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol symbol = symbolTable.getSymbol(reference);
-		if ((symbol instanceof CodeSymbol) || (symbol instanceof FunctionSymbol)) {
+		if (symbol == null) {
+			return false;
+		}
+		SymbolType type = symbol.getSymbolType();
+		if ((type == SymbolType.LABEL) || (type == SymbolType.FUNCTION)) {
 			RenameLabelCmd cmd = new RenameLabelCmd(symbol, labelName, SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}
@@ -757,7 +759,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (currentLocation instanceof CommentFieldLocation) {
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
-			int commentType = commentFieldLocation.getCommentType();
+			CommentType commentType = commentFieldLocation.getCommentType();
 			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
 			return tool.execute(cmd, currentProgram);
 		}
@@ -802,11 +804,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void setCommentInfo(CodeUnit cu, CodeUnitInfo info) {
-
-		for (int element : COMMENT_TYPES) {
-			String[] comments = cu.getCommentAsArray(element);
+		for (CommentType type : CommentType.values()) {
+			String[] comments = cu.getCommentAsArray(type);
 			if (comments != null && comments.length > 0) {
-				info.setComment(element, comments);
+				info.setComment(type, comments);
 			}
 		}
 	}

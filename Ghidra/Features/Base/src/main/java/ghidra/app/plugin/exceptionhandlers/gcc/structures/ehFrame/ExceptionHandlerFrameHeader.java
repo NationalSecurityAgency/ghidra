@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  */
 public class ExceptionHandlerFrameHeader {
-	
+
 	/* Class Members */
 	private TaskMonitor monitor;
 	private Program prog;
@@ -47,7 +47,7 @@ public class ExceptionHandlerFrameHeader {
 	private int eh_FramePtrEncoding;
 	private int eh_FrameDescEntryCntEncoding;
 	private int eh_FrameTableEncoding;
-	
+
 	/**
 	 * Constructor for an ExceptionHandlerFrameHeader.
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
@@ -74,11 +74,11 @@ public class ExceptionHandlerFrameHeader {
 	 */
 	public void addToDataTypeManager() {
 		DataTypeManager dtManager = prog.getDataTypeManager();
-		
+
 		/* Add the ehFrameHdr Structure to the dataTypeManager */
-		dtManager.addDataType(ehFrameHdrStruct, DataTypeConflictHandler.REPLACE_HANDLER );
+		dtManager.addDataType(ehFrameHdrStruct, DataTypeConflictHandler.REPLACE_HANDLER);
 	}
-	
+
 	/**
 	 * Method that creates an Exception Handler Frame Header Structure
 	 * at the address specified by 'addr'. If addr is 'null', this method returns without creating
@@ -90,20 +90,20 @@ public class ExceptionHandlerFrameHeader {
 	 */
 	public void create(Address addr) throws MemoryAccessException, AddressOutOfBoundsException {
 		CreateStructureCmd dataCmd = null;
-		
+
 		if (addr == null || monitor.isCancelled()) {
 			return;
 		}
-		
+
 		/* Create a new structure at the start of the .eh_frame_hdr section */
-		dataCmd = new CreateStructureCmd( ehFrameHdrStruct, addr );
+		dataCmd = new CreateStructureCmd(ehFrameHdrStruct, addr);
 		dataCmd.applyTo(prog);
-		
+
 		/* Set a comment on the newly created structure */
 		SetCommentCmd commentCmd =
 			new SetCommentCmd(addr, CommentType.PLATE, "Exception Handler Frame Header");
 		commentCmd.applyTo(prog);
-		
+
 		// Set the class members accordingly
 		eh_version = prog.getMemory().getByte(addr) & 0xFF;
 		eh_FramePtrEncoding = prog.getMemory().getByte(addr.add(1)) & 0xFF;

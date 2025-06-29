@@ -326,23 +326,23 @@ public class CodeUnitInfoPasteCmd implements Command<Program> {
 
 		if (plateComment != null) {
 			String[] oldComment = cu.getCommentAsArray(CommentType.PLATE);
-			cu.setCommentAsArray(CodeUnit.PLATE_COMMENT, appendComment(oldComment, plateComment));
+			cu.setCommentAsArray(CommentType.PLATE, appendComment(oldComment, plateComment));
 		}
 		if (preComment != null) {
 			String[] oldComment = cu.getCommentAsArray(CommentType.PRE);
-			cu.setCommentAsArray(CodeUnit.PRE_COMMENT, appendComment(oldComment, preComment));
+			cu.setCommentAsArray(CommentType.PRE, appendComment(oldComment, preComment));
 		}
 		if (postComment != null) {
 			String[] oldComment = cu.getCommentAsArray(CommentType.POST);
-			cu.setCommentAsArray(CodeUnit.POST_COMMENT, appendComment(oldComment, postComment));
+			cu.setCommentAsArray(CommentType.POST, appendComment(oldComment, postComment));
 		}
 		if (eolComment != null) {
 			String[] oldComment = cu.getCommentAsArray(CommentType.EOL);
-			cu.setCommentAsArray(CodeUnit.EOL_COMMENT, appendComment(oldComment, eolComment));
+			cu.setCommentAsArray(CommentType.EOL, appendComment(oldComment, eolComment));
 		}
 		if (repeatableComment != null) {
 			String[] oldComment = cu.getCommentAsArray(CommentType.REPEATABLE);
-			cu.setCommentAsArray(CodeUnit.REPEATABLE_COMMENT,
+			cu.setCommentAsArray(CommentType.REPEATABLE,
 				appendComment(oldComment, repeatableComment));
 		}
 	}

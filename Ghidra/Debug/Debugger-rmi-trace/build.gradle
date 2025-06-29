@@ -72,7 +72,7 @@ tasks.assemblePyPackage {
 	}
 }
 
-distributePyDep("protobuf-3.20.3-py2.py3-none-any.whl")
+distributePyDep("protobuf-6.31.0-py3-none-any.whl")
 distributePyDep("psutil-5.9.8.tar.gz")
 distributePyDep("setuptools-68.0.0-py3-none-any.whl")
 distributePyDep("wheel-0.37.1-py2.py3-none-any.whl")

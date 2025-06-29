@@ -933,15 +933,15 @@ public class ProgramBuilder {
 		});
 	}
 
+	@Deprecated(forRemoval = true, since = "11.4")
 	public void createComment(String address, String comment, int commentType) {
-		CommentType type = CommentType.values()[commentType];
-		createComment(address, comment, type);
+		createComment(address, comment, CommentType.valueOf(commentType));
 	}
 
-	public void createComment(String address, String comment, CommentType type) {
+	public void createComment(String address, String comment, CommentType commentType) {
 		tx(() -> {
 			Listing listing = program.getListing();
-			listing.setComment(addr(address), type, comment);
+			listing.setComment(addr(address), commentType, comment);
 		});
 	}
 
@@ -1109,10 +1109,9 @@ public class ProgramBuilder {
 		}
 
 		return tx(() -> {
-			FileBytes fileBytes =
-				program.getMemory()
-						.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
-							TaskMonitor.DUMMY);
+			FileBytes fileBytes = program.getMemory()
+					.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+						TaskMonitor.DUMMY);
 
 			return fileBytes;
 		});

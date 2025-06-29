@@ -254,7 +254,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				dt = section.toDataType();
 				DataUtilities.createData(program, start, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				setComment(CodeUnit.EOL_COMMENT, start, section.getName());
+				setComment(CommentType.EOL, start, section.getName());
 				start = start.add(dt.getLength());
 			}
 		}
@@ -383,7 +383,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			Address address = space.getAddress(addr);
 
-			setComment(CodeUnit.PRE_COMMENT, address, importInfo.getComment());
+			setComment(CommentType.PRE, address, importInfo.getComment());
 
 			Data data = listing.getDefinedDataAt(address);
 			if (data != null && data.isPointer()) {
@@ -547,7 +547,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 
 			Address address = space.getAddress(export.getAddress());
-			setComment(CodeUnit.PRE_COMMENT, address, export.getComment());
+			setComment(CommentType.PRE, address, export.getComment());
 			symTable.addExternalEntryPoint(address);
 
 			String name = export.getName();
@@ -713,9 +713,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
 						if (block != null) {
-							MemoryBlock paddingBlock =
-								MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
-									address, dataSize, "", "", r, w, x, log);
+							MemoryBlock paddingBlock = MemoryBlockUtils.createInitializedBlock(prog,
+								false, sectionName, address, dataSize, "", "", r, w, x, log);
 							if (paddingBlock != null) {
 								try {
 									prog.getMemory().join(block, paddingBlock);
@@ -992,7 +991,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			catch (CancelledException e) {
 				// Move on
 			}
-			
+
 			// Check for Swift
 			List<String> sectionNames =
 				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())

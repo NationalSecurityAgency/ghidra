@@ -172,10 +172,10 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void setRepeatableComment(Address a, String comment) {
-		setComment(a, CodeUnit.REPEATABLE_COMMENT, comment);
+		setComment(a, CommentType.REPEATABLE, comment);
 	}
 
-	private void setComment(Address a, int commentType, String comment) {
+	private void setComment(Address a, CommentType commentType, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		tx(program, () -> {
 			cu.setComment(commentType, comment);

@@ -848,7 +848,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				.setOptionsHelpLocation(
 					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
 
-		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 25, null,
 			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
 		vtOptions.getOptions(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION)
 				.setOptionsHelpLocation(

@@ -29,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class Ext4Analyzer extends FileFormatAnalyzer {
-	
+
 	private int blockSize;
 
 	@Override
@@ -53,18 +53,19 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 		int start = getSuperBlockStart(reader);
-		if( start == -1 ) {
+		if (start == -1) {
 			return false;
 		}
-		
+
 		reader.setPointerIndex(start + 0x38);
 		short magic = -1;
 		try {
 			magic = reader.readNextShort();
-		} catch (IOException e ) {
+		}
+		catch (IOException e) {
 			// ignore
 		}
-		if( magic != (short)0xef53 ) {
+		if (magic != (short) 0xef53) {
 			return false;
 		}
 		return true;
@@ -76,8 +77,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 	}
 
 	@Override
-	public boolean analyze(Program program, AddressSetView set,
-			TaskMonitor monitor, MessageLog log) throws Exception {
+	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+			throws Exception {
 		ByteProvider provider =
 			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
@@ -86,67 +87,74 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		reader.setPointerIndex(start);
 		Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
 		createData(program, toAddr(program, start), superBlock.toDataType());
-		
 
-		boolean is64Bit = (superBlock.getS_desc_size() > 32) && ((superBlock.getS_feature_incompat() & 0x80) > 0);
-		long numBytes = program.getMaxAddress().getOffset() - program.getMinAddress().getOffset() + 1;
-		int groupSize = calculateGroupSize( superBlock );
-		int numGroups = (int)numBytes / groupSize;
-		if( numBytes % groupSize != 0) {
+		boolean is64Bit =
+			(superBlock.getS_desc_size() > 32) && ((superBlock.getS_feature_incompat() & 0x80) > 0);
+		long numBytes =
+			program.getMaxAddress().getOffset() - program.getMinAddress().getOffset() + 1;
+		int groupSize = calculateGroupSize(superBlock);
+		int numGroups = (int) numBytes / groupSize;
+		if (numBytes % groupSize != 0) {
 			numGroups++;
 		}
-		
+
 		long groupDescOffset = groupStart + blockSize;
 		Address groupDescAddress = toAddr(program, groupDescOffset);
 		reader.setPointerIndex(groupDescOffset);
 		Ext4GroupDescriptor groupDescriptors[] = new Ext4GroupDescriptor[numGroups];
 		monitor.setMessage("Creating group descriptors...");
 		monitor.setMaximum(numGroups);
-		for( int i = 0; i < numGroups; i++ ) {
+		for (int i = 0; i < numGroups; i++) {
 			monitor.checkCancelled();
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, is64Bit);
 			DataType groupDescDataType = groupDescriptors[i].toDataType();
 			createData(program, groupDescAddress, groupDescDataType);
-			groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());	
+			groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());
 			monitor.incrementProgress(1);
 		}
-		
+
 		boolean isSparseSuper = (superBlock.getS_feature_ro_compat() & 1) != 0;
-		createSuperBlockCopies(program, reader, groupSize, numGroups, is64Bit, isSparseSuper, monitor);
-		
+		createSuperBlockCopies(program, reader, groupSize, numGroups, is64Bit, isSparseSuper,
+			monitor);
+
 		createInodeTables(program, reader, superBlock, groupDescriptors, is64Bit, monitor);
-		
+
 //		test(program, reader);
 		return true;
 	}
-	
+
 	private void createInodeTables(Program program, BinaryReader reader, Ext4SuperBlock superBlock,
-			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor) throws DuplicateNameException, Exception {
-		
+			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor)
+			throws DuplicateNameException, Exception {
+
 		int inodeCount = superBlock.getS_inodes_count();
 		Ext4Inode inodes[] = new Ext4Inode[inodeCount];
 
-		for( int i = 0; i < groupDescriptors.length; i++ ) {
+		for (int i = 0; i < groupDescriptors.length; i++) {
 			monitor.checkCancelled();
 			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table_lo() & 0xffffffffL;
-			if( is64Bit ) {
-				inodeTableBlockOffset = (((long) groupDescriptors[i].getBg_inode_table_hi()) << 32) | inodeTableBlockOffset;
+			if (is64Bit) {
+				inodeTableBlockOffset =
+					(((long) groupDescriptors[i].getBg_inode_table_hi()) << 32) |
+						inodeTableBlockOffset;
 			}
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
 			Address address = null;
 			try {
 				address = toAddr(program, offset);
-			} catch (Exception e ) {
+			}
+			catch (Exception e) {
 				throw new IOException("offset " + offset + " not in program.");
 			}
-			
+
 			int inodesPerGroup = superBlock.getS_inodes_per_group();
-			monitor.setMessage("Creating inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
+			monitor.setMessage(
+				"Creating inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
 			monitor.setMaximum(inodesPerGroup);
 			monitor.setProgress(0);
-			for( int j = 0; j < inodesPerGroup; j++ ) {
-				if( i == 0 && j == 0) {
+			for (int j = 0; j < inodesPerGroup; j++) {
+				if (i == 0 && j == 0) {
 					//inode 0 does not exist
 					continue;
 				}
@@ -163,37 +171,39 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 				inodes[inodesPerGroup * i + j] = inode;
 			}
 		}
-		processInodes( program, reader, superBlock, inodes, monitor);
+		processInodes(program, reader, superBlock, inodes, monitor);
 	}
 
-	private void processInodes(Program program, BinaryReader reader,
-			Ext4SuperBlock superBlock, Ext4Inode[] inodes, TaskMonitor monitor) throws Exception {
+	private void processInodes(Program program, BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4Inode[] inodes, TaskMonitor monitor) throws Exception {
 		//first 0xa inodes are reserved (0 doesn't exist)
-		for( int i = 0x1; i < inodes.length; i++ ) {
+		for (int i = 0x1; i < inodes.length; i++) {
 			monitor.checkCancelled();
 			Ext4Inode inode = inodes[i];
 			short mode = inode.getI_mode();
-			if( (mode & Ext4Constants.S_IFDIR) != 0 ) {
+			if ((mode & Ext4Constants.S_IFDIR) != 0) {
 				processDirectory(program, reader, superBlock, inode, monitor);
-			} else if( (mode & Ext4Constants.S_IFREG) != 0 ) {
+			}
+			else if ((mode & Ext4Constants.S_IFREG) != 0) {
 				processFile(program, reader, superBlock, inode, monitor);
-			} 
+			}
 		}
 	}
 
-	private void processFile(Program program, BinaryReader reader,
-			Ext4SuperBlock superBlock, Ext4Inode inode, TaskMonitor monitor) {
+	private void processFile(Program program, BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4Inode inode, TaskMonitor monitor) {
 		// TODO?
 	}
 
-	private void processDirectory(Program program, BinaryReader reader,
-			Ext4SuperBlock superBlock, Ext4Inode inode, TaskMonitor monitor) throws Exception {
-		if( (inode.getI_flags() & Ext4Constants.EXT4_INDEX_FL) != 0 ) {
+	private void processDirectory(Program program, BinaryReader reader, Ext4SuperBlock superBlock,
+			Ext4Inode inode, TaskMonitor monitor) throws Exception {
+		if ((inode.getI_flags() & Ext4Constants.EXT4_INDEX_FL) != 0) {
 			processHashTreeDirectory(program, reader, superBlock, inode, monitor);
 		}
-		boolean isDirEntry2 = (superBlock.getS_feature_incompat() & Ext4Constants.INCOMPAT_FILETYPE) != 0;
+		boolean isDirEntry2 =
+			(superBlock.getS_feature_incompat() & Ext4Constants.INCOMPAT_FILETYPE) != 0;
 		// if uses extents
-		if( (inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0 ) {
+		if ((inode.getI_flags() & Ext4Constants.EXT4_EXTENTS_FL) != 0) {
 //			Ext4IBlock i_block = inode.getI_block();
 //			Ext4ExtentHeader header = i_block.getHeader();
 //			if( header.getEh_depth() == 0 ) {
@@ -216,7 +226,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 //					
 //			} 
 		}
-		
+
 	}
 
 	private void processHashTreeDirectory(Program program, BinaryReader reader,
@@ -224,13 +234,14 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		// TODO?
 	}
 
-	private void createSuperBlockCopies(Program program, BinaryReader reader,
-			int groupSize, int numGroups, boolean is64Bit, boolean isSparseSuper, TaskMonitor monitor) throws DuplicateNameException, IOException, Exception {
+	private void createSuperBlockCopies(Program program, BinaryReader reader, int groupSize,
+			int numGroups, boolean is64Bit, boolean isSparseSuper, TaskMonitor monitor)
+			throws DuplicateNameException, IOException, Exception {
 		monitor.setMessage("Creating super block and group descriptor copies...");
 		monitor.setMaximum(numGroups);
-		for( int i = 1; i < numGroups; i++ ) {
+		for (int i = 1; i < numGroups; i++) {
 			monitor.checkCancelled();
-			if( isSparseSuper && (!isXpowerOfY(i, 3) && !isXpowerOfY(i, 5) && !isXpowerOfY(i, 7)) ) {
+			if (isSparseSuper && (!isXpowerOfY(i, 3) && !isXpowerOfY(i, 5) && !isXpowerOfY(i, 7))) {
 				continue;
 			}
 			int offset = groupSize * i;
@@ -238,27 +249,26 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			reader.setPointerIndex(offset);
 			Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
 			createData(program, address, superBlock.toDataType());
-			
-			
+
 			long groupDescOffset = offset + blockSize;
 			Address groupDescAddress = toAddr(program, groupDescOffset);
 			reader.setPointerIndex(groupDescOffset);
-			for( int j = 0; j < numGroups; j++ ) {
+			for (int j = 0; j < numGroups; j++) {
 				Ext4GroupDescriptor groupDesc = new Ext4GroupDescriptor(reader, is64Bit);
 				DataType groupDescDataType = groupDesc.toDataType();
 				createData(program, groupDescAddress, groupDescDataType);
-				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());			
+				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());
 			}
 			monitor.incrementProgress(1);
 		}
-		
+
 	}
-	
-	private boolean isXpowerOfY( int x, int y ) {
-		if( x == 0 ) {
+
+	private boolean isXpowerOfY(int x, int y) {
+		if (x == 0) {
 			return false;
 		}
-		while( x % y == 0 ) {
+		while (x % y == 0) {
 			x = x / y;
 		}
 		return x == 1;
@@ -276,23 +286,25 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			int padding = -1;
 			int padStart = 0;
 			boolean isPadding = false;
-			while( padStart < 1024 ) {
-				if( !isPadding ) {
-					padStart = (int)reader.getPointerIndex();
+			while (padStart < 1024) {
+				if (!isPadding) {
+					padStart = (int) reader.getPointerIndex();
 				}
 				padding = reader.readNextInt();
-				if( padding == 0 ) {
-					if( isPadding ) {
+				if (padding == 0) {
+					if (isPadding) {
 						return padStart + 0x400;
 					}
 					isPadding = true;
-				} else {
+				}
+				else {
 					isPadding = false;
 				}
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 		}
 		return -1;
 	}
-	
+
 }

@@ -31,18 +31,18 @@ import java.math.BigInteger;
 public interface AddressRange extends Comparable<AddressRange>, Iterable<Address> {
 
 	/**
-	 * Returns the number of addresses in the range.
+	 * {@return the number of addresses in the range}
 	 */
 	public long getLength();
 
 	/**
-	 * Returns the number of addresses as a BigInteger.
-	 * @return the number of addresses as a BigInteger.
+	 * {@return the number of addresses as a BigInteger}
 	 */
 	public BigInteger getBigLength();
 
 	/**
-	 * Returns true if the given address is contained in the range.
+	 * {@return true if the given address is contained in the range}
+	 * @param addr The address to check
 	 */
 	public boolean contains(Address addr);
 
@@ -64,13 +64,13 @@ public interface AddressRange extends Comparable<AddressRange>, Iterable<Address
 	public AddressRange intersectRange(Address start, Address end);
 
 	/**
-	 * Returns true if the given range intersects this range.
+	 * {@return true if the given range intersects this range; otherwise, false}
 	 * @param range the range to test for intersection with.
 	 */
 	public boolean intersects(AddressRange range);
 
 	/**
-	 * Returns true if the given range intersects this range.
+	 * {@return true if the given range intersects this range; otherwise, false}
 	 * @param start the first address in the range to test for intersection.
 	 * @param end the last address in the range to test for intersection.
 	 */

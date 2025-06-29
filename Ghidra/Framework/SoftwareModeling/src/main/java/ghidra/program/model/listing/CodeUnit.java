@@ -38,38 +38,36 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 */
 	public final static int MNEMONIC = -1;
 
-	public static final int NO_COMMENT = -1;
-
 	/**
 	 * comment type for end of line
 	 * @deprecated use {@link CommentType#EOL} 
 	 */
-	@Deprecated
-	public static final int EOL_COMMENT = 0;
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static final int EOL_COMMENT = 0; // CommentType.EOL.ordinal();
 	/**
 	 * comment type that goes before a code unit
 	 * @deprecated use {@link CommentType#PRE}
 	 */
-	@Deprecated
-	public static final int PRE_COMMENT = 1;
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static final int PRE_COMMENT = 1; // CommentType.PRE.ordinal();
 	/**
 	 * comment type that follows after a code unit
 	 * @deprecated use {@link CommentType#POST} 
 	 */
-	@Deprecated
-	public static final int POST_COMMENT = 2;
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static final int POST_COMMENT = 2; // CommentType.POST.ordinal();
 	/**
 	 * Property name for plate comment type
 	 * @deprecated use {@link CommentType#POST} 
 	 */
-	@Deprecated
-	public static final int PLATE_COMMENT = 3;
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static final int PLATE_COMMENT = 3; // CommentType.PLATE.ordinal();
 	/**
 	 * Property name for repeatable comment type
 	 * @deprecated use {@link CommentType#REPEATABLE} 
 	 */
-	@Deprecated
-	public static final int REPEATABLE_COMMENT = 4;
+	@Deprecated(forRemoval = true, since = "11.4")
+	public static final int REPEATABLE_COMMENT = 4; // CommentType.REPEATABLE.ordinal();
 
 	/**
 	 * Any comment property.
@@ -99,42 +97,36 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public String getAddressString(boolean showBlockName, boolean pad);
 
 	/**
-	 * Get the label for this code unit.
-	 * @return the label for this code unit.
+	 * {@return the label for this code unit.}
 	 */
 	public String getLabel();
 
 	/**
-	 * Get the Symbols for this code unit.
-	 * @return the Symbols for this code unit.
+	 * {@return the Symbols for this code unit.}
 	 * @throws ConcurrentModificationException if this object is no
 	 * longer valid.
 	 */
 	public Symbol[] getSymbols();
 
 	/**
-	 * Get the Primary Symbol for this code unit.
-	 * @return the Primary Symbol for this code unit.
+	 * {@return the Primary Symbol for this code unit.}
 	 * @throws ConcurrentModificationException if this object is no
 	 * longer valid.
 	 */
 	public Symbol getPrimarySymbol();
 
 	/**
-	 * Get the starting address for this code unit.
-	 * @return the starting address for this code unit.
+	 * {@return the starting address for this code unit.}
 	 */
 	public Address getMinAddress();
 
 	/**
-	 * Get the ending address for this code unit.
-	 * @return the ending address for this code unit.
+	 * {@return the ending address for this code unit.}
 	 */
 	public Address getMaxAddress();
 
 	/**
-	 * Get the mnemonic for this code unit, e.g., MOV, JMP
-	 * @return the mnemonic for this code unit, e.g., MOV, JMP
+	 * {@return the mnemonic for this code unit, e.g., MOV, JMP}
 	 */
 	public String getMnemonicString();
 
@@ -149,19 +141,19 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * three types of comments supported
 	 * @deprecated use {@link #getComment(CommentType)} instead
 	 */
-	@Deprecated
-	public String getComment(int commentType);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default String getComment(int commentType) {
+		return getComment(CommentType.valueOf(commentType));
+	}
 
 	/**
 	 * Get the comment for the given type
 	 *
-	 * @param type which type of comment to retrieve
+	 * @param type {@link CommentType comment type}
 	 * @return the comment string of the appropriate type or null if no comment of
 	 * that type exists for this code unit
 	 */
-	public default String getComment(CommentType type) {
-		return getComment(type.ordinal());
-	}
+	public String getComment(CommentType type);
 
 	/**
 	 * Get the comment for the given type and parse it into an array of strings
@@ -176,21 +168,21 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * three types of comments supported
 	 * @deprecated use {@link #getCommentAsArray(CommentType)} instead
 	 */
-	@Deprecated
-	public String[] getCommentAsArray(int commentType);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default String[] getCommentAsArray(int commentType) {
+		return getCommentAsArray(CommentType.valueOf(commentType));
+	}
 
 	/**
 	 * Get the comment for the given type and parse it into an array of strings
 	 * such that each line is its own string.
 	 *
-	 * @param type the comment type to retrieve
+	 * @param type {@link CommentType comment type}
 	 * @return an array of strings where each item in the array is a line of text
 	 * in the comment.  If there is no comment of the requested type, an empty array
 	 * is returned.
 	 */
-	public default String[] getCommentAsArray(CommentType type) {
-		return getCommentAsArray(type.ordinal());
-	}
+	public String[] getCommentAsArray(CommentType type);
 
 	/**
 	 * Set the comment for the given comment type.  Passing <code>null</code> clears the comment
@@ -203,18 +195,18 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * three types of comments supported
 	 * @deprecated use {@link #setComment(CommentType, String)} instead
 	 */
-	@Deprecated
-	public void setComment(int commentType, String comment);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default void setComment(int commentType, String comment) {
+		setComment(CommentType.valueOf(commentType), comment);
+	}
 
 	/**
 	 * Set the comment for the given comment type.  Passing <code>null</code> clears the comment
 	 *
-	 * @param type of comment to set
+	 * @param type {@link CommentType comment type}
 	 * @param comment comment for code unit; null clears the comment
 	 */
-	public default void setComment(CommentType type, String comment) {
-		setComment(type.ordinal(), comment);
-	}
+	public void setComment(CommentType type, String comment);
 
 	/**
 	 * Set the comment (with each line in its own string) for the given comment type
@@ -224,12 +216,22 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * @param comment an array of strings where each string is a single line of the comment.
 	 * @throws IllegalArgumentException if type is not one of the
 	 * three types of comments supported
+	 * @deprecated use {@link #setCommentAsArray(CommentType, String[])} instead
 	 */
-	public void setCommentAsArray(int commentType, String[] comment);
-
-	public default void setCommentAsArray(CommentType type, String[] comment) {
-		setCommentAsArray(type.ordinal(), comment);
+	@Deprecated(forRemoval = true, since = "11.4")
+	public default void setCommentAsArray(int commentType, String[] comment) {
+		setCommentAsArray(CommentType.valueOf(commentType), comment);
 	}
+
+	/**
+	 * Set the comment (with each line in its own string) for the given comment type
+	 *
+	 * @param type {@link CommentType comment type}
+	 * @param comment an array of strings where each string is a single line of the comment.
+	 * @throws IllegalArgumentException if type is not one of the
+	 * three types of comments supported
+	 */
+	public void setCommentAsArray(CommentType type, String[] comment);
 
 	/**
 	 * Get length of this code unit.  
@@ -260,9 +262,8 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public void getBytesInCodeUnit(byte[] buffer, int bufferOffset) throws MemoryAccessException;
 
 	/**
-	 * Returns true if address is contained in the range of this codeUnit
+	 * {@return true if address is contained in the range of this codeUnit}
 	 * @param testAddr the address to test.
-	 * @return true if address is contained in the range of this codeUnit
 	 */
 	public boolean contains(Address testAddr);
 
@@ -298,16 +299,14 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public Reference[] getMnemonicReferences();
 
 	/**
-	 * Get the references for the operand index.
+	 * {@return the references for the operand index.}
 	 * @param index operand index (0 is the first operand)
-	 * @return the references for the operand index.
 	 */
 	public Reference[] getOperandReferences(int index);
 
 	/**
-	 * Get the primary reference for the operand index.
+	 * {@return the primary reference for the operand index.}
 	 * @param index operand index (0 is the first operand)
-	 * @return the primary reference for the operand index.
 	 */
 	public Reference getPrimaryReference(int index);
 
@@ -336,14 +335,12 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public Reference[] getReferencesFrom();
 
 	/**
-	 * Get an iterator over all references TO this code unit.
-	 * @return an iterator over all references TO this code unit.
+	 * {@return an iterator over all references TO this code unit.}
 	 */
 	public ReferenceIterator getReferenceIteratorTo();
 
 	/**
-	 * Returns the program that generated this CodeUnit.
-	 * @return the program that generated this CodeUnit.
+	 * {@return the program that generated this CodeUnit.}
 	 */
 	public Program getProgram();
 
@@ -356,8 +353,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Remove external reference (if any) at the given opIndex
-	 * opIndex the index of the operand from which to remove any external reference.
-	 * @param opIndex the op index
+	 * @param opIndex the index of the operand from which to remove any external reference.
 	 */
 	public void removeExternalReference(int opIndex);
 
@@ -403,8 +399,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 			RefType refType);
 
 	/**
-	 * Get the number of operands for this code unit.
-	 * @return the number of operands for this code unit.
+	 * {@return the number of operands for this code unit.}
 	 */
 	public int getNumOperands();
 

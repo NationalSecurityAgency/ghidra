@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.trace.util;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.ProgramFragment;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.bookmark.TraceBookmark;
@@ -150,13 +150,13 @@ public interface TraceEvents {
 	 * @param commentType the comment type
 	 * @return the event type
 	 */
-	static TraceCommentEvent byCommentType(int commentType) {
+	static TraceCommentEvent byCommentType(CommentType commentType) {
 		return switch (commentType) {
-			case CodeUnit.PLATE_COMMENT -> PLATE_COMMENT_CHANGED;
-			case CodeUnit.PRE_COMMENT -> PRE_COMMENT_CHANGED;
-			case CodeUnit.POST_COMMENT -> POST_COMMENT_CHANGED;
-			case CodeUnit.EOL_COMMENT -> EOL_COMMENT_CHANGED;
-			case CodeUnit.REPEATABLE_COMMENT -> REPEATABLE_COMMENT_CHANGED;
+			case CommentType.PLATE -> PLATE_COMMENT_CHANGED;
+			case CommentType.PRE -> PRE_COMMENT_CHANGED;
+			case CommentType.POST -> POST_COMMENT_CHANGED;
+			case CommentType.EOL -> EOL_COMMENT_CHANGED;
+			case CommentType.REPEATABLE -> REPEATABLE_COMMENT_CHANGED;
 			default -> throw new AssertionError();
 		};
 	}

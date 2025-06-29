@@ -15,12 +15,15 @@
  */
 package sarif;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
+import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CommentType;
-import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramDiff;
 
 public class CommentSarifTest extends AbstractSarifTest {
@@ -41,9 +44,9 @@ public class CommentSarifTest extends AbstractSarifTest {
 		listing.setComment(entry.add(5), CommentType.REPEATABLE, "My Repeatable comment");
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -63,9 +66,27 @@ public class CommentSarifTest extends AbstractSarifTest {
 		listing.setComment(entry.add(4), CommentType.PLATE, "My Plate comment");
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
+	}
+
+	@Test
+	public void testCommentsInInstr() throws Exception {
+		block.putBytes(entry, asm, 0, asm.length);
+
+		Listing listing = program.getListing();
+
+		DisassembleCommand cmd = new DisassembleCommand(entry, new AddressSet(entry, entry), false);
+		assertTrue(cmd.applyTo(program));
+		Instruction instr = listing.getInstructionAt(entry);
+		assertNotNull(instr);
+		listing.setComment(entry, CommentType.EOL, "My EOL comment");
+
+		ProgramDiff programDiff = readWriteCompare();
+
+		AddressSetView differences = programDiff.getDifferences(monitor);
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -80,8 +101,8 @@ public class CommentSarifTest extends AbstractSarifTest {
 		listing.createData(entry, struct);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(!differences.isEmpty());
+		assert (!differences.isEmpty());
 	}
 }

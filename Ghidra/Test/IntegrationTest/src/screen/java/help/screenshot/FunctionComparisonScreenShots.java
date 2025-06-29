@@ -99,8 +99,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 			plugin.createComparison(f1, f2);
 			FunctionComparisonProvider provider =
 				waitForComponentProvider(FunctionComparisonProvider.class);
-			FunctionComparisonPanel functionComparisonPanel =
-				provider.getComponent();
+			FunctionComparisonPanel functionComparisonPanel = provider.getComponent();
 			runSwing(() -> {
 				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
 				ListingCodeComparisonPanel dualListing =

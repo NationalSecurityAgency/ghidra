@@ -17,8 +17,9 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -166,9 +167,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 		ListingFieldHighlightFactoryAdapter hlFactory =
 			new ListingFieldHighlightFactoryAdapter(hlProvider);
-		PlateFieldTextField textField =
-			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped,
-				hlFactory);
+		PlateFieldTextField textField = new PlateFieldTextField(elements, this, proxy, startX,
+			width, commentText, isClipped, hlFactory);
 		PlateListingTextField listingField = new PlateListingTextField(proxy, textField, hlFactory);
 		return listingField;
 	}
@@ -210,25 +210,16 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
-		String[] comments = cu.getCommentAsArray(CommentType.PLATE);
-		if (comments == null) {
-			return null;
+		Stream<String> commentsStream = Stream.empty();
+		String[] plateComments = cu.getCommentAsArray(CommentType.PLATE);
+		if (plateComments != null) {
+			commentsStream = Arrays.stream(plateComments);
 		}
 
-		StringBuilder buffy = new StringBuilder();
-		for (String comment : comments) {
-			if (buffy.length() != 0) {
-				buffy.append('\n');
-			}
-			buffy.append(comment);
-		}
-		for (String offcut : offcutComments) {
-			if (buffy.length() != 0) {
-				buffy.append('\n');
-			}
-			buffy.append(offcut);
-		}
-		return buffy.toString();
+		Program program = cu.getProgram();
+		Stream<String> comments = Stream.concat(commentsStream, offcutComments.stream());
+		return comments.map(c -> CommentUtils.getDisplayString(c, program))
+				.collect(Collectors.joining("\n"));
 	}
 
 	/*
@@ -256,8 +247,8 @@ public class PlateFieldFactory extends FieldFactory {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
 		}
 		for (String offcut : offcutComments) {
-			AttributedString as = new AttributedString(offcut, CommentColors.OFFCUT,
-				getMetrics(style), false, null);
+			AttributedString as =
+				new AttributedString(offcut, CommentColors.OFFCUT, getMetrics(style), false, null);
 			commentsList.add(new TextFieldElement(as, commentsList.size(), 0));
 		}
 
@@ -540,7 +531,7 @@ public class PlateFieldFactory extends FieldFactory {
 		}
 
 		CommentFieldLocation commentLocation = (CommentFieldLocation) programLoc;
-		if (commentLocation.getCommentType() != CodeUnit.PLATE_COMMENT) {
+		if (commentLocation.getCommentType() != CommentType.PLATE) {
 			return null;
 		}
 
@@ -603,8 +594,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider hsProvider,
-			ToolOptions toolOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hsProvider, ToolOptions toolOptions,
+			ToolOptions fieldOptions) {
 		return new PlateFieldFactory(formatModel, hsProvider, toolOptions, fieldOptions);
 	}
 

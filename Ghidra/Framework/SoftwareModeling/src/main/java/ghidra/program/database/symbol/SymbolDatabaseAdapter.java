@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,23 +39,36 @@ abstract class SymbolDatabaseAdapter {
 
 	static final int SYMBOL_NAME_COL = 0;
 	static final int SYMBOL_ADDR_COL = 1;
-	static final int SYMBOL_PARENT_COL = 2;
+	static final int SYMBOL_PARENT_ID_COL = 2;
 	static final int SYMBOL_TYPE_COL = 3;
-	static final int SYMBOL_STRING_DATA_COL = 4;
-	static final int SYMBOL_FLAGS_COL = 5;
+	static final int SYMBOL_FLAGS_COL = 4;
 
-	// sparse fields - the following fields are not always applicable so they are optional and 
+	// Sparse fields - the following fields are not always applicable so they are optional and 
 	// don't consume space in the database if they aren't used.
-	static final int SYMBOL_HASH_COL = 6;
-	static final int SYMBOL_PRIMARY_COL = 7;
-	static final int SYMBOL_DATATYPE_COL = 8;
-	static final int SYMBOL_VAROFFSET_COL = 9;
+	static final int SYMBOL_HASH_COL = 5;
+	static final int SYMBOL_PRIMARY_COL = 6;
+	static final int SYMBOL_DATATYPE_COL = 7;
+	static final int SYMBOL_VAROFFSET_COL = 8;
+	static final int SYMBOL_ORIGINAL_IMPORTED_NAME_COL = 9;
+	static final int SYMBOL_EXTERNAL_PROG_ADDR_COL = 10;
+	static final int SYMBOL_COMMENT_COL = 11;
+	static final int SYMBOL_LIBPATH_COL = 12;
 
-	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV3.V3_SYMBOL_SCHEMA;
+	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV4.V4_SYMBOL_SCHEMA;
 
 	// Bits 0 & 1 are used for the source of the symbol.
 	static final byte SYMBOL_SOURCE_BITS = (byte) 0x3;
 	static final byte SYMBOL_PINNED_FLAG = (byte) 0x4; // Bit 2 is flag for "anchored to address".
+
+	// Symbol type constants
+	static final int SYMBOL_TYPE_LABEL = SymbolType.LABEL.getID();
+	static final int SYMBOL_TYPE_LIBRARY = SymbolType.LIBRARY.getID();
+	static final int SYMBOL_TYPE_NAMESPACE = SymbolType.NAMESPACE.getID();
+	static final int SYMBOL_TYPE_CLASS = SymbolType.CLASS.getID();
+	static final int SYMBOL_TYPE_FUNCTION = SymbolType.FUNCTION.getID();
+	static final int SYMBOL_TYPE_PARAMETER = SymbolType.PARAMETER.getID();
+	static final int SYMBOL_TYPE_LOCAL_VAR = SymbolType.LOCAL_VAR.getID();
+	static final int SYMBOL_TYPE_GLOBAL_VAR = SymbolType.GLOBAL_VAR.getID();
 
 	// TODO: NEXT UPGRADE: remove all variable/parameter symbols with NO_ADDRESS
 
@@ -75,11 +88,11 @@ abstract class SymbolDatabaseAdapter {
 			throws VersionException, CancelledException, IOException {
 
 		if (openMode == OpenMode.CREATE) {
-			return new SymbolDatabaseAdapterV3(dbHandle, addrMap, true);
+			return new SymbolDatabaseAdapterV4(dbHandle, addrMap, true);
 		}
 
 		try {
-			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV3(dbHandle, addrMap, false);
+			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV4(dbHandle, addrMap, false);
 			return adapter;
 		}
 		catch (VersionException e) {
@@ -99,26 +112,33 @@ abstract class SymbolDatabaseAdapter {
 	}
 
 	private static SymbolDatabaseAdapter findReadOnlyAdapter(DBHandle handle, AddressMap addrMap)
-			throws VersionException, IOException {
+			throws VersionException {
+
+		try {
+			return new SymbolDatabaseAdapterV3(handle, addrMap.getOldAddressMap());
+		}
+		catch (VersionException e) {
+			// failed try older version
+		}
 
 		try {
 			return new SymbolDatabaseAdapterV2(handle, addrMap.getOldAddressMap());
 		}
-		catch (VersionException e1) {
+		catch (VersionException e) {
 			// failed try older version
 		}
 
 		try {
 			return new SymbolDatabaseAdapterV1(handle, addrMap.getOldAddressMap());
 		}
-		catch (VersionException e1) {
+		catch (VersionException e) {
 			// failed try older version
 		}
 
 		try {
 			return new SymbolDatabaseAdapterV0(handle, addrMap.getOldAddressMap());
 		}
-		catch (VersionException e1) {
+		catch (VersionException e) {
 			// failed - can't handle whatever version this is trying to open
 		}
 
@@ -140,7 +160,7 @@ abstract class SymbolDatabaseAdapter {
 
 			dbHandle.deleteTable(SYMBOL_TABLE_NAME);
 
-			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV3(dbHandle, addrMap, true);
+			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV4(dbHandle, addrMap, true);
 
 			copyTempToNewAdapter(tmpAdapter, newAdapter, monitor);
 			return newAdapter;
@@ -166,7 +186,7 @@ abstract class SymbolDatabaseAdapter {
 				((SymbolDatabaseAdapterV0) oldAdapter).extractLocalSymbols(tmpHandle, monitor);
 		}
 
-		SymbolDatabaseAdapterV3 tmpAdapter = new SymbolDatabaseAdapterV3(tmpHandle, addrMap, true);
+		SymbolDatabaseAdapterV4 tmpAdapter = new SymbolDatabaseAdapterV4(tmpHandle, addrMap, true);
 		RecordIterator iter = oldAdapter.getSymbols();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
@@ -200,26 +220,22 @@ abstract class SymbolDatabaseAdapter {
 	}
 
 	/**
-	 * Create a new symbol
+	 * Instantiate a new basic symbol record.  Caller is responsible for updating any related
+	 * optional record fields and then adding to the table via the 
+	 * {@link #updateSymbolRecord(DBRecord)} method.
+	 * 
 	 * @param name name of the symbol
-	 * @param address the address for the symbol
 	 * @param namespaceID the id of the containing namespace symbol
+	 * @param address the address for the symbol
 	 * @param symbolType the type of this symbol
-	 * @param stringData place to store a String value that depends on the symbol type
+	 * @param isPrimary if true, symbol record will be tagged as primary (relavent for label and
+	 * function symbols only).
 	 * @param source the source type of this symbol
 	 * Some symbol types, such as function symbols, can set the source to Symbol.DEFAULT
-	 * @param dataTypeId the id of an associated datatype or null if there is no associated datatype
-	 * @param varOffset the variable offset will be the ordinal for a parameter or first use offset
-	 * for a local variable
-	 * @param isPrimary true if the symbol is primary. Only applicable for labels and functions
-	 * @return the new record
-	 * @throws IOException if there was a problem accessing the database
-	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
-	 * that doesn't allow it
+	 * @return new symbol record (not yet added to symbol table)
 	 */
-	abstract DBRecord createSymbol(String name, Address address, long namespaceID,
-			SymbolType symbolType, String stringData, Long dataTypeId, Integer varOffset,
-			SourceType source, boolean isPrimary) throws IOException;
+	abstract DBRecord createSymbolRecord(String name, long namespaceID, Address address,
+			SymbolType symbolType, boolean isPrimary, SourceType source);
 
 	/**
 	 * Get the record with the given symbol ID
@@ -372,9 +388,28 @@ abstract class SymbolDatabaseAdapter {
 	 * This only includes memory-based stored symbols.
 	 * 
 	 * @param startName the starting name to search
+	 * @return a symbol record iterator over the symbols
 	 * @throws IOException if a database io error occurs
 	 */
 	abstract RecordIterator scanSymbolsByName(String startName) throws IOException;
+
+	/**
+	 * Get symbol records which match the specified external original import name.
+	 * @param extLabel external import name label
+	 * @return matching external symbol records (forward iteration only, delete not supported)
+	 * @throws IOException if a database io error occurs
+	 */
+	abstract RecordIterator getExternalSymbolsByOriginalImportName(String extLabel)
+			throws IOException;
+
+	/**
+	 * Get symbol records which match the specified external original import name.
+	 * @param extProgAddr external program address
+	 * @return matching external symbol records (forward iteration only, delete not supported)
+	 * @throws IOException if a database io error occurs
+	 */
+	abstract RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr)
+			throws IOException;
 
 	/**
 	 * Get all symbols contained in the given {@link Namespace} that have the given name
@@ -439,7 +474,8 @@ abstract class SymbolDatabaseAdapter {
 	protected static RecordIterator getNameAndNamespaceFilterIterator(String name, long namespaceId,
 			RecordIterator it) {
 		Query nameQuery = new FieldMatchQuery(SYMBOL_NAME_COL, new StringField(name));
-		Query namespaceQuery = new FieldMatchQuery(SYMBOL_PARENT_COL, new LongField(namespaceId));
+		Query namespaceQuery =
+			new FieldMatchQuery(SYMBOL_PARENT_ID_COL, new LongField(namespaceId));
 		Query nameAndNamespaceQuery = new AndQuery(nameQuery, namespaceQuery);
 		return new QueryRecordIterator(it, nameAndNamespaceQuery);
 	}
@@ -457,7 +493,8 @@ abstract class SymbolDatabaseAdapter {
 	protected static RecordIterator getNameNamespaceAddressFilterIterator(String name,
 			long namespaceId, long addressKey, RecordIterator it) {
 		Query nameQuery = new FieldMatchQuery(SYMBOL_NAME_COL, new StringField(name));
-		Query namespaceQuery = new FieldMatchQuery(SYMBOL_PARENT_COL, new LongField(namespaceId));
+		Query namespaceQuery =
+			new FieldMatchQuery(SYMBOL_PARENT_ID_COL, new LongField(namespaceId));
 		Query addressQuery = new FieldMatchQuery(SYMBOL_ADDR_COL, new LongField(addressKey));
 		Query nameAndNamespaceQuery = new AndQuery(nameQuery, namespaceQuery);
 		Query fullQuery = new AndQuery(nameAndNamespaceQuery, addressQuery);

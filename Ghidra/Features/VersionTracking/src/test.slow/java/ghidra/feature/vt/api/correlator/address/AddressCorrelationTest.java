@@ -88,7 +88,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		// Test a function match created by the Exact Bytes Match correlator.
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.EOL_COMMENT, "0x0041222b", "Exact bytes comment.");
+		addComment(CommentType.EOL, "0x0041222b", "Exact bytes comment.");
 
 		runCorrelator(new ExactMatchBytesProgramCorrelatorFactory());
 		selectMatch("0x00412210", "0x004121f0");
@@ -103,7 +103,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		// Test a function match created by the Exact Mnemonics Match correlator.
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.PRE_COMMENT, "0x00412988", "Exact mnemonics comment.");
+		addComment(CommentType.PRE, "0x00412988", "Exact mnemonics comment.");
 
 		runCorrelator(new ExactMatchMnemonicsProgramCorrelatorFactory());
 		selectMatch("0x00412950", "0x00412930");
@@ -118,7 +118,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		// Test a function match created by the Exact Instructions Match correlator.
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.POST_COMMENT, "0x004129a2", "Exact instructions comment.");
+		addComment(CommentType.POST, "0x004129a2", "Exact instructions comment.");
 
 		runCorrelator(new ExactMatchInstructionsProgramCorrelatorFactory());
 		selectMatch("0x00412950", "0x00412930");
@@ -134,8 +134,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		// two programs are for the same language and processor.
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.EOL_COMMENT, "0x004126dd", "Similar name eol comment.");
-		addComment(CodeUnit.PRE_COMMENT, "0x004126d7", "Similar name pre comment.");
+		addComment(CommentType.EOL, "0x004126dd", "Similar name eol comment.");
+		addComment(CommentType.PRE, "0x004126d7", "Similar name pre comment.");
 
 		runCorrelator(new SimilarSymbolNameProgramCorrelatorFactory());
 		selectMatch("0x00412690", "0x00412720");
@@ -158,8 +158,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		vtTestEnv.showTool();
 
 		// add source comment
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401003",
-			"Similar name plate comment not at entry.");
+		addComment(CommentType.PLATE, "0x00401003", "Similar name plate comment not at entry.");
 
 		// create correlation run 
 		runCorrelator(new SimilarSymbolNameProgramCorrelatorFactory());
@@ -187,7 +186,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		Program p2 = buildProgram3("language3");
 		createSession(p1, p2);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.EOL_COMMENT, "0x00401003", "Similar name eol comment.");
+		addComment(CommentType.EOL, "0x00401003", "Similar name eol comment.");
 
 		runCorrelator(new SimilarSymbolNameProgramCorrelatorFactory());
 		selectMatch("0x00401000", "0x00402000");
@@ -208,8 +207,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		Program p2 = buildProgram2("language2");
 		createSession(p1, p2);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401000", "First plate comment.");
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401003", "Second plate comment.");
+		addComment(CommentType.PLATE, "0x00401000", "First plate comment.");
+		addComment(CommentType.PLATE, "0x00401003", "Second plate comment.");
 
 		runCorrelator(new SimilarSymbolNameProgramCorrelatorFactory());
 		selectMatch("0x00401000", "0x00402000");
@@ -237,8 +236,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		Program p2 = buildProgram3("language3");
 		createSession(p1, p2);
 		vtTestEnv.showTool();
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401000", "First plate comment.");
-		addComment(CodeUnit.PLATE_COMMENT, "0x00401003", "Second plate comment.");
+		addComment(CommentType.PLATE, "0x00401000", "First plate comment.");
+		addComment(CommentType.PLATE, "0x00401003", "Second plate comment.");
 
 		runCorrelator(new SimilarSymbolNameProgramCorrelatorFactory());
 		selectMatch("0x00401000", "0x00402000");
@@ -443,7 +442,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	 * @param sourceAddressString the source address of the markup
 	 * @param comment the comment to be added at the source address
 	 */
-	private void addComment(int commentType, String sourceAddressString, String comment) {
+	private void addComment(CommentType commentType, String sourceAddressString, String comment) {
 		Address srcAddress = addr(sourceAddressString, sourceProgram);
 		int txID = sourceProgram.startTransaction("Add Comment");
 		boolean commit = false;

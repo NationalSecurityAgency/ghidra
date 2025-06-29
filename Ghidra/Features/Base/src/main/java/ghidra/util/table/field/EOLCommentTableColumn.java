@@ -26,8 +26,8 @@ import ghidra.program.util.*;
  * This table column displays the Label for either the program location or the address
  * associated with a row in the table.
  */
-public class EOLCommentTableColumn extends
-		ProgramLocationTableColumnExtensionPoint<ProgramLocation, String> {
+public class EOLCommentTableColumn
+		extends ProgramLocationTableColumnExtensionPoint<ProgramLocation, String> {
 
 	@Override
 	public ProgramLocation getProgramLocation(ProgramLocation rowObject, Settings settings,
@@ -35,7 +35,8 @@ public class EOLCommentTableColumn extends
 
 		String comment = getEOLComment(rowObject, program);
 		if (comment != null) {
-			return new EolCommentFieldLocation(program, rowObject.getAddress(), null, null, 0, 0, 0);
+			return new EolCommentFieldLocation(program, rowObject.getAddress(), null, null, 0, 0,
+				0);
 		}
 		return rowObject;
 	}

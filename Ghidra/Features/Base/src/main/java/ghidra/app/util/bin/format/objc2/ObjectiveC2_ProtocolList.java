@@ -26,7 +26,6 @@ import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC2_ProtocolList implements StructConverter {
@@ -41,7 +40,7 @@ public class ObjectiveC2_ProtocolList implements StructConverter {
 		this._state = state;
 		this._index = reader.getPointerIndex();
 
-		long count = state.is32bit ? reader.readNextInt() & Conv.INT_MASK : reader.readNextLong();
+		long count = state.is32bit ? reader.readNextUnsignedInt() : reader.readNextLong();
 
 		for (long i = 0 ; i < count ; ++i) {
 			long protocolIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);

@@ -102,7 +102,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 		new GenericAddressSpace("REGISTER", 32, TYPE_REGISTER, 0);
 
 	/**
-	 * Returns the name of this address space.
+	 * {@return the name of this address space}.
 	 * With the exception of {@link OverlayAddressSpace}, the name of an address space may not change.
 	 */
 	String getName();
@@ -114,14 +114,16 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 */
 	int getSpaceID();
 
-	/** Returns the number of bits that are used to form the address.  Thus
+	/**
+	 * {@return the number of bits that are used to form the address.}  Thus
 	 * the maximum offset for this address space will be 2^size-1.
 	 */
 	int getSize();
 
 	/**
-	 * Returns the number of data bytes which correspond to each addressable 
-	 * location within this space (i.e., word-size in bytes).
+	 * {@return the number of data bytes which correspond to each addressable 
+	 * location within this space (i.e., word-size in bytes).}
+	 * <p>
 	 * NOTE: When transforming a byte-offset to an addressable word
 	 * offset the method {@link #getAddressableWordOffset(long)} should
 	 * be used instead of simple division.  When transforming an addressable word-offset
@@ -145,17 +147,19 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public long getAddressableWordOffset(long byteOffset);
 
 	/**
-	 * Returns the absolute size of a pointer into this space (in bytes).
+	 * {@return the absolute size of a pointer into this space (in bytes).}
 	 * @see Program#getDefaultPointerSize() for a user adjustable pointer size which is derived from the
 	 * CompilerSpec store pointer size.
 	 */
 	int getPointerSize();
 
-	/** Returns the type of this address space
+	/** 
+	 * {@return the type of this address space}
 	 */
 	int getType();
 
-	/** Returns the unique index for this address space
+	/**
+	 * {@return the unique index for this address space}
 	 */
 	int getUnique();
 
@@ -372,14 +376,14 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	/**
 	 * Check the specified address range for validity within this space.
 	 * Segmented spaces will restrict a range to a single segment.
-	 * @param byteOffset
-	 * @param length
+	 * @param byteOffset The offset
+	 * @param length The length
 	 * @return true if range is valid for this space
 	 */
 	public boolean isValidRange(long byteOffset, long length);
 
 	/**
-	 * Tests whether addr2 immediately follows addr1.
+	 * {@return true if addr2 immediately follows addr1; otherwise, false}
 	 * @param addr1 the first address.
 	 * @param addr2 the second address.
 	 */
@@ -426,7 +430,9 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public long makeValidOffset(long offset) throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns true if this space represents a memory address.  NOTE: It is important to 
+	 * {@return true if this space represents a memory address.}
+	 * <p>
+	 * NOTE: It is important to 
 	 * make the distinction between Loaded and Non-Loaded memory addresses.  Program importers
 	 * may create memory blocks associated with Non-Loaded file content which are not associated
 	 * with processor defined memory regions.  While Loaded file content is placed into
@@ -438,49 +444,48 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public boolean isMemorySpace();
 
 	/**
-	 * Returns true if this space represents a Loaded Memory
-	 * region (e.g., processor RAM).
+	 * {@return true if this space represents a Loaded Memory region (e.g., processor RAM)}
 	 */
 	public boolean isLoadedMemorySpace();
 
 	/**
-	 * Returns true if this space represents a Non-Loaded storage region
-	 * for retaining non-loaded file data (e.g., OTHER)
+	 * {@return true if this space represents a Non-Loaded storage region
+	 * for retaining non-loaded file data (e.g., OTHER)}
 	 */
 	public boolean isNonLoadedMemorySpace();
 
 	/**
-	 * Returns true if this space represents a register location
+	 * {@return true if this space represents a register location}
 	 */
 	public boolean isRegisterSpace();
 
 	/**
-	 * Returns true if this space represents a variable location
+	 * {@return true if this space represents a variable location}
 	 */
 	public boolean isVariableSpace();
 
 	/**
-	 * Returns true if this space represents a stack location
+	 * {@return true if this space represents a stack location}
 	 */
 	public boolean isStackSpace();
 
 	/**
-	 * Returns true if this space represents a location in the HASH space. 
+	 * {@return true if this space represents a location in the HASH space}
 	 */
 	public boolean isHashSpace();
 
 	/**
-	 * Returns true if this space in the EXTERNAL_SPACE
+	 * {@return true if this space in the EXTERNAL_SPACE}
 	 */
 	public boolean isExternalSpace();
 
 	/**
-	 * Returns true if this space in the unique space
+	 * {@return true if this space in the unique space}
 	 */
 	public boolean isUniqueSpace();
 
 	/**
-	 * Returns true if this space in the constant space
+	 * {@return true if this space in the constant space}
 	 */
 	public boolean isConstantSpace();
 
@@ -493,17 +498,17 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	boolean hasMappedRegisters();
 
 	/**
-	 * Returns true if the address should display its addressSpace name.
+	 * {@return true if the address should display its addressSpace name}
 	 */
 	boolean showSpaceName();
 
 	/**
-	 * Returns true if this addressSpace is an OverlayAddressSpace
+	 * {@return true if this addressSpace is an overlay address space}
 	 */
 	boolean isOverlaySpace();
 
 	/**
-	 * Returns true if space uses signed offset
+	 * {@return true if space uses signed offset}
 	 */
 	boolean hasSignedOffset();
 

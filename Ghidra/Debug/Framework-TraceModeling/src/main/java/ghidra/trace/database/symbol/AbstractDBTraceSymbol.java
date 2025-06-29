@@ -287,12 +287,6 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	@Override
-	public boolean hasMultipleReferences() {
-		// TODO: Could be slightly more efficient by just iterating twice?
-		return getReferenceCount() > 1;
-	}
-
-	@Override
 	public boolean hasReferences() {
 		return !getReferenceCollection().isEmpty();
 	}
@@ -316,7 +310,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	public DBTraceReference[] getReferences() {
 		return getReferences(TaskMonitor.DUMMY);
 	}
-
+	
 	@SuppressWarnings("hiding")
 	void rawSet(String name, long parentID) {
 		this.name = name;
@@ -564,8 +558,4 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		return false;
 	}
 
-	@Override
-	public boolean isExternalEntryPoint() {
-		return false;
-	}
 }
