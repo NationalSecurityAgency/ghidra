@@ -17,19 +17,23 @@ package ghidra.app.plugin.core.analysis;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.*;
-import ghidra.app.util.bin.format.macho.dyld.*;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.DyldCacheLoader;
-import ghidra.app.util.opinion.MachoLoader;
+import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.DyldCacheUtils.DyldCacheImageRecord;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.framework.options.Options;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.disassemble.Disassembler;
@@ -191,29 +195,31 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 	private void analyzeDyldCacheFunctionStarts(Program program, List<ByteProvider> providers,
 			AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws MachException, IOException, CancelledException {
-		Map<DyldCacheHeader, ByteProvider> providerMap = new HashMap<>();
+		List<DyldCacheHeader> headers = new ArrayList<>();
+		List<String> names = new ArrayList<>();
 
 		// Parse all DYLD Cache headers.  There could be more that one if the DYLD Cache is "split".
 		for (ByteProvider provider : providers) {
 			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
 			header.parseFromFile(false, log, monitor);
-			providerMap.put(header, provider);
+			headers.add(header);
+			names.add(provider.getName());
 		}
 
-		// Process each Mach-O header found in each DYLD Cache header
-		for (DyldCacheHeader dyldCacheHeader : providerMap.keySet()) {
-			List<DyldCacheImage> mappedImages = dyldCacheHeader.getMappedImages();
-			monitor.initialize(mappedImages.size());
-			for (DyldCacheImage mappedImage : mappedImages) {
-				String name = new File(mappedImage.getPath()).getName();
+		// Process each Mach-O header
+		try (SplitDyldCache splitDyldCache =
+			new SplitDyldCache(providers, headers, names, log, monitor)) {
+			List<DyldCacheImageRecord> imageRecords = DyldCacheUtils.getImageRecords(headers);
+			monitor.initialize(imageRecords.size());
+			for (DyldCacheImageRecord imageRecord : imageRecords) {
+				String name = new File(imageRecord.image().getPath()).getName();
 				monitor.checkCancelled();
 				monitor.setMessage("Analyzing function starts for " + name + "...");
 				monitor.incrementProgress(1);
 
 				// Parse Mach-O header
-				MachHeader machoHeader = new MachHeader(providerMap.get(dyldCacheHeader),
-					mappedImage.getAddress() - dyldCacheHeader.getBaseAddress(), false);
-				machoHeader.parse();
+				MachHeader machoHeader = splitDyldCache.getMacho(imageRecord);
+				machoHeader.parse(splitDyldCache);
 
 				// The list of function starts should always be in a __LINKEDIT segment.
 				// If the DYLD Cache is "split", a Mach-O's __LINKEDIT segment may live in a
@@ -221,8 +227,8 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 				SegmentCommand linkEdit = machoHeader.getSegment(SegmentNames.SEG_LINKEDIT);
 				if (linkEdit != null) {
 					boolean foundLinkEdit = false;
-					for (DyldCacheHeader header : providerMap.keySet()) {
-						for (DyldCacheMappingInfo mappingInfo : header.getMappingInfos()) {
+					for (DyldCacheHeader h : headers) {
+						for (DyldCacheMappingInfo mappingInfo : h.getMappingInfos()) {
 							if (mappingInfo.contains(linkEdit.getVMaddress(), true)) {
 								analyzeFunctionStarts(program, machoHeader, set, monitor);
 								foundLinkEdit = true;
@@ -287,7 +293,8 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 				else if (usePseudoDisassembler) {
 					try {
 						final String UDF = "UDF";
-						if (pdis.disassemble(addr).getMnemonicString().equalsIgnoreCase(UDF)) {
+						PseudoInstruction instr = pdis.disassemble(addr);
+						if (instr != null && instr.getMnemonicString().equalsIgnoreCase(UDF)) {
 							skipMessage = "Skipped \"" + UDF + "\" Instruction";
 						}
 						else if (!pdis.isValidSubroutine(addr, true, false)) {
@@ -295,7 +302,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 						}
 					}
 					catch (Exception e) {
-						// ignore
+						skipMessage = e.getMessage();
 					}
 				}
 				if (skipMessage != null) {

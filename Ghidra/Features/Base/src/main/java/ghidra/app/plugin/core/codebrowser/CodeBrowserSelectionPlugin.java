@@ -19,6 +19,7 @@ import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.ComponentProvider;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -85,6 +86,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.keyBinding("ctrl A")
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
 				.buildAndInstall(tool);
@@ -105,6 +107,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup(SELECT_GROUP, "c")
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
 				.buildAndInstall(tool);
@@ -116,6 +119,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup("SelectUtils")
 				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Selection_Tables"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
 				.buildAndInstall(tool);
@@ -125,6 +129,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup("SelectUtils")
 				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Selection_Tables"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(
 					c -> createAddressRangeTable((CodeViewerProvider) c.getComponentProvider()))
@@ -193,12 +198,22 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 		tableProvider.installRemoveItemsAction();
 	}
 
+	private boolean hasCodeViewer(ListingActionContext c) {
+		ComponentProvider provider = c.getComponentProvider();
+		return provider instanceof CodeViewerProvider;
+	}
+
 	private boolean hasSelection(ListingActionContext c) {
+		if (!hasCodeViewer(c)) {
+			return false;
+		}
+
 		if (c.hasSelection()) {
 			return true;
 		}
 
-		String textSelection = ((CodeViewerProvider) c.getComponentProvider()).getTextSelection();
+		CodeViewerProvider provider = (CodeViewerProvider) c.getComponentProvider();
+		String textSelection = provider.getTextSelection();
 		return !StringUtils.isBlank(textSelection);
 	}
 
