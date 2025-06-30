@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.pcode.exec.trace.data;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.property.*;
 
@@ -47,6 +48,11 @@ public class DefaultPcodeTracePropertyAccess<T>
 		this.type = type;
 
 		this.po = data.getPropertyOps(name, type, false);
+	}
+
+	@Override
+	public Language getLanguage() {
+		return data.getLanguage();
 	}
 
 	/**
@@ -112,6 +118,21 @@ public class DefaultPcodeTracePropertyAccess<T>
 			return;
 		}
 		ops.clear(span, toOverlay(ops, hostRange));
+	}
+
+	@Override
+	public boolean hasSpace(AddressSpace space) {
+		TracePropertyMapOperations<T> ops = getPropertyOperations(false);
+		if (ops == null) {
+			return false;
+		}
+		if (ops instanceof TracePropertyMapSpace<T> propSpace) {
+			return propSpace.getAddressSpace() == space;
+		}
+		if (ops instanceof TracePropertyMap<T> propMap) {
+			return propMap.getPropertyMapSpace(space, false) != null;
+		}
+		throw new AssertionError();
 	}
 
 	/**

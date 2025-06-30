@@ -60,6 +60,16 @@ file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
 	ext.RELEASE_VERSION = ghidraProps.getProperty('application.version')
 }
 
+// Z3 download versions (https://github.com/Z3Prover/z3/releases)
+// NOTE: Changing these versions also requires appropriate changes to the sha256 values for each of 
+// the Z3 files specified in the dependency list below.  These versions may also be specified
+// elsewhere within the Ghidra source/build code.
+ext.Z3_VER = "4.13.0"
+ext.Z3_ARM64_OSX_VER = "11.0"
+ext.Z3_X64_OSX_VER = "11.7.10"
+ext.Z3_X64_GLIBC_VER = "2.31"
+// No Z3_WIN_VER
+
 ext.deps = [
 	[
 		name: "java-sarif-2.1-modified.jar",
@@ -162,6 +172,39 @@ ext.deps = [
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x86.fidb",
 		sha256: "98605c6b6b9214a945d844e41c85860d54649a45bca7873ef6991c0e93720787",
 		destination: FID_DIR
+	],
+	[
+		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Use this one for the Java jar
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
+		sha256: "93f91f9c6f4a00a041c19fc7a74adc1f441c8244ce70d486e19abcd89c6a014b",
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/"), FLAT_REPO_DIR, new WildcardFileFilter("*.jar"))
+		}
+	],
+	[
+		name: "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip", // macOS on Apple silicon
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip",
+		sha256: "e23d03005558c1b5d3c1b8bd503e65b84edfe3f1ae4298bd8c4710b5b0a645eb",
+		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+	],
+	[
+		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Linux on 64-bit Intel
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
+		sha256: "93f91f9c6f4a00a041c19fc7a74adc1f441c8244ce70d486e19abcd89c6a014b",
+		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+	],
+	[
+		name: "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip", // macOS on 64-bit Intel
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip",
+		sha256: "7598c2be3129429e83fb5082b92ae973f41a6a289873b4ea33180d9072067e80",
+		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+	],
+	[
+		name: "z3-${Z3_VER}-x64-win.zip", // Windows on 64-bit Intel
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-win.zip",
+		sha256: "0a36dd5654fe423d23a727c4570c9db9a315926a4301189b868b6eb9bfd5979d",
+		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
 	],
 	[
 		name: "protobuf-6.31.0-py3-none-any.whl",

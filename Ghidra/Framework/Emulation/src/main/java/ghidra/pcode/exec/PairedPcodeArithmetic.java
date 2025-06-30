@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.math.BigInteger;
 import java.util.Objects;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -154,6 +155,22 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	@Override
 	public Pair<L, R> fromConst(byte[] value) {
 		return Pair.of(leftArith.fromConst(value), rightArith.fromConst(value));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(long value, int size) {
+		return Pair.of(leftArith.fromConst(value, size), rightArith.fromConst(value, size));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(BigInteger value, int size, boolean isContextreg) {
+		return Pair.of(leftArith.fromConst(value, size, isContextreg),
+			rightArith.fromConst(value, size, isContextreg));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(BigInteger value, int size) {
+		return Pair.of(leftArith.fromConst(value, size), rightArith.fromConst(value, size));
 	}
 
 	@Override
