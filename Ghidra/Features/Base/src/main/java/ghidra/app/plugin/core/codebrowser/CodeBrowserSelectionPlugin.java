@@ -17,6 +17,9 @@ package ghidra.app.plugin.core.codebrowser;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
+import docking.ComponentProvider;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -83,6 +86,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.keyBinding("ctrl A")
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
 				.buildAndInstall(tool);
@@ -93,7 +97,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
 				.withContext(ListingActionContext.class, true)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.enabledWhen(c -> c.hasSelection())
+				.enabledWhen(c -> hasSelection(c))
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
 						.setSelection(new ProgramSelection()))
 				.buildAndInstall(tool);
@@ -103,6 +107,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup(SELECT_GROUP, "c")
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
 				.buildAndInstall(tool);
@@ -114,6 +119,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup("SelectUtils")
 				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Selection_Tables"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
 				.buildAndInstall(tool);
@@ -123,6 +129,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.menuGroup("SelectUtils")
 				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Selection_Tables"))
 				.withContext(ListingActionContext.class, true)
+				.enabledWhen(this::hasCodeViewer)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(
 					c -> createAddressRangeTable((CodeViewerProvider) c.getComponentProvider()))
@@ -189,6 +196,25 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			tableService.showTableWithMarkers(title + " " + model.getName(), "Selections", model,
 				SearchConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, componentProvider);
 		tableProvider.installRemoveItemsAction();
+	}
+
+	private boolean hasCodeViewer(ListingActionContext c) {
+		ComponentProvider provider = c.getComponentProvider();
+		return provider instanceof CodeViewerProvider;
+	}
+
+	private boolean hasSelection(ListingActionContext c) {
+		if (!hasCodeViewer(c)) {
+			return false;
+		}
+
+		if (c.hasSelection()) {
+			return true;
+		}
+
+		CodeViewerProvider provider = (CodeViewerProvider) c.getComponentProvider();
+		String textSelection = provider.getTextSelection();
+		return !StringUtils.isBlank(textSelection);
 	}
 
 	private GhidraProgramTableModel<Address> createTableModel(Program program,
