@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Adds DWARF source file line number info to the current program as source map entries.
+// Adds DWARF source file info to the current program.
 // A source file that is relative after path normalization will have all leading "."
 // and "/../" entries stripped and then be placed under an artificial directory.
 // Note that you can run this script on a program that has already been analyzed by the
@@ -25,7 +25,9 @@ import java.util.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileInfo;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.framework.store.LockException;
@@ -77,19 +79,54 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 		int entryCount = 0;
 		List<DWARFCompilationUnit> compUnits = dprog.getCompilationUnits();
 		SourceFileManager sourceManager = currentProgram.getSourceFileManager();
+
+		monitor.initialize(compUnits.size(), "DWARF: Reading Source Information");
+		// add all the source files and read the source map entries
+		Map<SourceFileInfo, SourceFile> sourceFileInfoToSourceFile = new HashMap<>();
+		Set<SourceFileInfo> badSourceFileInfo = new HashSet<>();
 		List<SourceFileAddr> sourceInfo = new ArrayList<>();
-		monitor.initialize(compUnits.size(), "DWARF: Reading Source Map Info");
 		for (DWARFCompilationUnit cu : compUnits) {
+			DWARFLine dLine = cu.getLine();
 			monitor.increment();
+			for (int i = 0; i < dLine.getNumFiles(); ++i) {
+				String filePath = dLine.getFilePath(i, true);
+				if (filePath == null) {
+					continue;
+				}
+				byte[] md5 = dLine.getFile(i).getMD5();
+				SourceFileInfo sfi = new SourceFileInfo(filePath, md5);
+				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
+					continue;
+				}
+				if (badSourceFileInfo.contains(sfi)) {
+					continue;
+				}
+				try {
+					String path = SourceFileUtils.normalizeDwarfPath(filePath,
+						COMPILATION_ROOT_DIRECTORY);
+					SourceFileIdType type =
+						md5 == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
+					SourceFile sFile = new SourceFile(path, type, md5);
+					sourceManager.addSourceFile(sFile);
+					sourceFileInfoToSourceFile.put(sfi, sFile);
+				}
+				catch (IllegalArgumentException e) {
+					if (numErrors++ < MAX_ERROR_MSGS_TO_DISPLAY) {
+						printerr("Exception creating source file %s".formatted(e.getMessage()));
+					}
+					badSourceFileInfo.add(sfi);
+					continue;
+				}
+			}
 			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
 		}
+
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Sorting " + sourceInfo.size() + " entries");
 		sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
 		monitor.setIndeterminate(false);
 		monitor.initialize(sourceInfo.size(), "DWARF: Applying Source Map Info");
-		Map<SourceFileAddr, SourceFile> sfasToSourceFiles = new HashMap<>();
-		Set<SourceFileAddr> badSfas = new HashSet<>();
+
 		AddressSet warnedAddresses = new AddressSet();
 		for (int i = 0; i < sourceInfo.size(); i++) {
 			monitor.increment(1);
@@ -100,8 +137,9 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 			if (sourceFileAddr.fileName() == null) {
 				continue;
 			}
-
-			if (badSfas.contains(sourceFileAddr)) {
+			SourceFileInfo sfi =
+				new SourceFileInfo(sourceFileAddr.fileName(), sourceFileAddr.md5());
+			if (badSourceFileInfo.contains(sfi)) {
 				continue;
 			}
 
@@ -142,25 +180,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 			}
 
 
-			SourceFile source = sfasToSourceFiles.get(sourceFileAddr);
-			if (source == null) {
-				try {
-					String path = SourceFileUtils.normalizeDwarfPath(sourceFileAddr.fileName(),
-						COMPILATION_ROOT_DIRECTORY);
-					SourceFileIdType type =
-						sourceFileAddr.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
-					source = new SourceFile(path, type, sourceFileAddr.md5());
-					sourceManager.addSourceFile(source);
-					sfasToSourceFiles.put(sourceFileAddr, source);
-				}
-				catch (IllegalArgumentException e) {
-					if (numErrors++ < MAX_ERROR_MSGS_TO_DISPLAY) {
-						printerr("Exception creating source file %s".formatted(e.getMessage()));
-					}
-					badSfas.add(sourceFileAddr);
-					continue;
-				}
-			}
+			SourceFile source = sourceFileInfoToSourceFile.get(sfi);
 			try {
 				sourceManager.addSourceMapEntry(source, sourceFileAddr.lineNum(), addr, length);
 			}

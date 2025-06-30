@@ -270,6 +270,8 @@ public class DWARFLine {
 		return lpe;
 	}
 
+	public record SourceFileInfo(String filePath, byte[] md5) {}
+
 	public record SourceFileAddr(long address, String fileName, byte[] md5, int lineNum,
 			boolean isEndSequence) {}
 
