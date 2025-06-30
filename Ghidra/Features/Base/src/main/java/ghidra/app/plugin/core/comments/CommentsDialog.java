@@ -137,8 +137,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 	void setCommentType(CommentType type) {
 		if (type == null) {
-			tab.setSelectedIndex(0);
-			return;
+			return; // Leave tab unchanged from last use
 		}
 		switch (type) {
 			case CommentType.EOL:
