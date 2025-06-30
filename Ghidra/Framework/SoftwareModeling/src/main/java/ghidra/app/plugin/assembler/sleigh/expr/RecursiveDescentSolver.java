@@ -170,7 +170,7 @@ public class RecursiveDescentSolver {
 	protected <T extends PatternExpression> MaskedLong getValue(T exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, cur);
-		DBG.println("Expression: " + value + " =: " + exp);
+		// DBG.println("Expression: " + value + " =: " + exp);
 		return value;
 	}
 

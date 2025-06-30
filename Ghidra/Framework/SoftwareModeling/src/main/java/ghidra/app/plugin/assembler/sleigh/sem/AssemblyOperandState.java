@@ -128,13 +128,13 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 		if (symExp == null) {
 			symExp = opSym.getDefiningSymbol().getPatternExpression();
 		}
-		DBG.println("Equation: " + symExp + " = " + Long.toHexString(value));
+		// DBG.println("Equation: " + symExp + " = " + Long.toHexString(value));
 		String desc = "Solution to " + opSym + " in " + Long.toHexString(value) + " = " + symExp;
 		AssemblyResolution sol =
 			factory.solveOrBackfill(symExp, value, bitsize, resolver.vals, null, desc);
-		DBG.println("Solution: " + sol);
+		// DBG.println("Solution: " + sol);
 		AssemblyResolution shifted = sol.shift(shift);
-		DBG.println("Shifted: " + shifted);
+		// DBG.println("Shifted: " + shifted);
 		return shifted;
 	}
 
