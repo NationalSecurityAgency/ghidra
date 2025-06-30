@@ -62,8 +62,8 @@ file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
 
 // Z3 download versions (https://github.com/Z3Prover/z3/releases)
 // NOTE: Changing these versions also requires appropriate changes to the sha256 values for each of 
-// the Z3 files specified in the dependency list below.  These versions may also be specified
-// elsewhere within the Ghidra source/build code.
+// the Z3 files specified in the dependency list below.  These versions are also be specified
+// elsewhere within the build.gradle code.
 ext.Z3_VER = "4.13.0"
 ext.Z3_ARM64_OSX_VER = "11.0"
 ext.Z3_X64_OSX_VER = "11.7.10"
