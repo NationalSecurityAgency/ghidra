@@ -52,8 +52,8 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	@DBAnnotatedColumn(DATATYPE_COLUMN_NAME)
 	static DBObjectColumn DATATYPE_COLUMN;
 
-	static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+	static String tableName(AddressSpace space) {
+		return DBTraceUtils.tableName(TABLE_NAME, space);
 	}
 
 	@DBAnnotatedField(column = PLATFORM_COLUMN_NAME)
@@ -269,7 +269,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	@Override
 	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
 		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
-				.get(space, createIfAbsent);
+				.get(space.space, createIfAbsent);
 	}
 
 	@Override

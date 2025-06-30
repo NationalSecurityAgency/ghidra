@@ -61,13 +61,7 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	@Override
 	protected DBTraceReferenceSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceReferenceSpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceReferenceSpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceReferenceSpace(this, dbh, space, ent, thread);
+		return new DBTraceReferenceSpace(this, dbh, space, ent);
 	}
 
 	/**
@@ -272,13 +266,13 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	@Override
 	public AddressSetView getReferenceSources(Lifespan span) {
 		return new UnionAddressSetView(
-			memSpacesView.stream().map(s -> s.getReferenceSources(span)).toList());
+			spacesView.stream().map(s -> s.getReferenceSources(span)).toList());
 	}
 
 	@Override
 	public AddressSetView getReferenceDestinations(Lifespan span) {
 		return new UnionAddressSetView(
-			memSpacesView.stream().map(s -> s.getReferenceDestinations(span)).toList());
+			spacesView.stream().map(s -> s.getReferenceDestinations(span)).toList());
 	}
 
 	@Override
@@ -296,6 +290,6 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	protected Collection<? extends DBTraceReference> getReferencesBySymbolId(long id) {
 		// NOTE: Must include register spaces, since this API is not public
 		// Only accessed via Symbol, for which it makes sense to include ALL refs.
-		return delegateCollection(allSpacesView, m -> m.getReferencesBySymbolId(id));
+		return delegateCollection(spacesView, m -> m.getReferencesBySymbolId(id));
 	}
 }

@@ -343,16 +343,16 @@ public class PopulateDemoTrace extends GhidraScript {
 			 */
 			mainLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400000), "main", global, SourceType.USER_DEFINED);
+					.create(snap, addr(0x00400000), "main", global, SourceType.USER_DEFINED);
 			cloneLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400060), "clone", global, SourceType.USER_DEFINED);
+					.create(snap, addr(0x00400060), "clone", global, SourceType.USER_DEFINED);
 			childLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400034), "child", global, SourceType.USER_DEFINED);
+					.create(snap, addr(0x00400034), "child", global, SourceType.USER_DEFINED);
 			exitLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, null, addr(0x00400061), "exit", global, SourceType.USER_DEFINED);
+					.create(snap, addr(0x00400061), "exit", global, SourceType.USER_DEFINED);
 
 			/**
 			 * Note the use of getProgramView as a means of using components intended for Program

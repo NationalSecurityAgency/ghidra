@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,6 +81,11 @@ public abstract class AbstractDebuggerRegistersProviderTest
 		waitForComponentProvider(DebuggerListingProvider.class).setAutoDisassemble(false);
 
 		createTrace();
+
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
+		}
+
 		r0 = tb.language.getRegister("r0");
 		pc = tb.language.getProgramCounter();
 		sp = tb.language.getDefaultCompilerSpec().getStackPointer();
@@ -109,6 +114,9 @@ public abstract class AbstractDebuggerRegistersProviderTest
 		controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createTrace();
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
+		}
 		createToyPlatform();
 
 		r0 = tb.reg(toy, "r0");
@@ -134,12 +142,14 @@ public abstract class AbstractDebuggerRegistersProviderTest
 	}
 
 	protected TraceThread addThread() throws DuplicateNameException {
-		return addThread("Thread1");
+		return addThread("Processes[1].Threads[1]");
 	}
 
 	protected TraceThread addThread(String threadName) throws DuplicateNameException {
 		try (Transaction tx = tb.startTransaction()) {
-			return tb.trace.getThreadManager().createThread(threadName, 0);
+			TraceThread thread = tb.trace.getThreadManager().createThread(threadName, 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
+			return thread;
 		}
 	}
 

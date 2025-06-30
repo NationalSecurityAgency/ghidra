@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -310,7 +310,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	@Override
 	public Iterator<Bookmark> getBookmarksIterator() {
 		// TODO: This seems terribly inefficient. We'll have to see how/when it's used.
-		return NestedIterator.start(bookmarkManager.getActiveMemorySpaces().iterator(),
+		return NestedIterator.start(bookmarkManager.getActiveSpaces().iterator(),
 			space -> filteredIterator(space.getAllBookmarks().iterator(),
 				bm -> program.viewport.containsAnyUpper(bm.getLifespan())));
 	}
@@ -368,7 +368,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		// Not doing so here causes a slight display error in the bookmark table.
 		// It will say "Row i of n", but n will be greater than the actual number of rows.
 		int sum = 0;
-		for (DBTraceBookmarkSpace space : bookmarkManager.getActiveMemorySpaces()) {
+		for (DBTraceBookmarkSpace space : bookmarkManager.getActiveSpaces()) {
 			sum += space.getAllBookmarks().size();
 		}
 		return sum;

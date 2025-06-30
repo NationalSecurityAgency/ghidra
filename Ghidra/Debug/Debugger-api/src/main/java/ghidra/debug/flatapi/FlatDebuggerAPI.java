@@ -53,7 +53,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.MathUtilities;
@@ -1452,11 +1451,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionContext createContext(TraceThread thread) {
-		if (thread instanceof TraceObjectThread objThread) {
-			return createContext(objThread.getObject());
-		}
-		return new DebuggerSingleObjectPathActionContext(
-			KeyPath.parse(thread.getPath()));
+		return createContext(thread.getObject());
 	}
 
 	default ActionContext createContext(Trace trace) {

@@ -69,9 +69,9 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -283,37 +283,28 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadDestroyed);
 		}
 
-		private boolean isVisibleObjectsMode(AddressSpace space) {
-			TraceObject container = current.getRegisterContainer();
-			return container != null &&
-				container.getCanonicalPath().toString().equals(space.getName());
-		}
-
-		private boolean isVisible(TraceAddressSpace space) {
+		private boolean isVisible(AddressSpace space) {
+			if (!space.isRegisterSpace()) {
+				return true; // Memory-mapped, visible no matter the active thread
+			}
 			TraceThread curThread = current.getThread();
 			if (curThread == null) {
 				return false;
 			}
-			if (space.getAddressSpace().isOverlaySpace()) {
-				return isVisibleObjectsMode(space.getAddressSpace());
+			if (space.isOverlaySpace()) {
+				return current.isRegisterSpace(space);
 			}
-			if (!space.getAddressSpace().isRegisterSpace()) {
-				return true; // Memory-mapped, visible no matter the active thread
+			if (space.isRegisterSpace()) {
+				throw new AssertionError();
 			}
-			if (space.getThread() != curThread) {
-				return false;
-			}
-			if (space.getFrameLevel() != current.getFrame()) {
-				return false;
-			}
-			return true;
+			return false;
 		}
 
-		private boolean isVisible(TraceAddressSpace space, TraceAddressSnapRange range) {
+		private boolean isVisible(AddressSpace space, TraceAddressSnapRange range) {
 			if (!isVisible(space)) {
 				return false;
 			}
-			if (space.getAddressSpace().isMemorySpace()) {
+			if (space.isMemorySpace()) {
 				return current.getPlatform()
 						.getLanguage()
 						.getRegisterAddresses()
@@ -351,7 +342,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			}
 		}
 
-		private void registerValueChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerValueChanged(AddressSpace space, TraceAddressSnapRange range,
 				byte[] oldIsNull, byte[] newVal) {
 			if (!isVisible(space, range)) {
 				return;
@@ -359,7 +350,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerStateChanged(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerStateChanged(AddressSpace space, TraceAddressSnapRange range,
 				TraceMemoryState oldState, TraceMemoryState newState) {
 			if (!isVisible(space, range)) {
 				return;
@@ -368,7 +359,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeAdded(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeAdded(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldIsNull, TraceCodeUnit newUnit) {
 			if (!isVisible(space, range)) {
 				return;
@@ -376,7 +367,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeReplaced(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeReplaced(AddressSpace space, TraceAddressSnapRange range,
 				long oldTypeID, long newTypeID) {
 			if (!isVisible(space, range)) {
 				return;
@@ -384,7 +375,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range.getRange());
 		}
 
-		private void registerTypeLifespanChanged(TraceAddressSpace space, TraceCodeUnit unit,
+		private void registerTypeLifespanChanged(AddressSpace space, TraceCodeUnit unit,
 				Lifespan oldSpan, Lifespan newSpan) {
 			if (!isVisible(space)) {
 				return;
@@ -402,7 +393,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			refreshRange(range); // Slightly wasteful, as we already have the data unit
 		}
 
-		private void registerTypeRemoved(TraceAddressSpace space, TraceAddressSnapRange range,
+		private void registerTypeRemoved(AddressSpace space, TraceAddressSnapRange range,
 				TraceCodeUnit oldUnit, TraceCodeUnit newIsNull) {
 			if (!isVisible(space)) {
 				return;

@@ -547,7 +547,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	DebuggerModulesPanel modulesPanel;
 	DebuggerSectionsPanel sectionsPanel;
 
-	// TODO: Lazy construction of these dialogs?
+	// LATER?: Lazy construction of these dialogs?
 	private final DebuggerBlockChooserDialog blockChooserDialog;
 	private final DebuggerModuleMapProposalDialog moduleProposalDialog;
 	private final DebuggerSectionMapProposalDialog sectionProposalDialog;

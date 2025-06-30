@@ -227,8 +227,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.delete(hostRange);
 			guestAddressSet.delete(guestRange);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_DELETED, null, this, range, null));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_DELETED,
+			range.getHostRange().getAddressSpace(), this, range, null));
 	}
 
 	@Override
@@ -280,8 +280,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.add(mappedRange.getHostRange());
 			guestAddressSet.add(mappedRange.getGuestRange());
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_ADDED, null,
-			this, null, mappedRange));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_ADDED,
+			hostStart.getAddressSpace(), this, null, mappedRange));
 		return mappedRange;
 	}
 

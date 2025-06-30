@@ -42,7 +42,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceSpace;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
@@ -136,8 +135,8 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		@DBAnnotatedColumn(FLAGS_COLUMN_NAME)
 		static DBObjectColumn FLAGS_COLUMN;
 
-		public static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-			return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+		public static String tableName(AddressSpace space) {
+			return DBTraceUtils.tableName(TABLE_NAME, space);
 		}
 
 		@DBAnnotatedField(
@@ -228,11 +227,11 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 			if (oldSymbol != null) {
 				space.trace.setChanged(new TraceChangeRecord<>(
-					TraceEvents.SYMBOL_ASSOCIATION_REMOVED, space, oldSymbol, ref));
+					TraceEvents.SYMBOL_ASSOCIATION_REMOVED, space.space, oldSymbol, ref));
 			}
 			if (newSymbol != null) {
 				space.trace.setChanged(new TraceChangeRecord<>(
-					TraceEvents.SYMBOL_ASSOCIATION_ADDED, space, newSymbol, ref));
+					TraceEvents.SYMBOL_ASSOCIATION_ADDED, space.space, newSymbol, ref));
 			}
 		}
 
@@ -288,8 +287,8 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		@DBAnnotatedColumn(REF_SPACE_COLUMN_NAME)
 		static DBObjectColumn REF_SPACE_COLUMN;
 
-		public static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-			return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+		public static String tableName(AddressSpace space) {
+			return DBTraceUtils.tableName(TABLE_NAME, space);
 		}
 
 		@DBAnnotatedField(column = REF_SPACE_COLUMN_NAME)
@@ -331,8 +330,6 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	protected final DBTraceReferenceManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -346,12 +343,10 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	protected final DBCachedObjectIndex<Long, DBTraceXRefEntry> xrefsByRefKey;
 
 	public DBTraceReferenceSpace(DBTraceReferenceManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -360,18 +355,15 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		long threadKey = ent.getThreadKey();
-		int frameLevel = ent.getFrameLevel();
 		this.referenceMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceReferenceEntry.tableName(space, threadKey, frameLevel), factory, lock, space,
-			thread, frameLevel, DBTraceReferenceEntry.class,
-			(t, s, r) -> new DBTraceReferenceEntry(this, t, s, r));
+			DBTraceReferenceEntry.tableName(space), trace, factory, lock, space,
+			DBTraceReferenceEntry.class, (t, s, r) -> new DBTraceReferenceEntry(this, t, s, r));
 		this.refsBySymbolId =
 			referenceMapSpace.getUserIndex(long.class, DBTraceReferenceEntry.SYMBOL_ID_COLUMN);
 
 		this.xrefMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceXRefEntry.tableName(space, threadKey, frameLevel), factory, lock, space, thread,
-			frameLevel, DBTraceXRefEntry.class, (t, s, r) -> new DBTraceXRefEntry(this, t, s, r));
+			DBTraceXRefEntry.tableName(space), trace, factory, lock, space,
+			DBTraceXRefEntry.class, (t, s, r) -> new DBTraceXRefEntry(this, t, s, r));
 		this.xrefsByRefKey = xrefMapSpace.getUserIndex(long.class, DBTraceXRefEntry.REF_KEY_COLUMN);
 	}
 
@@ -405,18 +397,13 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
+	public DBTrace getTrace() {
+		return trace;
+	}
+
+	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
-	}
-
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
 	}
 
 	@Override
@@ -692,8 +679,9 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		if (ref.getLifespan().lmin() < otherStartSnap) {
 			Lifespan oldSpan = ref.getLifespan();
 			ref.setEndSnap(otherStartSnap - 1);
-			trace.setChanged(new TraceChangeRecord<>(TraceEvents.REFERENCE_LIFESPAN_CHANGED, this,
-				ref.ref, oldSpan, ref.getLifespan()));
+			trace.setChanged(new TraceChangeRecord<>(
+				TraceEvents.REFERENCE_LIFESPAN_CHANGED, space, ref.ref, oldSpan,
+				ref.getLifespan()));
 		}
 		else {
 			ref.ref.delete();

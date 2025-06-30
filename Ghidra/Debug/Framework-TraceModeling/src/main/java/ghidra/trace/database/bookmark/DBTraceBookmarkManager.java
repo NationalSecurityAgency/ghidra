@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.database.space.*;
+import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
+import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
@@ -55,14 +56,6 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	 * | SpaceID |    Key   |
 	 * +---------+----------+
 	 * }
-	 * 
-	 * For register space:
-	 * 
-	 * {@code
-	 * +---12----+----32----+----8----+--12--+
-	 * | SpaceID |  Thread  |  Frame  |  Key |
-	 * +---------+----------+---------+------+
-	 * }
 	 */
 	// NOTE: There are few address spaces, but their IDs encode other stuff :/
 	protected static final int SPACE_ID_MASK = 0x0FFF;
@@ -71,23 +64,8 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	protected static final long MEM_KEY_MASK = 0x000F_FFFF_FFFF_FFFFL;
 	protected static final int MEM_KEY_SHIFT = 0;
 
-	protected static final long REG_THREAD_MASK = 0x0_FFFF_FFFFL;
-	protected static final int REG_THREAD_SHIFT = 20;
-
-	protected static final long REG_FRAME_MASK = 0x00FF;
-	protected static final int REG_FRAME_SHIFT = 12;
-
-	protected static final long REG_KEY_MASK = 0x0FFF;
-	protected static final int REG_KEY_SHIFT = 0;
-
-	protected static long packId(long key, DBTraceSpaceKey spaceKey) {
-		return spaceKey.getAddressSpace().isRegisterSpace() ? packRegId(key, spaceKey)
-				: packMemId(key, spaceKey);
-	}
-
-	protected static long packMemId(long key, DBTraceSpaceKey spaceKey) {
-		long spaceId = spaceKey.getAddressSpace().getSpaceID();
-		assert spaceKey.getThread() == null;
+	protected static long packId(long key, AddressSpace space) {
+		long spaceId = space.getSpaceID();
 
 		if ((spaceId & SPACE_ID_MASK) != spaceId) {
 			throw new AssertionError("Bad assumption");
@@ -98,69 +76,17 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 		return (spaceId << SPACE_ID_SHIFT) | (key << MEM_KEY_SHIFT);
 	}
 
-	protected static long packRegId(long key, DBTraceSpaceKey spaceKey) {
-		long spaceId = spaceKey.getAddressSpace().getSpaceID();
-		long threadKey = spaceKey.getThread().getKey();
-		int frameLevel = spaceKey.getFrameLevel();
-
-		if ((spaceId & SPACE_ID_MASK) != spaceId) {
-			throw new AssertionError("Bad assumption");
-		}
-		if ((threadKey & REG_THREAD_MASK) != threadKey) {
-			throw new AssertionError("Bad assumption");
-		}
-		if ((frameLevel & REG_FRAME_MASK) != frameLevel) {
-			throw new AssertionError("Bad assumption");
-		}
-		if ((key & REG_KEY_MASK) != key) {
-			throw new AssertionError("Bad assumption");
-		}
-		return (spaceId << SPACE_ID_SHIFT) | (threadKey << REG_THREAD_SHIFT) |
-			(frameLevel << REG_FRAME_SHIFT) | (key << REG_KEY_SHIFT);
-	}
-
 	protected static int unpackSpaceId(long id) {
 		return (int) ((id >> SPACE_ID_SHIFT) & SPACE_ID_MASK);
 	}
 
-	protected static long unpackMemKey(long id) {
+	protected static long unpackKey(long id) {
 		return (id >> MEM_KEY_SHIFT) & MEM_KEY_MASK;
 	}
 
-	protected static long unpackRegThread(long id) {
-		return (id >> REG_THREAD_SHIFT) & REG_THREAD_MASK;
-	}
-
-	protected static int unpackRegFrame(long id) {
-		return (int) ((id >> REG_FRAME_SHIFT) & REG_FRAME_MASK);
-	}
-
-	protected static long unpackRegKey(long id) {
-		return (id >> REG_KEY_SHIFT) & REG_KEY_MASK;
-	}
-
-	protected static DBTraceSpaceKey unpackSpaceKey(long id, Language baseLanguage,
-			DBTraceThreadManager threadManager) {
+	protected static AddressSpace unpackSpace(long id, AddressFactory addressFactory) {
 		int spaceId = unpackSpaceId(id);
-		AddressSpace space = baseLanguage.getAddressFactory().getAddressSpace(spaceId);
-		if (space == null) {
-			return null;
-		}
-		return space.isRegisterSpace() ? unpackRegSpaceKey(space, threadManager, id)
-				: unpackMemSpaceKey(space, id);
-	}
-
-	protected static DBTraceSpaceKey unpackMemSpaceKey(AddressSpace space, long id) {
-		return DBTraceSpaceKey.create(space, null, 0);
-	}
-
-	protected static DBTraceSpaceKey unpackRegSpaceKey(AddressSpace space,
-			DBTraceThreadManager threadManager, long id) {
-		long threadKey = unpackRegThread(id);
-		TraceThread thread = threadManager.getThread(threadKey);
-		assert thread != null;
-		int frameLevel = unpackRegFrame(id);
-		return DBTraceSpaceKey.create(space, thread, frameLevel);
+		return addressFactory.getAddressSpace(spaceId);
 	}
 
 	protected final Map<String, DBTraceBookmarkType> typesByName = new HashMap<>();
@@ -178,13 +104,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	@Override
 	protected DBTraceBookmarkSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceBookmarkSpace(this, space, null, 0);
-	}
-
-	@Override
-	protected DBTraceBookmarkSpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceBookmarkSpace(this, space, thread, ent.getFrameLevel());
+		return new DBTraceBookmarkSpace(this, space);
 	}
 
 	@Override
@@ -267,16 +187,15 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	@Override
 	public DBTraceBookmark getBookmark(long id) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			DBTraceSpaceKey spaceKey = unpackSpaceKey(id, baseLanguage, threadManager);
-			if (spaceKey == null) {
+			AddressSpace addressSpace = unpackSpace(id, trace.getInternalAddressFactory());
+			if (addressSpace == null) {
 				return null;
 			}
-			DBTraceBookmarkSpace space = get(spaceKey, false);
+			DBTraceBookmarkSpace space = get(addressSpace, false);
 			if (space == null) {
 				return null;
 			}
-			long bookmarkKey =
-				spaceKey.getAddressSpace().isRegisterSpace() ? unpackRegKey(id) : unpackMemKey(id);
+			long bookmarkKey = unpackKey(id);
 			return space.bookmarkMapSpace.getDataByKey(bookmarkKey);
 		}
 	}
@@ -288,7 +207,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 
 	@Override
 	public Set<String> getCategoriesForType(TraceBookmarkType type) {
-		return delegateHashSet(getActiveMemorySpaces(), m -> m.getCategoriesForType(type));
+		return delegateHashSet(getActiveSpaces(), m -> m.getCategoriesForType(type));
 	}
 
 	@Override
@@ -300,7 +219,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 
 	@Override
 	public Collection<? extends DBTraceBookmark> getAllBookmarks() {
-		return delegateCollection(getActiveMemorySpaces(), m -> m.getAllBookmarks());
+		return delegateCollection(getActiveSpaces(), m -> m.getAllBookmarks());
 	}
 
 	@Override
@@ -329,7 +248,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			return Collections.emptySet();
 		}
 		Collection<DBTraceBookmark> result = new ArrayList<>();
-		for (DBTraceBookmarkSpace space : memSpaces.values()) {
+		for (DBTraceBookmarkSpace space : spaces.values()) {
 			result.addAll(space.bookmarkMapSpace
 					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.getAddressSpace()))
 					.values());
@@ -343,7 +262,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			return Collections.emptySet();
 		}
 		Collection<DBTraceBookmark> result = new ArrayList<>();
-		for (DBTraceBookmarkSpace space : memSpaces.values()) {
+		for (DBTraceBookmarkSpace space : spaces.values()) {
 			result.addAll(space.bookmarkMapSpace
 					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.getAddressSpace()))
 					.values());

@@ -19,7 +19,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
 
@@ -305,6 +304,19 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @return the iterable of units
 	 */
 	default Iterable<? extends T> get(long snap, Register register, boolean forward) {
-		return get(snap, TraceRegisterUtils.rangeForRegister(register), forward);
+		return get(getTrace().getPlatformManager().getHostPlatform(), snap, register, forward);
 	}
+
+	/**
+	 * Get the live units whose start addresses are within the given register
+	 * 
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the snap during which the units must be alive
+	 * @param register the register
+	 * @param forward true to order the units by increasing address, false for descending
+	 * @return the iterable of units
+	 */
+	Iterable<? extends T> get(TracePlatform platform, long snap, Register register,
+			boolean forward);
 }

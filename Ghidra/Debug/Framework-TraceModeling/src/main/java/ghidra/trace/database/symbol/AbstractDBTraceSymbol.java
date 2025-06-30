@@ -39,7 +39,8 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceSymbol;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.DBAnnotatedColumn;
@@ -172,8 +173,8 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		return null;
 	}
 
-	protected TraceAddressSpace getSpace() {
-		return null;
+	protected AddressSpace getAddressSpace() {
+		return getAddress().getAddressSpace();
 	}
 
 	@Override
@@ -334,7 +335,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 			return null;
 		}
 		this.name = newName;
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_RENAMED, getSpace(), this, oldName,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_RENAMED, getAddressSpace(), this, oldName,
 			newName);
 	}
 
@@ -359,7 +360,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		DBTraceNamespaceSymbol checkedParent = checkCircular(newParent);
 		this.parent = checkedParent;
 		this.parentID = parent.getID();
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_PARENT_CHANGED, getSpace(), this,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_PARENT_CHANGED, getAddressSpace(), this,
 			oldParent, checkedParent);
 	}
 
@@ -383,7 +384,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 			return null;
 		}
 		doSetSource(newSource);
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_SOURCE_CHANGED, getSpace(), this,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_SOURCE_CHANGED, getAddressSpace(), this,
 			oldSource, newSource);
 	}
 

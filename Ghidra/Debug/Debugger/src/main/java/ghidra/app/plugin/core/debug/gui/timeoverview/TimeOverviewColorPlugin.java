@@ -42,11 +42,15 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
-import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.memory.*;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointManager;
+import ghidra.trace.model.memory.TraceMemoryManager;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceModuleManager;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.*;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -74,14 +78,13 @@ import resources.ResourceManager;
 )
 
 public class TimeOverviewColorPlugin extends AbstractDebuggerPlugin {
-	
+
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
-
 
 	public static final String HELP_TOPIC = "OverviewPlugin";
 	private static final String ACTIVE_SERVICES = "ActiveServices";
@@ -270,27 +273,19 @@ public class TimeOverviewColorPlugin extends AbstractDebuggerPlugin {
 		Trace trace = traceManager.getCurrentTrace();
 		TraceThreadManager threadManager = trace.getThreadManager();
 		for (TraceThread thread : threadManager.getAllThreads()) {
-			if (thread instanceof TraceObjectThread objThread) {
-				addObject(set, objThread.getObject());
-			}
+			addObject(set, thread.getObject());
 		}
 		TraceModuleManager moduleManager = trace.getModuleManager();
 		for (TraceModule module : moduleManager.getAllModules()) {
-			if (module instanceof TraceObjectModule objModule) {
-				addObject(set, objModule.getObject());
-			}
+			addObject(set, module.getObject());
 		}
 		TraceMemoryManager memoryManager = trace.getMemoryManager();
 		for (TraceMemoryRegion region : memoryManager.getAllRegions()) {
-			if (region instanceof TraceObjectMemoryRegion objRegion) {
-				addObject(set, objRegion.getObject());
-			}
+			addObject(set, region.getObject());
 		}
 		TraceBreakpointManager breakpointManager = trace.getBreakpointManager();
-		for (TraceBreakpoint bpt : breakpointManager.getAllBreakpoints()) {
-			if (bpt instanceof TraceObjectBreakpointLocation objBreakpoint) {
-				addObject(set, objBreakpoint.getObject());
-			}
+		for (TraceBreakpointLocation bpt : breakpointManager.getAllBreakpointLocations()) {
+			addObject(set, bpt.getObject());
 		}
 		TraceBookmarkManager bookmarkManager = trace.getBookmarkManager();
 		for (TraceBookmark mark : bookmarkManager.getAllBookmarks()) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.*;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
@@ -41,16 +40,12 @@ public class DBTraceReference implements TraceReference {
 		return ent.space.trace;
 	}
 
-	public TraceThread getThread() {
-		return ent.space.getThread();
-	}
-
 	@Override
 	public void delete() {
 		try (LockHold hold = LockHold.lock(ent.space.lock.writeLock())) {
 			ent.doDelete();
-			ent.space.trace.setChanged(
-				new TraceChangeRecord<>(TraceEvents.REFERENCE_DELETED, ent.space, ent, this));
+			ent.space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REFERENCE_DELETED,
+				ent.space.space, ent, this));
 			if (isPrimary()) {
 				Collection<? extends DBTraceReference> remaining = ent.space.getReferencesFrom(
 					getStartSnap(), getFromAddress(), getOperandIndex());
@@ -60,7 +55,7 @@ public class DBTraceReference implements TraceReference {
 				DBTraceReference newPrimary = remaining.iterator().next();
 				newPrimary.ent.setPrimary(true);
 				ent.space.trace.setChanged(new TraceChangeRecord<>(
-					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, this, false, true));
+					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space.space, this, false, true));
 			}
 		}
 	}
@@ -98,11 +93,12 @@ public class DBTraceReference implements TraceReference {
 			if (oldPrimary != null) {
 				oldPrimary.ent.setPrimary(false);
 				ent.space.trace.setChanged(new TraceChangeRecord<>(
-					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, oldPrimary, true, false));
+					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space.space, oldPrimary, true,
+					false));
 			}
 			ent.setPrimary(true);
 			ent.space.trace.setChanged(new TraceChangeRecord<>(
-				TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, this, false, true));
+				TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space.space, this, false, true));
 		}
 	}
 
@@ -163,7 +159,7 @@ public class DBTraceReference implements TraceReference {
 			}
 			ent.setSymbolId(symbol.getID());
 			getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ASSOCIATION_ADDED,
-				ent.space, dbSym, null, this));
+				ent.space.space, dbSym, null, this));
 		}
 	}
 
@@ -176,7 +172,7 @@ public class DBTraceReference implements TraceReference {
 			TraceSymbol oldSymbol = getTrace().getSymbolManager().getSymbolByID(ent.symbolId);
 			ent.setSymbolId(-1);
 			getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ASSOCIATION_REMOVED,
-				ent.space, oldSymbol, this, null));
+				ent.space.space, oldSymbol, this, null));
 		}
 	}
 

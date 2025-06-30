@@ -30,9 +30,9 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 
 public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -46,6 +46,7 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 	public void setUpTraceProgramViewMemoryTest() throws LanguageNotFoundException, IOException {
 		tb = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY64_BE);
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.trace.getTimeManager().createSnapshot("Created");
 		}
 		memory = tb.trace.getMemoryManager();
@@ -64,11 +65,11 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testBlockInOverlay() throws Throwable {
 		AddressSpace os;
-		DBTraceMemoryRegion io;
+		TraceMemoryRegion io;
 		try (Transaction tx = tb.startTransaction()) {
 			os = memory.createOverlayAddressSpace("test",
 				tb.trace.getBaseAddressFactory().getDefaultAddressSpace());
-			io = (DBTraceMemoryRegion) memory.createRegion(".io", 0, tb.range(os, 0x1000, 0x1fff),
+			io = memory.createRegion("Memory[.io]", 0, tb.range(os, 0x1000, 0x1fff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE, TraceMemoryFlag.VOLATILE);
 		}
 

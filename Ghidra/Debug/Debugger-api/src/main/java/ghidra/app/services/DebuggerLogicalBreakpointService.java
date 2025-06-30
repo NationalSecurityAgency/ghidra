@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,16 +21,16 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
-import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.CodeUnitLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo(
@@ -99,10 +99,10 @@ public interface DebuggerLogicalBreakpointService {
 	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because the trace
 	 * is not opened in the tool or events are still being processed, then null is returned.
 	 * 
-	 * @param bpt the trace breakpoint
+	 * @param loc the trace breakpoint location
 	 * @return the logical breakpoint, or null
 	 */
-	LogicalBreakpoint getBreakpoint(TraceBreakpoint bpt);
+	LogicalBreakpoint getBreakpoint(TraceBreakpointLocation loc);
 
 	/**
 	 * Get the collected logical breakpoints (at present) at the given location.
@@ -297,10 +297,10 @@ public interface DebuggerLogicalBreakpointService {
 	 * 
 	 * <p>
 	 * If the given location refers to a static image, this behaves as in
-	 * {@link #placeBreakpointAt(Program, Address, TraceBreakpointKind)}. If it refers to a trace
-	 * view, this behaves as in {@link #placeBreakpointAt(Trace, Address, TraceBreakpointKind)},
-	 * ignoring the view's current snapshot in favor of the present. The name is only saved for a
-	 * program breakpoint.
+	 * {@link #placeBreakpointAt(Program, Address, long, Collection, String)}. If it refers to a
+	 * trace view, this behaves as in *
+	 * {@link #placeBreakpointAt(Trace, Address, long, Collection, String)}, ignoring the view's
+	 * current snapshot in favor of the present. The name is only saved for a program breakpoint.
 	 * 
 	 * @param loc the location
 	 * @param length size of the breakpoint, may be ignored by debugger
@@ -348,7 +348,7 @@ public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Disable a collection of logical breakpoints on target, if applicable
 	 * 
-	 * @see #enableAll(Collection)
+	 * @see #enableAll(Collection, Trace)
 	 * @param col the collection
 	 * @param trace a trace, if the command should be limited to the given trace
 	 * @return a future which completes when all associated specifications have been disabled
@@ -358,7 +358,7 @@ public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Delete, if possible, a collection of logical breakpoints on target, if applicable
 	 * 
-	 * @see #enableAll(Collection)
+	 * @see #enableAll(Collection, Trace)
 	 * @param col the collection
 	 * @param trace a trace, if the command should be limited to the given trace
 	 * @return a future which completes when all associated specifications have been deleted
@@ -371,7 +371,7 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
-	CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col);
+	CompletableFuture<Void> enableLocs(Collection<TraceBreakpointLocation> col);
 
 	/**
 	 * Disable the given locations
@@ -379,7 +379,7 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
-	CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col);
+	CompletableFuture<Void> disableLocs(Collection<TraceBreakpointLocation> col);
 
 	/**
 	 * Delete the given locations
@@ -387,7 +387,7 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
-	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
+	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpointLocation> col);
 
 	/**
 	 * Generate an informational message when toggling the breakpoints
@@ -397,7 +397,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * is for toggling breakpoints. If the breakpoint set is empty, this should return null, since
 	 * the usual behavior in that case is to prompt to place a new breakpoint.
 	 * 
-	 * @see #generateStatusEnable(Collection, Trace))
+	 * @see #generateStatusEnable(Collection, Trace)
+	 * @param bs the set of logical breakpoints
 	 * @param loc a representative location
 	 * @return the status message, or null
 	 */
@@ -407,12 +408,12 @@ public interface DebuggerLogicalBreakpointService {
 	 * Generate an informational message when toggling the breakpoints at the given location
 	 * 
 	 * <p>
-	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace))}, except it
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace)}, except it
 	 * is for toggling breakpoints at a given location. If there are no breakpoints at the location,
 	 * this should return null, since the usual behavior in that case is to prompt to place a new
 	 * breakpoint.
 	 * 
-	 * @see #generateStatusEnable(Collection)
+	 * @see #generateStatusEnable(Collection, Trace)
 	 * @param loc the location
 	 * @return the status message, or null
 	 */

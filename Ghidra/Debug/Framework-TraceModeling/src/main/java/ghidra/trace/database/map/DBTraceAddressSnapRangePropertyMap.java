@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,17 +78,8 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 	@Override
 	protected DBTraceAddressSnapRangePropertyMapSpace<T, DR> createSpace(AddressSpace space,
 			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceAddressSnapRangePropertyMapSpace<>(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, null, ent.getFrameLevel(), dataType, dataFactory);
-	}
-
-	@Override
-	protected DBTraceAddressSnapRangePropertyMapSpace<T, DR> createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceAddressSnapRangePropertyMapSpace<>(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
+		return new DBTraceAddressSnapRangePropertyMapSpace<>(tableName(space), trace,
+			trace.getStoreFactory(), lock, space, dataType, dataFactory);
 	}
 
 	@Override
@@ -160,7 +151,7 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 	@Override
 	public int size() {
 		int count = 0;
-		for (DBTraceAddressSnapRangePropertyMapSpace<T, DR> space : getActiveMemorySpaces()) {
+		for (DBTraceAddressSnapRangePropertyMapSpace<T, DR> space : getActiveSpaces()) {
 			count += space.size();
 		}
 		return count;
@@ -168,37 +159,37 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 
 	@Override
 	public boolean isEmpty() {
-		return !delegateAny(memSpacesView, m -> !m.isEmpty());
+		return !delegateAny(spacesView, m -> !m.isEmpty());
 	}
 
 	@Override
 	public Collection<Entry<TraceAddressSnapRange, T>> entries() {
-		return delegateCollection(memSpacesView, m -> m.entries());
+		return delegateCollection(spacesView, m -> m.entries());
 	}
 
 	@Override
 	public Collection<Entry<TraceAddressSnapRange, T>> orderedEntries() {
-		return delegateCollection(memSpacesView, m -> m.orderedEntries());
+		return delegateCollection(spacesView, m -> m.orderedEntries());
 	}
 
 	@Override
 	public Collection<TraceAddressSnapRange> keys() {
-		return delegateCollection(memSpacesView, m -> m.keys());
+		return delegateCollection(spacesView, m -> m.keys());
 	}
 
 	@Override
 	public Collection<TraceAddressSnapRange> orderedKeys() {
-		return delegateCollection(memSpacesView, m -> m.orderedKeys());
+		return delegateCollection(spacesView, m -> m.orderedKeys());
 	}
 
 	@Override
 	public Collection<T> values() {
-		return delegateCollection(memSpacesView, m -> m.values());
+		return delegateCollection(spacesView, m -> m.values());
 	}
 
 	@Override
 	public Collection<T> orderedValues() {
-		return delegateCollection(memSpacesView, m -> m.orderedValues());
+		return delegateCollection(spacesView, m -> m.orderedValues());
 	}
 
 	@Override
@@ -209,22 +200,22 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 
 	@Override
 	public Entry<TraceAddressSnapRange, T> firstEntry() {
-		return delegateFirst(memSpacesView, m -> m.firstEntry());
+		return delegateFirst(spacesView, m -> m.firstEntry());
 	}
 
 	@Override
 	public TraceAddressSnapRange firstKey() {
-		return delegateFirst(memSpacesView, m -> m.firstKey());
+		return delegateFirst(spacesView, m -> m.firstKey());
 	}
 
 	@Override
 	public T firstValue() {
-		return delegateFirst(memSpacesView, m -> m.firstValue());
+		return delegateFirst(spacesView, m -> m.firstValue());
 	}
 
 	@Override
 	public void clear() {
-		for (DBTraceAddressSnapRangePropertyMapSpace<T, DR> space : memSpacesView) {
+		for (DBTraceAddressSnapRangePropertyMapSpace<T, DR> space : spacesView) {
 			space.clear();
 		}
 	}
@@ -232,7 +223,7 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 	@Override
 	public AddressSetView getAddressSetView(Lifespan span, Predicate<T> predicate) {
 		return new UnionAddressSetView(
-			memSpaces.values().stream().map(m -> m.getAddressSetView(span, predicate)).toList());
+			spaces.values().stream().map(m -> m.getAddressSetView(span, predicate)).toList());
 	}
 
 	@Override
