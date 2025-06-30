@@ -25,11 +25,11 @@ import docking.ComponentProvider;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
-import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.colors.*;
 import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgroundColorManager.ColoredFieldSelection;
+import ghidra.app.plugin.core.debug.gui.colors.SelectionGenerator;
+import ghidra.app.plugin.core.debug.gui.colors.SelectionTranslator;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerTrackedRegisterListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -127,14 +127,6 @@ public class DebuggerTrackLocationTrait {
 		}
 	}
 
-	// TODO: This may already be deprecated....
-	protected class ColorModel extends DebuggerTrackedRegisterBackgroundColorModel {
-		@Override
-		protected ProgramLocation getTrackedLocation() {
-			return trackedLocation;
-		}
-	}
-
 	protected class ListingColorModel
 			extends DebuggerTrackedRegisterListingBackgroundColorModel {
 		public ListingColorModel(ListingPanel listingPanel) {
@@ -176,7 +168,6 @@ public class DebuggerTrackLocationTrait {
 
 	protected final ForTrackingListener listener = new ForTrackingListener();
 
-	protected final ColorModel colorModel;
 	protected final TrackSelectionGenerator selectionGenerator;
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
@@ -187,12 +178,7 @@ public class DebuggerTrackLocationTrait {
 		this.plugin = plugin;
 		this.provider = provider;
 
-		this.colorModel = new ColorModel();
 		this.selectionGenerator = new TrackSelectionGenerator();
-	}
-
-	public BackgroundColorModel getBackgroundColorModel() {
-		return colorModel;
 	}
 
 	public ListingBackgroundColorModel createListingBackgroundColorModel(
