@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -490,30 +490,29 @@ public class HeadlessOptions {
 
 	/**
 	 * Sets the loader to use for imports, as well as any loader-specific arguments.  A null loader 
-	 * will attempt "best-guess" if possible.  Loader arguments are not supported if a "best-guess"
-	 * is made.
+	 * name will attempt a "best-guess" if possible.
 	 * 
-	 * @param loaderName The name (simple class name) of the loader to use.
-	 * @param loaderArgs A list of loader-specific arguments.  Could be null if there are none.
-	 * @throws InvalidInputException if an invalid loader name was specified, or if loader arguments
-	 *   were specified but a loader was not.
+	 * @param loaderName The name (simple class name) of the loader to use (could be null)
+	 * @throws InvalidInputException if an invalid loader name was specified
 	 */
-	public void setLoader(String loaderName, List<Pair<String, String>> loaderArgs)
-			throws InvalidInputException {
+	public void setLoader(String loaderName) throws InvalidInputException {
 		if (loaderName != null) {
 			this.loaderClass = LoaderService.getLoaderClassByName(loaderName);
 			if (this.loaderClass == null) {
 				throw new InvalidInputException("Invalid loader name specified: " + loaderName);
 			}
-			this.loaderArgs = loaderArgs;
 		}
 		else {
-			if (loaderArgs != null && loaderArgs.size() > 0) {
-				throw new InvalidInputException(
-					"Loader arguments defined without a loader being specified.");
-			}
 			this.loaderClass = null;
-			this.loaderArgs = null;
 		}
+	}
+
+	/**
+	 * Sets the loader arguments
+	 * 
+	 * @param loaderArgs A list of loader-specific arguments.  Could be null if there are none.
+	 */
+	public void setLoaderArgs(List<Pair<String, String>> loaderArgs) {
+		this.loaderArgs = loaderArgs;
 	}
 }

@@ -143,26 +143,22 @@ public class ImportBatchTask extends Task {
 			}
 			Pair<DomainFolder, String> destInfo = getDestinationInfo(batchLoadConfig, destFolder);
 
-			Object consumer = new Object();
 			try {
 				MessageLog messageLog = new MessageLog();
 				Project project = AppInfo.getActiveProject();
-				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
+				try (LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
 						.load(byteProvider, fixupProjectFilename(destInfo.second), project,
 							destInfo.first.getPathname(), loadSpec,
 							getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog,
-							consumer, monitor);
+							this, monitor)) {
 
-				// TODO: accumulate batch results
-				if (loadResults != null) {
-					try {
-						loadResults.save(project, consumer, messageLog, monitor);
+					// TODO: accumulate batch results
+					if (loadResults != null) {
+						loadResults.save(monitor);
 						processImportResults(loadResults, batchLoadConfig, monitor);
 					}
-					finally {
-						loadResults.release(consumer);
-					}
 				}
+
 				totalAppsImported++;
 
 				Msg.info(this, "Imported " + destInfo.first + "/ " + destInfo.second + ", " +
@@ -197,14 +193,20 @@ public class ImportBatchTask extends Task {
 			BatchLoadConfig appInfo, TaskMonitor monitor) {
 
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
-			DomainObject obj = loaded.getDomainObject();
-			if (obj instanceof Program program) {
-				if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
-					programManager.openProgram(program,
-						totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
-								: ProgramManager.OPEN_VISIBLE);
+			DomainObject obj = loaded.getDomainObject(this);
+			try {
+				if (obj instanceof Program program) {
+					if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
+						programManager.openProgram(program,
+							totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
+									: ProgramManager.OPEN_VISIBLE);
+					}
 				}
 			}
+			finally {
+				obj.release(this);
+			}
+
 			totalObjsImported++;
 		}
 	}

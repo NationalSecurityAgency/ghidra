@@ -403,14 +403,20 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			List<DomainFolder> searchFolders =
 				getLibrarySearchFolders(loadedPrograms, project, options, log);
 
-			List<LibrarySearchPath> searchPaths = getLibrarySearchPaths(
-				loadedPrograms.getFirst().getDomainObject(), loadSpec, options, log, monitor);
+			Program firstProgram = loadedPrograms.getFirst().getDomainObject(this);
+			List<LibrarySearchPath> searchPaths;
+			try {
+				searchPaths = getLibrarySearchPaths(firstProgram, loadSpec, options, log, monitor);
+			}
+			finally {
+				firstProgram.release(this);
+			}
 
 			monitor.initialize(loadedPrograms.size());
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
 				monitor.increment();
 
-				Program program = loadedProgram.getDomainObject();
+				Program program = loadedProgram.getDomainObject(this);
 				int id = program.startTransaction("Reexporting");
 				try {
 					reexport(program, loadedPrograms, searchFolders, searchPaths, options, monitor,
@@ -421,6 +427,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				}
 				finally {
 					program.endTransaction(id, true);
+					program.release(this);
 				}
 			}
 		}
@@ -451,12 +458,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 		for (String path : getReexportPaths(program, log)) {
 			monitor.checkCancelled();
-			Program programToRelease = null;
+			Program lib = null;
 			try {
 				Loaded<Program> match = findLibraryInLoadedList(loadedPrograms, path);
-				Program lib = null;
 				if (match != null) {
-					lib = match.getDomainObject();
+					lib = match.getDomainObject(this);
 				}
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
@@ -466,7 +472,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {
 								lib = p;
-								programToRelease = p;
+							}
+							else {
+								obj.release(this);
 							}
 							break;
 						}
@@ -498,8 +506,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 			finally {
-				if (programToRelease != null) {
-					programToRelease.release(this);
+				if (lib != null) {
+					lib.release(this);
 				}
 			}
 		}

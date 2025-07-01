@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,17 +30,16 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.references.*;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.LoadResults;
-import ghidra.app.util.opinion.LoaderService;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.Project;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
@@ -301,20 +300,14 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 
 	}
 
-	private void importFile(File file) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		String programNameOverride = null;
+	private void importFile(File file) throws CancelledException, VersionException, IOException {
 		Project project = env.getProject();
-		LoadResults<Program> loadResults = AutoImporter.importFresh(file, project,
-			project.getProjectData().getRootFolder().getPathname(), this, new MessageLog(),
-			TaskMonitor.DUMMY, LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-			programNameOverride, OptionChooser.DEFAULT_OPTIONS);
-
-		try {
-			loadResults.getPrimary().save(project, new MessageLog(), TaskMonitor.DUMMY);
-		}
-		finally {
-			loadResults.release(this);
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.projectFolderPath(project.getProjectData().getRootFolder().getPathname())
+				.load()) {
+			loadResults.getPrimary().save(TaskMonitor.DUMMY);
 		}
 	}
 

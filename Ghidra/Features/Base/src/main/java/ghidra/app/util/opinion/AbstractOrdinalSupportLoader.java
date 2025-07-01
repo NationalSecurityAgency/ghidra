@@ -131,12 +131,14 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 			throws CancelledException, IOException {
 
 		if (shouldPerformOrdinalLookup(options)) {
-			List<Loaded<Program>> saveablePrograms =
-				loadedPrograms.stream().filter(Predicate.not(Loaded::shouldDiscard)).toList();
+			List<Loaded<Program>> saveablePrograms = loadedPrograms
+					.stream()
+					.filter(loaded -> loaded.check(Predicate.not(Program::isTemporary)))
+					.toList();
 			monitor.initialize(saveablePrograms.size());
 			for (Loaded<Program> loadedProgram : saveablePrograms) {
 				monitor.checkCancelled();
-				Program program = loadedProgram.getDomainObject();
+				Program program = loadedProgram.getDomainObject(this);
 				int id = program.startTransaction("Ordinal fixups");
 				try {
 					applyLibrarySymbols(program, messageLog, monitor);
@@ -144,6 +146,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 				}
 				finally {
 					program.endTransaction(id, true); // More efficient to commit when program will be discarded
+					program.release(this);
 				}
 			}
 		}
