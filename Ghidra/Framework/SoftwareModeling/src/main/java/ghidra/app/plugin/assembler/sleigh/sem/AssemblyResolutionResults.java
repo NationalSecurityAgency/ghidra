@@ -142,11 +142,11 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 				continue;
 			}
 			AssemblyResolvedPatterns rp = (AssemblyResolvedPatterns) res;
-			if (false) DBG.println("Current: " + rp.lineToString());
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Current: " + rp.lineToString());
 			for (AssemblyResolution ar : applicator.getPatterns(rp)) {
-				if (false) DBG.println("Pattern: " + ar.lineToString());
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Pattern: " + ar.lineToString());
 				AssemblyResolvedPatterns combined = applicator.combine(rp, ar);
-				if (false) DBG.println("Combined: " + (combined == null ? "(null)" : combined.lineToString()));
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Combined: " + (combined == null ? "(null)" : combined.lineToString()));
 				if (combined == null) {
 					results.add(factory.error(applicator.describeError(rp, ar), ar));
 					continue;

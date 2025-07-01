@@ -174,7 +174,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 				AssemblyPatternBlock src = context; // NOTE: This is only correct for "instruction"
 				String table = "instruction";
 
-				if (false) DBG.println("Finding paths from " + src + " to " + ar.lineToString());
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Finding paths from " + src + " to " + ar.lineToString());
 				Collection<Deque<AssemblyConstructorSemantic>> paths =
 					ctxGraph.computeOptimalApplications(src, table, dst, table);
 				if (DBG != DbgTimer.INACTIVE) DBG.println("Found " + paths.size());
@@ -381,7 +381,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 */
 	protected AssemblyResolutionResults applyPatterns(AssemblyConstructorSemantic sem, int shift,
 			AssemblyResolutionResults temp) {
-		if (false) DBG.println("Applying patterns:");
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Applying patterns:");
 		Collection<AssemblyResolution> patterns =
 			sem.getPatterns()
 					.stream()
