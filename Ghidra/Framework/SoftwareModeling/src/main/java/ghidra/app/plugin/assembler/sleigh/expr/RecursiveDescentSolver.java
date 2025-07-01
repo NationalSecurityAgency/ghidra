@@ -123,7 +123,7 @@ public class RecursiveDescentSolver {
 				description);
 		}
 		catch (UnsupportedOperationException e) {
-			DBG.println("Error solving " + exp + " = " + goal);
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Error solving " + exp + " = " + goal);
 			throw e;
 		}
 	}
@@ -170,7 +170,7 @@ public class RecursiveDescentSolver {
 	protected <T extends PatternExpression> MaskedLong getValue(T exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, cur);
-		// DBG.println("Expression: " + value + " =: " + exp);
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Expression: " + value + " =: " + exp);
 		return value;
 	}
 

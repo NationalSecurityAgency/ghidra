@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.ConstructState;
 
 /**
@@ -142,8 +143,10 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 		return sem.getPatterns()
 				.stream()
 				.map(pat -> {
-					DBG.println(path + ": Constructor pattern: " + pat.lineToString());
-					DBG.println(path + ": Current     pattern: " + fromMutations.lineToString());
+					if (DBG != DbgTimer.INACTIVE) {
+						DBG.println(path + ": Constructor pattern: " + pat.lineToString());
+						DBG.println(path + ": Current     pattern: " + fromMutations.lineToString());
+					}
 					AssemblyResolvedPatterns combined = fromMutations.combine(pat.shift(shift));
 					//DBG.println("Combined    pattern: " + combined);
 					return combined;

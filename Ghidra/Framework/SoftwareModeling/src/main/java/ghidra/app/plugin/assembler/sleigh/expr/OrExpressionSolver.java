@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.expr.match.ExpressionMatcher;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.expression.*;
 import ghidra.util.Msg;
@@ -71,7 +72,7 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		PatternExpression fieldExp = null;
 		AssemblyResolvedPatterns result = factory.nop(description);
 		try (DbgCtx dc = dbg.start("Trying solution of field catenation")) {
-			dbg.println("Original: " + goal + ":= " + exp);
+			if (dbg != DbgTimer.INACTIVE) dbg.println("Original: " + goal + ":= " + exp);
 			for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
 				long hi = ent.getKey();
 				if (hi == 0) {
@@ -79,9 +80,9 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 					continue;
 				}
 
-				dbg.println("Part(" + hi + ":" + lo + "]:= " + fieldExp);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Part(" + hi + ":" + lo + "]:= " + fieldExp);
 				MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
-				dbg.println("Solving: " + part + ":= " + fieldExp);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Solving: " + part + ":= " + fieldExp);
 				AssemblyResolution sol = solver.solve(factory, fieldExp, part, vals, cur, hints,
 					description + " with shift " + lo);
 				if (sol.isError()) {
@@ -166,7 +167,7 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		}
 
 		// At this point, I know it's a circular shift
-		dbg.println("Identified circular shift: value:= " + expValu1 + ", shift:= " + expShift +
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Identified circular shift: value:= " + expValu1 + ", shift:= " + expShift +
 			", size:= " + size + ", dir:= " + (dir == 1 ? "right" : "left"));
 		return solveLeftCircularShift(factory, expValu1, expShift, size, dir, goal, vals, cur,
 			hints, description);
@@ -182,13 +183,13 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 
 		if (valValue != null && !valValue.isFullyDefined()) {
 			if (!valValue.isFullyUndefined()) {
-				dbg.println("Partially-defined f for left circular shift solver: " + valValue);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Partially-defined f for left circular shift solver: " + valValue);
 			}
 			valValue = null;
 		}
 		if (valShift != null && valShift.isFullyDefined()) {
 			if (!valShift.isFullyUndefined()) {
-				dbg.println("Partially-defined g for left circular shift solver: " + valShift);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Partially-defined g for left circular shift solver: " + valShift);
 			}
 			valShift = null;
 		}
@@ -278,16 +279,20 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			return tryCatenationExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			if (dbg != DbgTimer.INACTIVE) {
+				dbg.println("while solving: " + goal + "=:" + exp);
+				dbg.println(e.getMessage());
+			}
 		}
 
 		try {
 			return tryCircularShiftExpression(factory, exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
-			dbg.println("while solving: " + goal + "=:" + exp);
-			dbg.println(e.getMessage());
+			if (dbg != DbgTimer.INACTIVE) {
+				dbg.println("while solving: " + goal + "=:" + exp);
+				dbg.println(e.getMessage());
+			}
 		}
 
 		Map<ExpressionMatcher<?>, PatternExpression> match = MATCHERS.neqConst.match(exp);

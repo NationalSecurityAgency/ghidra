@@ -107,7 +107,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 		if (DBG == DbgTimer.ACTIVE) {
 			try (DbgCtx dc = DBG.start("Prototypes:")) {
 				protStream = protStream.map(prot -> {
-					// DBG.println(prot);
+					if (DBG != DbgTimer.INACTIVE) DBG.println(prot);
 					return prot;
 				}).collect(Collectors.toList()).stream();
 			}
@@ -174,12 +174,12 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 				AssemblyPatternBlock src = context; // NOTE: This is only correct for "instruction"
 				String table = "instruction";
 
-				// DBG.println("Finding paths from " + src + " to " + ar.lineToString());
+				if (false) DBG.println("Finding paths from " + src + " to " + ar.lineToString());
 				Collection<Deque<AssemblyConstructorSemantic>> paths =
 					ctxGraph.computeOptimalApplications(src, table, dst, table);
-				// DBG.println("Found " + paths.size());
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Found " + paths.size());
 				for (Deque<AssemblyConstructorSemantic> path : paths) {
-					// DBG.println("  " + path);
+					if (DBG != DbgTimer.INACTIVE) DBG.println("  " + path);
 					result.absorb(applyRecursionPath(path, tree, rootRec, ar));
 				}
 			}
@@ -206,9 +206,9 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 			vals.put(INST_NEXT, at.add(rp.getInstructionLength()).getAddressableWordOffset());
 			// inst_next2 use not really supported
 			vals.put(INST_NEXT2, at.add(rp.getInstructionLength()).getAddressableWordOffset());
-			// DBG.println("Backfilling: " + rp);
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Backfilling: " + rp);
 			AssemblyResolution ar = rp.backfill(SOLVER, vals);
-			// DBG.println("Backfilled final: " + ar);
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Backfilled final: " + ar);
 			return ar;
 		}).apply(factory, rp -> {
 			if (rp.hasBackfills()) {
@@ -364,11 +364,11 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 */
 	protected AssemblyResolutionResults applyMutations(AssemblyConstructorSemantic sem,
 			AssemblyResolutionResults temp) {
-		// DBG.println("Applying context mutations:");
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Applying context mutations:");
 		return temp.apply(factory, rp -> {
-			// DBG.println("Current: " + rp.lineToString());
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Current: " + rp.lineToString());
 			AssemblyResolution backctx = sem.solveContextChanges(rp, vals);
-			// DBG.println("Mutated: " + backctx.lineToString());
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Mutated: " + backctx.lineToString());
 			return backctx;
 		}).apply(factory, rp -> {
 			return rp.solveContextChangesForForbids(sem, vals);
@@ -381,7 +381,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 */
 	protected AssemblyResolutionResults applyPatterns(AssemblyConstructorSemantic sem, int shift,
 			AssemblyResolutionResults temp) {
-		// DBG.println("Applying patterns:");
+		if (false) DBG.println("Applying patterns:");
 		Collection<AssemblyResolution> patterns =
 			sem.getPatterns()
 					.stream()

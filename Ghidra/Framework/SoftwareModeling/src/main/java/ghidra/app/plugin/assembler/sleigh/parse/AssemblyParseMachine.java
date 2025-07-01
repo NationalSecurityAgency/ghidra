@@ -206,7 +206,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 		c.accepted = accepted;
 		c.error = error;
 
-		// DBG.println("Copied " + id + " to " + c.id);
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Copied " + id + " to " + c.id);
 		return c;
 	}
 
@@ -238,7 +238,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 				AssemblyParseBranch branch = new AssemblyParseBranch(parser.grammar, prod);
 				AssemblyParseMachine m = copy();
 				m.output.add(prod.getIndex());
-				// DBG.println("Prod: " + prod);
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Prod: " + prod);
 				for (@SuppressWarnings("unused")
 				AssemblySymbol sym : prod.getRHS()) {
 					m.stack.pop();
@@ -246,7 +246,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 				}
 				for (Action aa : m.parser.actions.get(m.stack.peek(), prod.getLHS())) {
 					GotoAction ga = (GotoAction) aa;
-					// DBG.println("Goto: " + ga);
+					if (DBG != DbgTimer.INACTIVE) DBG.println("Goto: " + ga);
 					AssemblyParseMachine n = m.copy();
 					n.stack.push(ga.newStateNum);
 					n.treeStack.push(branch);
@@ -274,7 +274,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 		try (DbgCtx dc = DBG.start("Matched " + t + " " + tok)) {
 			Collection<Action> as = parser.actions.get(stack.peek(), t);
 			assert !as.isEmpty();
-			// DBG.println("Actions: " + as);
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Actions: " + as);
 			for (Action a : as) {
 				doAction(a, tok, results, visited);
 			}
@@ -321,10 +321,10 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 */
 	protected void exhaust(Set<AssemblyParseMachine> results, Deque<AssemblyParseMachine> visited) {
 		try (DbgCtx dc = DBG.start("Exhausting machine " + id)) {
-			// DBG.println("Machine: " + this);
+			if (DBG != DbgTimer.INACTIVE) DBG.println("Machine: " + this);
 			AssemblyParseMachine loop = findLoop(this, visited);
 			if (loop != null) {
-				// DBG.println("Pruned. Loop of " + loop.id);
+				if (DBG != DbgTimer.INACTIVE) DBG.println("Pruned. Loop of " + loop.id);
 				return;
 			}
 			try (DequePush<?> push = DequePush.push(visited, this)) {
@@ -359,9 +359,11 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 						newExpected = new TreeSet<>();
 						newExpected.add(AssemblySentential.WHITE_SPACE);
 					}
-					// DBG.println("Syntax Error: ");
-					// DBG.println("  Expected: " + newExpected);
-					// DBG.println("  Got: " + buffer.substring(pos));
+					if (DBG != DbgTimer.INACTIVE) {
+						DBG.println("Syntax Error: ");
+						DBG.println("  Expected: " + newExpected);
+						DBG.println("  Got: " + buffer.substring(pos));
+					}
 					m.error = ERROR_SYNTAX;
 					m.got = buffer.substring(pos);
 					m.expected = newExpected;

@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericTerminal;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyTerminal;
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.ConstructState;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
@@ -128,13 +129,13 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 		if (symExp == null) {
 			symExp = opSym.getDefiningSymbol().getPatternExpression();
 		}
-		// DBG.println("Equation: " + symExp + " = " + Long.toHexString(value));
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Equation: " + symExp + " = " + Long.toHexString(value));
 		String desc = "Solution to " + opSym + " in " + Long.toHexString(value) + " = " + symExp;
 		AssemblyResolution sol =
 			factory.solveOrBackfill(symExp, value, bitsize, resolver.vals, null, desc);
-		// DBG.println("Solution: " + sol);
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Solution: " + sol);
 		AssemblyResolution shifted = sol.shift(shift);
-		// DBG.println("Shifted: " + shifted);
+		if (DBG != DbgTimer.INACTIVE) DBG.println("Shifted: " + shifted);
 		return shifted;
 	}
 

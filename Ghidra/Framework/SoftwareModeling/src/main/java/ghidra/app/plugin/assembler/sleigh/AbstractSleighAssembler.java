@@ -150,7 +150,7 @@ public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPattern
 		for (String part : assembly) {
 			for (String line : part.split("\n")) {
 				RegisterValue rv = program.getProgramContext().getDisassemblyContext(at);
-				// dbg.println(rv);
+				if (dbg != DbgTimer.INACTIVE) dbg.println(rv);
 				AssemblyPatternBlock ctx = AssemblyPatternBlock.fromRegisterValue(rv);
 				ctx = ctx.fillMask();
 				byte[] insbytes = assembleLine(at, line, ctx);

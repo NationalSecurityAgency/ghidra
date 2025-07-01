@@ -39,7 +39,7 @@ public class WildAssemblyNopStateGenerator
 	public Stream<AssemblyGeneratedPrototype> generate(GeneratorContext gc) {
 		// TODO: Do we want to restrict the values?
 		// TODO: Is this the right place to generate "interesting values"?
-		gc.dbg("Generating WILD NOP for " + opSym);
+		// gc.dbg("Generating WILD NOP for " + opSym);
 		return Stream.of(new AssemblyGeneratedPrototype(
 			new WildAssemblyNopState(resolver, gc.path, gc.shift, opSym, wildcard), fromLeft));
 	}
