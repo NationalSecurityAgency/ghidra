@@ -176,7 +176,7 @@ ext.deps = [
 	[
 		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Use this one for the Java jar
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
-		sha256: "93f91f9c6f4a00a041c19fc7a74adc1f441c8244ce70d486e19abcd89c6a014b",
+		sha256: "bc31ad12446d7db1bd9d0ac82dec9d7b5129b8b8dd6e44b571a83ac6010d2f9b",
 		destination: {
 			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip")
 			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/"), FLAT_REPO_DIR, new WildcardFileFilter("*.jar"))
@@ -185,25 +185,25 @@ ext.deps = [
 	[
 		name: "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip", // macOS on Apple silicon
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip",
-		sha256: "e23d03005558c1b5d3c1b8bd503e65b84edfe3f1ae4298bd8c4710b5b0a645eb",
+		sha256: "e7cd325cb2210d3b241d0d5517a293677030f58c1771e196c4574ef99dc45168",
 		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
 	],
 	[
 		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Linux on 64-bit Intel
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
-		sha256: "93f91f9c6f4a00a041c19fc7a74adc1f441c8244ce70d486e19abcd89c6a014b",
+		sha256: "bc31ad12446d7db1bd9d0ac82dec9d7b5129b8b8dd6e44b571a83ac6010d2f9b",
 		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
 	],
 	[
 		name: "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip", // macOS on 64-bit Intel
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip",
-		sha256: "7598c2be3129429e83fb5082b92ae973f41a6a289873b4ea33180d9072067e80",
+		sha256: "0c33d8574f7dcd041f1f4e7fe301840db6a527f866cb74b0b47518bf8053502d",
 		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
 	],
 	[
 		name: "z3-${Z3_VER}-x64-win.zip", // Windows on 64-bit Intel
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-win.zip",
-		sha256: "0a36dd5654fe423d23a727c4570c9db9a315926a4301189b868b6eb9bfd5979d",
+		sha256: "2bcd14b6849fddead3d0b3cb671cc9d134a8ef0b1d3eff3efd7d75a5bbf00dd3",
 		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
 	],
 	[
