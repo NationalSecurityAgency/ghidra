@@ -69,14 +69,14 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 	protected void okCallback() {
 		TaskLauncher.launchNonModal(TITLE, monitor -> {
 			super.okCallback();
-			try {
-				Object consumer = new Object();
-				MessageLog messageLog = new MessageLog();
-				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
+			Object consumer = new Object();
+			MessageLog messageLog = new MessageLog();
+			try (LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
 						.load(provider, program.getDomainFile().getName(), tool.getProject(),
 							program.getDomainFile().getParent().getPathname(), loadSpec,
-							getOptions(), messageLog, consumer, monitor);
-				loadResults.save(tool.getProject(), consumer, messageLog, monitor);
+						getOptions(), messageLog, consumer, monitor)) {
+
+				loadResults.save(monitor);
 				
 				// Display results
 				String importMessages = messageLog.toString();
@@ -90,8 +90,6 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 				else {
 					Msg.showInfo(this, null, TITLE, "The program has no libraries.");
 				}
-
-				loadResults.release(consumer);
 			}
 			catch (CancelledException e) {
 				// no need to show a message

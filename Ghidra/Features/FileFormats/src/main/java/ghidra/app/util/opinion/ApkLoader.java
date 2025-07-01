@@ -103,13 +103,13 @@ public class ApkLoader extends DexLoader {
 		}
 		finally {
 			if (!success) {
-				release(allLoadedPrograms, consumer);
+				allLoadedPrograms.forEach(Loaded::close);
 			}
 		}
 		if (allLoadedPrograms.isEmpty()) {
 			throw new LoadException("Operation finished with no programs to load");
 		}
-		link(allLoadedPrograms.stream().map(e -> e.getDomainObject()).toList(), log, monitor);
+		link(allLoadedPrograms, log, monitor);
 		return allLoadedPrograms;
 	}
 
@@ -300,11 +300,9 @@ public class ApkLoader extends DexLoader {
 	 * @param log the message log
 	 * @param monitor the task monitor
 	 */
-	private void link(List<Program> programList, MessageLog log, TaskMonitor monitor) {
-		MultiDexLinker linker = new MultiDexLinker(programList);
-		try {
+	private void link(List<Loaded<Program>> programList, MessageLog log, TaskMonitor monitor) {
+		try (MultiDexLinker linker = new MultiDexLinker(programList)) {
 			linker.link(monitor);
-			linker.clear(monitor);
 		}
 		catch (Exception e) {
 			log.appendException(e);

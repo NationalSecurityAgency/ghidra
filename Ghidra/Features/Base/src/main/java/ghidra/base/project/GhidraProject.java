@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.importer.*;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
@@ -593,67 +593,196 @@ public class GhidraProject {
 		openPrograms.put(program, id);
 	}
 
-	public Program importProgram(File file, Language language,
-			CompilerSpec compilerSpec) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByLookingForLcs(file, project, null,
-			language, compilerSpec, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File} with the best matching {@link Loader} that
+	 * supports the given language and compiler specification.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
+	public Program importProgram(File file, Language language, CompilerSpec compilerSpec)
+			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
+			IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the best matching {@link Loader} that
+	 * supports the given processor.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param processor The desired {@link Processor}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
 	public Program importProgram(File file, Processor processor) throws CancelledException,
-			DuplicateNameException, InvalidNameException, VersionException, IOException {
+			VersionException, LanguageNotFoundException, LoadException, IOException {
 		LanguageService svc = DefaultLanguageService.getLanguageService();
 		Language language = svc.getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		return importProgram(file, language, compilerSpec);
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the given {@link Loader}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param loaderClass The desired {@link Loader}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByUsingSpecificLoaderClass(file,
-			project, null, loaderClass, null, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
+			IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.loaders(loaderClass)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
+	/**
+	 * Automatically imports the given {@link File} with the given {@link Loader}, {@link Language},
+	 * and {@link CompilerSpec compiler specification}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @param loaderClass The desired {@link Loader}
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass, Language language,
-			CompilerSpec compilerSpec) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		SingleLoaderFilter loaderFilter = new SingleLoaderFilter(loaderClass, null);
-		LcsHintLoadSpecChooser opinionChoose = new LcsHintLoadSpecChooser(language, compilerSpec);
-		LoadResults<Program> loadResults =
-			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR, loaderFilter,
-				opinionChoose, null, new LoaderArgsOptionChooser(loaderFilter));
-		loadResults.releaseNonPrimary(this);
-		return loadResults.getPrimaryDomainObject();
+			CompilerSpec compilerSpec) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.loaders(loaderClass)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
-	public Program importProgram(File file) throws CancelledException,
-			DuplicateNameException, InvalidNameException, VersionException, IOException {
-		MessageLog messageLog = new MessageLog();
-		LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file, project,
-			null, this, messageLog, MONITOR);
-		Program program = loadResults.getPrimaryDomainObject();
-		loadResults.releaseNonPrimary(this);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
+	public Program importProgram(File file) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(project)
+				.monitor(MONITOR)
+				.load()) {
+			Program program = loadResults.getPrimaryDomainObject(this);
+			initializeProgram(program, false);
+			return program;
+		}
 	}
 
-	public Program importProgramFast(File file) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		Program program = importByStealingCodeFromAutoImporterByUsingBestGuess(file);
-		initializeProgram(program, false);
-		return program;
+	/**
+	 * Automatically imports the given {@link File}.
+	 * <p>
+	 * NOTE: It is the responsibility of the caller to release the returned {@link Program} 
+	 * with {@link Program#release(Object)} when it is no longer needed, with {@code this} 
+	 * {@link GhidraProject} instance as the consumer.
+	 * 
+	 * @param file The {@link File} to import
+	 * @return The imported {@link Program}
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws LanguageNotFoundException if there was a problem getting the language		
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if there was a problem loading
+	 * @deprecated Use {@link ProgramLoader}
+	 */
+	@Deprecated(since = "11.5", forRemoval = true)
+	public Program importProgramFast(File file) throws CancelledException, VersionException,
+			LanguageNotFoundException, LoadException, IOException {
+		return importProgram(file);
 	}
 
 //==================================================================================================
@@ -671,21 +800,6 @@ public class GhidraProject {
 		if (!ProjectTestUtils.deleteProject(projectDirectoryPath, projectName)) {
 			throw new IllegalStateException("Unable to delete test project");
 		}
-	}
-
-	private Program importByStealingCodeFromAutoImporterByUsingBestGuess(File file)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-
-		MessageLog messageLog = new MessageLog();
-
-		String programNameOverride = null;
-		LoadResults<Program> loadResults =
-			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR,
-				LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-				programNameOverride, OptionChooser.DEFAULT_OPTIONS);
-		loadResults.releaseNonPrimary(this);
-		return loadResults.getPrimaryDomainObject();
 	}
 
 //==================================================================================================

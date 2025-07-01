@@ -525,7 +525,7 @@ public class ImporterPlugin extends Plugin
 		Program program = manager.getCurrentProgram();
 
 		TaskLauncher.launchModal("Show Load Libraries Dialog", monitor -> {
-			ImporterUtilities.showLoadLibrariesDialog(program, tool, manager, monitor);
+			ImporterUtilities.showLoadLibrariesDialog(program, tool, monitor);
 		});
 	}
 

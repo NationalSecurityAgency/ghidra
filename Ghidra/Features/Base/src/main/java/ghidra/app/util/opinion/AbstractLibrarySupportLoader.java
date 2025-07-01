@@ -31,6 +31,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
+import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Library;
@@ -49,23 +50,51 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader {
 
+	/**
+	 * Option to attempt to fix up the {@link Loaded} {@link Program}'s external programs with
+	 * libraries discovered in the project. This alone does not cause new library programs to be 
+	 * loaded.
+	 */
 	public static final String LINK_EXISTING_OPTION_NAME = "Link Existing Project Libraries";
 	static final boolean LINK_EXISTING_OPTION_DEFAULT = true;
 
+	/**
+	 * Path of a {@link DomainFolder} to search for libraries
+	 */
 	public static final String LINK_SEARCH_FOLDER_OPTION_NAME = "Project Library Search Folder";
 	static final String LINK_SEARCH_FOLDER_OPTION_DEFAULT = "";
 
+	/**
+	 * Whether or not to search for libraries on disk (or in a {@link GFileSystem})
+	 */
 	public static final String LOAD_LIBRARY_OPTION_NAME = "Load Libraries From Disk";
 	static final boolean LOAD_LIBRARY_OPTION_DEFAULT = false;
-
+	
+	/**
+	 * A dummy option used to produce a custom renderer to select library search paths.
+	 * 
+	 * @see LibrarySearchPathDummyOption
+	 */
 	public static final String LIBRARY_SEARCH_PATH_DUMMY_OPTION_NAME = "Library Search Paths";
 
+	/**
+	 * How many levels of libraries to load
+	 */
 	public static final String DEPTH_OPTION_NAME = "Recursive Library Load Depth";
 	static final int DEPTH_OPTION_DEFAULT = 1;
 
+	/**
+	 * Path of a {@link DomainFolder} to save libraries to. This location will also be used as
+	 * a location to {@link #LINK_EXISTING_OPTION_NAME search for already-loaded libraries}.
+	 */
 	public static final String LIBRARY_DEST_FOLDER_OPTION_NAME = "Library Destination Folder";
 	static final String LIBRARY_DEST_FOLDER_OPTION_DEFAULT = "";
 
+	/**
+	 * A hidden option used by the {@link ImporterPlugin}'s "Load Libraries" action to inform this
+	 * {@link Loader} that the {@link Program} to import has already been saved to the project and
+	 * is currently open, and that only libraries should be loaded.
+	 */
 	public static final String LOAD_ONLY_LIBRARIES_OPTION_NAME = "Only Load Libraries"; // hidden
 	static final boolean LOAD_ONLY_LIBRARIES_OPTION_DEFAULT = false;
 
@@ -85,6 +114,31 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, IOException;
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * In addition to loading the given program bytes, this implementation will attempt to locate
+	 * the libraries that the program links to from the
+	 * {@link #LINK_SEARCH_FOLDER_OPTION_NAME project library search folder}, the
+	 * {@link #LIBRARY_DEST_FOLDER_OPTION_NAME library destination folder} and the
+	 * {@link #LOAD_LIBRARY_OPTION_NAME libraries found on disk}. All of these locations are
+	 * controlled by loader options.
+	 * <P>
+	 * If the hidden {@link #LOAD_ONLY_LIBRARIES_OPTION_NAME} option is set and the given project
+	 * is not {@code null}, it is assumed that a {@link DomainFile} exists at 
+	 * {@code projectFolderPath/loadedName}, is open, and the provider corresponds to its contents.
+	 * If this is the case, the primary (first) {@link Loaded} {@link Program} in the returned list
+	 * will NOT be affected by a {@link LoadResults#save(TaskMonitor)} operation. It will be the 
+	 * responsibility of the user to save this open program if desired.
+	 * 
+	 * @return A {@link List} of one or more {@link Loaded} {@link Program}s (created but not 
+	 *   saved). The first element in the {@link List} will the primary program, with the remaining
+	 *   elements being any newly loaded libraries.
+	 * @throws LoadException if the load failed in an unexpected way. If the
+	 *   {@link #LOAD_ONLY_LIBRARIES_OPTION_NAME} option is set, this exception will be thrown if
+	 *   the {@link DomainFile} at {@code projectFolderPath/loadedName} does not correspond to an 
+	 *   open {@link Program}.
+	 */
 	@Override
 	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String loadedName,
 			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
@@ -101,21 +155,28 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (!shouldLoadOnlyLibraries(options)) {
 				program = doLoad(provider, loadedName, loadSpec, libraryNameList, options, consumer,
 					log, monitor);
-				loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
+				loadedProgramList.add(
+					new Loaded<>(program, loadedName, project, projectFolderPath, consumer));
 				log.appendMsg("------------------------------------------------\n");
 			}
-			else if (project != null) {
-				ProjectData projectData = project.getProjectData();
-				DomainFile domainFile = projectData.getFile(projectFolderPath + "/" + loadedName);
+			else {
+				if (project == null) {
+					throw new LoadException("Cannot load only libraries...project is null");
+				}
+				DomainFile domainFile =
+					project.getProjectData().getFile(projectFolderPath + "/" + loadedName);
 				if (domainFile == null) {
 					throw new LoadException(
 						"Cannot load only libraries for a non-existant program");
 				}
+				if (!Program.class.isAssignableFrom(domainFile.getDomainObjectClass())) {
+					throw new LoadException("Cannot load only libraries for a non-program");
+				}
 				program = (Program) domainFile.getOpenedDomainObject(consumer);
 				if (program == null) {
-					throw new LoadException("Failed to acquire a Program");
+					throw new LoadException("Failed to acquire an open Program");
 				}
-				loadedProgramList.add(new Loaded<>(program, domainFile));
+				loadedProgramList.add(new LoadedOpen<>(program, domainFile, consumer));
 				libraryNameList.addAll(getLibraryNames(provider, program));
 			}
 
@@ -128,7 +189,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		}
 		finally {
 			if (!success) {
-				release(loadedProgramList, consumer);
+				loadedProgramList.forEach(Loaded::close);
 			}
 		}
 	}
@@ -169,32 +230,45 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<DomainFolder> searchFolders =
 			getLibrarySearchFolders(loadedPrograms, project, options, log);
 
-		List<LibrarySearchPath> searchPaths = getLibrarySearchPaths(
-			loadedPrograms.getFirst().getDomainObject(), loadSpec, options, log, monitor);
+		Program firstProgram = loadedPrograms.getFirst().getDomainObject(this);
+		List<LibrarySearchPath> searchPaths;
+		try {
+			searchPaths = getLibrarySearchPaths(firstProgram, loadSpec, options, log, monitor);
+		}
+		finally {
+			firstProgram.release(this);
+		}
 
-		List<Loaded<Program>> saveablePrograms =
-			loadedPrograms.stream().filter(Predicate.not(Loaded::shouldDiscard)).toList();
+		List<Loaded<Program>> saveablePrograms = loadedPrograms
+				.stream()
+				.filter(loaded -> loaded.check(Predicate.not(Program::isTemporary)))
+				.toList();
 
 		monitor.initialize(saveablePrograms.size());
 		for (Loaded<Program> loadedProgram : saveablePrograms) {
 			monitor.increment();
 
-			Program program = loadedProgram.getDomainObject();
-			ExternalManager extManager = program.getExternalManager();
-			String[] extLibNames = extManager.getExternalLibraryNames();
-			if (extLibNames.length == 0 ||
-				(extLibNames.length == 1 && Library.UNKNOWN.equals(extLibNames[0]))) {
-				continue; // skip program if no libraries defined
-			}
-
-			monitor.setMessage("Resolving..." + program.getName());
-			int id = program.startTransaction("Resolving external references");
+			Program program = loadedProgram.getDomainObject(this);
 			try {
-				resolveExternalLibraries(program, saveablePrograms, searchFolders, searchPaths,
-					options, monitor, log);
+				ExternalManager extManager = program.getExternalManager();
+				String[] extLibNames = extManager.getExternalLibraryNames();
+				if (extLibNames.length == 0 ||
+					(extLibNames.length == 1 && Library.UNKNOWN.equals(extLibNames[0]))) {
+					continue; // skip program if no libraries defined
+				}
+
+				monitor.setMessage("Resolving..." + program.getName());
+				int id = program.startTransaction("Resolving external references");
+				try {
+					resolveExternalLibraries(program, saveablePrograms, searchFolders, searchPaths,
+						options, monitor, log);
+				}
+				finally {
+					program.endTransaction(id, true);
+				}
 			}
 			finally {
-				program.endTransaction(id, true);
+				program.release(this);
 			}
 		}
 	}
@@ -408,16 +482,22 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected List<DomainFolder> getLibrarySearchFolders(List<Loaded<Program>> loadedPrograms,
 			Project project, List<Option> options, MessageLog log) {
-		List<DomainFolder> searchFolders = new ArrayList<>();
-		String projectFolderPath = loadedPrograms.get(0).getProjectFolderPath();
-		String destPath = getLibraryDestinationFolderPath(project, projectFolderPath, options);
-		DomainFolder destSearchFolder =
-			getLibraryDestinationSearchFolder(project, destPath, options);
-		DomainFolder linkSearchFolder = getLinkSearchFolder(project,
-			loadedPrograms.getFirst().getDomainObject(), projectFolderPath, options, log);
-		Optional.ofNullable(destSearchFolder).ifPresent(searchFolders::add);
-		Optional.ofNullable(linkSearchFolder).ifPresent(searchFolders::add);
-		return searchFolders;
+		Program firstProgram = loadedPrograms.getFirst().getDomainObject(this);
+		try {
+			List<DomainFolder> searchFolders = new ArrayList<>();
+			String projectFolderPath = loadedPrograms.get(0).getProjectFolderPath();
+			String destPath = getLibraryDestinationFolderPath(project, projectFolderPath, options);
+			DomainFolder destSearchFolder =
+				getLibraryDestinationSearchFolder(project, destPath, options);
+			DomainFolder linkSearchFolder =
+				getLinkSearchFolder(project, firstProgram, projectFolderPath, options, log);
+			Optional.ofNullable(destSearchFolder).ifPresent(searchFolders::add);
+			Optional.ofNullable(linkSearchFolder).ifPresent(searchFolders::add);
+			return searchFolders;
+		}
+		finally {
+			firstProgram.release(this);
+		}
 	}
 
 	/**
@@ -559,18 +639,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				}
 				else if (isLoadLibraries(options) || shouldSearchAllPaths(program, options, log)) {
 					Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(library, provider,
-						customSearchPaths, libraryDestFolderPath, unprocessed, depth,
+						project, customSearchPaths, libraryDestFolderPath, unprocessed, depth,
 						desiredLoadSpec, options, log, consumer, monitor);
 					if (loadedLibrary == null) {
-						loadedLibrary = loadLibraryFromSearchPaths(library, provider, searchPaths,
-							libraryDestFolderPath, unprocessed, depth, desiredLoadSpec, options,
-							log, consumer, monitor);
+						loadedLibrary = loadLibraryFromSearchPaths(library, provider, project,
+							searchPaths, libraryDestFolderPath, unprocessed, depth, desiredLoadSpec,
+							options, log, consumer, monitor);
 					}
 					if (loadedLibrary != null) {
-						boolean discarding = !loadLibraries || unprocessedLibrary.discard();
-						loadedLibrary.setDiscard(discarding);
+						boolean temporary = !loadLibraries || unprocessedLibrary.temporary();
+						loadedLibrary.apply(p -> p.setTemporary(temporary));
 						loadedPrograms.add(loadedLibrary);
-						log.appendMsg(discarding ? "Library not saved to project."
+						log.appendMsg(temporary ? "Library not saved to project."
 								: "Saving library to: " + loadedLibrary);
 					}
 					log.appendMsg("------------------------------------------------\n");
@@ -581,7 +661,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		}
 		finally {
 			if (!success) {
-				release(loadedPrograms, consumer);
+				loadedPrograms.forEach(Loaded::close);
 			}
 			Stream.of(customSearchPaths, searchPaths)
 					.flatMap(Collection::stream)
@@ -600,6 +680,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *
 	 * @param library The library to load
 	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param project The {@link Project}. Could be null if there is no project.
 	 * @param searchPaths A {@link List} of {@link LibrarySearchPath}s that will be searched
 	 * @param libraryDestFolderPath The path of the project folder to load the libraries into. 
 	 *   Could be null if the specified project is null or a destination folder path could not be 
@@ -617,7 +698,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load
 	 */
 	private Loaded<Program> loadLibraryFromSearchPaths(String library, ByteProvider provider,
-			List<LibrarySearchPath> searchPaths, String libraryDestFolderPath,
+			Project project, List<LibrarySearchPath> searchPaths, String libraryDestFolderPath,
 			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec desiredLoadSpec,
 			List<Option> options, MessageLog log, Object consumer, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -662,7 +743,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						folderPath = joinPaths(folderPath, FilenameUtils.getFullPath(library));
 					}
 				}
-				return new Loaded<Program>(libraryProgram, simpleLibraryName, folderPath);
+				return new Loaded<Program>(libraryProgram, simpleLibraryName, project, folderPath,
+					consumer);
 			}
 		}
 		finally {
@@ -947,9 +1029,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param name The name of the library
 	 * @param depth The recursive load depth of the library (based on the original binary being
 	 *   loaded)
-	 * @param discard True if the library should be discarded (not saved) after processing
+	 * @param temporary True if the library is temporary and should be discarded prior to returning
+	 *   from the load
 	 */
-	protected record UnprocessedLibrary(String name, int depth, boolean discard) {/**/}
+	protected record UnprocessedLibrary(String name, int depth, boolean temporary) {/**/}
 
 	/**
 	 * Creates a new {@link Queue} of {@link UnprocessedLibrary}s, initialized filled with the

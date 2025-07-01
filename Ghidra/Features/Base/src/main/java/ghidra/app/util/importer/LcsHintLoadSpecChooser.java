@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,11 @@
 package ghidra.app.util.importer;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import ghidra.app.util.opinion.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 
@@ -37,13 +39,46 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 	 * {@link CompilerSpec}.
 	 * 
 	 * @param language The {@link Language} to use (should not be null)
-	 * @param compilerSpec The {@link CompilerSpec} to use (f null default compiler spec will be used)
+	 * @param compilerSpec The {@link CompilerSpec} to use (if null default compiler spec will be 
+	 *   used)
+	 * @throws LanguageNotFoundException if there was a problem getting the language
 	 */
-	public LcsHintLoadSpecChooser(Language language, CompilerSpec compilerSpec) {
-		this.languageID = language.getLanguageID();
-		this.compilerSpecID =
-			(compilerSpec == null) ? language.getDefaultCompilerSpec().getCompilerSpecID()
-					: compilerSpec.getCompilerSpecID();
+	public LcsHintLoadSpecChooser(Language language, CompilerSpec compilerSpec)
+			throws LanguageNotFoundException {
+		this(language.getLanguageID(),
+			compilerSpec == null ? language.getDefaultCompilerSpec().getCompilerSpecID()
+					: compilerSpec.getCompilerSpecID());
+	}
+
+	/**
+	 * Creates a new {@link LcsHintLoadSpecChooser}.
+	 * <p>
+	 * NOTE: It is assumed that the given {@link LanguageID} is valid and it supports the given 
+	 * {@link CompilerSpecID}.
+	 * 
+	 * @param languageId The {@link LanguageID} to use (should not be null)
+	 * @param compilerSpecId The {@link CompilerSpecID} to use (if null default compiler spec will 
+	 *   be used)
+	 * @throws LanguageNotFoundException if there was a problem getting the language
+	 */
+	public LcsHintLoadSpecChooser(LanguageID languageId, CompilerSpecID compilerSpecId)
+			throws LanguageNotFoundException {
+		this.languageID = languageId;
+		this.compilerSpecID = Objects.requireNonNullElse(compilerSpecId,
+			DefaultLanguageService.getLanguageService()
+					.getLanguage(languageID)
+					.getDefaultCompilerSpec()
+					.getCompilerSpecID());
+	}
+
+	@Override
+	public LanguageID getLanguageId() {
+		return languageID;
+	}
+
+	@Override
+	public CompilerSpecID getCompilerSpecId() {
+		return compilerSpecID;
 	}
 
 	@Override

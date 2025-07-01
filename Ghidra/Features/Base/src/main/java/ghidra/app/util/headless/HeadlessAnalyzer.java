@@ -31,8 +31,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.*;
@@ -1530,17 +1529,23 @@ public class HeadlessAnalyzer {
 
 		Msg.info(this, "IMPORTING: " + fsrl);
 
-		LoadResults<Program> loadResults = null;
-		Loaded<Program> primary = null;
-		try {
+		// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
+		// loaded.
+		Program primaryProgram = null;
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(fsrl)
+				.project(project)
+				.projectFolderPath(folderPath)
+				.language(options.language)
+				.compiler(options.compilerSpec)
+				.loaders(options.loaderClass)
+				.loaderArgs(options.loaderArgs)
+				.load()) {
 
-			// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
-			// loaded.
-			loadResults = loadPrograms(fsrl, folderPath);
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
 
-			primary = loadResults.getPrimary();
-			Program primaryProgram = primary.getDomainObject();
+			Loaded<Program> primary = loadResults.getPrimary();
+			primaryProgram = primary.getDomainObject(this);
 
 			// Make sure we are allowed to save ALL programs to the project.  If not, save none and
 			// fail.
@@ -1566,7 +1571,15 @@ public class HeadlessAnalyzer {
 			// The act of marking the program as temporary by a script will signal
 			// us to discard any changes
 			if (!doSave) {
-				loadResults.forEach(e -> e.getDomainObject().setTemporary(true));
+				for (Loaded<Program> loaded : loadResults) {
+					Program program = loaded.getDomainObject(this);
+					try {
+						program.setTemporary(true);
+					}
+					finally {
+						program.release(this);
+					}
+				}
 			}
 
 			// Apply saveDomainFolder to the primary program, if applicable.
@@ -1582,38 +1595,48 @@ public class HeadlessAnalyzer {
 
 			// Save
 			for (Loaded<Program> loaded : loadResults) {
-				if (!loaded.getDomainObject().isTemporary()) {
-					try {
-						DomainFile domainFile =
-							loaded.save(project, new MessageLog(), TaskMonitor.DUMMY);
-						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)", loaded,
-							domainFile));
-					}
-					catch (IOException e) {
-						Msg.info(this, "REPORT: Save failed for: " + loaded);
-					}
-				}
-				else {
-					if (options.readOnly) {
-						Msg.info(this,
-							"REPORT: Discarded file import due to readOnly option: " + loaded);
+				Program program = loaded.getDomainObject(this);
+				try {
+					if (!program.isTemporary()) {
+						try {
+							DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
+							Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)",
+								loaded, domainFile));
+						}
+						catch (IOException e) {
+							Msg.info(this, "REPORT: Save failed for: " + loaded);
+						}
 					}
 					else {
-						Msg.info(this, "REPORT: Discarded file import as a result of script " +
-							"activity or analysis timeout: " + loaded);
+						if (options.readOnly) {
+							Msg.info(this,
+								"REPORT: Discarded file import due to readOnly option: " + loaded);
+						}
+						else {
+							Msg.info(this, "REPORT: Discarded file import as a result of script " +
+								"activity or analysis timeout: " + loaded);
+						}
 					}
+				}
+				finally {
+					program.release(this);
 				}
 			}
 
 			// Commit changes
 			if (options.commit) {
 				for (Loaded<Program> loaded : loadResults) {
-					if (!loaded.getDomainObject().isTemporary()) {
-						if (loaded == primary) {
-							AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
+					Program program = loaded.getDomainObject(this);
+					try {
+						if (!program.isTemporary()) {
+							if (loaded == primary) {
+								AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
+							}
+							commitProgram(loaded.getSavedDomainFile());
 						}
-						loaded.release(this);
-						commitProgram(loaded.getSavedDomainFile());
+					}
+					finally {
+						program.release(this);
 					}
 				}
 			}
@@ -1622,7 +1645,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		catch (LoadException e) {
-			Msg.error(this, "The AutoImporter could not successfully load " + fsrl +
+			Msg.error(this, "The ProgramLoader could not successfully load " + fsrl +
 				" with the provided import parameters. Please ensure that any specified" +
 				" processor/cspec arguments are compatible with the loader that is used during" +
 				" import and try again.");
@@ -1639,35 +1662,10 @@ public class HeadlessAnalyzer {
 			return false;
 		}
 		finally {
-			if (loadResults != null) {
-				loadResults.release(this);
+			if (primaryProgram != null) {
+				primaryProgram.release(this);
 			}
 		}
-	}
-
-	private LoadResults<Program> loadPrograms(FSRL fsrl, String folderPath)
-			throws VersionException, InvalidNameException, DuplicateNameException,
-			CancelledException, IOException, LoadException {
-		MessageLog messageLog = new MessageLog();
-
-		if (options.loaderClass == null) {
-			// User did not specify a loader
-			if (options.language == null) {
-				return AutoImporter.importByUsingBestGuess(fsrl, project, folderPath, this,
-					messageLog, TaskMonitor.DUMMY);
-			}
-			return AutoImporter.importByLookingForLcs(fsrl, project, folderPath, options.language,
-				options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
-		}
-
-		// User specified a loader
-		if (options.language == null) {
-			return AutoImporter.importByUsingSpecificLoaderClass(fsrl, project, folderPath,
-				options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
-		}
-		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(fsrl, project, folderPath,
-			options.loaderClass, options.loaderArgs, options.language, options.compilerSpec, this,
-			messageLog, TaskMonitor.DUMMY);
 	}
 
 	private void processWithImport(FSRL fsrl, String folderPath, Integer depth, boolean isFirstTime)

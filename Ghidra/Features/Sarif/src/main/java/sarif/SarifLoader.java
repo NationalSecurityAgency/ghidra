@@ -194,7 +194,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
 		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, programFolderPath));
+			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
 		boolean success = false;
 		try {
 			success = doImport(result.lastSarifMgr, options, log, prog, monitor, false);
@@ -206,7 +206,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 		finally {
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}
