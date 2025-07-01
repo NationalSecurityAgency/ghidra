@@ -6619,6 +6619,65 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+/// \class RulePtrOffsetArith
+/// \brief Transform typed pointer offset arithetic
+///
+/// Rule for converting pointer arithmetic involving typed offset pointers.
+/// Groups of PTRADD / INT_ADD / PTRSUB that involve TypePointerOff inputs
+/// are reassociated such that PTRSUB field offsets are relative to the offset
+/// pointer target.
+void RulePtrOffsetArith::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_ADD);
+  oplist.push_back(CPUI_PTRADD);
+}
+
+int4 RulePtrOffsetArith::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *in0 = op->getIn(0);
+  Varnode *in1 = op->getIn(1);
+  if (!in0->getDef() || in0->getDef()->code() != CPUI_PTRSUB) return 0;
+  Datatype *dt0 = in0->getType();
+  Datatype *dt1 = in1->getType();
+  if (!dt0->isPointerRel() || !dt1->isPointerOff()) return 0;
+
+  // Base pointer type must match the typed offset pointer base type
+  TypePointerRel *ptrin0 = (TypePointerRel*)dt0;
+  TypePointerOff *ptrin1 = (TypePointerOff*)dt1;
+  if (!ptrin0->getParent() || !ptrin1->getPtrFrom()) return 0;
+  if (ptrin0->getParent() != ptrin1->getPtrFrom()) return 0;
+
+  Varnode *child = in0->getDef()->getIn(0);
+  Varnode *field = in0->getDef()->getIn(1);
+
+  TypeFactory *types = data.getArch()->types;
+
+  TypePointer *base_ptr_off = (TypePointer*)in1->getType();
+  Datatype *base_struct = base_ptr_off->getPtrTo();
+  TypePointer *base_struct_ptr = types->getTypePointer(base_ptr_off->getSize(), base_struct, base_ptr_off->getWordSize());
+
+  TypePointer *child_ptr = (TypePointer*)child->getType();
+  Varnode *child_size = data.newConstant(child_ptr->getSize(), child_ptr->getPtrTo()->getSize());
+  PcodeOp *ptradd_rel = data.newOpBefore(op, CPUI_PTRADD, child, in1, child_size);
+
+  int4 field_offset = field->getOffset();
+  if (field_offset > 0) {
+    TypePointerRel *field_ptr_rel = types->getTypePointerRel(base_struct_ptr, base_struct, field_offset);
+    PcodeOp *ptrsub_field = data.newOpBefore(op, CPUI_PTRSUB, ptradd_rel->getOut(), field);
+    data.opSetOutput(ptrsub_field, op->getOut());
+    ptrsub_field->getOut()->updateType(field_ptr_rel);
+  } else {
+    data.opSetOutput(ptradd_rel, op->getOut());
+  }
+  ptradd_rel->getOut()->updateType(base_struct_ptr, true, true);
+  ptradd_rel->getOut()->setImplied();
+  data.opDestroy(op->getIn(0)->getDef());
+  data.opDestroy(op);
+  return 1;
+}
+
 /// \class RuleStructOffset0
 /// \brief Convert a LOAD or STORE to the first element of a structure to a PTRSUB.
 ///

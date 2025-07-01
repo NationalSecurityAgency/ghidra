@@ -809,6 +809,7 @@ public:
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
+  static TypePointerOff *getPointerOffsetType(const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPtradd(op); }
   virtual void printRaw(ostream &s,const PcodeOp *op);
 };
