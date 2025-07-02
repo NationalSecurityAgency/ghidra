@@ -250,9 +250,10 @@ public class HeadlessAnalyzer {
 	 *                      is acceptable if we are in -process mode)
 	 * @throws IOException if there was an IO-related problem
 	 * @throws MalformedURLException specified URL is invalid
+	 * @throws URISyntaxException specified URL is invalid
 	 */
 	public void processURL(URL ghidraURL, List<File> filesToImport)
-			throws IOException, MalformedURLException {
+			throws IOException, MalformedURLException, URISyntaxException {
 
 		if (options.readOnly && options.commit) {
 			Msg.error(this,
@@ -290,13 +291,14 @@ public class HeadlessAnalyzer {
 
 			if (!path.endsWith("/")) {
 				// force explicit folder path so that non-existent folders are created on import
-				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(), path + "/");
+				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
+					path + "/", null, null).toURL();
 			}
 		}
 		else { // Running in -process mode
 			if (path.endsWith("/") && path.length() > 1) {
-				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(),
-					path.substring(0, path.length() - 1));
+				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
+					path.substring(0, path.length() - 1), null, null).toURL();
 			}
 		}
 
@@ -1529,23 +1531,21 @@ public class HeadlessAnalyzer {
 
 		Msg.info(this, "IMPORTING: " + fsrl);
 
-		// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
-		// loaded.
-		Program primaryProgram = null;
-		try (LoadResults<Program> loadResults = ProgramLoader.builder()
-				.source(fsrl)
-				.project(project)
-				.projectFolderPath(folderPath)
-				.language(options.language)
-				.compiler(options.compilerSpec)
-				.loaders(options.loaderClass)
-				.loaderArgs(options.loaderArgs)
-				.load()) {
+		// Perform the load.
+		// Note that loading 1 file may result in more than 1 thing getting loaded.
+		LoadResults<Program> loadResults = null;
+		try {
+			loadResults = ProgramLoader.builder()
+					.source(fsrl)
+					.project(project)
+					.projectFolderPath(folderPath)
+					.language(options.language)
+					.compiler(options.compilerSpec)
+					.loaders(options.loaderClass)
+					.loaderArgs(options.loaderArgs)
+					.load();
 
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
-
-			Loaded<Program> primary = loadResults.getPrimary();
-			primaryProgram = primary.getDomainObject(this);
 
 			// Make sure we are allowed to save ALL programs to the project.  If not, save none and
 			// fail.
@@ -1559,27 +1559,27 @@ public class HeadlessAnalyzer {
 
 			// Check if there are defined memory blocks in the primary program.
 			// Abort if not (there is nothing to work with!).
-			if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
+			Loaded<Program> primary = loadResults.getPrimary();
+			if (primary.check(p -> p.getMemory().getAllInitializedAddressSet().isEmpty())) {
 				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " + fsrl);
 				return false;
 			}
 
 			// Analyze the primary program, and determine if we should save.
 			// TODO: Analyze non-primary programs (GP-2965).
-			boolean doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+			Program primaryProgram = primary.getDomainObject(this);
+			boolean doSave;
+			try {
+				doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+			}
+			finally {
+				primaryProgram.release(this);
+			}
 
 			// The act of marking the program as temporary by a script will signal
 			// us to discard any changes
 			if (!doSave) {
-				for (Loaded<Program> loaded : loadResults) {
-					Program program = loaded.getDomainObject(this);
-					try {
-						program.setTemporary(true);
-					}
-					finally {
-						program.release(this);
-					}
-				}
+				loadResults.forEach(e -> e.apply(p -> p.setTemporary(true)));
 			}
 
 			// Apply saveDomainFolder to the primary program, if applicable.
@@ -1595,48 +1595,37 @@ public class HeadlessAnalyzer {
 
 			// Save
 			for (Loaded<Program> loaded : loadResults) {
-				Program program = loaded.getDomainObject(this);
-				try {
-					if (!program.isTemporary()) {
-						try {
-							DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
-							Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)",
-								loaded, domainFile));
-						}
-						catch (IOException e) {
-							Msg.info(this, "REPORT: Save failed for: " + loaded);
-						}
+				if (!loaded.check(Program::isTemporary)) {
+					try {
+						DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
+						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)",
+							loaded, domainFile));
 					}
-					else {
-						if (options.readOnly) {
-							Msg.info(this,
-								"REPORT: Discarded file import due to readOnly option: " + loaded);
-						}
-						else {
-							Msg.info(this, "REPORT: Discarded file import as a result of script " +
-								"activity or analysis timeout: " + loaded);
-						}
+					catch (IOException e) {
+						Msg.info(this, "REPORT: Save failed for: " + loaded);
 					}
 				}
-				finally {
-					program.release(this);
+				else {
+					if (options.readOnly) {
+						Msg.info(this,
+							"REPORT: Discarded file import due to readOnly option: " + loaded);
+					}
+					else {
+						Msg.info(this, "REPORT: Discarded file import as a result of script " +
+							"activity or analysis timeout: " + loaded);
+					}
 				}
 			}
 
 			// Commit changes
 			if (options.commit) {
 				for (Loaded<Program> loaded : loadResults) {
-					Program program = loaded.getDomainObject(this);
-					try {
-						if (!program.isTemporary()) {
-							if (loaded == primary) {
-								AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
-							}
-							commitProgram(loaded.getSavedDomainFile());
+					if (!loaded.check(Program::isTemporary)) {
+						if (loaded == primary) {
+							AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
 						}
-					}
-					finally {
-						program.release(this);
+						loaded.close(); // we need to close before committing
+						commitProgram(loaded.getSavedDomainFile());
 					}
 				}
 			}
@@ -1662,8 +1651,8 @@ public class HeadlessAnalyzer {
 			return false;
 		}
 		finally {
-			if (primaryProgram != null) {
-				primaryProgram.release(this);
+			if (loadResults != null) {
+				loadResults.close();
 			}
 		}
 	}
