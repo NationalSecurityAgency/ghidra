@@ -73,8 +73,15 @@
         <constraint primary="332"    processor="x86"          endian="little" size="32" />
         <constraint primary="-31132" processor="x86"          endian="little" size="64"	variant="default" />
     </constraint>
-    <constraint loader="Assembler Output (AOUT)" compilerSpecID="gcc">
+    <constraint loader="UNIX A.out">
+      <constraint compilerSpecID="gcc">
         <constraint primary="134"  processor="x86"          endian="little" size="32" />
+      </constraint>
+    </constraint>
+    <constraint loader="Plan 9 A.out">
+      <constraint compilerSpecID="plan9">
+        <constraint primary="134"  secondary="plan9" processor="x86" endian="little" size="64"	variant="default" />
+      </constraint>
     </constraint>
     <constraint loader="Relocatable Object Module Format (OMF)">
       <constraint compilerSpecID="windows">
