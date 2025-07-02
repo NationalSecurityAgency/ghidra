@@ -10,6 +10,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#remote
+#@depends Debugger-rmi-trace
 #@enum TargetType:str remote extended-remote
 #@enum Endian:str auto big little
 #@arg :file "Image" "The target binary executable image (a copy on the local system)"
@@ -22,8 +23,8 @@
 
 . ..\support\gdbsetuputils.ps1
 
-$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
-$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
+$pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
 $arglist = Compute-Gdb-Remote-Args `

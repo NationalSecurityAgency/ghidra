@@ -1,11 +1,7 @@
 function Find-App-Properties {
-	[IO.FileInfo] $simple = "$Env:GHIDRA_HOME\Ghidra\applications.properties"
-	if ($simple.Exists) {
-		return $simple
-	}
-	[IO.FileInfo] $dev2 = "$Env:GHIDRA_HOME\ghidra\Ghidra\application.properties"
-	if ($dev2.Exists) {
-		return $dev2
+	[IO.FileInfo] $props = "$Env:GHIDRA_HOME\application.properties"
+	if ($props.Exists) {
+		return $props
 	}
 	throw "Cannot find application.properties"
 }
@@ -17,33 +13,39 @@ function Get-Ghidra-Version {
 }
 
 function Ghidra-Module-PyPath {
-	[IO.DirectoryInfo] $installed = "$Env:GHIDRA_HOME\Ghidra\$($args[0])\pypkg\src"
+	if ($args.Count -eq 0 -or $args[0] -eq "<SELF>") {
+		$modhomename = 'MODULE_HOME'
+	} else {
+		$modhomename = "MODULE_$($args[0])_HOME" -replace '-', '_'
+	}
+	$modhomeitem = Get-ChildItem Env:$modhomename
+	$modhome = $modhomeitem.Value
+	[IO.DirectoryInfo] $installed = "$modhome\pypkg\src"
 	if ($installed.Exists) {
 		return "$installed"
 	}
-	[IO.DirectoryInfo] $dev1 = "$Env:GHIDRA_HOME\Ghidra\$($args[0])\build\pypkg\src"
-	if ($dev1.Exists) {
-		return "$dev1"
-	}
-	[IO.DirectoryInfo] $dev2 = "$Env:GHIDRA_HOME\ghidra\Ghidra\$($args[0])\build\pypkg\src"
-	if ($dev2.Exists) {
-		return "$dev2"
+	[IO.DirectoryInfo] $dev = "$modhome\build\pypkg\src"
+	if ($dev.Exists) {
+		return "$dev"
 	}
 	throw "Cannot find Python source for $($args[0]). Try gradle assemblePyPackage?"
 }
 
 function Ghidra-Module-PyDist {
-	[IO.DirectoryInfo] $installed = "$Env:GHIDRA_HOME\Ghidra\$($args[0])\pypkg\dist"
+	if ($args.Count -eq 0 -or $args[0] -eq "<SELF>") {
+		$modhomename = 'MODULE_HOME'
+	} else {
+		$modhomename = "MODULE_$($args[0])_HOME" -replace '-', '_'
+	}
+	$modhomeitem = Get-ChildItem Env:$modhomename
+	$modhome = $modhomeitem.Value
+	[IO.DirectoryInfo] $installed = "$modhome\pypkg\dist"
 	if ($installed.Exists) {
 		return "$installed"
 	}
-	[IO.DirectoryInfo] $dev1 = "$Env:GHIDRA_HOME\Ghidra\$($args[0])\build\pypkg\dist"
-	if ($dev1.Exists) {
-		return "$dev1"
-	}
-	[IO.DirectoryInfo] $dev2 = "$Env:GHIDRA_HOME\ghidra\Ghidra\$($args[0])\build\pypkg\dist"
-	if ($dev2.Exists) {
-		return "$dev2"
+	[IO.DirectoryInfo] $dev = "$modhome\build\pypkg\dist"
+	if ($dev.Exists) {
+		return "$dev"
 	}
 	throw "Cannot find Python package for $($args[0]). Try gradle buildPyPackage?"
 }

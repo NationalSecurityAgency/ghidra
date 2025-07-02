@@ -25,6 +25,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#rr
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Trace Dir" "The target trace directory (e.g. .local/share/rr/trace)"
@@ -36,8 +37,8 @@
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_trace="$1"

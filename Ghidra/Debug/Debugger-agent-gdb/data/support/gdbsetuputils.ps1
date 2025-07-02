@@ -1,5 +1,5 @@
 
-. ..\..\..\Debugger-rmi-trace\data\support\setuputils.ps1
+. $Env:MODULE_Debugger_rmi_trace_HOME\data\support\setuputils.ps1
 
 function Add-Gdb-Init-Args {
 	param([ref]$ArgList)
@@ -48,7 +48,7 @@ function Add-Gdb-Tail-Args {
 	param([ref]$ArgList)
 
 	$ArgList.Value+=("-ex", "`"set confirm on`"")
-	$ArgList.Value+=("-ex", "`"set pagination on`"")
+#	$ArgList.Value+=("-ex", "`"set pagination on`"")
 }
 
 function Compute-Gdb-Usermode-Args {

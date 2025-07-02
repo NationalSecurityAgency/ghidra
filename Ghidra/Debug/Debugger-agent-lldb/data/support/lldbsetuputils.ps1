@@ -1,5 +1,5 @@
 
-. ..\..\..\Debugger-rmi-trace\data\support\setuputils.ps1
+. $Env:MODULE_Debugger_rmi_trace_HOME\data\support\setuputils.ps1
 
 function Add-Lldb-Init-Args {
 	param([ref]$ArgList)
