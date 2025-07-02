@@ -1,0 +1,149 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Visual Graphs</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Visual_Graph"></A>Visual Graphs</H1>
+
+    <BLOCKQUOTE>
+      <P>Visual Graphs are highly integrated graphs that all share common features and
+      actions. They typically have both a <A href="#Visual_Graph_Primary_View">Primary View</A> and 
+      a <A href="#Satellite_View">Satellite View</A>
+      
+    </BLOCKQUOTE>
+
+    <H2><A name="Visual_Graph_Primary_View"></A>Primary View</H2>
+
+    <BLOCKQUOTE>      
+      <P>The primary view is the main way to view and interact with the graph whose vertices
+      and edges are specialized for the particular visual graph instance.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Satellite_View"></A>Satellite View</H2>
+
+    <BLOCKQUOTE>
+      <P>The Satellite View provides an overview of the graph. From this view you may also perform
+      basic adjustment of the overall graph location. In addition to the complete graph, the
+      satellite view contains a <B>lens</B> (the white rectangle) that indicates how much of the
+      current graph fits into the primary view.</P>
+      
+      <P>The Satellite View can be in one of three states:  docked, undocked, or not showing. A
+      docked satellite view will be display in a corner of the primary graph. An undocked view
+      will be displayed in its own window. If the view is not showing, there will be an
+      <IMG src= "images/network-wireless.png" alt="" border="1">icon in the corner to indicate that
+      it is available.</P>
+
+      <P>When you left-click in the satellite view the graph is centered around the
+      corresponding point in the primary view. Alternatively, you may drag the lens of the
+      satellite view to the desired location by performing a mouse drag operation on the lens.</P>
+
+      <P>You may show/hide the satellite view by right-clicking anywhere in the Primary View and
+      selecting or deselecting the <B>Display Satellite View</B> toggle button from the popup
+      menu.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="help/shared/tip.png" alt="" border="0"> If the Primary View is painting
+        sluggishly, then hiding the Satellite View cause the Primary View to be more
+        responsive.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Satellite_View_Dock"></A>Detached Satellite</H3>
+
+      <BLOCKQUOTE>
+        <P>The Satellite View is docked by default. However, you can choose to instead
+        undock it and display it in its own window.</P>
+
+        <P>To undock the Satellite View, right-click in the graph and deselect the <B>Dock
+        Satellite View</B> menu item.</P>
+
+        <P>To re-dock the Satellite View, right-click in the graph and select the <B>Dock Satellite
+        View</B> menu item.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="help/shared/tip.png" alt="" border="0"> To show the Satellite View if it is
+        hidden, whether docked or undocked, you can press the <IMG src=
+        "images/network-wireless.png" alt="" border="1"> button. This button is in the lower-right
+        hand corner of the graph and is only visible if the Satellite View is hidden or
+        undocked.</P>
+      </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3><A name="Satellite_Location"></A>Docked Satellite Location</H3>
+
+      <BLOCKQUOTE>
+        <P>When the Satellite View is attached, or <B>docked</B>, to the Primary View, you can
+        choose which corner to show the satellite view. To change the corner, right-click in the
+        graph, select <B>Docked Satellite Position</B> and then select the appropriate sub-menu for
+        the desired corner.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+      <H2>Standar Graph Operations</H2>
+
+      <BLOCKQUOTE>
+        <H3><A name="Pan"></A>Panning</H3>
+
+        <BLOCKQUOTE>
+          <P>There are various ways to move the graph. To move the graph in any direction you can
+          drag from the whitespace of the graph.</P>
+
+          <P>By default, the scroll wheel zooms the graph. The scroll wheel can also be used
+          to scroll the graph vertically by holding the <TT><B>Ctrl</B></TT> key while
+          using the scroll wheel. Alternatively, you can move the graph left to right using the
+          mouse while holding <TT><B>Ctrl-Alt</B></TT>.</P>
+
+          <P>The satellite viewer may also be used to move the primary graphs view by dragging and
+          clicking inside of the satellite viewer.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Zoom"></A>Zooming</H3>
+
+        <BLOCKQUOTE>
+          <P>At <B>full zoom</B>, or <B>block level zoom</B>, each block is rendered at its natural
+          size. From that point, which is a
+          1:1 zoom level, you can zoom out in order to fit more of the graph into the display.</P>
+
+          <BLOCKQUOTE>
+            <P>To change the zoom you may use the mouse scroll wheel. This works
+            whether the mouse is over the primary viewer or the satellite viewer.</P>
+
+          </BLOCKQUOTE>
+
+          <P>The <A href="#Satellite_View">satellite viewer</A> is always zoomed out far enough to
+          fit the entire graph into its window.</P>
+        </BLOCKQUOTE>
+
+        <H3><A name="Interaction_Threshold"></A>Interaction Threshold</H3>
+
+        <BLOCKQUOTE>
+          <P>While zooming out (away from the vertices) you will eventually reach a point where you
+          can no longer interact with the component inside of the block. The blocks provide a subtle
+          visual indication when they are zoomed past this level, in the form of a drop-shadow. The
+          image below shows this drop-shadow. The block on the left is not past the interaction
+          threshold, but the block on the right is, and thus has a drop-shadow. This example is for
+          illustrative purposes only and during normal usage all blocks will share the save zoom
+          level. So, if one block is zoomed past the interaction threshold, all other blocks will
+          be as well.</P>
+        </BLOCKQUOTE>
+
+        <H3>Painting Threshold</H3>
+
+        <BLOCKQUOTE>
+          <P>While zooming out (away from the blocks) you will eventually reach a point where
+          contents each vertex will not be painted. Instead, each block will be painted by a
+          rectangle that is painted with the current background color of the vertex.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+    <BR>
+     <BR>
+  </BODY>
+</HTML>

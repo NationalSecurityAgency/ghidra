@@ -73,6 +73,7 @@ public class CircleWithLabelVertexShapeProvider implements VertexShapeProvider {
 	protected boolean useDebugBorders = false;
 
 	private String fullLabelText;
+	private int circleCenterYOffset;
 
 	public CircleWithLabelVertexShapeProvider(String label) {
 		this.fullLabelText = label;
@@ -83,6 +84,10 @@ public class CircleWithLabelVertexShapeProvider implements VertexShapeProvider {
 			VertexExpansionListener expansionListener) {
 		this.fullLabelText = label;
 		buildUi();
+	}
+
+	public int getCircleCenterYOffset() {
+		return circleCenterYOffset;
 	}
 
 	protected void buildUi() {
@@ -201,6 +206,7 @@ public class CircleWithLabelVertexShapeProvider implements VertexShapeProvider {
 
 		vertexImageLabel.setBounds(x, y, size.width, size.height);
 		Dimension shapeSize = vertexShape.getBounds().getSize();
+		circleCenterYOffset = shapeSize.height / 2 - parentSize.height / 2;
 
 		// setFrame() will make sure the shape's x,y values are where they need to be
 		// for the later 'full shape' creation
@@ -332,7 +338,7 @@ public class CircleWithLabelVertexShapeProvider implements VertexShapeProvider {
 		return false;
 	}
 
-	protected void setTogglesVisible(boolean visible) {
+	public void setTogglesVisible(boolean visible) {
 		toggleInsButton.setVisible(visible);
 		toggleOutsButton.setVisible(visible);
 	}

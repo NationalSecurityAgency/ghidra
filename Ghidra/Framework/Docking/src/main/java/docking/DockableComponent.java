@@ -147,6 +147,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	private void showContextMenu(MouseEvent e) {
+
 		if (e.isConsumed()) {
 			return;
 		}
