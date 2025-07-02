@@ -4669,23 +4669,23 @@ define pcodeop smm_restore_state;
                                           shrdflags(tmp,rm64,count); shiftresultflags(rm64,count); }
 @endif
 
-:SHR  rm8,n1    is vexMode=0 & byte=0xD0;  rm8 & n1 & reg_opcode=5 ...              { CF = rm8 & 1; OF = (rm8 >> 7) & 1; rm8 = rm8 >> 1; resultflags(rm8); }
+:SHR  rm8,n1    is vexMode=0 & byte=0xD0;  rm8 & n1 & reg_opcode=5 ...              { CF = rm8 & 1; OF = ((rm8 >> 7) & 1) != 0; rm8 = rm8 >> 1; resultflags(rm8); }
 :SHR  rm8,CL    is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=5 ...           { local count =   CL & 0x1f; local tmp = rm8; rm8 = rm8 >> count;
                                           shrflags(tmp, rm8,count); shiftresultflags(rm8,count); }
 :SHR  rm8,imm8  is vexMode=0 & byte=0xC0;  rm8 & reg_opcode=5 ... ; imm8            { local count = imm8 & 0x1f; local tmp = rm8; rm8 = rm8 >> count;
                                           shrflags(tmp, rm8,count); shiftresultflags(rm8,count); }
-:SHR rm16,n1    is vexMode=0 & opsize=0 & byte=0xD1; rm16 & n1 & reg_opcode=5 ...       { CF = (rm16 & 1) != 0; OF = (rm8 >> 15) & 1; rm16 = rm16 >> 1; resultflags(rm16); }
+:SHR rm16,n1    is vexMode=0 & opsize=0 & byte=0xD1; rm16 & n1 & reg_opcode=5 ...       { CF = (rm16 & 1) != 0; OF = ((rm16 >> 15) & 1) != 0; rm16 = rm16 >> 1; resultflags(rm16); }
 :SHR rm16,CL    is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=5 ...       { local count =   CL & 0x1f; local tmp = rm16; rm16 = rm16 >> count;
                                           shrflags(tmp, rm16,count); shiftresultflags(rm16,count); }
 :SHR rm16,imm8  is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x1f; local tmp = rm16; rm16 = rm16 >> count;
                                           shrflags(tmp, rm16,count); shiftresultflags(rm16,count); }
-:SHR rm32,n1    is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=5 ...        { CF = (rm32 & 1) != 0; OF = (rm8 >> 31) & 1; rm32 = rm32 >> 1; build check_rm32_dest; resultflags(rm32); }
+:SHR rm32,n1    is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=5 ...        { CF = (rm32 & 1) != 0; OF = ((rm32 >> 31) & 1) != 0; rm32 = rm32 >> 1; build check_rm32_dest; resultflags(rm32); }
 :SHR rm32,CL    is vexMode=0 & opsize=1 & byte=0xD3; CL & rm32 & check_rm32_dest ... & reg_opcode=5 ...       { local count =   CL & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
                                           shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
 :SHR rm32,imm8  is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x1f; local tmp = rm32; rm32 = rm32 >> count; build check_rm32_dest;
                                           shrflags(tmp, rm32,count); shiftresultflags(rm32,count); }
 @ifdef IA64
-:SHR rm64,n1    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 &reg_opcode=5 ...        { CF = (rm64 & 1) != 0; OF = (rm8 >> 63) & 1; rm64 = rm64 >> 1; resultflags(rm64); }
+:SHR rm64,n1    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 &reg_opcode=5 ...        { CF = (rm64 & 1) != 0; OF = ((rm64 >> 63) & 1) != 0; rm64 = rm64 >> 1; resultflags(rm64); }
 :SHR rm64,CL    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=5 ...       { local count =   CL & 0x3f; local tmp = rm64; rm64 = rm64 >> count;
                                           shrflags(tmp, rm64,count); shiftresultflags(rm64,count); }
 :SHR rm64,imm8  is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=5 ... ; imm8     { local count = imm8 & 0x3f; local tmp = rm64; rm64 = rm64 >> count;
