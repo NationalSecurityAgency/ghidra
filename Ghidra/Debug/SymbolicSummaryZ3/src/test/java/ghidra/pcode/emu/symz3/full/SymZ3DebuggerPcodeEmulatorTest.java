@@ -35,9 +35,11 @@ import ghidra.pcode.emu.symz3.trace.SymZ3TracePcodeExecutorState;
 import ghidra.pcode.emu.symz3.trace.SymZ3TracePcodeExecutorStatePiece;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.util.Msg;
@@ -61,14 +63,24 @@ public class SymZ3DebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				.count());
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	@Test
 	public void testFactoryCreate() throws Exception {
 		emuService.setEmulatorFactory(new SymZ3DebuggerPcodeEmulatorFactory());
 
 		createAndOpenTrace();
 
+		TraceThread thread;
 		try (Transaction tid = tb.startTransaction()) {
-			tb.getOrAddThread("Threads[0]", 0);
+			tb.createRootObject(buildContext(), "Target");
+			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 		}
 
 		traceManager.activateTrace(tb.trace);
@@ -81,7 +93,7 @@ public class SymZ3DebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				public TickStep nextSlice(Trace trace) {
 					// Expect decode of uninitialized memory immediately
 					assertEquals(0, calls++);
-					return new TickStep(0, 1);
+					return new TickStep(thread.getKey(), 1);
 				}
 			});
 
@@ -106,10 +118,12 @@ public class SymZ3DebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		TraceThread thread;
 		try (Transaction tid = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			mappingService.addMapping(
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000)),
 				new ProgramLocation(program, tb.addr(0x00400000)), 0x1000, false);
 			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			tb.exec(0, thread, 0, """
 					RIP = 0x55550000;
 					""");
@@ -134,7 +148,7 @@ public class SymZ3DebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				"MOV RAX, [0x55550800]"); // was [0x00400800], but fixed address is a problem.
 		}
 
-		TraceSchedule time = TraceSchedule.parse("0:t0-1");
+		TraceSchedule time = TraceSchedule.parse("0:t%d-1".formatted(thread.getKey()));
 		long scratch = emuService.emulate(tb.trace, time, TaskMonitor.DUMMY);
 
 		TracePropertyMap<String> traceSymMap = tb.trace.getAddressPropertyManager()
