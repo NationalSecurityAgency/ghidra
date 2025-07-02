@@ -26,8 +26,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
@@ -206,23 +205,68 @@ public class Plan9AoutProgramLoader {
 		int extraBssOffset = 0;
 		int undefinedSymbolIdx = 0;
 
+		Plan9AoutSymbol lastSymbol = null;
+		Function function = null;
+
 		for (Plan9AoutSymbol symbol : symtab) {
 			Address address = null;
 			MemoryBlock block = null;
 
 			switch (symbol.type) {
 				case N_TEXT:
+				case N_LEAF:
 					address = textBlock != null ? textBlock.getStart().add(symbol.value - header.getTextAddr()) : null;
 					block = textBlock;
+					lastSymbol = symbol;
+					function = null;
 					break;
 				case N_DATA:
 					address = dataBlock != null ? dataBlock.getStart().add(symbol.value - header.getDataAddr()) : null;
 					block = dataBlock;
+					lastSymbol = null;
+					function = null;
 					break;
 				case N_BSS:
 					address = bssBlock != null ? bssBlock.getStart().add(symbol.value - header.getBssAddr()) : null;
 					block = bssBlock;
+					lastSymbol = null;
+					function = null;
 					break;
+				case N_FRAME:
+					block = textBlock;
+					if (lastSymbol == null) {
+						log.appendMsg(block.getName(), String.format("Frame does not belong: %s", symbol.name));
+						continue;
+					}
+					address = textBlock != null ? textBlock.getStart().add(lastSymbol.value - header.getTextAddr()) : null;
+					function = functionManager.getFunctionAt(address);
+					if (function == null) {
+						try {
+							function = functionManager.createFunction(lastSymbol.name, address, new AddressSet(address), SourceType.IMPORTED);
+						} catch (InvalidInputException|OverlappingFunctionException ignored) {
+							log.appendMsg(block.getName(),
+								String.format("Unable to create function %s for frame %s",
+								lastSymbol.name, symbol.name));
+							continue;
+						}
+					}
+					function.getStackFrame()
+						.setLocalSize((int)symbol.value);
+					continue;
+				case N_AUTO:
+					block = textBlock;
+					try {
+						function.getStackFrame()
+							.createVariable(symbol.name, (int)-symbol.value, null, SourceType.IMPORTED);
+					} catch (DuplicateNameException ignored) {}
+					continue;
+				case N_PARAM:
+					block = textBlock;
+					try {
+						function.getStackFrame()
+							.createVariable(symbol.name, (int)symbol.value + program.getDefaultPointerSize(), null, SourceType.IMPORTED);
+					} catch (DuplicateNameException ignored) {}
+					continue;
 			}
 
 			if (address == null || block == null) {
@@ -240,7 +284,11 @@ public class Plan9AoutProgramLoader {
 						log.appendMsg(block.getName(), String.format(
 							"Failed to create function %s @ %s, creating symbol instead.",
 							symbol.name, address));
-						symbolTable.createLabel(address, symbol.name, SourceType.IMPORTED);
+						Symbol label =
+							symbolTable.createLabel(address, symbol.name, SourceType.IMPORTED);
+						if (symbol.isExt) {
+							label.setPrimary();
+						}
 					}
 					break;
 				default:
@@ -362,9 +410,11 @@ public class Plan9AoutProgramLoader {
 		// Markup entrypoint.
 		if (header.getEntryPoint() != 0) {
 			Address address = defaultAddressSpace.getAddress(header.getEntryPoint());
+			Function function = functionManager.getFunctionAt(address);
 			try {
-				functionManager.createFunction("entry", address, new AddressSet(address),
-					SourceType.IMPORTED).setCallingConvention("processEntry");
+				if (function == null)
+					function = functionManager.createFunction("entry", address, new AddressSet(address), SourceType.IMPORTED);
+				function.setCallingConvention("processEntry");
 			}
 			catch (OverlappingFunctionException e) {
 				log.appendMsg(dot_text,

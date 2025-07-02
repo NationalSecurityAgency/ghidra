@@ -25,13 +25,15 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.Plan9AoutProgramLoader;
-import ghidra.program.model.address.Address;
+import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.*;
 
 public class Plan9AoutSymbolTable implements Iterable<Plan9AoutSymbol>, StructConverter {
 	private final long fileSize;
@@ -94,7 +96,9 @@ public class Plan9AoutSymbolTable implements Iterable<Plan9AoutSymbol>, StructCo
 	public void markup(Program program, MemoryBlock block)
 			throws CodeUnitInsertionException, DuplicateNameException, InvalidNameException, IOException {
 		Listing listing = program.getListing();
+		AddressSpace defaultAddressSpace = program.getAddressFactory().getDefaultAddressSpace();
 		DataTypeManager dtmanager = program.getDataTypeManager();
+		FunctionManager functionManager = program.getFunctionManager();
 
 		DataType mword = (pointerSize == 8 ? QWORD : DWORD).clone(null);
 		DataType termUniBE = TerminatedUnicodeDataType.dataType.clone(null);
@@ -107,7 +111,6 @@ public class Plan9AoutSymbolTable implements Iterable<Plan9AoutSymbol>, StructCo
 
 		Address addr = block.getStart();
 
-		int idx = 0;
 		for (Plan9AoutSymbol symbol : this) {
 			Data valData = listing.createData(addr, mword);
 			addr = addr.add(valData.getLength());
@@ -133,8 +136,6 @@ public class Plan9AoutSymbolTable implements Iterable<Plan9AoutSymbol>, StructCo
 						valData.setComment(CommentType.EOL, symbol.name);
 					}
 			}
-
-			idx++;
 		}
 	}
 }
