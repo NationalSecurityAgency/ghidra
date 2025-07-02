@@ -212,8 +212,12 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Window w = kfm.getFocusedWindow();
 		if (w instanceof DockingDialog dialog) {
+			// the provider can be null when the dialog has been closed, but the Java focus transfer
+			// has not yet completed
 			DialogComponentProvider provider = dialog.getDialogComponent();
-			return provider.getActionContext(null);
+			if (provider != null) {
+				return provider.getActionContext(null);
+			}
 		}
 
 		return getComponentProviderContext(focusedWindowNode);
