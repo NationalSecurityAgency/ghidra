@@ -21,8 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import datagraph.*;
 import datagraph.data.graph.*;
@@ -70,6 +69,11 @@ public class DataGraphProviderTest extends AbstractGhidraHeadedIntegrationTest {
 		goToAddress("0x300");
 		graph = showDataGraph();
 		turnOffAnimation();
+	}
+
+	@After
+	public void tearDown() {
+		env.dispose();
 	}
 
 	@Test
