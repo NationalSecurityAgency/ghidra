@@ -47,7 +47,7 @@ public class AssemblyNopStateGenerator
 
 	@Override
 	public Stream<AssemblyGeneratedPrototype> generate(GeneratorContext gc) {
-		gc.dbg("Generating NOP for " + opSym);
+		// gc.dbg("Generating NOP for " + opSym);
 		return Stream.of(new AssemblyGeneratedPrototype(
 			new AssemblyNopState(resolver, gc.path, gc.shift, opSym), fromLeft));
 	}

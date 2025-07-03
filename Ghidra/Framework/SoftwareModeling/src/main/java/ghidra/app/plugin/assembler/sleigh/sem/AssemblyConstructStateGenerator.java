@@ -100,8 +100,8 @@ public class AssemblyConstructStateGenerator
 		Stream<AssemblyResolvedPatterns> applied = sem.applyPatternsForward(gc.shift, fromLeft)
 				.filter(pat -> {
 					if (pat == null) {
-						gc.dbg("Conflicting pattern. fromLeft=" + fromLeft + ",sem=" +
-							sem.getLocation());
+						// gc.dbg("Conflicting pattern. fromLeft=" + fromLeft + ",sem=" +
+						// 	sem.getLocation());
 						return false;
 					}
 					return true;

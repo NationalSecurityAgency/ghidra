@@ -110,17 +110,17 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 
 	@Override
 	public void setValue(Register register, BigInteger value) throws ContextChangeException {
-		dbg.println("Set " + register + " to " + value);
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Set " + register + " to " + value);
 	}
 
 	@Override
 	public void setRegisterValue(RegisterValue value) throws ContextChangeException {
-		dbg.println("Set " + value);
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Set " + value);
 	}
 
 	@Override
 	public void clearRegister(Register register) throws ContextChangeException {
-		dbg.println("Clear " + register);
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Clear " + register);
 	}
 
 	@Override
@@ -165,12 +165,12 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 
 	@Override
 	public void setFutureRegisterValue(Address address, RegisterValue value) {
-		dbg.println("Set " + value + " at " + address);
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Set " + value + " at " + address);
 	}
 
 	@Override
 	public void setFutureRegisterValue(Address fromAddr, Address toAddr, RegisterValue value) {
-		dbg.println("Set " + value + " for [" + fromAddr + ":" + toAddr + "]");
+		if (dbg != DbgTimer.INACTIVE) dbg.println("Set " + value + " for [" + fromAddr + ":" + toAddr + "]");
 	}
 
 	@Override
@@ -182,8 +182,10 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 			return;
 		}
 		defctx = defctx.combine(AssemblyPatternBlock.fromRegisterValue(registerValue));
-		dbg.println("Combining " + registerValue);
-		dbg.println("  " + defctx);
+		if (dbg != DbgTimer.INACTIVE) {
+			dbg.println("Combining " + registerValue);
+			dbg.println("  " + defctx);
+		}
 	}
 
 	@Override

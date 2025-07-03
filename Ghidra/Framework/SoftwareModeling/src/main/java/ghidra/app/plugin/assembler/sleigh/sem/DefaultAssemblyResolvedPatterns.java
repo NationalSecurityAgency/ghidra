@@ -28,6 +28,7 @@ import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory.AbstractAssemblyResolutionBuilder;
 import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory.AbstractAssemblyResolvedPatternsBuilder;
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
 import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
@@ -758,11 +759,11 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 			Set<Integer> printed =
 				Arrays.stream(cons.getOpsPrintOrder()).boxed().collect(Collectors.toSet());
 			if (!(opSym.getDefiningSymbol() instanceof SubtableSymbol)) {
-				AssemblyTreeResolver.DBG.println("Operand " + opSym + " is not a sub-table");
+				if (AssemblyTreeResolver.DBG != DbgTimer.INACTIVE) AssemblyTreeResolver.DBG.println("Operand " + opSym + " is not a sub-table");
 				continue;
 			}
 			if (!printed.contains(opIdx)) {
-				AssemblyTreeResolver.DBG.println("Operand " + opSym + " is hidden");
+				if (AssemblyTreeResolver.DBG != DbgTimer.INACTIVE) AssemblyTreeResolver.DBG.println("Operand " + opSym + " is hidden");
 				continue;
 			}
 			AssemblyResolvedPatterns child = (AssemblyResolvedPatterns) children.get(opIdx);

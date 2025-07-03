@@ -17,6 +17,8 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.List;
 
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
+
 /**
  * A {@link AssemblyResolution} indicating the occurrence of a (usually semantic) error
  * 
@@ -53,7 +55,8 @@ public class DefaultAssemblyResolvedError extends AbstractAssemblyResolution
 			String description, List<? extends AssemblyResolution> children,
 			AssemblyResolution right, String error) {
 		super(factory, description, children, right);
-		AbstractAssemblyTreeResolver.DBG.println(error);
+		if (AbstractAssemblyTreeResolver.DBG != DbgTimer.INACTIVE)
+			AbstractAssemblyTreeResolver.DBG.println(error);
 		this.error = error;
 	}
 

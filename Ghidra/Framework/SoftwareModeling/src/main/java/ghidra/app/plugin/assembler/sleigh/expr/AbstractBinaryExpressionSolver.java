@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.expression.BinaryExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
@@ -43,13 +44,13 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 
 		if (lval != null && !lval.isFullyDefined()) {
 			if (!lval.isFullyUndefined()) {
-				dbg.println("Partially-defined left value for binary solver: " + lval);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Partially-defined left value for binary solver: " + lval);
 			}
 			lval = null;
 		}
 		if (rval != null && !rval.isFullyDefined()) {
 			if (!rval.isFullyUndefined()) {
-				dbg.println("Partially-defined right value for binary solver: " + rval);
+				if (dbg != DbgTimer.INACTIVE) dbg.println("Partially-defined right value for binary solver: " + rval);
 			}
 			rval = null;
 		}
@@ -80,7 +81,7 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 			return factory.newErrorBuilder().error(e.getMessage()).description(description).build();
 		}
 		catch (AssertionError e) {
-			dbg.println("While solving: " + exp + " (" + description + ")");
+			if (dbg != DbgTimer.INACTIVE) dbg.println("While solving: " + exp + " (" + description + ")");
 			throw e;
 		}
 	}
