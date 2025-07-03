@@ -18,7 +18,7 @@ try:
     from . import trace_rmi_pb2 as bufs
 except Exception as e:
     from .setuputils import prompt_and_mitigate_dependencies
-    prompt_and_mitigate_dependencies("Debug/Debugger-rmi-trace")
+    prompt_and_mitigate_dependencies("Debugger-rmi-trace")
 
 from collections import deque
 from concurrent.futures import Executor, Future

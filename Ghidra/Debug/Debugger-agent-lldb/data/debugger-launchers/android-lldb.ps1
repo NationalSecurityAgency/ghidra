@@ -10,6 +10,7 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#android
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :file "Image" "The target binary executable image"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
@@ -21,8 +22,8 @@
 
 . ..\support\lldbsetuputils.ps1
 
-$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
-$pypathLldb = Ghidra-Module-PyPath "Debug/Debugger-agent-lldb"
+$pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
+$pypathLldb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathLldb;$pypathTrace;$Env:PYTHONPATH"
 
 $arglist = Compute-Lldb-Platform-Args `
