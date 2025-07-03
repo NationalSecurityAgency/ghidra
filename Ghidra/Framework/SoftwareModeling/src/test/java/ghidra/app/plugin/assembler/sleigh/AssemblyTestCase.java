@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.app.plugin.assembler.sleigh;
 
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 
 import org.apache.commons.collections4.MultiValuedMap;
@@ -28,9 +30,7 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 import ghidra.program.model.address.Address;
@@ -38,7 +38,6 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
 
 /**
  * A test for assembly of a particular SLEIGH language
@@ -52,7 +51,6 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 
 	// note: disable debug output in batch mode--over 15M of output to the test log
 
-	static final DbgTimer dbg = BATCH_MODE ? DbgTimer.INACTIVE : DbgTimer.ACTIVE;
 	static String setupLangID = "";
 
 	/**
@@ -91,24 +89,25 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	 * @param trees the trees
 	 */
 	protected static void dbgPrintTrees(Collection<AssemblyParseResult> trees) {
-		dbg.println("Got " + trees.size() + " tree(s).");
+		Msg.trace(AssemblyTestCase.class, "Got " + trees.size() + " tree(s).");
 		Set<String> suggestions = new TreeSet<>();
 		for (AssemblyParseResult result : trees) {
 			if (!result.isError()) {
 				AssemblyParseAcceptResult acc = (AssemblyParseAcceptResult) result;
 				AssemblyParseTreeNode tree = acc.getTree();
-				tree.print(dbg);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				tree.print(new PrintStream(baos));
+				Msg.trace(AssemblyTestCase.class, baos.toByteArray());
 			}
 			else {
 				AssemblyParseErrorResult err = (AssemblyParseErrorResult) result;
-				dbg.println(err);
+				Msg.trace(AssemblyTestCase.class, err.toString());
 				if (err.getBuffer().equals("")) {
 					suggestions.addAll(err.getSuggestions());
 				}
 			}
 		}
-		dbg.println("Proposals: " + suggestions);
-
+		Msg.trace(AssemblyTestCase.class, "Proposals: " + suggestions);
 	}
 
 	/**
@@ -129,12 +128,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 		Address at = lang.getDefaultSpace().getAddress(addr);
 		context.setContextRegister(ctx);
 		MemBuffer buf = new ByteMemBufferImpl(at, ins, lang.isBigEndian());
-		SleighDebugLogger logger =
-			new SleighDebugLogger(buf, context, lang, SleighDebugMode.VERBOSE);
 		InstructionPrototype ip = lang.parse(buf, context, false);
-		if (VERBOSE_DIS) {
-			dbg.println("SleighLog:\n" + logger.toString());
-		}
 		return new PseudoInstruction(at, ip, buf, context);
 	}
 
@@ -169,7 +163,6 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	 */
 	protected void checkOneCompat(String instr, AssemblyResolutionResults rr) {
 		AssemblyPatternBlock ins = AssemblyPatternBlock.fromString(instr);
-		dbg.println("Checking against: " + ins);
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess
 		Set<AssemblyResolvedPatterns> misses = new TreeSet<>();
 		for (AssemblyResolution ar : rr) {
@@ -185,14 +178,6 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			misses.add(rescon);
 		}
 
-		dbg.println("Errors:");
-		for (AssemblyResolution ar : errs) {
-			dbg.println(ar.toString("  "));
-		}
-		dbg.println("Mismatches:");
-		for (AssemblyResolution ar : misses) {
-			dbg.println(ar.toString("  "));
-		}
 		fail("No result matched the desired instruction bytes");
 	}
 
@@ -210,7 +195,6 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 		Address address = lang.getDefaultSpace().getAddress(addr);
 		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
-		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess.
@@ -224,13 +208,10 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			}
 			AssemblyResolvedPatterns rcon = (AssemblyResolvedPatterns) ar;
 			try {
-				dbg.println("  " + rcon.lineToString());
 				for (byte[] ins : rcon.possibleInsVals(ctx)) {
-					dbg.println("    " + NumericUtilities.convertBytesToString(ins));
 					PseudoInstruction pi = disassemble(addr, ins, ctx.getVals());
 					String cons = dumpConstructorTree(pi);
 					String dis = pi.toString();
-					dbg.println("      " + dis);
 					if (!disassembly.contains(dis.trim())) {
 						failedOne = true;
 						misTxtToCons.put(dis, cons);
@@ -244,24 +225,9 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			}
 		}
 		if (failedOne) {
-			dbg.println("Disassembly Mismatches:");
-			for (String dis : misTxtToCons.keySet()) {
-				dbg.println("  " + dis);
-				for (String cons : misTxtToCons.get(dis)) {
-					for (AssemblyResolvedPatterns rc : misTxtConsToRes.get(dis + cons)) {
-						dbg.println("    d:" + cons);
-						dbg.println("    a:" + rc.dumpConstructorTree());
-						dbg.println(rc.toString("      "));
-					}
-				}
-			}
 			fail("At least one result did not disassemble to the given text");
 		}
 		if (!gotOne) {
-			dbg.println("Errors:");
-			for (AssemblyResolution ar : errs) {
-				dbg.println(ar.toString("  "));
-			}
 			fail("Did not get any matches");
 		}
 	}
@@ -289,8 +255,6 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			if (ar.isError()) {
 				continue;
 			}
-			dbg.println("Got:");
-			dbg.println(ar.toString("  "));
 			fail("All results were expected to be errors");
 		}
 	}
@@ -459,7 +423,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	}
 
 	/**
-	 * Like {@link #assertOneCompatRestExact(String, String, String, long), except a context is
+	 * Like {@link #assertOneCompatRestExact(String, String, long, String)}, except a context is
 	 * given
 	 *
 	 * @param assembly the input assembly
@@ -494,7 +458,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	}
 
 	/**
-	 * Like {@link # assertAllSemanticErrors(String), but a context is given
+	 * Like {@link #assertAllSemanticErrors(String)}, but a context is given
 	 *
 	 * @param assembly the input assembly
 	 * @param ctxstr the context pattern for assembly
