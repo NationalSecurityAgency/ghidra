@@ -541,7 +541,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			SymbolicPropogator targetEval = symEval;
 			// if this is a tbX instruction, don't assume any old values
 			if (targetInstr != null && targetInstr.getMnemonicString().startsWith("tb")) {
-				targetEval = new SymbolicPropogator(program);
+				targetEval = new SymbolicPropogator(program, false);
 			}
 
 			Address zeroAddr = targetInstr.getMinAddress().getNewAddress(0);
