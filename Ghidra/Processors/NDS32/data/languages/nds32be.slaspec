@@ -1,0 +1,7 @@
+@define BASELINE_V2 "yes"
+@define BASELINE_V3 "yes"
+@define PERFORMANCE_V1 "yes"
+@define PERFORMANCE_V2 "yes"
+@define ENDIAN "big"
+
+@include "nds32.sinc"
