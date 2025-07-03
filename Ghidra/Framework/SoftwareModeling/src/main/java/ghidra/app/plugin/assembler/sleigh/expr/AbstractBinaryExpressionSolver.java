@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,15 +42,9 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 		MaskedLong rval = solver.getValue(exp.getRight(), vals, cur);
 
 		if (lval != null && !lval.isFullyDefined()) {
-			if (!lval.isFullyUndefined()) {
-				dbg.println("Partially-defined left value for binary solver: " + lval);
-			}
 			lval = null;
 		}
 		if (rval != null && !rval.isFullyDefined()) {
-			if (!rval.isFullyUndefined()) {
-				dbg.println("Partially-defined right value for binary solver: " + rval);
-			}
 			rval = null;
 		}
 
@@ -80,7 +74,6 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 			return factory.newErrorBuilder().error(e.getMessage()).description(description).build();
 		}
 		catch (AssertionError e) {
-			dbg.println("While solving: " + exp + " (" + description + ")");
 			throw e;
 		}
 	}
