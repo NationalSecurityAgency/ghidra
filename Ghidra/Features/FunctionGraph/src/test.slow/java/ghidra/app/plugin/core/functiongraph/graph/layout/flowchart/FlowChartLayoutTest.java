@@ -36,9 +36,9 @@ public class FlowChartLayoutTest extends AbstractFlowChartLayoutTest {
 
 	@Test
 	public void testBasicRootWithTwoChildren() throws CancelledException {
+
 		edge(A, B);
 		edge(A, C);
-		applyLayout();
 		showGraph();
 
 		assertVertices("""
@@ -67,7 +67,7 @@ public class FlowChartLayoutTest extends AbstractFlowChartLayoutTest {
 		edge(A, D);
 		applyLayout();
 
-//		showGraph();
+		showGraph();
 
 		assertVertices("""
 				......

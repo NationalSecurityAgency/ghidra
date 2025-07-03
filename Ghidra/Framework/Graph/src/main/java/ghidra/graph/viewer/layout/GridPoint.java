@@ -57,6 +57,12 @@ public class GridPoint {
 		return col == other.col && row == other.row;
 	}
 
+	public void transpose() {
+		int temp = row;
+		row = col;
+		col = temp;
+	}
+
 	@Override
 	public String toString() {
 		return "(r=" + row + ",c=" + col + ")";

@@ -293,7 +293,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		// the layout defines the shape of the edge (this gives the layout flexibility in how
 		// to render its shape)
-		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
+		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer(renderContext);
 		renderContext.setEdgeShapeTransformer(edgeTransformer);
 
 		renderContext.setArrowPlacementTolerance(5.0f);
@@ -361,7 +361,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		visualEdgeRenderer.setHoveredColorTransformer(
 			e -> new GColor("color.visualgraph.view.satellite.edge.hovered"));
 
-		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
+		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer(renderContext);
 		renderContext.setEdgeShapeTransformer(edgeTransformer);
 
 		renderContext.setVertexShapeTransformer(new VisualGraphVertexShapeTransformer<>());
@@ -471,14 +471,9 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		button.setOpaque(false);
 		button.setToolTipText(tooltip);
 
-		/*
-		 
-		 TODO fix when the Generic Visual Graph help module is created
-		 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(button,
-			new HelpLocation("GraphTopic", "Satellite_View_Dock"));
-		*/
+			new HelpLocation("Visual_Graph", "Satellite_View_Dock"));
 
 		return button;
 	}
@@ -1011,7 +1006,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 			v.setLocation(newLocation);
 
-			if (changeType == ChangeType.RESTORE) {
+			if (changeType.isTransitional()) {
 				// ignore these events, as they are a bulk operation and will be handled later
 				return;
 			}
@@ -1183,6 +1178,12 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		@Override
 		public void verticesRemoved(Iterable<V> vertices) {
 			getPathHighlighter().clearEdgeCache();
+
+			// clear any deleted nodes from the pick state
+			PickedState<V> pickedState = primaryViewer.getPickedVertexState();
+			for (V v : vertices) {
+				pickedState.pick(v, false);
+			}
 		}
 
 		@Override

@@ -97,27 +97,11 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		view.setSatelliteDocked(dockSatellite);
 
 		boolean showSatellite = saveState.getBoolean(DISPLAY_SATELLITE, true);
-		toggleSatelliteAction.setSelected(showSatellite);
-		view.setSatelliteVisible(showSatellite);
+		setSatelliteVisible(showSatellite);
 
 		String positionString = saveState.getString(DOCK_SATELLITE_POSITION, LOWER_RIGHT.name());
 		SatellitePosition position = SatellitePosition.valueOf(positionString);
-		view.setSatellitePosition(position);
-		deselectAllSatellitePositions();
-		switch (position) {
-			case LOWER_LEFT:
-				lowerLeftAction.setSelected(true);
-				break;
-			case LOWER_RIGHT:
-				lowerRightAction.setSelected(true);
-				break;
-			case UPPER_LEFT:
-				upperLeftAction.setSelected(true);
-				break;
-			case UPPER_RIGHT:
-				upperRightAction.setSelected(true);
-				break;
-		}
+		setSatellitePosition(position);
 	}
 
 	@Override
@@ -183,7 +167,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		toggleSatelliteAction.setPopupMenuData(
 			new MenuData(new String[] { "Display Satellite View" }));
 		toggleSatelliteAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Satellite_View"));
+			new HelpLocation("VisualGraph", "Satellite_View"));
 
 		dockSatelliteAction = new ToggleDockingAction("Dock Satellite View", owner) {
 			@Override
@@ -208,8 +192,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		};
 		dockSatelliteAction.setSelected(true);
 		dockSatelliteAction.setPopupMenuData(new MenuData(new String[] { "Dock Satellite View" }));
-		dockSatelliteAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Satellite_View"));
+		dockSatelliteAction.setHelpLocation(new HelpLocation("VisualGraph", "Satellite_View"));
 
 		upperLeftAction = new SatellitePositionAction("Upper Left", UPPER_LEFT, provider);
 		upperRightAction = new SatellitePositionAction("Upper Right", UPPER_RIGHT, provider);
@@ -234,7 +217,31 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		}
 	}
 
-	public void deselectAllSatellitePositions() {
+	public void setSatelliteVisible(boolean visible) {
+		toggleSatelliteAction.setSelected(visible);
+		view.setSatelliteVisible(visible);
+	}
+
+	public void setSatellitePosition(SatellitePosition position) {
+		deselectAllSatellitePositions();
+		switch (position) {
+			case LOWER_LEFT:
+				lowerLeftAction.setSelected(true);
+				break;
+			case LOWER_RIGHT:
+				lowerRightAction.setSelected(true);
+				break;
+			case UPPER_LEFT:
+				upperLeftAction.setSelected(true);
+				break;
+			case UPPER_RIGHT:
+				upperRightAction.setSelected(true);
+				break;
+		}
+		view.setSatellitePosition(position);
+	}
+
+	void deselectAllSatellitePositions() {
 		upperLeftAction.setSelected(false);
 		upperRightAction.setSelected(false);
 		lowerLeftAction.setSelected(false);
@@ -355,7 +362,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 			this.position = posiiton;
 			this.provider = provider;
 			setPopupMenuData(new MenuData(new String[] { "Docked Satellite Position", name }));
-			setHelpLocation(new HelpLocation("FunctionCallGraphPlugin", "Satellite_Location"));
+			setHelpLocation(new HelpLocation("VisualGraph", "Satellite_Location"));
 		}
 
 		@Override
