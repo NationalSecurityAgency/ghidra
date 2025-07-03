@@ -1113,6 +1113,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 				}
 				bestModule = module;
 			}
+			if (bestModule == null) {
+				setSelectedModules(Set.of());
+				return;
+			}
 			if (bestModule.getSections(snap).isEmpty()) {
 				setSelectedModules(Set.of(bestModule));
 				return;
