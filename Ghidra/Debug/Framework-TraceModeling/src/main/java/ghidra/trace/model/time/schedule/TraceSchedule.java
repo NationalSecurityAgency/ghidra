@@ -526,9 +526,22 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * Get the last thread stepped by this schedule in the context of the given trace
 	 * 
 	 * @param trace the trace containing the source snapshot and threads
-	 * @return the thread last stepped, or the "event thread" when no steps are taken
+	 * @return the thread last stepped, or the "event thread" when no steps are taken, or null
 	 */
 	public TraceThread getLastThread(Trace trace) {
+		long lastKey = getLastThreadKey();
+		return lastKey == -1 ? getEventThread(trace) : trace.getThreadManager().getThread(lastKey);
+	}
+
+	/**
+	 * Get the last thread stepped by this schedule in the context of the given trace
+	 * 
+	 * @param trace the trace containing the source snapshot and threads
+	 * @return the thread last stepped, or the "event thread" when no steps are taken
+	 * @throws IllegalArgumentException if the last thread cannot be determined from this schedule
+	 *             and the given trace.
+	 */
+	public TraceThread requireLastThread(Trace trace) {
 		long lastKey = getLastThreadKey();
 		return Step.requireThread(
 			lastKey == -1 ? getEventThread(trace) : trace.getThreadManager().getThread(lastKey),
@@ -650,7 +663,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public void finish(Trace trace, TraceSchedule position, PcodeMachine<?> machine,
 			TaskMonitor monitor) throws CancelledException {
-		TraceThread lastThread = position.getLastThread(trace);
+		TraceThread lastThread = position.requireLastThread(trace);
 		Sequence remains = steps.relativize(position.steps);
 		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		if (remains.isNop()) {
