@@ -7,4 +7,5 @@ data/languages/eBPF.ldefs||GHIDRA||||END|
 data/languages/eBPF.opinion||GHIDRA||||END|
 data/languages/eBPF.pspec||GHIDRA||||END|
 data/languages/eBPF.sinc||GHIDRA||||END|
+data/languages/eBPF_be.slaspec||GHIDRA||||END|
 data/languages/eBPF_le.slaspec||GHIDRA||||END|
