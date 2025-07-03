@@ -643,7 +643,8 @@ public class ProgramEmulationUtils {
 					pc.getAddressSpace().isOverlaySpace() ? List.of(pc.getAddressSpace())
 							: List.of();
 				loadExecutable(initial, program, overlays);
-				doLaunchEmulationThread(trace, snap, program, pc, pc);
+				TraceThread thread = doLaunchEmulationThread(trace, snap, program, pc, pc);
+				initial.setEventThread(thread);
 			}
 			trace.clearUndo();
 			success = true;

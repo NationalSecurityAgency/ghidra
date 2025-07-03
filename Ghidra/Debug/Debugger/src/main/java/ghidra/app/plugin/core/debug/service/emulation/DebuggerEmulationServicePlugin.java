@@ -742,6 +742,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			destSnap.setDescription("Emulated");
 			try {
 				ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
+				TraceThread lastThread = key.time.getLastThread(key.trace);
+				destSnap.setEventThread(lastThread);
 			}
 			catch (Throwable e) {
 				Msg.showError(this, null, "Emulate",
