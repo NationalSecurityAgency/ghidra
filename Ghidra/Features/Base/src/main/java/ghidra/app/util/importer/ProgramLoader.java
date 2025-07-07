@@ -147,6 +147,18 @@ public class ProgramLoader {
 		}
 
 		/**
+		 * Sets the required import source to the given filesystem path
+		 * <p>
+		 * NOTE: Any previously defined sources will be overwritten
+		 * 
+		 * @param path The filesystem path to import. A {@code null} value will unset the source.
+		 * @return This {@link Builder}
+		 */
+		public Builder source(String path) {
+			return source(new File(path));
+		}
+
+		/**
 		 * Sets the {@link Project}. Loaders can use this to take advantage of existing 
 		 * {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
 		 * libraries.
