@@ -429,6 +429,10 @@ class PyGhidraLauncher:
             **jpype_kwargs
         )
 
+        # Remove CWD from sys.path so we don't try to import from unintentional directories
+        # (i.e, an unrelated "ghidra" directory the user may have created)
+        sys.path.remove(os.getcwd())
+
         # Install hooks into python importlib
         sys.meta_path.append(_PyGhidraImportLoader())
         sys.meta_path.append(_GhidraBundleFinder())

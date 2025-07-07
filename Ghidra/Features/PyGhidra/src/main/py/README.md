@@ -325,6 +325,11 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__2.2.1:__
+* PyGhidra now launches with the current working directory removed from `sys.path` to prevent
+  the potential for importing invalid modules from random `ghidra/` or `java/` directories that may 
+  exist in the user's current working directory.
+
 __2.2.0:__
 * [`pyghidra.open_program()`](#pyghidraopen_program) and 
   [`pyghidra.run_script()`](#pyghidrarun_script) now accept a `nested_project_location` parameter
