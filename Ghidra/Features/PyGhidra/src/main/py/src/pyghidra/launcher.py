@@ -431,7 +431,11 @@ class PyGhidraLauncher:
 
         # Remove CWD from sys.path so we don't try to import from unintentional directories
         # (i.e, an unrelated "ghidra" directory the user may have created)
-        sys.path.remove(os.getcwd())
+        try:
+            sys.path.remove(os.getcwd())
+        except ValueError:
+            # CWD wasn't present on sys.path
+            pass
 
         # Install hooks into python importlib
         sys.meta_path.append(_PyGhidraImportLoader())
