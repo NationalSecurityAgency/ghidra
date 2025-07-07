@@ -174,37 +174,42 @@ ext.deps = [
 		destination: FID_DIR
 	],
 	[
-		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Use this one for the Java jar
+		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Linux on 64-bit Intel (use this one for the Java jar)
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
 		sha256: "bc31ad12446d7db1bd9d0ac82dec9d7b5129b8b8dd6e44b571a83ac6010d2f9b",
 		destination: {
-			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip")
-			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/"), FLAT_REPO_DIR, new WildcardFileFilter("*.jar"))
+			def name = "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}"
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "${name}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "${name}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/linux_x86_64"), new WildcardFileFilter("libz3*.so"))
+			copyDirectory(new File(DOWNLOADS_DIR, "${name}/bin/"), FLAT_REPO_DIR, new WildcardFileFilter("*.jar"))
 		}
 	],
 	[
 		name: "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip", // macOS on Apple silicon
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip",
 		sha256: "e7cd325cb2210d3b241d0d5517a293677030f58c1771e196c4574ef99dc45168",
-		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
-	],
-	[
-		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Linux on 64-bit Intel
-		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
-		sha256: "bc31ad12446d7db1bd9d0ac82dec9d7b5129b8b8dd6e44b571a83ac6010d2f9b",
-		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/mac_arm_64"), new WildcardFileFilter("libz3*.dylib"))
+		}
 	],
 	[
 		name: "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip", // macOS on 64-bit Intel
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip",
 		sha256: "0c33d8574f7dcd041f1f4e7fe301840db6a527f866cb74b0b47518bf8053502d",
-		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/mac_x86_64"), new WildcardFileFilter("libz3*.dylib"))
+		}
 	],
 	[
 		name: "z3-${Z3_VER}-x64-win.zip", // Windows on 64-bit Intel
 		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-win.zip",
 		sha256: "2bcd14b6849fddead3d0b3cb671cc9d134a8ef0b1d3eff3efd7d75a5bbf00dd3",
-		destination: file("${DEPS_DIR}/SymbolicSummaryZ3")
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-win.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-win/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/win_x86_64"), new WildcardFileFilter("libz3*.dll"))
+		}
 	],
 	[
 		name: "protobuf-6.31.0-py3-none-any.whl",

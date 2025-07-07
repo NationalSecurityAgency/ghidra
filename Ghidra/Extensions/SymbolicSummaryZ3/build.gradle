@@ -21,16 +21,9 @@ apply from: "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Xtra SymbolicSummaryZ3'
 
-ext.Z3_VER = "4.13.0"
-ext.Z3_ARM64_OSX_VER = "11.0"
-ext.Z3_X64_OSX_VER = "11.7.10"
-ext.Z3_X64_GLIBC_VER = "2.31"
-// NO Z3_WIN_VER
-
 dependencies {
 	api project(':Debugger')
 	api project(':SystemEmulation')
-	//api "com.microsoft.z3:java-jar:${Z3_VER}"
 	api ":com.microsoft.z3:"
 
 	// Oof. Apparently, this doesn't work transitively....
@@ -41,94 +34,30 @@ dependencies {
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 }
 
-ext.PLATFORM_BINDINGS = [
-	[
-		name: "mac_arm_64",
-		zip: "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip",
-		files: [
-			"z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}/bin/libz3.dylib",
-			"z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}/bin/libz3java.dylib"
-		]
-	],
-	[
-		name: "linux_x86_64",
-		zip: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
-		files: [
-			"z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/libz3.so",
-			"z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/libz3java.so"
-		]
-	],
-	[
-		name: "mac_x86_64",
-		zip: "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip",
-		files: [
-			"z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}/bin/libz3.dylib",
-			"z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}/bin/libz3java.dylib"
-		]
-	],
-	[
-		name: "win_x86_64",
-		zip: "z3-${Z3_VER}-x64-win.zip",
-		files: [
-			"z3-${Z3_VER}-x64-win/bin/libz3.dll",
-			"z3-${Z3_VER}-x64-win/bin/libz3java.dll",
-
-			"z3-${Z3_VER}-x64-win/bin/msvcp140.dll",
-			"z3-${Z3_VER}-x64-win/bin/msvcp140_1.dll",
-			"z3-${Z3_VER}-x64-win/bin/msvcp140_2.dll",
-			"z3-${Z3_VER}-x64-win/bin/msvcp140_atomic_wait.dll",
-			"z3-${Z3_VER}-x64-win/bin/msvcp140_codecvt_ids.dll",
-			"z3-${Z3_VER}-x64-win/bin/vcomp140.dll",
-			"z3-${Z3_VER}-x64-win/bin/vcruntime140.dll",
-			"z3-${Z3_VER}-x64-win/bin/vcruntime140_1.dll"
-		]
-	]
-]
-
-// Note: jars vary among platform zips, but contain all the same file names
-// I'm presuming they vary only by java compiler and/or target JVM.
-ext.JAVA_JAR = [
-	zip: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
-	files: [
-		"z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}/bin/com.microsoft.z3.jar",
-	]
-]
-
-RelativePath computeInto(FileCopyDetails fcd) {
-	def dstSegs = fcd.relativePath.segments
-	def diff = dstSegs.length - fcd.relativeSourcePath.segments.length
-	RelativePath pre = new RelativePath(false, dstSegs.take(diff))
-	assert pre.append(fcd.relativeSourcePath).equals(fcd.relativePath)
-	return pre
-}
-
-CopySpec z3CopySpec = copySpec {
-	PLATFORM_BINDINGS.forEach { platform ->
-		File depsFile = file("${DEPS_DIR}/SymbolicSummaryZ3/${platform.zip}")
-		File binRepoFile = file("${BIN_REPO}/Ghidra/Extensions/SymbolicSummaryZ3/${platform.zip}")
-		def z3ZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
-		
-		from(z3ZipTree) {
-			include platform.files
-			eachFile { fcd ->
-				fcd.relativePath = computeInto(fcd).append(true, fcd.relativePath.lastName)
-			}
-			into("${platform.name}")
-		}
+CopySpec z3LibsCopySpec = copySpec {
+	File depsDir = file("${DEPS_DIR}/SymbolicSummaryZ3/os")
+	File binRepoDir = file("${BIN_REPO}/Ghidra/Extensions/SymbolicSummaryZ3/os")
+	from(depsDir.exists() ? depsDir : binRepoDir) {
+		into("os")
 	}
 }
 
-task z3DevUnpackPlatforms(type: Copy) {
+task z3DevLibsCopy(type: Copy) {
 	description "Unpack Z3 archives for development use"
 	group = "Development Preparation"
 	
-	with z3CopySpec
-	destinationDir file("build/os")
+	onlyIf {
+		// Only need to do this if using dependencies directory
+		file("${DEPS_DIR}/SymbolicSummaryZ3/os").exists()
+	}
+	
+	with z3LibsCopySpec
+	destinationDir file("build")
 }
 
 zipExtensions {
-	into(getBaseProjectName(this.project) + "/os") {
-		with z3CopySpec
+	into(getBaseProjectName(this.project)) {
+		with z3LibsCopySpec
 	}
 	into(getBaseProjectName(this.project)) {
 		from(this.project.file(".")) {
@@ -137,4 +66,4 @@ zipExtensions {
 	}
 }
 
-rootProject.prepDev.dependsOn(z3DevUnpackPlatforms)
+rootProject.prepDev.dependsOn(z3DevLibsCopy)
