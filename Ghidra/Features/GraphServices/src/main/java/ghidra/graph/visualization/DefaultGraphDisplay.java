@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1195,6 +1195,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 								: MultiSelectionStrategy.rectangular())
 					.viewSize(PREFERRED_VIEW_SIZE)
 					.layoutSize(PREFERRED_LAYOUT_SIZE)
+
+//					// This is a reminder of how we can change the modifier keys for graph scaling
+//					.graphMouse(DefaultGraphMouse.builder()
+//							.yAxisScalingMask(Modifiers.masks.get("SHIFT_MENU"))
+//							.build())
 					.build();
 
 		// Add an ancestor listener to scale and center the graph after the component
