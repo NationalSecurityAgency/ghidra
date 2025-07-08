@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.docking.settings;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.Predicate;
 
 /**
@@ -40,14 +39,10 @@ public interface SettingsDefinition {
 		if (settings == null) {
 			return additional;
 		}
-		ArrayList<SettingsDefinition> list = new ArrayList<>();
-		list.addAll(Arrays.asList(settings));
-		for (SettingsDefinition def : additional) {
-			if (!list.contains(def)) {
-				list.add(def);
-			}
-		}
-		return list.toArray(new SettingsDefinition[list.size()]);
+		SettingsDefinition[] newArray = new SettingsDefinition[settings.length + additional.length];
+		System.arraycopy(settings, 0, newArray, 0, settings.length);
+		System.arraycopy(additional, 0, newArray, settings.length, additional.length);
+		return newArray;
 	}
 
 	/**
