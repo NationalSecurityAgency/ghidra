@@ -133,6 +133,8 @@ public class ProgramLoader {
 		/**
 		 * Sets the required import source to the given bytes
 		 * <p>
+		 * NOTE: {@link #load()} will fail if a {@link #name(String)} is not set
+		 * <p>
 		 * NOTE: Any previously defined sources will be overwritten
 		 * 
 		 * @param b The bytes to import. A {@code null} value will unset the source.
@@ -501,6 +503,10 @@ public class ProgramLoader {
 				p = fsService.getByteProvider(fsService.getLocalFSRL(file), true, monitor);
 			}
 			else if (bytes != null) {
+				if (importNameOverride == null) {
+					throw new LoadException(
+						"Byte source does not have a name (was name() called?)");
+				}
 				p = new ByteArrayProvider(bytes);
 			}
 			else {
