@@ -158,6 +158,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private LinkedList<Long> idsToDelete = new LinkedList<>();
 	private LinkedList<Pair<DataType, DataType>> typesToReplace = new LinkedList<>();
 	private List<DataType> favoritesList = new ArrayList<>();
+	private BadDataType myBadDataType = new BadDataType(this);
 
 	/**
 	 * Set of {@link AbstractIntegerDataType} IDs whose removal has been blocked
@@ -1238,6 +1239,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return dataType;
 		}
 
+		if (dataType instanceof BadDataType) {
+			// Avoid adding BAD data type to the manager which 
+			// will appear when needed for a missing datatype
+			return myBadDataType;
+		}
+
 		if (dataType instanceof BitFieldDataType) {
 			return resolveBitFieldDataType((BitFieldDataType) dataType, handler);
 		}
@@ -1888,9 +1895,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				throw new IllegalArgumentException(
 					"Datatype replacment with dynamic or factory type not permitted.");
 			}
-			if (getID(existingDt) < 0) {
+			if (!contains(existingDt)) {
 				throw new IllegalArgumentException(
 					"Datatype to replace is not contained in this datatype manager.");
+			}
+			if (existingDt instanceof BadDataType) {
+				throw new IllegalArgumentException("BAD Datatype can be deleted but not replaced.");
 			}
 			boolean fixupName = false;
 			if (!contains(replacementDt)) {
@@ -2291,7 +2301,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return DataType.DEFAULT;
 		}
 		if (dataTypeID == BAD_DATATYPE_ID) {
-			return BadDataType.dataType;
+			return myBadDataType;
 		}
 		return getDataType(dataTypeID, null);
 	}
@@ -2341,6 +2351,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private boolean removeInternal(DataType dataType) {
 		if (!contains(dataType)) {
 			return false;
+		}
+
+		if (dataType instanceof BadDataType) {
+			// Cannot really replace BAD datatype which is generally not directly referenced
+			deleteDataType(BAD_DATATYPE_ID);
+			return true;
 		}
 
 		long id = getID(dataType);
@@ -4582,7 +4598,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private record DedupedConflicts(int processCnt, int replaceCnt) {}
+	private record DedupedConflicts(int processCnt, int replaceCnt) {
+	}
 
 	private DedupedConflicts doDedupeConflicts(DataType dataType) {
 
