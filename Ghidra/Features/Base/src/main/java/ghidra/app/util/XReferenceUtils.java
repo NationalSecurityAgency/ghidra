@@ -227,7 +227,7 @@ public class XReferenceUtils {
 	 * 	ProgramLocation, Supplier)}.  That method takes a supplier that can regenerate the current
 	 *  xrefs for the table.
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static void showXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
 			TableService service, ProgramLocation location, Collection<Reference> xrefs) {
 

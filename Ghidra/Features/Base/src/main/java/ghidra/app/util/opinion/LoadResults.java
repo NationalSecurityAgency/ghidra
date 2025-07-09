@@ -131,7 +131,7 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	 *   this class, instead use {@link #getPrimaryDomainObject(Object)} and independently clean up
 	 *   the new reference with a separate call to {@link DomainObject#release(Object)}.
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public T getPrimaryDomainObject() {
 		return loadedList.get(0).getDomainObject();
 	}
@@ -170,7 +170,7 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	 * @param consumer the consumer
 	 * @deprecated Use {@link #close()} instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public void release(Object consumer) {
 		loadedList.forEach(loaded -> loaded.release(consumer));
 	}
@@ -184,7 +184,7 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	 *   release
 	 * @deprecated Use {@link #close()} instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public void release(Object consumer, Predicate<? super Loaded<T>> filter) {
 		loadedList.stream().filter(filter).forEach(loaded -> loaded.release(consumer));
 	}
@@ -198,7 +198,7 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	 * @deprecated Use {@link #getNonPrimary()} and {@link Loaded#close()} on the {@link List} 
 	 *   elements instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public void releaseNonPrimary(Object consumer) {
 		for (int i = 0; i < loadedList.size(); i++) {
 			if (i > 0) {

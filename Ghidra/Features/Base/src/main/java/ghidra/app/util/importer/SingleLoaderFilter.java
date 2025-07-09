@@ -24,7 +24,7 @@ import ghidra.app.util.opinion.Loader;
  * 
  * @deprecated Use {@link ProgramLoader.Builder#loaders(Class)} instead
  */
-@Deprecated(since = "11.5", forRemoval = true)
+@Deprecated(since = "12.0", forRemoval = true)
 public class SingleLoaderFilter implements Predicate<Loader> {
 	private final Class<? extends Loader> single;
 
@@ -34,7 +34,7 @@ public class SingleLoaderFilter implements Predicate<Loader> {
 	 * @param single The loader class used for this filter.
 	 * @deprecated Use {@link ProgramLoader.Builder#loaders(Class)} instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public SingleLoaderFilter(Class<? extends Loader> single) {
 		this.single = single;
 	}

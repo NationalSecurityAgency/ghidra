@@ -101,7 +101,7 @@ public class Loaded<T extends DomainObject> implements AutoCloseable {
 	 *   class, instead use {@link #getDomainObject(Object)} and independently clean up the new
 	 *   reference with a separate call to {@link DomainObject#release(Object)}.
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public T getDomainObject() {
 		return domainObject;
 	}
@@ -267,7 +267,7 @@ public class Loaded<T extends DomainObject> implements AutoCloseable {
 	 * @param consumer the consumer
 	 * @deprecated Use {@link #close()} instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public void release(Object consumer) {
 		if (!domainObject.isClosed() && domainObject.isUsedBy(consumer)) {
 			domainObject.release(consumer);

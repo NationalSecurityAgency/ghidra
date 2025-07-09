@@ -204,7 +204,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @deprecated Use {@link #set(GhidraState)} or {@link #set(GhidraState, ScriptControls)}
 	 *   instead
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public final void set(GhidraState state, TaskMonitor monitor, PrintWriter writer) {
 		set(state, new ScriptControls(writer, writer, monitor));
 	}
@@ -267,7 +267,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @deprecated Use {@link #execute(GhidraState, ScriptControls)} instead to also set a 
 	 *   {@link PrintWriter} for {@code stderr}
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public final void execute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
 			throws Exception {
 		execute(runState, new ScriptControls(runWriter, runWriter, runMonitor));
@@ -1003,7 +1003,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @return a demangled version of the mangled string, or null if it could not be demangled
 	 * @deprecated Use {@link DemanglerUtil#demangle(Program, String, Address)} instead
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public String getDemangled(String mangled) {
 		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
 		if (!demangledObjs.isEmpty()) {

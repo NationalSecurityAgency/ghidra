@@ -447,7 +447,7 @@ public class ProgramLoader {
 		 * @deprecated Use {@link #load()} instead
 		 */
 		@SuppressWarnings("unchecked")
-		@Deprecated(since = "11.5", forRemoval = true)
+		@Deprecated(since = "12.0", forRemoval = true)
 		LoadResults<Program> load(Object consumer) throws IOException, LanguageNotFoundException,
 				CancelledException, VersionException, LoadException {
 			try (ByteProvider p = getSourceAsProvider()) {

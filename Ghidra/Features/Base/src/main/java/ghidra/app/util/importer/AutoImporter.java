@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * @deprecated Use {@link ProgramLoader}
  */
-@Deprecated(since = "11.5", forRemoval = true)
+@Deprecated(since = "12.0", forRemoval = true)
 public final class AutoImporter {
 	private AutoImporter() {
 		// service class; cannot instantiate
@@ -79,7 +79,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingBestGuess(File file, Project project,
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor)
 			throws IOException, CancelledException, DuplicateNameException, InvalidNameException,
@@ -129,7 +129,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingBestGuess(FSRL fsrl, Project project,
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor)
 			throws IOException, CancelledException, DuplicateNameException, InvalidNameException,
@@ -179,7 +179,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingBestGuess(ByteProvider provider,
 			Project project, String projectFolderPath, Object consumer, MessageLog messageLog,
 			TaskMonitor monitor) throws IOException, CancelledException, DuplicateNameException,
@@ -230,7 +230,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingSpecificLoaderClass(File file,
 			Project project, String projectFolderPath, Class<? extends Loader> loaderClass,
 			List<Pair<String, String>> loaderArgs, Object consumer, MessageLog messageLog,
@@ -284,7 +284,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingSpecificLoaderClass(FSRL fsrl, Project project,
 			String projectFolderPath, Class<? extends Loader> loaderClass,
 			List<Pair<String, String>> loaderArgs, Object consumer, MessageLog messageLog,
@@ -339,7 +339,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByLookingForLcs(File file, Project project,
 			String projectFolderPath, Language language, CompilerSpec compilerSpec, Object consumer,
 			MessageLog messageLog, TaskMonitor monitor) throws IOException, CancelledException,
@@ -393,7 +393,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByLookingForLcs(FSRL fsrl, Project project,
 			String projectFolderPath, Language language, CompilerSpec compilerSpec, Object consumer,
 			MessageLog messageLog, TaskMonitor monitor) throws IOException, CancelledException,
@@ -448,7 +448,7 @@ public final class AutoImporter {
 	 *   failed language upgrade
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingSpecificLoaderClassAndLcs(File file,
 			Project project, String projectFolderPath, Class<? extends Loader> loaderClass,
 			List<Pair<String, String>> loaderArgs, Language language, CompilerSpec compilerSpec,
@@ -506,7 +506,7 @@ public final class AutoImporter {
 	 *   failed language upgrade
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importByUsingSpecificLoaderClassAndLcs(FSRL fsrl,
 			Project project, String projectFolderPath, Class<? extends Loader> loaderClass,
 			List<Pair<String, String>> loaderArgs, Language language, CompilerSpec compilerSpec,
@@ -562,7 +562,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static Loaded<Program> importAsBinary(File file, Project project,
 			String projectFolderPath, Language language, CompilerSpec compilerSpec, Object consumer,
 			MessageLog messageLog, TaskMonitor monitor) throws IOException, CancelledException,
@@ -618,7 +618,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static Loaded<Program> importAsBinary(ByteProvider bytes, Project project,
 			String projectFolderPath, Language language, CompilerSpec compilerSpec,
 			Object consumer, MessageLog messageLog, TaskMonitor monitor) throws IOException,
@@ -680,7 +680,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importFresh(File file, Project project,
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor,
 			Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,
@@ -743,7 +743,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importFresh(FSRL fsrl, Project project,
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor,
 			Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,
@@ -806,7 +806,7 @@ public final class AutoImporter {
 	 * @throws LoadException if nothing was loaded
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public static LoadResults<Program> importFresh(ByteProvider provider, Project project,
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor,
 			Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,

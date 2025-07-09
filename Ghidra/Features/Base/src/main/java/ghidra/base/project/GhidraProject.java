@@ -613,7 +613,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Language language, CompilerSpec compilerSpec)
 			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
 			IOException {
@@ -649,7 +649,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Processor processor) throws CancelledException,
 			VersionException, LanguageNotFoundException, LoadException, IOException {
 		LanguageService svc = DefaultLanguageService.getLanguageService();
@@ -676,7 +676,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass)
 			throws CancelledException, VersionException, LanguageNotFoundException, LoadException,
 			IOException {
@@ -713,7 +713,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file, Class<? extends Loader> loaderClass, Language language,
 			CompilerSpec compilerSpec) throws CancelledException, VersionException,
 			LanguageNotFoundException, LoadException, IOException {
@@ -748,7 +748,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgram(File file) throws CancelledException, VersionException,
 			LanguageNotFoundException, LoadException, IOException {
 		try (LoadResults<Program> loadResults = ProgramLoader.builder()
@@ -779,7 +779,7 @@ public class GhidraProject {
 	 * @throws LoadException if there was a problem loading
 	 * @deprecated Use {@link ProgramLoader}
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public Program importProgramFast(File file) throws CancelledException, VersionException,
 			LanguageNotFoundException, LoadException, IOException {
 		return importProgram(file);

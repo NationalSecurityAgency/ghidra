@@ -28,7 +28,7 @@ import ghidra.util.Msg;
  * 
  * @deprecated Use {@link ProgramLoader.Builder#loaderArgs(List)} instead
  */
-@Deprecated(since = "11.5", forRemoval = true)
+@Deprecated(since = "12.0", forRemoval = true)
 public class LoaderArgsOptionChooser implements OptionChooser {
 
 	private List<Pair<String, String>> loaderArgs;
@@ -39,7 +39,7 @@ public class LoaderArgsOptionChooser implements OptionChooser {
 	 * @param loaderArgs The {@link Loader} arguments
 	 * @deprecated Use {@link ProgramLoader.Builder#loaderArgs(List)} instead
 	 */
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public LoaderArgsOptionChooser(List<Pair<String, String>> loaderArgs) {
 		this.loaderArgs = loaderArgs;
 	}

@@ -67,7 +67,7 @@ public interface TraceBreakpointLocation extends TraceBreakpointCommon {
 	 * @param snap the snap
 	 * @return the (possibly empty) set of affected threads
 	 */
-	@Deprecated(forRemoval = true, since = "11.5")
+	@Deprecated(forRemoval = true, since = "12.0")
 	Set<TraceThread> getThreads(long snap);
 
 	/**
