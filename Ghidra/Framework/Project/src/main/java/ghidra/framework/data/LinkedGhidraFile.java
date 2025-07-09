@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +30,14 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.*;
-import ghidra.util.*;
+import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * {@code LinkedGhidraFile} corresponds to a {@link DomainFile} contained within a
- * {@link LinkedGhidraFolder}.
+ * {@link LinkedGhidraSubFolder}.
  */
 class LinkedGhidraFile implements LinkedDomainFile {
 
@@ -69,6 +69,25 @@ class LinkedGhidraFile implements LinkedDomainFile {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof LinkedGhidraFile other)) {
+			return false;
+		}
+		return fileName.equals(other.fileName) && parent.equals(other.parent);
+	}
+
+	@Override
+	public int hashCode() {
+		return getPathname().hashCode();
+	}
+
+	@Override
 	public int compareTo(DomainFile df) {
 		return fileName.compareToIgnoreCase(df.getName());
 	}
@@ -86,7 +105,8 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public DomainFile setName(String newName) throws InvalidNameException, IOException {
-		throw new ReadOnlyException("linked file is read only");
+		String name = getLinkedFile().setName(newName).getName();
+		return parent.getFile(name);
 	}
 
 	@Override
@@ -130,6 +150,7 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
+		// TODO: Should this reflect real project?
 		return parent.getProjectLocator();
 	}
 
@@ -147,17 +168,21 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public ChangeSet getChangesByOthersSinceCheckout() throws VersionException, IOException {
-		return null;
+		return getLinkedFile().getChangesByOthersSinceCheckout();
 	}
 
 	@Override
 	public DomainObject getDomainObject(Object consumer, boolean okToUpgrade, boolean okToRecover,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-		return getReadOnlyDomainObject(consumer, DomainFile.DEFAULT_VERSION, monitor);
+		return getLinkedFile().getDomainObject(consumer, okToUpgrade, okToRecover, monitor);
 	}
 
 	@Override
 	public DomainObject getOpenedDomainObject(Object consumer) {
+		DomainFile df = getLinkedFileNoError();
+		if (df != null) {
+			return df.getOpenedDomainObject(consumer);
+		}
 		return null;
 	}
 
@@ -195,7 +220,8 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public boolean isInWritableProject() {
-		return false; // While project may be writeable this folder/file is not
+		// TODO: Is this correct?
+		return parent.isInWritableProject();
 	}
 
 	@Override
@@ -212,47 +238,56 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public boolean isCheckedOut() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.isCheckedOut() : false;
 	}
 
 	@Override
 	public boolean isCheckedOutExclusive() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.isCheckedOutExclusive() : false;
 	}
 
 	@Override
 	public boolean modifiedSinceCheckout() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.modifiedSinceCheckout() : false;
 	}
 
 	@Override
 	public boolean canCheckout() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.canCheckout() : false;
 	}
 
 	@Override
 	public boolean canCheckin() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.canCheckin() : false;
 	}
 
 	@Override
 	public boolean canMerge() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.canMerge() : false;
 	}
 
 	@Override
 	public boolean canAddToRepository() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.canAddToRepository() : false;
 	}
 
 	@Override
 	public void setReadOnly(boolean state) throws IOException {
-		// ignore
+		getLinkedFile().setReadOnly(state);
 	}
 
 	@Override
 	public boolean isReadOnly() {
-		return true; // not reflected by icon
+		DomainFile df = getLinkedFileNoError();
+		// read-only state not reflected by icon
+		return df != null ? df.isReadOnly() : true;
 	}
 
 	@Override
@@ -263,7 +298,8 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public boolean isHijacked() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.isHijacked() : false;
 	}
 
 	@Override
@@ -274,85 +310,84 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public boolean isLatestVersion() {
-		return true;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.isLatestVersion() : true;
 	}
 
 	@Override
 	public int getVersion() {
-		// TODO: Do we want to reveal linked-local-project checkout details?
-		return getLatestVersion();
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.getVersion() : DomainFile.DEFAULT_VERSION;
 	}
 
 	@Override
 	public Version[] getVersionHistory() throws IOException {
-		DomainFile df = getLinkedFileNoError();
+		DomainFile df = getLinkedFile();
 		return df != null ? df.getVersionHistory() : new Version[0];
 	}
 
 	@Override
 	public void addToVersionControl(String comment, boolean keepCheckedOut, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().addToVersionControl(comment, keepCheckedOut, monitor);
 	}
 
 	@Override
 	public boolean checkout(boolean exclusive, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		throw new UnsupportedOperationException();
+		return getLinkedFile().checkout(exclusive, monitor);
 	}
 
 	@Override
 	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().checkin(checkinHandler, monitor);
 	}
 
 	@Override
 	public void merge(boolean okToUpgrade, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().merge(okToUpgrade, monitor);
 	}
 
 	@Override
 	public void undoCheckout(boolean keep) throws IOException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().undoCheckout(keep);
 	}
 
 	@Override
 	public void undoCheckout(boolean keep, boolean force) throws IOException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().undoCheckout(keep, force);
 	}
 
 	@Override
 	public void terminateCheckout(long checkoutId) throws IOException {
-		throw new UnsupportedOperationException();
+		getLinkedFile().terminateCheckout(checkoutId);
 	}
 
 	@Override
 	public ItemCheckoutStatus[] getCheckouts() throws IOException {
-		DomainFile df = getLinkedFileNoError();
-		return df != null ? df.getCheckouts() : new ItemCheckoutStatus[0];
+		return getLinkedFile().getCheckouts();
 	}
 
 	@Override
 	public ItemCheckoutStatus getCheckoutStatus() throws IOException {
-		// TODO: Do we want to reveal linked-local-project checkout details?
-		return null;
+		return getLinkedFile().getCheckoutStatus();
 	}
 
 	@Override
 	public void delete() throws IOException {
-		throw new ReadOnlyException("linked file is read only");
+		getLinkedFile().delete();
 	}
 
 	@Override
 	public void delete(int version) throws IOException {
-		throw new ReadOnlyException("linked file is read only");
+		getLinkedFile().delete(version);
 	}
 
 	@Override
 	public DomainFile moveTo(DomainFolder newParent) throws IOException {
-		throw new ReadOnlyException("linked file is read only");
+		return getLinkedFile().moveTo(newParent);
 	}
 
 	@Override
@@ -368,8 +403,8 @@ class LinkedGhidraFile implements LinkedDomainFile {
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		return getLinkedFile().copyToAsLink(newParent);
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+		return getLinkedFile().copyToAsLink(newParent, relative);
 	}
 
 	@Override
@@ -385,17 +420,18 @@ class LinkedGhidraFile implements LinkedDomainFile {
 
 	@Override
 	public boolean isChanged() {
-		return false;
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.isChanged() : false;
 	}
 
 	@Override
 	public boolean isOpen() {
-		return false;  // domain file proxy always used
+		return false; // real file may be but this is not
 	}
 
 	@Override
 	public boolean isBusy() {
-		return false;  // domain file proxy always used
+		return false; // real file may be but this is not
 	}
 
 	@Override
@@ -416,24 +452,30 @@ class LinkedGhidraFile implements LinkedDomainFile {
 	}
 
 	@Override
-	public boolean isLinkFile() {
+	public boolean isLink() {
 		DomainFile df = getLinkedFileNoError();
-		return df != null ? df.isLinkFile() : false;
+		return df != null ? df.isLink() : false;
 	}
 
 	@Override
-	public DomainFolder followLink() {
-		try {
-			return FolderLinkContentHandler.getReadOnlyLinkedFolder(this);
-		}
-		catch (IOException e) {
-			Msg.error(this, "Failed to following folder-link: " + getPathname());
-		}
-		return null;
+	public LinkFileInfo getLinkInfo() {
+		DomainFile df = getLinkedFileNoError();
+		return df != null ? df.getLinkInfo() : null;
+	}
+
+	@Override
+	public String getLinkedPathname() {
+		return parent.getLinkedPathname(fileName);
 	}
 
 	@Override
 	public String toString() {
-		return "LinkedGhidraFile: " + getPathname();
+		String str = parent.toString();
+		if (!str.endsWith("/")) {
+			str += "/";
+		}
+		str += getName();
+		return str;
 	}
+
 }

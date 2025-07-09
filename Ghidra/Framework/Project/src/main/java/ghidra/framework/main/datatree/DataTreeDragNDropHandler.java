@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,8 +118,7 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		if (ToolConstants.NO_ACTIVE_PROJECT.equals(destUserData.getName())) {
 			return false;
 		}
-
-		return true;
+		return DataTree.getRealInternalFolderForNode(destUserData) != null;
 	}
 
 	@Override
@@ -164,30 +163,28 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 
 	private List<GTreeNode> removeDuplicates(List<GTreeNode> allNodes) {
 
-		List<GTreeNode> folderNodes = getDomainFolderNodes(allNodes);
+		List<GTreeNode> parentNodes = getDomainParentNodes(allNodes);
 
 		// if a file has a parent in the list, then it is not needed as a separate entry
 		return allNodes.stream()
-				.filter(node -> !isChildOfFolders(folderNodes, node))
+				.filter(node -> !isChildOfParents(parentNodes, node))
 				.collect(Collectors.toList());
 	}
 
-	private List<GTreeNode> getDomainFolderNodes(List<GTreeNode> nodeList) {
-		List<GTreeNode> folderList = new ArrayList<>();
-
+	private List<GTreeNode> getDomainParentNodes(List<GTreeNode> nodeList) {
+		List<GTreeNode> parentList = new ArrayList<>();
 		for (GTreeNode node : nodeList) {
-			if (node instanceof DomainFolderNode) {
-				folderList.add(node);
+			if (!node.isLeaf()) {
+				parentList.add(node);
 			}
 		}
-
-		return folderList;
+		return parentList;
 	}
 
-	private boolean isChildOfFolders(List<GTreeNode> folderNodes, GTreeNode fileNode) {
+	private boolean isChildOfParents(List<GTreeNode> parentNodes, GTreeNode fileNode) {
 		GTreeNode node = fileNode.getParent();
 		while (node != null) {
-			if (folderNodes.contains(node)) {
+			if (parentNodes.contains(node)) {
 				return true;
 			}
 			node = node.getParent();

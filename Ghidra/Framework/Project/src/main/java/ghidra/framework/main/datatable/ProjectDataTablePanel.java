@@ -103,6 +103,7 @@ public class ProjectDataTablePanel extends JPanel {
 				.addListSelectionListener(e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
+		gTable.getColumn("Name").setCellRenderer(new NameCellRenderer());
 
 		// self-registering drag provider
 		new ProjectDataTableDragProvider();
@@ -123,6 +124,10 @@ public class ProjectDataTablePanel extends JPanel {
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, helpLocation);
+	}
+
+	public void setFilter(String filterText) {
+		table.setFiterText(filterText);
 	}
 
 	public void setSelectedDomainFiles(Set<DomainFile> files) {
@@ -208,8 +213,7 @@ public class ProjectDataTablePanel extends JPanel {
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent e) {
 		int[] selectedRows = gTable.getSelectedRows();
 		if (selectedRows.length == 0) {
-			return new ProjectDataContext(provider, projectData, gTable, null, null, gTable,
-				true);
+			return new ProjectDataContext(provider, projectData, gTable, null, null, gTable, true);
 		}
 
 		List<DomainFile> list = new ArrayList<>();
@@ -535,15 +539,41 @@ public class ProjectDataTablePanel extends JPanel {
 
 			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
 
-			Object value = data.getValue();
-
-			renderer.setText("");
-			if (value != null) {
-				DomainFileType type = (DomainFileType) value;
-				setToolTipText(type.getContentType());
-				setText("");
-				setIcon(type.getIcon());
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				DomainFileType type = (DomainFileType) data.getValue();
+				renderer.setText(type.toString());
+				renderer.setIcon(type.getIcon());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
 			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
+			return renderer;
+		}
+	}
+
+	private class NameCellRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				renderer.setText((String) data.getValue());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
+			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
 			return renderer;
 		}
 	}

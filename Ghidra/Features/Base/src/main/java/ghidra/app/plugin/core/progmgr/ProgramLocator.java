@@ -20,10 +20,10 @@ import java.net.URL;
 import java.util.Objects;
 
 import ghidra.framework.data.DomainFileProxy;
-import ghidra.framework.data.LinkHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /** 
  * Programs locations can be specified from either a {@link DomainFile} or a ghidra {@link URL}.
@@ -81,11 +81,19 @@ public class ProgramLocator {
 			file = domainFile;
 		}
 		else {
-			try {
-				url = GhidraURL.getNormalizedURL(resolveURL(domainFile));
+			if (domainFile instanceof LinkedDomainFile linkedFile) {
+				try {
+					// Attempt to resolve to actual linked-file to allow for
+					// direct URL reference
+					domainFile = linkedFile.getLinkedFile();
+				}
+				catch (IOException e) {
+					Msg.error(this, "Failed to resolve linked-file", e);
+				}
 			}
-			catch (IOException e) {
-				file = domainFile;
+			url = domainFile.getLocalProjectURL(null);
+			if (url == null) {
+				url = domainFile.getSharedProjectURL(null);
 			}
 		}
 		this.domainFile = file;
@@ -177,25 +185,4 @@ public class ProgramLocator {
 			Objects.equals(ghidraURL, other.ghidraURL) && version == other.version;
 	}
 
-	private URL resolveURL(DomainFile file) throws IOException {
-		if (file.isLinkFile()) {
-			return LinkHandler.getURL(file);
-		}
-		DomainFolder parent = file.getParent();
-		if (file instanceof LinkedDomainFile linkedFile) {
-			return resolveLinkedDomainFile(linkedFile);
-		}
-		if (!parent.getProjectLocator().isTransient()) {
-			return file.getLocalProjectURL(null);
-		}
-		return file.getSharedProjectURL(null);
-	}
-
-	private URL resolveLinkedDomainFile(LinkedDomainFile linkedFile) {
-		URL url = linkedFile.getLocalProjectURL(null);
-		if (url == null) {
-			url = linkedFile.getSharedProjectURL(null);
-		}
-		return url;
-	}
 }

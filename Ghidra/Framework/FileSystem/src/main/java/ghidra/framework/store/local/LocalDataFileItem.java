@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,27 +17,38 @@ package ghidra.framework.store.local;
 
 import ghidra.framework.store.DataFileItem;
 import ghidra.framework.store.FolderItem;
-import ghidra.util.PropertyFile;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
 
 import java.io.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
- * <code>LocalDataFile</code> provides a FolderItem implementation
+ * <code>LocalDataFileItem</code> provides a FolderItem implementation
  * for a local serialized data file.  This implementation supports 
  * a non-versioned file-system only.
  * <p>
  * This item utilizes a data directory for storing the serialized 
  * data file.
+ * <p>
+ * NOTE: The use of this file item type is not fully supported.
  */
-public class LocalDataFile extends LocalFolderItem implements DataFileItem {
+public class LocalDataFileItem extends LocalFolderItem implements DataFileItem {
 
 	private final static int IO_BUFFER_SIZE = 32 * 1024;
 	private static final String DATA_FILE = "data.1.gdf";
 
-	public LocalDataFile(LocalFileSystem fileSystem, PropertyFile propertyFile) throws IOException {
+	/**
+	 * Constructor for an existing local serialized=data file item which corresponds to the specified 
+	 * property file.
+	 * @param fileSystem file system
+	 * @param propertyFile database property file
+	 * @throws IOException if an IO Error occurs
+	 */
+	public LocalDataFileItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile)
+			throws IOException {
 		super(fileSystem, propertyFile, true, false);
 
 		if (fileSystem.isVersioned()) {
@@ -50,7 +61,7 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 	}
 
 	/**
-	 * Create a new local data file item.
+	 * Create a new local serialized-data file item.
 	 * @param fileSystem file system
 	 * @param propertyFile serialized data property file
 	 * @param istream data source input stream (should be a start of data and will be read to end of file).
@@ -61,14 +72,19 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 	 * @throws IOException if an IO Error occurs
 	 * @throws CancelledException if monitor cancels operation
 	 */
-	public LocalDataFile(LocalFileSystem fileSystem, PropertyFile propertyFile,
-			InputStream istream, String contentType, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public LocalDataFileItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile,
+			InputStream istream, String contentType, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		super(fileSystem, propertyFile, true, true);
 
 		if (fileSystem.isVersioned()) {
 			abortCreate();
 			throw new UnsupportedOperationException("Versioning not yet supported for DataFiles");
+		}
+
+		if (StringUtils.isBlank(contentType)) {
+			abortCreate();
+			throw new IllegalArgumentException("Missing content-type");
 		}
 
 		File dataFile = getDataFile();

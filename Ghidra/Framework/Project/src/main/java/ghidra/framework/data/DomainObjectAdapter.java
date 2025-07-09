@@ -404,7 +404,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		checkContentHandlerMaps();
 		ContentHandler<?> ch = contentHandlerTypeMap.get(contentType);
 		if (ch == null) {
-			throw new IOException("Content handler not found for " + contentType);
+			throw new IOException("Content handler not found for content-type: " + contentType);
 		}
 		return ch;
 	}

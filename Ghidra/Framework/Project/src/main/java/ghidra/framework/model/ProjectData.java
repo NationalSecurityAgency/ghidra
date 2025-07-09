@@ -30,6 +30,10 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The ProjectData interface provides access to all the data files and folders
  * in a project.
+ * <P>
+ * NOTE: Iterating over this project data instance will ignore all link-files.  If links should
+ * be handled please instantiate {@link ProjectDataUtils#descendantFiles(DomainFolder, DomainFileFilter)} 
+ * with a suitable {@link DomainFileFilter}.
  */
 public interface ProjectData extends Iterable<DomainFile> {
 
@@ -45,11 +49,35 @@ public interface ProjectData extends Iterable<DomainFile> {
 	public DomainFolder getRootFolder();
 
 	/**
-	 * Get domain folder specified by an absolute data path.
-	 * @param path the absolute path of domain folder relative to the data folder.
+	 * Get domain folder specified by an absolute data path.  All internal folder-links will be followed.
+	 * All path elements must refer to a valid internal non-conflicting folder or folder-link.  
+	 * Internal folder-links will be resolved to their corresponding linked-folder.
+	 * <P>
+	 * External links are not followed.  If external links should be followed the 
+	 * {@link #getFolder(String, DomainFolderFilter)} method should be used with an appropriate filter.
+	 * <P>
+	 * NOTE: Absolute paths do not include the project name which may be shown in the project 
+	 * data tree in place of the root folder node {@code "/"}.
+	 * 
+	 * @param path the absolute path of a domain folder within the project.
 	 * @return domain folder or null if folder not found
 	 */
 	public DomainFolder getFolder(String path);
+
+	/**
+	 * Get domain folder specified by an absolute data path.  If path refers to a 
+	 * non-conflicting folder-link the specified filter will determine if it should be 
+	 * followed to the linked-folder.  All folder path elements must satisfy the filter restrictions.
+	 * <P>
+	 * NOTE: Absolute paths do not include the project name which may be shown in the project 
+	 * data tree in place of the root folder node {@code "/"}.
+	 * 
+	 * @param path the absolute path of a domain folder within the project.
+	 * @param filter domain folder filter which constrains returned folder and following of 
+	 * folder-links.
+	 * @return domain folder or null if folder not found
+	 */
+	public DomainFolder getFolder(String path, DomainFolderFilter filter);
 
 	/**
 	 * Get the approximate number of files contained within the project.  The number 
@@ -68,15 +96,41 @@ public interface ProjectData extends Iterable<DomainFile> {
 	public int getFileCount();
 
 	/**
-	 * Get domain file specified by an absolute data path.
-	 * @param path the absolute path of domain file relative to the root folder.
+	 * Get domain file specified by an absolute data path. All internal folder-links will be followed.
+	 * The returned file may be a link-file and {@link DomainFile#getLinkInfo()} result and/or
+	 * {@link DomainFile#getDomainObjectClass()} / {@link DomainFile#getContentType()} should be 
+	 * checked if needed. 
+	 * <P>
+	 * External links are not followed.  If external links should be followed the 
+	 * {@link #getFile(String, DomainFileFilter)} method should be used with an appropriate filter.
+	 * <P>
+	 * NOTE: Absolute path does not include the project name which may be shown in the project 
+	 * data tree in place of the root folder node {@code "/"}.
+	 * 
+	 * @param path the absolute path of domain file within the project.
 	 * @return domain file or null if file not found
 	 */
 	public DomainFile getFile(String path);
 
 	/**
-	 * Finds all open domain files and appends
-	 * them to the specified list.
+	 * Get domain file specified by an absolute data path which satisfies the specified filter.
+	 * If permitted by the filter the returned file may be a link-file.  This may occur if filter
+	 * constrains based upon {@link DomainFile#getDomainObjectClass()} instead of 
+	 * {@link DomainFile#getContentType()}.  {@link DomainFile#getLinkInfo()} result can be checked
+	 * if needed. 
+	 * <P>
+	 * NOTE: Absolute path does not include the project name which may be shown in the project 
+	 * data tree in place of the root folder node {@code "/"}.
+	 * 
+	 * @param path the absolute path of domain file within the project.
+	 * @param filter domain file filter which constrains returned file and following of folder-links
+	 * and file-links.
+	 * @return domain file or null if file not found
+	 */
+	public DomainFile getFile(String path, DomainFileFilter filter);
+
+	/**
+	 * Finds all open domain files and appends them to the specified list.
 	 * @param list the list to receive the open domain files
 	 */
 	public void findOpenFiles(List<DomainFile> list);
@@ -106,7 +160,7 @@ public interface ProjectData extends Iterable<DomainFile> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Get domain file specified by its unique fileID. 
+	 * Get domain file specified by its unique fileID. Link following is not performed.
 	 * @param fileID domain file ID
 	 * @return domain file or null if file not found
 	 */
@@ -116,7 +170,7 @@ public interface ProjectData extends Iterable<DomainFile> {
 	 * Transform the specified name into an acceptable folder or file item name.  Only an individual folder
 	 * or file name should be specified, since any separators will be stripped-out.
 	 * NOTE: Uniqueness of name within the intended target folder is not considered.
-	 * @param name
+	 * @param name original name to be sanitized
 	 * @return valid name or "unknown" if no valid characters exist within name provided
 	 */
 	public String makeValidName(String name);
@@ -225,8 +279,13 @@ public interface ProjectData extends Iterable<DomainFile> {
 	 */
 	public URL getLocalProjectURL();
 
+	/**
+	 * Return a {@link DomainFile} iterator over all non-link files within this project data store.
+	 * If links should be followed use an appropropriate static method from {@link ProjectDataUtils}.
+	 * @return domain file iterator
+	 */
 	@Override
 	public default Iterator<DomainFile> iterator() {
-		return new ProjectDataUtils.DomainFileIterator(getRootFolder());
+		return ProjectDataUtils.descendantFiles(getRootFolder()).iterator();
 	}
 }

@@ -42,7 +42,8 @@ public class GzfExporter extends Exporter {
 
 	@Override
 	public boolean canExportDomainFile(DomainFile domainFile) {
-		return canExportDomainObject(domainFile.getDomainObjectClass());
+		// Avoid exporting link-file itself
+		return !domainFile.isLink() && canExportDomainObject(domainFile.getDomainObjectClass());
 	}
 
 	@Override

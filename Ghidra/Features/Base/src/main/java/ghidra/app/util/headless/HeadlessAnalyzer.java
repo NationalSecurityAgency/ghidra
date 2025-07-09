@@ -43,6 +43,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProject;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.protocol.ghidra.*;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.framework.store.local.LocalFileSystem;
@@ -354,7 +355,10 @@ public class HeadlessAnalyzer {
 						}
 						throw new IOException(title + ": " + message);
 					}
-				}, TaskMonitor.DUMMY);
+
+					// Link files are skipped to avoid duplicate processing
+					// Processing should be done on actual folder - not a linked folder
+				}, LinkFileControl.NO_FOLLOW, TaskMonitor.DUMMY);
 
 		}
 		catch (CancelledException e) {
@@ -1338,7 +1342,7 @@ public class HeadlessAnalyzer {
 		boolean filesProcessed = false;
 
 		DomainFile domFile = parentFolder.getFile(filename);
-		// Do not follow folder-links or consider program links.  Using content type
+		// Do not follow folder-links or program links.  Using content type
 		// to filter is best way to control this.
 		if (domFile != null &&
 			ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {

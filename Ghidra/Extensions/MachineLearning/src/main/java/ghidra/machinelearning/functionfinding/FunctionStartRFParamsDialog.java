@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.machinelearning.functionfinding;
-
-import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.BorderLayout;
 import java.util.*;
@@ -35,7 +33,7 @@ import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSet;
@@ -485,11 +483,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	}
 
 	private void searchOtherProgram(RandomForestRowObject modelRow) {
-		DataTreeDialog dtd =
-			new DataTreeDialog(null, "Select Program", OPEN, f -> {
-				Class<?> c = f.getDomainObjectClass();
-				return Program.class.isAssignableFrom(c);
-			});
+		ProgramFileChooser dtd = new ProgramFileChooser(null, "Select Program");
 		dtd.show();
 		DomainFile dFile = dtd.getDomainFile();
 		if (dFile == null) {

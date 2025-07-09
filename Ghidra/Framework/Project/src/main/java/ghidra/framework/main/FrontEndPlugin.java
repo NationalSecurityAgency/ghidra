@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -30,8 +31,7 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
-import docking.widgets.OkDialog;
-import docking.widgets.OptionDialog;
+import docking.widgets.*;
 import docking.widgets.button.GButton;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -41,7 +41,9 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
-import ghidra.framework.data.*;
+import ghidra.framework.data.ContentHandler;
+import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
@@ -131,8 +133,10 @@ public class FrontEndPlugin extends Plugin
 	private ProjectDataCopyAction copyAction;
 	private ProjectDataPasteAction pasteAction;
 	private ProjectDataPasteLinkAction pasteLinkAction;
+	private ProjectDataPasteLinkAction pasteRelativeLinkAction;
 	private ProjectDataRenameAction renameAction;
 	private ProjectDataOpenDefaultToolAction openAction;
+	private ProjectDataFollowLinkAction followLinkAction;
 	private ProjectDataExpandAction<FrontEndProjectTreeContext> expandAction;
 	private ProjectDataCollapseAction<FrontEndProjectTreeContext> collapseAction;
 	private ProjectDataSelectAction selectAction;
@@ -152,6 +156,8 @@ public class FrontEndPlugin extends Plugin
 	private VersionControlUndoHijackAction undoHijackAction;
 	private FindCheckoutsAction findCheckoutsAction;
 	private ToolChestChangeListener toolChestChangeListener;
+
+	private OptionDialogBuilder filterWarningBuilder;
 
 	/**
 	 * Construct a new FrontEndPlugin. This plugin is constructed once when
@@ -212,6 +218,10 @@ public class FrontEndPlugin extends Plugin
 	private void createActions() {
 		String owner = getName();
 
+		// Top of popup menu actions - no group
+		openAction = new ProjectDataOpenDefaultToolAction(owner, null);
+		followLinkAction = new ProjectDataFollowLinkAction(this, null);
+
 		String groupName = "Cut/copy/paste/new1";
 		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
 
@@ -220,12 +230,12 @@ public class FrontEndPlugin extends Plugin
 		clearCutAction = new ClearCutAction(owner);
 		copyAction = new ProjectDataCopyAction(owner, groupName);
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
-		pasteLinkAction = new ProjectDataPasteLinkAction(owner, groupName);
+		pasteLinkAction = new ProjectDataPasteLinkAction(owner, groupName, false);
+		pasteRelativeLinkAction = new ProjectDataPasteLinkAction(owner, groupName, true);
 
 		groupName = "Delete/Rename";
 		renameAction = new ProjectDataRenameAction(owner, groupName);
 		deleteAction = new ProjectDataDeleteAction(owner, groupName);
-		openAction = new ProjectDataOpenDefaultToolAction(owner, "Open");
 
 		groupName = "Expand/Collapse";
 		expandAction = new FrontEndProjectDataExpandAction(owner, groupName);
@@ -244,8 +254,10 @@ public class FrontEndPlugin extends Plugin
 		tool.addAction(copyAction);
 		tool.addAction(pasteAction);
 		tool.addAction(pasteLinkAction);
+		tool.addAction(pasteRelativeLinkAction);
 		tool.addAction(deleteAction);
 		tool.addAction(openAction);
+		tool.addAction(followLinkAction);
 		tool.addAction(renameAction);
 		tool.addAction(expandAction);
 		tool.addAction(collapseAction);
@@ -804,6 +816,7 @@ public class FrontEndPlugin extends Plugin
 
 	@Override
 	protected void dispose() {
+		projectDataPanel.setActiveProject(null); // force all project views to be disposed
 		dataTablePanel.dispose();
 		dataTreePanel.dispose();
 		projectActionManager.dispose();
@@ -1081,7 +1094,7 @@ public class FrontEndPlugin extends Plugin
 	}
 
 	public void openDomainFile(DomainFile domainFile) {
-		
+
 		String contentType = domainFile.getContentType();
 		if (ContentHandler.UNKNOWN_CONTENT.equals(contentType)) {
 			Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
@@ -1091,8 +1104,27 @@ public class FrontEndPlugin extends Plugin
 			return;
 		}
 
-		if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(contentType)) {
-			showLinkedFolderInViewedProject(domainFile);
+		if (domainFile.isLink() && domainFile.getLinkInfo().isFolderLink()) {
+
+			// Follow and check internal linkage
+			AtomicReference<LinkStatus> status = new AtomicReference<>();
+			DomainFile lastLink =
+				LinkHandler.followInternalLinkage(domainFile, s -> status.set(s), null);
+
+			try {
+				// Tree already handles opening folder-link while table does nothing
+				if (lastLink != null && status.get() == LinkStatus.EXTERNAL) {
+					showInViewedProject(LinkHandler.getLinkURL(lastLink), true);
+				}
+				else if (!dataTreePanel.isShowing()) {
+					// Filter table on absolute link path
+					String linkPath = LinkHandler.getAbsoluteLinkPath(domainFile);
+					dataTablePanel.setFilter(linkPath);
+				}
+			}
+			catch (IOException e) {
+				Msg.showError(this, tool.getActiveWindow(), "Link Error", e.getMessage());
+			}
 			return;
 		}
 
@@ -1120,64 +1152,32 @@ public class FrontEndPlugin extends Plugin
 				"opens this type of file");
 	}
 
-	private void showLinkedFolderInViewedProject(DomainFile domainFile) {
+	void showInViewedProject(URL ghidraUrl, boolean isFolder) {
 
-		try {
-			LinkedGhidraFolder linkedFolder =
-				FolderLinkContentHandler.getReadOnlyLinkedFolder(domainFile);
-			if (linkedFolder == null) {
-				return;  // unsupported use
-			}
-
-			ProjectDataTreePanel dtp = projectDataPanel.openView(linkedFolder.getProjectURL());
-			if (dtp == null) {
-				return;
-			}
-
-			// Do not hang onto domainFile, linkedFolder or their underlying project data
-
-			ProjectData viewedProjectData = dtp.getProjectData();
-			DomainFolder domainFolder =
-				viewedProjectData.getFolder(linkedFolder.getLinkedPathname());
-
-			if (domainFolder != null) {
-				// delayed to ensure tree is displayed
-				Swing.runLater(() -> dtp.selectDomainFolder(domainFolder));
-			}
+		// Check if active project can be used
+		URL activeProjectURL = activeProject.getProjectLocator().getURL();
+		URL viewProjectURL = GhidraURL.getProjectURL(ghidraUrl);
+		String path = GhidraURL.getProjectPathname(ghidraUrl);
+		boolean useActiveProject = activeProjectURL.equals(viewProjectURL);
+		if (!useActiveProject) {
+			// Check for shared repository match
+			useActiveProject =
+				viewProjectURL.equals(activeProject.getProjectData().getSharedProjectURL());
 		}
-		catch (IOException e) {
-			Msg.showError(this, projectDataPanel, "Linked-folder failure: " + domainFile.getName(),
-				e);
+		if (useActiveProject) {
+			selectTreeNode(dataTreePanel, path, isFolder);
+			return;
 		}
 
-	}
-
-	void showInViewedProject(URL ghidraURL, boolean isFolder) {
-
-		ProjectDataTreePanel dtp = projectDataPanel.openView(GhidraURL.getProjectURL(ghidraURL));
+		// Show in viewed project tree
+		ProjectDataTreePanel dtp = projectDataPanel.openView(GhidraURL.getProjectURL(ghidraUrl));
 		if (dtp == null) {
 			return;
 		}
 
 		Swing.runLater(() -> {
 			// delayed to ensure tree is displayed
-
-			ProjectData viewedProjectData = dtp.getProjectData();
-
-			String path = GhidraURL.getProjectPathname(ghidraURL);
-
-			if (isFolder) {
-				DomainFolder viewedProjectFolder = getViewProjectFolder(viewedProjectData, path);
-				if (viewedProjectFolder != null) {
-					dtp.selectDomainFolder(viewedProjectFolder);
-				}
-			}
-			else {
-				DomainFile viewedProjectFile = getViewProjectFile(viewedProjectData, path);
-				if (viewedProjectFile != null) {
-					dtp.selectDomainFile(viewedProjectFile);
-				}
-			}
+			selectTreeNode(dtp, path, isFolder);
 		});
 	}
 
@@ -1198,6 +1198,71 @@ public class FrontEndPlugin extends Plugin
 		return viewedProjectData.getFolder(path);
 	}
 
+	public void showInProjectTree(ProjectData projectData, String path, boolean isFolder) {
+		if (activeProject.getProjectData() == projectData) {
+			// Active project tree
+			selectTreeNode(dataTreePanel, path, isFolder);
+			return;
+		}
+
+		ProjectLocator projectLocator = projectData.getProjectLocator();
+		URL viewURL = projectLocator.getURL();
+		if (viewURL != null) {
+			ProjectDataTreePanel dtp = projectDataPanel.openView(viewURL);
+			// Found matching tree panel
+			selectTreeNode(dtp, path, isFolder);
+			return;
+		}
+
+		Msg.error(this, "Failed to open project tree: " + projectLocator.getName());
+	}
+
+	private void selectTreeNode(ProjectDataTreePanel dtp, String path, boolean isFolder) {
+
+		// NOTE: Would be nice to draw attention to the tree panel where the selection
+		// occurred since the selection may not change.
+
+		ProjectData viewedProjectData = dtp.getProjectData();
+		boolean foundIt = false;
+		if (isFolder) {
+			DomainFolder viewedProjectFolder = getViewProjectFolder(viewedProjectData, path);
+			if (viewedProjectFolder != null) {
+				if (viewedProjectFolder.isLinked()) {
+					isFolder = false; // linked-folder: must select as link-file node
+				}
+				else {
+					foundIt = true;
+					dtp.selectDomainFolder(viewedProjectFolder);
+				}
+			}
+		}
+
+		if (!isFolder) {
+			DomainFile viewedProjectFile = getViewProjectFile(viewedProjectData, path);
+			if (viewedProjectFile != null) {
+				foundIt = true;
+				dtp.selectDomainFile(viewedProjectFile);
+			}
+		}
+
+		DataTree dataTree = dtp.getDataTree();
+		if (!foundIt) {
+			Msg.showError(this, dataTree, "Invalid ",
+				"Referenced path not found or it conflicts with a link-file: " +
+					dataTree.getModelRoot().getName() + ":" + path);
+		}
+		else if (dataTree.isFiltered()) {
+			if (filterWarningBuilder == null) {
+				filterWarningBuilder =
+					new OptionDialogBuilder("Active Tree Filter: " + dtp.getName(),
+						"A project tree filter is currently active and may block the selection");
+				filterWarningBuilder.setMessageType(OptionDialog.WARNING_MESSAGE);
+				filterWarningBuilder.addDontShowAgainOption();
+			}
+			filterWarningBuilder.show(tool.getToolFrame());
+		}
+	}
+
 	private class MyToolChestChangeListener implements ToolChestChangeListener {
 
 		@Override
@@ -1216,4 +1281,5 @@ public class FrontEndPlugin extends Plugin
 		}
 
 	}
+
 }

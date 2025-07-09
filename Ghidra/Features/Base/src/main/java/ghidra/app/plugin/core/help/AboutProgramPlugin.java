@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,16 +79,25 @@ public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin
 				@Override
 				protected void actionPerformed(ProjectDataContext context) {
 					DomainFile domainFile = context.getSelectedFiles().get(0);
-					showAbout(domainFile, domainFile.getMetadata());
+					Map<String, String> metadata = domainFile.getMetadata();
+
+					showAbout(domainFile, metadata);
 				}
 
 				@Override
 				protected boolean isAddToPopup(ProjectDataContext context) {
-					return context.getFileCount() == 1 && context.getFolderCount() == 0;
+					if (context.getFileCount() == 1 && context.getFolderCount() == 0) {
+						// Adjust popup menu text
+						DomainFile domainFile = context.getSelectedFiles().get(0);
+						String contentType = domainFile.getContentType();
+						setPopupMenuData(
+							new MenuData(new String[] { "About " + contentType }, null, "AAA"));
+						return true;
+					}
+					return false;
 				}
 			};
-			aboutAction.setPopupMenuData(
-				new MenuData(new String[] { ACTION_NAME }, null, "AAA"));
+			aboutAction.setPopupMenuData(new MenuData(new String[] { ACTION_NAME }, null, "AAA"));
 
 			aboutAction.setEnabled(true);
 		}

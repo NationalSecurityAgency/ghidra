@@ -1160,7 +1160,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Get an iterator that contains the code units which have the specified property type defined. 
 	 * Only code units starting within the address set specified will be returned by the iterator.
 	 * If the address set is null then check the entire program.
-	 * <br>
+	 * <P>
 	 * Standard property types are defined in the CodeUnit class.  The property types are:
 	 *          <ul>
 	 *              <li>REFERENCE_PROPERTY</li>

@@ -17,16 +17,18 @@ package ghidra.framework.data;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.TransientProjectData;
+import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
-import ghidra.framework.store.FolderItem;
-import ghidra.framework.store.FolderNotEmptyException;
-import ghidra.framework.store.local.*;
+import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -211,11 +213,21 @@ class GhidraFolderData {
 	}
 
 	/**
-	 * Return this folder's name.
-	 * @return the name
+	 * {@return this folder's name.  The root folder will return the project or repository name}
 	 */
 	String getName() {
-		return name;
+		// Allow root folder to use project/repository name
+		return parent != null ? name : projectData.getProjectLocator().getName();
+	}
+
+	private void checkFolderLinkConflict(String folderName) throws DuplicateFileException {
+		GhidraFile file = getDomainFile(folderName);
+		if (file != null && file.isFolderLink()) {
+			// Folder-link file name not permitted to conflict with Folder
+			// NOTE: There is still lthe possibility of conflicting with offline version filesystem
+			throw new DuplicateFileException("Name conflict. Folder-link named " + folderName +
+				" already exists in " + getPathname());
+		}
 	}
 
 	/**
@@ -224,7 +236,7 @@ class GhidraFolderData {
 	 * @return renamed domain file (the original DomainFolder object becomes invalid since it is 
 	 * immutable)
 	 * @throws InvalidNameException if newName contains illegal characters
-	 * @throws DuplicateFileException if a folder named newName 
+	 * @throws DuplicateFileException if a folder of folder-link named newName 
 	 * already exists in this files domain folder.
 	 * @throws FileInUseException if any file within this folder or its descendants is 
 	 * in-use / checked-out.
@@ -233,10 +245,13 @@ class GhidraFolderData {
 	GhidraFolder setName(String newName) throws InvalidNameException, IOException {
 		synchronized (fileSystem) {
 			if (parent == null || fileSystem.isReadOnly()) {
-				throw new UnsupportedOperationException("setName not permitted on this folder");
+				throw new IOException("setName not permitted on this folder");
 			}
+
 			updateExistenceState();
 			checkInUse();
+
+			parent.checkFolderLinkConflict(newName);
 
 			String oldName = name;
 			String parentPath = parent.getPathname();
@@ -650,7 +665,7 @@ class GhidraFolderData {
 			Msg.error(this,
 				"Project folder contains " + nullNameCount + " null items: " + getPathname());
 		}
-		if (badItemCount != 0) {
+		if (unknownItemCount != 0) {
 			Msg.error(this, "Project folder contains " + unknownItemCount + " unsupported items: " +
 				getPathname());
 		}
@@ -1072,7 +1087,7 @@ class GhidraFolderData {
 	 * Create a subfolder within this folder.
 	 * @param folderName sub-folder name
 	 * @return the new folder
-	 * @throws DuplicateFileException if a folder by this name already exists
+	 * @throws DuplicateFileException if a folder or folder-link with this name already exists
 	 * @throws InvalidNameException if name is an empty string of if it contains characters other 
 	 * than alphanumerics.
 	 * @throws IOException if IO or access error occurs
@@ -1082,6 +1097,9 @@ class GhidraFolderData {
 			if (fileSystem.isReadOnly()) {
 				throw new AssertException("createFile permitted within writeable project only");
 			}
+
+			checkFolderLinkConflict(folderName);
+
 			fileSystem.createFolder(getPathname(), folderName);
 			folderChanged(folderName);
 
@@ -1101,6 +1119,9 @@ class GhidraFolderData {
 		synchronized (fileSystem) {
 			if (fileSystem.isReadOnly()) {
 				throw new AssertException("delete permitted within writeable project only");
+			}
+			if (parent == null) {
+				throw new IOException("root folder may not be deleted");
 			}
 			checkInUse();
 			try {
@@ -1150,19 +1171,26 @@ class GhidraFolderData {
 	GhidraFolder moveTo(GhidraFolderData newParent) throws IOException {
 		synchronized (fileSystem) {
 			if (newParent.getLocalFileSystem() != fileSystem || fileSystem.isReadOnly()) {
-				throw new AssertException("moveTo permitted within writeable project only");
+				throw new IOException("moveTo permitted within writeable project only");
+			}
+			if (parent == null) {
+				throw new IOException("root folder may not be moved");
 			}
 			if (getPathname().equals(newParent.getPathname())) {
-				throw new IllegalArgumentException("newParent must differ from current parent");
+				throw new IllegalArgumentException(
+					"new parent must differ from current parent: " + newParent);
 			}
 			checkInUse();
 
+			if (newParent.containsFolder(name)) {
+				throw new DuplicateFileException(
+					"Folder named " + name + " already exists in " + newParent);
+			}
+
+			newParent.checkFolderLinkConflict(name);
+
 			updateExistenceState();
 			try {
-				if (newParent.containsFolder(name)) {
-					throw new DuplicateFileException(
-						"Folder named " + getName() + " already exists in " + newParent);
-				}
 
 				if (folderExists) {
 					fileSystem.moveFolder(parent.getPathname(), name, newParent.getPathname());
@@ -1210,21 +1238,13 @@ class GhidraFolderData {
 	}
 
 	/**
-	 * Determine if the specified folder if an ancestor of this folder
-	 * (i.e., parent, grand-parent, etc.).
+	 * {@return true if the specified folder is an ancestor of this folder
+	 * (i.e., parent, grand-parent, etc.).}
 	 * @param folderData folder to be checked
-	 * @return true if the specified folder if an ancestor of this folder
 	 */
 	boolean isAncestor(GhidraFolderData folderData) {
-		if (!folderData.projectData.getProjectLocator().equals(projectData.getProjectLocator())) {
-			// check if projects share a common repository
-			RepositoryAdapter myRepository = projectData.getRepository();
-			RepositoryAdapter otherRepository = folderData.projectData.getRepository();
-			if (myRepository == null || otherRepository == null ||
-				!myRepository.getServerInfo().equals(otherRepository.getServerInfo()) ||
-				!myRepository.getName().equals(otherRepository.getName())) {
-				return false;
-			}
+		if (!hasSameProjectOrRepository(folderData)) {
+			return false;
 		}
 		GhidraFolderData checkParent = folderData;
 		while (checkParent != null) {
@@ -1234,6 +1254,37 @@ class GhidraFolderData {
 			checkParent = checkParent.getParentData();
 		}
 		return false;
+	}
+
+	/**
+	 * {@return true if the specified folder is associated with the same project or repository as
+	 * this folder.}
+	 * @param folderData folder to be checked
+	 */
+	boolean hasSameProjectOrRepository(GhidraFolderData folderData) {
+		if (folderData.projectData.getProjectLocator().equals(projectData.getProjectLocator())) {
+			return true;
+		}
+		// check if projects share a common repository
+		RepositoryAdapter myRepository = projectData.getRepository();
+		RepositoryAdapter otherRepository = folderData.projectData.getRepository();
+		if (myRepository == null || otherRepository == null ||
+			!myRepository.getServerInfo().equals(otherRepository.getServerInfo()) ||
+			!myRepository.getName().equals(otherRepository.getName())) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * {@return true if the specified folder is considered the same as this folder.}
+	 * @param folderData folder to be checked
+	 */
+	boolean isSame(GhidraFolderData folderData) {
+		if (!hasSameProjectOrRepository(folderData)) {
+			return false;
+		}
+		return getPathname().equals(folderData.getPathname());
 	}
 
 	/**
@@ -1255,15 +1306,18 @@ class GhidraFolderData {
 			if (isAncestor(newParent)) {
 				throw new IOException("self-referencing copy not permitted");
 			}
-			GhidraFolderData newFolderData = newParent.getFolderData(name, false);
-
+			String folderName = getName();
+			GhidraFolderData newFolderData = newParent.getFolderData(folderName, false);
 			if (newFolderData == null) {
 				try {
-					newFolderData = newParent.createFolder(name);
+					newFolderData = newParent.createFolder(folderName);
 				}
 				catch (InvalidNameException e) {
 					throw new AssertException("Unexpected error", e);
 				}
+			}
+			else if (isSame(newFolderData)) {
+				throw new IOException("self-referencing copy not permitted");
 			}
 			List<String> files = getFileNames();
 			for (String file : files) {
@@ -1296,13 +1350,16 @@ class GhidraFolderData {
 	 * managed project) the generated link will refer to the remote folder with a remote
 	 * Ghidra URL, otherwise a local project storage path will be used.
 	 * @param newParent new parent folder where link-file is to be created
-	 * @return newly created domain file (i.e., link-file) or null if link use not supported.
+	 * @param relative if true, and this file is contained within the same active 
+	 * {@link ProjectData} instance as {@code newParent}, an internal-project relative path 
+	 * file-link will be created.
+	 * @return newly created domain file which is a folder-link (i.e., link-file).
 	 * @throws IOException if an IO or access error occurs.
 	 */
-	DomainFile copyToAsLink(GhidraFolderData newParent) throws IOException {
+	DomainFile copyToAsLink(GhidraFolderData newParent, boolean relative) throws IOException {
 		synchronized (fileSystem) {
 			String linkFilename = name;
-			if (linkFilename == null) {
+			if (linkFilename == null) { // create name for link to root folder
 				if (projectData instanceof TransientProjectData) {
 					linkFilename = projectData.getRepository().getName();
 				}
@@ -1310,66 +1367,74 @@ class GhidraFolderData {
 					linkFilename = projectData.getProjectLocator().getName();
 				}
 			}
-			return newParent.copyAsLink(projectData, getPathname(), linkFilename,
+
+			return newParent.createLinkFile(projectData, getPathname(), relative, linkFilename,
 				FolderLinkContentHandler.INSTANCE);
 		}
 	}
 
 	/**
-	 * Create a link-file within this folder.  The link-file may correspond to various types of
-	 * content (e.g., Program, Trace, Folder, etc.) based upon specified link handler.
+	 * Create a link-file within this folder which references the specified file or folder 
+	 * {@code pathname} within the project specified by {@code sourceProjectData}.  The link-file 
+	 * may correspond to various types of content (e.g., Program, Trace, Folder, etc.) based upon 
+	 * the specified {@link LinkHandler} instance.
+	 * 
 	 * @param sourceProjectData referenced content project data within which specified path exists.
-	 * @param pathname path of referenced content with source project data
-	 * @param linkFilename name of link-file to be created within this folder.
-	 * @param lh link file handler used to create specific link file.
-	 * @return link-file 
+	 * If this differ's from this folder's project a Ghidra URL will be used, otherwise and internal
+	 * link path reference will be used.
+	 * @param pathname an absolute path of project folder or file within the specified source 
+	 * project data (a Ghidra URL is not permitted)
+	 * @param makeRelative if true, and this file is contained within the same active 
+	 * {@link ProjectData} instance as {@code newParent}, an internal-project relative path 
+	 * link-file will be created.
+	 * @param linkFilename name of link-file to be created within this folder.  NOTE: This name may 
+	 * be modified to ensure uniqueness within this folder.
+	 * @param lh link-file handler used to create specific link-file (see derived implementations
+	 * of {@link LinkHandler} and their public static INSTANCE.
+	 * @return newly created link-file 
 	 * @throws IOException if IO error occurs during link creation
 	 */
-	DomainFile copyAsLink(ProjectData sourceProjectData, String pathname, String linkFilename,
-			LinkHandler<?> lh) throws IOException {
+	DomainFile createLinkFile(ProjectData sourceProjectData, String pathname, boolean makeRelative,
+			String linkFilename, LinkHandler<?> lh) throws IOException {
 		synchronized (fileSystem) {
 			if (fileSystem.isReadOnly()) {
 				throw new ReadOnlyException("copyAsLink permitted to writeable project only");
 			}
 
-			if (sourceProjectData == projectData) {
-				// internal linking not yet supported
-				Msg.error(this, "Internal file/folder links not yet supported");
-				return null;
+			if (!pathname.startsWith(FileSystem.SEPARATOR)) {
+				throw new IllegalArgumentException("invalid pathname specified");
 			}
 
-			URL ghidraUrl = null;
-			if (sourceProjectData instanceof TransientProjectData) {
+			String linkPath;
+			if (sourceProjectData == projectData) {
+				if (makeRelative) {
+					linkPath = getRelativePath(pathname, getPathname());
+				}
+				else {
+					linkPath = pathname;
+				}
+			}
+			else if (sourceProjectData instanceof TransientProjectData) {
 				RepositoryAdapter repository = sourceProjectData.getRepository();
 				ServerInfo serverInfo = repository.getServerInfo();
-				ghidraUrl = GhidraURL.makeURL(serverInfo.getServerName(),
+				URL ghidraUrl = GhidraURL.makeURL(serverInfo.getServerName(),
 					serverInfo.getPortNumber(), repository.getName(), pathname);
+				linkPath = ghidraUrl.toExternalForm();
 			}
 			else {
 				ProjectLocator projectLocator = sourceProjectData.getProjectLocator();
 				if (projectLocator.equals(projectData.getProjectLocator())) {
 					return null; // local internal linking not supported
 				}
-				ghidraUrl = GhidraURL.makeURL(projectLocator, pathname, null);
+				URL ghidraUrl = GhidraURL.makeURL(projectLocator, pathname, null);
+				linkPath = ghidraUrl.toExternalForm();
 			}
 
-			String newName = linkFilename;
-			int i = 1;
-			while (true) {
-				GhidraFileData fileData = getFileData(newName, false);
-				if (fileData != null) {
-					// return existing file if link URL matches
-					if (ghidraUrl.equals(fileData.getLinkFileURL())) {
-						return getDomainFile(newName);
-					}
-					newName = linkFilename + "." + i;
-					++i;
-				}
-				break;
-			}
+			// Force use of unique link-file name
+			String newName = getUniqueName(linkFilename);
 
 			try {
-				lh.createLink(ghidraUrl, fileSystem, getPathname(), newName);
+				lh.createLink(linkPath, fileSystem, getPathname(), newName);
 			}
 			catch (InvalidNameException e) {
 				throw new IOException(e); // unexpected
@@ -1381,17 +1446,84 @@ class GhidraFolderData {
 	}
 
 	/**
-	 * Generate a non-conflicting file name for this folder based upon the specified preferred name.
+	 * Create an external link-file within this folder which references the specified 
+	 * {@code ghidraUrl} and whose content is defined by the specified {@link LinkHandler lh} 
+	 * instance.
+	 * 
+	 * @param ghidraUrl a Ghidra URL which corresponds to a file or a folder based on the designated
+	 * {@link LinkHandler lh} instance.  Only rudimentary URL checks are performed.
+	 * @param linkFilename name of link-file to be created within this folder.  NOTE: This name may 
+	 * be modified to ensure uniqueness within this folder.
+	 * @param lh link-file handler used to create specific link-file (see derived implementations
+	 * of {@link LinkHandler} and their public static INSTANCE.
+	 * @return newly created link-file 
+	 * @throws IOException if IO error occurs during link creation
+	 */
+	DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
+			throws IOException {
+
+		URL url = new URL(ghidraUrl);
+		if (!GhidraURL.isLocalGhidraURL(ghidraUrl) && !GhidraURL.isServerRepositoryURL(url)) {
+			throw new IllegalArgumentException("Invalid Ghidra URL specified");
+		}
+
+		// Force use of unique link-file name
+		String newName = getUniqueName(linkFilename);
+
+		try {
+			lh.createLink(ghidraUrl, fileSystem, getPathname(), newName);
+		}
+		catch (InvalidNameException e) {
+			throw new IOException(e); // unexpected
+		}
+
+		fileChanged(newName);
+		return getDomainFile(newName);
+	}
+
+	private String getUniqueName(String name) throws IOException {
+		String newName = name;
+		int i = 1;
+		while (true) {
+			// Check for unique name considering both files and folders
+			// NOTE: If disconnected from repository, remote content is not considered
+			if (getFileData(newName, false) == null && getFolderData(newName, false) == null) {
+				return newName;
+			}
+			newName = name + "." + i;
+			++i;
+		}
+	}
+
+	private static String getRelativePath(String referencedPathname, String linkParentPathname) {
+		Path referencedPath = Paths.get(referencedPathname);
+		Path linkParentPath = Paths.get(linkParentPathname);
+		Path relativePath = linkParentPath.relativize(referencedPath);
+		String path = relativePath.toString();
+		if (referencedPathname.endsWith(FileSystem.SEPARATOR) &&
+			!path.endsWith(FileSystem.SEPARATOR)) {
+			path += FileSystem.SEPARATOR;
+		}
+		return path;
+	}
+
+	/**
+	 * Generate a non-conflicting file name for this destination folder based upon the specified 
+	 * preferred name.
 	 * NOTE: This method is subject to race conditions where returned name could conflict by the
-	 * time it is actually used.
+	 * time it is actually used or names already present in repository while disconnected, etc.
 	 * @param preferredName preferred file name
+	 * @param checkFilesAndFolders if true ensure name is unique relative to both files and folders,
+	 * else unqiue among files only.
 	 * @return non-conflicting file name
 	 * @throws IOException if an IO error occurs during file checks
 	 */
-	String getTargetName(String preferredName) throws IOException {
+	String getUniqueFileName(String preferredName, boolean checkFilesAndFolders)
+			throws IOException {
 		String newName = preferredName;
 		int i = 1;
-		while (getFileData(newName, false) != null) {
+		while (getFileData(newName, false) != null ||
+			(checkFilesAndFolders && containsFolder(newName))) {
 			newName = preferredName + "." + i;
 			i++;
 		}

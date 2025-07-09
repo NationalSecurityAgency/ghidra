@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@ import java.util.Set;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.OptionDialogBuilder;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -104,6 +103,22 @@ public class DeleteProjectFilesTask extends Task {
 	}
 
 	private void deleteFolder(DomainFolder folder, TaskMonitor monitor) throws CancelledException {
+
+		while (folder instanceof LinkedDomainFolder linkedFolder) {
+			if (linkedFolder.isLinked()) {
+				throw new IllegalArgumentException(
+					"Linked-folder's originating file-link should have been removed instead: " +
+						linkedFolder.getPathname());
+			}
+			try {
+				folder = linkedFolder.getRealFolder();
+			}
+			catch (IOException e) {
+				Msg.error(this, "Error following linked-folder: " + e.getMessage() + "\n" +
+					folder.getPathname());
+				return;
+			}
+		}
 
 		for (DomainFolder subFolder : folder.getFolders()) {
 			monitor.checkCancelled();
@@ -204,10 +219,10 @@ public class DeleteProjectFilesTask extends Task {
 		}
 
 		String msg =
-			"The file \"" + file.getName() + "\" is a versioned file and if you continue, \n" +
+			"The file \"" + file.getName() + "\" is a versioned file and if you continue\n" +
 				"it (and all its versions) will be PERMANENTLY deleted!\n" +
-				"If this is a shared project, it will be deleted on the server (if permitted)\n" +
-				"for ALL users (if permitted)!" + "\nAre you sure you want to delete it?";
+				"If this is a shared project, it will be deleted on the server\n" +
+				"for ALL users (if permitted)!" + "\n\nAre you sure you want to delete it?";
 		versionedDialogBuilder.setMessage(msg);
 		return versionedDialogBuilder.show(parent);
 	}

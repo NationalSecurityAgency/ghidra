@@ -19,7 +19,6 @@ import java.io.*;
 import java.util.HashMap;
 
 import ghidra.util.Msg;
-import ghidra.util.PropertyFile;
 import ghidra.util.exception.NotFoundException;
 
 /**
@@ -94,7 +93,7 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 	}
 
 	@Override
-	protected synchronized void fileIdChanged(PropertyFile pfile, String oldFileId)
+	protected synchronized void fileIdChanged(ItemPropertyFile pfile, String oldFileId)
 			throws IOException {
 		indexJournal.open();
 		try {
@@ -143,11 +142,18 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 		if (item == null) {
 			return null;
 		}
+		ItemStorage itemStorage = item.itemStorage;
 		try {
-			PropertyFile propertyFile = item.itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			if (propertyFile.exists()) {
 				return LocalFolderItem.getFolderItem(this, propertyFile);
 			}
+		}
+		catch (InvalidObjectException e) {
+			// Use unknown placeholder item on failure
+			InvalidPropertyFile invalidFile = new InvalidPropertyFile(itemStorage.dir,
+				itemStorage.storageName, itemStorage.folderPath, itemStorage.itemName);
+			return new LocalUnknownFolderItem(this, invalidFile);
 		}
 		catch (FileNotFoundException e) {
 			// ignore

@@ -2827,8 +2827,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		DomainFile choice = loadAskValue(this::parseDomainFile, title);
 		if (!isRunningHeadless()) {
 			choice = doAsk(Program.class, title, "", choice, lastValue -> {
-
-				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
+				// File filter employed limits access to program files within the active project
+				// only to ensure the ability to open for update is possible. 
+				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+					new DefaultDomainFileFilter(Program.class, true));
 				dtd.show();
 				if (dtd.wasCancelled()) {
 					return null;
@@ -2932,8 +2934,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		String message = "";
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
-
-			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
+			// File filter employed limits access to files within the active project
+			// only to ensure the ability to open for update is possible. 
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+				DomainFileFilter.ALL_FILES_NO_EXTERNAL_FOLDERS_FILTER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();

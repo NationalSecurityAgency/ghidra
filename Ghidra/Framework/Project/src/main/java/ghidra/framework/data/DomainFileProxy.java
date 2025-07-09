@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -247,24 +247,13 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public boolean isLinkFile() {
-		DomainObjectAdapter dobj = getDomainObject();
-		if (dobj != null) {
-			ContentHandler<?> ch;
-			try {
-				ch = DomainObjectAdapter.getContentHandler(dobj);
-				return LinkHandler.class.isAssignableFrom(ch.getClass());
-			}
-			catch (IOException e) {
-				// ignore
-			}
-		}
+	public boolean isLink() {
 		return false;
 	}
 
 	@Override
-	public DomainFolder followLink() {
-		throw new UnsupportedOperationException();
+	public LinkFileInfo getLinkInfo() {
+		return null;
 	}
 
 	@Override
@@ -414,8 +403,8 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		return null; // not supported by proxy file
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

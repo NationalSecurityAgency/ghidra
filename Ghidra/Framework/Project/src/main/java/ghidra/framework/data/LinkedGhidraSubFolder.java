@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,21 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	private final LinkedGhidraSubFolder parent;
 	private final String folderName;
 
-	LinkedGhidraSubFolder(String folderName) {
+	/**
+	 * Construct root-linked-folder based on the name of a folder-link link-file.
+	 * @param linkFileName name of link-file which represents a folder-link
+	 */
+	LinkedGhidraSubFolder(String linkFileName) {
 		this.linkedRootFolder = getLinkedRootFolder();
 		this.parent = null; // must override getParent()
-		this.folderName = folderName;
+		this.folderName = linkFileName;
 	}
 
+	/**
+	 * Construct a linked-folder child
+	 * @param parent parent folder within a linked-folder hierarchy
+	 * @param folderName folder name
+	 */
 	LinkedGhidraSubFolder(LinkedGhidraSubFolder parent, String folderName) {
 		this.linkedRootFolder = parent.getLinkedRootFolder();
 		this.parent = parent;
@@ -60,8 +69,13 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	}
 
 	@Override
+	public boolean isExternal() {
+		return linkedRootFolder.isExternal();
+	}
+
+	@Override
 	public boolean isInWritableProject() {
-		return false; // While project may be writeable this folder is not
+		return linkedRootFolder.isInWritableProject();
 	}
 
 	@Override
@@ -75,8 +89,27 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	}
 
 	@Override
-	public DomainFolder getLinkedFolder() throws IOException {
-		return linkedRootFolder.getLinkedFolder(getLinkedPathname());
+	public DomainFolder getRealFolder() throws IOException {
+		return linkedRootFolder.getRealFolder(getLinkedPathname());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof LinkedGhidraSubFolder other)) {
+			return false;
+		}
+		return folderName.equals(other.folderName) && parent.equals(other.parent);
+	}
+
+	@Override
+	public int hashCode() {
+		return getPathname().hashCode();
 	}
 
 	@Override
@@ -85,8 +118,49 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	}
 
 	@Override
+	public boolean isSame(DomainFolder folder) {
+
+		// NOTE: This project check relates to the outermost containing project
+		// and not the project that may be referenenced by a link.
+		if (!getProjectLocator().equals(folder.getProjectLocator()) &&
+			!SystemUtilities.isEqual(getProjectData().getSharedProjectURL(),
+				folder.getProjectData().getSharedProjectURL())) {
+			// Containing project/repository appears to be unrelated
+			return false;
+		}
+
+		return getPathname().equals(folder.getPathname());
+	}
+
+	@Override
+	public boolean isSameOrAncestor(DomainFolder folder) {
+
+		// NOTE: This project check relates to the outermost containing project
+		// and not the project that may be referenenced by a link.
+		if (!getProjectLocator().equals(folder.getProjectLocator()) &&
+			!SystemUtilities.isEqual(getProjectData().getSharedProjectURL(),
+				folder.getProjectData().getSharedProjectURL())) {
+			// Containing project/repository appears to be unrelated
+			return false;
+		}
+
+		String pathname = getPathname();
+
+		DomainFolder f = folder;
+		while (f != null) {
+			if (f == this || pathname.equals(f.getPathname())) {
+				return true;
+			}
+			f = f.getParent();
+		}
+		return false;
+	}
+
+	@Override
 	public DomainFolder setName(String newName) throws InvalidNameException, IOException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		String name = linkedFolder.setName(newName).getName();
+		return parent.getFolder(name);
 	}
 
 	@Override
@@ -126,6 +200,11 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	}
 
 	@Override
+	public ProjectData getLinkedProjectData() throws IOException {
+		return linkedRootFolder.getLinkedProjectData();
+	}
+
+	@Override
 	public ProjectData getProjectData() {
 		return parent.getProjectData();
 	}
@@ -142,23 +221,24 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 		return path;
 	}
 
-	/**
-	 * Get the pathname of this folder within the linked-project/repository
-	 * @return absolute linked folder path within the linked-project/repository
-	 */
+	@Override
 	public String getLinkedPathname() {
-		String path = parent.getLinkedPathname();
+		return parent.getLinkedPathname(folderName);
+	}
+
+	final String getLinkedPathname(String childName) {
+		String path = getLinkedPathname();
 		if (!path.endsWith(FileSystem.SEPARATOR)) {
 			path += FileSystem.SEPARATOR;
 		}
-		path += folderName;
+		path += childName;
 		return path;
 	}
 
 	@Override
 	public LinkedGhidraSubFolder[] getFolders() {
 		try {
-			DomainFolder linkedFolder = getLinkedFolder();
+			DomainFolder linkedFolder = getRealFolder();
 			DomainFolder[] folders = linkedFolder.getFolders();
 			LinkedGhidraSubFolder[] linkedSubFolders = new LinkedGhidraSubFolder[folders.length];
 			for (int i = 0; i < folders.length; i++) {
@@ -167,7 +247,7 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 			return linkedSubFolders;
 		}
 		catch (IOException e) {
-			Msg.error(this, "Linked folder failure: " + e.getMessage());
+			Msg.error(this, "Linked folder failure '" + this + "': " + e.getMessage());
 			return new LinkedGhidraSubFolder[0];
 		}
 	}
@@ -175,14 +255,14 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	@Override
 	public LinkedGhidraSubFolder getFolder(String name) {
 		try {
-			DomainFolder linkedFolder = getLinkedFolder();
+			DomainFolder linkedFolder = getRealFolder();
 			DomainFolder f = linkedFolder.getFolder(name);
 			if (f != null) {
 				return new LinkedGhidraSubFolder(this, name);
 			}
 		}
 		catch (IOException e) {
-			Msg.error(this, "Linked folder failure: " + e.getMessage());
+			Msg.error(this, "Linked folder failure '" + this + "': " + e.getMessage());
 		}
 		return null;
 	}
@@ -190,7 +270,7 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	@Override
 	public DomainFile[] getFiles() {
 		try {
-			DomainFolder linkedFolder = getLinkedFolder();
+			DomainFolder linkedFolder = getRealFolder();
 			DomainFile[] files = linkedFolder.getFiles();
 			LinkedGhidraFile[] linkedSubFolders = new LinkedGhidraFile[files.length];
 			for (int i = 0; i < files.length; i++) {
@@ -199,7 +279,7 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 			return linkedSubFolders;
 		}
 		catch (IOException e) {
-			Msg.error(this, "Linked folder failure: " + e.getMessage());
+			Msg.error(this, "Linked folder failure '" + this + "': " + e.getMessage());
 			return new LinkedGhidraFile[0];
 		}
 	}
@@ -211,17 +291,17 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	 */
 	public DomainFile getLinkedFileNoError(String name) {
 		try {
-			DomainFolder linkedFolder = getLinkedFolder();
+			DomainFolder linkedFolder = getRealFolder();
 			return linkedFolder.getFile(name);
 		}
 		catch (IOException e) {
-			Msg.error(this, "Linked folder failure: " + e.getMessage());
+			// Ignore
 		}
 		return null;
 	}
 
 	DomainFile getLinkedFile(String name) throws IOException {
-		DomainFolder linkedFolder = getLinkedFolder();
+		DomainFolder linkedFolder = getRealFolder();
 		DomainFile df = linkedFolder.getFile(name);
 		if (df == null) {
 			throw new FileNotFoundException("linked-file '" + name + "' not found");
@@ -238,11 +318,11 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	@Override
 	public boolean isEmpty() {
 		try {
-			DomainFolder linkedFolder = getLinkedFolder();
+			DomainFolder linkedFolder = getRealFolder();
 			return linkedFolder.isEmpty();
 		}
 		catch (IOException e) {
-			Msg.error(this, "Linked folder failure: " + e.getMessage());
+			Msg.error(this, "Linked folder failure '" + this + "': " + e.getMessage());
 			// TODO: what should we return if folder not found or error occurs?
 			// True is returned to allow this method to be used to avoid continued access.
 			return true;
@@ -252,51 +332,83 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	@Override
 	public DomainFile createFile(String name, DomainObject obj, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.createFile(name, obj, monitor);
 	}
 
 	@Override
 	public DomainFile createFile(String name, File packFile, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.createFile(name, packFile, monitor);
+	}
+
+	@Override
+	public DomainFile createLinkFile(ProjectData sourceProjectData, String pathname,
+			boolean makeRelative, String linkFilename, LinkHandler<?> lh) throws IOException {
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.createLinkFile(sourceProjectData, pathname, makeRelative, linkFilename,
+			lh);
+	}
+
+	@Override
+	public DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
+			throws IOException {
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.createLinkFile(ghidraUrl, linkFilename, lh);
 	}
 
 	@Override
 	public DomainFolder createFolder(String name) throws InvalidNameException, IOException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		DomainFolder child = linkedFolder.createFolder(name);
+		return new LinkedGhidraSubFolder(parent, child.getName());
 	}
 
 	@Override
 	public void delete() throws IOException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		linkedFolder.delete();
 	}
 
 	@Override
 	public DomainFolder moveTo(DomainFolder newParent) throws IOException {
-		throw new ReadOnlyException("linked folder is read only");
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.moveTo(newParent);
 	}
 
 	@Override
 	public DomainFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		DomainFolder linkedFolder = getLinkedFolder();
+		DomainFolder linkedFolder = getRealFolder();
 		return linkedFolder.copyTo(newParent, monitor);
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		DomainFolder linkedFolder = getLinkedFolder();
-		return linkedFolder.copyToAsLink(newParent);
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+		DomainFolder linkedFolder = getRealFolder();
+		return linkedFolder.copyToAsLink(newParent, relative);
 	}
 
 	@Override
 	public void setActive() {
-		// do nothing
+		try {
+			DomainFolder linkedFolder = getRealFolder();
+			linkedFolder.setActive();
+		}
+		catch (IOException e) {
+			// ignore
+		}
 	}
 
 	@Override
 	public String toString() {
-		return "LinkedGhidraSubFolder: " + getPathname();
+		String str = parent.toString();
+		if (!str.endsWith("/")) {
+			str += "/";
+		}
+		str += getName();
+		return str;
 	}
 
 	@Override
