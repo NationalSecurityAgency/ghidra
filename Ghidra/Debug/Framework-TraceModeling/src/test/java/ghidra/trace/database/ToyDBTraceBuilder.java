@@ -103,6 +103,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 			        <element schema='Target' />
 			    </schema>
 			    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='EventScope' />
 			        <interface name='Process' />
 			        <attribute name='self' schema='Target' />
 			        <attribute name='Threads' schema='ThreadContainer' />
