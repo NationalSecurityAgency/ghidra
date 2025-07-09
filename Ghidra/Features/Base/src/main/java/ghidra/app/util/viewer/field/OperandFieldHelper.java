@@ -20,12 +20,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.event.ChangeListener;
 
-import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.*;
+import docking.widgets.fieldpanel.field.AbstractTextFieldElement;
+import docking.widgets.fieldpanel.field.AttributedString;
+import docking.widgets.fieldpanel.field.CompositeFieldElement;
+import docking.widgets.fieldpanel.field.FieldElement;
+import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.FieldUtils;
+import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.GhidraOptions;
-import ghidra.app.util.*;
+import ghidra.app.util.ColorAndStyle;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.SymbolInspector;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -33,13 +41,30 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataImage;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.Playable;
+import ghidra.program.model.data.Union;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.LabelString;
+import ghidra.program.model.listing.OperandRepresentationList;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.Variable;
+import ghidra.program.model.listing.VariableOffset;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
+import ghidra.program.model.symbol.Equate;
+import ghidra.program.model.symbol.EquateTable;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.util.EquateOperandFieldLocation;
+import ghidra.program.util.OperandFieldLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
 /**
@@ -180,8 +205,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 		this.maxDisplayLines = maxLines;
 	}
 
-	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField field,
-			int opIndex, int column) {
+	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField field, int opIndex,
+			int column) {
 		if (field instanceof ListingTextField listingField) {
 			RowColLocation rcl = listingField.dataToScreenLocation(opIndex, column);
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
@@ -211,7 +236,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 		if (lf instanceof ImageFactoryField) {
 			Data data = (Data) obj;
-			if (data.getValue() instanceof DataImage) {
+			Object value = data.getValue();
+			if (value instanceof DataImage || value instanceof Icon) {
 				return new ResourceFieldLocation(data.getProgram(), data.getMinAddress(),
 					data.getComponentPath(), codeUnitFormat.getDataValueRepresentationString(data),
 					0, col, data);
@@ -362,6 +388,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 			return new ImageFactoryField(this, ((DataImage) value).getImageIcon(), proxy,
 				getMetrics(), startX + varWidth, width);
 		}
+		if (value instanceof Icon) {
+			return new ImageFactoryField(this, (Icon) value, proxy, getMetrics(), startX + varWidth,
+				width);
+		}
 		else if (value instanceof Playable) {
 			return new ImageFactoryField(this, ((Playable) value).getImageIcon(), proxy,
 				getMetrics(), startX + varWidth, width);
@@ -452,8 +482,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 		if (wrapOnSemicolon) {
 			List<FieldElement> lines = breakIntoLines(elements);
 			if (lines.size() == 1) {
-				return ListingTextField.createSingleLineTextField(this, proxy,
-					lines.get(0), startX + varWidth, width, hlProvider);
+				return ListingTextField.createSingleLineTextField(this, proxy, lines.get(0),
+					startX + varWidth, width, hlProvider);
 			}
 			return ListingTextField.createMultilineTextField(this, proxy, lines, startX, width,
 				hlProvider);

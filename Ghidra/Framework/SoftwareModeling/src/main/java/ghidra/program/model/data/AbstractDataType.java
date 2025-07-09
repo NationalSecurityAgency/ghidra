@@ -28,7 +28,7 @@ import ghidra.util.UniversalID;
  */
 public abstract class AbstractDataType implements DataType {
 
-	private final static TypeDefSettingsDefinition[] EMPTY_TYPEDEF_DEFINITIONS =
+	protected final static TypeDefSettingsDefinition[] EMPTY_TYPEDEF_DEFINITIONS =
 		new TypeDefSettingsDefinition[0];
 
 	protected String name;

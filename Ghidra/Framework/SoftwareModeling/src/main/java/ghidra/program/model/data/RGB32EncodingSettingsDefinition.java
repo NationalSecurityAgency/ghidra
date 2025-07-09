@@ -21,51 +21,59 @@ import ghidra.docking.settings.EnumSettingsDefinition;
 import ghidra.docking.settings.Settings;
 
 /**
- * The settings definition for the numeric display format
+ * The typedef settings definition which specifies a 32-bit RGB Color Encoding
  */
-public class PointerTypeSettingsDefinition
+public class RGB32EncodingSettingsDefinition
 		implements EnumSettingsDefinition, TypeDefSettingsDefinition {
 
-	private static final String POINTER_TYPE_SETTINGS_NAME = "ptr_type";
-	private static final String DESCRIPTION =
-		"Specifies the pointer type which affects interpretation of offset";
-	private static final String DISPLAY_NAME = "Pointer Type";
+	public enum RGB32Encoding {
+		ARGB_8888, RGBA_8888, BGRA_8888, ABGR_8888;
+	}
 
-	// Choices correspond to the enumerated PointerType values
+	public static final RGB32Encoding DEFAULT_ENCODING = RGB32Encoding.ARGB_8888;
+
+	private static final String RGB32_ENCODING_SETTINGS_NAME = "rgb32";
+	private static final String DESCRIPTION = "Specifies a 32-bit RGB Color Encoding";
+	private static final String DISPLAY_NAME = "RGB32 Encoding";
+
 	private static final String[] choices =
-		{ "default", "image-base-relative", "relative", "file-offset" };
+		{ RGB32Encoding.ARGB_8888.name(), RGB32Encoding.RGBA_8888.name(),
+			RGB32Encoding.BGRA_8888.name(), RGB32Encoding.ABGR_8888.name() };
 
-	public static final PointerTypeSettingsDefinition DEF = new PointerTypeSettingsDefinition();
+	public static final RGB32EncodingSettingsDefinition DEF = new RGB32EncodingSettingsDefinition();
 
-	private PointerTypeSettingsDefinition() {
+	private RGB32EncodingSettingsDefinition() {
 	}
 
 	/**
-	 * Returns the format based on the specified settings
+	 * Returns the RGB encoding standard based on the specified settings
 	 * @param settings the instance settings or null for default value.
-	 * @return the {@link PointerType}.  {@link PointerType#DEFAULT} will be returned
+	 * @return the RGB encoding standard.  The default encoding will be returned
 	 * if no setting has been made.
 	 */
-	public PointerType getType(Settings settings) {
-		if (settings == null) {
-			return PointerType.DEFAULT;
-		}
-		Long value = settings.getLong(POINTER_TYPE_SETTINGS_NAME);
-		if (value == null) {
-			return PointerType.DEFAULT;
-		}
-		int type = (int) value.longValue();
-		try {
-			return PointerType.valueOf(type);
-		}
-		catch (NoSuchElementException e) {
-			return PointerType.DEFAULT;
-		}
+	public RGB32Encoding getRGBEncoding(Settings settings) {
+		return RGB32Encoding.valueOf(getValueString(settings));
 	}
 
 	@Override
 	public int getChoice(Settings settings) {
-		return getType(settings).value;
+		if (settings == null) {
+			return 0;
+		}
+		Long value = settings.getLong(RGB32_ENCODING_SETTINGS_NAME);
+		if (value == null) {
+			return 0;
+		}
+		int choice = (int) value.longValue();
+		try {
+			if (choice >= 0 || choice < choices.length) {
+				return choice;
+			}
+		}
+		catch (NoSuchElementException e) {
+			// ignore
+		}
+		return 0;
 	}
 
 	@Override
@@ -74,22 +82,29 @@ public class PointerTypeSettingsDefinition
 	}
 
 	@Override
-	public void setChoice(Settings settings, int value) {
+	public void setChoice(Settings settings, int choice) {
 		try {
-			setType(settings, PointerType.valueOf(value));
+			if (choice > 0 || choice < choices.length) {
+				// non-default encoding setting
+				settings.setLong(RGB32_ENCODING_SETTINGS_NAME, choice);
+				return;
+			}
 		}
 		catch (NoSuchElementException e) {
-			settings.clearSetting(POINTER_TYPE_SETTINGS_NAME);
+			// ignore
 		}
+		settings.clearSetting(RGB32_ENCODING_SETTINGS_NAME);
 	}
 
-	public void setType(Settings settings, PointerType type) {
-		if (type == PointerType.DEFAULT) {
-			settings.clearSetting(POINTER_TYPE_SETTINGS_NAME);
+	public void setRGBEncoding(Settings settings, RGB32Encoding encoding) {
+		String encodingName = encoding.name();
+		for (int i = 0; i < choices.length; i++) {
+			if (choices[i].equals(encodingName)) {
+				setChoice(settings, i);
+				break;
+			}
 		}
-		else {
-			settings.setLong(POINTER_TYPE_SETTINGS_NAME, type.value);
-		}
+		throw new AssertionError("Missing RGB Encoding choice: " + encoding);
 	}
 
 	@Override
@@ -104,7 +119,7 @@ public class PointerTypeSettingsDefinition
 
 	@Override
 	public String getStorageKey() {
-		return POINTER_TYPE_SETTINGS_NAME;
+		return RGB32_ENCODING_SETTINGS_NAME;
 	}
 
 	@Override
@@ -119,23 +134,23 @@ public class PointerTypeSettingsDefinition
 
 	@Override
 	public void clear(Settings settings) {
-		settings.clearSetting(POINTER_TYPE_SETTINGS_NAME);
+		settings.clearSetting(RGB32_ENCODING_SETTINGS_NAME);
 	}
 
 	@Override
 	public void copySetting(Settings settings, Settings destSettings) {
-		Long l = settings.getLong(POINTER_TYPE_SETTINGS_NAME);
+		Long l = settings.getLong(RGB32_ENCODING_SETTINGS_NAME);
 		if (l == null) {
-			destSettings.clearSetting(POINTER_TYPE_SETTINGS_NAME);
+			destSettings.clearSetting(RGB32_ENCODING_SETTINGS_NAME);
 		}
 		else {
-			destSettings.setLong(POINTER_TYPE_SETTINGS_NAME, l);
+			destSettings.setLong(RGB32_ENCODING_SETTINGS_NAME, l);
 		}
 	}
 
 	@Override
 	public boolean hasValue(Settings setting) {
-		return setting.getValue(POINTER_TYPE_SETTINGS_NAME) != null;
+		return setting.getValue(RGB32_ENCODING_SETTINGS_NAME) != null;
 	}
 
 	public String getDisplayChoice(Settings settings) {

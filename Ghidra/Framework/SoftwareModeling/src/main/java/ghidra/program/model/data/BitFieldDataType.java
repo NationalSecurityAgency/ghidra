@@ -102,8 +102,8 @@ public class BitFieldDataType extends AbstractDataType {
 	/**
 	 * Get the effective bit-size based upon the specified base type size.  A bit size
 	 * larger than the base type size will truncated to the base type size.
-	 * @param declaredBitSize
-	 * @param baseTypeByteSize
+	 * @param declaredBitSize declare bitfield size
+	 * @param baseTypeByteSize base datatype size in bytes
 	 * @return effective bit-size
 	 */
 	public static int getEffectiveBitSize(int declaredBitSize, int baseTypeByteSize) {
@@ -417,9 +417,13 @@ public class BitFieldDataType extends AbstractDataType {
 		if (dt instanceof Enum) {
 			return ((Enum) dt).getRepresentation(big, settings, effectiveBitSize);
 		}
+		if (dt instanceof BooleanDataType) {
+			// TRUE or FALSE representation
+			return ((BooleanDataType) dt).getRepresentation(big, settings, effectiveBitSize);
+		}
 		AbstractIntegerDataType intDT = (AbstractIntegerDataType) dt;
-		if (intDT.getFormatSettingsDefinition()
-				.getFormat(settings) == FormatSettingsDefinition.CHAR) {
+		int format = intDT.getFormatSettingsDefinition().getFormat(settings);
+		if (format == FormatSettingsDefinition.CHAR) {
 			if (big.signum() < 0) {
 				big = big.add(BigInteger.valueOf(2).pow(effectiveBitSize));
 			}
@@ -429,7 +433,7 @@ public class BitFieldDataType extends AbstractDataType {
 			return StringDataInstance.getCharRepresentation(this, bytes, settings);
 		}
 
-		return intDT.getRepresentation(big, settings, effectiveBitSize);
+		return AbstractIntegerDataType.getRepresentation(big, settings, effectiveBitSize, isSigned);
 	}
 
 	@Override

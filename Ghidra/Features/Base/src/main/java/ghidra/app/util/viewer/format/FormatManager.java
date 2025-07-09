@@ -28,8 +28,10 @@ import ghidra.app.util.viewer.field.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.classfinder.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -259,8 +261,7 @@ public class FormatManager implements OptionsChangeListener {
 			return false;
 		}
 		DataType type = data.getBaseDataType();
-		return type.getLength() > 0 && type instanceof AbstractIntegerDataType ||
-			type instanceof DefaultDataType;
+		return type.getLength() > 0 && type.getValueClass(null) == Scalar.class;
 	}
 
 	/**
@@ -944,8 +945,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	private class MultipleHighlighterProvider implements ListingHighlightProvider {
 
-		private List<ListingHighlightProvider> highlightProviders =
-			new CopyOnWriteArrayList<>();
+		private List<ListingHighlightProvider> highlightProviders = new CopyOnWriteArrayList<>();
 
 		@Override
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
@@ -961,8 +961,7 @@ public class FormatManager implements OptionsChangeListener {
 			int size = highlightProviders.size();
 			for (int i = size - 1; i >= 0; i--) {
 				ListingHighlightProvider provider = highlightProviders.get(i);
-				Highlight[] highlights =
-					provider.createHighlights(text, field, cursorTextOffset);
+				Highlight[] highlights = provider.createHighlights(text, field, cursorTextOffset);
 				for (Highlight highlight : highlights) {
 					list.add(highlight);
 				}
