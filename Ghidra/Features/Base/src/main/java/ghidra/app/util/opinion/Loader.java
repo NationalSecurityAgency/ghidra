@@ -201,12 +201,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * if absolutely necessary.
 	 * 
 	 * @param provider The bytes to load.
-	 * @return The preferred file name to use when loading.
+	 * @return The preferred file name to use when loading, or {@code null} if a name could not
+	 *   be determined from the provider.
 	 */
 	public default String getPreferredFileName(ByteProvider provider) {
 		FSRL fsrl = provider.getFSRL();
 		String name = (fsrl != null) ? fsrl.getName() : provider.getName();
-		return name.replaceAll("[\\\\:|]+", "/");
+		return name != null ? name.replaceAll("[\\\\:|]+", "/") : null;
 	}
 
 	/**

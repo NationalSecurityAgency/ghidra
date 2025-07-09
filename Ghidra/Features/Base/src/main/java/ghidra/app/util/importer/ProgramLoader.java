@@ -32,8 +32,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -233,6 +232,25 @@ public class ProgramLoader {
 			this.loaderFilter =
 				cls != null ? loader -> loader.getClass().equals(cls) : LoaderService.ACCEPT_ALL;
 			return this;
+		}
+
+		/**
+		 * Sets the acceptable {@link Loader} to use during import.
+		 * <p>
+		 * By default, all {@link Loader}s are accepted ({@link LoaderService#ACCEPT_ALL}).
+		 * 
+		 * @param clsName The class name of the {@link Loader} to use during import. A {@code null}
+		 *   value will revert back to the default ({@link LoaderService#ACCEPT_ALL}).
+		 * @return This {@link Builder}
+		 * @throws InvalidInputException if the given loader class name did not correspond to a
+		 *   {@link Loader}
+		 */
+		public Builder loaders(String clsName) throws InvalidInputException {
+			Class<? extends Loader> cls = LoaderService.getLoaderClassByName(clsName);
+			if (cls == null) {
+				throw new InvalidInputException("Loader '%s' does not exist!".formatted(clsName));
+			}
+			return loaders(cls);
 		}
 	
 		/**
@@ -436,8 +454,8 @@ public class ProgramLoader {
 
 				LoadSpec loadSpec = getLoadSpec(p);
 				List<Option> loaderOptions = getLoaderOptions(p, loadSpec);
-				String importName = Objects.requireNonNullElse(importNameOverride,
-					loadSpec.getLoader().getPreferredFileName(p));
+				String importName = importNameOverride != null ? importNameOverride
+						: loadSpec.getLoader().getPreferredFileName(p);
 
 				// Load
 				Msg.info(ProgramLoader.class, "Using Loader: " + loadSpec.getLoader().getName());
