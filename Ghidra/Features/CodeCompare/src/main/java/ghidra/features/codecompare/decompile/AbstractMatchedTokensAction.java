@@ -15,24 +15,15 @@
  */
 package ghidra.features.codecompare.decompile;
 
-import static ghidra.util.datastruct.Duo.Side.*;
-
-import java.util.Iterator;
-import java.util.List;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
-import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.DecompilerLocation;
-import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.features.codecompare.graphanalysis.TokenBin;
-import ghidra.program.model.listing.Program;
-import ghidra.util.datastruct.Duo.Side;
 
 /**
  * This is a base class for actions in a {@link DecompilerCodeComparisonPanel}
  */
 public abstract class AbstractMatchedTokensAction extends DockingAction {
+	protected static final String MENU_PARENT = "Apply From Other Function";
+	protected static final String HELP_TOPIC = "FunctionComparison";
 
 	protected DecompilerCodeComparisonPanel diffPanel;
 	protected boolean disableOnReadOnly;
@@ -52,83 +43,43 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 		this.disableOnReadOnly = disableOnReadOnly;
 	}
 
-	/**
-	 * Determines whether the action should be enable for a pair of
-	 * matching tokens. 
-	 * 
-	 * @param tokenPair tokens
-	 * @return true if action should be enabled
-	 */
-	protected abstract boolean enabledForTokens(TokenPair tokenPair);
+	@Override
+	public void actionPerformed(ActionContext context) {
+		if (!(context instanceof DualDecompilerActionContext compareContext)) {
+			return;
+		}
+
+		dualDecompilerActionPerformed(compareContext);
+	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		if (!(context instanceof DualDecompilerActionContext compareContext)) {
 			return false;
 		}
-		DecompilerCodeComparisonPanel decompPanel = compareContext.getCodeComparisonPanel();
 
 		if (disableOnReadOnly) {
-			//get the program corresponding to the panel with focus
-			Side focusedSide = decompPanel.getActiveSide();
-			Program program = decompPanel.getProgram(focusedSide);
-			if (program == null) {
-				return false; //panel initializing; don't enable action
-			}
-			if (!program.canSave()) {
-				return false;  //program is read-only, don't enable action
+			if (compareContext.isActiveProgramReadOnly()) {
+				return false;  // program is read-only, don't enable action
 			}
 		}
 
-		TokenPair currentPair = getCurrentTokenPair(decompPanel);
-		return enabledForTokens(currentPair);
-
+		return isEnabledForDualDecompilerContext(compareContext);
 	}
 
 	/**
-	 * Returns a {@link TokenPair} consisting of the token under the cursor in the focused
-	 * decompiler panel and its counterpart in the other panel. 
-	 *
-	 * @param decompPanel decomp panel
-	 * @return matching tokens (or null if no match)
+	 * Subclasses return true if they are enabled for the given context
+	 * 
+	 * @param context the context
+	 * @return true if enabled
 	 */
-	protected TokenPair getCurrentTokenPair(
-			DecompilerCodeComparisonPanel decompPanel) {
+	protected abstract boolean isEnabledForDualDecompilerContext(
+			DualDecompilerActionContext context);
 
-		DecompilerPanel focusedPanel = decompPanel.getActiveDisplay().getDecompilerPanel();
-
-		if (!(focusedPanel.getCurrentLocation() instanceof DecompilerLocation focusedLocation)) {
-			return null;
-		}
-
-		ClangToken focusedToken = focusedLocation.getToken();
-		if (focusedToken == null) {
-			return null;
-		}
-		List<TokenBin> tokenBin = diffPanel.getHighBins();
-		if (tokenBin == null) {
-			return null;
-		}
-		TokenBin containingBin = TokenBin.getBinContainingToken(tokenBin, focusedToken);
-		if (containingBin == null) {
-			return null;
-		}
-		TokenBin matchedBin = containingBin.getMatch();
-		if (matchedBin == null) {
-			return null;
-		}
-		//loop over the tokens in the matching bin and return the first one in the same
-		//class as focusedToken
-		Iterator<ClangToken> tokenIter = matchedBin.iterator();
-		while (tokenIter.hasNext()) {
-			ClangToken currentMatch = tokenIter.next();
-			if (currentMatch.getClass().equals(focusedToken.getClass())) {
-				return decompPanel.getActiveSide() == LEFT
-						? new TokenPair(focusedToken, currentMatch)
-						: new TokenPair(currentMatch, focusedToken);
-			}
-		}
-		return null;
-	}
+	/**
+	 * Subclasses will perform their work in this method
+	 * @param context the context
+	 */
+	protected abstract void dualDecompilerActionPerformed(DualDecompilerActionContext context);
 
 }
