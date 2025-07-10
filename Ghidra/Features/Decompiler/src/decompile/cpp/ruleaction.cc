@@ -9602,12 +9602,12 @@ bool RuleIgnoreNan::isAnotherNan(Varnode *vn)
 ///
 /// The given PcodeOp takes input from a NaN operation through a specific slot. We look for a floating-point comparison
 /// PcodeOp (FLOAT_LESS, FLOAT_LESSEQUAL, FLOAT_EQUAL, or FLOAT_NOTEQUAL) that is combined with the given PcodeOp and
-/// has the same input Varnode as the NaN.  The data-flow must be combined either through a BOOL_OR or BOOL_AND
-/// operation, or the given PcodeOp must be a CBRANCH that protects immediate control-flow to another CBRANCH
-/// taking the result of the comparison as input.  If a matching comparison is found, the NaN input to the given
-/// PcodeOp is removed, assuming the output of the NaN operation is always \b false.
-/// Input from an unmodified NaN result must be combined through a BOOL_OR, but a NaN result that has been negated
-/// must combine through a BOOL_AND.
+/// has the same input Varnode as the NaN.  The data-flow must be combined either through a BOOL_OR, BOOL_AND,
+/// INT_EQUAL, or INT_NOTEQUAL operation, or the given PcodeOp must be a CBRANCH that protects immediate control-flow
+/// to another CBRANCH taking the result of the comparison as input.  If a matching comparison is found, the NaN input
+/// to the given PcodeOp is removed, assuming the output of the NaN operation is always \b false.
+/// If a NaN result is combined through a BOOL_OR, it must be unmodified, but a NaN result combined
+/// through a BOOL_AND must be negated.
 /// \param floatVar is the input Varnode to NaN operation
 /// \param op is the given PcodeOp to test
 /// \param slot is the input index of the NaN operation
@@ -9618,7 +9618,8 @@ bool RuleIgnoreNan::isAnotherNan(Varnode *vn)
 Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slot,OpCode matchCode,int4 &count,Funcdata &data)
 
 {
-  if (op->code() == matchCode) {
+  OpCode opc = op->code();
+  if (opc == matchCode) {
     Varnode *vn = op->getIn(1 - slot);
     if (checkBackForCompare(floatVar,vn)) {
       data.opSetOpcode(op,CPUI_COPY);
@@ -9630,7 +9631,14 @@ Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slo
       return op->getOut();
     }
   }
-  else if (op->code() == CPUI_CBRANCH) {
+  else if (opc == CPUI_INT_EQUAL || opc == CPUI_INT_NOTEQUAL) {
+    Varnode *vn = op->getIn(1 - slot);
+    if (checkBackForCompare(floatVar,vn)) {
+      data.opSetInput(op,data.newConstant(1,(matchCode == CPUI_BOOL_OR) ? 0 : 1),slot);
+      count += 1;
+    }
+  }
+  else if (opc == CPUI_CBRANCH) {
     BlockBasic *parent = op->getParent();
     PcodeOp *lastOp;
     int4 outDir = (matchCode == CPUI_BOOL_OR) ? 0 : 1;
