@@ -109,11 +109,14 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
+	public void load(Program program, ImporterSettings settings) throws IOException {
+
+		ByteProvider provider = settings.provider();
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (isUniveralBinary(provider)) {
-			provider = matchUniversalBinaryProvider(provider, loadSpec, monitor);
+			provider = matchUniversalBinaryProvider(provider, settings.loadSpec(), monitor);
 		}
 
 		try {
@@ -142,9 +145,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
 			list.add(new Option(REEXPORT_OPTION_NAME, REEXPORT_OPTION_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-reexport"));
@@ -174,16 +177,16 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected boolean isValidSearchPath(FSRL fsrl, LoadSpec loadSpec, TaskMonitor monitor)
+	protected boolean isValidSearchPath(FSRL fsrl, ImporterSettings settings)
 			throws CancelledException {
 		FileSystemService fsService = FileSystemService.getInstance();
-		try (ByteProvider provider = fsService.getByteProvider(fsrl, loggingDisabled, monitor)) {
+		try (ByteProvider provider = fsService.getByteProvider(fsrl, false, settings.monitor())) {
 			if (!DyldCacheUtils.isDyldCache(provider)) {
 				return true;
 			}
 			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
 			DyldArchitecture dyld = header.getArchitecture();
-			LanguageCompilerSpecPair lcs = loadSpec.getLanguageCompilerSpec();
+			LanguageCompilerSpecPair lcs = settings.loadSpec().getLanguageCompilerSpec();
 			String processor = lcs.getLanguage().getProcessor().toString().toLowerCase();
 			boolean is64bit = lcs.getLanguage()
 					.getAddressFactory()
@@ -267,10 +270,10 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected FSRL resolveLibraryFile(GFileSystem fs, String library) throws IOException {
-		FSRL fsrl = super.resolveLibraryFile(fs, library);
-		if (fsrl != null) {
-			return fsrl;
+	protected GFile lookupLibraryInFs(String library, GFileSystem fs) throws IOException {
+		GFile f = super.lookupLibraryInFs(library, fs);
+		if (f != null) {
+			return f;
 		}
 		String libraryParentPath = FilenameUtils.getFullPath(library);
 		String libraryName = FilenameUtils.getName(library);
@@ -278,13 +281,13 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		if (libraryParentDir != null) {
 			for (GFile file : fs.getListing(libraryParentDir)) {
 				if (file.isDirectory() && file.getName().equals("Versions")) {
-					String versionsPath = joinPaths(libraryParentPath, file.getName());
+					String versionsPath = FSUtilities.appendPath(libraryParentPath, file.getName());
 					List<GFile> versionListion = fs.getListing(file);
 					if (!versionListion.isEmpty()) {
 						GFile specificVersionDir = versionListion.get(0);
 						if (specificVersionDir.isDirectory()) {
-							return resolveLibraryFile(fs,
-								joinPaths(versionsPath, specificVersionDir.getName(), libraryName));
+							return lookupLibraryInFs(FSUtilities.appendPath(versionsPath,
+								specificVersionDir.getName(), libraryName), fs);
 						}
 					}
 				}
@@ -292,11 +295,54 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 					continue;
 				}
 				if (file.getName().equals(libraryName)) {
-					return file.getFSRL();
+					return file;
 				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Special Mach-O library file resolver to account for a "Versions" subdirectory being inserted
+	 * in the library lookup path.  For example, a reference to:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework/Foundation}
+	 * <p>
+	 * might be found at:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation}
+	 * <hr>
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected DomainFile lookupLibraryInFolder(String libraryName, DomainFolder folder) {
+		DomainFolder versionsFolder = folder.getFolder("Versions");
+		if (versionsFolder != null) {
+			DomainFolder[] versions = versionsFolder.getFolders();
+			if (versions.length > 0) {
+				folder = versions[0];
+			}
+		}
+		return super.lookupLibraryInFolder(libraryName, folder);
+	}
+
+	/**
+	 * Special Mach-O library {@link Comparator} to account for a "Versions" subdirectory being 
+	 * inserted in the library lookup path.  For example, a reference to:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework/Foundation}
+	 * <p>
+	 * might be found at:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation}
+	 * <hr>
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected Comparator<String> getLibraryNameComparator() {
+		String versionRegex = "Versions/.+/";
+		return (s1, s2) -> s1.replaceAll(versionRegex, "")
+				.compareTo(s2.replaceAll(versionRegex, ""));
 	}
 
 	/**
@@ -306,11 +352,11 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * set and the Mach-O actually has {@code LC_REEXPORT_DYLIB} entries. 
 	 */
 	@Override
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
-		if (super.shouldSearchAllPaths(program, options, log)) {
+	protected boolean shouldSearchAllPaths(Program program, ImporterSettings settings) {
+		if (super.shouldSearchAllPaths(program, settings)) {
 			return true;
 		}
-		if (shouldPerformReexports(options)) {
+		if (shouldPerformReexports(settings)) {
 			try {
 				Symbol header =
 					program.getSymbolTable().getSymbols(MachoProgramBuilder.HEADER_SYMBOL).next();
@@ -323,8 +369,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 			catch (Exception e) {
-				log.appendMsg("Failed to parse Mach-O header for: '%s': %s"
-						.formatted(program.getName(), e.getMessage()));
+				settings.log()
+						.appendMsg("Failed to parse Mach-O header for: '%s': %s"
+								.formatted(program.getName(), e.getMessage()));
 			}
 		}
 		return false;
@@ -339,17 +386,16 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * depth would have prevented their save as a normal library)
 	 */
 	@Override
-	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
-			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, TaskMonitor monitor)
+	protected void processLibrary(Program lib, String libName, FSRL libFsrl,
+			Queue<UnprocessedLibrary> unprocessed, int depth, ImporterSettings settings)
 			throws IOException, CancelledException {
 
-		if (!shouldPerformReexports(options)) {
+		if (!shouldPerformReexports(settings)) {
 			return;
 		}
 
 		try {
-			for (String path : getReexportPaths(lib, log)) {
+			for (String path : getReexportPaths(lib, settings.log())) {
 				unprocessed.add(new UnprocessedLibrary(path, depth, depth == 1));
 			}
 		}
@@ -364,19 +410,20 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * Adds reexported symbols to each {@link Loaded} {@link Program}.
 	 */
 	@Override
-	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms,
+			ImporterSettings settings) throws CancelledException, IOException {
 
-		if (shouldPerformReexports(options)) {
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
+
+		if (shouldPerformReexports(settings)) {
 			
-			List<DomainFolder> searchFolders =
-				getLibrarySearchFolders(loadedPrograms, project, options, log);
+			List<DomainFolder> searchFolders = getLibrarySearchFolders(loadedPrograms, settings);
 
 			Program firstProgram = loadedPrograms.getFirst().getDomainObject(this);
 			List<LibrarySearchPath> searchPaths;
 			try {
-				searchPaths = getLibrarySearchPaths(firstProgram, loadSpec, options, log, monitor);
+				searchPaths = getLibrarySearchPaths(firstProgram, settings);
 			}
 			finally {
 				firstProgram.release(this);
@@ -389,8 +436,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				Program program = loadedProgram.getDomainObject(this);
 				int id = program.startTransaction("Reexporting");
 				try {
-					reexport(program, loadedPrograms, searchFolders, searchPaths, options, monitor,
-						log);
+					reexport(program, loadedPrograms, searchFolders, searchPaths, settings);
 				}
 				catch (Exception e) {
 					log.appendException(e);
@@ -402,8 +448,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 
-		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, log,
-			monitor);
+		super.postLoadProgramFixups(loadedPrograms, settings);
 	}
 
 	/**
@@ -507,11 +552,12 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	/**
 	 * Checks to see if reexports should be performed
 	 * 
-	 * @param options a {@link List} of {@link Option}s
+	 * @param settings The {@link Loader.ImporterSettings}
 	 * @return True if reexports should be performed; otherwise, false
 	 */
-	private boolean shouldPerformReexports(List<Option> options) {
-		return OptionUtils.getOption(REEXPORT_OPTION_NAME, options, REEXPORT_OPTION_DEFAULT);
+	private boolean shouldPerformReexports(ImporterSettings settings) {
+		return OptionUtils.getOption(REEXPORT_OPTION_NAME, settings.options(),
+			REEXPORT_OPTION_DEFAULT);
 	}
 
 	/**
@@ -550,16 +596,16 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * @param searchFolders A {@link List} of project folders that may contain already-loaded
 	 *   {@link Program}s with reexportable symbols
 	 * @param searchPaths A {@link List} of file system search paths that will be searched
-	 * @param options The load options
-	 * @param monitor A cancelable task monitor
-	 * @param log The log
+	 * @param settings The {@link Loader.ImporterSettings}
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
 	private void reexport(Program program, List<Loaded<Program>> loadedPrograms,
 			List<DomainFolder> searchFolders, List<LibrarySearchPath> searchPaths,
-			List<Option> options, TaskMonitor monitor, MessageLog log)
+			ImporterSettings settings)
 			throws CancelledException, Exception {
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		for (String path : getReexportPaths(program, log)) {
 			monitor.checkCancelled();
@@ -572,7 +618,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
 						DomainFile df =
-							findLibraryInProject(path, searchFolder, searchPaths, options, monitor);
+							findLibraryInProject(path, searchFolder, searchPaths, settings);
 						if (df != null) {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {

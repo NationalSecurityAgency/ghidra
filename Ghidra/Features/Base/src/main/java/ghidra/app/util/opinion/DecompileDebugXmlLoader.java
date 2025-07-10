@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -101,31 +100,16 @@ public class DecompileDebugXmlLoader extends AbstractProgramLoader {
 	/**
 	 * After initial parsing of the XML file, load the details into a new program for 
 	 * loading/viewing in Ghidra.
-	 * 
-	 * @param provider ByteProvider
-	 * @param programName Program name from the XML
-	 * @param project active project
-	 * @param programFolderPath folder path to XML
-	 * @param loadSpec String parsed out of the XML for details regarding language/compiler spec
-	 * @param options program options - will always be empty
-	 * @param log MessageLog
-	 * @param consumer Object
-	 * @param monitor TaskMonitor
-	 * 
-	 * @return List of loaded programs - should always be 1
+	 * <hr>
+	 * {@inheritDoc}
 	 */
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project,
-			String programFolderPath, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
+			throws IOException, CancelledException {
 
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec importerCompilerSpec =
-			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
-		ParseGhidraDebugResult parsedResult = parse(provider);
+		ParseGhidraDebugResult parsedResult = parse(settings.provider());
 		if (parsedResult.lastInfo == null) {
 			return new ArrayList<Loaded<Program>>();
 		}
@@ -136,15 +120,14 @@ public class DecompileDebugXmlLoader extends AbstractProgramLoader {
 				importerLanguage.getAddressFactory().getAddress(parsedResult.lastInfo.offset());
 		}
 
-		Program prog = createProgram(provider, programName, imageBase, getName(),
-			importerLanguage, importerCompilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
+		Program prog = createProgram(imageBase, settings);
+		List<Loaded<Program>> loadedList = List.of(new Loaded<>(prog, settings));
 
 		int loadingId = prog.startTransaction("Loading debug XML file");
 
 		try {
-			doImport(parsedResult.debugXmlMgr, options, log, prog, monitor, false, programName);
+			doImport(parsedResult.debugXmlMgr, settings.options(), settings.log(), prog,
+				settings.monitor(), false, settings.importName());
 		}
 		catch (
 
@@ -304,8 +287,7 @@ public class DecompileDebugXmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor)
+	protected void loadProgramInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 		// since we will not ever be loading this debug program into an existing program, this 
 		// should not be used. 

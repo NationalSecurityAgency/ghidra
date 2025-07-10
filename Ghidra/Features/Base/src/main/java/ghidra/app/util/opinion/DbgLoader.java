@@ -19,15 +19,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * An opinion service for processing Microsoft DBG files.
@@ -68,15 +65,14 @@ public class DbgLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException {
+	public void load(Program prog, ImporterSettings settings) throws IOException {
 
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Loading of DBG file may only be 'added' to existing " +
 				PeLoader.PE_NAME + " Program");
 		}
 
-		SeparateDebugHeader debug = new SeparateDebugHeader(provider);
+		SeparateDebugHeader debug = new SeparateDebugHeader(settings.provider());
 
 		String parentPath = prog.getExecutablePath();
 		File parentFile = new File(parentPath);
@@ -93,8 +89,8 @@ public class DbgLoader extends AbstractPeDebugLoader {
 				sectionToAddress.put(sectionHeader,
 					imageBase.add(sectionHeader.getVirtualAddress()));
 			}
-			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog, options,
-				monitor);
+			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog,
+				settings.options(), settings.monitor());
 		}
 		finally {
 			if (provider2 != null) {

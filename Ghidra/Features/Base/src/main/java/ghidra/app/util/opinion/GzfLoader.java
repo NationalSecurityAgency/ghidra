@@ -23,11 +23,9 @@ import org.apache.commons.io.FilenameUtils;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
 import ghidra.program.database.ProgramContentHandler;
@@ -67,18 +65,17 @@ public class GzfLoader implements Loader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		return Collections.emptyList();
 	}
 
 	@Override
-	public LoadResults<? extends DomainObject> load(ByteProvider provider, String programName,
-			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor)
+	public LoadResults<? extends DomainObject> load(ImporterSettings settings)
 			throws IOException, CancelledException, VersionException {
 
-		Program program = loadPackedProgramDatabase(provider, programName, consumer, monitor);
-		return new LoadResults<>(program, programName, project, projectFolderPath, consumer);
+		Program program = loadPackedProgramDatabase(settings.provider(), settings.importName(),
+			settings.consumer(), settings.monitor());
+		return new LoadResults<>(new Loaded<>(program, settings));
 	}
 
 	private Program loadPackedProgramDatabase(ByteProvider provider, String programName,
@@ -127,8 +124,7 @@ public class GzfLoader implements Loader {
 	}
 
 	@Override
-	public void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor)
+	public void loadInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 		throw new LoadException("Cannot add GZF to program");
 	}

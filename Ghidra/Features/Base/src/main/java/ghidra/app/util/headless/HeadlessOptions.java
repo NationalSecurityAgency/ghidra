@@ -61,6 +61,9 @@ public class HeadlessOptions {
 	// -overwrite
 	boolean overwrite;
 
+	// -mirror
+	boolean mirror;
+
 	// -recursive
 	boolean recursive;
 	Integer recursiveDepth; // 'null' means use default depth, which is different for files vs dirs
@@ -318,6 +321,15 @@ public class HeadlessOptions {
 	 */
 	public void enableOverwriteOnConflict(boolean enabled) {
 		this.overwrite = enabled;
+	}
+
+	/**
+	 * Enables/disables mirroring of the imported file(s) filesystem path in the project.
+	 * 
+	 * @param enabled True if filesystem mirroring should happen; otherwise, false.
+	 */
+	public void enableMirroring(boolean enabled) {
+		this.mirror = enabled;
 	}
 
 	/**

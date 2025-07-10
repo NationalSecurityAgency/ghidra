@@ -19,16 +19,16 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
-import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
+import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * The result of a 
- * {@link Loader#load(ghidra.app.util.bin.ByteProvider, String, Project, String, LoadSpec, List, MessageLog, Object, TaskMonitor) load}.
- * A {@link LoadResults} object provides convenient access to and operations on the underlying 
- * {@link Loaded} {@link DomainObject}s that got loaded.
+ * {@link Loader#load(ghidra.app.util.opinion.Loader.ImporterSettings)}. Provides convenient 
+ * access to and operations on the underlying {@link Loaded} {@link DomainObject}s that got loaded.
  * 
  * @param <T> The type of {@link DomainObject}s that were loaded
  */
@@ -54,29 +54,14 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	}
 	
 	/**
-	 * Creates a new {@link LoadResults} that contains a new {@link Loaded} 
-	 * {@link DomainObject} created from the given parameters.  This new {@link Loaded} 
-	 * {@link DomainObject} is assumed to be the {@link #getPrimary() primary} {@link Loaded} 
-	 * {@link DomainObject}.
+	 * Creates a new {@link LoadResults} that contains the given {@link Loaded} 
+	 * {@link DomainObject}. This {@link Loaded} {@link DomainObject} is assumed to be the 
+	 * {@link #getPrimary() primary} {@link Loaded} {@link DomainObject}.
 	 * 
-	 * @param domainObject The loaded {@link DomainObject}
-	 * @param name The name of the loaded {@link DomainObject}.  If a 
-	 *   {@link #save(TaskMonitor) save} occurs, this will attempted to be used for the resulting 
-	 *   {@link DomainFile}'s name.
-	 * @param project If not null, the project this will get saved to during a 
-	 *   {@link #save(TaskMonitor)} operation
-	 * @param projectFolderPath The project folder path this will get saved to during a 
-	 *   {@link #save(TaskMonitor) save} operation.  If null or empty, the root project folder will
-	 *   be used.
-	 * @param consumer A reference to the object "consuming" the returned this 
-	 *   {@link LoadResults}, used to ensure the underlying {@link DomainObject}s are only closed 
-	 *   when every consumer is done with it (see {@link #close()}). NOTE:  Wrapping a 
-	 *   {@link DomainObject} in a {@link LoadResults} transfers responsibility of releasing the 
-	 *   given {@link DomainObject} to this {@link LoadResults}'s {@link #close()} method. 
+	 * @param loaded The {@link Loaded} {@link DomainObject}
 	 */
-	public LoadResults(T domainObject, String name, Project project, String projectFolderPath,
-			Object consumer) {
-		this(List.of(new Loaded<T>(domainObject, name, project, projectFolderPath, consumer)));
+	public LoadResults(Loaded<T> loaded) {
+		this(List.of(loaded));
 	}
 
 	/**
@@ -155,9 +140,11 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>>,
 	 * @throws IOException If there was a problem saving. A thrown exception may result in only some
 	 *   of the {@link Loaded} elements being saved. It is the responsibility of the caller to clean
 	 *   things up appropriately.
+	 * @throws InvalidNameException if saving with an invalid name
 	 * @see Loaded#save(TaskMonitor)
 	 */
-	public void save(TaskMonitor monitor) throws CancelledException, IOException {
+	public void save(TaskMonitor monitor)
+			throws CancelledException, IOException, InvalidNameException {
 		for (Loaded<T> loaded : loadedList) {
 			loaded.save(monitor);
 		}

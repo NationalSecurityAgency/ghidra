@@ -62,12 +62,17 @@ public class DumpPeShim extends PeLoader {
 			return;
 		}
 		program.setEffectiveImageBase(minAddress);
+		Object consumer = new Object();
 		try {
-			load(provider, loadSpec, options, program, monitor, log);
+			program.addConsumer(consumer);
+			ImporterSettings settings = new ImporterSettings(provider, program.getName(), null,
+				null, false, loadSpec, options, consumer, log, monitor);
+			load(program, settings);
 			monitor.checkCancelled();
 		}
 		finally {
 			program.setEffectiveImageBase(null);
+			program.release(consumer);
 		}
 
 		shiftModule();

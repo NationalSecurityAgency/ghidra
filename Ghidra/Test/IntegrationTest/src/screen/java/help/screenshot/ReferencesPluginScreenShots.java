@@ -38,6 +38,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -300,7 +301,8 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 
 	}
 
-	private void importFile(File file) throws CancelledException, VersionException, IOException {
+	private void importFile(File file)
+			throws CancelledException, VersionException, IOException, InvalidNameException {
 		Project project = env.getProject();
 		try (LoadResults<Program> loadResults = ProgramLoader.builder()
 				.source(file)
