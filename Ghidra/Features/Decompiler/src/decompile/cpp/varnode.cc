@@ -2004,6 +2004,12 @@ bool TraverseNode::isAlternatePathValid(const Varnode *vn,uint4 flags)
   if (vn->loneDescend() == (PcodeOp*)0) return false;
   const PcodeOp *op = vn->getDef();
   if (op == (PcodeOp*)0) return true;
+  while(op->isIncidentalCopy() && op->code() == CPUI_COPY) {	// Skip any incidental COPY
+    vn = op->getIn(0);
+    if (vn->loneDescend() == (PcodeOp *)0) return false;
+    op = vn->getDef();
+    if (op == (PcodeOp *)0) return true;
+  }
   return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
 }
 
