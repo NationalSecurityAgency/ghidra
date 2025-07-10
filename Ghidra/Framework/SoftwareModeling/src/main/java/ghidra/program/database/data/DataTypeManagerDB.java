@@ -158,7 +158,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private LinkedList<Long> idsToDelete = new LinkedList<>();
 	private LinkedList<Pair<DataType, DataType>> typesToReplace = new LinkedList<>();
 	private List<DataType> favoritesList = new ArrayList<>();
-	private BadDataType myBadDataType = new BadDataType(this);
 
 	/**
 	 * Set of {@link AbstractIntegerDataType} IDs whose removal has been blocked
@@ -1242,7 +1241,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dataType instanceof BadDataType) {
 			// Avoid adding BAD data type to the manager which 
 			// will appear when needed for a missing datatype
-			return myBadDataType;
+			return BadDataType.dataType;
 		}
 
 		if (dataType instanceof BitFieldDataType) {
@@ -2301,7 +2300,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return DataType.DEFAULT;
 		}
 		if (dataTypeID == BAD_DATATYPE_ID) {
-			return myBadDataType;
+			return BadDataType.dataType;
 		}
 		return getDataType(dataTypeID, null);
 	}
