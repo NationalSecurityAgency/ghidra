@@ -627,7 +627,41 @@
         	namespace and full signature, including any complex data types and referenced types. Use
         	this action with caution as it can potentially add many inappropriate and conflicting
         	data types, especially if the source function is from a program with a different 
-        	architecture or compiler.
+        	architecture or compiler. </LI>
+        	<A name="Function_Comparison_Apply_Local_Variable_Name">
+        	<LI><B>Apply Local Variable Name</B> - Available when the selected and matched 
+        	decompiler tokens are local variables. Applies just the variable name from the other 
+			function. </LI>
+			<A name="Function_Comparison_Apply_Global_Variable_Name">
+			<LI><B>Apply Global Variable Name</B> - Avaiable when the selected and matched
+			decompiler tokens are global variables. Applies just the variable name from the other
+			function. </LI>
+        	<A name="Function_Comparison_Apply_Variable_Skeleton_Type">
+        	<LI><B>Apply Variable Skeleton Type</B> - Available when the selected and matched 
+        	decompiler tokens are variables. Applies a limited form of the variable data type to
+        	the other function where structures and unions are not copied, but instead empty
+        	placeholders are created. </LI>
+        	<A name="Function_Comparison_Apply_Variable_Type">
+        	<LI><B>Apply Variable Type</B> - Available when the selected and matched decompiler 
+        	tokens are variables. Applies the full variable type from the other function. Use
+        	this action with caution as it can potentially add an inappropriate and conflicting
+        	data type, especially if the source function is from a program with a different 
+        	architecture or compiler. </LI>
+        	<A name="Function_Comparison_Apply_Callee_Name">
+        	<LI><B>Apply Callee Function Name</B> - Available when the selected and matched 
+        	decompiler tokens are function calls. Performs the same action as 
+        	<A href="#Function_Comparison_Apply_Name">Apply Function Name</A>, but acts on the 
+        	callee functions. </LI>
+        	<A name="Function_Comparison_Apply_Callee_Signature">
+        	<LI><B>Apply Callee Function Signature</B> - Available when the selected and matched 
+        	decompiler tokens are function calls. Performs the same action as 
+        	<A href="#Function_Comparison_Apply_Signature">Apply Function Signature</A>, but acts on
+        	the callee functions. </LI>
+        	<A name="Function_Comparison_Apply_Callee_Signature_And_Datatypes">
+        	<LI><B>Apply Callee Function Signature and Data Types</B> - Available when the selected 
+        	and matched decompiler tokens are function calls. Performs the same action as 
+        	<A href="#Function_Comparison_Apply_Signature_And_Datatypes">Apply Function Signature 
+        	and Data Types</A>, but acts on the callee functions. </LI>
         </UL>
 
       <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionComparisonPlugin</I></P>

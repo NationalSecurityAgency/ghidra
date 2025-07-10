@@ -182,6 +182,13 @@ public class DecompilerCodeComparisonPanel
 		actions.add(new DecompilerCodeComparisonOptionsAction());
 		actions.add(toggleExactConstantMatchingAction);
 		actions.add(new CompareFuncsFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyLocalNameFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyGlobalNameFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyVariableTypeFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyEmptyVariableTypeFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyCalleeFunctionNameFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyCalleeEmptySignatureFromMatchedTokensAction(this, tool));
+		actions.add(new ApplyCalleeSignatureWithDatatypesFromMatchedTokensAction(this, tool));
 	}
 
 	private void decompileDataSet(Side side, DecompileData dcompileData) {

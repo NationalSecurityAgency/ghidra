@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
-import ghidra.features.codecompare.plugin.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ByteDataType;
@@ -130,11 +130,14 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	@Test
-	public void testNextPreviousActionSwitchPanelFocus() {
+	public void testNextPreviousActionSwitchPanelFocus() throws Exception {
 		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
 		DockingActionIf nextAction = getAction(plugin, "Compare Next Function");
 		DockingActionIf previousAction = getAction(plugin, "Compare Previous Function");
+
+		// since we are clicking the listing panel, bring that to the front first
+		setActivePanel(provider, provider.getComponent().getDualListingPanel());
 
 		// left panel has focus, so nextAction should be enabled and previous should be disabled
 		ActionContext context = provider.getActionContext(null);
@@ -286,6 +289,11 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 
 	private void assertNotEnabled(DockingActionIf action, ActionContext context) {
 		assertFalse(runSwing(() -> action.isEnabledForContext(context)));
+	}
+
+	private void setActivePanel(FunctionComparisonProvider provider, CodeComparisonPanel panel) {
+		runSwing(() -> provider.getComponent().setCurrentTabbedComponent(panel.getName()));
+		waitForSwing();
 	}
 
 	private FunctionComparisonProvider compareFunctions(Set<Function> functions) {
