@@ -760,8 +760,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
 			CommentType commentType = commentFieldLocation.getCommentType();
-			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
-			return tool.execute(cmd, currentProgram);
+			if (commentType != null) {
+				SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
+				return tool.execute(cmd, currentProgram);
+			}
 		}
 		return false;
 	}
