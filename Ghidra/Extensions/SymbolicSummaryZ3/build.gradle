@@ -43,7 +43,7 @@ CopySpec z3LibsCopySpec = copySpec {
 }
 
 task z3DevLibsCopy(type: Copy) {
-	description "Unpack Z3 archives for development use"
+	description = "Unpack Z3 archives for development use"
 	group = "Development Preparation"
 	
 	onlyIf {
@@ -52,7 +52,7 @@ task z3DevLibsCopy(type: Copy) {
 	}
 	
 	with z3LibsCopySpec
-	destinationDir file("build")
+	destinationDir = file("build")
 }
 
 zipExtensions {
