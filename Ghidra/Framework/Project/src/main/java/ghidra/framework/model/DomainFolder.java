@@ -62,7 +62,7 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  * <P>
  * Example #2, where we locate via a link file:
- * <pre>
+ * <pre>{@code
  *    DomainFile file = ...
  *    LinkFileInfo linkInfo = file.getLinkInfo();
  *    if (linkInfo != null && linkInfo.isFolderLink()) {
@@ -75,7 +75,7 @@ import ghidra.util.task.TaskMonitor;
  *          DomainFile[] files = linkedFolder.getFiles();
  *       }
  *    }
- * </pre>
+ * }</pre>
  * <P>
  * The utility method {@link ProjectDataUtils#descendantFiles(DomainFolder, DomainFileFilter)}
  * may also come in handy to iterate over folder contents while restricting treatment of
@@ -141,26 +141,26 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 
 	/**
 	 * Returns true if the given folder is the same as this folder based on path
-	 * and underlying project/repository.  Unlike the {@link #equals(Object)} check, this method
-	 * handles cases where the folder provided may correspond to another project instance 
+	 * and underlying project/repository.  Unlike the {@link Object#equals(Object)} check, this 
+	 * method handles cases where the folder provided may correspond to another project instance 
 	 * which is considered the same as the project that this folder is contained within.
 	 * 
 	 * @param folder the potential same or descendant folder to check
 	 * @return true if the given folder is the same or a child of this folder or 
-	 * one of its decendents.
+	 * one of its descendants.
 	 */
 	public boolean isSame(DomainFolder folder);
 
 	/**
 	 * Returns true if the given folder is the same or a child of this folder or 
-	 * one of its decendents based on path and underlying project/repository.  Unlike the 
-	 * {@link #equals(Object)} check, this method
+	 * one of its descendants based on path and underlying project/repository.  Unlike the 
+	 * {@link Object#equals(Object)} check, this method
 	 * handles cases where the folder provided may correspond to another project instance 
 	 * which is considered the same as the project that this folder is contained within.
 	 * 
 	 * @param folder the potential same or descendant folder to check
 	 * @return true if the given folder is the same or a child of this folder or 
-	 * one of its decendents.
+	 * one of its descendants.
 	 */
 	public boolean isSameOrAncestor(DomainFolder folder);
 

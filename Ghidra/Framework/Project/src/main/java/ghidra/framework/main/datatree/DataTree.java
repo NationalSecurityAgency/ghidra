@@ -116,12 +116,12 @@ public class DataTree extends GTree {
 	 * <ol>  
 	 * <li>{@link DomainFolderNode} - the node's domain folder will be returned</li>
 	 * <li>{@link DomainFileNode} (folder-link content type) - the referenced folder within the node's 
-	 * project will be returned under the following conditions, otherwise null will be returned:</li><br>
+	 * project will be returned under the following conditions, otherwise null will be returned:
 	 * <ul>
 	 * <li>The file corresponds to a folder-link, and</li>
 	 * <li>the folder-link ultimately refers to a domain folder within the same project
 	 * (i.e., a URL-based link path is not used and link status is {@link LinkStatus#INTERNAL}).</li>
-	 * </ul>
+	 * </ul></li>
 	 * <li>{@link DomainFileNode} (normal file or file-link) - the node's parent folder will be
 	 * returned.</li>
 	 * </ol>
@@ -131,7 +131,6 @@ public class DataTree extends GTree {
 	 * or {@link LinkStatus#EXTERNAL} in which case null will be returned.
 	 * <P>
 	 * A {@link LinkedDomainFolder} will always be resolved to its real folder which it corresponds to.
-	 * <P>
 	 * 
 	 * @param node Data Tree Node to be evaluated for its real internal folder
 	 * @return internal project folder which corresponds to the specified node. 

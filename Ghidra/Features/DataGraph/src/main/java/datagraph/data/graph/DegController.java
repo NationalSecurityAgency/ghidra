@@ -569,7 +569,7 @@ public class DegController implements DomainObjectListener {
 				toDelete.addAll(graph.getDescendants(other));
 			}
 			else {
-				// else dgVertex is the descendent of the other vertx, so dgVertex and its
+				// else dgVertex is the descendent of the other vertex, so dgVertex and its
 				// descendants should be removed
 				toDelete.add(dgVertex);
 				toDelete.addAll(graph.getDescendants(dgVertex));

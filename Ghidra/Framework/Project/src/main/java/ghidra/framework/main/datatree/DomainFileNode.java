@@ -195,8 +195,8 @@ public class DomainFileNode extends DataTreeNode {
 	}
 
 	/**
-	 * This method intended for test use only.
 	 * {@return true if a pending refresh exists for this node}
+	 * This method intended for test use only.
 	 */
 	public boolean hasPendingRefresh() {
 		return refreshCount.get() != 0;
