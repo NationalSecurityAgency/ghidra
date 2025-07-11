@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package docking.widgets.tab;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -32,7 +33,7 @@ import resources.Icons;
  *
  * @param <T> the type of the tab values
  */
-class GTab<T> extends JPanel {
+public class GTab<T> extends JPanel {
 	private final static Border TAB_BORDER = new GTabBorder(false);
 	private final static Border SELECTED_TAB_BORDER = new GTabBorder(true);
 	private static final String SELECTED_FONT_TABS_ID = "font.widget.tabs.selected";
@@ -67,6 +68,7 @@ class GTab<T> extends JPanel {
 		nameLabel.setText(tabPanel.getDisplayName(value));
 		nameLabel.setIcon(tabPanel.getValueIcon(value));
 		nameLabel.setToolTipText(tabPanel.getValueToolTip(value));
+
 		Gui.registerFont(nameLabel, selected ? SELECTED_FONT_TABS_ID : FONT_TABS_ID);
 		add(nameLabel, BorderLayout.WEST);
 
@@ -76,13 +78,18 @@ class GTab<T> extends JPanel {
 		closeLabel.setOpaque(true);
 		add(closeLabel, BorderLayout.EAST);
 
-		installMouseListener(this, new GTabMouseListener());
-
+		GTabMouseListener listener = new GTabMouseListener();
+		installMouseListener(this, listener);
 		initializeTabColors(false);
 	}
 
 	T getValue() {
 		return value;
+	}
+
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+		initializeTabColors(false);
 	}
 
 	void refresh() {
@@ -96,9 +103,10 @@ class GTab<T> extends JPanel {
 		initializeTabColors(b);
 	}
 
-	private void installMouseListener(Container c, MouseListener listener) {
+	private void installMouseListener(Container c, GTabMouseListener listener) {
 
 		c.addMouseListener(listener);
+		c.addMouseMotionListener(listener);
 		Component[] children = c.getComponents();
 		for (Component element : children) {
 			if (element instanceof Container) {
@@ -106,6 +114,7 @@ class GTab<T> extends JPanel {
 			}
 			else {
 				element.addMouseListener(listener);
+				element.addMouseMotionListener(listener);
 			}
 		}
 	}
@@ -162,6 +171,16 @@ class GTab<T> extends JPanel {
 			if (!selected) {
 				tabPanel.selectTab(value);
 			}
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			tabPanel.mouseReleased(GTab.this, e);
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			tabPanel.mouseDragged(GTab.this, e);
 		}
 	}
 
