@@ -553,7 +553,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void selectTab(Program p) {
-		JPanel tab = runSwing(() -> panel.getTab(p));
+		GTab<Program> tab = runSwing(() -> panel.getTab(p));
 		Point point = runSwing(() -> tab.getLocationOnScreen());
 		clickMouse(tab, MouseEvent.BUTTON1, point.x + 1, point.y + 1, 1, 0);
 		assertEquals(p, getSelectedTabValue());

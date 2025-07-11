@@ -127,7 +127,7 @@ public class GTabPanelTest extends AbstractDockingTest {
 		setSelectedValue("ABCDEFGHIJK");
 		assertTrue(isVisibleTab("ABCDEFGHIJK"));
 		setSelectedValue("One");
-		assertFalse(isVisibleTab("ABCDEFGHIJK"));
+		assertTrue(isVisibleTab("ABCDEFGHIJK"));
 	}
 
 	@Test
@@ -231,6 +231,21 @@ public class GTabPanelTest extends AbstractDockingTest {
 		highlightNextTab(true);
 		assertEquals("Test Tab Panel: One selected: Two highlighted",
 			gTabPanel.getAccessibleName());
+	}
+
+	@Test
+	public void testMoveTab() {
+		assertEquals("One", getValue(0));
+		assertEquals("Two", getValue(1));
+		assertEquals("Three Three Three", getValue(2));
+		moveTab("One", 2);
+		assertEquals("Two", getValue(0));
+		assertEquals("Three Three Three", getValue(1));
+		assertEquals("One", getValue(2));
+	}
+
+	private void moveTab(String value, int newIndex) {
+		runSwing(() -> gTabPanel.moveTab(value, newIndex));
 	}
 
 	private List<String> getHiddenTabs() {
