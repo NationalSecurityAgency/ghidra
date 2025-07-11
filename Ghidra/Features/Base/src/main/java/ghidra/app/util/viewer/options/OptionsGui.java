@@ -40,6 +40,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.app.util.viewer.field.ListingColors.*;
+import ghidra.util.ColorUtils;
 
 /**
  * Class for displaying and manipulating field colors and fonts.
@@ -65,6 +66,9 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement FUN_CALL_FIXUP = new ScreenElement("Function Call-Fixup", FunctionColors.CALL_FIXUP);
 	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", FunctionColors.NAME);
 	public static final ScreenElement FUN_PARAMS = new ScreenElement("Function Parameters", FunctionColors.PARAM);
+	public static final ScreenElement FUN_PARAM_CUSTOM = new ScreenElement("Function Parameter, Custom Storage", FunctionColors.PARAM_CUSTOM);
+	public static final ScreenElement FUN_PARAM_DYNAMIC = new ScreenElement("Function Parameter, Dynamic Storage", FunctionColors.PARAM_DYNAMIC);
+	public static final ScreenElement FUN_VARIABLE = new ScreenElement("Function Variable", FunctionColors.VARIABLE);
 	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", FunctionColors.TAG);
 	public static final ScreenElement FUN_AUTO_PARAMS = new ScreenElement("Function Auto-Parameters", FunctionColors.PARAM_AUTO);
 	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type", FunctionColors.RETURN_TYPE);
@@ -73,7 +77,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", LabelColors.LOCAL);
 	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", MnemonicColors.NORMAL);
 	public static final ScreenElement MNEMONIC_OVERRIDE = new ScreenElement("Mnemonic, Override", MnemonicColors.OVERRIDE);
-	public static final ScreenElement MNEMONIC_UNIMPL = new ScreenElement("Unimplemented Mnemonic", MnemonicColors.UNIMPLEMENTED);
+	public static final ScreenElement MNEMONIC_UNIMPL = new ScreenElement("Mnemonic, Unimplemented ", MnemonicColors.UNIMPLEMENTED);
 	public static final ScreenElement FLOW_ARROW_ACTIVE = new ScreenElement("Flow Arrow, Active", FlowArrowColors.ACTIVE);
 	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement("Flow Arrow, Not Active", FlowArrowColors.INACTIVE);
 	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement("Flow Arrow, Selected", FlowArrowColors.SELECTED);
@@ -83,9 +87,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post", "Post-Comment", CommentColors.POST);
 	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment", CommentColors.PRE);
 	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", ListingColors.SEPARATOR);
-	public static final ScreenElement VARIABLE = new ScreenElement("Variable", FunctionColors.VARIABLE);
-	public static final ScreenElement PARAMETER_CUSTOM = new ScreenElement("Parameter, Custom Storage", FunctionColors.PARAM_CUSTOM);
-	public static final ScreenElement PARAMETER_DYNAMIC = new ScreenElement("Parameter, Dynamic Storage", FunctionColors.PARAM_DYNAMIC);
+	public static final ScreenElement SEPARATOR_LINE = new ScreenElement("Separator Line", Colors.BACKGROUND);	
 	public static final ScreenElement XREF = new ScreenElement("XRef", XrefColors.DEFAULT);
 	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", XrefColors.OFFCUT);
 	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", XrefColors.READ);
@@ -98,18 +100,21 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement PCODE_RAW_VARNODE = new ScreenElement("P-code Raw Varnode", PcodeColors.VARNODE);
 	public static final ScreenElement PCODE_USEROP = new ScreenElement("P-code Userop", PcodeColors.USEROP);
 
+	static ScreenElement[] elements = { 
+		ADDRESS, 
+		BACKGROUND, BAD_REF_ADDR, BYTES, 
+		COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, 
+		COMMENT_REF_REPEAT, CONSTANT,
+		ENTRY_POINT, EXT_REF_RESOLVED, EXT_REF_UNRESOLVED, 
+		FIELD_NAME, FLOW_ARROW_ACTIVE,	FLOW_ARROW_NON_ACTIVE, FLOW_ARROW_SELECTED, 
+		FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS, FUN_PARAM_DYNAMIC, FUN_PARAM_CUSTOM, FUN_VARIABLE,
+		FUN_RET_TYPE, FUN_CALL_FIXUP, FUN_TAG, 		
+		LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD, 
+		MNEMONIC, MNEMONIC_OVERRIDE, MNEMONIC_UNIMPL,
+		PCODE_LINE_LABEL, PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP,
+		REGISTERS, SEPARATOR, UNDERLINE, 
+		XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
 	//@formatter:on
-
-	static ScreenElement[] elements =
-		{ ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE,
-			COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, COMMENT_REF_REPEAT, CONSTANT,
-			ENTRY_POINT, EXT_REF_RESOLVED, EXT_REF_UNRESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
-			FLOW_ARROW_NON_ACTIVE, FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS,
-			FUN_AUTO_PARAMS, FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY,
-			LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM,
-			PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP,
-			REGISTERS, SEPARATOR, UNDERLINE, MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT,
-			XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 
@@ -167,28 +172,31 @@ public class OptionsGui extends JPanel {
 			}
 			else {
 				setSelectedIndex(index);
+				setSelectedFieldElement(index);
 			}
 		});
 
 		setSelectedIndex(0);
 		colorChooser.getSelectionModel().addChangeListener(e -> {
 			Color c = colorChooser.getColor();
+			Color oldColor = elements[selectedIndex].getColor();
 			elements[selectedIndex].setColor(c);
 			colorPanel.setBackground(c);
 			genLayouts();
-			fieldPanel.setBackgroundColor(BACKGROUND.getColor());
-			enableApply();
+
+			if (!ColorUtils.hasSameRgb(oldColor, c)) {
+				enableApply();
+			}
 		});
+
 		ActionListener styleListener = e -> {
 			updateStyle();
 			genLayouts();
-			fieldPanel.setBackgroundColor(BACKGROUND.getColor());
 			enableApply();
 		};
 		ActionListener familyListener = e -> {
 			updateFonts();
 			genLayouts();
-			fieldPanel.setBackgroundColor(BACKGROUND.getColor());
 			enableApply();
 		};
 
@@ -217,7 +225,7 @@ public class OptionsGui extends JPanel {
 	}
 
 	/**
-	 * callback for when the selected display field changes.
+	 * Callback for when the selected display field changes.
 	 *
 	 * @param index the index in the JList of the selected field.
 	 */
@@ -241,6 +249,26 @@ public class OptionsGui extends JPanel {
 			boldCheckbox.setEnabled(true);
 			italicsCheckbox.setEnabled(true);
 		}
+	}
+
+	private void setSelectedFieldElement(int index) {
+		ListModel<ScreenElement> model = namesList.getModel();
+		ScreenElement screenElement = model.getElementAt(index);
+
+		SimpleLayoutModel layoutModel = (SimpleLayoutModel) fieldPanel.getLayoutModel();
+		FieldSelection selection = layoutModel.getFieldSelection(screenElement);
+		if (selection == null) {
+			fieldPanel.clearSelection();
+			return;
+		}
+
+		FieldRange range = selection.getFieldRange(0);
+		FieldLocation loc = range.getStart();
+
+		fieldPanel.setCursorPosition(loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol());
+		fieldPanel.setSelection(selection);
+		fieldPanel.scrollTo(loc);
+		fieldPanel.center(loc);
 	}
 
 	public void setBaseFont(Font font) {
@@ -515,6 +543,8 @@ public class OptionsGui extends JPanel {
 		lb.add(".........", SEPARATOR);
 		list.add(lb.getLayout());
 
+		list.add(blankLine());
+
 		lb = new LayoutBuilder(1);
 		lb.add("       ", null);
 		lb.add("sprintf", LABELS_NON_PRIMARY);
@@ -556,6 +586,8 @@ public class OptionsGui extends JPanel {
 		lb = new LayoutBuilder(1);
 		lb.add(".........", SEPARATOR);
 		list.add(lb.getLayout());
+
+		list.add(blankLine());
 
 		lb = new LayoutBuilder(2);
 		lb.add("       ", null);
@@ -610,6 +642,9 @@ public class OptionsGui extends JPanel {
 		lb.add("33", CONSTANT);
 		list.add(lb.getLayout());
 
+		list.add(blankLine());
+		list.add(blankLine());
+
 		lb = new LayoutBuilder(1);
 		lb.add("       ", null);
 		lb.add("//  This is a function comment", COMMENT_EOL);
@@ -639,30 +674,30 @@ public class OptionsGui extends JPanel {
 
 		lb = new LayoutBuilder(3);
 		lb.add("       ", null);
-		lb.add("12    ", PARAMETER_DYNAMIC);
-		lb.add("DWord  ", PARAMETER_DYNAMIC);
-		lb.add("param_12  ", PARAMETER_DYNAMIC);
+		lb.add("12    ", FUN_PARAM_DYNAMIC);
+		lb.add("DWord  ", FUN_PARAM_DYNAMIC);
+		lb.add("param_12  ", FUN_PARAM_DYNAMIC);
 		list.add(lb.getLayout());
 
 		lb = new LayoutBuilder(3);
 		lb.add("       ", null);
-		lb.add("8    ", PARAMETER_CUSTOM);
-		lb.add("DWord  ", PARAMETER_CUSTOM);
-		lb.add("param_8  ", PARAMETER_CUSTOM);
+		lb.add("8    ", FUN_PARAM_CUSTOM);
+		lb.add("DWord  ", FUN_PARAM_CUSTOM);
+		lb.add("param_8  ", FUN_PARAM_CUSTOM);
 		list.add(lb.getLayout());
 
 		lb = new LayoutBuilder(3);
 		lb.add("       ", null);
-		lb.add("4    ", PARAMETER_CUSTOM);
-		lb.add("Word   ", PARAMETER_CUSTOM);
-		lb.add("param_4  ", PARAMETER_CUSTOM);
+		lb.add("4    ", FUN_PARAM_CUSTOM);
+		lb.add("Word   ", FUN_PARAM_CUSTOM);
+		lb.add("param_4  ", FUN_PARAM_CUSTOM);
 		list.add(lb.getLayout());
 
 		lb = new LayoutBuilder(3);
 		lb.add("       ", null);
-		lb.add("-4   ", VARIABLE);
-		lb.add("Float  ", VARIABLE);
-		lb.add("local_4  ", VARIABLE);
+		lb.add("-4   ", FUN_VARIABLE);
+		lb.add("Float  ", FUN_VARIABLE);
+		lb.add("local_4  ", FUN_VARIABLE);
 		list.add(lb.getLayout());
 
 		lb = new LayoutBuilder(2);
@@ -689,8 +724,14 @@ public class OptionsGui extends JPanel {
 		}
 	}
 
+	private Layout blankLine() {
+		LayoutBuilder lb = new LayoutBuilder(1);
+		lb.add("                                   ", SEPARATOR_LINE);
+		return lb.getLayout();
+	}
+
 	/**
-	 * updates the style of the field at the selected index.
+	 * Updates the style of the field at the selected index.
 	 */
 	private void updateStyle() {
 		if (customCheckbox.isSelected()) {
@@ -839,12 +880,75 @@ public class OptionsGui extends JPanel {
 			return BigInteger.valueOf(layouts.length);
 		}
 
+		FieldSelection getFieldSelection(ScreenElement element) {
+
+			List<FieldRange> ranges = getAllRanges(element);
+			if (ranges.isEmpty()) {
+				return null;
+			}
+
+			FieldSelection selection = new FieldSelection();
+			for (FieldRange r : ranges) {
+				selection.addRange(r);
+			}
+
+			return selection;
+		}
+
+		// finds all places this element is used; consecutive fields will be combined
+		List<FieldRange> getAllRanges(ScreenElement element) {
+
+			List<FieldRange> ranges = new ArrayList<>();
+			for (int index = 0; index < layouts.length; index++) {
+				SingleRowLayout rowLayout = (SingleRowLayout) layouts[index];
+				getRangesForRow(rowLayout, element, index, ranges);
+			}
+			return ranges;
+		}
+
+		private void getRangesForRow(SingleRowLayout layout, ScreenElement element, int index,
+				List<FieldRange> ranges) {
+
+			FieldRange lastRange = null;
+			int n = layout.getNumFields();
+			for (int i = 0; i < n; i++) {
+				ScreenElementTextField field = (ScreenElementTextField) layout.getField(i);
+				ScreenElement fieldElement = field.getScreenElement();
+				String text = field.getText();
+				if (element != fieldElement) {
+					lastRange = null;
+					continue;
+				}
+
+				int start = 0;
+				if (lastRange == null) {
+					start = getNonWhitespaceStart(text);
+				}
+
+				lastRange = new FieldRange(
+					new FieldLocation(index, i, 0, start),
+					new FieldLocation(index, i, 0, start + text.trim().length()));
+				ranges.add(lastRange);
+			}
+		}
+	}
+
+	private int getNonWhitespaceStart(String text) {
+		int start = 0;
+		for (int j = 0; j < text.length(); j++) {
+			char c = text.charAt(j);
+			if (!Character.isWhitespace(c)) {
+				break;
+			}
+			start++;
+		}
+		return start;
 	}
 
 	/**
 	 * Class to create the layouts for the preview panel.
 	 */
-	class LayoutBuilder {
+	private class LayoutBuilder {
 		private ClippingTextField[] fields;
 		int startPos;
 		int fieldNum;
