@@ -44,7 +44,7 @@ import ghidra.util.task.TaskMonitor;
 public class DomainFileNode extends DataTreeNode {
 
 	private static final Icon UNKNOWN_FILE_ICON = new GIcon("icon.datatree.node.domain.file");
-	private static final String RIGHT_ARROW = "\u2b95";
+	private static final String RIGHT_ARROW = Character.isDefined(0x2192) ? "\u2192" : "->";
 
 	private final DomainFile domainFile;
 

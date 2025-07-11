@@ -59,7 +59,7 @@ import resources.icons.TranslateIcon;
 
 public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
-	private static final String RIGHT_ARROW = "\u2b95";
+	private static final String RIGHT_ARROW = "\u2192";
 	private static final String OTHER_PROJECT = "Other_Project";
 	private Icon icon =
 		(Icon) getInstanceField("CONVERT_ICON", ProjectChooseRepositoryWizardModel.class);
