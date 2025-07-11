@@ -561,7 +561,7 @@ public class VariableUtilities {
 			callingConvention = compilerSpec.getDefaultCallingConvention();
 		}
 		int stackAlign = callingConvention.getStackParameterAlignment();
-		if (stackAlign < 0) {
+		if (stackAlign <= 0) {
 			stackAlign = 1;
 		}
 		int bias = 0;
