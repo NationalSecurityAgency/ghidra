@@ -20,9 +20,9 @@ namespace ghidra {
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[18] = {
+sub_metatype Datatype::base2sub[19] = {
     SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UINT_PARTIALENUM, SUB_UNION, SUB_STRUCT, SUB_INT_ENUM, SUB_UINT_ENUM,
-    SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN,
+    SUB_ARRAY, SUB_PTROFF, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN,
     SUB_SPACEBASE, SUB_VOID
 };
 
@@ -248,6 +248,9 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_PTRREL:
     res = "ptrrel";
     break;
+  case TYPE_PTROFF:
+    res = "ptroff";
+    break;
   case TYPE_ARRAY:
     res = "array";
     break;
@@ -310,6 +313,8 @@ type_metatype string2metatype(const string &metastring)
       return TYPE_PTR;
     else if (metastring=="ptrrel")
       return TYPE_PTRREL;
+    else if (metastring=="ptroff")
+      return TYPE_PTROFF;
     else if (metastring=="partunion")
       return TYPE_PARTIALUNION;
     else if (metastring=="partstruct")
@@ -2703,6 +2708,32 @@ Datatype *TypePointerRel::getPtrToFromParent(Datatype *base,int4 off,TypeFactory
   return base;
 }
 
+void TypePointerOff::decode(Decoder &decoder,TypeFactory &typegrp)
+
+{
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
+  metatype = TYPE_PTR;		// Don't use TYPE_PTROFF internally
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_WORDSIZE) {
+      wordsize = decoder.readUnsignedInteger();
+    }
+    else if (attrib == ATTRIB_SPACE) {
+      spaceid = decoder.readSpace();
+    }
+  }
+  ptrfrom = typegrp.decodeType( decoder );
+  ptrto = typegrp.decodeType( decoder );
+  submeta = SUB_PTROFF;
+  plain = typegrp.getTypePointer(size,ptrto,wordsize);
+  if (ptrto->getMetatype() == TYPE_UNKNOWN)
+    submeta = SUB_PTROFF_UNK;
+//  decoder.closeElement(elemId);
+}
+
 /// Turn on the data-type's function prototype
 /// \param tfact is the factory that owns \b this
 /// \param sig is the list of names and data-types making up the prototype
@@ -4460,6 +4491,15 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
   case TYPE_PTRREL:
     {
       TypePointerRel tp;
+      tp.decode(decoder, *this);
+      if (forcecore)
+	tp.flags |= Datatype::coretype;
+      ct = findAdd(tp);
+    }
+    break;
+  case TYPE_PTROFF:
+    {
+      TypePointerOff tp;
       tp.decode(decoder, *this);
       if (forcecore)
 	tp.flags |= Datatype::coretype;
