@@ -282,7 +282,7 @@ def walk_project(
     start_folder = project.projectData.getFolder(start)
     if start_folder is None:
         raise FileNotFoundError(f'Starting folder "{start}" does not exist in the Project')
-    for file in ProjectDataUtils.DomainFileIterator(start_folder):
+    for file in ProjectDataUtils.descendantFiles(start_folder):
         if file_filter(file):
             callback(file)
 
