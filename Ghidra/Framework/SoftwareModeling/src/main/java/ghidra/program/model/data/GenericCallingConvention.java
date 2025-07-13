@@ -59,7 +59,18 @@ public enum GenericCallingConvention {
 	/**
 	 * Similar to fastcall but extended vector registers are used
 	 */
-	vectorcall(CompilerSpec.CALLING_CONVENTION_vectorcall);
+	vectorcall(CompilerSpec.CALLING_CONVENTION_vectorcall),
+
+	/**
+	 * Similar to stdcall but with reverse parameter stacking
+	 */
+	pascal(CompilerSpec.CALLING_CONVENTION_pascal),
+	
+	/**
+	 * Similar to pascal but using a far pointer
+	 */
+	pascal16far(CompilerSpec.CALLING_CONVENTION_pascal + "16far")
+	;
 
 	// Append new conventions to the bottom only so that ordinal values will not change!!
 
