@@ -13,32 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.dwarf.attribs;
-
-import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
+package ghidra.app.util.bin.format.dwarf.macro.entry;
 
 /**
- * DWARF string attribute.
+ * Represents the end of an included source file.
  */
-public class DWARFStringAttribute extends DWARFAttributeValue {
-	protected String value;
+public class DWARFMacroEndFile extends DWARFMacroInfoEntry {
 
-	public DWARFStringAttribute(String value, DWARFAttributeDef<?> def) {
-		super(def);
-		this.value = value;
-	}
-
-	public String getValue(DWARFCompilationUnit cu) {
-		return value;
-	}
-
-	@Override
-	public String getValueString(DWARFCompilationUnit cu) {
-		return getValue(cu);
+	public DWARFMacroEndFile(DWARFMacroInfoEntry other) {
+		super(other);
 	}
 
 	@Override
 	public String toString() {
-		return "%s : %s = \"%s\"".formatted(getAttributeName(), getAttributeForm(), value);
+		return super.toString();
 	}
 }

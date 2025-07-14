@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf.attribs;
 
+import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -34,6 +35,11 @@ public class DWARFBlobAttribute extends DWARFAttributeValue {
 
 	public int getLength() {
 		return bytes.length;
+	}
+
+	@Override
+	public String getValueString(DWARFCompilationUnit cu) {
+		return NumericUtilities.convertBytesToString(bytes, " ");
 	}
 
 	@Override
