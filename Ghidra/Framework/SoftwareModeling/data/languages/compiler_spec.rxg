@@ -344,6 +344,7 @@
 
   <define name="model_datatype_type">
     <attribute name="name"/>
+    <optional><attribute name="maxprimitives"/></optional>
     <optional><attribute name="minsize"/></optional>
     <optional><attribute name="maxsize"/></optional>
     <optional><attribute name="sizes"/></optional>

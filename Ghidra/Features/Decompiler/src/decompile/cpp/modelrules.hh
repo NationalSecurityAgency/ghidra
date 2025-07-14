@@ -29,6 +29,7 @@ class ParamEntry;
 class ParamActive;
 
 extern AttributeId ATTRIB_SIZES;	///< Marshaling attribute "sizes"
+extern AttributeId ATTRIB_MAX_PRIMITIVES; ///< Marshaling attribute "maxprimitives"
 
 extern ElementId ELEM_DATATYPE;		///< Marshaling element \<datatype>
 extern ElementId ELEM_CONSUME;		///< Marshaling element \<consume>
@@ -151,10 +152,11 @@ class HomogeneousAggregate : public SizeRestrictedFilter {
   int4 maxPrimitives;			///< Maximum number of primitives in the aggregate
 public:
   HomogeneousAggregate(type_metatype meta);	///< Constructor for use with decode()
-  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max);	///< Constructor
+  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize);	///< Constructor
   HomogeneousAggregate(const HomogeneousAggregate &op2);	///< Copy constructor
   virtual DatatypeFilter *clone(void) const { return new HomogeneousAggregate(*this); }
   virtual bool filter(Datatype *dt) const;
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A filter on some aspect of a specific function prototype

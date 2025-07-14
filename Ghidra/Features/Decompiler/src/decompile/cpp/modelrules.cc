@@ -19,6 +19,7 @@
 namespace ghidra {
 
 AttributeId ATTRIB_SIZES = AttributeId("sizes",151);
+AttributeId ATTRIB_MAX_PRIMITIVES = AttributeId("maxprimitives", 153);
 
 ElementId ELEM_DATATYPE = ElementId("datatype",273);
 ElementId ELEM_CONSUME = ElementId("consume",274);
@@ -224,9 +225,9 @@ bool PrimitiveExtractor::extract(Datatype *dt,int4 max,int4 offset)
     if (!extract(compDt,max,curOff))
       return false;
     expectedOff = curOff + compDt->getAlignSize();
- }
+  }
   return true;
-}
+} 
 
 /// \param dt is data-type extract from
 /// \param unionIllegal is \b true if unions encountered during extraction are considered illegal
@@ -385,11 +386,11 @@ HomogeneousAggregate::HomogeneousAggregate(type_metatype meta)
 
 {
   metaType = meta;
-  maxPrimitives = 2;
+  maxPrimitives = 4;
 }
 
-HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max)
-  : SizeRestrictedFilter(min,max)
+HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize)
+  : SizeRestrictedFilter(minSize, maxSize)
 {
   metaType = meta;
   maxPrimitives = maxPrim;
@@ -408,7 +409,7 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
   type_metatype meta = dt->getMetatype();
   if (meta != TYPE_ARRAY && meta != TYPE_STRUCT)
     return false;
-  PrimitiveExtractor primitives(dt,true,0,4);
+  PrimitiveExtractor primitives(dt,true,0,maxPrimitives);
   if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown()
       || !primitives.isAligned() || primitives.containsHoles())
     return false;
@@ -420,6 +421,21 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
       return false;
   }
   return true;
+}
+
+void HomogeneousAggregate::decode(Decoder &decoder)
+{
+	SizeRestrictedFilter::decode(decoder);
+	decoder.rewindAttributes();
+	for(;;) {
+    	uint4 attribId = decoder.getNextAttributeId();
+    	if (attribId == 0) break;
+    	if (attribId == ATTRIB_MAX_PRIMITIVES) {
+			uint4 xmlMaxPrim = decoder.readUnsignedInteger();
+			if (xmlMaxPrim > 0) maxPrimitives = xmlMaxPrim;
+		}
+	}
+	
 }
 
 /// If the next element is a qualifier filter, decode it from the stream and return it.
