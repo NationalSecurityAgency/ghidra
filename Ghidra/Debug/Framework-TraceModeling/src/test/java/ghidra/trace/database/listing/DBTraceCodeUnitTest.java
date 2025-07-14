@@ -238,8 +238,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-	public void testCodeUnitLocationGetters() throws CodeUnitInsertionException,
-			TraceOverlappedRegionException, DuplicateNameException {
+	public void testCodeUnitLocationGetters()
+			throws CodeUnitInsertionException, TraceOverlappedRegionException {
 		TraceInstruction ins;
 		try (Transaction tx = b.startTransaction()) {
 			ins = b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
@@ -859,8 +859,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-	public void testDataValueGetters() throws TraceOverlappedRegionException,
-			DuplicateNameException, CodeUnitInsertionException {
+	public void testDataValueGetters()
+			throws TraceOverlappedRegionException, CodeUnitInsertionException {
 		Union myUnion = new UnionDataType("myUnion");
 		myUnion.add(ShortDataType.dataType);
 
@@ -925,7 +925,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertNull(da4018.getValue());
 		assertNull(dd401c.getValue());
 
-		assertNull(u3fff.getValueClass());
+		assertEquals(Scalar.class, u3fff.getValueClass());
 		assertEquals(Scalar.class, dl4000.getValueClass());
 		assertEquals(Address.class, dp4006.getValueClass());
 		assertEquals(String.class, ds400e.getValueClass());
@@ -1001,8 +1001,8 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-	public void testInstructionOperandAndFlowSettersGetters() throws CodeUnitInsertionException,
-			TraceOverlappedRegionException, DuplicateNameException {
+	public void testInstructionOperandAndFlowSettersGetters()
+			throws CodeUnitInsertionException, TraceOverlappedRegionException {
 		Register r4 = b.language.getRegister("r4");
 		Register lr = b.language.getRegister("lr");
 		Register fC = b.language.getRegister("C");
@@ -1283,7 +1283,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testToString() throws CodeUnitInsertionException, AddressOverflowException,
-			TraceOverlappedRegionException, DuplicateNameException {
+			TraceOverlappedRegionException {
 		Language x86 = getSLEIGH_X86_LANGUAGE();
 		TraceGuestPlatform guest;
 		TraceData d4000;
@@ -1630,7 +1630,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testComponentGetters() throws CodeUnitInsertionException,
-			TraceOverlappedRegionException, DuplicateNameException, InvalidDataTypeException {
+			TraceOverlappedRegionException, InvalidDataTypeException {
 		Structure myStruct = new StructureDataType("myStruct", 0);
 		myStruct.add(ShortDataType.dataType);
 		myStruct.add(ShortDataType.dataType);
