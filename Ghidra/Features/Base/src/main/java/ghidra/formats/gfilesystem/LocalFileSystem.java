@@ -75,21 +75,6 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	}
 
 	/**
-	 * Creates a new file system instance that is a sub-view limited to the specified directory.
-	 * 
-	 * @param fsrl {@link FSRL} that must be a directory in this local filesystem 
-	 * @return new {@link LocalFileSystemSub} instance
-	 * @throws IOException if bad FSRL
-	 */
-	public LocalFileSystemSub getSubFileSystem(FSRL fsrl) throws IOException {
-		if (isLocalSubdir(fsrl)) {
-			File localDir = getLocalFile(fsrl);
-			return new LocalFileSystemSub(localDir, this);
-		}
-		return null;
-	}
-
-	/**
 	 * Returns true if the {@link FSRL} is a local filesystem subdirectory.
 	 *
 	 * @param fsrl {@link FSRL} to test.
@@ -136,7 +121,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		return fsFSRL.withPath(fsrlPath);
 	}
 
-	private GFile getGFile(File f) {
+	public GFile getGFile(File f) {
 		List<File> parts = LocalFileSystem.getFilePathParts(f); // [/subdir/subroot/file, /subdir/subroot, /subdir, /]
 		GFile current = rootDir;
 		for (int i = parts.size() - 2; i >= 0; i--) {

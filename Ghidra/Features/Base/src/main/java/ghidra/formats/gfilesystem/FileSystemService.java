@@ -709,13 +709,6 @@ public class FileSystemService {
 			if (ref != null) {
 				return ref;
 			}
-
-			GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-			if (subdirFS != null) {
-				ref = subdirFS.getRefManager().create();
-				fsInstanceManager.add(subdirFS);
-				return ref;
-			}
 		}
 
 		// Normal case, probe the container file and create a filesystem instance.
@@ -748,18 +741,6 @@ public class FileSystemService {
 		return null;
 	}
 
-	private GFileSystem probeForLocalSubDirFilesystem(FSRL containerFSRL) {
-		if (localFS.isLocalSubdir(containerFSRL)) {
-			try {
-				return localFS.getSubFileSystem(containerFSRL);
-			}
-			catch (IOException e) {
-				Msg.error(this, "Problem when probing for local directory: ", e);
-			}
-		}
-		return null;
-	}
-	
 	/**
 	 * Mount a specific file system (by class) using a specified container file.
 	 * <p>
@@ -814,11 +795,6 @@ public class FileSystemService {
 	 */
 	public GFileSystem openFileSystemContainer(FSRL containerFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
-
-		GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-		if (subdirFS != null) {
-			return subdirFS;
-		}
 
 		ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
 		return fsFactoryMgr.probe(byteProvider, this, null, FileSystemInfo.PRIORITY_LOWEST,
