@@ -1917,19 +1917,19 @@ bool ParamTrial::operator<(const ParamTrial &b) const
 /// \param a trial
 /// \param b trial
 /// \return \b true if \b a should be ordered before \b b
-bool ParamTrial::fixedPositionCompare(const ParamTrial &a, const ParamTrial &b)
+bool ParamTrial::fixedPositionCompare(const ParamTrial &a,const ParamTrial &b)
 
 {
-	if (a.fixedPosition == -1 && b.fixedPosition == -1){
-		return a < b;
-	}
-	if (a.fixedPosition == -1){
-		return false;
-	}
-	if (b.fixedPosition == -1){
-		return true;
-	}
-	return a.fixedPosition < b.fixedPosition;
+  if (a.fixedPosition == -1 && b.fixedPosition == -1) {
+    return a < b;
+  }
+  if (a.fixedPosition == -1) {
+    return false;
+  }
+  if (b.fixedPosition == -1) {
+    return true;
+  }
+  return a.fixedPosition < b.fixedPosition;
 }
 
 /// \param recoversub selects whether a sub-function or the active function is being tested
@@ -1943,6 +1943,7 @@ ParamActive::ParamActive(bool recoversub)
   isfullychecked = false;
   needsfinalcheck = false;
   recoversubcall = recoversub;
+  joinReverse = false;
 }
 
 void ParamActive::clear(void)
@@ -1953,6 +1954,7 @@ void ParamActive::clear(void)
   stackplaceholder = -1;
   numpasses = 0;
   isfullychecked = false;
+  joinReverse = false;
 }
 
 /// A ParamTrial object is created and a slot is assigned.
@@ -5693,9 +5695,9 @@ void FuncCallSpecs::buildInputFromTrials(Funcdata &data)
   newparam.push_back(op->getIn(0)); // Preserve the fspec parameter
 
   if (isDotdotdot() && isInputLocked()){
-      //if varargs, move the fixed args to the beginning of the list in order
-	  //preserve relative order of variable args
-	  activeinput.sortFixedPosition();
+    // if varargs, move the fixed args to the beginning of the list in order to
+    // preserve relative order of variable args
+    activeinput.sortFixedPosition();
   }
 
   for(int4 i=0;i<activeinput.getNumTrials();++i) {
@@ -5802,8 +5804,15 @@ void FuncCallSpecs::buildOutputFromTrials(Funcdata &data,vector<Varnode *> &tria
     data.opSetOutput(op,finaloutvn); // Move varnode to its new position as output of call
   }
   else if (activeoutput.getNumTrials()==2) {
-    Varnode *hivn = finalvn[1];	// orderOutputPieces puts hi last
-    Varnode *lovn = finalvn[0];
+    Varnode *hivn,*lovn;
+    if (activeoutput.isJoinReverse()) {
+      hivn = finalvn[0];
+      lovn = finalvn[1];
+    }
+    else {
+      hivn = finalvn[1];
+      lovn = finalvn[0];
+    }
     if (data.isDoublePrecisOn()) {
       lovn->setPrecisLo();	// Mark that these varnodes are part of a larger precision whole
       hivn->setPrecisHi();

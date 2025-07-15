@@ -319,6 +319,7 @@ public:
   static AssignAction *decodeAction(Decoder &decoder,const ParamListStandard *res);
   static AssignAction *decodePrecondition(Decoder &decoder, const ParamListStandard *res);
   static AssignAction *decodeSideeffect(Decoder &decoder,const ParamListStandard *res);
+  static void justifyPieces(vector<VarnodeData> &pieces,int4 offset,bool isBigEndian,bool consumeMostSig,bool justifyRight);
 };
 
 /// \brief Action assigning a parameter Address from the next available stack location
@@ -355,6 +356,7 @@ public:
 /// Consumption can spill over onto the stack if desired.
 class MultiSlotAssign : public AssignAction {
   type_class resourceType;		///< Resource list from which to consume
+  bool isBigEndian;			///< True for big endian architectures
   bool consumeFromStack;		///< True if resources should be consumed from the stack
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool enforceAlignment;		///< True if register resources are discarded to match alignment
@@ -399,10 +401,11 @@ public:
 class MultiSlotDualAssign : public AssignAction {
   type_class baseType;			///< Resource list from which to consume general tiles
   type_class altType;			///< Resource list from which to consume alternate tiles
-  bool consumeFromStack;        ///< True if resources should be consumed from the stack
+  bool isBigEndian;			///< True for big endian architectures
+  bool consumeFromStack;        	///< True if resources should be consumed from the stack
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool justifyRight;			///< True if initial bytes are padding for odd data-type sizes
-  bool fillAlternate;             ///< True if a single primitive needs to fill an alternate tile
+  bool fillAlternate;             	///< True if a single primitive needs to fill an alternate tile
   int4 tileSize;			///< Number of bytes in a tile
   vector<const ParamEntry *> baseTiles;	///< General registers to be joined
   vector<const ParamEntry *> altTiles;	///< Alternate registers to be joined

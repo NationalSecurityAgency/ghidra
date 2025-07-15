@@ -167,6 +167,13 @@ public class ParamListStandard implements ParamList {
 		return entry[index];
 	}
 
+	/**
+	 * @return true if resources are from a big endian address space
+	 */
+	public boolean isBigEndian() {
+		return entry[0].isBigEndian();
+	}
+
 	@Override
 	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
