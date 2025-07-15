@@ -6255,7 +6255,7 @@ void AddTreeState::calcSubtype(void)
     }
     extra = AddrSpace::byteToAddress(extra, ct->getWordSize()); // Convert back to address units
     offset = (offset - extra) & ptrmask;
-    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
+    correct = (correct - extra) & ptrmask;
     isSubtype = true;
   }
   else if (baseType->getMetatype() == TYPE_STRUCT) {
@@ -6272,7 +6272,7 @@ void AddTreeState::calcSubtype(void)
     }
     extra = AddrSpace::byteToAddressInt(extra, ct->getWordSize()); // Convert back to address units
     offset = (offset - extra) & ptrmask;
-    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
+    correct = (correct - extra) & ptrmask;
     if (pRelType != (TypePointerRel *)0 && offset == pRelType->getAddressOffset()) {
       // offset falls within basic ptrto
       if (!pRelType->evaluateThruParent(0)) {	// If we are not representing offset 0 through parent
@@ -6284,7 +6284,7 @@ void AddTreeState::calcSubtype(void)
   }
   else if (baseType->getMetatype() == TYPE_ARRAY) {
     isSubtype = true;
-    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
+    correct = (correct - offset) & ptrmask;
     offset = 0;
   }
   else {
@@ -6294,7 +6294,7 @@ void AddTreeState::calcSubtype(void)
   if (pRelType != (const TypePointerRel *)0) {
     int4 ptrOff = ((TypePointerRel *)ct)->getAddressOffset();
     offset = (offset - ptrOff) & ptrmask;
-    // Do NOT adjust 'correct' - it tracks double-counted constants only, not structural offsets
+    correct = (correct - ptrOff) & ptrmask;
   }
 }
 
