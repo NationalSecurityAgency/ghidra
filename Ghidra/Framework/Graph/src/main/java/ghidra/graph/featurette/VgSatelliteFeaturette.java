@@ -288,9 +288,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 
 			satelliteComponent.setMinimumSize(new Dimension(400, 400));
 
-			// TODO - need generic, shared help for the common abstract graph features;
-			//        will be done in an upcoming ticket
-			// setHelpLocation(new HelpLocation("Graph", "Satellite_View_Dock"));
+			setHelpLocation(new HelpLocation("VisualGraph", "Satellite_View_Dock"));
 
 			// this will group the satellite with the provider
 			setWindowMenuGroup(windowGroup);

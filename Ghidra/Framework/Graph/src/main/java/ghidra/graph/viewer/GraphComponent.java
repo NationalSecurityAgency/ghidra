@@ -473,7 +473,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(button,
-			new HelpLocation("Visual_Graph", "Satellite_View_Dock"));
+			new HelpLocation("VisualGraph", "Satellite_View_Dock"));
 
 		return button;
 	}

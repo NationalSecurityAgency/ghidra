@@ -157,8 +157,9 @@
         
         <tocdef id="FileSystem Browser"	text="FileSystem Browser" target="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html" />
                    
-        <tocdef id="Graphing" text="Graphing" target="help/topics/Graph/GraphIntro.html">
-        	<tocdef id="Graph Services" text="Graph Services" target="help/topics/Graph/GraphServicesIntro.html"/> 
+        <tocdef id="Graphing" text="Graphing" target="help/topics/Graph/GraphIntro.html">        	
+        	<tocdef id="Graph Services" sortgroup="a" text="Graph Services" target="help/topics/Graph/GraphServicesIntro.html"/>
+        	<tocdef id="Visual Graphs" text="Visual Graphs" target="help/topics/VisualGraph/Visual_Graph.html"/> 
         </tocdef>
                     
         <tocdef id="Program Tree" text="Program Tree"  target="help/topics/ProgramTreePlugin/program_tree.htm" >
