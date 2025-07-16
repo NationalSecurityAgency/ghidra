@@ -99,8 +99,13 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 	private GTreeNode getParentNode(T context) {
 
 		GTreeNode node = context.getContextNode();
+		if (node == null) {
+			// no node selected in the tree
+			return context.getTree().getModelRoot();
+		}
+
 		if (node instanceof DomainFileNode) {
-			return ((DomainFileNode) node).getParent();
+			return node.getParent();
 		}
 		return node;
 	}
