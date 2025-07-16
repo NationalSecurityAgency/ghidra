@@ -379,6 +379,16 @@
         </element>
       </zeroOrMore>
     </interleave>
+    <zeroOrMore>
+      <element name="consume_extra">
+        <attribute name="storage"/>
+        <optional>
+          <attribute name="matchsize">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+      </element>
+    </zeroOrMore>
     <choice>
       <element name="consume">
         <attribute name="storage"/>
@@ -392,6 +402,11 @@
       <element name="join">
         <optional>
           <attribute name="reversejustify">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="reversesignif">
             <ref name="boolean_type"/>
           </attribute>
         </optional>
@@ -426,6 +441,11 @@
           </attribute>
         </optional>
         <optional>
+          <attribute name="reversesignif">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
           <attribute name="storage"/>
         </optional>
         <optional>
@@ -438,6 +458,16 @@
     </choice>
     <zeroOrMore>
       <element name="consume_extra">
+        <attribute name="storage"/>
+        <optional>
+          <attribute name="matchsize">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+      </element>
+    </zeroOrMore>
+    <zeroOrMore>
+      <element name="consume_remaining">
         <attribute name="storage"/>
       </element>
     </zeroOrMore>

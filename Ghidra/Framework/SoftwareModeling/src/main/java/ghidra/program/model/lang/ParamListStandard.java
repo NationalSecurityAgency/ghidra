@@ -177,14 +177,14 @@ public class ParamListStandard implements ParamList {
 
 		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
 			ParameterPieces last = res.get(res.size() - 1);
-			StorageClass store;
 			if (last.hiddenReturnPtr) {
-				store = StorageClass.HIDDENRET;
+				// Need to pull from registers marked as hiddenret 
+				assignAddressFallback(StorageClass.HIDDENRET, last.type, false, status, last);
 			}
 			else {
-				store = ParamEntry.getBasicTypeClass(last.type);
+				// Assign as a regular first input pointer parameter
+				assignAddress(last.type, proto, 0, dtManager, status, last);
 			}
-			assignAddressFallback(store, last.type, false, status, last);
 			last.hiddenReturnPtr = true;
 		}
 		for (int i = 0; i < proto.intypes.size(); ++i) {

@@ -19,61 +19,55 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
-import java.util.Map.Entry;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Encoder;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
 /**
- * Consume additional registers from an alternate resource list
+ * Consume all the remaining registers from a given resource list
  * 
  * This action is a side-effect and doesn't assign an address for the current parameter.
- * The resource list, resourceType, is specified. If the side-effect is triggered,
- * register resources from this list are consumed.  If matchSize is true (the default),
- * registers are consumed, until the number of bytes in the data-type is reached.  Otherwise,
- * only a single register is consumed. If all registers are already consumed, no action is taken.
+ * The resource list, resourceType, is specified. If the side-effect is triggered, all register
+ * resources from this list are consumed, until no registers remain. If all registers are already
+ * consumed, no action is taken.
  */
-public class ConsumeExtra extends AssignAction {
+public class ConsumeRemaining extends AssignAction {
 
-	private StorageClass resourceType;	// The other resource list to consume from
-	private boolean matchSize;			// false, if side-effect only consumes a single register
-	private ParamEntry[] tiles;			// Registers that can be consumed
+	private StorageClass resourceType; // The resource list to consume from
+	private ParamEntry[] tiles; // Registers that can be consumed
 
 	/**
-	 * Cache specific ParamEntry needed by the action.
-	 * Find the first ParamEntry matching the resourceType.
+	 * Cache specific ParamEntry needed by the action
+	 * Find the first ParamEntry matching the resourceType
 	 * @throws InvalidInputException if it cannot find the configured ParamEntry objects
 	 */
 	private void initializeEntries() throws InvalidInputException {
 		tiles = resource.extractTiles(resourceType);
 		if (tiles.length == 0) {
 			throw new InvalidInputException(
-				"Could not find matching resources for action: consume_extra");
+				"Could not find matching resources for action: consume_remaining");
 		}
 	}
 
-	protected ConsumeExtra(ParamListStandard res) {
+	protected ConsumeRemaining(ParamListStandard res) {
 		super(res);
 		resourceType = StorageClass.GENERAL;
-		matchSize = true;
 	}
 
-	public ConsumeExtra(StorageClass store, boolean match, ParamListStandard res)
+	public ConsumeRemaining(StorageClass store, ParamListStandard res)
 			throws InvalidInputException {
 		super(res);
 		resourceType = store;
-		matchSize = match;
 		initializeEntries();
 	}
 
 	@Override
 	public AssignAction clone(ParamListStandard newResource) throws InvalidInputException {
-		return new ConsumeExtra(resourceType, matchSize, newResource);
+		return new ConsumeRemaining(resourceType, newResource);
 	}
 
 	@Override
@@ -81,9 +75,8 @@ public class ConsumeExtra extends AssignAction {
 		if (this.getClass() != op.getClass()) {
 			return false;
 		}
-		ConsumeExtra otherAction = (ConsumeExtra) op;
-		if (matchSize != otherAction.matchSize ||
-			resourceType != otherAction.resourceType) {
+		ConsumeRemaining otherAction = (ConsumeRemaining) op;
+		if (resourceType != otherAction.resourceType) {
 			return false;
 		}
 		if (tiles.length != otherAction.tiles.length) {
@@ -101,42 +94,28 @@ public class ConsumeExtra extends AssignAction {
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
 		int iter = 0;
-		int sizeLeft = dt.getLength();
-		while (sizeLeft > 0 && iter != tiles.length) {
+		while (iter != tiles.length) {
 			ParamEntry entry = tiles[iter];
 			++iter;
 			if (status[entry.getGroup()] != 0) {
-				continue;		// Already consumed
+				continue; // Already consumed
 			}
-			status[entry.getGroup()] = -1;	// Consume the slot/register
-			sizeLeft -= entry.getSize();
-			if (!matchSize) {
-				break;		// Only consume a single register
-			}
+			status[entry.getGroup()] = -1;
 		}
 		return SUCCESS;
 	}
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ELEM_CONSUME_EXTRA);
+		encoder.openElement(ELEM_CONSUME_REMAINING);
 		encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
-		encoder.writeBool(ATTRIB_MATCHSIZE, matchSize);
-		encoder.closeElement(ELEM_CONSUME_EXTRA);
+		encoder.closeElement(ELEM_CONSUME_REMAINING);
 	}
 
 	@Override
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
-		XmlElement elem = parser.start(ELEM_CONSUME_EXTRA.name());
-		for (Entry<String, String> attrib : elem.getAttributes().entrySet()) {
-			String name = attrib.getKey();
-			if (name.equals(ATTRIB_STORAGE.name())) {
-				resourceType = StorageClass.getClass(attrib.getValue());
-			}
-			else if (name.equals(ATTRIB_MATCHSIZE.name())) {
-				matchSize = SpecXmlUtils.decodeBoolean(attrib.getValue());
-			}
-		}
+		XmlElement elem = parser.start(ELEM_CONSUME_REMAINING.name());
+		resourceType = StorageClass.getClass(elem.getAttribute(ATTRIB_STORAGE.name()));
 		parser.end(elem);
 		try {
 			initializeEntries();

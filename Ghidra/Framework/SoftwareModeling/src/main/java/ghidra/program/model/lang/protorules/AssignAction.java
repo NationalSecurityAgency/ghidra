@@ -157,9 +157,37 @@ public abstract class AssignAction {
 		else if (nm.equals(ELEM_EXTRA_STACK.name())) {
 			action = new ExtraStack(res, 0);
 		}
+		else if (nm.equals(ELEM_CONSUME_REMAINING.name())) {
+			action = new ConsumeRemaining(res);
+		}
 		else {
 			throw new XmlParseException("Unknown model rule sideeffect: " + nm);
 		}
+		action.restoreXml(parser);
+		return action;
+	}
+
+	/**
+	 * Read the next precondition element from the stream, if it exists. Return the new configured
+	 * AssignAction object. If the next element is not a precondition, return null.
+	 * @param parser is the stream parser
+	 * @param res is the resource set for the new precondition
+	 * @return the new precondition, or null if no more preconditions are in the stream
+	 * @throws XmlParseException if the precondition XML is malformed
+	 */
+	static public AssignAction restorePreconditionXml(XmlPullParser parser, ParamListStandard res)
+			throws XmlParseException {
+		AssignAction action;
+		XmlElement elemId = parser.peek();
+		String nm = elemId.getName();
+
+		if (nm.equals(ELEM_CONSUME_EXTRA.name())) {
+			action = new ConsumeExtra(res);
+		}
+		else {
+			return null;
+		}
+
 		action.restoreXml(parser);
 		return action;
 	}
