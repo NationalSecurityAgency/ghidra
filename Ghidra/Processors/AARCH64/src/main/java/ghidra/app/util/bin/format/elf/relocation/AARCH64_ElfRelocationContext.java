@@ -21,13 +21,13 @@ import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 
 /**
- * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
+ * <code>AARCH64_ElfRelocationContext</code> provides ability to generate a
  * Global Offset Table (GOT) to facilitate GOT related relocations encountered within 
  * object modules.
  */
-class X86_64_ElfRelocationContext extends ElfGotRelocationContext<X86_64_ElfRelocationHandler> {
+class AARCH64_ElfRelocationContext extends ElfGotRelocationContext<AARCH64_ElfRelocationHandler> {
 
-	X86_64_ElfRelocationContext(X86_64_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
+	AARCH64_ElfRelocationContext(AARCH64_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
 			Map<ElfSymbol, Address> symbolMap) {
 		super(handler, loadHelper, symbolMap);
 	}
@@ -35,24 +35,25 @@ class X86_64_ElfRelocationContext extends ElfGotRelocationContext<X86_64_ElfRelo
 	@Override
 	protected boolean requiresGotEntry(ElfRelocation r) {
 
-		X86_64_ElfRelocationType type = handler.getRelocationType(r.getType());
+		AARCH64_ElfRelocationType type = handler.getRelocationType(r.getType());
 		if (type == null) {
 			return false;
 		}
 
 		switch (type) {
-			case R_X86_64_GOTPCREL:
-//			case R_X86_64_GOTOFF64:
-//			case R_X86_64_GOTPC32:
-//			case R_X86_64_GOT64:
-			case R_X86_64_GOTPCREL64:
-//			case R_X86_64_GOTPC64:
+
+			// NOTE: There are many more relocation types that require a GOT allocation.
+			//@formatter:off
+			
+			//case R_AARCH64_P32_GOT_LD_PREL19:
+			case R_AARCH64_P32_ADR_GOT_PAGE:
+			case R_AARCH64_P32_LD32_GOT_LO12_NC:
+			//case R_AARCH64_P32_LD32_GOTPAGE_LO14:
+			case R_AARCH64_ADR_GOT_PAGE:
+			case R_AARCH64_LD64_GOT_LO12_NC:
 				return true;
-			case R_X86_64_GOTPCRELX:
-			case R_X86_64_REX_GOTPCRELX:
-				// NOTE: Relocation may not actually require GOT entry in which case %got 
-				// may be over-allocated, but is required in some cases.
-				return true;
+				
+			//@formatter:on
 			default:
 				return false;
 		}
