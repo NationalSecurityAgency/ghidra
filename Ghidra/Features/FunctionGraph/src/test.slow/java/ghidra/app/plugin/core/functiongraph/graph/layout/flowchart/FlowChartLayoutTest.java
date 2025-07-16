@@ -39,7 +39,9 @@ public class FlowChartLayoutTest extends AbstractFlowChartLayoutTest {
 
 		edge(A, B);
 		edge(A, C);
-		showGraph();
+		applyLayout();
+
+		// showGraph();
 
 		assertVertices("""
 				....
