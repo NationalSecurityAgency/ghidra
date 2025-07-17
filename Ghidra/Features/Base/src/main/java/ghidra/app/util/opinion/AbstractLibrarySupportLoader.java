@@ -15,9 +15,7 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -712,7 +710,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		Program libraryProgram = null;
 		String simpleLibraryName = FilenameUtils.getName(library);
-		boolean isAbsolute = new File(library).isAbsolute();
+		boolean isAbsolute = isAbsoluteLibraryPath(library);
 
 		boolean success = false;
 		try {
@@ -847,13 +845,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		try {
 			for (LibrarySearchPath searchPath : searchPaths) {
 				monitor.checkCancelled();
-				String fullLibraryPath = joinPaths(searchPath.relativeFsPath(), library);
+				String fullLibraryPath =
+					FSUtilities.appendPath(searchPath.relativeFsPath(), library);
 				GFileSystem fs = searchPath.fsRef().getFilesystem();
 				FSRL fsrl = resolveLibraryFile(fs, fullLibraryPath);
 				Optional.ofNullable(fsrl).ifPresent(results::add);
 			}
 
-			if (results.isEmpty() && new File(library).isAbsolute()) {
+			if (results.isEmpty() && isAbsoluteLibraryPath(library)) {
 				LocalFileSystem localFS = FileSystemService.getInstance().getLocalFS();
 				FSRL fsrl = resolveLibraryFile(localFS, library);
 				Optional.ofNullable(fsrl).ifPresent(results::add);
@@ -1054,7 +1053,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * A library search path
 	 * 
 	 * @param fsRef The root {@link FileSystemRef}
-	 * @param relativeFsPath A {@link Path} relative to the root of the file system, or null for the
+	 * @param relativeFsPath string path, relative to the root of the file system, or null for the
 	 *   root
 	 */
 	protected record LibrarySearchPath(FileSystemRef fsRef, String relativeFsPath) {}
@@ -1122,28 +1121,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					continue;
 				}
 
-				if (fsService.isLocal(fsrl)) {
-					try {
-						FileSystemRef fileRef =
-							fsService.probeFileForFilesystem(fsrl, monitor, null);
-						if (fileRef != null) {
-							result.add(new LibrarySearchPath(fileRef, null));
-						}
-					}
-					catch (IOException e) {
-						log.appendMsg(e.getMessage());
+				try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
+					if (fileRef != null) {
+						result.add(
+							new LibrarySearchPath(fileRef.fsRef.dup(), fileRef.file.getPath()));
 					}
 				}
-				else {
-					try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
-						if (fileRef != null) {
-							File f = new File(fileRef.file.getPath()); // File API will sanitize Windows-style paths
-							result.add(new LibrarySearchPath(fileRef.fsRef.dup(), f.getPath()));
-						}
-					}
-					catch (IOException e) {
-						log.appendMsg(e.getMessage());
-					}
+				catch (IOException e) {
+					log.appendMsg(e.getMessage());
 				}
 			}
 			success = true;
@@ -1241,5 +1226,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return isCaseInsensitiveLibraryFilenames()
 				? String.CASE_INSENSITIVE_ORDER
 				: (s1, s2) -> s1.compareTo(s2);
+	}
+
+	/**
+	 * Performs a platform-independent test to see if the given path is absolute
+	 * 
+	 * @param path The path to test
+	 * @return True if the given path is absolute; otherwise, false
+	 */
+	private boolean isAbsoluteLibraryPath(String path) {
+		return FilenameUtils.getPrefixLength(path) > 0;
 	}
 }

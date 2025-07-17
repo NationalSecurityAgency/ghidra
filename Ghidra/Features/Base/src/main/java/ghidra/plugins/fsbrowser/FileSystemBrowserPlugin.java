@@ -140,22 +140,28 @@ public class FileSystemBrowserPlugin extends Plugin
 	 * method).
 	 *
 	 * @param fsRef {@link FileSystemRef} of open {@link GFileSystem}
+	 * @param rootDir directory to use as the root of the filesystem's tree, or {@code null} to
+	 * specify the filesystem's actual rootdir
 	 * @param show boolean true if the new browser component should be shown
 	 */
-	public void createNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
-		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(fsRef, show));
+	public void createNewFileSystemBrowser(FileSystemRef fsRef, GFile rootDir, boolean show) {
+		if (rootDir == null) {
+			rootDir = fsRef.getFilesystem().getRootDir();
+		}
+		RefdFile refdRootDir = new RefdFile(fsRef, rootDir);
+		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(refdRootDir, show));
 	}
 
-	private void doCreateNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
-		FSRLRoot fsFSRL = fsRef.getFilesystem().getFSRL();
-		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
+	private void doCreateNewFileSystemBrowser(RefdFile rootFile, boolean show) {
+		FSRL rootFSRL = rootFile.file.getFSRL();
+		FSBComponentProvider provider = currentBrowsers.get(rootFSRL);
 		if (provider != null) {
-			Msg.info(this, "Filesystem browser already open for " + fsFSRL);
-			fsRef.close();
+			Msg.info(this, "Filesystem browser already open for " + rootFSRL);
+			FSUtilities.uncheckedClose(rootFile, null);
 		}
 		else {
-			provider = new FSBComponentProvider(this, fsRef);
-			currentBrowsers.put(fsFSRL, provider);
+			provider = new FSBComponentProvider(this, rootFile);
+			currentBrowsers.put(rootFSRL, provider);
 			getTool().addComponentProvider(provider, false);
 			provider.afterAddedToTool();
 			provider.contextChanged();
@@ -202,32 +208,6 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * Worker function for doOpenFilesystem, meant to be called in a task thread.
-	 *
-	 * @param containerFSRL {@link FSRL} of the container to open
-	 * @param parent parent {@link Component} for error dialogs, null ok
-	 * @param monitor {@link TaskMonitor} to watch and update.
-	 */
-	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
-		try {
-			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
-			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
-				FileSystemProbeConflictResolver.GUI_PICKER);
-			if (ref == null) {
-				Msg.showWarn(this, parent, "Open Filesystem",
-					"No filesystem provider for " + containerFSRL.getName());
-				return;
-			}
-
-			createNewFileSystemBrowser(ref, true);
-		}
-		catch (IOException | CancelledException e) {
-			FSUtilities.displayException(this, parent, "Open Filesystem Error",
-				"Error opening filesystem for " + containerFSRL.getName(), e);
-		}
-	}
-
-	/**
 	 * Prompts the user to pick a file system container file to open using a local
 	 * filesystem browser and then displays that filesystem in a new fsb browser.
 	 */
@@ -255,10 +235,43 @@ public class FileSystemBrowserPlugin extends Plugin
 			return;
 		}
 
-		FSRL containerFSRL = fsService().getLocalFSRL(file);
+		LocalFileSystem localFS = fsService().getLocalFS();
+		if (file.isDirectory()) {
+			createNewFileSystemBrowser(localFS.getRefManager().create(), localFS.getGFile(file),
+				true);
+			return;
+		}
+
 		TaskLauncher.launchModal("Open File System", (monitor) -> {
+			FSRL containerFSRL = localFS.getLocalFSRL(file);
 			doOpenFilesystem(containerFSRL, parent, monitor);
 		});
+	}
+
+	/**
+	 * Worker function for doOpenFilesystem, meant to be called in a task thread.
+	 *
+	 * @param containerFSRL {@link FSRL} of the container to open
+	 * @param parent parent {@link Component} for error dialogs, null ok
+	 * @param monitor {@link TaskMonitor} to watch and update.
+	 */
+	private void doOpenFilesystem(FSRL containerFSRL, Component parent, TaskMonitor monitor) {
+		try {
+			monitor.setMessage("Probing " + containerFSRL.getName() + " for filesystems");
+			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
+				FileSystemProbeConflictResolver.GUI_PICKER);
+			if (ref == null) {
+				Msg.showWarn(this, parent, "Open Filesystem",
+					"No filesystem provider for " + containerFSRL.getName());
+				return;
+			}
+
+			createNewFileSystemBrowser(ref, null, true);
+		}
+		catch (IOException | CancelledException e) {
+			FSUtilities.displayException(this, parent, "Open Filesystem Error",
+				"Error opening filesystem for " + containerFSRL.getName(), e);
+		}
 	}
 
 	private FileSystemService fsService() {
