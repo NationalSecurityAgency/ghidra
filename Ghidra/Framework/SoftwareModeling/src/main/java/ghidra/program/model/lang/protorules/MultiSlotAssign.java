@@ -267,6 +267,9 @@ public class MultiSlotAssign extends AssignAction {
 		if (resource.getEntry(0).isBigEndian() != justifyRight) {
 			encoder.writeBool(ATTRIB_REVERSEJUSTIFY, true);
 		}
+		if (resource.getEntry(0).isBigEndian() != consumeMostSig) {
+			encoder.writeBool(ATTRIB_REVERSESIGNIF, true);
+		}
 		if (resourceType != StorageClass.GENERAL) {
 			encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
 		}
@@ -284,6 +287,11 @@ public class MultiSlotAssign extends AssignAction {
 			if (name.equals(ATTRIB_REVERSEJUSTIFY.name())) {
 				if (SpecXmlUtils.decodeBoolean(attrib.getValue())) {
 					justifyRight = !justifyRight;
+				}
+			}
+			else if (name.equals(ATTRIB_REVERSESIGNIF.name())) {
+				if (SpecXmlUtils.decodeBoolean(attrib.getValue())) {
+					consumeMostSig = !consumeMostSig;
 				}
 			}
 			else if (name.equals(ATTRIB_STORAGE.name())) {
