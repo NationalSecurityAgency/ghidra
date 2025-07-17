@@ -280,21 +280,27 @@ public class DWARFLine {
 		try (DWARFLineProgramExecutor lpe = getLineProgramexecutor(cu, reader)) {
 			List<SourceFileAddr> results = new ArrayList<>();
 			for (DWARFLineProgramState row : lpe.allRows()) {
-				byte[] md5 = null;
-				if (cu.getDWARFVersion() >= 5 && (row.file < cu.getLine().getNumFiles())) {
-					md5 = cu.getLine().getFile(row.file).getMD5();
+				try {
+					DWARFFile file = getFile(row.file);
+					results.add(new SourceFileAddr(row.address, file.getPathName(this),
+						file.getMD5(), row.line, row.isEndSequence));
 				}
-				String filePath = getFilePath(row.file, true);
-				if (filePath != null) {
-					results.add(new SourceFileAddr(row.address, filePath, md5, row.line,
-						row.isEndSequence));
-				} else {
+				catch (IOException e) {
 					cu.getProgram().getImportSummary().badSourceFileCount++;
 				}
 			}
 
 			return results;
 		}
+	}
+
+	public List<SourceFileInfo> getAllSourceFileInfos() {
+		List<SourceFileInfo> result = new ArrayList<>();
+		files.forEach(df -> {
+			// TODO: last_mod info not included yet
+			result.add(new SourceFileInfo(df.getPathName(this), df.getMD5()));
+		});
+		return result;
 	}
 
 	public DWARFFile getDir(int index) throws IOException {
@@ -308,7 +314,7 @@ public class DWARFLine {
 	/**
 	 * Get a file name given a file index.
 	 * 
-	 * @param index index of the file
+	 * @param index index of the file, where index may not be zero based depending on dwarf version
 	 * @return file {@link DWARFFile}
 	 * @throws IOException if invalid index
 	 */
@@ -326,30 +332,6 @@ public class DWARFLine {
 		}
 		throw new IOException(
 			"Invalid file index %d for line table at 0x%x: ".formatted(index, startOffset));
-	}
-
-	/**
-	 * Returns the number of indexed files
-	 * @return num files
-	 */
-	public int getNumFiles() {
-		return files.size();
-	}
-
-	public String getFilePath(int index, boolean includePath) {
-		try {
-			DWARFFile f = getFile(index);
-			if (!includePath) {
-				return f.getName();
-			}
-
-			String dir = f.getDirectoryIndex() >= 0 ? getDir(f.getDirectoryIndex()).getName() : "";
-
-			return FSUtilities.appendPath(dir, f.getName());
-		}
-		catch (IOException e) {
-			return null;
-		}
 	}
 
 	@Override
