@@ -71,6 +71,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 		readOnlyViews = new HashMap<>(TYPICAL_NUM_VIEWS);
 
 		projectTab = new JTabbedPane(SwingConstants.BOTTOM);
+		projectTab.setName("PROJECT_TABBED_PANE");
 		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 		projectTab.addChangeListener(e -> frontEndPlugin.getTool().contextChanged(null));
 
