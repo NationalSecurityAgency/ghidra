@@ -373,7 +373,8 @@ public class ProjectDataTablePanel extends JPanel {
 			}
 			checkCapacity();
 			if (!capacityExceeded) {
-				model.addObject(new DomainFileInfo(file));
+				model.addObject(new DomainFileInfo(file, model));
+				model.refresh();
 			}
 		}
 
@@ -382,7 +383,7 @@ public class ProjectDataTablePanel extends JPanel {
 			if (ignoreChanges()) {
 				return;
 			}
-			model.refresh();
+			reload();
 		}
 
 		@Override
@@ -399,6 +400,7 @@ public class ProjectDataTablePanel extends JPanel {
 					break;
 				}
 			}
+			model.refresh();
 		}
 
 		@Override

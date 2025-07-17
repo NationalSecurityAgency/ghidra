@@ -77,9 +77,7 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 
 	@After
 	public void tearDown() throws Exception {
-		if (env != null) {
-			env.dispose();
-		}
+		env.dispose();
 		ClientUtil.clearRepositoryAdapter("localhost", ServerTestUtil.GHIDRA_TEST_SERVER_PORT);
 	}
 

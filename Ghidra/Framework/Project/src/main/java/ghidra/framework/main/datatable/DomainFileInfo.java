@@ -28,6 +28,8 @@ import ghidra.framework.model.DomainFile;
 public class DomainFileInfo {
 
 	private DomainFile domainFile;
+	private ProjectDataTableModel model;
+	private int modCount;
 	private String name;
 	private String path;
 	private Map<String, String> metadata;
@@ -36,9 +38,9 @@ public class DomainFileInfo {
 	private Boolean isBrokenLink;
 	private String toolTipText;
 
-	public DomainFileInfo(DomainFile domainFile) {
+	DomainFileInfo(DomainFile domainFile, ProjectDataTableModel model) {
 		this.domainFile = domainFile;
-		this.path = domainFile.getParent().getPathname();
+		this.model = model;
 	}
 
 	private String computeName() {
@@ -74,6 +76,7 @@ public class DomainFileInfo {
 	}
 
 	public synchronized String getDisplayName() {
+		checkModelModCount();
 		if (name == null) {
 			name = computeName();
 		}
@@ -81,6 +84,7 @@ public class DomainFileInfo {
 	}
 
 	public synchronized String getPath() {
+		checkModelModCount();
 		if (path == null) {
 			path = domainFile.getParent().getPathname();
 		}
@@ -88,6 +92,7 @@ public class DomainFileInfo {
 	}
 
 	public synchronized DomainFileType getDomainFileType() {
+		checkModelModCount();
 		if (domainFileType == null) {
 			checkStatus();
 			String contentType = domainFile.getContentType();
@@ -102,7 +107,7 @@ public class DomainFileInfo {
 	}
 
 	public synchronized Date getModificationDate() {
-
+		checkModelModCount();
 		if (modificationDate == null) {
 			modificationDate = getLastModifiedTime();
 		}
@@ -118,6 +123,7 @@ public class DomainFileInfo {
 	}
 
 	private synchronized Map<String, String> getMetadata() {
+		checkModelModCount();
 		if (metadata == null) {
 			metadata = domainFile.getMetadata();
 			if (metadata == null) {
@@ -154,7 +160,16 @@ public class DomainFileInfo {
 		return domainFile.getName();
 	}
 
-	private void checkStatus() {
+	private void checkModelModCount() {
+		int modelModCount = model.getModCount();
+		if (modelModCount != modCount) {
+			refresh();
+			modCount = modelModCount;
+		}
+	}
+
+	private synchronized void checkStatus() {
+		checkModelModCount();
 		if (isBrokenLink == null) {
 			isBrokenLink = false;
 			List<String> linkErrors = null;
