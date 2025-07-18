@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -215,26 +215,33 @@ public class PowerPC64_ElfRelocationHandler
 				memory.setInt(relocationAddress, newValue);
 				break;
 			case R_PPC64_JMP_SLOT:
-				// TODO: do we need option to allow function descriptor
-				// use - or not?  The EF_PPC64_ABI in e_flags is not reliable.
-				Address functionDescriptorAddr = relocationAddress.getNewAddress(symbolValue);
-				MemoryBlock block = memory.getBlock(functionDescriptorAddr);
+				MemoryBlock block = memory.getBlock(symbolAddr);
 				if (block == null) {
 					throw new MemoryAccessException(
-						"Function descriptor not found at: " + functionDescriptorAddr);
+						"Relocation symbol not found in memory: " + symbolAddr);
 				}
+
 				if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 					// If symbol is in EXTERNAL block, we don't have descriptor entry;
 					// just fill-in first slot with EXTERNAL address
 					memory.setLong(relocationAddress, symbolValue);
 					byteLength = 8;
+					break;
 				}
-				else {
+
+				if (PowerPC64_ElfExtension
+						.getPpc64ABIVersion(elfRelocationContext.getElfHeader()) == 1) {
+					// ABI ELFv1 (used by big-endian PPC64) expected to copy full function descriptor
+					// into .got.plt section where symbolAddr refers to function descriptor
 					// Copy function descriptor data
-					byte[] bytes = new byte[24]; // TODO: can descriptor size vary ?
-					memory.getBytes(functionDescriptorAddr, bytes);
+					byte[] bytes = new byte[24];
+					memory.getBytes(symbolAddr, bytes);
 					memory.setBytes(relocationAddress, bytes);
 					byteLength = bytes.length;
+				}
+				else {
+					memory.setLong(relocationAddress, symbolValue);
+					byteLength = 8;
 				}
 				break;
 			case R_PPC64_UADDR32:
