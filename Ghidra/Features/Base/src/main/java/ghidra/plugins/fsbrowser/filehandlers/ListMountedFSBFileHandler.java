@@ -15,13 +15,14 @@
  */
 package ghidra.plugins.fsbrowser.filehandlers;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.SelectFromListDialog;
-import ghidra.formats.gfilesystem.FSRLRoot;
-import ghidra.formats.gfilesystem.FileSystemRef;
+import ghidra.formats.gfilesystem.*;
 import ghidra.plugins.fsbrowser.*;
 
 public class ListMountedFSBFileHandler implements FSBFileHandler {
@@ -45,19 +46,52 @@ public class ListMountedFSBFileHandler implements FSBFileHandler {
 				.popupMenuPath("List Mounted Filesystems")
 				.popupMenuGroup("L")
 				.onAction(ac -> {
-					FSRLRoot fsFSRL = SelectFromListDialog.selectFromList(
-						context.fsService().getMountedFilesystems(), "Select filesystem",
-						"Choose filesystem to view", f -> f.toPrettyString());
+					List<FSRL> sortedFSRLs = new ArrayList<>();
+					sortedFSRLs.addAll(context.plugin().getCurrentlyOpenBrowsers());
+					sortedFSRLs.sort((f1, f2) -> f1.toString().compareTo(f2.toString()));
+					FSRL fsrl = SelectFromListDialog.selectFromList(sortedFSRLs,
+						"Select filesystem", "Choose filesystem to view",
+						f -> getPrettyFSRLString(f));
 
-					FileSystemRef fsRef;
-					if (fsFSRL != null &&
-						(fsRef = context.fsService().getMountedFilesystem(fsFSRL)) != null) {
-						context.fsbComponent()
-								.getPlugin()
-								.createNewFileSystemBrowser(fsRef, null, true);
+					if (fsrl != null) {
+						context.plugin().showProvider(context.plugin().getProviderFor(fsrl));
+
 					}
 				})
 				.build());
+	}
+
+	private String getPrettyFSRLString(FSRL fsrl) {
+		FileSystemService fsService = context.fsService();
+		LocalFileSystem localFS = fsService.getLocalFS();
+		if (localFS.getRootDir().getFSRL().equals(fsrl)) {
+			return "My Computer";
+		}
+		else if (fsrl.getNestingDepth() == 1) {
+			return new File(fsrl.getPath()).getPath();
+		}
+		else {
+			if (fsrl.getPath().equals("/")) {
+				fsrl = fsrl.getFS();
+			}
+			String result = "";
+			List<FSRL> fsrlParts = fsrl.split();
+			for (int i = 0; i < fsrlParts.size(); i++) {
+				FSRL part = fsrlParts.get(i);
+				if (i == 0) {
+					result = new File(part.getPath()).getPath();
+				}
+				else {
+					if (part instanceof FSRLRoot) {
+						// skip, will be last element
+					}
+					else {
+						result += "|" + part.getPath();
+					}
+				}
+			}
+			return result;
+		}
 	}
 
 }

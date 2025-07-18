@@ -107,11 +107,11 @@ public class FSBRootNode extends FSBNode {
 	}
 
 	public FileSystemRef getFSRef() {
-		return modelNode.rootDir.fsRef;
+		return modelNode.rootDir != null ? modelNode.rootDir.fsRef : null;
 	}
 
 	private void releaseFSRefIfModelNode() {
-		if (this != modelNode) {
+		if (this != modelNode || rootDir == null) {
 			return;
 		}
 		FileSystemService.getInstance().releaseFileSystemImmediate(rootDir.fsRef);
