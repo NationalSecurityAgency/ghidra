@@ -230,8 +230,11 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 		plugin.getTool().removePopupActionProvider(this);
 		projectIndex.removeIndexListener(this);
 
-		if (rootNode != null && rootNode.getFSRef() != null && !rootNode.getFSRef().isClosed()) {
-			rootNode.getFSRef().getFilesystem().getRefManager().removeListener(this);
+		if (rootNode != null) {
+			FileSystemRef rootNodeFSRef = rootNode.getFSRef();
+			if (rootNodeFSRef != null && !rootNodeFSRef.isClosed()) {
+				rootNodeFSRef.getFilesystem().getRefManager().removeListener(this);
+			}
 		}
 		fileHandlers.clear();
 		if (gTree != null) {

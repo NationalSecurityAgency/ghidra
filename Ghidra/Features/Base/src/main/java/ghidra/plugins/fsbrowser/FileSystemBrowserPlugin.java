@@ -168,6 +168,12 @@ public class FileSystemBrowserPlugin extends Plugin
 		}
 
 		if (show) {
+			showProvider(provider);
+		}
+	}
+
+	public void showProvider(FSBComponentProvider provider) {
+		if (provider != null) {
 			getTool().showComponentProvider(provider, true);
 			getTool().toFront(provider);
 			provider.contextChanged();
@@ -283,18 +289,22 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * For testing access only.
+	 * Returns an already opened provider for the specified FSRL. 
 	 *
-	 * @param fsFSRL {@link FSRLRoot} of browser component to fetch.
+	 * @param fsrl {@link FSRL} of root dir of browser component to fetch.
 	 * @return provider or null if not found.
 	 */
-	/* package */ FSBComponentProvider getProviderFor(FSRLRoot fsFSRL) {
-		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
+	public FSBComponentProvider getProviderFor(FSRL fsrl) {
+		FSBComponentProvider provider = currentBrowsers.get(fsrl);
 		if (provider == null) {
-			Msg.info(this, "Could not find browser for " + fsFSRL);
+			Msg.info(this, "Could not find browser for " + fsrl);
 			return null;
 		}
 		return provider;
+	}
+
+	public List<FSRL> getCurrentlyOpenBrowsers() {
+		return List.copyOf(currentBrowsers.keySet());
 	}
 
 	//--------------------------------------------------------------------------------------------
