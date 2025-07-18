@@ -349,18 +349,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	@Override
 	public String getSeparator(int opIndex) {
-
-		if (opIndex < 0 || opIndex >= getNumOperands()) {
-			return null;
-		}
-
-		lock.acquire();
-		try {
-			return proto.getSeparator(opIndex, this);
-		}
-		finally {
-			lock.release();
-		}
+		return proto.getSeparator(opIndex);
 	}
 
 	@Override

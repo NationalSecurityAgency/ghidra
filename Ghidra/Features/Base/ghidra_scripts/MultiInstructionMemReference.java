@@ -353,7 +353,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 					}
 				}
 
-				SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
+				SymbolicPropogator symEval = new SymbolicPropogator(currentProgram, false);
 				symEval.setParamRefCheck(false);
 				symEval.setReturnRefCheck(false);
 				symEval.setStoredRefCheck(false);

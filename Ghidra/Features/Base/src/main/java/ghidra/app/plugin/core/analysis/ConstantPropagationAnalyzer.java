@@ -472,7 +472,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			flowStart = func.getEntryPoint();
 		}
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(checkParamRefsOption);
 
 		symEval.setParamPointerRefCheck(checkPointerParamRefsOption);
