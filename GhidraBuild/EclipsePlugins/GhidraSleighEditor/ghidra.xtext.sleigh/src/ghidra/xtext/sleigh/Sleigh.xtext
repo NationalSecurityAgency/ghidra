@@ -333,7 +333,7 @@ constraintSinglePexpression:
 
 
 pexprSym:
-	inst_start?='inst_start' | inst_next?='inst_next' | sym=[specificsymbol]
+	inst_start?='inst_start' | inst_next?='inst_next' | seg_next?='seg_next' | sym=[specificsymbol]
 ;
 
 pequation :

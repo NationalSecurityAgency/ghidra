@@ -35,6 +35,7 @@ public class SleighParserContext implements ParserContext {
 	private Address addr; // Address of start of instruction (inst_start)
 	private Address nextInstrAddr; // Address of next instruction (inst_next)
 	private Address next2InstAddr; // Address of instruction after next instruction (inst_next2)
+	private Address segAddr; // Segment address of current instruction (seg_next)
 	private Address refAddr; // corresponds to inst_ref for call-fixup use
 	private Address destAddr; // corresponds to inst_dest for call-fixup use
 	private SleighInstructionPrototype prototype;
@@ -211,6 +212,19 @@ public class SleighParserContext implements ParserContext {
 	}
 
 	/**
+	 * Get segment address of current instruction. For x86, this returns the CS register value.
+	 * This may return null if this context instance does not support use of {@code seg_next}.
+	 * @return segment address of current instruction or null
+	 */
+	public Address getSegaddr() {
+		if (segAddr != null) {
+			return segAddr;
+		}
+		segAddr = computeSegAddress();
+		return segAddr;
+	}
+
+	/**
 	 * Return the address after the next instruction (inst_next2).  The length of next instruction 
 	 * based on attempted parse of next instruction and does not consider any delayslot use.
 	 * The current instructions context is used during the parse.
@@ -243,6 +257,43 @@ public class SleighParserContext implements ParserContext {
 			// ignore
 		}
 		return null;
+	}
+
+	/**
+	 * Compute the segment address for the current instruction. For x86, this extracts the 
+	 * segment from the current instruction address. For other architectures, this may return 
+	 * a dummy value or null.
+	 * @return segment address or null if unable to determine
+	 */
+	private Address computeSegAddress() {
+		if (addr == null || constantSpace == null) {
+			return null;
+		}
+		try {
+			// If we have a segmented address, get the real segment value
+			if (addr instanceof SegmentedAddress) {
+				SegmentedAddress segAddr = (SegmentedAddress) addr;
+				long segmentValue = segAddr.getSegment();
+				return constantSpace.getAddress(segmentValue);
+			}
+			
+			// For non-segmented address spaces, try to extract segment from address space
+			AddressSpace addrSpace = addr.getAddressSpace();
+			if (addrSpace instanceof SegmentedAddressSpace) {
+				// This shouldn't happen, but just in case...
+				SegmentedAddressSpace segSpace = (SegmentedAddressSpace) addrSpace;
+				long linearAddress = addr.getOffset();
+				long segmentValue = segSpace.getDefaultSegmentFromFlat(linearAddress);
+				return constantSpace.getAddress(segmentValue);
+			}
+			
+			// For linear address spaces, return null or a dummy value
+			return constantSpace.getAddress(0);
+		}
+		catch (Exception e) {
+			// ignore
+		}
+		return constantSpace.getAddress(0);
 	}
 
 	/**

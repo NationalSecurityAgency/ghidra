@@ -27,7 +27,7 @@ class SleighSymbol {
 public:
   enum symbol_type { space_symbol, token_symbol, userop_symbol, value_symbol, valuemap_symbol,
 		     name_symbol, varnode_symbol, varnodelist_symbol, operand_symbol,
-		     start_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
+		     start_symbol, end_symbol, next2_symbol, seg_symbol, subtable_symbol, macro_symbol, section_symbol,
                      bitrange_symbol, context_symbol, epsilon_symbol, label_symbol, flowdest_symbol, flowref_symbol,
 		     dummy_symbol };
 private:

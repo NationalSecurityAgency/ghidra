@@ -340,10 +340,11 @@ specific_symbol[String purpose] returns [SpecificSymbol symbol]
 	:	^(OP_IDENTIFIER s=.) {
 			SleighSymbol sym = pcode.findSymbol($s.getText());
 			if (sym == null) {
-				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
+				unknownSymbolError($s.getText(), find($s), "start, end, next2, seg, operand, epsilon, or varnode", purpose);
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
+					&& sym.getType() != symbol_type.seg_symbol
 					&& sym.getType() != symbol_type.flowdest_symbol
 					&& sym.getType() != symbol_type.flowref_symbol
 					&& sym.getType() != symbol_type.operand_symbol
@@ -833,7 +834,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 	:	^(OP_IDENTIFIER s=.) {
 			SleighSymbol sym = sc.findSymbol($s.getText());
 			if (sym == null) {
-				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
+				unknownSymbolError($s.getText(), find($s), "start, end, next2, seg, operand, epsilon, or varnode", purpose);
             } else if(sym.getType() == symbol_type.operand_symbol) {
                 OperandSymbol os = (OperandSymbol) sym;
                 if (os.getDefiningSymbol() != null && os.getDefiningSymbol().getType() == symbol_type.subtable_symbol) {
@@ -843,6 +844,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.seg_symbol
 					|| sym.getType() == symbol_type.flowdest_symbol
 					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
@@ -861,7 +863,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 					reportError(find($s), "Global symbol '" + sym.getName() + "' is not allowed in action expression");
 				}
 			} else {
-				wrongSymbolTypeError(sym, find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
+				wrongSymbolTypeError(sym, find($s), "start, end, next2, seg, operand, epsilon, or varnode", purpose);
 			}
 		}
 	|	t=OP_WILDCARD {
