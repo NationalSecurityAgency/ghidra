@@ -1125,7 +1125,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 			GoTypeManager goTypes = goBinary.getGoTypes();
 			ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, true);
-			SymbolicPropogator symEval = new SymbolicPropogator(program);
+			SymbolicPropogator symEval = new SymbolicPropogator(program, true);
 			symEval.flowConstants(callingFunc.getEntryPoint(), callingFunc.getBody(), eval, true,
 				monitor);
 
