@@ -522,6 +522,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		Function f = elfLoadHelper.createOneByteFunction(name, address, false);
 		if (f != null && localFunction != null) {
 			f.setThunkedFunction(localFunction);
+			elfLoadHelper.setElfSymbolAddress(elfSymbol, address);
 			return null; // symbol creation handled
 		}
 
@@ -543,6 +544,11 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		if (elf.e_machine() != ElfConstants.EM_PPC64) {
 			return 0;
 		}
+
+		if (elf.getSection(".opd") != null) {
+			return 1;
+		}
+
 		// TODO: While the e_flags should indicate the use of function descriptors, this
 		// may not be set reliably.  The presence of the .opd section is another
 		// indicator but could be missing if sections have been stripped.
