@@ -5946,6 +5946,7 @@ void AddTreeState::clear(void)
   multiple.clear();
   coeff.clear();
   nonmult.clear();
+  multiequalsToInspect.clear();
   correct = 0;
   offset = 0;
   valid = true;
@@ -6010,6 +6011,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
+  inspectedMultiequals = false;
 }
 
 /// \brief Given an offset into the base data-type and array hints find sub-component being referenced
@@ -6082,44 +6084,48 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff)
 {
   Varnode *vnconst = op->getIn(1);
   Varnode *vnterm = op->getIn(0);
-  uint8 val;
 
   if (vnterm->isFree()) {
     valid = false;
     return false;
   }
   if (vnconst->isConstant()) {
-    val = (vnconst->getOffset() * treeCoeff) & ptrmask;
-    intb sval = sign_extend(val, vn->getSize() * 8 - 1);
-    intb rem = (size == 0) ? sval : sval % size;
-    if (rem != 0) {
-      if ((val >= size) && (size != 0)) {
-	valid = false; // Size is too big: pointer type must be wrong
-	return false;
-      }
-      if (!preventDistribution) {
-	if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
-	  if (distributeOp == (PcodeOp *)0)
-	    distributeOp = op;
-	  return spanAddTree(vnterm->getDef(), val);
-	}
-      }
-      uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
-      if (vncoeff > biggestNonMultCoeff)
-	biggestNonMultCoeff = vncoeff;
-      return true;
-    }
-    else {
-      if (treeCoeff != 1)
-	isDistributeUsed = true;
-      multiple.push_back(vnterm);
-      coeff.push_back(sval);
-      return false;
-    }
+    return checkMultTermPiece(vn, op, treeCoeff, vnconst->getOffset(), vnterm);
   }
   if (treeCoeff > biggestNonMultCoeff)
     biggestNonMultCoeff = treeCoeff;
   return true;
+}
+
+bool AddTreeState::checkMultTermPiece(Varnode *vn,PcodeOp *op,uint8 treeCoeff,uintb constval,Varnode *vnterm)
+{
+  uint8 val = (constval * treeCoeff) & ptrmask;
+  intb sval = sign_extend(val, vn->getSize() * 8 - 1);
+  intb rem = (size == 0) ? sval : sval % size;
+  if (rem != 0) {
+    if ((val >= size) && (size != 0)) {
+      valid = false; // Size is too big: pointer type must be wrong
+      return false;
+    }
+    if (!preventDistribution) {
+      if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
+        if (distributeOp == (PcodeOp *)0)
+          distributeOp = op;
+        return spanAddTree(vnterm->getDef(), val);
+      }
+    }
+    uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
+    if (vncoeff > biggestNonMultCoeff)
+      biggestNonMultCoeff = vncoeff;
+    return true;
+  }
+  else {
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
+    multiple.push_back(vnterm);
+    coeff.push_back(sval);
+    return false;
+  }
 }
 
 /// If the given Varnode is a constant or multiplicative term, update
@@ -6164,6 +6170,16 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
       return checkMultTerm(vn, def, treeCoeff);
+    if (def->code() == CPUI_INT_LEFT) {
+      Varnode *shiftLeftByPtr = def->getIn(1);
+      if (shiftLeftByPtr->isConstant()) {
+        uintb shiftLeftBy = shiftLeftByPtr->getOffset();
+        if (shiftLeftBy != shiftLeftByPtr->getSize() * 8 - 1)
+          return checkMultTermPiece(vn, def, treeCoeff, 1ULL << shiftLeftBy, def->getIn(0));
+      }
+    }
+    if (treeCoeff == 1 && def->code() == CPUI_MULTIEQUAL)
+      multiequalsToInspect.push_back(vn);
   }
   else if (vn->isFree()) {
     valid = false;
@@ -6207,6 +6223,212 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uint8 treeCoeff)
   if (two_is_non)
     nonmult.push_back(op->getIn(1));
   return false;		// At least one of the sides contains multiples
+}
+
+intb AddTreeState::greatestCommonDivisor(intb val1, intb val2) {
+  intb op1multiplier = val1;
+  if (val1 < 0) val1 = -val1;
+  if (val2 < 0) val2 = -val2;
+  if (val1 != 0 && val2 != 0) {
+    while (val2 != val1) {  // greatest common divisor: euclid's algorithm
+      if (val2 > val1) {
+        val2 -= val1;
+      } else {
+        val1 -= val2;
+      }
+    }
+    return val2;
+  } else if (val1 != 0) {
+    return val1;
+  } else if (val2 != 0) {
+    return val2;
+  } else {
+    return -1;
+  }
+}
+
+// \brief Modify surrounding expressions in an attempt to recover the multiple
+// 
+// For situations like this:
+// int sliding_offset = 0;  // or any constant divisible by element_size
+// // or int sliding_offset = something * element_size;
+// do {
+//   ... *(pointer_to_element + sliding_offset + optional_member_offset) ...
+//   sliding_offset += element_size;
+//   // or
+//   sliding_offset -= element_size;
+// } while (true);
+// , where element_size is the size of element pointed to by pointer_to_element
+// 
+// It modifies expressions which set or write the sliding_offset variable
+// by dividing their constant by element_size, and applying * element_size
+// (multiplication by element_size) to all places where the sliding_offset is used instead.
+// This makes RulePtrArith more likely to recognize that the CPUI_INT_ADD expression
+// is actually a CPUI_PTRADD.
+// \return \b true if successful, \b false otherwise
+bool AddTreeState::inspectMultiequals(void) {
+  vector<Varnode *>::iterator iter;
+  for (iter = multiequalsToInspect.begin(); iter != multiequalsToInspect.end(); ++iter) {
+    Varnode *vn = *iter;
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->numInput() != 2) continue;
+    Varnode *in1 = op->getIn(0);
+    if (!in1->isWritten() || in1->loneDescend() != op) continue;
+    PcodeOp *op1 = in1->getDef();
+    int4 op1Size = 0;
+    intb op1Val = 0;
+    int op1ReplacementSlot = 0;
+    if (op1->code() == CPUI_INT_MULT || op1->code() == CPUI_INT_LEFT) {
+      Varnode *multTerm = op1->getIn(0);
+      if (multTerm->isFree()) continue;
+      Varnode *multConst = op1->getIn(1);
+      if (!multConst->isConstant()) continue;
+      uintb multval = multConst->getOffset() & ptrmask;
+      intb multsval;
+      if (op1->code() == CPUI_INT_LEFT) {
+        if (multval == multConst->getSize() * 8 - 1) {
+          continue;
+        }
+        multval = 1ULL << multval;
+        multsval = multval;
+      } else {
+        multsval = sign_extend(multval, in1->getSize() * 8 - 1);
+      }
+      op1Val = multsval;
+      op1ReplacementSlot = 1;
+      op1Size = multConst->getSize();
+    } else if (op1->code() == CPUI_COPY) {
+      Varnode *assignmentConst = op1->getIn(0);
+      if (!assignmentConst->isConstant() || op1->numInput() != 1) continue;
+      uintb assignval = assignmentConst->getOffset() & ptrmask;
+      intb assignsval = sign_extend(assignval, in1->getSize() * 8 - 1);
+      op1Val = assignsval;
+      op1ReplacementSlot = 0;
+      op1Size = assignmentConst->getSize();
+    } else {
+      continue;
+    }
+    Varnode *in2 = op->getIn(1);
+    if (!in2->isWritten()) continue;
+    bool failed = false;
+    int4 comparisonsvalSize;
+    intb comparisonsval;
+    PcodeOp* comparisonOp = nullptr;
+    list<PcodeOp *>::const_iterator in2Desc;
+    for (in2Desc = in2->beginDescend(); in2Desc != in2->endDescend(); ++in2Desc) {
+      PcodeOp* desc = *in2Desc;
+      if (desc == op) {
+        continue;
+      }
+      if (desc->code() != CPUI_INT_SLESS && desc->code() != CPUI_INT_SLESSEQUAL) {
+        failed = true;
+        break;
+      }
+      if (comparisonOp == nullptr) {
+	comparisonOp = desc;
+	if (comparisonOp->numInput() != 2) {
+	  failed = true;
+	  break;
+	}
+	const Varnode* comparisonOperand = comparisonOp->getIn(1);
+	if (!comparisonOperand->isConstant()) {
+	  failed = true;
+	  break;
+	}
+	comparisonsvalSize = comparisonOperand->getSize();
+	uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+        comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
+      } else {
+        failed = true;
+        break;
+      }
+    }
+    if (failed) continue;
+    PcodeOp *op2 = in2->getDef();
+    if (op2->code() != CPUI_INT_ADD) continue;
+    Varnode *addTerm = op2->getIn(0);
+    if (addTerm != vn) continue;
+    Varnode *addConst = op2->getIn(1);
+    if (!addConst->isConstant()) continue;
+    uintb addval = addConst->getOffset() & ptrmask;
+    intb addsval = sign_extend(addval, in2->getSize() * 8 - 1);
+    bool needDistributeCopy = false;
+    if (op1->code() == CPUI_COPY
+        && (size == 0 && op1Val != 0 || op1Val % size != 0)
+        && (baseType->getMetatype() == TYPE_STRUCT
+          || baseType->getMetatype() == TYPE_SPACEBASE)) {
+      // if the constant in CPUI_COPY is an offset to a member of the struct,
+      // -needDistributeCopy- being true will mean we want to duplicate that constant
+      // into all mentions of the -vn- and in the original CPUI_COPY replace it with 0
+      nonmultsum = op1Val;
+      biggestNonMultCoeff = 0;
+      nonmult.push_back(op1ReplacementSlot != -1 ? op1->getIn(op1ReplacementSlot) : op1->getOut());
+      calcSubtype();
+      needDistributeCopy = (valid && isSubtype);
+    }
+    Varnode *newConstForOp1;
+    intb extra = 0;
+    if (needDistributeCopy) {
+      extra = op1Val;
+      newConstForOp1 = data.newConstant(op1Size, 0);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      if (comparisonOp != nullptr) {
+        const Varnode* comparisonOperand = comparisonOp->getIn(1);
+        data.opSetInput(comparisonOp,
+          data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval - op1Val) & ptrmask), 1);
+        comparisonsval -= op1Val;
+      }
+      op1Val = 0;
+    } else if (op1Val % size != 0 || addsval % size != 0) continue;  // the value in CPUI_COPY is either not the offset into the struct or op1 is not a CPUI_COPY
+    intb multiplier = greatestCommonDivisor(op1Val, addsval);
+    if (comparisonOp != nullptr && !needDistributeCopy) {
+      multiplier = greatestCommonDivisor(multiplier, comparisonsval);
+    }
+    if (multiplier != 1) {
+      Varnode *newConstForOp1 = data.newConstant(op1Size, (op1Val / multiplier) & ptrmask);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      Varnode *newConstForAdd = data.newConstant(addConst->getSize(), (addsval / multiplier) & ptrmask);
+      data.opSetInput(op2, newConstForAdd, 1);
+    }
+    list<PcodeOp *>::const_iterator descendListIter;
+    vector<PcodeOp *> descendants;
+    for (descendListIter = vn->beginDescend(); descendListIter != vn->endDescend(); ++descendListIter) {
+      descendants.push_back(*descendListIter);
+    }
+    vector<PcodeOp *>::const_iterator descendIter;
+    for (descendIter = descendants.begin(); descendIter != descendants.end(); ++descendIter) {
+      PcodeOp *desc = *descendIter;
+      if (desc == op1 || desc == op2 || desc->code() == CPUI_INDIRECT) continue;
+      int4 inSlot = desc->getSlot(vn);
+      PcodeOp *newMultOp = nullptr;
+      Varnode* nodeToAdd;
+      if (multiplier != 1) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), multiplier & ptrmask));
+        nodeToAdd = newMultOp->getOut();
+      } else {
+        nodeToAdd = vn;
+      }
+      if (extra != 0) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_ADD, nodeToAdd, data.newConstant(op1Size, (uintb)extra & ptrmask));
+      }
+      if (newMultOp != nullptr) {
+        data.opSetInput(desc, newMultOp->getOut(), inSlot);
+      }
+    }
+    if (comparisonOp != nullptr) {
+      const Varnode* comparisonOperand = comparisonOp->getIn(1);
+      uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+      intb comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
+      if (multiplier != 1) {
+        data.opSetInput(comparisonOp,
+	  data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval / multiplier) & ptrmask), 1);
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 /// Make final calcultions to determine if a pointer to a sub data-type of the base
@@ -6408,13 +6630,47 @@ bool AddTreeState::apply(void)
   if (isDegenerate)
     return buildDegenerate();
   spanAddTree(baseOp,1);
+  if (!preventDistribution && distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+    clear();
+    preventDistribution = true;
+    spanAddTree(baseOp,1);
+  }
   if (!valid) return false;		// Were there any show stoppers
+  if (multiple.empty() && !multiequalsToInspect.empty() && size != 0) {
+    if (inspectMultiequals()) {
+      inspectedMultiequals = true;
+      clear();
+      spanAddTree(baseOp,1);
+    }
+  }
   if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
     clear();
     preventDistribution = true;
     spanAddTree(baseOp,1);
   }
+  if (!valid) return false;
   calcSubtype();
+  if (!valid) {
+    if (!preventDistribution && distributeOp != (PcodeOp *)0) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+      if (valid) {
+        calcSubtype();
+      }
+    }
+    if (!valid && !inspectedMultiequals
+          && !multiequalsToInspect.empty() && size != 0) {
+      if (inspectMultiequals()) {
+        inspectedMultiequals = true;
+        clear();
+        spanAddTree(baseOp,1);
+        if (valid) {
+          calcSubtype();
+        }
+      }
+    }
+  }
   if (!valid) return false;
   while(valid && distributeOp != (PcodeOp *)0) {
     if (!data.distributeIntMultAdd(distributeOp)) {
@@ -6896,7 +7152,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   multiplier = 0;
   int8 submultiplier;
   if (vn->isConstant())
-    return vn->getOffset();
+    return sign_extend(vn->getOffset(), vn->getSize() * 8 - 1);
   if (!vn->isWritten())
     return 0;
   maxLevel -= 1;
@@ -6906,10 +7162,12 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   OpCode opc = op->code();
   int8 retval = 0;
   if (opc == CPUI_INT_ADD) {
-    retval += getConstOffsetBack(op->getIn(0),submultiplier,maxLevel);
+    Varnode *opIn0 = op->getIn(0);
+    retval += getConstOffsetBack(opIn0,submultiplier,maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
-    retval += getConstOffsetBack(op->getIn(1), submultiplier, maxLevel);
+    Varnode *opIn1 = op->getIn(1);
+    retval += getConstOffsetBack(opIn1, submultiplier, maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
   }
@@ -6917,8 +7175,22 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     Varnode *cvn = op->getIn(1);
     if (!cvn->isConstant()) return 0;
     multiplier = cvn->getOffset();
-    getConstOffsetBack(op->getIn(0), submultiplier, maxLevel);
-    if (submultiplier > 0)
+    intb multiplier_s = sign_extend(multiplier, cvn->getSize() * 8 - 1);
+    if (multiplier_s < 0) multiplier = -multiplier_s;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
+      multiplier *= submultiplier;		// Only contribute to the multiplier
+  }
+  else if (opc == CPUI_INT_LEFT) {
+    Varnode *cvn = op->getIn(1);
+    if (!cvn->isConstant()) return 0;
+    uintb constval = cvn->getOffset();
+    if (constval == 0 || constval == cvn->getSize() * 8 - 1) return 0;
+    multiplier = 1ULL << constval;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
       multiplier *= submultiplier;		// Only contribute to the multiplier
   }
   return retval;
