@@ -277,17 +277,7 @@ public class SleighParserContext implements ParserContext {
 				return constantSpace.getAddress(segmentValue);
 			}
 			
-			// For non-segmented address spaces, try to extract segment from address space
-			AddressSpace addrSpace = addr.getAddressSpace();
-			if (addrSpace instanceof SegmentedAddressSpace) {
-				// This shouldn't happen, but just in case...
-				SegmentedAddressSpace segSpace = (SegmentedAddressSpace) addrSpace;
-				long linearAddress = addr.getOffset();
-				long segmentValue = segSpace.getDefaultSegmentFromFlat(linearAddress);
-				return constantSpace.getAddress(segmentValue);
-			}
-			
-			// For linear address spaces, return null or a dummy value
+			// For non-segmented address spaces, return a default value
 			return constantSpace.getAddress(0);
 		}
 		catch (Exception e) {

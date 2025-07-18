@@ -180,6 +180,19 @@ public:
   virtual void decode(Decoder &decoder,Translate *trans);
 };
 
+class SegInstructionValue : public PatternValue {
+public:
+  SegInstructionValue(void) {}
+  virtual intb getValue(ParserWalker &walker) const {
+    return (intb)AddrSpace::byteToAddress(walker.getSegaddr().getOffset(),walker.getSegaddr().getSpace()->getWordSize()); }
+  virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
+  virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
+  virtual intb minValue(void) const { return (intb)0; }
+  virtual intb maxValue(void) const { return (intb)0; }
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
+};
+
 class Constructor;		// Forward declaration
 class OperandSymbol;
 class OperandValue : public PatternValue {

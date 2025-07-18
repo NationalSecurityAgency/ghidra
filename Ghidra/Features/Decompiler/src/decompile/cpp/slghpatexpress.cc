@@ -480,6 +480,10 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
     res = new StartInstructionValue();
   else if (el == sla::ELEM_END_EXP)
     res = new EndInstructionValue();
+  else if (el == sla::ELEM_NEXT2_EXP)
+    res = new Next2InstructionValue();
+  else if (el == sla::ELEM_SEG_EXP)
+    res = new SegInstructionValue();
   else if (el == sla::ELEM_PLUS_EXP)
     res = new PlusExpression();
   else if (el == sla::ELEM_SUB_EXP)
@@ -736,6 +740,20 @@ void Next2InstructionValue::decode(Decoder &decoder,Translate *trans)
 
 {
   uint4 el = decoder.openElement(sla::ELEM_NEXT2_EXP);
+  decoder.closeElement(el);
+}
+
+void SegInstructionValue::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_SEG_EXP);
+  encoder.closeElement(sla::ELEM_SEG_EXP);
+}
+
+void SegInstructionValue::decode(Decoder &decoder,Translate *trans)
+
+{
+  uint4 el = decoder.openElement(sla::ELEM_SEG_EXP);
   decoder.closeElement(el);
 }
 

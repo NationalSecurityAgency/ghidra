@@ -125,6 +125,8 @@ uintb ConstTpl::fix(const ParserWalker &walker) const
     return walker.getNaddr().getOffset(); // Fill in next address placeholder with real address
   case j_next2:
     return walker.getN2addr().getOffset(); // Fill in next2 address placeholder with real address
+  case j_seg:
+    return walker.getSegaddr().getOffset(); // Fill in segment address placeholder with real address
   case j_flowref:
     return walker.getRefAddr().getOffset();
   case j_flowref_size:
@@ -326,6 +328,10 @@ void ConstTpl::encode(Encoder &encoder) const
     encoder.openElement(sla::ELEM_CONST_NEXT2);
     encoder.closeElement(sla::ELEM_CONST_NEXT2);
     break;
+  case j_seg:
+    encoder.openElement(sla::ELEM_CONST_SEG);
+    encoder.closeElement(sla::ELEM_CONST_SEG);
+    break;
   case j_curspace:
     encoder.openElement(sla::ELEM_CONST_CURSPACE);
     encoder.closeElement(sla::ELEM_CONST_CURSPACE);
@@ -390,6 +396,9 @@ void ConstTpl::decode(Decoder &decoder)
   }
   else if (el == sla::ELEM_CONST_NEXT2) {
     type = j_next2;
+  }
+  else if (el == sla::ELEM_CONST_SEG) {
+    type = j_seg;
   }
   else if (el == sla::ELEM_CONST_CURSPACE) {
     type = j_curspace;

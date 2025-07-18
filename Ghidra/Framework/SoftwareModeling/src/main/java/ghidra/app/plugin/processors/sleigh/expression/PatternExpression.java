@@ -60,6 +60,9 @@ public abstract class PatternExpression {
 		else if (el == ELEM_NEXT2_EXP.id()) {
 			res = new Next2InstructionValue();
 		}
+		else if (el == ELEM_SEG_EXP.id()) {
+			res = new SegInstructionValue();
+		}
 		else if (el == ELEM_PLUS_EXP.id()) {
 			res = new PlusExpression();
 		}

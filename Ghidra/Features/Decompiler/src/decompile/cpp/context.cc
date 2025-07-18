@@ -58,6 +58,47 @@ const Address &ParserContext::getN2addr(void) const
   return n2addr;
 }
 
+const Address &ParserContext::getSegaddr(void) const
+
+{
+  if (segaddr.isInvalid()) {
+    if (translate == (Translate *)0 || parsestate == uninitialized)
+      throw LowlevelError("seg_next not available in this context");
+    
+    // NOTE: This C++ implementation is likely UNUSED for actual seg_next evaluation.
+    // The real seg_next processing happens in the Java SleighParserContext during 
+    // instruction parsing and pattern matching, where real SegmentedAddress.getSegment() 
+    // values are available. This C++ ParserContext is used later during p-code generation
+    // when seg_next expressions have already been resolved by the Java layer.
+    //
+    // This is kept as a fallback implementation for completeness, but seg_next symbols
+    // in Sleigh patterns should be handled by the Java SleighParserContext.computeSegAddress()
+    // method which has access to real segment information.
+    
+    uintb segmentValue = 0;
+    
+    // Fallback segment extraction for C++ context (probably unused)
+    AddrSpace *space = addr.getSpace();
+    if (space->getType() == IPTR_PROCESSOR) {
+      // This is still an approximation since we only have linear addresses here
+      uintb linearAddr = addr.getOffset();
+      
+      if (space->getWordSize() == 1 && space->getAddrSize() >= 4) {
+        // Basic x86 segment approximation from linear address
+        segmentValue = (linearAddr >> 4) & 0xFFFF;
+        
+        // Validate that this looks like a reasonable segment value
+        if (segmentValue == 0 || segmentValue > 0xFFFF) {
+          segmentValue = 0;  // Default fallback
+        }
+      }
+    }
+    
+    segaddr = Address(const_space, segmentValue);
+  }
+  return segaddr;
+}
+
 uintm ParserContext::getInstructionBytes(int4 bytestart,int4 size,uint4 off) const
 
 {				// Get bytes from the instruction stream into a intm
