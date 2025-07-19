@@ -22,6 +22,7 @@ package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.plugin.core.disassembler.AddressTable;
 import ghidra.app.services.*;
+import ghidra.app.util.SegmentedAddressHelper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.options.Options;
@@ -208,9 +209,19 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 		try {
-			addr = space.getAddress(scalar.getUnsignedValue(), true);
+			// Enhanced segmented address support: check if we're in a segmented space
+			// and should use DS register to resolve immediate values
+			if (space instanceof SegmentedAddressSpace) {
+				addr = createSegmentedAddress(program, instr, (SegmentedAddressSpace) space, scalar);
+			} else {
+				addr = space.getAddress(scalar.getUnsignedValue(), true);
+			}
 		}
 		catch (AddressOutOfBoundsException e) {
+			return false;
+		}
+
+		if (addr == null) {
 			return false;
 		}
 
@@ -242,6 +253,24 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 			SourceType.ANALYSIS);
 
 		return true;
+	}
+
+	/**
+	 * Creates a segmented address from a scalar operand using the processor's
+	 * constresolve register (automatically determined from processor specification).
+	 * For immediate operands in segmented architectures, this treats the scalar 
+	 * as an offset within the appropriate segment (e.g., DS:offset for x86).
+	 * 
+	 * @param program the program containing the instruction
+	 * @param instr the instruction containing the scalar operand
+	 * @param segSpace the segmented address space
+	 * @param scalar the scalar operand value
+	 * @return segmented address using processor-appropriate segment register
+	 */
+	private Address createSegmentedAddress(Program program, Instruction instr, 
+			SegmentedAddressSpace segSpace, Scalar scalar) {
+		return SegmentedAddressHelper.createSegmentedAddress(program, instr.getMinAddress(), 
+			segSpace, scalar.getUnsignedValue());
 	}
 
 	void checkForJumpTable(Program program, Instruction refInstr, int opIndex, Object opObjects[],
