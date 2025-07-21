@@ -399,7 +399,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 							sfman.addSourceMapEntry(sourceFile, lineNum, startAddr, len);
 						}
 						catch (AddressOverflowException | IllegalArgumentException e) {
-							Msg.error(this, "Failed to add source file mapping", e);
+							Msg.error(this, "Failed to add source file mapping: " + e.getMessage());
 						}
 					}
 				}

@@ -88,13 +88,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 		for (DWARFCompilationUnit cu : compUnits) {
 			DWARFLine dLine = cu.getLine();
 			monitor.increment();
-			for (int i = 0; i < dLine.getNumFiles(); ++i) {
-				String filePath = dLine.getFilePath(i, true);
-				if (filePath == null) {
-					continue;
-				}
-				byte[] md5 = dLine.getFile(i).getMD5();
-				SourceFileInfo sfi = new SourceFileInfo(filePath, md5);
+			for (SourceFileInfo sfi : dLine.getAllSourceFileInfos()) {
 				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
 					continue;
 				}
@@ -102,11 +96,11 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 					continue;
 				}
 				try {
-					String path = SourceFileUtils.normalizeDwarfPath(filePath,
+					String path = SourceFileUtils.normalizeDwarfPath(sfi.filePath(),
 						COMPILATION_ROOT_DIRECTORY);
 					SourceFileIdType type =
-						md5 == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
-					SourceFile sFile = new SourceFile(path, type, md5);
+						sfi.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
+					SourceFile sFile = new SourceFile(path, type, sfi.md5());
 					sourceManager.addSourceFile(sFile);
 					sourceFileInfoToSourceFile.put(sfi, sFile);
 				}
