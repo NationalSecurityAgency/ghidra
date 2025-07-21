@@ -435,6 +435,11 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 				// now get rid of all the instructions that were analyzed
 				todoSet.delete(resultSet);
 			}
+			
+			// make sure todoSet removes start address if no results
+			if (resultSet == null || resultSet.isEmpty()) {
+				todoSet.delete(start,start);
+			}
 		}
 	}
 
