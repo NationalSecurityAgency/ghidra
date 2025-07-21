@@ -15,6 +15,8 @@
  */
 package help;
 
+import static help.GHelpMsg.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -96,7 +98,7 @@ public class GHelpBuilder {
 		if (results.failed()) {
 			String message = "Found invalid help:\n" + results.getMessage();
 			if (ignoreInvalid) {
-				printErrorMessage(message);
+				error(message);
 			}
 			else {
 				exitWithError(message, null);
@@ -267,15 +269,6 @@ public class GHelpBuilder {
 		}
 	}
 
-	private static void flush() {
-		System.out.flush();
-		System.out.println();
-		System.out.flush();
-		System.err.flush();
-		System.err.println();
-		System.err.flush();
-	}
-
 	private static void debug(String string) {
 		if (debugEnabled) {
 			flush();
@@ -290,7 +283,7 @@ public class GHelpBuilder {
 			if (opt.equals(OUTPUT_DIRECTORY_OPTION)) {
 				i++;
 				if (i >= args.length) {
-					errorMessage(OUTPUT_DIRECTORY_OPTION + " requires an argument");
+					error(OUTPUT_DIRECTORY_OPTION + " requires an argument");
 					printUsage();
 					System.exit(1);
 				}
@@ -299,7 +292,7 @@ public class GHelpBuilder {
 			else if (opt.equals(MODULE_NAME_OPTION)) {
 				i++;
 				if (i >= args.length) {
-					errorMessage(MODULE_NAME_OPTION + " requires an argument");
+					error(MODULE_NAME_OPTION + " requires an argument");
 					printUsage();
 					System.exit(1);
 				}
@@ -308,7 +301,7 @@ public class GHelpBuilder {
 			else if (opt.equals(HELP_PATHS_OPTION)) {
 				i++;
 				if (i >= args.length) {
-					errorMessage(HELP_PATHS_OPTION + " requires an argument");
+					error(HELP_PATHS_OPTION + " requires an argument");
 					printUsage();
 					System.exit(1);
 				}
@@ -322,7 +315,7 @@ public class GHelpBuilder {
 			else if (opt.equals(HELP_PATHS_GENERATED_OPTION)) {
 				i++;
 				if (i >= args.length) {
-					errorMessage(HELP_PATHS_GENERATED_OPTION + " requires an argument");
+					error(HELP_PATHS_GENERATED_OPTION + " requires an argument");
 					printUsage();
 					System.exit(1);
 				}
@@ -340,7 +333,7 @@ public class GHelpBuilder {
 				ignoreInvalid = true;
 			}
 			else if (opt.startsWith("-")) {
-				errorMessage("Unknown option " + opt);
+				error("Unknown option " + opt);
 				printUsage();
 				System.exit(1);
 			}
@@ -353,17 +346,17 @@ public class GHelpBuilder {
 		HelpBuildUtils.debug = debugEnabled;
 
 		if (helpInputDirectories.size() == 0) {
-			errorMessage("Must specify at least one input directory");
+			error("Must specify at least one input directory");
 			printUsage();
 			System.exit(1);
 		}
 		if (outputDirectoryName == null) {
-			errorMessage("Missing output directory: " + OUTPUT_DIRECTORY_OPTION + " [output]");
+			error("Missing output directory: " + OUTPUT_DIRECTORY_OPTION + " [output]");
 			printUsage();
 			System.exit(1);
 		}
 		if (moduleName == null) {
-			errorMessage("Missing module name: " + MODULE_NAME_OPTION + " [name]");
+			error("Missing module name: " + MODULE_NAME_OPTION + " [name]");
 			printUsage();
 			System.exit(1);
 		}
@@ -385,35 +378,7 @@ public class GHelpBuilder {
 		buffy.append("    ").append(IGNORE_INVALID_SWITCH).append("\n");
 		buffy.append("                  to continue despite broken links and anchors\n");
 
-		errorMessage(buffy.toString());
-	}
-
-	private static void printErrorMessage(String message) {
-		// this prevents error messages getting interspersed with output messages
-		flush();
-		errorMessage(message);
-	}
-
-	private static void errorMessage(String message) {
-		errorMessage(message, null);
-	}
-
-	private static void errorMessage(String message, Throwable t) {
-		try {
-			// give the output thread a chance to finish it's output (this is a workaround for
-			// the Eclipse editor, and its use of two threads in its console).
-			Thread.sleep(250);
-		}
-		catch (InterruptedException e) {
-			// don't care; we tried
-		}
-
-		System.err.println("[" + GHelpBuilder.class.getSimpleName() + "] " + message);
-		if (t != null) {
-			t.printStackTrace();
-		}
-
-		flush();
+		error(buffy.toString());
 	}
 
 //==================================================================================================
