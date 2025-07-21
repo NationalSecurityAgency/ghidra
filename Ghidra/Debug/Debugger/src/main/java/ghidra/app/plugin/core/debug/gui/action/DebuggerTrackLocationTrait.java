@@ -39,11 +39,11 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
+import ghidra.pcode.exec.PcodeExecutionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceThread;
@@ -62,7 +62,6 @@ public class DebuggerTrackLocationTrait {
 
 		public ForTrackingListener() {
 			listenFor(TraceEvents.BYTES_CHANGED, this::registersChanged);
-			//listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
 			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceEvents.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
 		}
@@ -74,17 +73,6 @@ public class DebuggerTrackLocationTrait {
 				return;
 			}
 			if (!tracker.affectedByBytesChange(space, range, current)) {
-				return;
-			}
-			doTrack(TrackCause.DB_CHANGE);
-		}
-
-		private void stackChanged(TraceStack stack) {
-			if (current.getView() == null || spec == null) {
-				// Should only happen during transitional times, if at all.
-				return;
-			}
-			if (!tracker.affectedByStackChange(stack, current)) {
 				return;
 			}
 			doTrack(TrackCause.DB_CHANGE);
@@ -255,7 +243,7 @@ public class DebuggerTrackLocationTrait {
 	public List<ActionState<LocationTrackingSpec>> getStates() {
 		Map<String, ActionState<LocationTrackingSpec>> states = new TreeMap<>();
 		// NOTE: Ensure the saved spec is available, even if no factory produces it, yet.
-		// NOTE: In particular, the DebuggerWatchesPlugin may not read its config before us.
+		// NOTE: In particular, the DebuggerWatchesPlugin might not read its config before us.
 		states.put(spec.getConfigName(), makeState(spec));
 		for (LocationTrackingSpec spec : LocationTrackingSpecFactory
 				.allSuggested(tool)
@@ -331,6 +319,14 @@ public class DebuggerTrackLocationTrait {
 		}
 		catch (TraceClosedException ex) {
 			// Silently continue
+		}
+		catch (PcodeExecutionException ex) {
+			if (ex.getCause() instanceof TraceClosedException) {
+				// Silently continue
+			}
+			else {
+				Msg.error(this, "Error while computing locatin: " + ex);
+			}
 		}
 		catch (Throwable ex) {
 			Msg.error(this, "Error while computing location: " + ex);
