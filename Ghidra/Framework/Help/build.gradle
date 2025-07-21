@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,4 +30,86 @@ dependencies {
 	// Only include this debug version of the jh library if necessary.
 	//api name:'jh2.with.debug'
 	api 'javax.help:javahelp:2.0.05'
+}
+
+/*
+ * Get all help tasks from all projects
+ */
+def getAllHelpTasks() {
+
+	List list = new ArrayList()
+	rootProject.allprojects {
+		tasks.each {		
+			if (it.name == 'buildModuleHelp') {
+				list.add(it)
+			}
+		}
+	}
+	return list
+}
+
+/*
+ * A task at the Ghidra tool top-level build that will trigger all 'buildModuleHelp' tasks to run,
+ * this building help.  Additionally, this task will perform any needed validation after all help
+ * modules are built.
+ */
+tasks.register('buildHelp') {
+
+	description 'Build all Ghidra help'
+
+	dependsOn { getAllHelpTasks() }  // all 'buildHelpModule' tasks
+	dependsOn 'validateHelpTocFiles' // the validate TOC task to run after all help is built
+}
+
+
+
+/*
+ * Gathers all generated help TOC files and validates them.
+ */
+tasks.register('validateHelpTocFiles', JavaExec) {
+
+	group = "private"
+
+	dependsOn { getAllHelpTasks() }  // all 'buildHelpModule' tasks to provide TOC inputs
+
+	// we need our Help java files compiled	
+	dependsOn jar
+
+	mainClass = 'help.GHelpTocValidator'
+
+	// to allow remote debugging of the help build jvm
+	// jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=13001'
+	
+	// print debug info
+	// args '-debug' 
+	
+	doFirst {
+
+		// get the Help module jar file, since it has classes we use
+		classpath += jar.outputs.files
+		
+		// get the classpath items used by the Help module, since we use those classes
+		classpath += configurations.runtimeClasspath
+				
+		// add each Module-help.jar file created by 'buildModuleHelp' to the application inputs
+		rootProject.allprojects.forEach {
+			
+			// <module>/build/libs/Module-help.jar
+			def helpLibDir = it.file('build/libs')
+			if (helpLibDir.isDirectory()) {
+			
+				helpLibDir.listFiles().each {
+					String name = it.getName()
+					if (name.endsWith('-help.jar')) {
+						args "${it.absolutePath}"
+					}
+				}
+			}
+		
+		}
+		
+		// Sigal that any System.out messages from this Java process should be logged at INFO level.
+		// To see this output, run gradle with the '-i' option to show INFO messages.
+		logging.captureStandardOutput LogLevel.INFO				
+	}
 }
