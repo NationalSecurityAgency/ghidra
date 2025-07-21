@@ -154,7 +154,6 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testWriteStateRegister() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			AddressSpace rs = tb.language.getAddressFactory().getRegisterSpace();
 			TraceThread thread = initTrace(tb, "", List.of());
 
 			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.host, 0);
@@ -176,7 +175,8 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			// TODO: Might be nice to coalesce identical values
 			//   Becomes the 2D cover optimization problem. Still could do some easy cases.
 			assertEquals(
-				makeTaintEntries(tb.trace, Lifespan.nowOn(1), rs, Set.of(0L, 1L, 2L, 3L), "test_0"),
+				makeTaintEntries(tb.trace, Lifespan.nowOn(1), mapSpace.getAddressSpace(),
+					Set.of(0L, 1L, 2L, 3L), "test_0"),
 				Set.copyOf(mapSpace.getEntries(Lifespan.at(1), tb.reg("RAX"))));
 		}
 	}

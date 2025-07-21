@@ -72,13 +72,27 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	/**
 	 * Get all entries intersecting the given register and lifespan
 	 * 
+	 * @param platform the platform defining the register
+	 * @param lifespan the range of snaps
+	 * @param register the register
+	 * @return the entries
+	 */
+	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(TracePlatform platform,
+			Lifespan lifespan, Register register) {
+		AddressRange range = platform.getConventionalRegisterRange(getAddressSpace(), register);
+		return getEntries(lifespan, range);
+	}
+
+	/**
+	 * Get all entries intersecting the given register and lifespan
+	 * 
 	 * @param lifespan the range of snaps
 	 * @param register the register
 	 * @return the entries
 	 */
 	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 			Register register) {
-		return getEntries(lifespan, TraceRegisterUtils.rangeForRegister(register));
+		return getEntries(getTrace().getPlatformManager().getHostPlatform(), lifespan, register);
 	}
 
 	/**
