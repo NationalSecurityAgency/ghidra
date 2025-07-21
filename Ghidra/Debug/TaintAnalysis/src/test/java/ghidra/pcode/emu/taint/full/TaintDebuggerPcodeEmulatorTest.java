@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.emu.taint.full;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
@@ -34,7 +35,6 @@ import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeEmulatorTest;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
@@ -65,15 +65,24 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 					.count());
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	@Test
 	public void testFactoryCreate() throws Exception {
 		emuService.setEmulatorFactory(new TaintDebuggerPcodeEmulatorFactory());
 
 		createAndOpenTrace();
 
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
-			tb.getOrAddThread("Threads[0]", 0);
+			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 		}
 
 		traceManager.activateTrace(tb.trace);
@@ -86,7 +95,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				public TickStep nextSlice(Trace trace) {
 					// Expect decode of uninitialized memory immediately
 					assertEquals(0, calls++);
-					return new TickStep(1, 1);
+					return new TickStep(thread.getKey(), 1);
 				}
 			});
 
@@ -94,7 +103,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 		assertTrue(emu instanceof TaintDebuggerPcodeEmulator);
 	}
 
-	//@Test
+	@Test
 	public void testReadsProgramUsrProperties() throws Exception {
 		emuService.setEmulatorFactory(new TaintDebuggerPcodeEmulatorFactory());
 
@@ -106,13 +115,12 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		programManager.openProgram(program);
 
-		AddressSpace rs = tb.language.getAddressFactory().getRegisterSpace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			mappingService.addMapping(
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000)),
 				new ProgramLocation(program, tb.addr(0x00400000)), 0x1000, false);
-			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			tb.exec(0, thread, 0, "RIP = 0x55550000;");
@@ -135,24 +143,16 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 			asm.assemble(tb.addr(0x00400000), "MOV RAX, qword ptr [0x00400800]");
 		}
 
-		TraceSchedule time = TraceSchedule.parse("0:t1-1");
+		TraceSchedule time = TraceSchedule.parse("0:t%d-1".formatted(thread.getKey()));
 		long scratch = emuService.emulate(tb.trace, time, TaskMonitor.DUMMY);
 
 		TracePropertyMap<String> traceTaintMap = tb.trace.getAddressPropertyManager()
 				.getPropertyMap(TaintTracePcodeExecutorStatePiece.NAME, String.class);
 		TracePropertyMapSpace<String> taintRegSpace =
-			traceTaintMap.getPropertyMapRegisterSpace(thread, 0, true);
+			traceTaintMap.getPropertyMapRegisterSpace(thread, 0, false);
 
 		assertEquals(TaintTracePcodeEmulatorTest.makeTaintEntries(tb.trace,
-			Lifespan.span(scratch, -1), rs, Set.of(0L), "test_0"),
+			Lifespan.span(scratch, -1), taintRegSpace.getAddressSpace(), Set.of(0L), "test_0"),
 			Set.copyOf(taintRegSpace.getEntries(Lifespan.at(scratch), tb.reg("RAX"))));
 	}
-	
-	SchemaContext buildContext() {
-		return new ToySchemaBuilder()
-				.noRegisterGroups()
-				.useRegistersPerFrame()
-				.build();
-	}
-
 }
