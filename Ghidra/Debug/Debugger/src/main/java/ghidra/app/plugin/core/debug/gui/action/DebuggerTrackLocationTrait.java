@@ -248,13 +248,19 @@ public class DebuggerTrackLocationTrait {
 		return action;
 	}
 
+	protected ActionState<LocationTrackingSpec> makeState(LocationTrackingSpec spec) {
+		return new ActionState<>(spec.getMenuName(), spec.getMenuIcon(), spec);
+	}
+
 	public List<ActionState<LocationTrackingSpec>> getStates() {
 		Map<String, ActionState<LocationTrackingSpec>> states = new TreeMap<>();
+		// NOTE: Ensure the saved spec is available, even if no factory produces it, yet.
+		// NOTE: In particular, the DebuggerWatchesPlugin may not read its config before us.
+		states.put(spec.getConfigName(), makeState(spec));
 		for (LocationTrackingSpec spec : LocationTrackingSpecFactory
 				.allSuggested(tool)
 				.values()) {
-			states.put(spec.getConfigName(),
-				new ActionState<>(spec.getMenuName(), spec.getMenuIcon(), spec));
+			states.put(spec.getConfigName(), makeState(spec));
 		}
 		ActionState<LocationTrackingSpec> current = action.getCurrentState();
 		if (current != null) {
