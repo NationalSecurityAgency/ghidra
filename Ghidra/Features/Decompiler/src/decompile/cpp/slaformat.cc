@@ -18,7 +18,7 @@
 namespace ghidra {
 namespace sla {
 const int4 FORMAT_SCOPE = 1;
-const int4 FORMAT_VERSION = 4;
+const int4 FORMAT_VERSION = 5;
 
 // ATTRIB_CONTEXT = 1 is reserved
 AttributeId ATTRIB_VAL = AttributeId("val", 2, FORMAT_SCOPE);
