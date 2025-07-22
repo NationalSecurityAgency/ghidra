@@ -286,8 +286,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 	 */
 	protected abstract boolean isApplicableToUnit(CodeUnit unit);
 
-	@Override
-	public boolean isAddToPopup(ActionContext context) {
+	protected boolean isApplicableToContext(ActionContext context) {
 		CodeUnit cu = getCodeUnit(context);
 		if (cu == null || !isApplicableToUnit(cu)) {
 			return false;
@@ -318,6 +317,16 @@ public abstract class AbstractPatchAction extends DockingAction {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		return super.isEnabledForContext(context) && isApplicableToContext(context);
+	}
+
+	@Override
+	public boolean isAddToPopup(ActionContext context) {
+		return super.isAddToPopup(context) && isApplicableToContext(context);
 	}
 
 	/**
