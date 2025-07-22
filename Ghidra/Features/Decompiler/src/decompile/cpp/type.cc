@@ -1726,6 +1726,9 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
       int8 suboff;
       Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
+	int8 subdiff = diff + remain - suboff;
+	if (subdiff > 128)
+	  break;
 	*newoff = -diff;
 	return subtype;
       }
