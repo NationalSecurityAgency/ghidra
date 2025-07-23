@@ -50,7 +50,7 @@ public class DataTypeGraphComparator {
 		 * @param dt2 matching element from the second/right/dest DataType graph
 		 * @return false if abort this subtree, true if continue
 		 */
-		public boolean observe(DataType dt1, DataType dt2);
+		boolean observe(DataType dt1, DataType dt2);
 	}
 
 	/**
@@ -156,7 +156,7 @@ public class DataTypeGraphComparator {
 	}
 
 	private void compare(Structure pre, Structure post) {
-		for (DataTypeComponent dtc : pre.getComponents()) {
+		for (DataTypeComponent dtc : pre.getDefinedComponents()) {
 			DataType preDTCType = dtc.getDataType();
 			DataTypeComponent postDTC = post.getComponentAt(dtc.getOffset());
 			if (postDTC == null) {
@@ -173,12 +173,12 @@ public class DataTypeGraphComparator {
 
 	private void compare(Union pre, Union post) {
 		Map<String, DataTypeComponent> postCompsByName = new HashMap<>();
-		for (DataTypeComponent dtc : post.getComponents()) {
+		for (DataTypeComponent dtc : post.getDefinedComponents()) {
 			if (dtc.getFieldName() != null) {
 				postCompsByName.put(dtc.getFieldName(), dtc);
 			}
 		}
-		for (DataTypeComponent preDTC : pre.getComponents()) {
+		for (DataTypeComponent preDTC : pre.getDefinedComponents()) {
 			DataTypeComponent postDTC = postCompsByName.get(preDTC.getFieldName());
 			if (postDTC != null) {
 				compare(preDTC.getDataType(), postDTC.getDataType());
