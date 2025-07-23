@@ -896,10 +896,15 @@ int4 RulePullsubMulti::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0; // Don't pull apart a double precision object
 
-  // Make sure we don't new add SUBPIECE ops that aren't going to cancel in some way
-  int4 branches = mult->numInput();
-  uintb consume = calc_mask(newSize) << 8*minByte;
+  // Make sure we don't add new SUBPIECE ops that aren't going to cancel in some way
+  if (minByte > sizeof(uintb)) return 0;
+  uintb consume;
+  if (minByte < sizeof(uintb))
+    consume = calc_mask(newSize) << 8*minByte;
+  else
+    consume = 0;
   consume = ~consume;			// Check for use of bits outside of what gets truncated later
+  int4 branches = mult->numInput();
   for(int4 i=0;i<branches;++i) {
     Varnode *inVn = mult->getIn(i);
     if ((consume & inVn->getConsume()) != 0) {	// Check if bits not truncated are still used
@@ -961,6 +966,7 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
 
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
+  if (vn->getSize() > sizeof(uintb)) return 0;
   PcodeOp *indir = vn->getDef();
   if (indir->code()!=CPUI_INDIRECT) return 0;
   if (indir->getIn(1)->getSpace()->getType()!=IPTR_IOP) return 0;
@@ -6850,19 +6856,18 @@ void RulePtraddUndo::getOpList(vector<uint4> &oplist) const
 int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  Varnode *basevn;
-  TypePointer *tp;
-
   if (!data.hasTypeRecoveryStarted()) return 0;
   int4 size = (int4)op->getIn(2)->getOffset(); // Size the PTRADD thinks we are pointing
-  basevn = op->getIn(0);
-  tp = (TypePointer *)basevn->getTypeReadFacing(op);
-  if (tp->getMetatype() == TYPE_PTR)								// Make sure we are still a pointer
+  Varnode *basevn = op->getIn(0);
+  Datatype *dt = basevn->getTypeReadFacing(op);
+  if (dt->getMetatype() == TYPE_PTR) {								// Make sure we are still a pointer
+    TypePointer *tp = (TypePointer *)dt;
     if (tp->getPtrTo()->getAlignSize()==AddrSpace::addressToByteInt(size,tp->getWordSize())) {	// of the correct size
       Varnode *indVn = op->getIn(1);
       if ((!indVn->isConstant()) || (indVn->getOffset() != 0))					// and that index isn't zero
 	return 0;
     }
+  }
 
   data.opUndoPtradd(op,false);
   return 1;
@@ -7299,8 +7304,9 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *sb = op->getIn(0);
   Datatype *sbType = sb->getTypeReadFacing(op);
   if (sbType->getMetatype() != TYPE_PTR) return 0;
-  TypeSpacebase *sbtype = (TypeSpacebase *)((TypePointer *)sbType)->getPtrTo();
-  if (sbtype->getMetatype() != TYPE_SPACEBASE) return 0;
+  Datatype *dt = ((TypePointer *)sbType)->getPtrTo();
+  if (dt->getMetatype() != TYPE_SPACEBASE) return 0;
+  TypeSpacebase *sbtype = (TypeSpacebase *)dt;
   Varnode *vn1 = op->getIn(1);
   if (!vn1->isConstant()) return 0;
   Varnode *outvn = op->getOut();
@@ -10871,8 +10877,9 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
     if (defOp->code() == CPUI_INT_ADD && defOp->getIn(1)->isConstant()) {
       addOp = defOp;
       rootPtr = defOp->getIn(0);
-      offset = defOp->getIn(1)->getOffset();
-      if (offset > 16) return 0;		// INT_ADD offset must be small
+      uintb off = defOp->getIn(1)->getOffset();
+      if (off > 16) return 0;		// INT_ADD offset must be small
+      offset = off;
       if (defOp->getOut()->loneDescend() == (PcodeOp *)0) return 0;	// INT_ADD must be used only once
       elType = rootPtr->getTypeReadFacing(defOp);
     }

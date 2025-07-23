@@ -2901,7 +2901,6 @@ void ProtoModelMerged::decode(Decoder &decoder)
   }
   decoder.closeElement(elemId);
   ((ParamListMerged *)input)->finalize();
-  ((ParamListMerged *)output)->finalize();
 }
 
 void ParameterBasic::setTypeLock(bool val)
