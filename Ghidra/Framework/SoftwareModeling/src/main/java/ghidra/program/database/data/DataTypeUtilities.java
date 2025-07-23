@@ -62,13 +62,13 @@ public class DataTypeUtilities {
 		cPrimitiveNameMap.put("long double", LongDoubleDataType.dataType);
 	}
 
-	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear 
+	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear
 	// when/if this was ever used in the generation of a conflict name.
-	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers) 
+	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers)
 	// will not utilize conflict names.  This includes pointers and arrays whose base
 	// type is a BuiltInDataType.
 	// NOTE: The BASE_DATATYPE_CONFLICT_PATTERN may never be applied to a pointer
-	// or array name as it will always fail to match.  Pointer and array decorations 
+	// or array name as it will always fail to match.  Pointer and array decorations
 	// must be stripped off first.
 	private static final Pattern BASE_DATATYPE_CONFLICT_PATTERN =
 		Pattern.compile(Pattern.quote(DataType.CONFLICT_SUFFIX) + "([_]{0,1}\\d+){0,1}$");
@@ -157,7 +157,7 @@ public class DataTypeUtilities {
 	 * Note: pointers to the second data type are references and therefore are not considered to be
 	 * part of the first and won't cause true to be returned. If you pass a pointer to this method
 	 * for the first or second parameter, it will return false.
-	 * 
+	 *
 	 * @param firstDataType the data type whose components or base type should be checked to see if
 	 *            the second data type is part of it.
 	 * @param secondDataType the data type to be checked for in the first data type.
@@ -192,7 +192,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID
-	 * 
+	 *
 	 * @param dataType1 first data type
 	 * @param dataType2 second data type
 	 * @return true if types correspond to the same type from a source archive
@@ -218,7 +218,7 @@ public class DataTypeUtilities {
 	/**
 	 * Returns true if two dataTypes have the same sourceArchive and the same UniversalID OR are
 	 * equivalent
-	 * 
+	 *
 	 * @param dataType1 first data type (if invoked by DB object or manager, this argument must
 	 *            correspond to the DataTypeDB).
 	 * @param dataType2 second data type
@@ -230,6 +230,10 @@ public class DataTypeUtilities {
 		if (isSameDataType(dataType1, dataType2)) {
 			return true;
 		}
+		if (dataType2 instanceof DataTypeDB) {
+			// Leverage optimizations within most DataTypeDB implementations
+			return dataType2.isEquivalent(dataType1);
+		}
 		// otherwise, check if they are equivalent
 		return dataType1.isEquivalent(dataType2);
 	}
@@ -237,16 +241,16 @@ public class DataTypeUtilities {
 	/**
 	 * Determine if two dataTypes are the same kind of datatype without considering naming or
 	 * component makeup.  The use of Typedefs is ignored and stripped away for comparison.
-	 * This method also ignores details about most built-in types, pointers and arrays 
+	 * This method also ignores details about most built-in types, pointers and arrays
 	 * (e.g., number of elements or size).  Implementations of the following abstract classes
 	 * will be treated as the same kind as another datatype which extends the same abstract
 	 * class:
 	 * <ul>
-	 * <li>{@link AbstractIntegerDataType}</li> 
+	 * <li>{@link AbstractIntegerDataType}</li>
 	 * <li>{@link AbstractFloatDataType}</li>
 	 * <li>{@link AbstractStringDataType}</li>
 	 * </ul>
-	 *  Other uses of {@link BuiltInDataType} must match the specific implementation class. 
+	 *  Other uses of {@link BuiltInDataType} must match the specific implementation class.
 	 * @param dataType1 first data type
 	 * @param dataType2 second data type
 	 * @return true if the two dataTypes are the same basic kind else false
@@ -311,7 +315,7 @@ public class DataTypeUtilities {
 	 * Get the base data type for the specified data type stripping away pointers and arrays only. A
 	 * null will be returned for a default pointer.
 	 *
-	 * @param dt the data type whose base data type is to be determined. 
+	 * @param dt the data type whose base data type is to be determined.
 	 * @return the base data type (may be null for default pointer).
 	 */
 	public static DataType getBaseDataType(DataType dt) {
@@ -393,7 +397,7 @@ public class DataTypeUtilities {
 	/**
 	 * Create a data type category path derived from the specified namespace and rooted from the
 	 * specified baseCategory
-	 * 
+	 *
 	 * @param baseCategory category path from which to root the namespace-base path
 	 * @param namespace the namespace
 	 * @return namespace derived category path
@@ -415,9 +419,9 @@ public class DataTypeUtilities {
 	 * Find the structure data type which corresponds to the specified class namespace
 	 * within the specified data type manager.
 	 * The structure must utilize a namespace-based category path, however,
-	 * the match criteria can be fuzzy and relies primarily on the full class namespace.  
-	 * A properly named class structure must reside within a category whose trailing 
-	 * path either matches the class namespace or the class-parent's namespace.  
+	 * the match criteria can be fuzzy and relies primarily on the full class namespace.
+	 * A properly named class structure must reside within a category whose trailing
+	 * path either matches the class namespace or the class-parent's namespace.
 	 * Preference is given to it residing within the class-parent's namespace.
 	 * @param dataTypeManager data type manager which should be searched.
 	 * @param classNamespace class namespace
@@ -440,10 +444,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Attempt to find the data type whose dtName and specified namespace match a stored data type
-	 * within the specified dataTypeManager. The first match which satisfies the category path 
-	 * requirement will be returned.  If a non-root namespace is specified the datatype's trailing 
+	 * within the specified dataTypeManager. The first match which satisfies the category path
+	 * requirement will be returned.  If a non-root namespace is specified the datatype's trailing
 	 * category path must match the specified namespace path.
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param namespace namespace associated with dtName (null indicates no namespace constraint)
 	 * @param dtName name of data type
@@ -466,10 +470,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Attempt to find the data type whose dtNameWithNamespace match a stored data type within the
-	 * specified dataTypeManager. The namespace will be used in checking data type parent categories.  
-	 * NOTE: name parsing assumes :: namespace delimiter which can be thrown off if name includes 
+	 * specified dataTypeManager. The namespace will be used in checking data type parent categories.
+	 * NOTE: name parsing assumes :: namespace delimiter which can be thrown off if name includes
 	 * template information which could contain namespaces (see {@link SymbolPathParser#parse(String)}).
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param dtNameWithNamespace name of data type qualified with namespace (e.g.,
 	 *            ns1::ns2::dtname)
@@ -507,7 +511,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Return the appropriate datatype for a given C primitive datatype name.
-	 * 
+	 *
 	 * @param dataTypeName the datatype name (e.g. "unsigned int", "long long")
 	 * @return the appropriate datatype for a given C primitive datatype name.
 	 */
@@ -525,11 +529,11 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get relative/partial category paths which corresponds to a specified namespace.
-	 * Any {@link Library} namespace will be ignored and treated like the global namespace 
+	 * Any {@link Library} namespace will be ignored and treated like the global namespace
 	 * when generating a related category path. An empty string will be returned for the
 	 * global namespace.
 	 * @param namespace data type namespace
-	 * @return partial two-element array with category path for namespace [NAMESPACE_PATH_INDEX] 
+	 * @return partial two-element array with category path for namespace [NAMESPACE_PATH_INDEX]
 	 * and parent-namespace [PARENT_NAMESPACE_PATH_INDEX].
 	 * A null is returned if namespace is null or the root/global namespace.
 	 */
@@ -557,12 +561,12 @@ public class DataTypeUtilities {
 	/**
 	 * Namespace category matcher.  Only those datatypes contained within a catgeory
 	 * whose trailing category path matches the specified namespacePath will be considered
-	 * a possible match.  If the namespacePath is empty array all category paths will 
+	 * a possible match.  If the namespacePath is empty array all category paths will
 	 * be considered a match with preference given to the root category.
 	 * @param categoryPath datatype category path
 	 * @param namespacePath namespace path
 	 * @return {@link CategoryMatchType#PREFERRED} if namespace match found, {@link CategoryMatchType#SECONDARY}
-	 * if no namespace constraint specified else {@link CategoryMatchType#NONE} if namespace constraint not 
+	 * if no namespace constraint specified else {@link CategoryMatchType#NONE} if namespace constraint not
 	 * satisfied.
 	 */
 	private static CategoryMatchType getCategoryMatchType(CategoryPath categoryPath,
@@ -577,14 +581,14 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Namespace category matcher.  
+	 * Namespace category matcher.
 	 * @param categoryPath datatype category path
 	 * @param namespacePaths namespace paths constraint or null for no namespace.  This value should
 	 * be obtained from the {@link #getRelativeCategoryPaths(Namespace)} method.
-	 * @param parentNamespacePreferred if true matching on parent namespace is 
+	 * @param parentNamespacePreferred if true matching on parent namespace is
 	 * enabled and preferred over match on actual namespace.  This is used for
 	 * class structure searching.
-	 * @return {@link CategoryMatchType#PREFERRED} is returned if parentNamespacePreferred is true 
+	 * @return {@link CategoryMatchType#PREFERRED} is returned if parentNamespacePreferred is true
 	 * and category path matches on parent-namespace or parentNamespacePreferred is false
 	 * and category path matches on namespace.  {@link CategoryMatchType#SECONDARY} is returned
 	 * if parentNamespacePreferred is true and category path matches on namespace.  Otherwise
@@ -639,7 +643,7 @@ public class DataTypeUtilities {
 	 * @param <T> A standard interface which extends {@link DataType} (e.g., {@link Structure}).
 	 * @param dataTypeManager datatype manager to query
 	 * @param rootPath root category path
-	 * @param namespacePath an optional namespace path to be checked under rootPath.  
+	 * @param namespacePath an optional namespace path to be checked under rootPath.
 	 * If null or empty the rootPath will be checked for dtName.
 	 * @param dtName datatype name
 	 * @param classConstraint datatype class constraint (optional, may be null)
@@ -667,7 +671,7 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Get the specified datatype by name and category and return only if its type 
+	 * Get the specified datatype by name and category and return only if its type
 	 * corresponds to an class constraint if specified.
 	 * @param <T> A standard interface which extends {@link DataType} (e.g., {@link Structure}).
 	 * @param category datatype category to query
@@ -689,9 +693,9 @@ public class DataTypeUtilities {
 	/**
 	 * Perform a preferred category namespace qualified datatype search using
 	 * category path supplied by {@link Program#getPreferredRootNamespaceCategoryPath()}.
-	 * Any {@link Library} namespace will be ignored and treated like the global namespace 
-	 * when generating a related category path.  This method only applies to 
-	 * {@link ProgramBasedDataTypeManager} and will always return null for other 
+	 * Any {@link Library} namespace will be ignored and treated like the global namespace
+	 * when generating a related category path.  This method only applies to
+	 * {@link ProgramBasedDataTypeManager} and will always return null for other
 	 * datatype managers.
 	 * @param dataTypeManager datatype manager
 	 * @param namespace namespace constraint or null for no namespace.
@@ -730,7 +734,7 @@ public class DataTypeUtilities {
 	 * Compare datatype category path lengths for sorting shortest path first.
 	 * Tie-breaker based on path name sort.
 	 * Rationale is to provide some deterministic datatype selection behavior and
-	 * to allow duplicates within a hierarchical orgainzation to prefer the short
+	 * to allow duplicates within a hierarchical organization to prefer the short
 	 * path to reduce bad namespace matches.
 	 */
 	private static final Comparator<DataType> DATATYPE_CATEGORY_PATH_LENGTH_COMPARATOR =
@@ -745,15 +749,15 @@ public class DataTypeUtilities {
 		};
 
 	/**
-	 * Perform a namespace qualified datatype search.  
+	 * Perform a namespace qualified datatype search.
 	 * @param dataTypeManager datatype manager
 	 * @param dtName datatype name
 	 * @param classConstraint type of datatype by its interface class (e.g., {@link Structure}).
 	 * @param categoryMatcher responsible for evaluating the category path
-	 * for a possible match with a namespace constraint.  
-	 * @return The first {@link CategoryMatchType#PREFERRED} match will be 
-	 * returned if found.  If none are {@link CategoryMatchType#PREFERRED}, the first 
-	 * {@link CategoryMatchType#SECONDARY} match will be returned.  Otherwise null is returned. 
+	 * for a possible match with a namespace constraint.
+	 * @return The first {@link CategoryMatchType#PREFERRED} match will be
+	 * returned if found.  If none are {@link CategoryMatchType#PREFERRED}, the first
+	 * {@link CategoryMatchType#SECONDARY} match will be returned.  Otherwise null is returned.
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T extends DataType> T findDataType(DataTypeManager dataTypeManager,
@@ -812,10 +816,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
+	 *
 	 * @param dataType data type
 	 * @param includeCategoryPath if true, the category path will be included with the
-	 * returned name (e.g., /mypath/mydt) and any occurance of a forward slash within individual 
+	 * returned name (e.g., /mypath/mydt) and any occurance of a forward slash within individual
 	 * path components, including the data type name, will be escaped (e.g., {@code "\/"}).
 	 * @return name with optional category path included
 	 */
@@ -829,7 +833,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
+	 *
 	 * @param dataTypeName data type name with optional category path included
 	 * @return name with optional category path included
 	 */
@@ -849,7 +853,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get a datatype's name without conflict suffix.
-	 * 
+	 *
 	 * @param dt datatype (pointer and array permitted)
 	 * @return datatype's name without conflict suffix
 	 */
@@ -904,13 +908,13 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the conflict value string associated with a conflict datatype name.
-	 * 
+	 *
 	 * @param dataType datatype to be checked
 	 * @return conflict value:
 	 * <ol>
 	 * <li>-1: when type does not have a conflict name,</li>
 	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
-	 * <li>a positive value which corresponds to the conflict number in the name 
+	 * <li>a positive value which corresponds to the conflict number in the name
 	 *     (e.g., returns 2 for {@code .conflict2}).</li>
 	 * </ol>
 	 */
@@ -930,13 +934,13 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the conflict value associated with a conflict datatype name.
-	 * 
+	 *
 	 * @param dataTypeName datatype name to be checked
 	 * @return conflict value:
 	 * <ol>
 	 * <li>-1: when name is not have a conflict name,</li>
 	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
-	 * <li>a positive value which corresponds to the conflict number in the name 
+	 * <li>a positive value which corresponds to the conflict number in the name
 	 *     (e.g., returns 2 for {@code .conflict2}).</li>
 	 * </ol>
 	 */
@@ -952,7 +956,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Determine if the specified data type name is a conflict name.
-	 * 
+	 *
 	 * @param dataTypeName datatype name
 	 * @return true if data type name is a conflict name.
 	 */
@@ -991,7 +995,7 @@ public class DataTypeUtilities {
 	/**
 	 * Compares two data type name strings to determine if they are equivalent names, ignoring
 	 * conflict patterns present.
-	 * 
+	 *
 	 * @param name1 the first name
 	 * @param name2 the second name
 	 * @return true if the names are equivalent when conflict suffixes are ignored.

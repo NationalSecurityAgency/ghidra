@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.SymbolPath;
@@ -211,6 +212,9 @@ public class MDMangUtils {
 		// When simple is true, we need to recurse the nested hierarchy to pull the names
 		// up to the main namespace level, so we set recurse = true
 		recurseNamespace(demangledParts, parsableItem, simple);
+		if(ObjectUtils.isEmpty(regularPathName)) {
+			return createSymbolPath(demangledParts);
+		}
 		List<String> regularParts = SymbolPathParser.parse(regularPathName);
 
 		int m = Integer.min(demangledParts.size(), regularParts.size());
@@ -239,6 +243,10 @@ public class MDMangUtils {
 			parts.add(0, n);
 		}
 
+		return createSymbolPath(parts);
+	}
+	
+	private static SymbolPath createSymbolPath(List<String> parts) {
 		SymbolPath sp = null;
 		for (String part : parts) {
 			sp = new SymbolPath(sp, part);
