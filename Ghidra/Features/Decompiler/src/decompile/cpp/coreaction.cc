@@ -4585,11 +4585,17 @@ int4 ActionInputPrototype::apply(Funcdata &data)
     for(int4 i=0;i<active.getNumTrials();++i) {
       ParamTrial &paramtrial(active.getTrial(i));
       if (paramtrial.isUnref() && paramtrial.isUsed()) {
-	vn = data.newVarnode(paramtrial.getSize(),paramtrial.getAddress());
-	vn = data.setInputVarnode(vn);
-	int4 slot = triallist.size();
-	triallist.push_back(vn);
-	paramtrial.setSlot(slot + 1);
+	if (data.hasInputIntersection(paramtrial.getSize(), paramtrial.getAddress())) {
+	  // There is something in the way of the unreferenced parameter, don't create it
+	  paramtrial.markNoUse();
+	}
+	else {
+	  vn = data.newVarnode(paramtrial.getSize(),paramtrial.getAddress());
+	  vn = data.setInputVarnode(vn);
+	  int4 slot = triallist.size();
+	  triallist.push_back(vn);
+	  paramtrial.setSlot(slot + 1);
+	}
       }
     }
     if (data.isHighOn())

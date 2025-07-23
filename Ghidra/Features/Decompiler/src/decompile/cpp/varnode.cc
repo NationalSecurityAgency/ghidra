@@ -1530,6 +1530,29 @@ Varnode *VarnodeBank::findCoveringInput(int4 s,const Address &loc) const
   return (Varnode *)0;
 }
 
+/// \param s is the number of bytes in the given range
+/// \param loc is the starting address of the given range
+/// \return \b true if there is an input Varnode that overlaps the range
+bool VarnodeBank::hasInputIntersection(int4 s,const Address &loc) const
+
+{
+  VarnodeDefSet::const_iterator iter;
+  Varnode *vn;
+  iter = beginDef(Varnode::input,loc);
+  if (iter != def_tree.end()) {
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc, s))
+      return true;
+  }
+  if (iter != def_tree.begin()) {
+    --iter;
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc,s))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Beginning of Varnodes in given address space sorted by location
 ///
 /// \param spaceid is the given address space

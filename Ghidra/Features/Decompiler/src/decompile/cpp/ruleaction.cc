@@ -1757,6 +1757,7 @@ int4 RuleAndCompare::applyOp(PcodeOp *op,Funcdata &data)
   switch(subop->code()) {
   case CPUI_SUBPIECE:
     basevn = subop->getIn(0);
+    if (basevn->getSize() > sizeof(uintb)) return 0;
     baseconst = andop->getIn(1)->getOffset();
     andconst  = baseconst << subop->getIn(1)->getOffset() * 8;
     break;
