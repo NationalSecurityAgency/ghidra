@@ -37,14 +37,14 @@ class GhidraLauncher(PyGhidraLauncher):
             if sys.platform == "win32":
                 appid = ctypes.c_wchar_p(self.app_info.name)
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)  # @UndefinedVariable
-            Thread(lambda: Ghidra.main([self._class_name, *self.args])).start()
+            Thread(lambda: Ghidra.main(["ghidra.Ghidra", self._class_name, *self.args])).start()
             is_exiting = threading.Event()
             Runtime.getRuntime().addShutdownHook(Thread(is_exiting.set))
             if sys.platform == "darwin":
                 _run_mac_app()
             is_exiting.wait()
         else:
-            Ghidra.main([self._class_name, *self.args])
+            Ghidra.main(["ghidra.Ghidra", self._class_name, *self.args])
 
 
 class ParsedArgs(argparse.Namespace):
