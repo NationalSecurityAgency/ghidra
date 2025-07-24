@@ -15,6 +15,7 @@
  */
 package agent.lldb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -55,6 +56,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			assertEquals(false, execute.parameters().get("to_string").getDefaultValue());
 			assertEquals("test\n",
 				execute.invoke(Map.of("cmd", "script print('test')", "to_string", true)));
+			conn.success();
 		}
 	}
 
@@ -63,6 +65,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 		try (LldbAndConnection conn = startAndConnectLldb()) {
 			start(conn, getSpecimenPrint());
 			conn.execute("kill");
+			conn.success();
 		}
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 			// Just confirm it's present
@@ -89,6 +92,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.toList();
 				assertThat(list.size(), greaterThan(2));
 			}
+			conn.success();
 		}
 	}
 
@@ -128,6 +132,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"main");
 			}
+			conn.success();
 		}
 	}
 
@@ -177,6 +182,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
 					"main+0x30");
 			}
+			conn.success();
 		}
 	}
 
@@ -201,6 +207,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.toList();
 				assertEquals(1, list.size());
 			}
+			conn.success();
 		}
 	}
 
@@ -223,6 +230,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertLocalOs(env.getValue(0, "_os").castValue());
 				assertEquals(PLAT.endian(), env.getValue(0, "_endian").getValue());
 			}
+			conn.success();
 		}
 	}
 
@@ -243,6 +251,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
 			}
+			conn.success();
 		}
 	}
 
@@ -273,6 +282,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.toList();
 				assertTrue(list.size() > 1);
 			}
+			conn.success();
 		}
 	}
 
@@ -302,6 +312,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				// LLDB treats registers in arch's endian
 				assertEquals("deadbeef", intRegVal.getUnsignedValue().toString(16));
 			}
+			conn.success();
 		}
 	}
 
@@ -324,6 +335,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					tb.trace.getMemoryManager().getAllRegions();
 				assertThat(all.size(), greaterThan(2));
 			}
+			conn.success();
 		}
 	}
 
@@ -347,6 +359,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					all.stream().filter(m -> m.getName(SNAP).contains("expPrint")));
 				assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase(SNAP)));
 			}
+			conn.success();
 		}
 	}
 
@@ -388,6 +401,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 							.or(containsString("tid = 0x%x".formatted(index))));
 				}
 			}
+			conn.success();
 		}
 	}
 
@@ -421,6 +435,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					assertThat(out, containsString("#%s".formatted(level)));
 				}
 			}
+			conn.success();
 		}
 	}
 
@@ -440,6 +455,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("target list");
 				assertThat(out, containsString("No targets"));
 			}
+			conn.success();
 		}
 	}
 
@@ -466,6 +482,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					String out = conn.executeCapture("target list");
 					assertThat(out, containsString("pid=%d".formatted(dproc.pid)));
 				}
+				conn.success();
 			}
 		}
 	}
@@ -490,6 +507,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					String out = conn.executeCapture("target list");
 					assertThat(out, containsString("pid=%d".formatted(dproc.pid)));
 				}
+				conn.success();
 			}
 		}
 	}
@@ -512,6 +530,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				//assertThat(out, containsString("pid=%d".formatted(dproc.pid)));
 				assertThat(out, containsString("detached"));
 			}
+			conn.success();
 		}
 	}
 
@@ -534,6 +553,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("target list");
 				assertThat(out, containsString(getSpecimenPrint()));
 			}
+			conn.success();
 		}
 	}
 
@@ -565,6 +585,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("bt");
 				assertThat(out, containsString("read"));
 			}
+			conn.success();
 		}
 	}
 
@@ -585,6 +606,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("target list");
 				assertThat(out, containsString("exited"));
 			}
+			conn.success();
 		}
 	}
 
@@ -648,6 +670,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				FoundHex pc = FoundHex.findHex(List.of(disAt.split("\\s+")), 0);
 				assertEquals(instr.target, pc.value);
 			}
+			conn.success();
 		}
 	}
 
@@ -677,6 +700,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				FoundHex pc = FoundHex.findHex(List.of(disAt.split("\\s+")), 0);
 				assertEquals(instr.next, pc.value);
 			}
+			conn.success();
 		}
 	}
 
@@ -706,6 +730,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				FoundHex pc = FoundHex.findHex(List.of(disAt.split("\\s+")), 0);
 				assertEquals(addr.value, pc);
 			}
+			conn.success();
 		}
 	}
 
@@ -736,6 +761,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				int finalDepth = getDepth(conn);
 				assertEquals(initDepth - 1, finalDepth);
 			}
+			conn.success();
 		}
 	}
 
@@ -766,6 +792,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				int finalDepth = getDepth(conn);
 				assertEquals(initDepth - 1, finalDepth);
 			}
+			conn.success();
 		}
 	}
 
@@ -787,6 +814,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString("main"));
 				assertThat(out, containsString(Long.toHexString(address)));
 			}
+			conn.success();
 		}
 	}
 
@@ -806,6 +834,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("breakpoint list");
 				assertThat(out, containsString("main"));
 			}
+			conn.success();
 		}
 	}
 
@@ -828,6 +857,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("breakpoint list");
 				assertThat(out, containsString(Long.toHexString(address)));
 			}
+			conn.success();
 		}
 	}
 
@@ -849,6 +879,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				//NB: a little odd that this isn't in hex
 				assertThat(out, containsString(Long.toString(address)));
 			}
+			conn.success();
 		}
 	}
 
@@ -875,6 +906,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString("size = 1"));
 				assertThat(out, containsString("type = r"));
 			}
+			conn.success();
 		}
 	}
 
@@ -897,6 +929,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString(Long.toHexString(address)));
 				assertThat(out, containsString("type = r"));
 			}
+			conn.success();
 		}
 	}
 
@@ -925,6 +958,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					containsString("type = w"),
 					containsString("type = m")));
 			}
+			conn.success();
 		}
 	}
 
@@ -949,6 +983,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					containsString("type = w"),
 					containsString("type = m")));
 			}
+			conn.success();
 		}
 	}
 
@@ -975,6 +1010,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString("size = 1"));
 				assertThat(out, containsString("type = rw"));
 			}
+			conn.success();
 		}
 	}
 
@@ -997,6 +1033,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString(Long.toHexString(address)));
 				assertThat(out, containsString("type = rw"));
 			}
+			conn.success();
 		}
 	}
 
@@ -1017,6 +1054,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString("Exception"));
 				assertThat(out, containsString("__cxa_throw"));
 			}
+			conn.success();
 		}
 	}
 
@@ -1040,6 +1078,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("breakpoint list");
 				assertThat(out, containsString("disabled"));
 			}
+			conn.success();
 		}
 	}
 
@@ -1064,6 +1103,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("breakpoint list");
 				assertThat(out, containsString("disabled"));
 			}
+			conn.success();
 		}
 	}
 
@@ -1087,6 +1127,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				String out = conn.executeCapture("breakpoint list");
 				assertThat(out, containsString("No breakpoints"));
 			}
+			conn.success();
 		}
 	}
 
@@ -1117,6 +1158,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				out = conn.executeCapture("watchpoint list");
 				assertThat(out, containsString("No watchpoints"));
 			}
+			conn.success();
 		}
 	}
 
