@@ -45,6 +45,7 @@ import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 
 public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedDebuggerTest {
@@ -76,7 +77,9 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		helper.dismissWithArguments(Map.ofEntries(
 			helper.entry("address", "localhost"),
 			helper.entry("port", 0)));
-		waitForPass(() -> Unique.assertOne(traceRmiService.getAllAcceptors()));
+		TraceRmiAcceptor acceptor =
+			waitForPass(() -> Unique.assertOne(traceRmiService.getAllAcceptors()));
+		acceptor.cancel();
 	}
 
 	@Test
@@ -129,6 +132,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	public void testActionCloseOnAcceptor() throws Exception {
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
+		waitForSwing();
 		TraceRmiAcceptorNode node =
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor);
 		assertNotNull(node);
@@ -149,6 +153,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	@Test
 	public void testActionCloseOnConnection() throws Exception {
 		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
+			waitForSwing();
 			TraceRmiConnectionNode node =
 				TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
 						.get(cx.connection);
@@ -169,6 +174,8 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
 		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
+			waitForSwing();
+
 			performEnabledAction(provider, provider.actionCloseAll, true);
 
 			waitForPass(() -> assertFalse(traceRmiService.isServerStarted()));
@@ -209,6 +216,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	public void testAcceptHasNode() throws Exception {
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
+		waitForSwing();
 		TraceRmiAcceptorNode node =
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor);
 		assertNotNull(node);
@@ -219,11 +227,13 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	public void testAcceptThenCancelNoNode() throws Exception {
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
+		waitForSwing();
 		assertNotNull(
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor));
 
 		acceptor.cancel();
 		waitForPass(() -> traceRmiService.getAllAcceptors().isEmpty());
+		waitForSwing();
 		assertNull(
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor));
 	}
@@ -310,6 +320,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	public void testAcceptThenSuccessNodes() throws Exception {
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
+		waitForSwing();
 		assertNotNull(
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor));
 
@@ -320,6 +331,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 						.get(acceptor)));
 			waitForPass(() -> assertEquals(cx.connection,
 				Unique.assertOne(traceRmiService.getAllConnections())));
+			waitForSwing();
 
 			TraceRmiConnectionNode node =
 				TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
@@ -335,6 +347,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		traceRmiService.startServer();
 		try (Cx cx = Cx.toServer(traceRmiService, "Test client")) {
 			waitForPass(() -> traceRmiService.getAllAcceptors().isEmpty());
+			waitForSwing();
 
 			TraceRmiConnectionNode node = waitForValue(
 				() -> TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
@@ -349,6 +362,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
 			waitForPass(() -> assertEquals(cx.connection,
 				Unique.assertOne(traceRmiService.getAllConnections())));
+			waitForSwing();
 
 			TraceRmiConnectionNode node =
 				TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
@@ -364,6 +378,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
 		try (Cx cx = Cx.complete(acceptor, "Test client")) {
+			waitForSwing();
 			assertNotNull(TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
 					.get(cx.connection));
 
@@ -380,6 +395,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		TraceRmiAcceptor acceptor =
 			traceRmiService.acceptOne(new InetSocketAddress("localhost", 0));
 		try (Cx cx = Cx.complete(acceptor, "Test client")) {
+			waitForSwing();
 			assertNotNull(TraceRmiConnectionTreeHelper.getConnectionNodeMap(provider.rootNode)
 					.get(cx.connection));
 
@@ -403,12 +419,13 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			}
 			cx.client.activate(1, "");
 			Target target = waitForValue(() -> traceManager.getCurrent().getTarget());
+			waitForSwing();
 
 			TraceRmiTargetNode node =
 				TraceRmiConnectionTreeHelper.getTargetNodeMap(provider.rootNode).get(target);
 			assertEquals("bash (snap=1)", node.getDisplayText());
 
-			provider.tree.setSelectedNode(node);
+			Swing.runNow(() -> provider.tree.setSelectedNode(node));
 			// Tree uses a task queue for selection requests
 			waitForPass(
 				() -> assertEquals(node, Unique.assertOne(provider.tree.getSelectedNodes())));
