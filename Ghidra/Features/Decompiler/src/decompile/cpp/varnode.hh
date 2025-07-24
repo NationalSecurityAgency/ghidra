@@ -390,6 +390,7 @@ public:
   Varnode *findInput(int4 s,const Address &loc) const;		///< Find an input Varnode
   Varnode *findCoveredInput(int4 s,const Address &loc) const;	///< Find an input Varnode contained within this range
   Varnode *findCoveringInput(int4 s,const Address &loc) const;	///< Find an input Varnode covering a range
+  bool hasInputIntersection(int4 s,const Address &loc) const;	///< Check for input Varnode that overlaps the given range
   uint4 getCreateIndex(void) const { return create_index; }	///< Get the next creation index to be assigned
   VarnodeLocSet::const_iterator beginLoc(void) const { return loc_tree.begin(); }	///< Beginning of location list
   VarnodeLocSet::const_iterator endLoc(void) const { return loc_tree.end(); }		///< End of location list
