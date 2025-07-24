@@ -26,6 +26,7 @@ import ghidra.debug.api.target.TargetPublicationListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 public class TraceRmiServiceNode extends AbstractTraceRmiManagerNode
 		implements TraceRmiServiceListener, TargetPublicationListener {
@@ -107,46 +108,60 @@ public class TraceRmiServiceNode extends AbstractTraceRmiManagerNode
 
 	@Override
 	public void serverStarted(SocketAddress address) {
-		serverNode.fireNodeChanged();
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			serverNode.fireNodeChanged();
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void serverStopped() {
-		serverNode.fireNodeChanged();
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			serverNode.fireNodeChanged();
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void connected(TraceRmiConnection connection, ConnectMode mode,
 			TraceRmiAcceptor acceptor) {
-		addConnectionNode(connection);
-		removeAcceptorNode(acceptor);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			addConnectionNode(connection);
+			removeAcceptorNode(acceptor);
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void disconnected(TraceRmiConnection connection) {
-		removeConnectionNode(connection);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			removeConnectionNode(connection);
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void waitingAccept(TraceRmiAcceptor acceptor) {
-		addAcceptorNode(acceptor);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			addAcceptorNode(acceptor);
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void acceptCancelled(TraceRmiAcceptor acceptor) {
-		removeAcceptorNode(acceptor);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			removeAcceptorNode(acceptor);
+			provider.contextChanged();
+		});
 	}
 
 	@Override
 	public void acceptFailed(TraceRmiAcceptor acceptor, Exception e) {
-		removeAcceptorNode(acceptor);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			removeAcceptorNode(acceptor);
+			provider.contextChanged();
+		});
 	}
 
 	@Override
@@ -167,7 +182,7 @@ public class TraceRmiServiceNode extends AbstractTraceRmiManagerNode
 		synchronized (targetNodes) {
 			targetNodes.put(target, tNode);
 		}
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> provider.contextChanged());
 	}
 
 	protected static <K> void fireNodeChanged(Map<K, ? extends AbstractTraceRmiManagerNode> map,
@@ -207,8 +222,10 @@ public class TraceRmiServiceNode extends AbstractTraceRmiManagerNode
 		if (node == null) {
 			return;
 		}
-		node.getConnectionNode().targetWithdrawn(target);
-		provider.contextChanged();
+		Swing.runIfSwingOrRunLater(() -> {
+			node.getConnectionNode().targetWithdrawn(target);
+			provider.contextChanged();
+		});
 	}
 
 	public void coordinates(DebuggerCoordinates coordinates) {
