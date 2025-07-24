@@ -4332,8 +4332,20 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
 						// ...unless COPY is into something more interesting
     }
     if (constBlock->dominates(op->getParent())) {
-      int4 slot = op->getSlot(varVn);
-      data.opSetInput(op,constVn,slot);	// Replace ref with constant!
+      if (opc == CPUI_RETURN){
+          // CPUI_RETURN ops can't directly take constants
+          // as inputs
+          PcodeOp *copyBeforeRet = data.newOp(1, op->getAddr());
+          data.opSetOpcode(copyBeforeRet,CPUI_COPY);
+          data.opSetInput(copyBeforeRet,constVn,0);
+          data.newVarnodeOut(varVn->getSize(),varVn->getAddr(),copyBeforeRet);
+          data.opSetInput(op,copyBeforeRet->getOut(),1);
+          data.opInsertBefore(copyBeforeRet,op);
+      }
+      else {
+        int4 slot = op->getSlot(varVn);
+        data.opSetInput(op,constVn,slot);	// Replace ref with constant!
+      }
       count += 1;			// We made a change
     }
   }
