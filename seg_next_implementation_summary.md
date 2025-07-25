@@ -47,13 +47,15 @@ rel16: reloc is simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16)
 
 **NEW (Fixed):**
 ```sleigh
-rel16: reloc is simm16 [ reloc=(seg_next << 4) + ((inst_next + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=0 & simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=1 & simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ]
 ```
 
 This now:
-- Gets real CS register value via `seg_next`
-- Preserves CS while only modifying IP with wraparound
-- Correctly handles relative CALL/JMP instructions in segmented mode
+- **Real Mode**: Gets real CS register value via `seg_next` (needed because segment extraction from linear addresses is impossible)
+- **Protected Mode**: Uses linear address extraction (feasible because Ghidra's hack creates one-to-one mapping)
+- Preserves segment boundaries while only modifying offset with wraparound
+- Correctly handles relative CALL/JMP instructions in both segmented modes
 
 ## How to Test
 

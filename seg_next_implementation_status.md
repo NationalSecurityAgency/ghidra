@@ -11,8 +11,13 @@ rel16: reloc is simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16)
 
 **Fixed Code:**
 ```sleigh
-rel16: reloc is simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=0 & simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=1 & simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ]
 ```
+
+**Note**: Different approaches are needed:
+- **Real Mode**: Uses `seg_next` because segment extraction from linear addresses is mathematically impossible  
+- **Protected Mode**: Uses Ghidra's hack approach since the artificial address space allows reliable linear extraction
 
 ## ✅ IMPLEMENTATION COMPLETED (25 files modified)
 
@@ -40,7 +45,7 @@ rel16: reloc is simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) +
 9. **ParserWalker**: Added getSegaddr() method with cross-context support
 
 ### Target Fix (1 file) ✅
-- **ia.sinc**: Updated rel16 definition with improved formula using seg_next
+- **ia.sinc**: Updated rel16 definition with mode-specific implementations (seg_next for real mode, linear extraction for protected mode)
 
 ## 🎯 **READY FOR TESTING**
 

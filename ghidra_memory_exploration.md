@@ -5,12 +5,12 @@ This document tracks the implementation of comprehensive segmented memory suppor
 
 ## ✅ Phase 1: seg_next Implementation (COMPLETED)
 
-### Problem Statement
-The core issue was in `ia.sinc` line 1099 where x86 segmented memory handling was broken:
+### Problem Statement  
+The core issue was in `ia.sinc` where x86 real mode segmented memory handling was broken:
 ```sleigh
 rel16: reloc is simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ]
 ```
-This incorrectly tried to extract segment values from linear address upper bits, which is mathematically impossible since multiple segment:offset combinations map to the same linear address.
+This incorrectly tried to extract segment values from linear address upper bits for **all modes**. While this approach works for Ghidra's protected mode hack (where selectors are left-shifted 16 bits), it's mathematically impossible for **real mode** since multiple segment:offset combinations map to the same linear address.
 
 ### Solution: seg_next Built-in Variable
 Following the pattern of existing instruction values (`inst_next`, `inst_next2`), we implemented `seg_next` across **25 files** with the following components:
@@ -45,8 +45,22 @@ if (addr instanceof SegmentedAddress) {
 ### Target Fix Applied
 Updated `ia.sinc` rel16 definition to:
 ```sleigh
-rel16: reloc is simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=0 & simm16 [ reloc=(seg_next << 4) + ((inst_next - (seg_next << 4) + simm16) & 0xFFFF); ]
+rel16: reloc is protectedMode=1 & simm16 [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ]
 ```
+
+#### Implementation Notes: Why Different Approaches?
+
+**Real Mode (protectedMode=0)**: Uses `seg_next` because:
+- Multiple segment:offset combinations map to same linear address (segment << 4)
+- Extracting segment from linear address is mathematically impossible
+- Requires actual segment register value from `seg_next`
+
+**Protected Mode (protectedMode=1)**: Uses linear address extraction because:
+- Ghidra's hack creates one-to-one mapping (selector << 16) 
+- Each linear address has exactly one segment:offset representation
+- Segment extraction via `(inst_next >> 16) << 16` is mathematically reliable
+- No need for `seg_next` - the artificial address space makes extraction feasible
 
 ### Architecture Discovery
 Investigation revealed critical architecture insight:
@@ -197,7 +211,7 @@ currentCS: CS is CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
 
 ### Technical Details
 - **Pattern Chain**: CS override → MOV `m16` → `Mem16` → `seg16` → `currentCS` → now uses real segment value
-- **Consistency**: This fix aligns `currentCS` with the successful `rel16` pattern that already used `seg_next`
+- **Consistency**: This fix aligns `currentCS` with the successful `rel16` real mode pattern that uses `seg_next` (note: `rel16` protected mode uses different approach)
 - **Simplification**: Since `seg_next` provides real segment values, the `protectedMode` distinction was eliminated—one pattern now handles both modes
 - **Architecture**: Leverages the existing `seg_next` infrastructure implemented in Phase 1
 
