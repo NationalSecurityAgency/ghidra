@@ -2868,6 +2868,37 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		speculatedVxtStructs.putAll(expectedVxtStructs);
 	}
 
+	private static final Map<String, String> expectedVxtAddressTypes = new LinkedHashMap<>();
+	static {
+		expectedVxtAddressTypes.put("004503cc", "/Q4NS/Q4/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450434", "/Q5NS/Q5/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("0045049c", "/Q6NS/Q6/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450508", "/Q7NS/Q7/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00450600", "/R1NS/R1/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("004501e4", "/P1NS/P1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045020c", "/P2NS/P2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450240", "/Q1NS/Q1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450270", "/Q1NS/Q1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004502a4", "/Q2NS/Q2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004502dc", "/Q2NS/Q2/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450310", "/Q3NS/Q3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045033c", "/Q3NS/Q3/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450370", "/Q4NS/Q4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004503a8", "/Q4NS/Q4/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004503d8", "/Q5NS/Q5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450404", "/Q5NS/Q5/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("00450440", "/Q6NS/Q6/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045046c", "/Q6NS/Q6/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004504a8", "/Q7NS/Q7/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004504b0", "/Q7NS/Q7/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("004504d8", "/Q7NS/Q7/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00450518", "/R1NS/R1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450534", "/R1NS/R1/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("00450564", "/R1NS/R1/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00450598", "/R1NS/R1/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("004505d0", "/R1NS/R1/!internal/VTABLE_00000028");
+	}
+
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
@@ -2907,6 +2938,10 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<String, String> getExpectedVxtAddressTypes() {
+		return expectedVxtAddressTypes;
 	}
 
 	@Override
