@@ -27,7 +27,7 @@ public class RenameAction extends SymbolTreeContextAction {
 		super("Rename Symbol", plugin.getName());
 		setPopupMenuData(
 			new MenuData(new String[] { "Rename" }, null, "xxx", MenuData.NO_MNEMONIC, "1"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
+		setKeyBindingData(new KeyBindingData("L"));
 	}
 
 	@Override
