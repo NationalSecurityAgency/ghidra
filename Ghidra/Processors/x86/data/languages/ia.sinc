@@ -1130,7 +1130,8 @@ Mem16: addr16  	is (segover=0 & mod=1 & r_m=6) ... & addr16   { tmp:$(SIZE) = se
 Mem16: addr16   is (segover=0 & mod=2 & r_m=2) ... & addr16   { tmp:$(SIZE) = segment(SS,addr16); export tmp; }
 Mem16: addr16   is (segover=0 & mod=2 & r_m=3) ... & addr16   { tmp:$(SIZE) = segment(SS,addr16); export tmp; }
 Mem16: addr16  	is (segover=0 & mod=2 & r_m=6) ... & addr16   { tmp:$(SIZE) = segment(SS,addr16); export tmp; }
-Mem16: seg16^addr16	is seg16; addr16							 	   { tmp:$(SIZE) = segment(seg16,addr16); export tmp; }
+Mem16: seg16^addr16	is protectedMode=0 & seg16; addr16 { tmp:$(SIZE) = segment(seg16,addr16); export tmp; }
+Mem16: seg16^addr16	is protectedMode=1 & seg16; addr16 { tmp:$(SIZE) = seg16 + zext(addr16); export tmp; }
 
 Mem: Mem16 is addrsize=0 & Mem16             { export Mem16; }
 
