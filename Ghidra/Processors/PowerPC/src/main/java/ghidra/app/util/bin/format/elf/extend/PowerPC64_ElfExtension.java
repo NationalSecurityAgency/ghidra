@@ -24,13 +24,11 @@ import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.relocation.PowerPC64_ElfRelocationType;
 import ghidra.app.util.opinion.ElfLoader;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.QWordDataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -66,19 +64,24 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 	private static final int STO_PPC64_LOCAL_BIT = 5;
 	private static final int STO_PPC64_LOCAL_MASK = 0xE0;
 
+	// Use equate for ELFv1 to remember if function descriptors use 2 or 3 pointers.
+	// An equate value of 0 indicates 3-pointers, while 1 indicates 2-pointers
+	private static final String FN_DESCR_TYPE_NAME = "_ELFv1_PPC64_FN_DESCR_TYPE_";
+
 	public static final String TOC_BASE = "TOC_BASE"; // injected symbol to mark global TOC_BASE
+
+	public static final String OPD_SECTION_NAME = ".opd";
 
 	@Override
 	public boolean canHandle(ElfHeader elf) {
-		return elf.e_machine() == ElfConstants.EM_PPC64 && elf.is64Bit();
+		return elf.e_machine() == ElfConstants.EM_PPC64;
 	}
 
 	@Override
 	public boolean canHandle(ElfLoadHelper elfLoadHelper) {
 		Language language = elfLoadHelper.getProgram().getLanguage();
 		return canHandle(elfLoadHelper.getElfHeader()) &&
-			"PowerPC".equals(language.getProcessor().toString()) &&
-			language.getLanguageDescription().getSize() == 64;
+			"PowerPC".equals(language.getProcessor().toString());
 	}
 
 	@Override
@@ -107,12 +110,104 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 		setEntryPointContext(elfLoadHelper, monitor);
 
-		processOPDSection(elfLoadHelper, monitor);
+		if (getPpc64ElfABIVersion(elfLoadHelper.getElfHeader()) != 2) {
+			processOPDSection(elfLoadHelper, monitor); // establishes OPD_SIZE equate
+		}
 
+		// Super handles conventional GOT and executable PLT 
 		super.processGotPlt(elfLoadHelper, monitor);
 
-		processPpc64v2PltPointerTable(elfLoadHelper, monitor);
-		processPpc64PltGotPointerTable(elfLoadHelper, monitor);
+		// ppc64 extension only handles non-execute PLT containing pointers or function descriptors
+		ElfHeader elf = elfLoadHelper.getElfHeader();
+		if (getPpc64ElfABIVersion(elf) == 2) {
+			setPpc64ELFv2TocBase(elfLoadHelper, monitor);
+		}
+		if (!processPpc64DynamicPltPointerTable(elfLoadHelper, monitor)) {
+			processPpc64PltSectionPointerTable(elfLoadHelper, monitor);
+		}
+	}
+
+	private void setPpc64ELFv2TocBase(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) {
+		// paint TOC_BASE value as r2 across executable blocks since r2
+		// is needed to resolve call stubs
+		Symbol tocSymbol = SymbolUtilities.getLabelOrFunctionSymbol(elfLoadHelper.getProgram(),
+			TOC_BASE, err -> elfLoadHelper.getLog().appendMsg("PowerPC64_ELF", err));
+		if (tocSymbol != null) {
+			paintTocAsR2value(tocSymbol.getAddress().getOffset(), elfLoadHelper, monitor);
+		}
+	}
+
+	private void rememberELFv1FunctionDescriptorSize(ElfLoadHelper elfLoadHelper,
+			boolean hasThreePointerFnDescriptor) {
+		EquateTable equateTable = elfLoadHelper.getProgram().getEquateTable();
+		try {
+			equateTable.createEquate(FN_DESCR_TYPE_NAME, hasThreePointerFnDescriptor ? 0 : 1);
+		}
+		catch (DuplicateNameException | InvalidInputException e) {
+			Msg.error(this, "Unexpected exception", e);
+		}
+	}
+
+	/**
+	 * Recall the determination of function desciptors using 2 or 3 pointers for ELFv1.
+	 * The {@link #rememberELFv1FunctionDescriptorSize(ElfLoadHelper, boolean)} must have been
+	 * previously invoked to store this via an Equate use {@link #FN_DESCR_TYPE_NAME}.
+	 * @param elfLoadHelper ELF load helper
+	 * @return true if 3-pointer or false if 2-pointer function descriptor, null if never stored
+	 */
+	private Boolean hasELFv1ThreePointerFnDescriptor(ElfLoadHelper elfLoadHelper) {
+		EquateTable equateTable = elfLoadHelper.getProgram().getEquateTable();
+		Equate value = equateTable.getEquate(FN_DESCR_TYPE_NAME);
+		if (value == null) {
+			return null;
+		}
+		return value.getValue() == 0;
+	}
+
+	/**
+	 * Determine the ELFv1 Function Descriptor size/type by checking TOC_Base entry for first
+	 * two .opd entries.
+	 * @param opdAddr entry address of within .opd (generally, should be first entry)
+	 * @param uses32bitPtr true if 32-bit pointers are used, false if 64-bit
+	 * @param mem program memory
+	 * @param isFirstEntry true if opdAddr corresponds to first entry
+	 * @return true if .opd entried consist of three pointers, false if two pointers
+	 * @throws MemoryAccessException if memory access error occurs while checking .opd entries
+	 * @throws AddressOverflowException if address error occurs while checking .opd entries
+	 */
+	private boolean hasELFv1ThreePointerFnDescriptor(Address opdAddr, boolean uses32bitPtr,
+			Memory mem, boolean isFirstEntry)
+			throws MemoryAccessException, AddressOverflowException {
+
+		// NOTE: This method assumes the first two entries within the .opd region will have the same
+		// TOC value (2nd pointer).  I'm sure this is over simplified and could fail for some larger
+		// binaries.  If a better test is devised it could replace the use of this method.
+
+		int pointerSize = uses32bitPtr ? 4 : 8;
+
+		long tocValue = getUnsignedValue(opdAddr.addNoWrap(pointerSize), uses32bitPtr, mem);
+
+		// look forward assuming 2-pointer descriptor size
+		try {
+			long nextTocValue =
+				getUnsignedValue(opdAddr.addNoWrap(3 * pointerSize), uses32bitPtr, mem);
+			if (nextTocValue == tocValue) {
+				return false;
+			}
+
+			if (!isFirstEntry) {
+				long prevTocValue =
+					getUnsignedValue(opdAddr.subtractNoWrap(pointerSize), uses32bitPtr, mem);
+				if (prevTocValue == tocValue) {
+					return false;
+				}
+			}
+		}
+		catch (AddressOverflowException | MemoryAccessException e) {
+			// ignore error from peeking around
+		}
+
+		return true; // assume 3-pointer descriptor use
 	}
 
 	private void findTocBase(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) {
@@ -147,27 +242,33 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		}
 	}
 
-	private void processPpc64PltGotPointerTable(ElfLoadHelper elfLoadHelper, TaskMonitor monitor)
-			throws CancelledException {
+	private void processPpc64PltSectionPointerTable(ElfLoadHelper elfLoadHelper,
+			TaskMonitor monitor) throws CancelledException {
+
+		MemoryBlock pltBlock = getPltSectionBlockSetReadOnly(elfLoadHelper);
+		if (pltBlock == null) {
+			return; // .plt not found or is executable
+		}
 
 		ElfHeader elf = elfLoadHelper.getElfHeader();
-		if (getPpc64ABIVersion(elf) == 2) {
-			// paint TOC_BASE value as r2 across executable blocks since r2
-			// is needed to resolve call stubs
-			Symbol tocSymbol = SymbolUtilities.getLabelOrFunctionSymbol(elfLoadHelper.getProgram(),
-				TOC_BASE, err -> elfLoadHelper.getLog().appendMsg("PowerPC64_ELF", err));
-			if (tocSymbol != null) {
-				paintTocAsR2value(tocSymbol.getAddress().getOffset(), elfLoadHelper, monitor);
-			}
-			// TODO: verify ABI detection
-			return;
+		if (getPpc64ElfABIVersion(elf) == 2) {
+			markupELFv2PltGot(elfLoadHelper, pltBlock.getStart(), -1, monitor);
 		}
+		else {
+			markupELFv1PltPointerTable(elfLoadHelper, pltBlock.getStart(), -1, monitor);
+		}
+	}
+
+	private boolean processPpc64DynamicPltPointerTable(ElfLoadHelper elfLoadHelper,
+			TaskMonitor monitor) throws CancelledException {
+
+		ElfHeader elf = elfLoadHelper.getElfHeader();
 
 		ElfDynamicTable dynamicTable = elf.getDynamicTable();
 		if (dynamicTable == null || !dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTGOT) ||
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTRELSZ) ||
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTREL)) {
-			return;
+			return false;
 		}
 
 		try {
@@ -175,36 +276,125 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 				elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTGOT));
 			Address pltAddr = elfLoadHelper.getDefaultAddress(pltgotOffset);
 			Program program = elfLoadHelper.getProgram();
-			MemoryBlock pltBlock = program.getMemory().getBlock(pltAddr);
-			if (pltBlock == null || pltBlock.isExecute()) {
-				return;
+			MemoryBlock block = program.getMemory().getBlock(pltAddr);
+			if (block == null || block.isExecute()) {
+				return false; // PLT block not found or is executable
 			}
 
+			// Compute number of entries in .pltgot based upon number of associated dynamic relocations
 			int relEntrySize = (dynamicTable
 					.getDynamicValue(ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value) ? 24
 							: 16;
-
 			long pltEntryCount =
 				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTRELSZ) / relEntrySize;
 
+			if (getPpc64ElfABIVersion(elf) == 2) {
+				markupELFv2PltGot(elfLoadHelper, pltAddr, pltEntryCount, monitor);
+			}
+			else {
+				markupELFv1PltPointerTable(elfLoadHelper, pltAddr, pltEntryCount, monitor);
+			}
+		}
+		catch (NotFoundException e) {
+			throw new AssertException("Unexpected Error", e);
+		}
+		return true;
+	}
+
+	private void markupELFv2PltGot(ElfLoadHelper elfLoadHelper, Address pltAddr, long pltEntryCount,
+			TaskMonitor monitor) throws CancelledException {
+
+		int pointerSize = elfLoadHelper.getProgram().getDefaultPointerSize();
+
+		if (pltEntryCount <= 0) {
+			// compute based upon block size
+			MemoryBlock pltBlock = elfLoadHelper.getProgram().getMemory().getBlock(pltAddr);
+			pltEntryCount = (pltBlock.getSize() - PLT_HEAD_SIZE) / pointerSize;
+		}
+
+		Address addr = pltAddr.add(PLT_HEAD_SIZE);
+		try {
+			monitor.setShowProgressValue(true);
+			monitor.setProgress(0);
+			monitor.setMaximum(pltEntryCount);
+			int count = 0;
+
 			for (int i = 0; i < pltEntryCount; i++) {
 				monitor.checkCancelled();
-				pltAddr = pltAddr.addNoWrap(24);
-				Symbol refSymbol = markupDescriptorEntry(pltAddr, false, elfLoadHelper);
+				monitor.setProgress(++count);
+				if (elfLoadHelper.createData(addr, PointerDataType.dataType) == null) {
+					break; // stop early if failed to create a pointer
+				}
+				addr = addr.addNoWrap(pointerSize);
+			}
+		}
+		catch (AddressOverflowException e) {
+			// ignore
+		}
+	}
+
+	private void markupELFv1PltPointerTable(ElfLoadHelper elfLoadHelper, Address pltAddr,
+			long pltEntryCount, TaskMonitor monitor) throws CancelledException {
+
+		// Recover ELFv1 function descriptor type from stored Equate
+		Boolean hasThreePointerFnDescriptor = hasELFv1ThreePointerFnDescriptor(elfLoadHelper);
+		if (hasThreePointerFnDescriptor == null) {
+			return;
+		}
+
+		// NOTE: There are different conventions for the PLT based upon specific ABI
+		//		 conventions.  Dectecting what convention applies can be very tricky
+		//		 and may requiring applying some hueristic.  For now we will avoid 
+		//		 marking up this section and rely on other analysis.
+		//
+		// Case observations:
+		//       - Shared library for ELFv1 treated .plt section similar to .opd with
+		//		 the placement of function descriptors (3 pointers).
+
+		Program program = elfLoadHelper.getProgram();
+		Memory mem = program.getMemory();
+
+		int fnDescriptorSize = hasThreePointerFnDescriptor ? 3 : 2;
+		int pointerByteSize = program.getDefaultPointerSize();
+		int opdEntryByteSize = fnDescriptorSize * pointerByteSize;
+
+		if (pltEntryCount <= 0) {
+			// compute based upon block size
+			MemoryBlock pltBlock = elfLoadHelper.getProgram().getMemory().getBlock(pltAddr);
+			pltEntryCount = pltBlock.getSize() / opdEntryByteSize;
+		}
+
+		try {
+			monitor.setShowProgressValue(true);
+			monitor.setProgress(0);
+			monitor.setMaximum(pltEntryCount);
+			int count = 0;
+
+			for (int i = 0; i < pltEntryCount; i++) {
+				monitor.checkCancelled();
+				monitor.setProgress(++count);
+
+				// NOTE: First entry is skipped intentionally
+				pltAddr = pltAddr.addNoWrap(opdEntryByteSize);
+
+				Symbol refSymbol = markupDescriptorEntry(pltAddr, false,
+					hasThreePointerFnDescriptor, elfLoadHelper);
 				if (refSymbol != null && refSymbol.getSymbolType() == SymbolType.FUNCTION &&
-					refSymbol.getSource() == SourceType.DEFAULT) {
+					refSymbol.getSource() == SourceType.DEFAULT &&
+					!mem.isExternalBlockAddress(refSymbol.getAddress())) {
+
+					// TODO: Rename of DEFAULT thunk should always be avoided (see GP-5872)
+
 					try {
-						// Force source type on function to prevent potential removal by clear-flow
-						refSymbol.setName(".pltgot." + refSymbol.getName(), SourceType.IMPORTED);
+						// Rename default symbol with non-default source to prevent potential removal 
+						// by clear-flow. 
+						refSymbol.setName(".plt." + refSymbol.getName(), SourceType.IMPORTED);
 					}
 					catch (DuplicateNameException | InvalidInputException e) {
 						// ignore
 					}
 				}
 			}
-		}
-		catch (NotFoundException e) {
-			throw new AssertException("unexpected", e);
 		}
 		catch (AddressOverflowException e) {
 			elfLoadHelper.log("Failed to process PltGot entries: " + e.getMessage());
@@ -234,55 +424,69 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 	}
 
-	private void processPpc64v2PltPointerTable(ElfLoadHelper elfLoadHelper, TaskMonitor monitor)
-			throws CancelledException {
+	private MemoryBlock getPltSectionBlockSetReadOnly(ElfLoadHelper elfLoadHelper) {
 
 		ElfHeader elf = elfLoadHelper.getElfHeader();
 		ElfSectionHeader pltSection = elf.getSection(ElfSectionHeaderConstants.dot_plt);
 		if (pltSection == null) {
-			return;
+			return null;
 		}
 		Program program = elfLoadHelper.getProgram();
 		MemoryBlock pltBlock = program.getMemory().getBlock(pltSection.getNameAsString());
 		if (pltBlock == null) {
-			return;
+			return null;
 		}
 		if (pltSection.isExecutable()) {
-			return;
+			return null;
 		}
 
 		// set pltBlock read-only to permit decompiler simplification
 		pltBlock.setWrite(false);
 
-		if (getPpc64ABIVersion(elf) != 2) {
-			// TODO: add support for other PLT implementations
-			return;
-		}
-
-		// TODO: Uncertain
-
-		Address addr = pltBlock.getStart().add(PLT_HEAD_SIZE);
-		try {
-			while (addr.compareTo(pltBlock.getEnd()) < 0) {
-				monitor.checkCancelled();
-				if (elfLoadHelper.createData(addr, PointerDataType.dataType) == null) {
-					break; // stop early if failed to create a pointer
-				}
-				addr = addr.addNoWrap(PLT_ENTRY_SIZE);
-			}
-		}
-		catch (AddressOverflowException e) {
-			// ignore
-		}
-
+		return pltBlock;
 	}
 
 	private void processOPDSection(ElfLoadHelper elfLoadHelper, TaskMonitor monitor)
 			throws CancelledException {
 
-		MemoryBlock opdBlock = elfLoadHelper.getProgram().getMemory().getBlock(".opd");
+		boolean makeSymbol = false;
+		Program program = elfLoadHelper.getProgram();
+		Memory mem = program.getMemory();
+		MemoryBlock opdBlock = mem.getBlock(OPD_SECTION_NAME);
 		if (opdBlock == null) {
+
+			// Handle case where section names have been stripped - find .opd section
+			ElfHeader elf = elfLoadHelper.getElfHeader();
+			if (elf.getSectionHeaderCount() == 0 || !(elf.isExecutable() || elf.isSharedObject())) {
+				return;
+			}
+
+			// Determine entry address which should point into .opd block
+			long entry = elf.e_entry();
+			if (entry == 0) {
+				return;
+			}
+			AddressFactory addrFactory = program.getAddressFactory();
+			entry += elfLoadHelper.getImageBaseWordAdjustmentOffset();
+			Address entryAddress =
+				addrFactory.getDefaultAddressSpace().getTruncatedAddress(entry, true);
+			opdBlock = mem.getBlock(entryAddress);
+			makeSymbol = true;
+		}
+
+		if (opdBlock == null || !opdBlock.isInitialized() || opdBlock.isExecute()) {
 			return;
+		}
+
+		if (makeSymbol) {
+			try {
+				// Create .opd symbol if section lacked this name
+				elfLoadHelper.createSymbol(opdBlock.getStart(), OPD_SECTION_NAME, false, false,
+					null);
+			}
+			catch (InvalidInputException e) {
+				// ignore - unexpected
+			}
 		}
 
 		monitor.setMessage("Processing Function Descriptor Symbols...");
@@ -290,35 +494,50 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		Address addr = opdBlock.getStart();
 		Address endAddr = opdBlock.getEnd();
 
-		monitor.setShowProgressValue(true);
-		monitor.setProgress(0);
-		monitor.setMaximum((endAddr.subtract(addr) + 1) / 24);
-		int count = 0;
-
 		try {
+			int pointerByteSize = program.getDefaultPointerSize();
+			boolean hasThreePointerFnDescriptor =
+				hasELFv1ThreePointerFnDescriptor(addr, pointerByteSize == 4, mem, true);
+			int fnDescriptorSize = hasThreePointerFnDescriptor ? 3 : 2;
+			int opdEntryByteSize = fnDescriptorSize * pointerByteSize;
+
+			rememberELFv1FunctionDescriptorSize(elfLoadHelper, hasThreePointerFnDescriptor); // remember as equate
+
+			monitor.setShowProgressValue(true);
+			monitor.setProgress(0);
+			monitor.setMaximum((endAddr.subtract(addr) + 1) / opdEntryByteSize);
+			int count = 0;
+
 			while (addr.compareTo(endAddr) < 0) {
 				monitor.checkCancelled();
 				monitor.setProgress(++count);
-				processOPDEntry(elfLoadHelper, addr);
-				addr = addr.addNoWrap(24);
+				processOPDEntry(elfLoadHelper, addr, hasThreePointerFnDescriptor);
+				addr = addr.addNoWrap(opdEntryByteSize);
 			}
 		}
-		catch (AddressOverflowException e) {
-			// ignore end of space
+		catch (MemoryAccessException | AddressOverflowException e) {
+			// ignore end of space or failure to detect descriptor size
 		}
 
 		// allow .opd section contents to be treated as constant values
 		opdBlock.setWrite(false);
 	}
 
-	private void processOPDEntry(ElfLoadHelper elfLoadHelper, Address opdAddr) {
+	private long getUnsignedValue(Address addr, boolean uses32bitPtr, Memory mem)
+			throws MemoryAccessException {
+		return uses32bitPtr ? Integer.toUnsignedLong(mem.getInt(addr)) : mem.getLong(addr);
+	}
+
+	private void processOPDEntry(ElfLoadHelper elfLoadHelper, Address opdAddr,
+			boolean fnDescriptorHasEnvPtr) {
 
 		Program program = elfLoadHelper.getProgram();
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		boolean isGlobal = symbolTable.isExternalEntryPoint(opdAddr);
 
-		Symbol refSymbol = markupDescriptorEntry(opdAddr, isGlobal, elfLoadHelper);
+		Symbol refSymbol =
+			markupDescriptorEntry(opdAddr, isGlobal, fnDescriptorHasEnvPtr, elfLoadHelper);
 		if (refSymbol == null) {
 			return;
 		}
@@ -334,7 +553,8 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 				refSymbol.getSource() == SourceType.DEFAULT) {
 				try {
 					// Force source type on function to prevent potential removal by clear-flow
-					refSymbol.setName(".opd." + refSymbol.getName(), SourceType.IMPORTED);
+					refSymbol.setName(OPD_SECTION_NAME + "." + refSymbol.getName(),
+						SourceType.IMPORTED);
 				}
 				catch (DuplicateNameException | InvalidInputException e) {
 					// ignore
@@ -365,24 +585,35 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 	}
 
 	private Symbol markupDescriptorEntry(Address entryAddr, boolean isGlobal,
-			ElfLoadHelper elfLoadHelper) {
+			boolean hasThreePointerFnDescriptor, ElfLoadHelper elfLoadHelper) {
 		Program program = elfLoadHelper.getProgram();
 
-		// markup function descriptor (3 elements, 24-bytes)
-		Data refPtr = elfLoadHelper.createData(entryAddr, PointerDataType.dataType);
+		// markup function descriptor (two or three pointers)
+		Data refPtr = elfLoadHelper.createData(entryAddr, PointerDataType.dataType); // function *
 		Data tocPtr = elfLoadHelper.createData(entryAddr.add(program.getDefaultPointerSize()),
-			PointerDataType.dataType);
-		// TODO: uncertain what 3rd procedure descriptor element represents
-		elfLoadHelper.createData(entryAddr.add(2 * program.getDefaultPointerSize()),
-			QWordDataType.dataType);
+			PointerDataType.dataType); // toc *
 
 		if (refPtr == null || tocPtr == null) {
-			Msg.error(this, "Failed to process PPC64 descriptor at " + entryAddr);
+			Msg.error(this, "Failed to process PPC64 function descriptor at " + entryAddr);
 			return null;
 		}
 
+		// FIXME! How do we determine if an env* is present - descriptor may only have two pointers
+		// instead of three.
+
+		if (hasThreePointerFnDescriptor) {
+			elfLoadHelper.createData(entryAddr.add(2 * program.getDefaultPointerSize()),
+				PointerDataType.dataType); // env *
+		}
+
 		Address refAddr = (Address) refPtr.getValue();
-		if (refAddr == null || program.getMemory().getBlock(refAddr) == null) {
+		if (refAddr == null || refAddr.getOffset() == 0 ||
+			program.getMemory().getBlock(refAddr) == null) {
+			return null;
+		}
+
+		Address tocAddr = (Address) tocPtr.getValue();
+		if (tocAddr == null || tocAddr.getOffset() == 0) {
 			return null;
 		}
 
@@ -403,17 +634,15 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		}
 
 		// set r2 to TOC base for each function
-		Address tocAddr = (Address) tocPtr.getValue();
-		if (tocAddr != null) {
-			Register r2reg = program.getRegister("r2");
-			RegisterValue tocValue = new RegisterValue(r2reg, tocAddr.getOffsetAsBigInteger());
-			try {
-				program.getProgramContext().setRegisterValue(refAddr, refAddr, tocValue);
-			}
-			catch (ContextChangeException e) {
-				throw new AssertException(e);
-			}
+		Register r2reg = program.getRegister("r2");
+		RegisterValue tocValue = new RegisterValue(r2reg, tocAddr.getOffsetAsBigInteger());
+		try {
+			program.getProgramContext().setRegisterValue(refAddr, refAddr, tocValue);
 		}
+		catch (ContextChangeException e) {
+			throw new AssertException(e);
+		}
+
 		return function.getSymbol();
 	}
 
@@ -440,7 +669,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 			throws CancelledException {
 		Program program = elfLoadHelper.getProgram();
 
-		if (getPpc64ABIVersion(elfLoadHelper.getElfHeader()) == 2) {
+		if (getPpc64ElfABIVersion(elfLoadHelper.getElfHeader()) == 2) {
 
 			monitor.setMessage("Assuming r12 for global functions...");
 
@@ -476,11 +705,11 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 		// Check for V2 ABI
 		if (isExternal || elfSymbol.getType() != ElfSymbol.STT_FUNC ||
-			getPpc64ABIVersion(elfHeader) != 2) {
+			getPpc64ElfABIVersion(elfHeader) != 2) {
 			return address;
 		}
 
-		// NOTE: I don't think the ABI supports little-endian
+		// NOTE: I don't think the ELFv1 ABI supports little-endian
 		Language language = elfLoadHelper.getProgram().getLanguage();
 		if (!canHandle(elfLoadHelper) || elfHeader.e_machine() != ElfConstants.EM_PPC64 ||
 			language.getLanguageDescription().getSize() != 64) {
@@ -530,22 +759,22 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 	}
 
 	/**
-	 * Get the PPC64 ABI version specified within the ELF header.
+	 * Get the PPC64 ELF ABI version specified within the ELF header.
 	 * Expected values include:
 	 * <ul>
-	 * <li> 1 for original function descriptor using ABI </li>
+	 * <li> 1 for original function descriptor use (i.e., .opd) </li>
 	 * <li> 2 for revised ABI without function descriptors </li>
-	 * <li> 0 for unspecified or not using any features affected by the differences </li>
+	 * <li> 0 for unspecified or not using any features affected by the differences (ELFv1 assumed)</li>
 	 * </ul>
 	 * @param elf ELF header
-	 * @return ABI version
+	 * @return ELF ABI version
 	 */
-	public static int getPpc64ABIVersion(ElfHeader elf) {
+	public static int getPpc64ElfABIVersion(ElfHeader elf) {
 		if (elf.e_machine() != ElfConstants.EM_PPC64) {
 			return 0;
 		}
 
-		if (elf.getSection(".opd") != null) {
+		if (elf.getSection(OPD_SECTION_NAME) != null) {
 			return 1;
 		}
 
