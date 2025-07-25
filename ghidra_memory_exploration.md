@@ -163,6 +163,49 @@ The decompiler now provides the same segmented address navigation capabilities a
 
 ---
 
+## ✅ Phase 3: CS Segment Override Fix for Memory Addressing (COMPLETED)
+
+### Problem Statement  
+While `seg_next` was successfully implemented for relative addressing (like `rel16`), CS segment overrides in memory addressing patterns were still broken. The specific failing pattern was:
+```
+131d:1518 2e 89 3e e6 11        MOV        word ptr CS:[DAT_1000_11e6],DI
+```
+
+This instruction has a CS segment override (`0x2e` prefix) but the `currentCS` pattern was still using the old broken approach of extracting segment from linear addresses.
+
+### Root Cause Analysis
+The issue traced through this pattern matching chain:
+1. **CS segment override prefix** (`0x2e`) sets `segover=1`
+2. **MOV instruction** (`0x89`) uses `m16` memory operand  
+3. **`m16` resolves** through `Mem16` pattern with `seg16`
+4. **`seg16` with `segover=1`** uses `currentCS` pattern
+5. **`currentCS` was still broken**: Used `(inst_next >> 4) & 0xf000` instead of `seg_next`
+
+### Solution Applied
+Updated the `currentCS` pattern definitions in `ia.sinc` to use `seg_next`:
+
+**BEFORE (Broken):**
+```sleigh
+currentCS: CS is protectedMode=0 & CS { tmp:4 = (inst_next >> 4) & 0xf000; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS = tmp:2; export CS; }
+```
+
+**AFTER (Fixed):**
+```sleigh
+currentCS: CS is protectedMode=0 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=1 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
+```
+
+### Technical Details
+- **Pattern Chain**: CS override → MOV `m16` → `Mem16` → `seg16` → `currentCS` → now uses real segment value
+- **Consistency**: This fix aligns `currentCS` with the successful `rel16` pattern that already used `seg_next`
+- **Architecture**: Leverages the existing `seg_next` infrastructure implemented in Phase 1
+
+### Status: ✅ COMPLETE
+CS segment override in memory addressing now properly uses real segment values instead of attempting impossible extraction from linear addresses. This fixes the specific issue with patterns like `MOV word ptr CS:[DAT_1000_11e6],DI` where data is stored locally to the code segment.
+
+---
+
 ## Summary
 
 ### Files Modified

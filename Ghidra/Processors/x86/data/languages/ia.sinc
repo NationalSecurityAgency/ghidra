@@ -1103,8 +1103,8 @@ addr64: [Base64 + Index64*ss + simm32_64] is mod=2 & r_m=4; Index64 & Base64 & s
 addr64: [Base64 + Index64*ss]			is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0   { local tmp=Base64+Index64*ss; export tmp; }
 @endif
 
-currentCS: CS is protectedMode=0 & CS { tmp:4 = (inst_next >> 4) & 0xf000; CS = tmp:2; export CS; }
-currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=0 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
+currentCS: CS is protectedMode=1 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
  
 segWide: is segover=0		        { export 0:$(SIZE); }
 segWide: CS: is segover=1 & CS	{ export 0:$(SIZE); }
