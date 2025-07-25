@@ -116,6 +116,7 @@ public class WindowActionManager {
 
 	void contextChanged(Map<Class<? extends ActionContext>, ActionContext> defaultContextMap,
 			ActionContext localContext, Set<DockingActionIf> excluded) {
+
 		/**
 		 * We need the guard against reentrant changes to the actionToProxyMap, lest the iterator
 		 * throw a ConcurrentModificationException. If the guard finds a violation, i.e., the map
@@ -145,8 +146,8 @@ public class WindowActionManager {
 				ActionContext context =
 					getContextForAction(action, localContext, defaultContextMap);
 				// Reentry point 2
-				boolean enabled =
-					context == null ? false : proxyAction.isEnabledForContext(context);
+
+				boolean enabled = proxyAction.isEnabledForContext(context);
 				// Reentry point 3, which we check
 				proxyAction.setEnabled(enabled);
 				if (reentryGuard.isViolated()) {
@@ -168,7 +169,7 @@ public class WindowActionManager {
 				return context;
 			}
 		}
-		return null;
+		return new DefaultActionContext();
 	}
 
 	/**
