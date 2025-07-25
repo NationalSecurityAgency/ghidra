@@ -148,7 +148,7 @@ public class AddressEvaluator extends ExpressionEvaluator {
 			long offset = longValue.getLongValue();
 			AddressSpace space = getAddressSpace();
 			try {
-				return space.getAddressInThisSpaceOnly(offset);
+				return space.getAddressInThisSpaceOnly(offset*space.getAddressableUnitSize());
 			}
 			catch (AddressOutOfBoundsException e) {
 				throw new ExpressionException(e.getMessage());
