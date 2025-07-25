@@ -259,3 +259,101 @@ Potential areas for future improvement:
 - Enhanced segment register tracking during analysis
 - Better visualization of segmented addresses in the UI
 - Additional segmented architecture support as needed 
+
+---
+
+## 16-Bit Protected Mode: Ghidra's Hack and Limitations
+
+### Overview
+While this implementation provides comprehensive support for **real mode segmentation**, 16-bit protected mode in Ghidra uses a simplified "hack" approach that has significant architectural limitations. This section documents these limitations to set proper expectations.
+
+### Ghidra's Protected Mode Implementation
+Ghidra handles 16-bit protected mode using a simplified address calculation defined in `x86-16.pspec`:
+```java
+// Ghidra's hack: selector << 16 + offset
+res = (zext(base) << 16) + zext(inner);
+```
+
+This contrasts with **real mode** (in `x86-16-real.pspec`):
+```java
+// Architecturally correct: segment << 4 + offset  
+res = (zext(base) << 4) + zext(inner);
+```
+
+### Architectural Limitations
+
+#### 1. **Simplified Address Mapping**
+- **Reality**: In true 16-bit protected mode, segment registers contain **selectors** that index into Global/Local Descriptor Tables (GDT/LDT) to retrieve base addresses, limits, and access rights
+- **Ghidra's Hack**: Treats selectors as if they were base addresses shifted left by 16 bits
+- **Impact**: `selector << 16` creates an artificial linear mapping that doesn't correspond to actual descriptor table entries
+
+#### 2. **Missing Descriptor Table Information**
+- **Reality**: Protected mode descriptors contain rich information:
+  - Base address (20-bit in 286, 32-bit in 386+)
+  - Segment limit (16-bit with granularity bit)
+  - Access rights (readable, writable, executable, privilege level)
+  - Type information (code, data, system segments)
+- **Ghidra's Hack**: Ignores all descriptor information beyond a synthetic base address
+- **Impact**: Analysis cannot understand segment boundaries, access restrictions, or privilege levels
+
+#### 3. **Descriptor Table Lookup Bypass**
+- **Reality**: Every memory access requires descriptor validation and limit checking
+- **Ghidra's Hack**: Direct arithmetic calculation bypasses all protection mechanisms
+- **Impact**: Cannot detect segment limit violations or access right violations that would cause exceptions
+
+#### 4. **Privilege Level Ignorance**
+- **Reality**: Selectors encode Current Privilege Level (CPL) and Descriptor Privilege Level (DPL)
+- **Ghidra's Hack**: Treats all selectors equally regardless of privilege bits
+- **Impact**: Cannot analyze privilege transitions, system calls, or protection violations
+
+#### 5. **Binary Compatibility Constraints**
+- **Works With**: Binaries that can function under Ghidra's specific segment allocation scheme
+- **Fails With**: 
+  - Binaries that depend on specific descriptor table layouts
+  - Code that performs descriptor table manipulation
+  - Programs that rely on segment limit checking
+  - Multi-privilege level operating systems
+
+### Why This Approach?
+
+#### Implementation Complexity
+Proper 16-bit protected mode support would require:
+- **Descriptor Table Emulation**: Full GDT/LDT tracking and parsing
+- **Segment Register State**: Complex state management for descriptor caches
+- **Memory Protection Logic**: Limit checking and access right validation
+- **Privilege Level Tracking**: CPL/DPL comparison for every memory access
+- **Exception Handling**: Proper modeling of protection faults
+
+#### Architectural Constraints
+- **SLEIGH Limitations**: Processor specification language lacks descriptor table lookup capabilities
+- **Analysis Framework**: Ghidra's analysis engine expects relatively static address spaces
+- **Performance Impact**: Full protection checking would significantly slow analysis
+
+### Practical Implications
+
+#### What Works
+- **Simple Protected Mode Programs**: Basic applications that don't exploit advanced protection features
+- **Flat Memory Model**: Programs that use large segments covering the entire address space
+- **Single Privilege Level**: Applications running at a consistent privilege level
+
+#### What Doesn't Work
+- **Operating System Kernels**: Heavy reliance on privilege transitions and descriptor manipulation
+- **Real-Time Systems**: Precise segment limit checking for memory protection
+- **Legacy DOS Extenders**: Complex segment management and descriptor table manipulation
+- **Multi-Tasking Systems**: Per-task descriptor table and segment state management
+
+### Recommended Usage
+- **Primary Focus**: Use Ghidra for **real mode** analysis where this implementation provides full architectural accuracy
+- **Protected Mode**: Accept the limitations and use for basic analysis of simple protected mode binaries
+- **Advanced Analysis**: Consider specialized tools for operating systems or complex protected mode software
+
+### Future Considerations
+Implementing true 16-bit protected mode support would require:
+1. **Major Framework Changes**: Core address space and memory management modifications
+2. **SLEIGH Extensions**: New language features for descriptor table operations  
+3. **Performance Optimization**: Efficient caching of descriptor table state
+4. **UI Enhancements**: Visualization of segment descriptors and protection information
+
+For now, the focus remains on providing excellent **real mode segmentation support** while acknowledging the protected mode limitations as an acceptable trade-off for implementation complexity.
+
+--- 
