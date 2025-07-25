@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -32,11 +33,14 @@ public class DWARFFile {
 	 * Reads a DWARFFile entry.
 	 * 
 	 * @param reader BinaryReader
+	 * @param cu {@link DWARFCompilationUnit}
 	 * @return new DWARFFile, or null if end-of-list was found
 	 * @throws IOException if error reading
 	 */
-	public static DWARFFile readV4(BinaryReader reader) throws IOException {
-		String name = reader.readNextAsciiString();
+	public static DWARFFile readV4(BinaryReader reader, DWARFCompilationUnit cu)
+			throws IOException {
+		Charset charset = cu.getProgram().getCharset();
+		String name = reader.readNextString(charset, 1);
 		if (name.length() == 0) {
 			// empty name == end-of-list of files
 			return null;

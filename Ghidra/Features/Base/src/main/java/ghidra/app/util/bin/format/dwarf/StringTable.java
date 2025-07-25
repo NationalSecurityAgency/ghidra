@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -33,23 +34,26 @@ public class StringTable {
 	 * @param reader BinaryReader
 	 * @return new instance, or null if reader is null
 	 */
-	public static StringTable of(BinaryReader reader) {
+	public static StringTable of(BinaryReader reader, Charset charset) {
 		if (reader == null) {
 			return null;
 		}
-		return new StringTable(reader);
+		return new StringTable(reader, charset);
 	}
 
 	protected BinaryReader reader;
 	protected WeakValueHashMap<Long, String> cache = new WeakValueHashMap<>();
+	private Charset charset;
 
 	/**
 	 * Creates a StringTable
 	 * 
 	 * @param reader {@link BinaryReader} .debug_str or .debug_line_str
+	 * @param charset {@link Charset} of strings
 	 */
-	public StringTable(BinaryReader reader) {
+	public StringTable(BinaryReader reader, Charset charset) {
 		this.reader = reader;
+		this.charset = charset;
 	}
 
 	/**
@@ -82,7 +86,7 @@ public class StringTable {
 
 		String s = cache.get(offset);
 		if (s == null) {
-			s = reader.readUtf8String(offset);
+			s = reader.readString(offset, charset, 1);
 			cache.put(offset, s);
 		}
 

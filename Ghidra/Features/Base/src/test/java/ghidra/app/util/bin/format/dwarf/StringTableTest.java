@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.dwarf;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
@@ -44,7 +45,7 @@ public class StringTableTest extends AbstractGenericTest {
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
 		// @formatter:on
-		StringTable st = new StringTable(br);
+		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
 
 		assertEquals("ab", st.getStringAtOffset(0));
 		assertEquals("c", st.getStringAtOffset(3));
@@ -62,7 +63,7 @@ public class StringTableTest extends AbstractGenericTest {
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
 		// @formatter:on
-		StringTable st = new StringTable(br);
+		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
 
 		assertEquals("ab", st.getStringAtOffset(0));
 		assertEquals("b", st.getStringAtOffset(1));
@@ -79,7 +80,7 @@ public class StringTableTest extends AbstractGenericTest {
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
 		// @formatter:on
-		StringTable st = new StringTable(br);
+		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
 
 		try {
 			st.getStringAtOffset(9);
@@ -99,7 +100,7 @@ public class StringTableTest extends AbstractGenericTest {
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
 		// @formatter:on
-		StringTable st = new StringTable(br);
+		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
 
 		try {
 			st.getStringAtOffset(-2);
@@ -113,7 +114,7 @@ public class StringTableTest extends AbstractGenericTest {
 	@Test
 	public void testEmptyStrTable() {
 		BinaryReader br = br();
-		StringTable st = new StringTable(br);
+		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
 
 		try {
 			st.getStringAtOffset(0);

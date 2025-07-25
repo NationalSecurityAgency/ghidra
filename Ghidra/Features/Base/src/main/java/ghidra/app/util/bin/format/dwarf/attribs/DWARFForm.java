@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,13 +79,14 @@ public enum DWARFForm {
 		@Override
 		public long getSize(DWARFFormContext context) throws IOException {
 			long start = context.reader().getPointerIndex();
-			context.reader().readNextUtf8String();
+			context.reader().readNextString(context.dprog().getCharset(), 1);
 			return context.reader().getPointerIndex() - start;
 		}
 
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFStringAttribute(context.reader().readNextUtf8String(), context.def());
+			String s = context.reader().readNextString(context.dprog().getCharset(), 1);
+			return new DWARFStringAttribute(s, context.def());
 		}
 	},
 	DW_FORM_block(0x9, DWARFForm.DYNAMIC_SIZE, block) {
