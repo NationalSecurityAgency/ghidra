@@ -192,13 +192,13 @@ currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS =
 
 **AFTER (Fixed):**
 ```sleigh
-currentCS: CS is protectedMode=0 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
-currentCS: CS is protectedMode=1 & CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
+currentCS: CS is CS { tmp:4 = seg_next; CS = tmp:2; export CS; }
 ```
 
 ### Technical Details
 - **Pattern Chain**: CS override → MOV `m16` → `Mem16` → `seg16` → `currentCS` → now uses real segment value
 - **Consistency**: This fix aligns `currentCS` with the successful `rel16` pattern that already used `seg_next`
+- **Simplification**: Since `seg_next` provides real segment values, the `protectedMode` distinction was eliminated—one pattern now handles both modes
 - **Architecture**: Leverages the existing `seg_next` infrastructure implemented in Phase 1
 
 ### Status: ✅ COMPLETE
