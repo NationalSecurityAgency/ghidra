@@ -137,11 +137,14 @@ public class RecoveredClassHelper {
 	protected final boolean createBookmarks;
 	protected final boolean useShortTemplates;
 	protected final boolean nameVfunctions;
+	protected final boolean makeVfunctionsThisCalls;
+
 	public HashMap<Address, Set<Function>> allVfunctions = new HashMap<>();
 
 	public RecoveredClassHelper(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVunctions, TaskMonitor monitor) throws Exception {
+			boolean nameVunctions, boolean makeVfunctionsThisCalls, TaskMonitor monitor)
+			throws Exception {
 
 		this.monitor = monitor;
 		this.program = program;
@@ -156,6 +159,7 @@ public class RecoveredClassHelper {
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
 		this.nameVfunctions = nameVunctions;
+		this.makeVfunctionsThisCalls = makeVfunctionsThisCalls;
 
 		globalNamespace = (GlobalNamespace) program.getGlobalNamespace();
 
@@ -4770,8 +4774,10 @@ public class RecoveredClassHelper {
 			// can't put external functions into a namespace from this program
 			if (!vfunction.isExternal()) {
 
-				// if not already, make it a this call
-				makeFunctionThiscall(vfunction);
+				// check script option and if not already, make it a this call
+				if (makeVfunctionsThisCalls) {
+					makeFunctionThiscall(vfunction);
+				}
 
 				// put symbol on the virtual function
 				Symbol vfunctionSymbol = vfunction.getSymbol();
