@@ -184,6 +184,10 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 					funcName = syscallNumbersToNames.get(offset);
 				}
 				callee = createFunction(callTarget, funcName);
+				if (callee == null) {
+					Msg.warn(this, "Unable to create function at "+callTarget);
+					continue;
+				}
 				callee.setCallingConvention(callingConvention);
 
 				//check if the function name is one of the non-returning syscalls
