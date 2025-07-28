@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.debug.service.emulation;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -45,6 +45,7 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
 import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -553,6 +554,16 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	private void invalidateCacheActivated(ActionContext ignored) {
+		invalidateCache();
+	}
+
+	private void configureEmulatorActivated(DebuggerPcodeEmulatorFactory factory) {
+		// TODO: Pull up config page. Tool Options? Program/Trace Options?
+		setEmulatorFactory(factory);
+	}
+
+	@Override
+	public void invalidateCache() {
 		DebuggerCoordinates current = traceManager.getCurrent();
 		Trace trace = current.getTrace();
 		long version = trace.getEmulatorCacheVersion();
@@ -564,11 +575,6 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		// NB. Success should already display on screen, since it's current.
 		// Failure should be reported by tool's task manager.
 		traceManager.materialize(current);
-	}
-
-	private void configureEmulatorActivated(DebuggerPcodeEmulatorFactory factory) {
-		// TODO: Pull up config page. Tool Options? Program/Trace Options?
-		setEmulatorFactory(factory);
 	}
 
 	@Override
@@ -638,7 +644,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		Lifespan span = Lifespan.at(snap);
 		TraceBreakpointManager bm = trace.getBreakpointManager();
 		for (AddressSpace as : trace.getBaseAddressFactory().getAddressSpaces()) {
-			for (TraceBreakpoint bpt : bm.getBreakpointsIntersecting(span,
+			for (TraceBreakpointLocation bpt : bm.getBreakpointsIntersecting(span,
 				new AddressRangeImpl(as.getMinAddress(), as.getMaxAddress()))) {
 				if (!bpt.isEmuEnabled(snap)) {
 					continue;
@@ -736,6 +742,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			destSnap.setDescription("Emulated");
 			try {
 				ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
+				TraceThread lastThread = key.time.getLastThread(key.trace);
+				destSnap.setEventThread(lastThread);
 			}
 			catch (Throwable e) {
 				Msg.showError(this, null, "Emulate",
@@ -797,14 +805,43 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	class TraceMappingWaiter extends CompletableFuture<Void>
+			implements DebuggerStaticMappingChangeListener {
+		private final Trace trace;
+
+		public TraceMappingWaiter(Trace trace) {
+			this.trace = trace;
+		}
+
+		@Override
+		public void mappingsChanged(Set<Trace> affectedTraces, Set<Program> affectedPrograms) {
+			if (affectedTraces.contains(trace)) {
+				complete(null);
+			}
+		}
+
+		public void softWait() {
+			try {
+				get(1, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
+				Msg.warn(this, "Mappings not reported by service after 1 second");
+			}
+		}
+	}
+
 	@Override
 	public Trace launchProgram(Program program, Address address) throws IOException {
 		Trace trace = null;
 		try {
 			trace = ProgramEmulationUtils.launchEmulationTrace(program, address, this);
+			trace.flushEvents();
+
+			TraceMappingWaiter waiter = new TraceMappingWaiter(trace);
+			staticMappings.addChangeListener(waiter);
 			traceManager.openTrace(trace);
 			traceManager.activateTrace(trace);
-			Swing.allowSwingToProcessEvents();
+			waiter.softWait();
 		}
 		finally {
 			if (trace != null) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.List;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
+import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.program.model.data.LEB128;
 
 /**
@@ -119,6 +120,7 @@ public class DWARFFile {
 	 * @param directory_index index of the directory for this file
 	 * @param modification_time modification time of the file
 	 * @param length length of the file
+	 * @param md5 bytes of md5 hash
 	 */
 	public DWARFFile(String name, int directory_index, long modification_time, long length,
 			byte[] md5) {
@@ -131,6 +133,17 @@ public class DWARFFile {
 
 	public String getName() {
 		return this.name;
+	}
+
+	public String getPathName(DWARFLine parentLine) {
+		try {
+			String dir = directory_index >= 0 ? parentLine.getDir(directory_index).getName() : "";
+
+			return FSUtilities.appendPath(dir, name);
+		}
+		catch (IOException e) {
+			return name;
+		}
 	}
 
 	public DWARFFile withName(String newName) {

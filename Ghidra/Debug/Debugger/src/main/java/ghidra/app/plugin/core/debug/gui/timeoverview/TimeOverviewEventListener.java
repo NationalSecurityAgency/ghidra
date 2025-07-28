@@ -23,11 +23,15 @@ import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.trace.model.*;
 import ghidra.trace.model.bookmark.TraceBookmark;
-import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.memory.*;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointManager;
+import ghidra.trace.model.memory.TraceMemoryManager;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceModuleManager;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.*;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
@@ -118,193 +122,150 @@ public class TimeOverviewEventListener extends TraceDomainObjectListener {
 			regionChanged(region);
 		}
 		TraceBreakpointManager breakpointManager = trace.getBreakpointManager();
-		for (TraceBreakpoint bpt : breakpointManager.getAllBreakpoints()) {
+		for (TraceBreakpointLocation bpt : breakpointManager.getAllBreakpointLocations()) {
 			bptChanged(bpt);
 		}
 	}
-	
-	private void threadAdded(TraceThread thread) {
-		if (!(thread instanceof TraceObjectThread objThread)) {
-			return;
-		}
 
-		TraceObject obj = objThread.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMinSnap();
-				p.updateMap(snap, TimeType.BPT_ADDED, thread.getName(snap), true);
-			});
+	private void threadAdded(TraceThread thread) {
+		TraceObject obj = thread.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMinSnap();
+					p.updateMap(snap, TimeType.BPT_ADDED, thread.getName(snap), true);
+				});
 	}
 
 	private void threadChanged(TraceThread thread) {
-		if (!(thread instanceof TraceObjectThread objThread)) {
-			return;
-		}
-
-		TraceObject obj = objThread.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectThread.KEY_TID, true)
-			.forEach(v -> {
-				long snapMin = v.getMinSnap();
-				long snapMax = v.getMaxSnap();
-				if (snapMin == snapMax) {
-					p.updateMap(snapMin, TimeType.THREAD_CHANGED, thread.getName(snapMin), true);
-				}
-				else {
-					p.updateMap(snapMin, TimeType.THREAD_ADDED, thread.getName(snapMin), true);
-					p.updateMap(snapMax, TimeType.THREAD_REMOVED, thread.getName(snapMax), true);
-				}
-			});
+		TraceObject obj = thread.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceThread.KEY_TID, true).forEach(v -> {
+			long snapMin = v.getMinSnap();
+			long snapMax = v.getMaxSnap();
+			if (snapMin == snapMax) {
+				p.updateMap(snapMin, TimeType.THREAD_CHANGED, thread.getName(snapMin),
+					true);
+			}
+			else {
+				p.updateMap(snapMin, TimeType.THREAD_ADDED, thread.getName(snapMin), true);
+				p.updateMap(snapMax, TimeType.THREAD_REMOVED, thread.getName(snapMax),
+					true);
+			}
+		});
 	}
 
 	private void threadDeleted(TraceThread thread) {
-		if (!(thread instanceof TraceObjectThread objThread)) {
-			return;
-		}
-
-		TraceObject obj = objThread.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMaxSnap();
-				p.updateMap(snap, TimeType.THREAD_REMOVED, thread.getName(snap), true);
-			});
+		TraceObject obj = thread.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMaxSnap();
+					p.updateMap(snap, TimeType.THREAD_REMOVED, thread.getName(snap), true);
+				});
 	}
 
 	private void moduleAdded(TraceModule module) {
-		if (!(module instanceof TraceObjectModule objMod)) {
-			return;
-		}
-
-		TraceObject obj = objMod.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMinSnap();
-				p.updateMap(snap, TimeType.MODULE_ADDED, module.getName(snap), true);
-			});
+		TraceObject obj = module.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMinSnap();
+					p.updateMap(snap, TimeType.MODULE_ADDED, module.getName(snap), true);
+				});
 	}
 
 	private void moduleChanged(TraceModule module) {
-		if (!(module instanceof TraceObjectModule objMod)) {
-			return;
-		}
-
-		TraceObject obj = objMod.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snapMin = v.getMinSnap();
-				long snapMax = v.getMaxSnap();
-				if (snapMin == snapMax) {
-					p.updateMap(snapMin, TimeType.MODULE_CHANGED, module.getName(snapMin), true);
-				}
-				else {
-					p.updateMap(snapMin, TimeType.MODULE_ADDED, module.getName(snapMin), true);
-					p.updateMap(snapMax, TimeType.MODULE_REMOVED, module.getName(snapMax), true);
-				}
-			});
+		TraceObject obj = module.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snapMin = v.getMinSnap();
+					long snapMax = v.getMaxSnap();
+					if (snapMin == snapMax) {
+						p.updateMap(snapMin, TimeType.MODULE_CHANGED, module.getName(snapMin),
+							true);
+					}
+					else {
+						p.updateMap(snapMin, TimeType.MODULE_ADDED, module.getName(snapMin), true);
+						p.updateMap(snapMax, TimeType.MODULE_REMOVED, module.getName(snapMax),
+							true);
+					}
+				});
 	}
 
 	private void moduleDeleted(TraceModule module) {
-		if (!(module instanceof TraceObjectModule objMod)) {
-			return;
-		}
-
-		TraceObject obj = objMod.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMaxSnap();
-				p.updateMap(snap, TimeType.MODULE_REMOVED, module.getName(snap), true);
-			});
+		TraceObject obj = module.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMaxSnap();
+					p.updateMap(snap, TimeType.MODULE_REMOVED, module.getName(snap), true);
+				});
 	}
 
 	private void regionAdded(TraceMemoryRegion region) {
-		if (!(region instanceof TraceObjectMemoryRegion objReg)) {
-			return;
-		}
-
-		TraceObject obj = objReg.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMinSnap();
-				p.updateMap(snap, TimeType.REGION_ADDED, region.getName(snap), true);
-			});
+		TraceObject obj = region.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMinSnap();
+					p.updateMap(snap, TimeType.REGION_ADDED, region.getName(snap), true);
+				});
 	}
 
 	private void regionChanged(TraceMemoryRegion region) {
-		if (!(region instanceof TraceObjectMemoryRegion objReg)) {
-			return;
-		}
-
-		TraceObject obj = objReg.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snapMin = v.getMinSnap();
-				long snapMax = v.getMaxSnap();
-				if (snapMin == snapMax) {
-					p.updateMap(snapMin, TimeType.REGION_CHANGED, region.getName(snapMin), true);
-				}
-				else {
-					p.updateMap(snapMin, TimeType.REGION_ADDED, region.getName(snapMin), true);
-					p.updateMap(snapMax, TimeType.REGION_REMOVED, region.getName(snapMax), true);
-				}
-			});
+		TraceObject obj = region.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snapMin = v.getMinSnap();
+					long snapMax = v.getMaxSnap();
+					if (snapMin == snapMax) {
+						p.updateMap(snapMin, TimeType.REGION_CHANGED, region.getName(snapMin),
+							true);
+					}
+					else {
+						p.updateMap(snapMin, TimeType.REGION_ADDED, region.getName(snapMin), true);
+						p.updateMap(snapMax, TimeType.REGION_REMOVED, region.getName(snapMax),
+							true);
+					}
+				});
 	}
 
 	private void regionDeleted(TraceMemoryRegion region) {
-		if (!(region instanceof TraceObjectMemoryRegion objReg)) {
-			return;
-		}
-
-		TraceObject obj = objReg.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMaxSnap();
-				p.updateMap(snap, TimeType.REGION_REMOVED, region.getName(snap), true);
-			});
+		TraceObject obj = region.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMaxSnap();
+					p.updateMap(snap, TimeType.REGION_REMOVED, region.getName(snap), true);
+				});
 	}
 
-	private void bptAdded(TraceBreakpoint bpt) {
-		if (!(bpt instanceof TraceObjectBreakpointLocation objBpt)) {
-			return;
-		}
-
-		TraceObject obj = objBpt.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMinSnap();
-				p.updateMap(snap, TimeType.BPT_ADDED, bpt.getName(snap), true);
-			});
+	private void bptAdded(TraceBreakpointLocation bpt) {
+		TraceObject obj = bpt.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMinSnap();
+					p.updateMap(snap, TimeType.BPT_ADDED, bpt.getName(snap), true);
+				});
 	}
 
-	private void bptChanged(TraceBreakpoint bpt) {
-		if (!(bpt instanceof TraceObjectBreakpointLocation objBpt)) {
-			return;
-		}
-
-		TraceObject obj = objBpt.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snapMin = v.getMinSnap();
-				long snapMax = v.getMaxSnap();
-				if (snapMin == snapMax) {
-					p.updateMap(snapMin, TimeType.BPT_CHANGED, bpt.getName(snapMin), true);
-				}
-				else {
-					p.updateMap(snapMin, TimeType.BPT_ADDED, bpt.getName(snapMin), true);
-					p.updateMap(snapMax, TimeType.BPT_REMOVED, bpt.getName(snapMax), true);
-				}
-			});
+	private void bptChanged(TraceBreakpointLocation bpt) {
+		TraceObject obj = bpt.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snapMin = v.getMinSnap();
+					long snapMax = v.getMaxSnap();
+					if (snapMin == snapMax) {
+						p.updateMap(snapMin, TimeType.BPT_CHANGED, bpt.getName(snapMin), true);
+					}
+					else {
+						p.updateMap(snapMin, TimeType.BPT_ADDED, bpt.getName(snapMin), true);
+						p.updateMap(snapMax, TimeType.BPT_REMOVED, bpt.getName(snapMax), true);
+					}
+				});
 	}
 
-	private void bptDeleted(TraceBreakpoint bpt) {
-		if (!(bpt instanceof TraceObjectBreakpointLocation objBpt)) {
-			return;
-		}
-
-		TraceObject obj = objBpt.getObject();
-		obj.getOrderedValues(Lifespan.ALL, TraceObjectBreakpointLocation.KEY_RANGE, true)
-			.forEach(v -> {
-				long snap = v.getMaxSnap();
-				p.updateMap(snap, TimeType.BPT_REMOVED, bpt.getName(snap), true);
-			});
+	private void bptDeleted(TraceBreakpointLocation bpt) {
+		TraceObject obj = bpt.getObject();
+		obj.getOrderedValues(Lifespan.ALL, TraceBreakpointLocation.KEY_RANGE, true)
+				.forEach(v -> {
+					long snap = v.getMaxSnap();
+					p.updateMap(snap, TimeType.BPT_REMOVED, bpt.getName(snap), true);
+				});
 	}
 
 	private void bookmarkAdded(TraceBookmark bookmark) {

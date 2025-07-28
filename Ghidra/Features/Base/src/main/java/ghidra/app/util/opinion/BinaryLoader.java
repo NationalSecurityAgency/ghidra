@@ -283,7 +283,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		Program prog = createProgram(provider, programName, baseAddr, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
 		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, programFolderPath));
+			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
 
 		boolean success = false;
 		try {
@@ -294,7 +294,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		}
 		finally {
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}

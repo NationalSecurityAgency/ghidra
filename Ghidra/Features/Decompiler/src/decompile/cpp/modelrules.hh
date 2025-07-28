@@ -29,6 +29,9 @@ class ParamEntry;
 class ParamActive;
 
 extern AttributeId ATTRIB_SIZES;	///< Marshaling attribute "sizes"
+extern AttributeId ATTRIB_MAX_PRIMITIVES; ///< Marshaling attribute "maxprimitives"
+extern AttributeId ATTRIB_REVERSESIGNIF; ///< Marshaling attribute "reversesignif"
+extern AttributeId ATTRIB_MATCHSIZE; ///< Marshaling attribute "matchsize"
 
 extern ElementId ELEM_DATATYPE;		///< Marshaling element \<datatype>
 extern ElementId ELEM_CONSUME;		///< Marshaling element \<consume>
@@ -43,6 +46,7 @@ extern ElementId ELEM_HIDDEN_RETURN;	///< Marshaling element \<hidden_return>
 extern ElementId ELEM_JOIN_PER_PRIMITIVE;	///< Marshaling element \<join_per_primitive>
 extern ElementId ELEM_JOIN_DUAL_CLASS;	///< Marshaling element \<join_dual_class>
 extern ElementId ELEM_EXTRA_STACK;	///< Marshaling element \<extra_stack>
+extern ElementId ELEM_CONSUME_REMAINING; ///< Marshaling element \<consume_remaining>
 
 /// \brief Class for extracting primitive elements of a data-type
 ///
@@ -151,10 +155,11 @@ class HomogeneousAggregate : public SizeRestrictedFilter {
   int4 maxPrimitives;			///< Maximum number of primitives in the aggregate
 public:
   HomogeneousAggregate(type_metatype meta);	///< Constructor for use with decode()
-  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max);	///< Constructor
+  HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize);	///< Constructor
   HomogeneousAggregate(const HomogeneousAggregate &op2);	///< Copy constructor
   virtual DatatypeFilter *clone(void) const { return new HomogeneousAggregate(*this); }
   virtual bool filter(Datatype *dt) const;
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A filter on some aspect of a specific function prototype
@@ -309,6 +314,7 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decode(Decoder &decoder)=0;
   static AssignAction *decodeAction(Decoder &decoder,const ParamListStandard *res);
+  static AssignAction *decodePrecondition(Decoder &decoder, const ParamListStandard *res);
   static AssignAction *decodeSideeffect(Decoder &decoder,const ParamListStandard *res);
 };
 
@@ -490,6 +496,26 @@ public:
   virtual void decode(Decoder &decoder);
 };
 
+/// \brief Consume all the remaining registers from a given resource list
+/// 
+/// This action is a side-effect and doesn't assign an address for the current parameter.
+/// The resource list, resourceType, is specified. If the side-effect is triggered, all register
+/// resources from this list are consumed, until no registers remain. If all registers are already
+/// consumed, no action is taken.
+class ConsumeRemaining : public AssignAction {
+  type_class resourceType; ///< The other resource list to consume from
+  vector<const ParamEntry *> tiles; ///< List of registers that can be consumed
+  void initializeEntries(void); ///< Cache specific ParamEntry needed by the action
+public:
+  ConsumeRemaining(const ParamListStandard *res); ///< Constructor for use with decode
+  ConsumeRemaining(type_class store, const ParamListStandard *res); ///< Constructor
+  virtual AssignAction *clone(const ParamListStandard *newResource) const {
+	return new ConsumeRemaining(resourceType,newResource); }
+  virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+                  vector<int4> &status,ParameterPieces &res) const;
+  virtual void decode(Decoder &decoder);
+};
+
 /// \brief A rule controlling how parameters are assigned addresses
 ///
 /// Rules are applied to a parameter in the context of a full function prototype.
@@ -500,6 +526,7 @@ class ModelRule {
   DatatypeFilter *filter;		///< Which data-types \b this rule applies to
   QualifierFilter *qualifier;		///< Additional qualifiers for when the rule should apply (if non-null)
   AssignAction *assign;			///< How the Address should be assigned
+  vector<AssignAction *> preconditions; ///< Extra actions that happen before assignment, discarded on failure
   vector<AssignAction *> sideeffects;	///< Extra actions that happen on success
 public:
   ModelRule(void) {

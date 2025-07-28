@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,30 @@ package ghidra.trace.model.stack;
 import ghidra.lifecycle.Experimental;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 
 /**
  * A frame in a {@link TraceStack}
  */
-public interface TraceStackFrame {
+@TraceObjectInfo(
+	schemaName = "StackFrame",
+	shortName = "frame",
+	attributes = {
+		TraceStackFrame.KEY_PC,
+	},
+	fixedKeys = {})
+public interface TraceStackFrame extends TraceObjectInterface {
+	String KEY_PC = "_pc";
+
+	/**
+	 * Get the trace containing this frame
+	 * 
+	 * @return the trace
+	 */
+	Trace getTrace();
+
 	/**
 	 * Get the containing stack
 	 * 

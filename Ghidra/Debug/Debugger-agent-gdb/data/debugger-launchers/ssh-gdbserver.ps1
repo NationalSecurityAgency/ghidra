@@ -1,4 +1,3 @@
-#@timeout 60000
 #@title gdb + gdbserver via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -11,6 +10,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#gdbserver_ssh
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@arg :str! "Image" "The target binary executable image on the remote system"
 #@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
@@ -25,8 +25,8 @@
 
 . ..\support\gdbsetuputils.ps1
 
-$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
-$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
+$pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
 $arglist = Compute-Gdb-Remote-Args `

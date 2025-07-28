@@ -46,7 +46,6 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
@@ -672,10 +671,9 @@ public enum VariableValueUtils {
 				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
-			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-				TraceThread thread = space.getThread();
+			private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
 				// TODO: Consider the lifespan, too? Would have to use viewport....
-				if (thread == null || thread == coordinates.getThread()) {
+				if (space.isMemorySpace() || coordinates.isRegisterSpace(space)) {
 					invalidateCache();
 				}
 			}

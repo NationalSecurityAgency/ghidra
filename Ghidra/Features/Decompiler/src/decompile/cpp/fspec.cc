@@ -34,7 +34,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
-AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",153);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",156);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -774,14 +774,19 @@ void ParamListStandard::assignMapRtoL(const PrototypePieces &proto,TypeFactory &
 
   if (res.size() == 2) {	// Check for hidden parameters defined by the output list
     Datatype *dt = res.back().type;
-    type_class store;
-    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0)
-      store = TYPECLASS_HIDDENRET;
-    else
-      store = metatype2typeclass(dt->getMetatype());
-    // Reserve first param for hidden return pointer
-    if (assignAddressFallback(store,dt,false,status,res.back()) == AssignAction::fail)
-      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0) {
+      // Need to pull from registers marked as hiddenret 
+      if (assignAddressFallback(TYPECLASS_HIDDENRET,dt,false,status,res.back()) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+      }
+    }
+    else {
+	  // Assign as a regular first input pointer parameter
+	  if (assignAddress(dt,proto,0,typefactory,status,res.back()) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+	  }
+	}
+	
     res.back().flags |= ParameterPieces::hiddenretparm;
   }
   for(int4 i=0;i<proto.intypes.size();++i) {
@@ -1618,8 +1623,10 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
       res.back().type = typefactory.getTypeVoid();
     }
     else {
-      if (assignAddressFallback(TYPECLASS_PTR,pointertp,false,status,res.back()) == AssignAction::fail)
-	throw ParamUnassignedError("Cannot assign return value as a pointer");
+	  res.back().type = pointertp;
+	  if (assignAddress(pointertp,proto,-1,typefactory,status,res.back()) == AssignAction::fail) {
+	    throw ParamUnassignedError("Cannot assign return value as a pointer");
+	  }
     }
     res.back().flags = ParameterPieces::indirectstorage;
 

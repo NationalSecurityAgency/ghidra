@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,11 +83,10 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * <p>
 	 * Note that when the load completes, the returned {@link Loaded} {@link DomainObject}s are not 
 	 * saved to a project.  That is the responsibility of the caller (see 
-	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * {@link LoadResults#save(TaskMonitor)}).
 	 * <p>
-	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
-	 * {@link DomainObject}s with {@link LoadResults#release(Object)} when they are no longer
-	 * needed.
+	 * It is also the responsibility of the caller to close the returned {@link Loaded}
+	 * {@link DomainObject}s with {@link LoadResults#close()} when they are no longer needed.
 	 *
 	 * @param provider The bytes to load.
 	 * @param loadedName A suggested name for the primary {@link Loaded} {@link DomainObject}. 
@@ -105,7 +104,9 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param messageLog The message log.
-	 * @param consumer A consumer object for generated {@link DomainObject}s.
+	 * @param consumer A reference to the object "consuming" the returned {@link LoadResults}, used
+	 *   to ensure the underlying {@link Program}s are only closed when every consumer is done
+	 *   with it (see {@link LoadResults#close()}).
 	 * @param monitor A task monitor.
 	 * @return The {@link LoadResults} which contains one or more {@link Loaded} 
 	 *   {@link DomainObject}s (created but not saved).
@@ -200,12 +201,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * if absolutely necessary.
 	 * 
 	 * @param provider The bytes to load.
-	 * @return The preferred file name to use when loading.
+	 * @return The preferred file name to use when loading, or {@code null} if a name could not
+	 *   be determined from the provider.
 	 */
 	public default String getPreferredFileName(ByteProvider provider) {
 		FSRL fsrl = provider.getFSRL();
 		String name = (fsrl != null) ? fsrl.getName() : provider.getName();
-		return name.replaceAll("[\\\\:|]+", "/");
+		return name != null ? name.replaceAll("[\\\\:|]+", "/") : null;
 	}
 
 	/**

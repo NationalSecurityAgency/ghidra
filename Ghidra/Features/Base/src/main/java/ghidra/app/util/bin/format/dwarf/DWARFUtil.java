@@ -486,7 +486,7 @@ public class DWARFUtil {
 	}
 
 	public static void packCompositeIfPossible(Composite original, DataTypeManager dtm) {
-		if (original.isZeroLength() || original.getNumComponents() == 0) {
+		if (original.isZeroLength() || original.getNumDefinedComponents() == 0) {
 			// don't try to pack empty structs, this would throw off conflicthandler logic.
 			// also don't pack sized structs with no fields because when packed down to 0 bytes they
 			// cause errors when used as a param type

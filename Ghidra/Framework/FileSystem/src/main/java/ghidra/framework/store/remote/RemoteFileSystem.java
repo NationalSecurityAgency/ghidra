@@ -120,10 +120,13 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 			if (items[i].getItemType() == RepositoryItem.DATABASE) {
 				folderItems[i] = new RemoteDatabaseItem(repository, items[i]);
 			}
+			else if (items[i].getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+				folderItems[i] = new RemoteTextDataItem(repository, items[i]);
+			}
 			else {
-				Msg.error(this,
-					"Unsupported respository item encountered (" + items[i].getItemType() + "): " +
-						folderPath + items[i].getName());
+				Msg.error(this, "Unsupported respository item encountered (" +
+					items[i].getItemType() + "): " + folderPath + items[i].getName());
+				folderItems[i] = new RemoteUnknownFolderItem(repository, items[i]);
 			}
 		}
 		return folderItems;
@@ -138,7 +141,10 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported repository item type (" + item.getItemType() + ")");
+		if (item.getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+			return new RemoteTextDataItem(repository, item);
+		}
+		return new RemoteUnknownFolderItem(repository, item);
 	}
 
 	@Override
@@ -150,7 +156,10 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 		if (item.getItemType() == RepositoryItem.DATABASE) {
 			return new RemoteDatabaseItem(repository, item);
 		}
-		throw new IOException("Unsupported repository item type (" + item.getItemType() + ")");
+		if (item.getItemType() == RepositoryItem.TEXT_DATA_FILE) {
+			return new RemoteTextDataItem(repository, item);
+		}
+		return new RemoteUnknownFolderItem(repository, item);
 	}
 
 	@Override
@@ -161,6 +170,17 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	@Override
 	public void createFolder(String parentPath, String folderName) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isSupportedItemType(FolderItem folderItem) {
+		if (folderItem instanceof DatabaseItem) {
+			return true; // assume this is always supported
+		}
+		if (folderItem instanceof TextDataItem) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -205,6 +225,14 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 			throws InvalidNameException, IOException, CancelledException {
 		repository.createDataFile(parentPath, name);
 		return (DataFileItem) getItem(parentPath, name);
+	}
+
+	@Override
+	public TextDataItem createTextDataItem(String parentPath, String name, String fileID,
+			String contentType, String textData, String comment)
+			throws InvalidNameException, IOException {
+		repository.createTextDataFile(parentPath, name, fileID, contentType, textData, comment);
+		return (TextDataItem) getItem(parentPath, name);
 	}
 
 	@Override

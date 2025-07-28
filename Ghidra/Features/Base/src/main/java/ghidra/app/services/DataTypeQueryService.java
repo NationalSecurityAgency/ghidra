@@ -57,7 +57,7 @@ public interface DataTypeQueryService {
 	 * @deprecated use {@link #promptForDataType(String)}
 	 */
 	@SuppressWarnings("javadoc")
-	@Deprecated(since = "11.5", forRemoval = true)
+	@Deprecated(since = "12.0", forRemoval = true)
 	public DataType getDataType(String filterText);
 
 	/**

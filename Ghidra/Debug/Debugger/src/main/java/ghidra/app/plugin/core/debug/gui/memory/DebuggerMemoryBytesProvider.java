@@ -55,8 +55,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -65,7 +64,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
@@ -99,8 +97,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 		}
 
-		private void bytesChanged(TraceAddressSpace space) {
-			if (space.getAddressSpace().isMemorySpace()) {
+		private void bytesChanged(AddressSpace space) {
+			if (space.isMemorySpace()) {
 				currCache.invalidate();
 				prevCache.invalidate();
 			}

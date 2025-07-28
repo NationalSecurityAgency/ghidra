@@ -635,13 +635,14 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		TraceMemoryRegion echoText, echoData, libText, libData;
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 		try (Transaction tx = tb.startTransaction()) {
-			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
+			tb.createRootObject("Target");
+			echoText = mm.createRegion("Memory[/bin/echo (0x00400000)]",
 				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
+			echoData = mm.createRegion("Memory[/bin/echo (0x00600000)]",
 				0, tb.range(0x00600000, 0x00600fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			libText = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff00000)]",
+			libText = mm.createRegion("Memory[/lib/libc.so (0x7ff00000)]",
 				0, tb.range(0x7ff00000, 0x7ff0ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			libData = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff20000)]",
+			libData = mm.createRegion("Memory[/lib/libc.so (0x7ff20000)]",
 				0, tb.range(0x7ff20000, 0x7ff20fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
@@ -688,7 +689,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			objModBash.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
 
-		TraceModule modBash = objModBash.queryInterface(TraceObjectModule.class);
+		TraceModule modBash = objModBash.queryInterface(TraceModule.class);
 		assertEquals(Map.of(),
 			mappingService.proposeModuleMaps(List.of(modBash), 0, List.of(program)));
 	}

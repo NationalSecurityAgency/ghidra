@@ -1,0 +1,250 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Function Graph Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Data_Graph"></A> <A name="DataGraphPlugin"></A>Data Graph</H1>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src="images/DataGraph.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>The data graph is a graph display that shows data objects in memory. Each data vertex
+      displays a scrollable view of a data object and its contents.</P> 
+      
+      <P>Initially, a data graph is generated from a specific data program location. The graph
+      will be populated with one data vertex showing the data for that location. From this original
+      source vertex, the references to and from this vertex can be explored to add additional
+      vertices to the graph. In the data vertex display, any data elements that have an outgoing
+      reference will have an <IMG src="Icons.RIGHT_ICON" alt="" border="0"> icon that can be clicked
+      to quickly explore that reference.</P>
+      
+      <P>If a reference leads from/to code, a simple code vertex is generated
+      that simply shows the function and offset of the reference from the function's entry point. 
+      For the purposes of the data graph, code vertices are end points and cannot be explored 
+      further.</P>
+
+      <P>The display consists of the <A href="#Primary_View">Primary View</A> and an optional <A
+      href="help/topics/VisualGraph/Visual_Graph.html#Satellite_View">Satellite View</A>.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Primary_View"></A>Primary View</H2>
+
+    <BLOCKQUOTE>      
+      <P>The primary view shows an initial data object that was used to create the graph. This
+      data vertex can be used to explore references and pointers. As you explore, new vertices
+      will be added to the graph. All vertices in the graph can trace a reference relationship
+      back to the original source data object.</P>
+      
+      <BLOCKQUOTE>
+      <P><IMG src="help/shared/tip.png" alt="" border="0">The original source data vertex
+      has a <IMG src="Icons.HOME_ICON" alt="" border="0"> icon in its header to indicate it is the original source vertex.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Vertices"></A>Vertices</H2>
+    <BLOCKQUOTE>
+    <H3>Data Vertices</H3>
+    
+    <BLOCKQUOTE>
+      <P>Data vertices show information about the data and values they contain. If the vertex
+      datatype is a primitive, such as an int, the vertex contains only one row that shows its name
+      and value. If the data is more complex such as a structure or array, the vertex will display
+      multiple rows showing the name and value of each field in the structure. If the structure
+      contains other structures or arrays of data, those data items can be expanded in a tree/table
+      structure showing the names and values of that internal data.</P>
+	  
+	  <P>Any elements that are pointers (or have attached outgoing references) will display a
+	  <IMG src="Icons.RIGHT_ICON" alt="" border="0"> icon that can be clicked to explore those
+	  references to add new vertices.</P>
+
+      <P>Data vertices can be resized by dragging the bottom right corner. Also, the interior column
+      sizes can be adjusted by hovering the mouse on a column boundary and dragging left or
+      right.</P>
+      
+      <P>The header of a vertex contains the name of the label and/or address of the data object.
+      The header also contains buttons that allow you to perform some common operations on the
+      vertex.</P>
+
+      <P>As long as you are within the <A href="help/topics/VisualGraph/Visual_Graph.html#Interaction_Threshold">interaction threshold</A>,
+      you may interact with the vertex to expand/collapse sub-data elements and to click on any
+      pointer references to add vertices to the graph.</P>
+      
+	</BLOCKQUOTE>
+	<H3>Code Vertices</H3>
+	<BLOCKQUOTE>
+      <P>Generally vertices in the graph show data objects, but a vertex can also represent a
+      reference from or to code. In the data graph, code vertices are terminal vertices, simply
+      showing the function name and offset into or out of that function.</P>
+
+      <TABLE x-use-null-cells="" width="100%">
+        <TBODY>
+          <TR>
+            <TD align="center" width="100%"><IMG alt="" border="1" src=
+            "images/CodeVertex.png"></TD>
+          </TR>
+        </TBODY>
+      </TABLE>
+
+      <P>In the image above, the graph is showing two references to the same string.</P>
+	</BLOCKQUOTE>
+
+      <H3><A name="Layout">Vertex Layout</A></H3>
+      <BLOCKQUOTE>
+		<P>The data graph uses a special layout to attempt to maintain a logical structure as
+		more vertices are added to the graph. This layout uses the exploration order
+		to layout the vertices.</P>
+
+		<P>Starting with the original data vertex. All vertices that were
+		added to the graph by following outgoing references are displayed in a column to the right of 
+		the vertex. Within this column, the vertices are ordered by the order they are first referenced
+		from the source vertex.</P>
+		
+		<P>Similarly, vertices added to the graph by following incoming references are shown in a 
+		column to the left of the source vertex. Within this column, the vertices are ordered by 
+		address.</P>
+		
+		<P>Additional layers of vertices can be added by further exploring the child vertices and their
+		descendants. These additional vertices are ordered in the same way relative to their immediate
+		source vertex.</P>
+		
+		<P>Whenever a vertex is removed from the graph, all vertices that were discovered by exploring
+		from that vertex are also removed.</P>
+
+		</BLOCKQUOTE>
+      <H3>Vertex Actions</H3>
+
+      <BLOCKQUOTE>
+        <P>The following toolbar actions are available on a data vertex.</P>
+
+        <UL>
+          <LI><A name="Expand_All"><IMG alt="" src="Icons.EXPAND_ALL_ICON">&nbsp<B> Expand All</B> -
+          Expands all expandable sub-data elements recursively contained in the data object. Note
+          that this action is not available if the data has no sub-data elements.</A></LI>
+
+          <LI><A name="Collapse_All"><IMG alt="" src="Icons.COLLAPSE_ALL_ICON">&nbsp<B>Collapse All</B>
+          - Collapses all expanded sub-data elements. Note that this action is not available if the
+          data has no sub-data elements.</A></LI>
+
+          <LI><A name="Delete_Vertex"><IMG alt="" src="Icons.CLOSE_ICON">&nbsp<B>Delete Vertex</B> - Removes this vertex and all vertices
+          that descend from this vertex.</A></LI>
+        </UL>
+
+        <P><A name="Popups">The following popup actions are are available depending on where the
+        mouse is positioned when the popup is triggered.</A></P>
+
+        <UL>
+          <LI><A name="Add_Outgoing"><B>Add All Outgoing References</B> - All outgoing references
+          from this data element or its sub-elements will generate a new vertex in the graph, if
+          not already present.</A></LI>
+
+          <LI><A name="Add_Incoming"><B>Add All Incoming References</B> - The program will be
+          searched for any references to this data element or its sub-elents and a new vertex be
+          created each discovered reference, if not already present.</A></LI>
+
+          <LI><A name="Expand_Fully"><B>Expand Fully</B> - If the mouse is over an
+          expandable row in data vertex, the vertex and all it's child elements will be fully
+          expanded.</A></LI>
+
+          <LI><A name="Original_Source"><B>Set Original Source</B> - Makes this the original source
+          root vertex. All other vertices are reorganized and laid out as if they were discovered
+          by following references from this vertex.See</A> <A href="#Layout">Vertex
+          Layout.</A></LI>
+
+          <LI><A name="Delete_Selected"><B>Delete Selected Vertices</B> - Deletes the selected
+          vertices and any descendants vertices (vertices that were discovered via exploring from 
+          that vertex.)</A></LI>
+        </UL>
+		</BLOCKQUOTE>
+        <H3>Selecting Vertices</H3>
+
+        <BLOCKQUOTE>
+          <P>Left-clicking a vertex will select that vertex. To select multiple vertices, hold down
+          the <B><TT>Ctrl</TT></B> key while clicking. To deselect
+          a block, hold the <TT>Ctrl</TT> key while clicking the block. To clear all selected
+          blocks, click in an empty area of the primary view. When selected, a block is adorned
+          with a halo.</P>
+
+          <P>You may also select multiple vertices in one action by holding the <B><TT>Ctrl</TT></B> key
+          while performing a drag operation. Press the <B><TT>Ctrl</TT></B> key and start the drag in an
+          empty area of the primary view (not over a vertex). This will create a bounding rectangle
+          on the screen that will select any vertices contained therein when the action is
+          finished.</P>
+        </BLOCKQUOTE>
+
+        <H3>Navigating Vertices</H3>
+
+        <BLOCKQUOTE>
+          <P>By default the data graph can be used to navigate the main views of the tool. Clicking
+          on a vertex or a row within a vertex will generate a goto event for that address, causing
+          the main tool to navigate to that location. See the actions below to turn off this
+          behavior.</P>
+
+          <P>Also, the data graph can listen for tool location changes and select the appropriate
+          vertex in the graph if any vertices contain the tool location address. This behavior is
+          off by default, but can be turn on via a popup action.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2><A name="Data_Graph_Actions"></A>Data Graph Actions</H2>
+	  <BLOCKQUOTE>
+      <H3>Toolbar Actions</H3>
+
+      <UL>
+        <LI><A name="Relayout_Graph"><IMG alt="" src=
+        "icon.plugin.datagraph.action.viewer.reset">&nbsp<B>Refresh Layout</B> - All manually positioned
+        vertices will be reset and the graph will relayout to its automated locations.</A></LI>
+
+        <LI><A name="Select_Home_Vertex"><IMG alt="" src=
+        "Icons.HOME_ICON">&nbsp<B>Go To Source Vertex</B> - The original source vertex will be selected
+        and centered in the graph.</A></LI>
+
+        <LI><A name="Navigate_In"><IMG alt="" src=
+        "Icons.NAVIGATE_ON_INCOMING_EVENT_ICON">&nbsp<B>Navigate In</B> - If selected, the graph will
+        listen for tool location events and select the vertex that contains the location address,
+        is one exists.</A></LI>
+
+        <LI><A name="Navigate_Out"><IMG alt="" src=
+        "Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON">&nbsp<B>Navigate Out</B> - If selected, the graph will
+        generate tool location events when vertices are selected or rows within a vertex are
+        selected.</A></LI>
+
+        <LI><A name="Expanded_Format"><IMG alt="" src=
+        "icon.plugin.datagraph.action.viewer.vertex.format">&nbsp<B>Expanded Format</B> - If selected,
+        vertices will show more information for each row in the display. In compact mode, a data
+        row will generally show the field name and its value. In expanded mode, a data row will
+        generally show the datatype, field name, and its value.</A></LI>
+      </UL>
+	</BLOCKQUOTE
+	<H2>Standard Graph Features and Actions</H2>
+	<BLOCKQUOTE>
+	<P>The data graph is a type of Ghidra Visual Graph and has some standard concepts, features
+	and actions. 
+	<BLOCKQUOTE>
+		<UL>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Satellite_View">Satellite View</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Pan">Panning</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Zoom">Zooming</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Interaction_Threshold">Interaction Threshold</A></LI>
+		</UL>
+	</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
+    <P class="providedbyplugin">Provided by: <I>Data Graph Plugin</I></P>
+    <BR>
+     <BR>
+  </BODY>
+</HTML>

@@ -26,6 +26,7 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#remote
+#@depends Debugger-rmi-trace
 #@arg :file "Image" "The target binary executable image (a copy on the local system)"
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
@@ -34,8 +35,8 @@
 
 . ../support/lldbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"

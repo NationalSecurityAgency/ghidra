@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * The intent is for the full dyld_cache_slide_info structures to extend this and add their
  * specific parts.
  * 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
 public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 

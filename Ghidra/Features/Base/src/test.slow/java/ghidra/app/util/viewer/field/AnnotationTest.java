@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,7 +52,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.TaskMonitor;
-import util.CollectionUtils;
 
 public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -365,7 +364,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
 		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
-		assertErrorDialog("No Symbol");
+		assertErrorDialog("Symbol Not Found");
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyServiceProvider.programClosed(programName));
@@ -422,7 +421,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
 		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
-		assertErrorDialog("No Symbol");
+		assertErrorDialog("Symbol Not Found");
 
 		assertTrue(spyServiceProvider.programOpened(programName));
 		assertTrue(spyServiceProvider.programClosed(programName));
@@ -478,7 +477,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
 		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
-		assertErrorDialog("No Program");
+		assertErrorDialog("Program Not Found");
 
 		assertFalse(spyServiceProvider.programOpened(programName));
 	}
@@ -495,8 +494,8 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
 
 		// real path
-		String realPath = "folder1/program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, realPath);
+		String realPath = "/folder1/program_f1_f2.exe";
+		addFakeProgramByPath(spyServiceProvider, realPath, program);
 
 		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -513,7 +512,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
 		click(spyNavigatable, spyServiceProvider, annotatedElement);
 
-		assertErrorDialog("No Folder");
+		assertErrorDialog("Folder Not Found");
 
 		assertFalse(spyServiceProvider.programOpened(otherProgramPath));
 	}
@@ -525,7 +524,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
 
 		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
+		addFakeProgramByPath(spyServiceProvider, otherProgramPath, program);
 
 		String annotationText = "{@program " + otherProgramPath + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -557,7 +556,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address = program.getAddressFactory().getAddress(addresstring);
 
 		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
+		addFakeProgramByPath(spyServiceProvider, otherProgramPath, program);
 
 		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -591,7 +590,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
 		String annotationPath = "\\folder1\\folder2\\program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
+		addFakeProgramByPath(spyServiceProvider, otherProgramPath, program);
 
 		String annotationText = "{@program " + annotationPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -622,9 +621,9 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String addresstring = "1001000";
 		Address address = program.getAddressFactory().getAddress(addresstring);
 
-		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
+		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
 		String annotationPath = "folder1\\folder2\\program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
+		addFakeProgramByPath(spyServiceProvider, otherProgramPath, program);
 
 		String annotationText = "{@program " + annotationPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -656,8 +655,8 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String addresstring = "1001000";
 		Address address = program.getAddressFactory().getAddress(addresstring);
 
-		String otherProgramPath = "folder1/folder2/program_f1_f2.exe";
-		addFakeProgramByPath(spyServiceProvider, otherProgramPath);
+		String otherProgramPath = "/folder1/folder2/program_f1_f2.exe";
+		addFakeProgramByPath(spyServiceProvider, otherProgramPath, program);
 
 		String annotationText = "{@program " + otherProgramPath + "@" + addresstring + "}";
 		String rawComment = "My comment - " + annotationText;
@@ -883,30 +882,29 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		return new FieldElement[] { fieldElement };
 	}
 
-	private void addFakeProgramByPath(SpyServiceProvider provider, String path) {
+	private void addFakeProgramByPath(SpyServiceProvider provider, String path, Program p) {
 
 		SpyProjectDataService spyProjectData =
 			(SpyProjectDataService) provider.getService(ProjectDataService.class);
 		FakeRootFolder root = spyProjectData.fakeProjectData.fakeRootFolder;
 
-		String parentPath = FilenameUtils.getFullPath(path);
-		String programName = FilenameUtils.getName(path);
-
-		String[] paths = parentPath.split("/");
-		TestDummyDomainFolder parent = root;
-		String pathSoFar = root.getPathname();
-		for (String folderName : paths) {
-			pathSoFar += folderName;
-			TestDummyDomainFolder folder = (TestDummyDomainFolder) root.getFolder(pathSoFar);
-			if (folder == null) {
-				folder = new TestDummyDomainFolder(parent, folderName);
-				root.addFolder(folder);
-			}
-			parent = folder;
+		if (StringUtils.isBlank(path) || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
+			throw new IllegalArgumentException(
+				"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
 		}
+		else if (path.charAt(path.length() - 1) == FileSystem.SEPARATOR_CHAR) {
+			throw new IllegalArgumentException("Missing file name in path");
+		}
+		int ix = path.lastIndexOf(FileSystem.SEPARATOR);
+		String folderPath = "/";
+		if (ix > 0) {
+			folderPath = path.substring(0, ix);
+		}
+		String programName = path.substring(ix + 1);
 
 		try {
-			parent.createFile(programName, (DomainObject) null, TaskMonitor.DUMMY);
+			DomainFolder parent = ProjectDataUtils.createDomainFolderPath(root, folderPath);
+			parent.createFile(programName, p, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			failWithException("Unable to create a dummy domain file", e);
@@ -973,41 +971,50 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		public DomainFolder getFolder(String path) {
-			return fakeRootFolder.getFolder(path);
+		public DomainFolder getFolder(String path, DomainFolderFilter filter) {
+			return ProjectDataUtils.getDomainFolder(fakeRootFolder, path, filter);
+		}
+
+		@Override
+		public DomainFile getFile(String path, DomainFileFilter filter) {
+			if (StringUtils.isBlank(path) || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
+				throw new IllegalArgumentException(
+					"Absolute path must begin with '" + FileSystem.SEPARATOR_CHAR + "'");
+			}
+			else if (path.charAt(path.length() - 1) == FileSystem.SEPARATOR_CHAR) {
+				throw new IllegalArgumentException("Missing file name in path");
+			}
+			int ix = path.lastIndexOf(FileSystem.SEPARATOR);
+
+			DomainFolder folder;
+			String fileName = path;
+			if (ix > 0) {
+				folder = getFolder(path.substring(0, ix), filter);
+				fileName = path.substring(ix + 1);
+			}
+			else {
+				folder = getRootFolder();
+			}
+			if (folder != null) {
+				DomainFile file = folder.getFile(fileName);
+				if (file != null && filter.accept(file)) {
+					return file;
+				}
+			}
+			return null;
 		}
 	}
 
 	private class FakeRootFolder extends TestDummyDomainFolder {
 
-		private List<TestDummyDomainFolder> folders = CollectionUtils.asList(this);
-
-		private List<TestDummyDomainFile> folderFiles =
-			CollectionUtils.asList(new TestDummyDomainFile(this, OTHER_PROGRAM_NAME));
-
 		public FakeRootFolder() {
 			super(null, "Fake Root Folder");
-		}
-
-		void addFolder(TestDummyDomainFolder f) {
-			folders.add(f);
+			files.add(new TestDummyDomainFile(this, OTHER_PROGRAM_NAME, "Program"));
 		}
 
 		@Override
-		public synchronized DomainFile[] getFiles() {
-			return folderFiles.toArray(new TestDummyDomainFile[folderFiles.size()]);
-		}
-
-		@Override
-		public synchronized DomainFolder getFolder(String path) {
-			for (TestDummyDomainFolder folder : folders) {
-				String folderPath = folder.getPathname();
-				if (folderPath.equals(path)) {
-					return folder;
-				}
-			}
-
-			return null;
+		public boolean isInWritableProject() {
+			return true;
 		}
 	}
 

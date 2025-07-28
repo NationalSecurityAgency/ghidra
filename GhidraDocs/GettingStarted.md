@@ -1,5 +1,5 @@
 # Getting Started with Ghidra
-The information provided in this document is effective as of Ghidra 11.4 and is subject to change 
+The information provided in this document is effective as of Ghidra 12.0 and is subject to change 
 with future releases.
 
 ## Table of Contents

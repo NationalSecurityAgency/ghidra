@@ -27,9 +27,10 @@ import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 
 public class DebuggerRmiBreakpointsProviderTest
 		extends AbstractDebuggerBreakpointsProviderTest<TraceRmiTarget, Trace> {
@@ -107,7 +108,7 @@ public class DebuggerRmiBreakpointsProviderTest
 		try (Transaction tx = trace.openTransaction("Add .text")) {
 			Objects.requireNonNull(addMemoryRegion(trace.getObjectManager(), Lifespan.nowOn(0),
 				tb.range(0x55550000, 0x55550fff), "bin:.text", "rx")
-						.queryInterface(TraceObjectMemoryRegion.class));
+						.queryInterface(TraceMemoryRegion.class));
 		}
 	}
 
@@ -139,24 +140,21 @@ public class DebuggerRmiBreakpointsProviderTest
 	}
 
 	@Override
-	protected void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
+	protected void handleToggleBreakpointInvocation(TraceBreakpointLocation expectedLoc,
 			boolean expectedEn) throws Throwable {
-		if (!(expectedBreakpoint instanceof TraceObjectBreakpointLocation loc)) {
-			throw new AssertionError("Unexpected trace breakpoint type: " + expectedBreakpoint);
-		}
 		Map<String, Object> args = rmiMethodToggleBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.setEnabled(Lifespan.nowOn(0), expectedEn);
+			expectedLoc.setEnabled(Lifespan.nowOn(0), expectedEn);
 		}
 		rmiMethodToggleBreak.result(null);
 		assertEquals(Map.ofEntries(
-			Map.entry("breakpoint", loc.getSpecification().getObject()),
+			Map.entry("breakpoint", expectedLoc.getSpecification().getObject()),
 			Map.entry("enabled", expectedEn)), args);
 	}
 
 	@Override
-	protected void assertNotLiveBreakpoint(TraceRmiTarget target, TraceBreakpoint breakpoint)
+	protected void assertNotLiveBreakpoint(TraceRmiTarget target, TraceBreakpointLocation loc)
 			throws Throwable {
-		// TODO: Not sure there's anything to do here
+		// NOTE: Not sure there's anything to do here
 	}
 }

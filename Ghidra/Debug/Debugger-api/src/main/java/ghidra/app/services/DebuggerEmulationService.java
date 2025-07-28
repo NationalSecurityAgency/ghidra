@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,13 +55,20 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * The result of letting the emulator "run free"
+	 * 
+	 * @param schedule the schedule that was emulated
+	 * @param snapshot the snapshot where the final state was written down
+	 * @param error if an error occurred, the error, or null
 	 */
 	record RecordEmulationResult(TraceSchedule schedule, long snapshot, Throwable error)
-			implements EmulationResult {
-	}
+			implements EmulationResult {}
 
 	/**
 	 * An emulator managed by this service
+	 * 
+	 * @param trace the trace the emulator is bound to
+	 * @param emulator the emulator itself
+	 * @param version the cache version. See {@link #isValid()}.
 	 */
 	record CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator, long version) {
 		public CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator) {
@@ -112,14 +119,16 @@ public interface DebuggerEmulationService {
 		 * 
 		 * @param emu the emulator
 		 */
-		void running(CachedEmulator emu);
+		default void running(CachedEmulator emu) {
+		}
 
 		/**
 		 * An emulator has stopped
 		 * 
 		 * @param emu the emulator
 		 */
-		void stopped(CachedEmulator emu);
+		default void stopped(CachedEmulator emu) {
+		}
 	}
 
 	/**
@@ -140,8 +149,7 @@ public interface DebuggerEmulationService {
 	 * <p>
 	 * TODO: Should there be some opinion service for choosing default configs? Seems overly
 	 * complicated for what it offers. For now, we won't save anything, we'll default to the
-	 * (built-in) {@link BytesDebuggerPcodeEmulatorFactory}, and we won't have configuration
-	 * options.
+	 * (built-in) concrete emulator, and we won't have configuration options.
 	 * 
 	 * @param factory the chosen factory
 	 */
@@ -228,6 +236,7 @@ public interface DebuggerEmulationService {
 	 * @param monitor a monitor cancellation
 	 * @param scheduler a thread scheduler for the emulator
 	 * @return the result of emulation
+	 * @throws CancelledException if the user cancels the task
 	 */
 	EmulationResult run(TracePlatform platform, TraceSchedule from, TaskMonitor monitor,
 			Scheduler scheduler) throws CancelledException;
@@ -268,8 +277,8 @@ public interface DebuggerEmulationService {
 	 * Get the cached emulator for the given trace and time
 	 * 
 	 * <p>
-	 * To guarantee the emulator is present, call {@link #backgroundEmulate(Trace, TraceSchedule)}
-	 * first.
+	 * To guarantee the emulator is present, call
+	 * {@link #backgroundEmulate(TracePlatform, TraceSchedule)} first.
 	 * <p>
 	 * <b>WARNING:</b> This emulator belongs to this service. Stepping it, or otherwise manipulating
 	 * it without the service's knowledge can lead to unintended consequences.
@@ -289,6 +298,11 @@ public interface DebuggerEmulationService {
 	 * @return the collection
 	 */
 	Collection<CachedEmulator> getBusyEmulators();
+
+	/**
+	 * Invalidate the trace's cache of emulated states.
+	 */
+	void invalidateCache();
 
 	/**
 	 * Add a listener for emulator state changes

@@ -324,7 +324,7 @@ public class FcgVertexShapeProvider extends CircleWithLabelVertexShapeProvider {
 	}
 
 	@Override
-	protected void setTogglesVisible(boolean visible) {
+	public void setTogglesVisible(boolean visible) {
 
 		boolean isIn = isInDirection();
 		boolean turnOn = isIn && hasIncomingReferences && visible;

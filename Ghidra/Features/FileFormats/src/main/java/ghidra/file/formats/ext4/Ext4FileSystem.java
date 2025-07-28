@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,15 +234,6 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 		return inode;
 	}
 
-	/**
-	 * Returns a {@link ByteProvider} that supplies the bytes of the requested file.
-	 * 
-	 * @param file {@link GFile} to get
-	 * @param monitor {@link TaskMonitor} to cancel
-	 * @return {@link ByteProvider} containing the bytes of the requested file, caller is
-	 * responsible for closing the ByteProvider
-	 * @throws IOException if error
-	 */
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
 		file = fsIndex.resolveSymlinks(file);

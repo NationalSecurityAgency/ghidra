@@ -19,6 +19,9 @@
 namespace ghidra {
 
 AttributeId ATTRIB_SIZES = AttributeId("sizes",151);
+AttributeId ATTRIB_MAX_PRIMITIVES = AttributeId("maxprimitives", 153);
+AttributeId ATTRIB_REVERSESIGNIF = AttributeId("reversesignif", 154);
+AttributeId ATTRIB_MATCHSIZE = AttributeId("matchsize", 155);
 
 ElementId ELEM_DATATYPE = ElementId("datatype",273);
 ElementId ELEM_CONSUME = ElementId("consume",274);
@@ -33,6 +36,7 @@ ElementId ELEM_HIDDEN_RETURN = ElementId("hidden_return",282);
 ElementId ELEM_JOIN_PER_PRIMITIVE = ElementId("join_per_primitive",283);
 ElementId ELEM_JOIN_DUAL_CLASS = ElementId("join_dual_class",285);
 ElementId ELEM_EXTRA_STACK = ElementId("extra_stack",287);
+ElementId ELEM_CONSUME_REMAINING = ElementId("consume_remaining",288);
 
 /// \brief Check that a big Primitive properly overlaps smaller Primitives
 ///
@@ -224,9 +228,9 @@ bool PrimitiveExtractor::extract(Datatype *dt,int4 max,int4 offset)
     if (!extract(compDt,max,curOff))
       return false;
     expectedOff = curOff + compDt->getAlignSize();
- }
+  }
   return true;
-}
+} 
 
 /// \param dt is data-type extract from
 /// \param unionIllegal is \b true if unions encountered during extraction are considered illegal
@@ -385,11 +389,11 @@ HomogeneousAggregate::HomogeneousAggregate(type_metatype meta)
 
 {
   metaType = meta;
-  maxPrimitives = 2;
+  maxPrimitives = 4;
 }
 
-HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max)
-  : SizeRestrictedFilter(min,max)
+HomogeneousAggregate::HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 minSize,int4 maxSize)
+  : SizeRestrictedFilter(minSize, maxSize)
 {
   metaType = meta;
   maxPrimitives = maxPrim;
@@ -408,7 +412,7 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
   type_metatype meta = dt->getMetatype();
   if (meta != TYPE_ARRAY && meta != TYPE_STRUCT)
     return false;
-  PrimitiveExtractor primitives(dt,true,0,4);
+  PrimitiveExtractor primitives(dt,true,0,maxPrimitives);
   if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown()
       || !primitives.isAligned() || primitives.containsHoles())
     return false;
@@ -420,6 +424,21 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
       return false;
   }
   return true;
+}
+
+void HomogeneousAggregate::decode(Decoder &decoder)
+{
+	SizeRestrictedFilter::decode(decoder);
+	decoder.rewindAttributes();
+	for(;;) {
+    	uint4 attribId = decoder.getNextAttributeId();
+    	if (attribId == 0) break;
+    	if (attribId == ATTRIB_MAX_PRIMITIVES) {
+			uint4 xmlMaxPrim = decoder.readUnsignedInteger();
+			if (xmlMaxPrim > 0) maxPrimitives = xmlMaxPrim;
+		}
+	}
+	
 }
 
 /// If the next element is a qualifier filter, decode it from the stream and return it.
@@ -603,6 +622,29 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
   return action;
 }
 
+/// \brief Read the next model rule precondition element from the stream
+///
+/// Allocate the precondition object corresponding to the element and configure it.
+/// If the next element is not a precondition, return null.
+/// \param decoder is the stream decoder
+/// \param res is the resource set for the new precondition
+/// \return the new precondition, or null if no more preconditions are in the stream
+AssignAction *AssignAction::decodePrecondition(Decoder &decoder,const ParamListStandard *res)
+{
+  AssignAction *action;
+  uint4 elemId = decoder.peekElement();
+  
+  if (elemId == ELEM_CONSUME_EXTRA) {
+	action = new ConsumeExtra(res);
+  }
+  else {
+    return (AssignAction *)0;
+  }
+  
+  action->decode(decoder);
+  return action;
+}
+
 /// \brief Read the next model rule sideeffect element from the stream
 ///
 /// Allocate the sideeffect object corresponding to the element and configure it.
@@ -621,6 +663,9 @@ AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListSta
   }
   else if (elemId == ELEM_EXTRA_STACK) {
     action = new ExtraStack(res,0);
+  }
+  else if (elemId == ELEM_CONSUME_REMAINING) {
+	action = new ConsumeRemaining(res);
   }
   else
     throw DecoderError("Expecting model rule sideeffect");
@@ -895,8 +940,12 @@ void MultiSlotAssign::decode(Decoder &decoder)
     if (attribId == 0) break;
     if (attribId == ATTRIB_REVERSEJUSTIFY) {
       if (decoder.readBool())
-	justifyRight = !justifyRight;
+	    justifyRight = !justifyRight;
     }
+    else if (attribId == ATTRIB_REVERSESIGNIF) {
+	  if (decoder.readBool()) 
+	    consumeMostSig = !consumeMostSig;
+	}
     else if (attribId == ATTRIB_STORAGE) {
       resourceType = string2typeclass(decoder.readString());
     }
@@ -1200,8 +1249,12 @@ void MultiSlotDualAssign::decode(Decoder &decoder)
     if (attribId == 0) break;
     if (attribId == ATTRIB_REVERSEJUSTIFY) {
       if (decoder.readBool())
-	justifyRight = !justifyRight;
+	    justifyRight = !justifyRight;
     }
+    else if (attribId == ATTRIB_REVERSESIGNIF) {
+	  if (decoder.readBool())
+	    consumeMostSig = !consumeMostSig;
+	}
     else if (attribId == ATTRIB_STORAGE || attribId == ATTRIB_A) {
       baseType = string2typeclass(decoder.readString());
     }
@@ -1337,6 +1390,61 @@ void ConsumeExtra::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_CONSUME_EXTRA);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    else if (attribId == ATTRIB_STORAGE) {
+		resourceType = string2typeclass(decoder.readString());
+	}
+	else if (attribId == ATTRIB_MATCHSIZE) {
+		matchSize = decoder.readBool();
+	}
+  }
+  decoder.closeElement(elemId);
+  initializeEntries();
+}
+
+
+/// Find the first ParamEntry matching the \b resourceType.
+void ConsumeRemaining::initializeEntries(void)
+
+{
+  resource->extractTiles(tiles,resourceType);
+  if (tiles.size() == 0)
+    throw LowlevelError("Could not find matching resources for action: consume_remaining");
+}
+
+ConsumeRemaining::ConsumeRemaining(const ParamListStandard *res)
+  : AssignAction(res)
+{
+  resourceType = TYPECLASS_GENERAL;
+}
+
+ConsumeRemaining::ConsumeRemaining(type_class store,const ParamListStandard *res)
+  : AssignAction(res)
+{
+  resourceType = store;
+  initializeEntries();
+}
+
+uint4 ConsumeRemaining::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+				     vector<int4> &status,ParameterPieces &res) const
+{
+  int4 iter = 0;
+  while(iter != tiles.size()) {
+    const ParamEntry *entry = tiles[iter];
+    ++iter;
+    if (status[entry->getGroup()] != 0)
+      continue;		// Already consumed
+    status[entry->getGroup()] = -1;	// Consume the slot/register
+  }
+  return success;
+}
+
+void ConsumeRemaining::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_CONSUME_REMAINING);
   resourceType = string2typeclass(decoder.readString(ATTRIB_STORAGE));
   decoder.closeElement(elemId);
   initializeEntries();
@@ -1400,6 +1508,8 @@ ModelRule::ModelRule(const ModelRule &op2,const ParamListStandard *res)
     assign = op2.assign->clone(res);
   else
     assign = (AssignAction *)0;
+  for (int4 i=0;i<op2.preconditions.size();++i)
+    preconditions.push_back(op2.preconditions[i]->clone(res)); 
   for(int4 i=0;i<op2.sideeffects.size();++i)
     sideeffects.push_back(op2.sideeffects[i]->clone(res));
 }
@@ -1425,6 +1535,8 @@ ModelRule::~ModelRule(void)
     delete qualifier;
   if (assign != (AssignAction *)0)
     delete assign;
+  for(int4 i=0;i<preconditions.size();++i)
+    delete preconditions[i];
   for(int4 i=0;i<sideeffects.size();++i)
     delete sideeffects[i];
 }
@@ -1451,8 +1563,13 @@ uint4 ModelRule::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
   if (qualifier != (QualifierFilter *)0 && !qualifier->filter(proto,pos)) {
     return AssignAction::fail;
   }
-  uint4 response = assign->assignAddress(dt,proto,pos,tlist,status,res);
+  vector<int4> tmpStatus = status;
+  for(int4 i =0;i<preconditions.size();++i) {
+	preconditions[i]->assignAddress(dt,proto,pos,tlist,tmpStatus,res);
+  }
+  uint4 response = assign->assignAddress(dt,proto,pos,tlist,tmpStatus,res);
   if (response != AssignAction::fail) {
+	status = tmpStatus;
     for(int4 i=0;i<sideeffects.size();++i) {
       sideeffects[i]->assignAddress(dt,proto,pos,tlist,status,res);
     }
@@ -1482,6 +1599,12 @@ void ModelRule::decode(Decoder &decoder,const ParamListStandard *res)
   }
   else {
     qualifier = new AndFilter(qualifiers);
+  }
+  for (;;) {
+	AssignAction *precond = AssignAction::decodePrecondition(decoder, res);
+	if (precond == (AssignAction *)0)
+	  break;
+    preconditions.push_back(precond);
   }
   assign = AssignAction::decodeAction(decoder, res);
   while(decoder.peekElement() != 0) {

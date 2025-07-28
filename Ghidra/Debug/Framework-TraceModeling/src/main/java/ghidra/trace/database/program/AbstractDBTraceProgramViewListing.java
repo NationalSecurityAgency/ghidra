@@ -38,7 +38,6 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -46,6 +45,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.property.TracePropertyMapOperations;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
@@ -59,13 +59,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected class DBTraceProgramViewUndefinedData extends UndefinedDBTraceData {
 		public DBTraceProgramViewUndefinedData(DBTrace trace, long snap, Address address,
-				DBTraceThread thread, int frameLevel) {
+				TraceThread thread, int frameLevel) {
 			super(trace, snap, address, thread, frameLevel);
 		}
 
 		@Override
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
-			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
+			DBTraceMemorySpace mem = trace.getMemoryManager().get(getAddressSpace(), false);
 			if (mem == null) {
 				buffer.put((byte) 0);
 				return 1;

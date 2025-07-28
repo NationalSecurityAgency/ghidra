@@ -25,14 +25,15 @@
 #@menu-group lldb
 #@icon icon.debugger
 #@help lldb#macos_kernel
+#@depends Debugger-rmi-trace
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
 
 . ../support/lldbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathLldb=$(ghidra-module-pypath "Debug/Debugger-agent-lldb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathLldb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathLldb:$pypathTrace:$PYTHONPATH
 
 function launch-lldb() {

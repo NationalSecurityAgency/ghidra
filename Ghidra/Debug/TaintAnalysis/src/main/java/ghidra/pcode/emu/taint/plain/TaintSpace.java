@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,9 +62,9 @@ public class TaintSpace {
 	 * Retrieve the taint sets for the variable at the given offset
 	 * 
 	 * <p>
-	 * This retrieves as many taint sets as there are elements in the given buffer vector. This
-	 * first element becomes the taint set at the given offset, then each subsequent element becomes
-	 * the taint set at each subsequent offset until the vector is filled. This is analogous to the
+	 * This retrieves as many taint sets as there are elements in the given buffer vector. The first
+	 * element becomes the taint set at the given offset, then each subsequent element becomes the
+	 * taint set at each subsequent offset until the vector is filled. This is analogous to the
 	 * manner in which bytes would be "read" from concrete state, starting at a given offset, into a
 	 * destination array.
 	 * 

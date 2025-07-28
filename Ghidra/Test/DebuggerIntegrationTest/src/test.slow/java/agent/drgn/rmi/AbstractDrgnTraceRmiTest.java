@@ -52,9 +52,9 @@ import junit.framework.AssertionFailedError;
 
 public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
 
-	protected static String CORE = "core.12137";
-	protected static String MDO = "/New Traces/" + CORE;
-	public static String PREAMBLE = """
+	protected static final String CORE = "core.12137";
+	protected static final String MDO = "/New Traces/" + CORE;
+	public static final String PREAMBLE = """
 			import os
 			import drgn
 			import drgn.cli

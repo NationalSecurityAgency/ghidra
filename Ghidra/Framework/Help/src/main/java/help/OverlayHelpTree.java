@@ -52,6 +52,7 @@ public class OverlayHelpTree {
 	}
 
 	private void addExternalTOCItem(TOCItem item) {
+
 		TOCItem parent = item.getParent();
 		String parentID = parent == null ? null : parent.getIDAttribute();
 		if (parentID == null) {
@@ -129,6 +130,20 @@ public class OverlayHelpTree {
 		// printTreeForID(writer, sourceFileID);
 	}
 
+	public void validateAllTOCs() {
+
+		initializeTree();
+		doValidateAllTOCs(rootNode);
+	}
+
+	private void doValidateAllTOCs(OverlayNode node) {
+		node.validateChildrenSortGroups();
+		Set<OverlayNode> children = node.children;
+		for (OverlayNode child : children) {
+			doValidateAllTOCs(child);
+		}
+	}
+
 	void printTreeForID(PrintWriter writer, String sourceFileID) {
 		initializeTree();
 
@@ -149,7 +164,7 @@ public class OverlayHelpTree {
 
 	private void printContents(String sourceFileID, PrintWriter writer) {
 		if (rootNode == null) {
-			// assume not TOC contents; empty TOC file
+			// assume no TOC contents; empty TOC file
 			return;
 		}
 
@@ -185,6 +200,7 @@ public class OverlayHelpTree {
 	}
 
 	private void buildChildren(OverlayNode node) {
+
 		String definitionID = node.getDefinitionID();
 		Set<TOCItem> children = parentToChildrenMap.remove(definitionID);
 		if (children == null) {

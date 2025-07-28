@@ -160,11 +160,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 		ProjectData projectData = project != null ? project.getProjectData() : null;
 		try (ExternalSymbolResolver esr = new ExternalSymbolResolver(projectData, monitor)) {
-			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				esr.addProgramToFixup(
-					loadedProgram.getProjectFolderPath() + loadedProgram.getName(),
-					loadedProgram.getDomainObject());
-			}
+			loadedPrograms.forEach(p -> esr.addProgramToFixup(p));
 			esr.fixUnresolvedExternalSymbols();
 			esr.logInfo(messageLog::appendMsg, true);
 		}

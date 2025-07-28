@@ -63,11 +63,10 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * <p>
 	 * Note that when the load completes, the returned {@link Loaded} {@link Program}s are not 
 	 * saved to a project.  That is the responsibility of the caller (see 
-	 * {@link Loaded#save(Project, MessageLog, TaskMonitor)}).
+	 * {@link Loaded#save(TaskMonitor)}).
 	 * <p>
-	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
-	 * {@link Program}s with {@link Loaded#release(Object)} when they are no longer
-	 * needed.
+	 * It is also the responsibility of the caller to close the returned {@link Loaded} 
+	 * {@link Program}s with {@link Loaded#close()} when they are no longer needed.
 	 *
 	 * @param provider The bytes to load.
 	 * @param loadedName A suggested name for the primary {@link Loaded} {@link Program}. 
@@ -135,21 +134,26 @@ public abstract class AbstractProgramLoader implements Loader {
 		try {
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
 				monitor.checkCancelled();
-				Program program = loadedProgram.getDomainObject();
-				applyProcessorLabels(options, program);
-				program.setEventsEnabled(true);
+				Program program = loadedProgram.getDomainObject(this);
+				try {
+					applyProcessorLabels(options, program);
+					program.setEventsEnabled(true);
+				}
+				finally {
+					program.release(this);
+				}
 			}
 
 			// Subclasses can perform custom post-load fix-ups
 			postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog, monitor);
 
-			// Discard unneeded programs
+			// Discard temporary programs
 			Iterator<Loaded<Program>> iter = loadedPrograms.iterator();
 			while (iter.hasNext()) {
 				Loaded<Program> loaded = iter.next();
-				if (loaded.shouldDiscard()) {
+				if (loaded.check(p -> p.isTemporary())) {
 					iter.remove();
-					loaded.release(consumer);
+					loaded.close();
 				}
 			}
 
@@ -158,7 +162,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 		finally {
 			if (!success) {
-				release(loadedPrograms, consumer);
+				loadedPrograms.forEach(Loaded::close);
 			}
 			postLoadCleanup(success);
 		}
@@ -461,18 +465,6 @@ public abstract class AbstractProgramLoader implements Loader {
 	 */
 	protected LanguageService getLanguageService() {
 		return DefaultLanguageService.getLanguageService();
-	}
-
-	/**
-	 * Releases the given consumer from each of the provided {@link Loaded loaded programs}
-	 *
-	 * @param loadedPrograms A list of {@link Loaded loaded programs} which are no longer being used
-	 * @param consumer The consumer that was marking the {@link Program}s as being used
-	 */
-	protected final void release(List<Loaded<Program>> loadedPrograms, Object consumer) {
-		for (Loaded<Program> loadedProgram : loadedPrograms) {
-			loadedProgram.getDomainObject().release(consumer);
-		}
 	}
 
 	private void applyProcessorLabels(List<Option> options, Program program) {

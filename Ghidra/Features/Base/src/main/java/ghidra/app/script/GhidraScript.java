@@ -44,8 +44,7 @@ import ghidra.app.tablechooser.TableChooserExecutor;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.app.util.dialog.AskAddrDialog;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.app.util.query.TableService;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
@@ -205,7 +204,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @deprecated Use {@link #set(GhidraState)} or {@link #set(GhidraState, ScriptControls)}
 	 *   instead
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public final void set(GhidraState state, TaskMonitor monitor, PrintWriter writer) {
 		set(state, new ScriptControls(writer, writer, monitor));
 	}
@@ -268,7 +267,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @deprecated Use {@link #execute(GhidraState, ScriptControls)} instead to also set a 
 	 *   {@link PrintWriter} for {@code stderr}
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public final void execute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
 			throws Exception {
 		execute(runState, new ScriptControls(runWriter, runWriter, runMonitor));
@@ -1004,7 +1003,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @return a demangled version of the mangled string, or null if it could not be demangled
 	 * @deprecated Use {@link DemanglerUtil#demangle(Program, String, Address)} instead
 	 */
-	@Deprecated(since = "11.5")
+	@Deprecated(since = "12.0")
 	public String getDemangled(String mangled) {
 		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
 		if (!demangledObjs.isEmpty()) {
@@ -2828,8 +2827,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		DomainFile choice = loadAskValue(this::parseDomainFile, title);
 		if (!isRunningHeadless()) {
 			choice = doAsk(Program.class, title, "", choice, lastValue -> {
-
-				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
+				// File filter employed limits access to program files within the active project
+				// only to ensure the ability to open for update is possible. 
+				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+					new DefaultDomainFileFilter(Program.class, true));
 				dtd.show();
 				if (dtd.wasCancelled()) {
 					return null;
@@ -2933,8 +2934,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		String message = "";
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
-
-			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
+			// File filter employed limits access to files within the active project
+			// only to ensure the ability to open for update is possible. 
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN,
+				DomainFileFilter.ALL_FILES_NO_EXTERNAL_FOLDERS_FILTER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -3631,8 +3634,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	/**
 	 * Attempts to import the specified file. It attempts to detect the format and
 	 * automatically import the file. If the format is unable to be determined, then
-	 * null is returned.  For more control over the import process, {@link AutoImporter} may be
-	 * directly called.
+	 * null is returned.  For more control over the import process, {@link ProgramLoader} may be
+	 * directly used.
 	 * <p>
 	 * NOTE: The returned {@link Program} is not automatically saved into the current project.
 	 * <p>
@@ -3645,11 +3648,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @throws Exception if any exceptions occur while importing
 	 */
 	public Program importFile(File file) throws Exception {
-		try {
-			LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file,
-				state.getProject(), null, this, new MessageLog(), monitor);
-			loadResults.releaseNonPrimary(this);
-			return loadResults.getPrimaryDomainObject();
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(state.getProject())
+				.monitor(monitor)
+				.load()) {
+			return loadResults.getPrimaryDomainObject(this);
 		}
 		catch (LoadException e) {
 			return null;
@@ -3658,7 +3662,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Imports the specified file as raw binary.  For more control over the import process,
-	 * {@link AutoImporter} may be directly called.
+	 * {@link ProgramLoader} may be directly used.
 	 * <p>
 	 * NOTE: It is the responsibility of the script that calls this method to release the returned
 	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer
@@ -3672,10 +3676,15 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public Program importFileAsBinary(File file, Language language, CompilerSpec compilerSpec)
 			throws Exception {
-		try {
-			Loaded<Program> loaded = AutoImporter.importAsBinary(file, state.getProject(), null,
-				language, compilerSpec, this, new MessageLog(), monitor);
-			return loaded.getDomainObject();
+		try (LoadResults<Program> loadResults = ProgramLoader.builder()
+				.source(file)
+				.project(state.getProject())
+				.loaders(BinaryLoader.class)
+				.language(language)
+				.compiler(compilerSpec)
+				.monitor(monitor)
+				.load()) {
+			return loadResults.getPrimaryDomainObject(this);
 		}
 		catch (LoadException e) {
 			return null;

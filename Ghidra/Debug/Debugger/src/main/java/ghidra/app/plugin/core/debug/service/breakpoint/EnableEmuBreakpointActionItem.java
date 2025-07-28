@@ -19,15 +19,15 @@ import java.util.concurrent.CompletableFuture;
 
 import db.Transaction;
 import ghidra.async.AsyncUtils;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
-public record EnableEmuBreakpointActionItem(TraceBreakpoint bpt, long snap)
+public record EnableEmuBreakpointActionItem(TraceBreakpointLocation loc, long snap)
 		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
 		try (Transaction tx =
-			bpt.getTrace().openTransaction("Enable Emulated Breakpoint")) {
-			bpt.setEmuEnabled(snap, true);
+			loc.getTrace().openTransaction("Enable Emulated Breakpoint")) {
+			loc.setEmuEnabled(snap, true);
 		}
 		return AsyncUtils.nil();
 	}

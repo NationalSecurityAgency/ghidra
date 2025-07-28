@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,10 @@ InjectPayloadSleigh::~InjectPayloadSleigh(void)
     delete tpl;
 }
 
+/// Create an empty payload in preparation for parsing the injection from a stream
+/// \param src is a name or other description of the document to be parsed
+/// \param nm is the name of the injection
+/// \param tp is the type of injection
 InjectPayloadSleigh::InjectPayloadSleigh(const string &src,const string &nm,int4 tp)
   : InjectPayload(nm,tp)
 {
@@ -63,8 +67,8 @@ void InjectPayloadSleigh::inject(InjectContext &context,PcodeEmit &emit) const
   con.cacher.emit(con.baseaddr,&emit);
 }
 
-/// The content is read as raw p-code source
-/// \param decoder is the XML stream decoder
+/// The content is read as raw p-code source.
+/// \param decoder is the stream decoder
 void InjectPayloadSleigh::decodeBody(Decoder &decoder)
 
 {
@@ -95,11 +99,18 @@ void InjectPayloadSleigh::printTemplate(ostream &s) const
   tpl->encode(encoder,-1);
 }
 
+/// \brief Verify that storage locations passed in -con- match the restrictions set for a given payload
+///
+/// If the parsed injection does not match the restrictions, an exception is thrown.
+/// \param con is the SLEIGH context established after parsing the injection
+/// \param inputlist is the list of input parameters specified for the given payload
+/// \param output is the list of output parameters specified for the given payload
+/// \param source is a description or name for the payload document
 void InjectPayloadSleigh::checkParameterRestrictions(InjectContextSleigh &con,
 						     const vector<InjectParameter> &inputlist,
 						     const vector<InjectParameter> &output,
 						     const string &source)
-{ // Verify that the storage locations passed in -con- match the restrictions set for this payload
+{
   if (inputlist.size() != con.inputlist.size())
     throw LowlevelError("Injection parameter list has different number of parameters than p-code operation: "+source);
   for(int4 i=0;i<inputlist.size();++i) {
@@ -116,11 +127,18 @@ void InjectPayloadSleigh::checkParameterRestrictions(InjectContextSleigh &con,
   }
 }
 
+/// \brief Set-up operands in the parser state so that they pick up storage locations in InjectContext
+///
+/// \param con is context for the parser
+/// \param walker is the parser state
+/// \param inputlist is the input varnodes as described by the payload
+/// \param output is the output varnodes as described by the payload
+/// \param source is a description or name of the payload document
 void InjectPayloadSleigh::setupParameters(InjectContextSleigh &con,ParserWalkerChange &walker,
 					  const vector<InjectParameter> &inputlist,
 					  const vector<InjectParameter> &output,
 					  const string &source)
-{ // Set-up operands in the parser state so that they pick up storage locations in InjectContext
+{
   checkParameterRestrictions(con,inputlist,output,source);
   ParserContext *pos = walker.getParserContext();
   for(int4 i=0;i<inputlist.size();++i) {
@@ -195,6 +213,11 @@ void InjectPayloadCallother::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+/// \brief Constructor for use with decode
+///
+/// \param g is the Architecture owning the script
+/// \param src is a description or name of the payload document
+/// \param nm is the name of the script
 ExecutablePcodeSleigh::ExecutablePcodeSleigh(Architecture *g,const string &src,const string &nm)
   : ExecutablePcode(g,src,nm)
 {
@@ -252,6 +275,25 @@ void ExecutablePcodeSleigh::printTemplate(ostream &s) const
   tpl->encode(encoder,-1);
 }
 
+/// \brief Constructor for use with decode
+///
+/// \param g is the Architecture
+/// \param base is original InjectPayload object whose dynamic payloads are being cached
+InjectPayloadDynamic::InjectPayloadDynamic(Architecture *g,InjectPayload *base)
+  : InjectPayload(base->getName(),base->getType())
+{
+  glb = g;
+  dynamic = true;
+
+  // Clone basic properties of the original payload
+  incidentalCopy = base->isIncidentalCopy();
+  paramshift = base->getParamShift();
+  for(int4 i=0;i<base->sizeInput();++i)
+    inputlist.push_back(base->getInput(i));
+  for(int4 i=0;i<base->sizeOutput();++i)
+    output.push_back(base->getOutput(i));
+}
+
 InjectPayloadDynamic::~InjectPayloadDynamic(void)
 
 {
@@ -260,6 +302,10 @@ InjectPayloadDynamic::~InjectPayloadDynamic(void)
     delete (*iter).second;
 }
 
+/// \brief Decode a specific p-code sequence and the context in which it applied
+///
+/// Decode the Address for a specific context and then elements for the specific p-code ops.
+/// \param decoder is the stream to pull from
 void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
 
 {
@@ -301,14 +347,6 @@ PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g)
   contextCache.glb = g;
 }
 
-int4 PcodeInjectLibrarySleigh::registerDynamicInject(InjectPayload *payload)
-
-{
-  int4 id = injection.size();
-  injection.push_back(payload);
-  return id;
-}
-
 /// \brief Force a payload to be dynamic for debug purposes
 ///
 /// Debug information may include inject information for payloads that aren't dynamic.
@@ -320,12 +358,18 @@ InjectPayloadDynamic *PcodeInjectLibrarySleigh::forceDebugDynamic(int4 injectid)
 
 {
   InjectPayload *oldPayload = injection[injectid];
-  InjectPayloadDynamic *newPayload = new InjectPayloadDynamic(glb,oldPayload->getName(),oldPayload->getType());
+  InjectPayloadDynamic *newPayload = new InjectPayloadDynamic(glb,oldPayload);
   delete oldPayload;
   injection[injectid] = newPayload;
   return newPayload;
 }
 
+/// \brief Convert SLEIGH syntax to p-code templates for the given InjectPayload
+///
+/// The payload \b parsestring must be populated with SLEIGH synatax.
+/// The SLEIGH translator is used to parse the syntax and produce the
+/// p-code templates that are then ready to be injected via InjectPayload::inject.
+/// \param payload is the given InjectPayload
 void PcodeInjectLibrarySleigh::parseInject(InjectPayload *payload)
 
 {
@@ -391,7 +435,7 @@ void PcodeInjectLibrarySleigh::registerInject(int4 injectid)
 {
   InjectPayload *payload = injection[injectid];
   if (payload->isDynamic()) {
-    InjectPayload *sub = new InjectPayloadDynamic(glb,payload->getName(),payload->getType());
+    InjectPayload *sub = new InjectPayloadDynamic(glb,payload);
     delete payload;
     payload = sub;
     injection[injectid] = payload;

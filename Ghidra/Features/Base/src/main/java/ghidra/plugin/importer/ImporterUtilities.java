@@ -265,8 +265,16 @@ public class ImporterUtilities {
 
 	}
 
-	public static void showLoadLibrariesDialog(Program program, PluginTool tool,
-			ProgramManager manager, TaskMonitor monitor) {
+	/**
+	 * Constructs a {@link LoadLibrariesOptionsDialog} and shows it in the swing thread. If the 
+	 * given {@link Program} does not support library loading, a warning message will be shown
+	 * instead.
+	 * 
+	 * @param program The {@link Program}
+	 * @param tool The {@link PluginTool}
+	 * @param monitor {@link TaskMonitor}
+	 */
+	public static void showLoadLibrariesDialog(Program program, PluginTool tool,TaskMonitor monitor) {
 
 		Objects.requireNonNull(monitor);
 
@@ -279,9 +287,25 @@ public class ImporterUtilities {
 
 		try {
 			ByteProvider provider = getProvider(program);
+			if (provider == null) {
+				Msg.showWarn(null, null, LoadLibrariesOptionsDialog.TITLE,
+					"Cannot Load Libraries. Program does not have file bytes associated with it.");
+				return;
+			}
 			LoadSpec loadSpec = getLoadSpec(provider, program);
+			if (loadSpec == null || loadSpec.getLoader()
+					.getDefaultOptions(provider, loadSpec, null, false)
+					.stream()
+					.noneMatch(e -> e.getName()
+							.equals(
+								AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME))) {
+				Msg.showWarn(null, null, LoadLibrariesOptionsDialog.TITLE,
+					"Cannot Load Libraries. Program does not support library loading.");
+				return;
+			}
 			AddressFactory addressFactory =
 				loadSpec.getLanguageCompilerSpec().getLanguage().getAddressFactory();
+
 			SystemUtilities.runSwingLater(() -> {
 				OptionsDialog dialog = new LoadLibrariesOptionsDialog(provider, program, tool,
 					loadSpec, () -> addressFactory);
@@ -345,20 +369,12 @@ public class ImporterUtilities {
 				Program program =
 					doFSImportHelper((GFileSystemProgramProvider) refdFile.fsRef.getFilesystem(),
 						gfile, destFolder, consumer, monitor);
-				if (program != null) {
-					LoadResults<? extends DomainObject> loadResults = new LoadResults<>(program,
-						program.getName(), destFolder.getPathname());
-					boolean success = false;
-					try {
-						doPostImportProcessing(tool, programManager, fsrl, loadResults, consumer,
-							"", monitor);
-						success = true;
-					}
-					finally {
-						if (!success) {
-							program.release(consumer);
-						}
-					}
+				if (program == null) {
+					return;
+				}
+				try (LoadResults<? extends DomainObject> loadResults = new LoadResults<>(program,
+					program.getName(), tool.getProject(), destFolder.getPathname(), consumer)) {
+					doPostImportProcessing(tool, programManager, fsrl, loadResults, "", monitor);
 				}
 			}
 			catch (Exception e) {
@@ -420,14 +436,14 @@ public class ImporterUtilities {
 
 			Object consumer = new Object();
 			MessageLog messageLog = new MessageLog();
-			LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
+			try (LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
 					.load(bp, programName, tool.getProject(), destFolder.getPathname(), loadSpec,
-						options, messageLog, consumer, monitor);
+						options, messageLog, consumer, monitor)) {
+				loadResults.save(monitor);
+				doPostImportProcessing(tool, programManager, fsrl, loadResults,
+					messageLog.toString(), monitor);
+			}
 
-			loadResults.save(tool.getProject(), consumer, messageLog, monitor);
-
-			doPostImportProcessing(tool, programManager, fsrl, loadResults, consumer,
-				messageLog.toString(), monitor);
 		}
 		catch (CancelledException e) {
 			// no need to show a message
@@ -440,35 +456,39 @@ public class ImporterUtilities {
 
 	private static Set<DomainFile> doPostImportProcessing(PluginTool pluginTool,
 			ProgramManager programManager, FSRL fsrl,
-			LoadResults<? extends DomainObject> loadResults, Object consumer, String importMessages,
+			LoadResults<? extends DomainObject> loadResults, String importMessages,
 			TaskMonitor monitor) throws CancelledException {
 
 		boolean firstProgram = true;
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
 			monitor.checkCancelled();
-
-			if (loaded.getDomainObject() instanceof Program program) {
-				if (programManager != null) {
-					int openState = firstProgram
-							? ProgramManager.OPEN_CURRENT
-							: ProgramManager.OPEN_VISIBLE;
-					programManager.openProgram(program, openState);
+			Object consumer = new Object();
+			DomainObject obj = loaded.getDomainObject(consumer);
+			try {
+				if (obj instanceof Program) {
+					if (programManager != null) {
+						int openState = firstProgram
+								? ProgramManager.OPEN_CURRENT
+								: ProgramManager.OPEN_VISIBLE;
+						programManager.openProgram((Program) obj, openState);
+					}
+					importedFilesSet.add(obj.getDomainFile());
 				}
-				importedFilesSet.add(program.getDomainFile());
-			}
-			if (firstProgram) {
-				// currently we only show results for the imported program, not any libraries
-				displayResults(pluginTool, loaded.getDomainObject(),
-					loaded.getDomainObject().getDomainFile(), importMessages);
+				if (firstProgram) {
+					// currently we only show results for the imported program, not any libraries
+					displayResults(pluginTool, obj, obj.getDomainFile(), importMessages);
 
-				// Optionally echo loader message log to application.log
-				if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
-					Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+					// Optionally echo loader message log to application.log
+					if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
+						Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+					}
 				}
+				firstProgram = false;
 			}
-			loaded.release(consumer);
-			firstProgram = false;
+			finally {
+				obj.release(consumer);
+			}
 		}
 
 		selectFiles(importedFilesSet);

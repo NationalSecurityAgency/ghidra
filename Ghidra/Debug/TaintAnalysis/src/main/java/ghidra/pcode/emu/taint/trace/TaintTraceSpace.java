@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,10 +71,7 @@ public class TaintTraceSpace extends TaintSpace {
 	 * the property at the entry's offset. If the taint set is empty, we clear the property rather
 	 * than putting the empty taint set into the property.
 	 * 
-	 * @param map the backing object, which must now exist
-	 * @param snap the destination snap
-	 * @param thread if a register space, the destination thread
-	 * @param frame if a register space, the destination frame
+	 * @param into the trace-property access to write into
 	 */
 	public void writeDown(PcodeTracePropertyAccess<String> into) {
 		if (space.isUniqueSpace()) {

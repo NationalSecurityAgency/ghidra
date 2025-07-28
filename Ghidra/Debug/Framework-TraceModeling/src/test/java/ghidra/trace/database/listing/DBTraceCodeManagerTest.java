@@ -39,13 +39,16 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.guest.*;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -372,6 +375,8 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	 * settings <em>while the unit is still being created</em>. This will invalidate the trace's
 	 * caches. All of them, including the defined data units, which can become the cause of many
 	 * timing issues.
+	 * 
+	 * @throws Throwable because
 	 */
 	@Test
 	public void testOverlapErrWithDataTypeSettings() throws Throwable {
@@ -1388,6 +1393,12 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		}
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.build();
+	}
+
 	@Test
 	public void testRegisterSpace() throws Exception {
 		TraceThread thread;
@@ -1395,7 +1406,13 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData dR4;
 
 		try (Transaction tx = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			b.createRootObject(new ToySchemaBuilder()
+					.noRegisterGroups()
+					.useRegistersPerFrame()
+					.build(),
+				"Target");
+			thread = b.getOrAddThread("Threads[1]", 0);
+			b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 2);
 			regCode = manager.getCodeRegisterSpace(thread, true);
 			dR4 = regCode.definedData()
 					.create(Lifespan.nowOn(0), b.language.getRegister("r4"), LongDataType.dataType);
@@ -1926,14 +1943,16 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testSaveAndLoad() throws Exception {
+		Register r4 = b.language.getRegister("r4");
+
 		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject(buildContext(), "Target");
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
-			TraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
+			b.createObjectsRegsForThread(thread, Lifespan.nowOn(0), b.host);
 			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
-			regCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r4"),
-						LongDataType.dataType);
+			regCode.definedData().create(Lifespan.nowOn(0), r4, LongDataType.dataType);
 		}
 
 		File file = b.save();
@@ -1943,7 +1962,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			DBTraceCodeManager manager = b.trace.getCodeManager();
 
 			// No transaction, so it had better exist
-			TraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			List<TraceCodeUnit> units = new ArrayList<>();
 			for (TraceCodeUnit u : manager.definedUnits().get(0, true)) {
 				units.add(u);
@@ -1966,7 +1985,9 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 			assertTrue(units.get(1) instanceof TraceData);
 			TraceData data = (TraceData) units.get(1);
-			assertEquals(b.language.getRegister("r4").getAddress(), data.getAddress());
+			AddressSpace spaceT0 = TraceRegisterUtils.getRegisterAddressSpace(thread, 0, false);
+			AddressRange rngR4 = b.host.getConventionalRegisterRange(spaceT0, r4);
+			assertEquals(rngR4.getMinAddress(), data.getAddress());
 			assertEquals(new Scalar(32, 0), data.getValue());
 			assertEquals(4, data.getLength());
 		}
@@ -1974,25 +1995,33 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testUndoThenRedo() throws Exception {
+		Register r4 = b.language.getRegister("r4");
+
+		TraceThread thread;
+		try (Transaction tx = b.startTransaction()) {
+			/**
+			 * This part should not be undone: 1) Because asking for threads without a root object
+			 * causes an error. 2) Because the thread is an object, it's subject to the write-back
+			 * cache and cannot be undone.
+			 */
+			b.createRootObject(buildContext(), "Target");
+			thread = b.getOrAddThread("Threads[1]", 0);
+			b.createObjectsRegsForThread(thread, Lifespan.nowOn(0), b.host);
+		}
+
 		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
-			TraceThread thread = b.getOrAddThread("Thread 1", 0);
 			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
-			regCode.definedData()
-					.create(Lifespan.nowOn(0), b.language.getRegister("r4"),
-						LongDataType.dataType);
+			regCode.definedData().create(Lifespan.nowOn(0), r4, LongDataType.dataType);
 		}
 
 		b.trace.undo();
 
 		assertFalse(manager.definedUnits().get(0, true).iterator().hasNext());
-		assertTrue(b.trace.getThreadManager().getAllThreads().isEmpty());
 
 		b.trace.redo();
 
-		// No transaction, so it had better exist
-		TraceThread thread = b.getOrAddThread("Thread 1", 0);
 		List<TraceCodeUnit> units = new ArrayList<>();
 		for (TraceCodeUnit u : manager.definedUnits().get(0, true)) {
 			units.add(u);
@@ -2000,8 +2029,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		// Again, no transaction, so that space had better exist
 		for (TraceCodeUnit u : manager.getCodeRegisterSpace(thread, true)
 				.definedUnits()
-				.get(0,
-					true)) {
+				.get(0, true)) {
 			units.add(u);
 		}
 
@@ -2015,7 +2043,10 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 		assertTrue(units.get(1) instanceof TraceData);
 		TraceData data = (TraceData) units.get(1);
-		assertEquals(b.language.getRegister("r4").getAddress(), data.getAddress());
+
+		AddressSpace spaceT0 = TraceRegisterUtils.getRegisterAddressSpace(thread, 0, false);
+		AddressRange rngR4 = b.host.getConventionalRegisterRange(spaceT0, r4);
+		assertEquals(rngR4.getMinAddress(), data.getAddress());
 		assertEquals(new Scalar(32, 0), data.getValue());
 		assertEquals(4, data.getLength());
 	}

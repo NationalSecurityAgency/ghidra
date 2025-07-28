@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.net.URL;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.*;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -56,7 +57,8 @@ public abstract class IterateRepository {
 			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
 		}
 
-		GhidraURLQuery.queryUrl(ghidraURL, new GhidraURLResultHandlerAdapter(true) {
+		// Query URL - may be either file or folder (no link following)
+		GhidraURLQuery.queryUrl(ghidraURL, null, new GhidraURLResultHandlerAdapter(true) {
 
 			@Override
 			public void processResult(DomainFolder domainFolder, URL url, TaskMonitor m)
@@ -76,7 +78,9 @@ public abstract class IterateRepository {
 				process(domainFile, monitor);
 			}
 
-		}, monitor);
+			// Link files are skipped to avoid duplicate processing
+			// Processing should be done on actual folder - not a linked folder
+		}, LinkFileControl.NO_FOLLOW, monitor);
 
 	}
 
@@ -115,12 +119,11 @@ public abstract class IterateRepository {
 	private void process(DomainFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		// Do not follow folder-links or consider program links.  Using content type
-		// to filter is best way to control this.  If program links should be considered
-		// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+		// Do not follow folder-links or consider program links to avoid possible duplication of
+		// file processing.  Using content type is the best way to restrict this.  If program links 
+		// should be considered "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
 		// should be used.
 		if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(file.getContentType())) {
-			// NOTE: linked-folders and linked-files are not currently supported
 			return; // skip non-program file
 		}
 
@@ -129,6 +132,7 @@ public abstract class IterateRepository {
 			Msg.debug(IterateRepository.class, "Processing " + file.getPathname() + "...");
 			monitor.setMessage("Processing: " + file.getName());
 			monitor.incrementProgress(1);
+			// NOTE: The following method invocation will follow all links if presented one
 			program = (Program) file.getReadOnlyDomainObject(this, -1, monitor);
 			process(program, monitor);
 		}

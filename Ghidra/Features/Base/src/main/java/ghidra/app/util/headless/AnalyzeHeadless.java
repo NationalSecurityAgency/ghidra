@@ -45,8 +45,8 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		//@formatter:off
 		IMPORT("-import", true, "[<directory>|<file>]+"),
 		PROCESS("-process", true, "[<project_file>]"),
-		PRE_SCRIPT("-prescript", true, "<ScriptName>"),
-		POST_SCRIPT("-postscript", true, "<ScriptName>"),
+		PRE_SCRIPT("-preScript", true, "<ScriptName>"),
+		POST_SCRIPT("-postScript", true, "<ScriptName>"),
 		SCRIPT_PATH("-scriptPath", true, "\"<path1>[;<path2>...]\""),
 		PROPERTIES_PATH("-propertiesPath", true, "\"<path1>[;<path2>...]\""),
 		SCRIPT_LOG("-scriptlog", true, "<path to script log file>"),
@@ -54,7 +54,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		OVERWRITE("-overwrite", false),
 		RECURSIVE("-recursive", false),
 		READ_ONLY("-readOnly", false),
-		DELETE_PROJECT("-deleteproject", false),
+		DELETE_PROJECT("-deleteProject", false),
 		NO_ANALYSIS("-noanalysis", false),
 		PROCESSOR("-processor", true, "<languageID>"),
 		CSPEC("-cspec", true, "<compilerSpecID>"),
@@ -66,7 +66,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		OK_TO_DELETE("-okToDelete", false),
 		MAX_CPU("-max-cpu", true, "<max cpu cores to use>"),
 		LIBRARY_SEARCH_PATHS("-librarySearchPaths", true, "<path1>[;<path2>...]"),
-		LOADER("-loader", true, "<desired loader name>"),
+		LOADER(Loader.COMMAND_LINE_ARG_PREFIX, true, "<desired loader name>"),
 		LOADER_ARGS(Loader.COMMAND_LINE_ARG_PREFIX + "-", true, "<loader argument value>") {
 			@Override
 			public boolean matches(String arg) {
@@ -424,7 +424,8 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		options.setPostScriptsWithArgs(postScripts);
 
 		// Set loader and loader args
-		options.setLoader(loaderName, loaderArgs);
+		options.setLoader(loaderName);
+		options.setLoaderArgs(loaderArgs);
 
 		// Set user-specified language and compiler spec
 		options.setLanguageAndCompiler(languageId, compilerSpecId);

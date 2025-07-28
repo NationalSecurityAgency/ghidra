@@ -65,7 +65,7 @@ public class SymbolicPropogator {
 
 	private boolean debug = false;
 	
-	private boolean trackStartEndState = false; // track the start/end values for each instruction
+	private boolean recordStartEndState = false; // record the start/end values for registers at each instruction
 
 	private long pointerMask;
 	private int pointerSize;
@@ -103,21 +103,35 @@ public class SymbolicPropogator {
 	// cache for pcode callother injection payloads
 	HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<Long, InjectPayload>();
 
+	/**
+	 * Create SymbolicPropagator for program.
+	 * 
+	 * This will record all values at the beginning and ending of instructions.
+	 * Recording all values can take more time and memory.  So if the SymbolicEvaluator
+	 * callback mechanism is being used, use the alternate constructor with false for
+	 * recordStartEndState.
+	 * 
+	 */
 	public SymbolicPropogator(Program program) {
-		this (program, false);
+		this (program, true);
 	}
 
 	/**
-	 * Create symbolic propagation on program
+	 * Create SymbolicPropagator for program either recording or start/end state at each instruction.
+	 * 
+	 * NOTE: if you are going to inspect values at instructions after {@link SymbolicPropogator}.flowConstants()
+	 * has completed, then you should pass true for recordStartEndState.  If you are using a custom
+	 * SymbolicEvaluator with the flowConstants() method, then you should pass false.
 	 * 
 	 * @param program program
-	 * @param trackStartEndState - true to track the each register at the start/end of each instruction
-	 *                             this will use more memory and be slightly slower
+	 * @param recordStartEndState - true to record the value of each register at the start/end of each
+	 *                      instruction This will use more memory and be slightly slower.  If inspecting
+	 *                      values after flowContants() has completed, you must pass true.
 	 */
-	public SymbolicPropogator(Program program, boolean trackStartEndState) {
+	public SymbolicPropogator(Program program, boolean recordStartEndState) {
 		this.program = program;
 		
-		this.trackStartEndState = trackStartEndState;
+		this.recordStartEndState = recordStartEndState;
 
 		Language language = program.getLanguage();
 
@@ -126,7 +140,7 @@ public class SymbolicPropogator {
 
 		setPointerMask(program);
 
-		context = new VarnodeContext(program, programContext, spaceContext, trackStartEndState);
+		context = new VarnodeContext(program, programContext, spaceContext, recordStartEndState);
 		context.setDebug(debug);
 	}
 
@@ -259,7 +273,7 @@ public class SymbolicPropogator {
 		Language language = program.getLanguage();
 		ProgramContext newValueContext = new ProgramContextImpl(language);
 		ProgramContext newSpaceContext = new ProgramContextImpl(language);
-		VarnodeContext newContext = new VarnodeContext(program, newValueContext, newSpaceContext, trackStartEndState);
+		VarnodeContext newContext = new VarnodeContext(program, newValueContext, newSpaceContext, recordStartEndState);
 		newContext.setDebug(debug);
 
 		programContext = newValueContext;
@@ -318,8 +332,9 @@ public class SymbolicPropogator {
 
 	/**
 	 * Get constant or register relative value assigned to the 
-	 * specified register at the specified address
-	 * Note: This can only be called safely if trackStartEndState flag is true.
+	 * specified register at the specified address.
+	 * 
+	 * Note: This can only be called safely if recordStartEndState flag is true.
 	 * Otherwise it will just return the current value, not the value at the given address.
 	 * 
 	 * @param toAddr address
@@ -349,13 +364,13 @@ public class SymbolicPropogator {
 	/**
 	 * Get constant or register relative value assigned to the 
 	 * specified register at the specified address after the instruction has executed.
-	 * Note: This can only be called if trackStartEndState flag is true.
+	 * Note: This can only be called if recordStartEndState flag is true.
 	 * 
 	 * @param toAddr address
 	 * @param reg register
 	 * @return register value
 	 * 
-	 * @throws UnsupportedOperationException trackStartEndState == false at construction
+	 * @throws UnsupportedOperationException recordStartEndState == false at construction
 	 */
 	public Value getEndRegisterValue(Address toAddr, Register reg) {
 

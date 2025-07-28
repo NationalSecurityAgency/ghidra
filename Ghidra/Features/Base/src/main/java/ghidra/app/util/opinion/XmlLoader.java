@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,7 +200,7 @@ public class XmlLoader extends AbstractProgramLoader {
 		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
 		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, programFolderPath));
+			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
 		boolean success = false;
 		try {
 			success = doImport(result.lastXmlMgr, options, log, prog, monitor, false);
@@ -212,7 +212,7 @@ public class XmlLoader extends AbstractProgramLoader {
 		}
 		finally {
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}

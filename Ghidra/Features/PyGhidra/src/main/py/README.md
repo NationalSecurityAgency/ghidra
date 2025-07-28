@@ -21,33 +21,28 @@ instructions in this document focus on this type of usage.
 
 To install the PyGhidra Python library:
 1. Download and install
-   [Ghidra 11.3 or later](https://github.com/NationalSecurityAgency/ghidra/releases) to a desired 
+   [Ghidra 12.0 or later](https://github.com/NationalSecurityAgency/ghidra/releases) to a desired 
    location.
-2. Set the `GHIDRA_INSTALL_DIR` environment variable to point to the directory where Ghidra is 
-   installed.
-3. Install PyGhidra:
+2. Install PyGhidra:
    * Online: `pip install pyghidra`
    * Offline: `python3 -m pip install --no-index -f 
      <GhidraInstallDir>/Ghidra/Features/PyGhidra/pypkg/dist pyghidra`
-     
-Optionally, you can also install the Ghidra type stubs to improve your development experience 
-(assuming your Python editor supports it). The type stubs module is specific to each version of
-Ghidra:
-* Online: `pip install ghidra-stubs==<version>`
-* Offline: `python3 -m pip install --no-index -f <GhidraInstallDir>/docs/ghidra_stubs ghidra-stubs`
+3. Optionally install the Ghidra type stubs to improve your development experience (assuming your 
+   Python editor supports it). The type stubs module is specific to each version of Ghidra:
+   * Online: `pip install ghidra-stubs==<version>`
+   * Offline: `python3 -m pip install --no-index -f <GhidraInstallDir>/docs/ghidra_stubs ghidra-stubs`
+4. Optionally point PyGhidra at your Ghidra installation by setting the `GHIDRA_INSTALL_DIR` 
+   environment variable. If not set, PyGhidra will point itself at the last used installation of
+   Ghidra. Alternatively, you can point PyGhidra at a Ghidra installation with
+   `pyghidra.start(install_dir=<GhidraInstallDir>)` (see below).
 
 ## API
-The current version of PyGhidra inherits an API from the original "Pyhidra" project that provides an
-excellent starting point for interacting with a Ghidra installation. __NOTE:__ These functions are 
-subject to change in the future as more thought and feedback is collected on PyGhidra's role in the
-greater Ghidra ecosystem:
+The current version of PyGhidra introduces many new API methods with the goal of making the most
+common Ghidra tasks quick and easy, such as opening a project, getting a program, running a
+GhidraScript, etc. The inherited API from the original "Pyhidra" project is still available, but at 
+this point it will only receive bug fixes.
 
 ### pyghidra.start()
-To get a raw connection to Ghidra use the `start()` function. This will setup a JPype connection and
-initialize Ghidra in headless mode, which will allow you to directly import `ghidra` and `java`.
-
-__NOTE:__ No projects or programs get setup in this mode.
-
 ```python
 def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
     """
@@ -60,23 +55,7 @@ def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
     """
 ```
 
-#### Example:
-```python
-import pyghidra
-pyghidra.start()
-
-import ghidra
-from ghidra.app.util.headless import HeadlessAnalyzer
-from ghidra.program.flatapi import FlatProgramAPI
-from ghidra.base.project import GhidraProject
-from java.lang import String
-
-# do things
-```
-
 ### pyghidra.started()
-To check to see if PyGhidra has been started, use the `started()` function.
-
 ```python
 def started() -> bool:
     """
@@ -84,13 +63,255 @@ def started() -> bool:
     """
 ```
 
-#### Example: 
+### pyghidra.open_project()
 ```python
-import pyghidra
+def open_project(
+        path: Union[str, Path],
+        name: str,
+        create: bool = False
+) -> "Project": # type: ignore
+    """
+    Opens the Ghidra project at the given location, optionally creating it if it doesn't exist.
 
-if pyghidra.started():
-    ...
+    :param path: Path of Ghidra project parent directory.
+    :param name: Name of Ghidra project to open/create.
+    :param create: Whether to create the project if it doesn't exist
+    :return: A Ghidra "Project" object.
+    :raises FileNotFoundError: If the project to open was not found and it shouldn't be created.
+    """
 ```
+
+### pyghidra.open_filesystem()
+```python
+def open_filesystem(
+        path: Union[str, Path]
+    ) -> "GFileSystem":
+    """
+    Opens a filesystem in Ghidra.
+
+    :param path: Path of filesystem to open in Ghidra.
+    :return: A Ghidra "GFileSystem" object.
+    :raises ValueError: If the filesystem to open is not supported by Ghidra.
+    """
+```
+
+### pyghidra.consume_program()
+```python
+def consume_program(
+        project: "Project", 
+        path: Union[str, Path],
+        consumer: Any = None
+    ) -> Tuple["Program", "Object"]:
+    """
+    Gets the Ghidra program from the given project with the given project path. The returned program
+    must be manually released when it is no longer needed.
+
+    :param project: The Ghidra project that has the program.
+    :param path: The project path of the program (should start with "/")
+    :param consumer: An optional reference to the Java object "consuming" the returned program, used
+        to ensure the underlying DomainObject is only closed when every consumer is done with it. If
+        a consumer is not provided, one will be generated by this function.
+    :return: A 2-element tuple containing the program and a consumer object that must be used to
+        release the program when finished with it (i.e., program.release(consumer). If a consumer
+        object was provided, the same consumer object is returned. Otherwise, a new consumer object
+        is created and returned.
+    :raises FileNotFoundError: If the path does not exist in the project.
+    :raises TypeError: If the path in the project exists but is not a Program.
+    """
+```
+
+### pyghidra.program_context()
+```python
+@contextlib.contextmanager
+def program_context(
+        project: "Project", 
+        path: Union[str, Path],
+    ) -> "Program":
+    """
+    Gets the Ghidra program from the given project with the given project path. The returned
+    program's resource cleanup is performed by a context manager.
+
+    :param project: The Ghidra project that has the program.
+    :param path: The project path of the program (should start with "/").
+    :return: The Ghidra program.
+    :raises FileNotFoundError: If the path does not exist in the project.
+    :raises TypeError: If the path in the project exists but is not a Program.
+    """
+```
+
+### pyghidra.analyze()
+```python
+def analyze(program: "Program"):
+    """
+    Analyzes the given program.
+
+    :param program: The Ghidra program to analyze.
+    """
+```
+
+### pyghidra.ghidra_script()
+```python
+def ghidra_script(
+        path: Union[str, Path],
+        project: "Project",
+        program: "Program" = None,
+        echo_stdout = True,
+        echo_stderr = True
+    ) -> Tuple[str, str]:
+    """
+    Runs any type of GhidraScript (Java, PyGhidra, Jython, etc).
+
+    :param path: The GhidraScript's path.
+    :param project: The Ghidra project to run the GhidraScript in.
+    :param program: An optional Ghidra program that the GhidraScript will see as its "currentProgram".
+    :param echo_stdout: Whether or not to echo the GhidraScript's standard output.
+    :param echo_stderr: Whether or not to echo the GhidraScript's standard error.
+    :return: A 2 element tuple consisting of the GhidraScript's standard output and standard error.
+    """
+```
+
+### pyghidra.transaction()
+```python
+@contextlib.contextmanager
+def transaction(
+        program: "Program",
+        description: str = "Unnamed Transaction"
+    ):
+    """
+    Creates a context for running a Ghidra transaction.
+
+    :param program: The Ghidra program that will be affected.
+    :param description: The transaction description
+    :return: The transaction ID.
+    """
+```
+
+### pyghidra.analysis_properties()
+```python
+def analysis_properties(program: "Program") -> "Options":
+    """
+    Convenience function to get the Ghidra "Program.ANALYSIS_PROPERTIES" options.
+
+    :return: the Ghidra "Program.ANALYSIS_PROPERTIES" options.
+    """
+```
+
+### pyghidra.program_info()
+```python
+def program_info(program: "Program") -> "Options":
+    """
+    Convenience function to get the Ghidra "Program.PROGRAM_INFO" options.
+
+    :return: the Ghidra "Program.PROGRAM_INFO" options.
+    """
+```
+
+### pyghidra.program_loader()
+```python
+def program_loader() -> "ProgramLoader.Builder":
+    """
+    Convenience function to get a Ghidra "ProgramLoader.Builder" object.
+
+    :return: A Ghidra "ProgramLoader.Builder" object.
+    """
+```
+
+### pyghidra.dummy_monitor()
+```python
+def dummy_monitor() -> "TaskMonitor":
+    """
+    Convenience function to get the Ghidra "TaskMonitor.DUMMY" object.
+
+    :return: The Ghidra "TaskMonitor.DUMMY" object.
+    """
+```
+
+### pyghidra.walk_project()
+```python
+def walk_project(
+        project: "Project",
+        callback: Callable[["DomainFile"], None],
+        start: Union[str, Path] = "/",
+        file_filter: Callable[["DomainFile"], bool] = lambda _f: True
+    ):
+    """
+    Walks the the given Ghidra project, calling the provided function when each domain file is 
+    encountered.
+
+    :param project: The Ghidra project to walk.
+    :param callback: The callback to process each domain file.
+    :param start: An optional starting project folder path.
+    :param file_filter: A filter used to limit what domain files get processed.
+    :raises FileNotFoundError: If the starting folder is not found in the project.
+    """
+```
+
+### pyghidra.walk_programs()
+```python
+def walk_programs(
+        project: "Project",
+        callback: Callable[["DomainFile", "Program"], None],
+        start: Union[str, Path] = "/",
+        program_filter: Callable[["DomainFile", "Program"], bool] = lambda _f, _p: True
+    ):
+    """
+    Walks the the given Ghidra project, calling the provided function when each program is 
+    encountered. Non-programs in the project are skipped.
+
+    :param project: The Ghidra project to walk.
+    :param callback: The callback to process each program.
+    :param start: An optional starting project folder path.
+    :param program_filter: A filter used to limit what programs get processed.
+    :raises FileNotFoundError: If the starting folder is not found in the project.
+    """
+```
+
+## Example
+The following example, while not very useful, showcases much of the API:
+```python
+import os, jpype, pyghidra
+pyghidra.start()
+
+# Open/create a project
+with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", create=True) as project:
+
+    # Walk a Ghidra release zip file, load every decompiler binary, and save them to the project
+    with pyghidra.open_filesystem(f"{os.environ['DOWNLOADS_DIR']}/ghidra_11.4_PUBLIC_20250620.zip") as fs:
+        loader = pyghidra.program_loader().project(project)
+        for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
+            loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
+            with loader.load() as load_results:
+                load_results.save(pyghidra.dummy_monitor())
+
+    # Analyze the windows decompiler program
+    with pyghidra.program_context(project, "/win_x86_64/decompile.exe") as program:
+        analysis_props = pyghidra.analysis_properties(program)
+        with pyghidra.transaction(program):
+            analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
+        pyghidra.analyze(program)
+        program.save("Analyzed", pyghidra.dummy_monitor())
+    
+    # Walk the project and set a propery in each decompiler program
+    def set_property(domain_file, program):
+        with pyghidra.transaction(program):
+            program_info = pyghidra.program_info(program)
+            program_info.setString("PyGhidra Property", "Set by PyGhidra!")
+        program.save("Setting property", pyghidra.dummy_monitor())
+    pyghidra.walk_programs(project, set_property, program_filter=lambda f, p: p.name.startswith("decompile"))
+
+    # Load some bytes as a new program
+    ByteArrayCls = jpype.JArray(jpype.JByte)
+    my_bytes = ByteArrayCls(b"\xaa\xbb\xcc\xdd\xee\xff")
+    loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
+    loader.loaders("BinaryLoader").language("DATA:LE:64:default")
+    with loader.load() as load_results:
+        load_results.save(pyghidra.dummy_monitor())
+
+    # Run a GhidraScript
+    pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
+```
+
+## Legacy API
 
 ### pyghidra.open_program()
 To have PyGhidra setup a binary file for you, use the `open_program()` function. This will setup a 
@@ -325,6 +546,15 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__3.0.0:__
+* Introduced many new functions to the PyGhidra API. PyGhidra 3.0.0 requires Ghidra 12.0 or later
+  to run.
+
+__2.2.1:__
+* PyGhidra now launches with the current working directory removed from `sys.path` to prevent
+  the potential for importing invalid modules from random `ghidra/` or `java/` directories that may 
+  exist in the user's current working directory.
+
 __2.2.0:__
 * [`pyghidra.open_program()`](#pyghidraopen_program) and 
   [`pyghidra.run_script()`](#pyghidrarun_script) now accept a `nested_project_location` parameter

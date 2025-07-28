@@ -31,6 +31,7 @@ dependencies {
 	api project(':DecompilerDependent')
 	api project(':FunctionGraph')
 	api project(':ProposedUtils')
+	api project(':DataGraph')
 
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')

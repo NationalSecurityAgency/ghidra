@@ -23,7 +23,7 @@ import ghidra.program.model.listing.ProgramFragment;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
 import ghidra.trace.model.listing.*;
@@ -81,14 +81,14 @@ public interface TraceEvents {
 	/** A {@link TraceBookmark} was deleted */
 	TraceBookmarkEvent BOOKMARK_DELETED = TraceBookmarkEvent.BOOKMARK_DELETED;
 
-	/** A {@link TraceBreakpoint} was added */
+	/** A {@link TraceBreakpointLocation} was added */
 	TraceBreakpointEvent BREAKPOINT_ADDED = TraceBreakpointEvent.BREAKPOINT_ADDED;
-	/** A {@link TraceBreakpoint} was changed */
+	/** A {@link TraceBreakpointLocation} was changed */
 	TraceBreakpointEvent BREAKPOINT_CHANGED = TraceBreakpointEvent.BREAKPOINT_CHANGED;
-	/** A {@link TraceBreakpoint}'s lifespan was changed */
+	/** A {@link TraceBreakpointLocation}'s lifespan was changed */
 	TraceBreakpointLifespanEvent BREAKPOINT_LIFESPAN_CHANGED =
 		TraceBreakpointLifespanEvent.BREAKPOINT_LIFESPAN_CHANGED;
-	/** A {@link TraceBreakpoint} was deleted */
+	/** A {@link TraceBreakpointLocation} was deleted */
 	TraceBreakpointEvent BREAKPOINT_DELETED = TraceBreakpointEvent.BREAKPOINT_DELETED;
 
 	/** A {@link Category} was added. The {@code long} is the category id. */

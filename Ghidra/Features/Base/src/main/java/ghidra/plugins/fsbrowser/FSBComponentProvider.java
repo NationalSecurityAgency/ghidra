@@ -19,6 +19,7 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.awt.Component;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -81,20 +83,20 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	 * ownership of the passed-in {@link FileSystemRef fsRef}.
 	 *
 	 * @param plugin parent plugin
-	 * @param fsRef {@link FileSystemRef} to a {@link GFileSystem}.
+	 * @param rootDir {@link FileSystemRef} to a {@link GFileSystem} and a {@link GFile} root
 	 */
-	public FSBComponentProvider(FileSystemBrowserPlugin plugin, FileSystemRef fsRef) {
-		super(plugin.getTool(), getDescriptiveFSName(fsRef.getFilesystem()), plugin.getName());
+	public FSBComponentProvider(FileSystemBrowserPlugin plugin, RefdFile rootDir) {
+		super(plugin.getTool(), getDescriptiveFSName(rootDir), plugin.getName());
 
 		this.plugin = plugin;
-		this.rootNode = new FSBRootNode(fsRef);
+		this.rootNode = new FSBRootNode(rootDir);
 		this.pm = plugin.getTool().getService(ProgramManager.class);
 
 		setTransient();
-		setIcon(getFSIcon(fsRef.getFilesystem(), true, fsbIcons));
+		setIcon(getFSIcon(rootDir.fsRef.getFilesystem(), true, fsbIcons));
 
 		initTree();
-		fsRef.getFilesystem().getRefManager().addListener(this);
+		rootDir.fsRef.getFilesystem().getRefManager().addListener(this);
 		initFileHandlers();
 
 		setHelpLocation(
@@ -150,8 +152,12 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				if (value instanceof FSBRootNode) {
 					// do nothing
 				}
-				else if (value instanceof FSBDirNode) {
-					// do nothing special, but exclude FSBFileNode
+				else if (value instanceof FSBDirNode dirNode) {
+					Icon currentIcon = getIcon();
+					Icon newIcon = dirNode.isSymlink()
+							? FSBIcons.buildIcon(currentIcon, List.of(FSBIcons.LINK_OVERLAY_ICON))
+							: currentIcon;
+					setIcon(newIcon);
 				}
 				else if (value instanceof FSBFileNode fileNode) {
 					renderFile(fileNode, selected);
@@ -224,8 +230,11 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 		plugin.getTool().removePopupActionProvider(this);
 		projectIndex.removeIndexListener(this);
 
-		if (rootNode != null && rootNode.getFSRef() != null && !rootNode.getFSRef().isClosed()) {
-			rootNode.getFSRef().getFilesystem().getRefManager().removeListener(this);
+		if (rootNode != null) {
+			FileSystemRef rootNodeFSRef = rootNode.getFSRef();
+			if (rootNodeFSRef != null && !rootNodeFSRef.isClosed()) {
+				rootNodeFSRef.getFilesystem().getRefManager().removeListener(this);
+			}
 		}
 		fileHandlers.clear();
 		if (gTree != null) {
@@ -367,6 +376,9 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	}
 
 	public boolean ensureFileAccessable(FSRL fsrl, FSBNode node, TaskMonitor monitor) {
+		if (node instanceof FSBDirNode) {
+			return true;
+		}
 
 		FSBFileNode fileNode = (node instanceof FSBFileNode) ? (FSBFileNode) node : null;
 
@@ -399,9 +411,16 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	}
 
 	public boolean openFileSystem(FSBNode node, boolean nested) {
+		if (node instanceof FSBDirNode dirNode) {
+			plugin.createNewFileSystemBrowser(dirNode.getFSBRootNode().getFSRef().dup(),
+				dirNode.file, true);
+			return true;
+		}
+
 		if (!(node instanceof FSBFileNode fileNode) || fileNode.getFSRL() == null) {
 			return false;
 		}
+
 		FSRL fsrl = fileNode.getFSRL();
 		gTree.runTask(monitor -> {
 			if (!ensureFileAccessable(fsrl, fileNode, monitor)) {
@@ -437,7 +456,8 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 						return;
 					}
 
-					FSBRootNode nestedRootNode = new FSBRootNode(ref, modelFileNode);
+					RefdFile refdRootDir = new RefdFile(ref, ref.getFilesystem().getRootDir());
+					FSBRootNode nestedRootNode = new FSBRootNode(refdRootDir, modelFileNode);
 
 					int indexInParent = modelFileNode.getIndexInParent();
 					GTreeNode parent = modelFileNode.getParent();
@@ -453,7 +473,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					contextChanged();
 				}
 				else {
-					plugin.createNewFileSystemBrowser(ref, true);
+					plugin.createNewFileSystemBrowser(ref, null, true);
 				}
 			});
 			return true;
@@ -577,6 +597,18 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 						if (destNode != null) {
 							Swing.runLater(() -> gTree.setSelectedNodes(destNode));
 						}
+						else {
+							String msg = "Failed to go to %s (%s)".formatted(fileNode.symlinkDest,
+								destFile.getPath());
+							// front end tool doesn't show message when using setStatusInfo, but
+							// does display Msg.warn messages
+							if (tool instanceof FrontEndTool) {
+								Msg.warn(this, msg);
+							}
+							else {
+								tool.setStatusInfo(msg);
+							}
+						}
 					});
 					return;
 				}
@@ -592,15 +624,23 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 
 	}
 
-	static String getDescriptiveFSName(GFileSystem fs) {
-		return fs instanceof LocalFileSystem ? "My Computer" : fs.getName();
+	static String getDescriptiveFSName(RefdFile rootFile) {
+		GFileSystem fs = rootFile.fsRef.getFilesystem();
+		GFile file = rootFile.file;
+		boolean isRootDir = file.getParentFile() == null;
+		if (fs instanceof LocalFileSystem) {
+			// use [new File(fsrl.path).getPath()] to transform fsrl formatted path back into
+			// current jvm OS specific string format
+			return isRootDir ? "My Computer" : new File(file.getPath()).getPath();
+		}
+		return fs.getName() + (!isRootDir ? " - " + file.getPath() : "");
 	}
 
 	static Icon getFSIcon(GFileSystem fs, boolean isRootNode, FSBIcons fsbIcons) {
 		List<Icon> overlays = !isRootNode ? List.of(FSBIcons.FILESYSTEM_OVERLAY_ICON) : List.of();
 		FSRL container = fs.getFSRL().getContainer();
 		String containerName = container != null ? container.getName() : "/";
-		Icon image = fs instanceof LocalFileSystem || fs instanceof LocalFileSystemSub
+		Icon image = fs instanceof LocalFileSystem
 				? FSBIcons.MY_COMPUTER
 				: fsbIcons.getIcon(containerName, overlays);
 		if (image == FSBIcons.DEFAULT_ICON) {

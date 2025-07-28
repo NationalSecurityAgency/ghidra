@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,6 +87,7 @@
 // 
 //@category Version Tracking
 import ghidra.app.script.GhidraScript;
+import ghidra.feature.vt.api.db.VTSessionContentHandler;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.util.VTOptions;
@@ -107,8 +108,8 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		
-		if(currentProgram == null) {
+
+		if (currentProgram == null) {
 			println("Please open the destination program.");
 			return;
 		}
@@ -175,8 +176,8 @@ public class AutoVersionTrackingScript extends GhidraScript {
 			return;
 		}
 
-		Program sourceProgram = (Program) sourceProgramDF.getDomainObject(this, autoUpgradeIfNeeded,
-			false, monitor);
+		Program sourceProgram =
+			(Program) sourceProgramDF.getDomainObject(this, autoUpgradeIfNeeded, false, monitor);
 
 		VTSession session = null;
 		try {
@@ -258,19 +259,8 @@ public class AutoVersionTrackingScript extends GhidraScript {
 	 * @throws CancelledException if cancelled
 	 */
 	private boolean hasExistingSession(String name, DomainFolder folder) throws CancelledException {
-
-		DomainFile[] files = folder.getFiles();
-
-		for (DomainFile file : files) {
-			monitor.checkCancelled();
-
-			if (file.getName().equals(name)) {
-				if (file.getContentType().equals("VersionTracking")) {
-					return true;
-				}
-			}
-		}
-		return false;
+		DomainFile file = folder.getFile(name);
+		return file != null && file.getContentType().equals(VTSessionContentHandler.CONTENT_TYPE);
 	}
 
 	/**

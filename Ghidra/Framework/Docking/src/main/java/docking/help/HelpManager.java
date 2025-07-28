@@ -523,20 +523,28 @@ public class HelpManager implements HelpService {
 	public Map<Object, HelpLocation> getInvalidHelpLocations(TaskMonitor monitor)
 			throws CancelledException {
 
+		Set<String> alreadySeen = new HashSet<>();
 		Map<Object, HelpLocation> map = new WeakHashMap<>();
 		Map<Object, HelpLocation> helpLocationsCopy = copyHelpLocations();
 		monitor.initialize(helpLocationsCopy.size());
 		Set<Entry<Object, HelpLocation>> entries = helpLocationsCopy.entrySet();
 		for (Entry<Object, HelpLocation> entry : entries) {
-			monitor.checkCancelled();
+			monitor.increment();
 
 			Object helpee = entry.getKey();
 			HelpLocation location = entry.getValue();
 			monitor.setMessage("Checking " + helpee);
-			if (!hasValidHelp(helpee, location)) {
-				map.put(helpee, location);
+			if (hasValidHelp(helpee, location)) {
+				continue;
 			}
-			monitor.incrementProgress(1);
+
+			String inception = location.getInceptionInformation();
+			if (alreadySeen.contains(inception)) {
+				continue; // don't show repeated errors for same line of code
+			}
+
+			alreadySeen.add(inception);
+			map.put(helpee, location);
 		}
 		return map;
 	}

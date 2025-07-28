@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,8 +67,8 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<Program>(program, programName, programFolderPath));
+		List<Loaded<Program>> loadedList = List.of(
+			new Loaded<Program>(program, programName, project, programFolderPath, consumer));
 
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
@@ -81,7 +81,7 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 		finally {
 			program.endTransaction(transactionID, true); // More efficient to commit when program will be discarded
 			if (!success) {
-				release(loadedList, consumer);
+				loadedList.forEach(Loaded::close);
 			}
 		}
 	}

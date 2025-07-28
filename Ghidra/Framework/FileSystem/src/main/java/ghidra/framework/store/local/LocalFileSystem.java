@@ -82,11 +82,12 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Construct a local filesystem for existing data
-	 * @param rootPath
-	 * @param create
-	 * @param isVersioned
-	 * @param readOnly
-	 * @param enableAsyncronousDispatching
+	 * @param rootPath filesystem root directory (the directory must exist and must not have any 
+	 * contents if {@code create} is true)
+	 * @param create true if creating new filesystem from the empty directory at rootPath
+	 * @param isVersioned true if creating a versioned filesystem
+	 * @param readOnly true if file system is read-only (ignored if {@code create} is true).
+	 * @param enableAsyncronousDispatching true if async event dispatching should be performed
 	 * @return local filesystem
 	 * @throws FileNotFoundException if specified rootPath does not exist
 	 * @throws IOException if error occurs while reading/writing index files
@@ -103,10 +104,6 @@ public abstract class LocalFileSystem implements FileSystem {
 			throw new IOException("new filesystem directory is not empty: " + rootPath);
 		}
 		if (create) {
-//			if (isCreateMangledFileSystemEnabled()) {
-//				return new MangledLocalFileSystem(rootPath, isVersioned, readOnly,
-//					enableAsyncronousDispatching);
-//			}
 			return new IndexedV1LocalFileSystem(rootPath, isVersioned, readOnly,
 				enableAsyncronousDispatching, true);
 		}
@@ -154,7 +151,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	/**
 	 * Returns true if any file found within dir whose name starts
 	 * with '~' character (e.g., ~index.dat, etc)
-	 * @param dir
+	 * @param dir directory to inspect
 	 * @return true if any hidden file found with '~' prefix
 	 */
 	private static boolean hasAnyHiddenFiles(File dir) {
@@ -237,7 +234,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Associate file system with a specific repository logger
-	 * @param repositoryLogger
+	 * @param repositoryLogger repository logger (may be null)
 	 */
 	public void setAssociatedRepositoryLogger(RepositoryLogger repositoryLogger) {
 		this.repositoryLogger = repositoryLogger;
@@ -317,8 +314,14 @@ public abstract class LocalFileSystem implements FileSystem {
 			return pfile.exists();
 		}
 
-		PropertyFile getPropertyFile() throws IOException {
-			return new PropertyFile(dir, storageName, folderPath, itemName);
+		/**
+		 * Get property file associated with this item storage
+		 * @return property file
+		 * @throws InvalidObjectException if a file parse error occurs
+		 * @throws IOException if an IO error occurs reading an existing file
+		 */
+		ItemPropertyFile getPropertyFile() throws IOException {
+			return new ItemPropertyFile(dir, storageName, folderPath, itemName);
 		}
 
 		@Override
@@ -336,19 +339,19 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Find an existing storage location
-	 * @param folderPath
-	 * @param itemName
+	 * @param folderPath folder path of item
+	 * @param itemName item name
 	 * @return storage location.  A non-null value does not guarantee that the associated
 	 * item actually exists.
-	 * @throws FileNotFoundException
+	 * @throws FileNotFoundException if existing storage allocation not found
 	 */
 	protected abstract ItemStorage findItemStorage(String folderPath, String itemName)
 			throws FileNotFoundException;
 
 	/**
 	 * Allocate a new storage location
-	 * @param folderPath
-	 * @param itemName
+	 * @param folderPath folder path of item
+	 * @param itemName item name
 	 * @return storage location
 	 * @throws DuplicateFileException if item path has previously been allocated
 	 * @throws IOException if invalid path/item name specified
@@ -359,9 +362,9 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Deallocate item storage
-	 * @param folderPath
-	 * @param itemName
-	 * @throws IOException
+	 * @param folderPath folder path of item
+	 * @param itemName item name
+	 * @throws IOException if an IO error occurs
 	 */
 	protected abstract void deallocateItemStorage(String folderPath, String itemName)
 			throws IOException;
@@ -376,15 +379,27 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	@Override
 	public synchronized LocalFolderItem getItem(String folderPath, String name) throws IOException {
+		ItemStorage itemStorage = null;
 		try {
-			ItemStorage itemStorage = findItemStorage(folderPath, name);
+			itemStorage = findItemStorage(folderPath, name);
 			if (itemStorage == null) {
 				return null;
 			}
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			if (propertyFile.exists()) {
 				return LocalFolderItem.getFolderItem(this, propertyFile);
 			}
+
+			// force cleanup of bad storage allocation
+			Msg.warn(this, "Attempting item cleanup due to missing property file: " +
+				new File(propertyFile.getParentStorageDirectory(), propertyFile.getStorageName()));
+			itemDeleted(folderPath, name);
+		}
+		catch (InvalidObjectException e) {
+			// Use unknown placeholder item on failure
+			InvalidPropertyFile invalidFile = new InvalidPropertyFile(itemStorage.dir,
+				itemStorage.storageName, itemStorage.folderPath, itemStorage.itemName);
+			return new LocalUnknownFolderItem(this, invalidFile);
 		}
 		catch (FileNotFoundException e) {
 			// ignore
@@ -394,11 +409,12 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Notification that FileID has been changed within propertyFile
-	 * @param propertyFile
-	 * @param oldFileId
-	 * @throws IOException
+	 * @param propertyFile item property file
+	 * @param oldFileId old FileId
+	 * @throws IOException if an IO error occurs
 	 */
-	protected void fileIdChanged(PropertyFile propertyFile, String oldFileId) throws IOException {
+	protected void fileIdChanged(ItemPropertyFile propertyFile, String oldFileId)
+			throws IOException {
 		// do nothing by default
 	}
 
@@ -419,6 +435,12 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	@Override
+	public boolean isSupportedItemType(FolderItem folderItem) {
+		return (folderItem instanceof DatabaseItem) || (folderItem instanceof TextDataItem) ||
+			(folderItem instanceof DataFileItem);
+	}
+
+	@Override
 	public synchronized LocalDatabaseItem createDatabase(String parentPath, String name,
 			String fileID, BufferFile bufferFile, String comment, String contentType,
 			boolean resetDatabaseId, TaskMonitor monitor, String user)
@@ -434,7 +456,7 @@ public abstract class LocalFileSystem implements FileSystem {
 		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
 		LocalDatabaseItem item = null;
 		try {
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			item = new LocalDatabaseItem(this, propertyFile, bufferFile, contentType, fileID,
 				comment, resetDatabaseId, monitor, user);
 		}
@@ -462,7 +484,7 @@ public abstract class LocalFileSystem implements FileSystem {
 		ItemStorage itemStorage = allocateItemStorage(parentPath, hiddenName);
 		LocalDatabaseItem item = null;
 		try {
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			item = new LocalDatabaseItem(this, propertyFile, bufferFile, contentType, fileID, null,
 				resetDatabaseId, monitor, null);
 		}
@@ -489,7 +511,7 @@ public abstract class LocalFileSystem implements FileSystem {
 		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
 		LocalManagedBufferFile bufferFile = null;
 		try {
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			bufferFile = LocalDatabaseItem.create(this, propertyFile, bufferSize, contentType,
 				fileID, user, projectPath);
 		}
@@ -502,7 +524,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	@Override
-	public synchronized LocalDataFile createDataFile(String parentPath, String name,
+	public synchronized LocalDataFileItem createDataFile(String parentPath, String name,
 			InputStream istream, String comment, String contentType, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 
@@ -514,11 +536,12 @@ public abstract class LocalFileSystem implements FileSystem {
 		testValidName(name, false);
 
 		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
-		LocalDataFile dataFile = null;
+		LocalDataFileItem dataFile = null;
 		try {
 //TODO handle comment
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
-			dataFile = new LocalDataFile(this, propertyFile, istream, contentType, monitor);
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
+			dataFile = new LocalDataFileItem(this, propertyFile, istream, contentType, monitor);
+			dataFile.log("file created", getUserName());
 		}
 		finally {
 			if (dataFile == null) {
@@ -529,6 +552,38 @@ public abstract class LocalFileSystem implements FileSystem {
 		eventManager.itemCreated(parentPath, name);
 
 		return dataFile;
+	}
+
+	@Override
+	public synchronized LocalTextDataItem createTextDataItem(String parentPath, String name,
+			String fileID, String contentType, String textData, String ignoredComment)
+			throws InvalidNameException, IOException {
+
+		// comment is ignored
+
+		if (readOnly) {
+			throw new ReadOnlyException();
+		}
+
+		testValidName(parentPath, true);
+		testValidName(name, false);
+
+		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
+		LocalTextDataItem linkFile = null;
+		try {
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
+			linkFile = new LocalTextDataItem(this, propertyFile, fileID, contentType, textData);
+			linkFile.log("file created", getUserName());
+		}
+		finally {
+			if (linkFile == null) {
+				deallocateItemStorage(parentPath, name);
+			}
+		}
+
+		eventManager.itemCreated(parentPath, name);
+
+		return linkFile;
 	}
 
 	@Override
@@ -561,7 +616,7 @@ public abstract class LocalFileSystem implements FileSystem {
 		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
 		LocalDatabaseItem item = null;
 		try {
-			PropertyFile propertyFile = itemStorage.getPropertyFile();
+			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			item =
 				new LocalDatabaseItem(this, propertyFile, packedFile, contentType, monitor, user);
 		}
@@ -661,6 +716,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Returns file system listener.
+	 * @return file system listener or null
 	 */
 	FileSystemListener getListener() {
 		return eventManager;
@@ -716,6 +772,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	/**
+	 * @param c character to check
 	 * @return true if c is a valid character within the FileSystem.
 	 */
 	public static boolean isValidNameCharacter(char c) {
@@ -756,9 +813,9 @@ public abstract class LocalFileSystem implements FileSystem {
 	/**
 	 * Notify the filesystem that the property file and associated data files for
 	 * an item have been removed from the filesystem.
-	 * @param folderPath
-	 * @param itemName
-	 * @throws IOException
+	 * @param folderPath folder path of item
+	 * @param itemName item name
+	 * @throws IOException if an IO error occurs
 	 */
 	protected synchronized void itemDeleted(String folderPath, String itemName) throws IOException {
 		// do nothing
@@ -768,6 +825,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	 * Returns the full path for a specific folder or item
 	 * @param parentPath full parent path
 	 * @param name child folder or item name
+	 * @return pathname
 	 */
 	protected final static String getPath(String parentPath, String name) {
 		if (parentPath.length() == 1) {
@@ -848,7 +906,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Escape hidden prefix chars in name
-	 * @param name
+	 * @param name name to be escaped
 	 * @return escaped name
 	 */
 	public static final String escapeHiddenDirPrefixChars(String name) {
@@ -867,7 +925,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Unescape a non-hidden directory name
-	 * @param name
+	 * @param name name to be unescaped
 	 * @return unescaped name or null if name is a hidden name
 	 */
 	public static final String unescapeHiddenDirPrefixChars(String name) {

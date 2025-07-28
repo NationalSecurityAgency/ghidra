@@ -300,11 +300,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
-	protected DBTraceBreakpointManager createBreakpointManager(DBTraceThreadManager threadManager)
+	protected DBTraceBreakpointManager createBreakpointManager(DBTraceObjectManager objectManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Breakpoint Manager",
 			(openMode, monitor) -> new DBTraceBreakpointManager(dbh, openMode, rwLock, monitor,
-				baseLanguage, this, threadManager));
+				this, objectManager));
 	}
 
 	@DependentService
@@ -367,10 +367,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
-	protected DBTraceModuleManager createModuleManager() throws CancelledException, IOException {
+	protected DBTraceModuleManager createModuleManager(DBTraceObjectManager objectManager)
+			throws CancelledException, IOException {
 		return createTraceManager("Module Manager",
-			(openMode, monitor) -> new DBTraceModuleManager(dbh, openMode, rwLock, monitor,
-				baseLanguage, this));
+			(openMode, monitor) -> new DBTraceModuleManager(dbh, openMode, rwLock, monitor, this,
+				objectManager));
 	}
 
 	@DependentService
@@ -670,16 +671,16 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.sourceArchiveAdded(sourceArchiveID.getValue());
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_ADDED, null, sourceArchiveID));
+		setChanged(new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_ADDED, null,
+			sourceArchiveID));
 	}
 
 	public void dataTypeChanged(long changedID, DataType changedType) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(changedID);
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_CHANGED, null, changedID, changedType));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_CHANGED, null, changedID,
+			changedType));
 	}
 
 	public void dataTypeAdded(long addedID, DataType addedType) {
@@ -701,16 +702,16 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(movedID);
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_MOVED, null, movedID, oldPath, newPath));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_MOVED, null, movedID,
+			oldPath, newPath));
 	}
 
 	public void dataTypeNameChanged(long renamedID, String oldName, String newName) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(renamedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_RENAMED, null, renamedID, oldName,
-			newName));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_RENAMED, null, renamedID,
+			oldName, newName));
 	}
 
 	public void dataTypeDeleted(long deletedID, DataTypePath deletedPath) {
@@ -725,16 +726,16 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.categoryAdded(addedID);
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_ADDED, null, addedID, addedCategory));
+		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_ADDED, null, addedID,
+			addedCategory));
 	}
 
 	public void categoryMoved(long movedID, CategoryPath oldPath, CategoryPath newPath) {
 		if (recordChanges) {
 			traceChangeSet.categoryChanged(movedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_MOVED, null, movedID, oldPath,
-			newPath));
+		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_MOVED, null, movedID,
+			oldPath, newPath));
 	}
 
 	public void categoryRenamed(long renamedID, String oldName, String newName) {

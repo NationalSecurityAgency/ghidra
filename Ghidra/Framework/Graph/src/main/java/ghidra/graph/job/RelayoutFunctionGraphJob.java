@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,6 @@ import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdesktop.animation.timing.Animator;
-import org.jdesktop.animation.timing.interpolation.PropertySetter;
-
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutPositions;
 
@@ -32,25 +29,6 @@ public class RelayoutFunctionGraphJob<V extends VisualVertex, E extends VisualEd
 		super(viewer, useAnimation);
 	}
 
-	@Override
-	protected Animator createAnimator() {
-
-		initializeVertexLocations();
-		clearLocationCache();
-
-		if (!useAnimation) {
-			return null;
-		}
-
-		updateOpacity(0);
-
-		Animator newAnimator =
-			PropertySetter.createAnimator(duration, this, "percentComplete", 0.0, 1.0);
-		newAnimator.setAcceleration(0f);
-		newAnimator.setDeceleration(0.8f);
-
-		return newAnimator;
-	}
 
 	@Override
 	protected void finished() {
@@ -77,6 +55,7 @@ public class RelayoutFunctionGraphJob<V extends VisualVertex, E extends VisualEd
 		// Create the new vertex locations.
 		//
 		Collection<V> vertices = graph.getVertices();
+
 		for (V vertex : vertices) {
 			Point2D currentPoint = toLocation(vertex);
 			Point2D startPoint = (Point2D) currentPoint.clone();

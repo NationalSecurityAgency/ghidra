@@ -344,6 +344,7 @@
 
   <define name="model_datatype_type">
     <attribute name="name"/>
+    <optional><attribute name="maxprimitives"/></optional>
     <optional><attribute name="minsize"/></optional>
     <optional><attribute name="maxsize"/></optional>
     <optional><attribute name="sizes"/></optional>
@@ -378,6 +379,16 @@
         </element>
       </zeroOrMore>
     </interleave>
+    <zeroOrMore>
+      <element name="consume_extra">
+        <attribute name="storage"/>
+        <optional>
+          <attribute name="matchsize">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+      </element>
+    </zeroOrMore>
     <choice>
       <element name="consume">
         <attribute name="storage"/>
@@ -395,6 +406,11 @@
           </attribute>
         </optional>
         <optional>
+          <attribute name="reversesignif">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
           <attribute name="align">
             <ref name="boolean_type"/>
           </attribute>
@@ -404,6 +420,11 @@
         </optional>
         <optional>
           <attribute name="stackspill"/>
+        </optional>
+        <optional>
+          <attribute name="backfill">
+            <ref name="boolean_type"/>
+          </attribute>
         </optional>
       </element>
       <element name="hidden_return">
@@ -425,6 +446,11 @@
           </attribute>
         </optional>
         <optional>
+          <attribute name="reversesignif">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
           <attribute name="storage"/>
         </optional>
         <optional>
@@ -437,6 +463,16 @@
     </choice>
     <zeroOrMore>
       <element name="consume_extra">
+        <attribute name="storage"/>
+        <optional>
+          <attribute name="matchsize">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+      </element>
+    </zeroOrMore>
+    <zeroOrMore>
+      <element name="consume_remaining">
         <attribute name="storage"/>
       </element>
     </zeroOrMore>

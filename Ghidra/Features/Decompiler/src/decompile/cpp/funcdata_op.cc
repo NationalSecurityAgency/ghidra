@@ -880,8 +880,10 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
       --oiter;
       PcodeOp *lastop = *oiter;
       obank.moveSequenceDead(firstop,lastop,callop); // Move cloned sequence to right after callop
-      if (callop->isBlockStart())
+      if (callop->isBlockStart()) {
 	firstop->setFlag(PcodeOp::startbasic); // First op of inline inherits callop's startbasic flag
+	flow.updateTarget(callop, firstop);
+      }
       else
 	firstop->clearFlag(PcodeOp::startbasic);
     }

@@ -44,7 +44,7 @@ public class InvocationDialogHelper<P, D extends AbstractDebuggerParameterDialog
 	}
 
 	public void dismissWithArguments(Map<String, ValStr<?>> args) {
-		dialog.setMemorizedArguments(args);
+		runSwing(() -> dialog.setMemorizedArguments(args));
 		invoke();
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -50,7 +50,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -399,13 +398,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	@Override
 	protected DBTraceCodeSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceCodeSpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceCodeSpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceCodeSpace(this, dbh, space, ent, thread);
+		return new DBTraceCodeSpace(this, dbh, space, ent);
 	}
 
 	@Override
@@ -421,11 +414,6 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	@Override
 	public Lock writeLock() {
 		return spaceStore.writeLock();
-	}
-
-	@Override
-	public TraceCodeSpace getCodeSpace(TraceAddressSpace space, boolean createIfAbsent) {
-		return get(space, createIfAbsent);
 	}
 
 	@Override
@@ -468,16 +456,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	@Internal
 	public void deletePlatform(DBTraceGuestPlatform guest, TaskMonitor monitor)
 			throws CancelledException {
-		// TODO: Use sub-monitors when available
-		for (DBTraceCodeSpace codeSpace : memSpaces.values()) {
-			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
-		}
-		for (DBTraceCodeSpace codeSpace : regSpaces.values()) {
-			// TODO: I don't know any way to get guest instructions into register space
-			// The mapping manager does (should) not allow guest register addresses
-			// TODO: Test this if I ever get guest data units
-			// TODO: I think explicit per-thread/frame register spaces will be going away, anyway
-			// They'll just be path-named overlays on register space?
+		for (DBTraceCodeSpace codeSpace : spaces.values()) {
 			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
 		}
 	}
@@ -621,7 +600,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			return result;
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
-		for (DBTraceCodeSpace space : memSpaces.values()) {
+		for (DBTraceCodeSpace space : spaces.values()) {
 			changes.addAll(
 				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
 						.values());
@@ -642,7 +621,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			return result;
 		}
 		Collection<AbstractDBTraceCodeUnit<?>> changes = new ArrayList<>();
-		for (DBTraceCodeSpace space : memSpaces.values()) {
+		for (DBTraceCodeSpace space : spaces.values()) {
 			changes.addAll(
 				space.dataMapSpace.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.space))
 						.values());

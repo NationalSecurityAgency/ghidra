@@ -1251,8 +1251,8 @@ public class CodeUnitFormat {
 		}
 
 		result = addBlockName(program, toAddress, result, refBlock, withBlockName);
-		LabelType labelType = (toSymbol != null && toSymbol.isExternal()) ? LabelString.EXTERNAL
-				: LabelString.CODE_LABEL;
+		LabelType labelType = (toSymbol != null && toSymbol.isExternal()) ? LabelType.EXTERNAL
+				: LabelType.CODE_LABEL;
 		LabelString label = new LabelString(result, labelType);
 
 		// Apply extended pointer markup if needed
@@ -1291,8 +1291,8 @@ public class CodeUnitFormat {
 		Symbol symbol = program.getSymbolTable().getSymbol(referencesFrom[0]);
 		if (symbol != null && !symbol.isDynamic()) {
 			String result = getSymbolLabelString(program, symbol, ref.getFromAddress());
-			return new LabelString(result,
-				symbol.isExternal() ? LabelString.EXTERNAL : LabelString.CODE_LABEL);
+			return new LabelString(result, symbol,
+				symbol.isExternal() ? LabelType.EXTERNAL : LabelType.CODE_LABEL);
 		}
 		return null;
 	}

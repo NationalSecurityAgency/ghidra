@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -142,6 +143,10 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 		 * @throws DuplicateNameException If a data type of the same name already exists
 		 */
 		public void markup(Program program) throws DuplicateNameException, IOException {
+			
+			AbstractProgramLoader.markAsFunction(program, null,
+				program.getImageBase().add(beginAddress));
+			
 			if (unwindInfoAddressOrData > 0) {
 				DataType dt = unwindInfo.toDataType();
 				Address start = program.getImageBase().add(unwindInfoAddressOrData);

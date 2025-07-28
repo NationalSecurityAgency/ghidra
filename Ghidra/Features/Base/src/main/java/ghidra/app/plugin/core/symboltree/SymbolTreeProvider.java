@@ -605,15 +605,17 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	// @formatter:off
 		return new DomainObjectListenerBuilder(this)
 			.ignoreWhen(this::ignoreEvents)
-			.any(RESTORED).terminate(this::reloadTree)
+			.any(RESTORED).terminate(this::reloadTree)			
 			.with(ProgramChangeRecord.class)
 				.each(SYMBOL_RENAMED).call(this::processSymbolRenamed)
 				.each(SYMBOL_DATA_CHANGED, SYMBOL_SCOPE_CHANGED).call(this::processSymbolChanged)
-				.each(FUNCTION_CHANGED).call(this::processFunctionChanged)
 				.each(SYMBOL_ADDED).call(this::processSymbolAdded)
 				.each(SYMBOL_REMOVED).call(this::processSymbolRemoved)
 				.each(EXTERNAL_ENTRY_ADDED, EXTERNAL_ENTRY_REMOVED)
 					.call(this::processExternalEntryChanged)
+					
+				// handle function changes specially so that we can perform coalesce changes
+				.any(FUNCTION_CHANGED).call(this::processAllFunction)
 			.build();
 		// @formatter:on
 	}
@@ -626,10 +628,24 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		symbolRemoved((Symbol) pcr.getObject());
 	}
 
-	private void processFunctionChanged(ProgramChangeRecord pcr) {
-		Function function = (Function) pcr.getObject();
-		Symbol symbol = function.getSymbol();
-		symbolChanged(symbol);
+	private void processAllFunction(DomainObjectChangedEvent e) {
+
+		// grab all function records and remove duplicates so that we can make 1 task for all 
+		// changes to a given function
+		Set<Symbol> symbols = new HashSet<>();
+		int n = e.numRecords();
+		for (int i = 0; i < n; i++) {
+			DomainObjectChangeRecord r = e.getChangeRecord(i);
+			if (r instanceof FunctionChangeRecord fcr) {
+				Function f = fcr.getFunction();
+				Symbol s = f.getSymbol();
+				symbols.add(s);
+			}
+		}
+
+		for (Symbol s : symbols) {
+			symbolChanged(s);
+		}
 	}
 
 	private void processSymbolChanged(ProgramChangeRecord pcr) {
@@ -851,5 +867,4 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			task.run(monitor);
 		}
 	}
-
 }

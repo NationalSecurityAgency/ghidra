@@ -24,8 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 import db.buffers.LocalManagedBufferFile;
 import ghidra.framework.store.*;
-import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.framework.store.local.LocalFolderItem;
+import ghidra.framework.store.local.*;
 import ghidra.server.Repository;
 import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
@@ -94,20 +93,20 @@ public class RepositoryFolder {
 	private void init() throws IOException {
 		String path = getPathname();
 		String[] names = fileSystem.getFolderNames(path);
-		for (String name2 : names) {
-			RepositoryFolder subfolder = new RepositoryFolder(repository, fileSystem, this, name2);
-			folderMap.put(name2, subfolder);
+		for (String folderName : names) {
+			RepositoryFolder subfolder =
+				new RepositoryFolder(repository, fileSystem, this, folderName);
+			folderMap.put(folderName, subfolder);
 		}
 		names = fileSystem.getItemNames(path);
 		int badItemCount = 0;
-		for (String name2 : names) {
-			LocalFolderItem item = fileSystem.getItem(path, name2);
-			if (item == null || !(item instanceof DatabaseItem)) {
+		for (String itemName : names) {
+			LocalFolderItem item = fileSystem.getItem(path, itemName);
+			if (item == null || (item instanceof UnknownFolderItem)) {
 				++badItemCount;
-				continue;
 			}
-			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, name2);
-			fileMap.put(name2, rf);
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
 		}
 		if (badItemCount != 0) {
 			log.error("Repository '" + repository.getName() + "' contains " + badItemCount +
@@ -217,7 +216,7 @@ public class RepositoryFolder {
 			if (fileSystem.fileExists(getPathname(), fileName)) {
 				try {
 					LocalFolderItem item = fileSystem.getItem(getPathname(), fileName);
-					if (item == null || !(item instanceof DatabaseItem)) {
+					if (item == null) {
 						log.error("Repository '" + repository.getName() + "' contains bad item: " +
 							makePathname(getPathname(), fileName));
 						return null;
@@ -259,6 +258,41 @@ public class RepositoryFolder {
 			RepositoryFolder rf = getFolder(folderName);
 			RepositoryManager.log(repository.getName(), rf.getPathname(), "folder created", user);
 			return rf;
+		}
+	}
+
+	/**
+	 * Creates a new text data file within the specified parent folder.
+	 * @param itemName new data file name
+	 * @param fileID file ID to be associated with new file or null
+	 * @param contentType application defined content type
+	 * @param textData text data (required)
+	 * @param comment file comment (may be null)
+	 * @param user user who is initiating request
+	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
+	 * @throws InvalidNameException if the name has illegal characters.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public void createTextDataFile(String itemName, String fileID, String contentType,
+			String textData, String comment, String user) throws InvalidNameException, IOException {
+		synchronized (fileSystem) {
+			repository.validate();
+			repository.validateWritePrivilege(user);
+			if (getFile(itemName) != null) {
+				throw new DuplicateFileException(itemName + " already exists");
+			}
+
+			LocalTextDataItem textDataItem = fileSystem.createTextDataItem(getPathname(), itemName,
+				fileID, contentType, textData, null); // comment conveyed with Version info below
+
+			Version singleVersion = new Version(1, System.currentTimeMillis(), user, comment);
+			textDataItem.setVersionInfo(singleVersion);
+
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
+
+			RepositoryManager.log(repository.getName(), makePathname(getPathname(), itemName),
+				"file created", user);
 		}
 	}
 
@@ -445,4 +479,5 @@ public class RepositoryFolder {
 				: parentPath;
 		return path + FileSystem.SEPARATOR + childName;
 	}
+
 }

@@ -333,7 +333,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			}
 			catch (VersionException e) {
 				VersionExceptionHandler.showVersionError(null, domainFile.getName(), type, "open",
-					e);
+					false, e);
 			}
 			catch (IOException e) {
 				Msg.showError(this, null, "Can't open " + type + ": " + domainFile.getName(),

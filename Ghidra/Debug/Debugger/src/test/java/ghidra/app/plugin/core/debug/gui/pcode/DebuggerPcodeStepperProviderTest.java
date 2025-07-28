@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
-import generic.theme.*;
+import generic.theme.ApplicationThemeManager;
+import generic.theme.ThemeManager;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -46,8 +47,10 @@ import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
@@ -79,15 +82,25 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		createTrace();
 	}
 
+	SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.useRegistersPerFrame()
+				.noRegisterGroups()
+				.build();
+	}
+
 	protected void populateTrace() throws Exception {
 		start = tb.addr(0x00400000);
 		InstructionIterator iit;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
-					.addRegion("echo:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+					.addRegion("Memory[echo:.text]", Lifespan.nowOn(0),
+						tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
-			thread = tb.getOrAddThread("1", 0);
+			thread = tb.getOrAddThread("Threads[1]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 
 			PcodeExecutor<byte[]> init = TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
 			init.executeSleigh("pc = 0x00400000;");
@@ -124,7 +137,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 	public void testCloseCurrentTraceEmpty() throws Exception {
 		populateTrace();
 
-		TraceSchedule schedule1 = TraceSchedule.parse("0:.t0-1");
+		TraceSchedule schedule1 = TraceSchedule.parse("0:.t%d-1".formatted(thread.getKey()));
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		waitForPass(() -> assertDecodeStep());
@@ -166,13 +179,13 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		});
 
 		// Just one p-code step to load injection (decode step)
-		TraceSchedule schedule1 = TraceSchedule.parse("0:.t0-1");
+		TraceSchedule schedule1 = TraceSchedule.parse("0:.t%d-1".formatted(thread.getKey()));
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		traceManager.activateTime(schedule1);
 		waitForPass(() -> assertEquals(schedule1, pcodeProvider.current.getTime()));
 
-		waitForPass(() -> assertTrue(pcodeProvider.pcodeTableModel.getModelData()
+		waitForPass(() -> assertTrue(pcodeProvider.pcodeTableModel.copyModelData()
 				.stream()
 				.anyMatch(r -> r.getCode().contains("stepper_test_userop"))));
 	}

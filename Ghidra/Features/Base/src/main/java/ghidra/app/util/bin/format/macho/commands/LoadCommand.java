@@ -175,7 +175,13 @@ public abstract class LoadCommand implements StructConverter {
 			long size) {
 		if (fileOffset != 0 && size != 0) {
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-			SegmentCommand segment = getContainingSegment(header, fileOffset);
+			SegmentCommand segment = null;
+			if (getLinkerDataOffset() != 0) {
+				segment = header.getSegment(SegmentNames.SEG_LINKEDIT);
+			}
+			if (segment == null) {
+				segment = getContainingSegment(header, fileOffset);
+			}
 			if (segment != null) {
 				return space.getAddress(
 					segment.getVMaddress() + (fileOffset - segment.getFileOffset()));

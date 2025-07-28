@@ -31,8 +31,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.*;
@@ -44,6 +43,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProject;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.protocol.ghidra.*;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.framework.store.local.LocalFileSystem;
@@ -251,9 +251,10 @@ public class HeadlessAnalyzer {
 	 *                      is acceptable if we are in -process mode)
 	 * @throws IOException if there was an IO-related problem
 	 * @throws MalformedURLException specified URL is invalid
+	 * @throws URISyntaxException specified URL is invalid
 	 */
 	public void processURL(URL ghidraURL, List<File> filesToImport)
-			throws IOException, MalformedURLException {
+			throws IOException, MalformedURLException, URISyntaxException {
 
 		if (options.readOnly && options.commit) {
 			Msg.error(this,
@@ -291,13 +292,14 @@ public class HeadlessAnalyzer {
 
 			if (!path.endsWith("/")) {
 				// force explicit folder path so that non-existent folders are created on import
-				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(), path + "/");
+				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
+					path + "/", null, null).toURL();
 			}
 		}
 		else { // Running in -process mode
 			if (path.endsWith("/") && path.length() > 1) {
-				ghidraURL = new URL("ghidra", ghidraURL.getHost(), ghidraURL.getPort(),
-					path.substring(0, path.length() - 1));
+				ghidraURL = new URI("ghidra", null, ghidraURL.getHost(), ghidraURL.getPort(),
+					path.substring(0, path.length() - 1), null, null).toURL();
 			}
 		}
 
@@ -353,7 +355,10 @@ public class HeadlessAnalyzer {
 						}
 						throw new IOException(title + ": " + message);
 					}
-				}, TaskMonitor.DUMMY);
+
+					// Link files are skipped to avoid duplicate processing
+					// Processing should be done on actual folder - not a linked folder
+				}, LinkFileControl.NO_FOLLOW, TaskMonitor.DUMMY);
 
 		}
 		catch (CancelledException e) {
@@ -1337,7 +1342,7 @@ public class HeadlessAnalyzer {
 		boolean filesProcessed = false;
 
 		DomainFile domFile = parentFolder.getFile(filename);
-		// Do not follow folder-links or consider program links.  Using content type
+		// Do not follow folder-links or program links.  Using content type
 		// to filter is best way to control this.
 		if (domFile != null &&
 			ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
@@ -1530,17 +1535,21 @@ public class HeadlessAnalyzer {
 
 		Msg.info(this, "IMPORTING: " + fsrl);
 
+		// Perform the load.
+		// Note that loading 1 file may result in more than 1 thing getting loaded.
 		LoadResults<Program> loadResults = null;
-		Loaded<Program> primary = null;
 		try {
+			loadResults = ProgramLoader.builder()
+					.source(fsrl)
+					.project(project)
+					.projectFolderPath(folderPath)
+					.language(options.language)
+					.compiler(options.compilerSpec)
+					.loaders(options.loaderClass)
+					.loaderArgs(options.loaderArgs)
+					.load();
 
-			// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
-			// loaded.
-			loadResults = loadPrograms(fsrl, folderPath);
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
-
-			primary = loadResults.getPrimary();
-			Program primaryProgram = primary.getDomainObject();
 
 			// Make sure we are allowed to save ALL programs to the project.  If not, save none and
 			// fail.
@@ -1554,19 +1563,27 @@ public class HeadlessAnalyzer {
 
 			// Check if there are defined memory blocks in the primary program.
 			// Abort if not (there is nothing to work with!).
-			if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
+			Loaded<Program> primary = loadResults.getPrimary();
+			if (primary.check(p -> p.getMemory().getAllInitializedAddressSet().isEmpty())) {
 				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " + fsrl);
 				return false;
 			}
 
 			// Analyze the primary program, and determine if we should save.
 			// TODO: Analyze non-primary programs (GP-2965).
-			boolean doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+			Program primaryProgram = primary.getDomainObject(this);
+			boolean doSave;
+			try {
+				doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+			}
+			finally {
+				primaryProgram.release(this);
+			}
 
 			// The act of marking the program as temporary by a script will signal
 			// us to discard any changes
 			if (!doSave) {
-				loadResults.forEach(e -> e.getDomainObject().setTemporary(true));
+				loadResults.forEach(e -> e.apply(p -> p.setTemporary(true)));
 			}
 
 			// Apply saveDomainFolder to the primary program, if applicable.
@@ -1582,12 +1599,11 @@ public class HeadlessAnalyzer {
 
 			// Save
 			for (Loaded<Program> loaded : loadResults) {
-				if (!loaded.getDomainObject().isTemporary()) {
+				if (!loaded.check(Program::isTemporary)) {
 					try {
-						DomainFile domainFile =
-							loaded.save(project, new MessageLog(), TaskMonitor.DUMMY);
-						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)", loaded,
-							domainFile));
+						DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
+						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)",
+							loaded, domainFile));
 					}
 					catch (IOException e) {
 						Msg.info(this, "REPORT: Save failed for: " + loaded);
@@ -1608,11 +1624,11 @@ public class HeadlessAnalyzer {
 			// Commit changes
 			if (options.commit) {
 				for (Loaded<Program> loaded : loadResults) {
-					if (!loaded.getDomainObject().isTemporary()) {
+					if (!loaded.check(Program::isTemporary)) {
 						if (loaded == primary) {
 							AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
 						}
-						loaded.release(this);
+						loaded.close(); // we need to close before committing
 						commitProgram(loaded.getSavedDomainFile());
 					}
 				}
@@ -1622,7 +1638,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		catch (LoadException e) {
-			Msg.error(this, "The AutoImporter could not successfully load " + fsrl +
+			Msg.error(this, "The ProgramLoader could not successfully load " + fsrl +
 				" with the provided import parameters. Please ensure that any specified" +
 				" processor/cspec arguments are compatible with the loader that is used during" +
 				" import and try again.");
@@ -1640,34 +1656,9 @@ public class HeadlessAnalyzer {
 		}
 		finally {
 			if (loadResults != null) {
-				loadResults.release(this);
+				loadResults.close();
 			}
 		}
-	}
-
-	private LoadResults<Program> loadPrograms(FSRL fsrl, String folderPath)
-			throws VersionException, InvalidNameException, DuplicateNameException,
-			CancelledException, IOException, LoadException {
-		MessageLog messageLog = new MessageLog();
-
-		if (options.loaderClass == null) {
-			// User did not specify a loader
-			if (options.language == null) {
-				return AutoImporter.importByUsingBestGuess(fsrl, project, folderPath, this,
-					messageLog, TaskMonitor.DUMMY);
-			}
-			return AutoImporter.importByLookingForLcs(fsrl, project, folderPath, options.language,
-				options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
-		}
-
-		// User specified a loader
-		if (options.language == null) {
-			return AutoImporter.importByUsingSpecificLoaderClass(fsrl, project, folderPath,
-				options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
-		}
-		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(fsrl, project, folderPath,
-			options.loaderClass, options.loaderArgs, options.language, options.compilerSpec, this,
-			messageLog, TaskMonitor.DUMMY);
 	}
 
 	private void processWithImport(FSRL fsrl, String folderPath, Integer depth, boolean isFirstTime)

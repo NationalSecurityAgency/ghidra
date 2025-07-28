@@ -18,7 +18,7 @@ try:
     from . import trace_rmi_pb2 as bufs
 except Exception as e:
     from .setuputils import prompt_and_mitigate_dependencies
-    prompt_and_mitigate_dependencies("Debug/Debugger-rmi-trace")
+    prompt_and_mitigate_dependencies("Debugger-rmi-trace")
 
 from collections import deque
 from concurrent.futures import Executor, Future
@@ -48,7 +48,7 @@ from .util import send_delimited, recv_delimited
 # Other places to change:
 # * every pyproject.toml file (incl. deps)
 # * TraceRmiHandler.VERSION
-VERSION = '11.5'
+VERSION = '12.0'
 
 
 E = TypeVar('E')

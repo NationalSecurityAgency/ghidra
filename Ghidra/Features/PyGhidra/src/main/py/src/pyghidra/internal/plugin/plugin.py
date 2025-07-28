@@ -23,9 +23,11 @@ import threading
 import types
 from code import InteractiveConsole
 
+from ghidra.app.script import ScriptControls
 from ghidra.framework import Application
 from ghidra.pyghidra import PyGhidraScriptProvider, PyGhidraPlugin
 from ghidra.pyghidra.interpreter import PyGhidraConsole
+from ghidra.util.task import TaskMonitor
 from java.io import BufferedReader, InputStreamReader # type:ignore @UnresolvedImport
 from java.lang import String # type:ignore @UnresolvedImport 
 from java.lang import Thread as JThread # type:ignore @UnresolvedImport
@@ -160,11 +162,12 @@ class PyConsole(InteractiveConsole):
         self._out = console.getOutWriter()
         self._err = console.getErrWriter()
         self._writer = self._out
+        self._error_writer = self._err
         self._thread = None
         self._interact_thread = None
         self._script = self.locals._script
         state = self._script.getState()
-        self._script.set(state, self._out)
+        self._script.set(state, ScriptControls(console, TaskMonitor.DUMMY))
         self._state = ConsoleState.RESET
         self._completer = PythonCodeCompleter(self)
 

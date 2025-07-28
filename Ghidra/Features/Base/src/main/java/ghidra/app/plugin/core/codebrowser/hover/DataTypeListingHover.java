@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.ToolTipUtils;
+import ghidra.app.util.viewer.field.ResourceFieldLocation;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -125,6 +126,11 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 			EquateOperandFieldLocation equateLocation =
 				(EquateOperandFieldLocation) programLocation;
 			return createEquateToolTipComponent(program, equateLocation.getEquate());
+		}
+		if (programLocation instanceof ResourceFieldLocation resourceLoc) {
+			Data data = resourceLoc.getResourceData();
+			dt = data.getDataType();
+			return createTooltipComponent(dt.getRepresentation(data, data, data.getLength()));
 		}
 
 		return null;

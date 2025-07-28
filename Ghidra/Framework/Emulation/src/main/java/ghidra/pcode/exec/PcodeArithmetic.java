@@ -62,6 +62,8 @@ public interface PcodeArithmetic<T> {
 		LOAD(Reason.EXECUTE_READ),
 		/** The value will be used as the address of a value to store */
 		STORE(Reason.EXECUTE_READ),
+		/** The p-code specification defines the operand as a constant */
+		BY_DEF(Reason.EXECUTE_READ),
 		/** Some other reason, perhaps for userop library use */
 		OTHER(Reason.EXECUTE_READ),
 		/** The user or a tool is inspecting the value */
@@ -559,26 +561,6 @@ public interface PcodeArithmetic<T> {
 	 */
 	default double toDouble(T value, Purpose purpose) {
 		return Double.longBitsToDouble(toLong(value, purpose));
-	}
-
-	/**
-	 * Convert, if possible, the given abstract value to a concrete boolean
-	 * 
-	 * <p>
-	 * Any non-zero value is considered true
-	 * 
-	 * @param value the abstract value
-	 * @param purpose the reason why the emulator needs a concrete value
-	 * @return the concrete value
-	 * @throws ConcretionError if the value cannot be made concrete
-	 */
-	default boolean toBoolean(T value, Purpose purpose) {
-		for (byte b : toConcrete(value, purpose)) {
-			if (b != 0) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**

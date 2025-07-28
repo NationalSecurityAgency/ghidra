@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,8 +80,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@DBAnnotatedColumn(FLAGS_COLUMN_NAME)
 	static DBObjectColumn FLAGS_COLUMN;
 
-	static String tableName(AddressSpace space, long threadKey) {
-		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, 0);
+	static String tableName(AddressSpace space) {
+		return DBTraceUtils.tableName(TABLE_NAME, space);
 	}
 
 	/**
@@ -326,7 +326,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public Address getAddress(int opIndex) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			DBTraceReferenceSpace refSpace = space.referenceManager.get(space, false);
+			DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, false);
 			if (refSpace == null) {
 				return InstructionAdapterFromPrototype.super.getAddress(opIndex);
 			}
@@ -368,7 +368,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			checkIsValid();
 			if (isFallThroughOverridden()) {
-				DBTraceReferenceSpace refSpace = space.referenceManager.get(space, false);
+				DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, false);
 				if (refSpace == null) {
 					return null;
 				}
@@ -434,7 +434,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public Address[] getFlows() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			DBTraceReferenceSpace refSpace = space.referenceManager.get(space, false);
+			DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, false);
 			if (refSpace == null) {
 				return EMPTY_ADDRESS_ARRAY;
 			}
@@ -556,7 +556,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			this.flowOverride = flowOverride;
 			update(FLAGS_COLUMN);
 
-			DBTraceReferenceSpace refSpace = space.referenceManager.get(space, true);
+			DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, true);
 			for (DBTraceReference ref : refSpace.getFlowReferencesFrom(getStartSnap(), getX1())) {
 				if (!isSameFlowType(origFlowType, ref.getReferenceType())) {
 					continue;
@@ -569,9 +569,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				ref.setReferenceType(refType);
 			}
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FLOW_OVERRIDE_CHANGED, space, this,
-				oldFlowOverride, flowOverride));
+		space.trace.setChanged(new TraceChangeRecord<>(
+			TraceEvents.INSTRUCTION_FLOW_OVERRIDE_CHANGED, space.space, this, oldFlowOverride,
+			flowOverride));
 	}
 
 	@Override
@@ -602,9 +602,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 			updateLengthOverride(length);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_LENGTH_OVERRIDE_CHANGED, space, this,
-				oldLengthOverride, length));
+		space.trace.setChanged(new TraceChangeRecord<>(
+			TraceEvents.INSTRUCTION_LENGTH_OVERRIDE_CHANGED, space.space, this, oldLengthOverride,
+			length));
 	}
 
 	private void updateLengthOverride(int length) {
@@ -671,7 +671,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				setFallThroughOverridden(true);
 			}
 			else {
-				DBTraceReferenceSpace refSpace = space.referenceManager.get(space, true);
+				DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, true);
 				refSpace.addMemoryReference(lifespan, getAddress(), fallThrough,
 					RefType.FALL_THROUGH, SourceType.USER_DEFINED, Reference.MNEMONIC);
 				// TODO: ReferenceManager must be observable. Listen for FALL_THROUGHs
@@ -695,7 +695,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	private void clearFallThroughRefs(DBTraceReference keepFallThroughRef) {
 		clearingFallThroughs.take(() -> {
-			DBTraceReferenceSpace refSpace = space.referenceManager.get(space, false);
+			DBTraceReferenceSpace refSpace = space.referenceManager.get(space.space, false);
 			if (refSpace == null) {
 				return;
 			}
@@ -729,9 +729,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			flags &= FALLTHROUGH_CLEAR_MASK;
 		}
 		update(FLAGS_COLUMN);
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FALL_THROUGH_OVERRIDE_CHANGED, space,
-				this, !overridden, overridden));
+		space.trace.setChanged(new TraceChangeRecord<>(
+			TraceEvents.INSTRUCTION_FALL_THROUGH_OVERRIDE_CHANGED, space.space, this, !overridden,
+			overridden));
 	}
 
 	@Override
@@ -750,7 +750,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// TODO: Why would I throw ContextChangeException?
 			// Where I see the check, it checks for an existing instruction.... Well, I'm one!
 			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, true);
+				space.trace.getRegisterContextManager().get(space.space, true);
 			ctxSpace.setValue(getLanguage(), new RegisterValue(register, value), lifespan, range);
 		}
 	}
@@ -761,7 +761,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// TODO: Why would I throw ContextChangeException?
 			// Where I see the check, it checks for an existing instruction.... Well, I'm one!
 			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, true);
+				space.trace.getRegisterContextManager().get(space.space, true);
 			ctxSpace.setValue(getLanguage(), value, lifespan, range);
 		}
 	}
@@ -772,7 +772,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// TODO: Why would I throw ContextChangeException?
 			// Where I see the check, it checks for an existing instruction.... Well, I'm one!
 			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, false);
+				space.trace.getRegisterContextManager().get(space.space, false);
 			if (ctxSpace == null) {
 				return;
 			}
@@ -823,7 +823,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public boolean hasValue(Register register) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, false);
+				space.trace.getRegisterContextManager().get(space.space, false);
 			if (ctxSpace == null) {
 				return false;
 			}

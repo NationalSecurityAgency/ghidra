@@ -21,6 +21,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeDisplayOptions;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 
@@ -30,8 +31,10 @@ import ghidra.program.model.symbol.Reference;
 public interface Data extends CodeUnit, Settings {
 
 	/**
-	 * Returns the value of the data item.  The value may be an address, a scalar,
-	 * register or null if no value.
+	 * Returns the value of this data as determined by the corresponding {@link DataType}.
+	 * The value may be an {@link Address}, {@link Scalar}, a datatype-defined object or null 
+	 * if no value.
+	 * 
 	 * @return the value
 	 */
 	public Object getValue();
@@ -42,7 +45,7 @@ public interface Data extends CodeUnit, Settings {
 	 * <p>NOTE: This determination is made based upon data type and settings only and does not
 	 * examine memory bytes which are used to construct the data value object.
 	 *
-	 * @return value class or null if a consistent class is not utilized.
+	 * @return value class or null if a consistent value class is not utilized.
 	 */
 	public Class<?> getValueClass();
 

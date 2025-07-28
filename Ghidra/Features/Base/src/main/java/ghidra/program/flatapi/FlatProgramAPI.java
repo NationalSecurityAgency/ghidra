@@ -207,6 +207,7 @@ public class FlatProgramAPI {
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 
+		mgr.initializeOptions();
 		mgr.reAnalyzeAll(null);
 
 		analyzeChanges(program);

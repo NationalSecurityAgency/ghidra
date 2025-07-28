@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-. ../../../Debugger-rmi-trace/data/support/setuputils.sh
+. $MODULE_Debugger_rmi_trace_HOME/data/support/setuputils.sh
 
 add-lldb-init-args() {
 	args+=(-o "version")

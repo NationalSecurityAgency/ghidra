@@ -25,12 +25,13 @@ import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.framework.data.CheckinHandler;
+import ghidra.framework.Application;
+import ghidra.framework.data.*;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -38,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * @see TestDummyDomainFolder
  */
-public class TestDummyDomainFile implements DomainFile {
+public class TestDummyDomainFile implements DomainFile, LinkFileInfo {
 
 	private String name;
 	private TestDummyDomainFolder parent;
@@ -47,9 +48,47 @@ public class TestDummyDomainFile implements DomainFile {
 	private boolean isVersioned;
 	private boolean isInUse;
 
+	private String contentType;
+	private Class<? extends DomainObject> domainObjectClass;
+
+	/**
+	 * Construct test file with unknown content-type.
+	 * 
+	 * @param parent parent folder
+	 * @param name file name
+	 */
 	public TestDummyDomainFile(TestDummyDomainFolder parent, String name) {
+		this(parent, name, null);
+	}
+
+	/**
+	 * Construct test file with a specified content-type.  When a content-type other than 
+	 * {@link ContentHandler#UNKNOWN_CONTENT} is specified the corresponding {@link ContentHandler} 
+	 * must be available which will require the {@link ClassSearcher} to be active with 
+	 * appropriate {@link Application} initialization.
+	 * <P>
+	 * NOTE: Support for a link-file will require a derived implementation.
+	 * 
+	 * @param parent parent folder
+	 * @param name file name
+	 * @param fileContentType {@link DomainObject} content-type as specified by corresponding 
+	 * {@link ContentHandler} implementation class.
+	 */
+	public TestDummyDomainFile(TestDummyDomainFolder parent, String name, String fileContentType) {
 		this.parent = parent;
 		this.name = name;
+		contentType = fileContentType != null ? fileContentType : ContentHandler.UNKNOWN_CONTENT;
+		domainObjectClass = DomainObject.class;
+		if (!ContentHandler.UNKNOWN_CONTENT.equals(contentType)) {
+			try {
+				ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(contentType);
+				domainObjectClass = ch.getDomainObjectClass();
+			}
+			catch (IOException e) {
+				// Ensure corresponding content-handler has been found by ClassSearcher.
+				throw new AssertException("Unsupported content type: " + contentType);
+			}
+		}
 	}
 
 	public void setInUse() {
@@ -111,24 +150,36 @@ public class TestDummyDomainFile implements DomainFile {
 		throw new UnsupportedOperationException();
 	}
 
+	ContentHandler<?> getContentHandler() throws IOException {
+		if (contentType == null) {
+			throw new UnsupportedOperationException();
+		}
+		return DomainObjectAdapter.getContentHandler(contentType);
+	}
+
 	@Override
 	public String getContentType() {
-		throw new UnsupportedOperationException();
+		return contentType;
 	}
 
 	@Override
-	public boolean isLinkFile() {
-		return false;
+	public boolean isLink() {
+		try {
+			return getContentHandler() instanceof LinkHandler;
+		}
+		catch (IOException e) {
+			return false; // unknown content
+		}
 	}
 
 	@Override
-	public DomainFolder followLink() {
-		throw new UnsupportedOperationException();
+	public LinkFileInfo getLinkInfo() {
+		return isLink() ? this : null;
 	}
 
 	@Override
 	public Class<? extends DomainObject> getDomainObjectClass() {
-		throw new UnsupportedOperationException();
+		return domainObjectClass;
 	}
 
 	@Override
@@ -347,7 +398,7 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -404,5 +455,29 @@ public class TestDummyDomainFile implements DomainFile {
 			return parent + "/" + name;
 		}
 		return name;
+	}
+
+	//
+	// LinkFileInfo methods
+	//
+
+	@Override
+	public DomainFile getFile() {
+		return this;
+	}
+
+	@Override
+	public LinkedGhidraFolder getLinkedFolder() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getLinkPath() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getAbsoluteLinkPath() throws IOException {
+		throw new UnsupportedOperationException();
 	}
 }

@@ -34,68 +34,20 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.iface.TraceObjectAggregate;
+import ghidra.trace.model.target.iface.TraceAggregate;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStore;
 
 public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationTest {
-	public static final String XML_CTX = """
-			<context>
-			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-			        <attribute name='curTarget' schema='Target' />
-			        <attribute name='Targets' schema='TargetContainer' />
-			    </schema>
-			    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
-			            attributeResync='ONCE'>
-			        <element schema='Target' />
-			    </schema>
-			    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Process' />
-			        <attribute name='self' schema='Target' />
-			        <attribute name='Threads' schema='ThreadContainer' />
-			        <attribute name='Memory' schema='Memory' />
-			    </schema>
-			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Thread' />
-			    </schema>
-			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Thread' />
-			        <interface name='Aggregate' />
-			        <attribute name='Registers' schema='RegisterContainer' />
-			    </schema>
-			    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='RegisterContainer' />
-			        <attribute name='User' schema='RegisterGroup' />
-			        <attribute name='Float' schema='RegisterGroup' />
-			    </schema>
-			    <schema name='RegisterGroup' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Register' />
-			    </schema>
-			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='Register' />
-			    </schema>
-			    <schema name='Memory' canonical='yes' elementResync='NEVER'
-			            attributeResync='NEVER'>
-			        <element schema='Region' />
-			    </schema>
-			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-			        <interface name='MemoryRegion' />
-			        <attribute-alias from="_range" to="Range" />
-			    </schema>
-			</context>
-			""";
 	protected ToyDBTraceBuilder b;
 	protected DBTraceObjectManager manager;
 
-	protected SchemaContext ctx;
+	protected SchemaContext ctx = ToyDBTraceBuilder.CTX_DEFAULT;
 
 	protected TraceObject root;
 	protected TraceObject targetContainer;
@@ -105,8 +57,6 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void setUpObjectManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
 		manager = b.trace.getObjectManager();
-
-		ctx = XmlSchemaContext.deserialize(XML_CTX);
 	}
 
 	protected void populateModel(int targetCount) {
@@ -317,10 +267,10 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 
 		assertEquals(Set.of(),
-			manager.queryAllInterface(Lifespan.toNow(-1), TraceObjectThread.class)
+			manager.queryAllInterface(Lifespan.toNow(-1), TraceThread.class)
 					.collect(Collectors.toSet()));
-		assertEquals(Set.of(thread.queryInterface(TraceObjectThread.class)),
-			manager.queryAllInterface(Lifespan.ALL, TraceObjectThread.class)
+		assertEquals(Set.of(thread.queryInterface(TraceThread.class)),
+			manager.queryAllInterface(Lifespan.ALL, TraceThread.class)
 					.collect(Collectors.toSet()));
 	}
 
@@ -431,8 +381,8 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 		assertEquals(Set.of(), root.getInterfaces());
 		assertEquals(Set.of(
-			TraceObjectAggregate.class,
-			TraceObjectThread.class),
+			TraceAggregate.class,
+			TraceThread.class),
 			thread.getInterfaces());
 	}
 
@@ -445,10 +395,10 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			thread = manager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
-		assertNull(root.queryInterface(TraceObjectThread.class));
-		TraceObjectThread threadIf = thread.queryInterface(TraceObjectThread.class);
+		assertNull(root.queryInterface(TraceThread.class));
+		TraceThread threadIf = thread.queryInterface(TraceThread.class);
 		assertNotNull(threadIf);
-		assertSame(threadIf, thread.queryInterface(TraceObjectThread.class));
+		assertSame(threadIf, thread.queryInterface(TraceThread.class));
 	}
 
 	@Test

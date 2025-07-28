@@ -20,6 +20,8 @@ import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
@@ -140,6 +142,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public void setThunkedFunction(Function referencedFunction) {
+		if (isExternal()) {
+			throw new UnsupportedOperationException("External functions may not be a thunk");
+		}
 		if ((referencedFunction != null) && !(referencedFunction instanceof FunctionDB)) {
 			throw new IllegalArgumentException("FunctionDB expected for referenced function");
 		}

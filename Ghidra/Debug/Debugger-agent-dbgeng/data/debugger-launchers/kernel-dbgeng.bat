@@ -9,6 +9,7 @@
 ::@menu-group dbgeng
 ::@icon icon.debugger
 ::@help dbgeng#win_kernel
+::@depends Debugger-rmi-trace
 ::@enum Connection:str Remote Local EXDI
 ::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 :: Use env instead of args, because "all args except first" is terrible to implement in batch

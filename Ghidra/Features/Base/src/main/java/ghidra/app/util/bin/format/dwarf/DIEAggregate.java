@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.util.bin.format.dwarf.attribs.*;
 import ghidra.app.util.bin.format.dwarf.expression.*;
+import ghidra.app.util.bin.format.dwarf.line.DWARFFile;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.util.Msg;
 
@@ -471,9 +472,9 @@ public class DIEAggregate {
 		}
 		try {
 			int fileNum = attr.getUnsignedIntExact();
-			DWARFCompilationUnit cu = attrInfo.die.getCompilationUnit();
-			DWARFLine line = cu.getLine();
-			return line.getFilePath(fileNum, false);
+			DWARFLine line = attrInfo.die.getCompilationUnit().getLine();
+			DWARFFile file = line.getFile(fileNum);
+			return file.getName();
 		}
 		catch (IOException e) {
 			return null;

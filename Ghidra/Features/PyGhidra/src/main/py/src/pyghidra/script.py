@@ -205,12 +205,6 @@ class PyGhidraScript(dict):
     def get_static_view(self):
         return _StaticMap(self)
 
-    def set(self, state, monitor, writer):
-        """
-        see GhidraScript.set
-        """
-        self._script.set(state, monitor, writer)
-
     def run(self, script_path: str = None, script_args: List[str] = None):
         """
         Run this GhidraScript

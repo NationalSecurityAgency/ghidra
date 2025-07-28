@@ -148,7 +148,7 @@ public class MultiIcon implements Icon {
 
 		if (disabled) {
 			// Alpha blend to background
-			Color bgColor = c.getBackground();
+			Color bgColor = c != null ? c.getBackground() : Color.gray;
 			g.setColor(ColorUtils.withAlpha(bgColor, 128));
 			g.fillRect(x, y, width, height);
 		}

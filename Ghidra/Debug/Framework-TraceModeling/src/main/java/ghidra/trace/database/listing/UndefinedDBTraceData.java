@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,11 @@ import ghidra.program.model.listing.Data;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceSpaceMixin;
 
 /**
  * The implementation for an undefined {@link TraceData} for {@link DBTrace}
@@ -41,7 +40,7 @@ import ghidra.trace.util.TraceAddressSpace;
  * These are not backed by a table. They are generated ephemerally. Each is exactly one unit in size
  * in both time and space.
  */
-public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
+public class UndefinedDBTraceData implements DBTraceDataAdapter, TraceSpaceMixin {
 	protected final DBTrace trace;
 	protected final long snap;
 	protected final Lifespan lifespan;
@@ -66,11 +65,6 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 		this.address = address;
 		this.thread = thread;
 		this.frameLevel = frameLevel;
-	}
-
-	@Override
-	public TraceAddressSpace getTraceSpace() {
-		return this;
 	}
 
 	@Override
@@ -169,7 +163,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 
 	@Override
 	public int getBytes(ByteBuffer buffer, int addressOffset) {
-		DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
+		DBTraceMemorySpace mem = trace.getMemoryManager().get(getAddressSpace(), false);
 		if (mem == null) {
 			// TODO: 0-fill instead? Will need to check memory space bounds.
 			return 0;
@@ -289,7 +283,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	@Override
 	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
 		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
-				.get(this, createIfAbsent);
+				.get(getAddressSpace(), createIfAbsent);
 	}
 
 	@Override

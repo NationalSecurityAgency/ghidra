@@ -26,13 +26,17 @@ public class CommentTypeUtils {
 	 * @param cu
 	 * @param loc
 	 * @param defaultCommentType
-	 * @return comment type
+	 * @return comment type or defaultCommentType if location does not correspond 
+	 * to a comment
 	 */
 	public static CommentType getCommentType(CodeUnit cu, ProgramLocation loc,
 			CommentType defaultCommentType) {
 		if (loc instanceof CommentFieldLocation) {
 			CommentFieldLocation cfLoc = (CommentFieldLocation) loc;
-			return cfLoc.getCommentType();
+			CommentType type = cfLoc.getCommentType();
+			if (type != null) {
+				return type;
+			}
 		}
 		else if (loc instanceof PlateFieldLocation) {
 			return CommentType.PLATE;

@@ -11,6 +11,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#qemu
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@env OPT_TARGET_IMG:file!="" "Image" "The target binary executable image"
 #@env GHIDRA_LANG_EXTTOOL_qemu_system:file="" "QEMU command" "The path to qemu-system for the target architecture."
@@ -23,8 +24,8 @@
 
 . ..\support\gdbsetuputils.ps1
 
-$pypathTrace = Ghidra-Module-PyPath "Debug/Debugger-rmi-trace"
-$pypathGdb = Ghidra-Module-PyPath "Debug/Debugger-agent-gdb"
+$pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
+$pypathGdb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathGdb;$pypathTrace;$Env:PYTHONPATH"
 
 $qemuargs = @("`"$Env:GHIDRA_LANG_EXTTOOL_qemu_system`"")
