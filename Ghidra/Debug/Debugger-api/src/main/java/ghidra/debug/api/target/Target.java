@@ -700,4 +700,15 @@ public interface Target {
 	 * @return true if busy
 	 */
 	boolean isBusy();
+
+	/**
+	 * Forcibly commit all of the back-ends transactions on this target's trace.
+	 * 
+	 * <p>
+	 * This is generally not a recommended course of action, except that sometimes the back-end
+	 * crashes and fails to close a transaction. It should only be invoked by a relatively hidden
+	 * menu option, and mediated by a warning of some sort. Closing a transaction prematurely, when
+	 * the back-end actually <em>does</em> still need it may cause a host of other problems.
+	 */
+	void forciblyCloseTransactions();
 }
