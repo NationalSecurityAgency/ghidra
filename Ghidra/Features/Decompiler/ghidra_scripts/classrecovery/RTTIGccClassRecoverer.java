@@ -107,10 +107,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIGccClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, TaskMonitor monitor) throws Exception {
+			boolean nameVfunctions, boolean makeVfunctionsThisCalls, boolean isDwarfLoaded,
+			TaskMonitor monitor) throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			isDwarfLoaded, monitor);
+			makeVfunctionsThisCalls,isDwarfLoaded, monitor);
 
 		this.isDwarfLoaded = isDwarfLoaded;
 

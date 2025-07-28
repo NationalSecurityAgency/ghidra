@@ -123,6 +123,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// bookmark all constructor/destructor functions recognized by script
 	private static final boolean BOOKMARK_FOUND_FUNCTIONS = true;
 
+	// make vfunctions this calls
+	private static final boolean MAKE_VFUNCTIONS_THISCALLS = true;
+
 	// show a graph of class hierarchies after script is complete
 	// no parent = blue vertex
 	// single parent = green vertex
@@ -193,7 +196,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isPE() && isGcc()) {
 
@@ -214,7 +217,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -242,7 +245,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			nameVfunctions = !hasDebugSymbols;
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-				nameVfunctions, hasDebugSymbols, monitor);
+				nameVfunctions, MAKE_VFUNCTIONS_THISCALLS, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
