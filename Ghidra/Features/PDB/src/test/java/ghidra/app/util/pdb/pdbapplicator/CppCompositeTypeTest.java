@@ -32,7 +32,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
@@ -2084,6 +2084,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = egray832Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2153,6 +2155,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = egray864Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2222,6 +2226,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = vftm32Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2291,6 +2297,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = vftm64Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2360,6 +2368,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = cfb432Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2429,6 +2439,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = cfb464Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2519,10 +2531,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private void checkVxtStructures(DataTypeManager dtm,
 			Map<ClassID, Map<String, String>> expectedVxtStructs) {
 		for (Map.Entry<ClassID, Map<String, String>> entry : expectedVxtStructs.entrySet()) {
+			Map<String, String> expectedTables = entry.getValue();
+			if (expectedTables.isEmpty()) {
+				continue;
+			}
 			ClassID id = entry.getKey();
 			CategoryPath cp = ClassUtils.getClassInternalsPath(id);
 			Category category = dtm.getCategory(cp);
-			Map<String, String> expectedTables = entry.getValue();
+			assertNotNull(category);
 			for (Map.Entry<String, String> tableEntry : expectedTables.entrySet()) {
 				String tableName = tableEntry.getKey();
 				String expectedTableDump = tableEntry.getValue();
@@ -2531,24 +2547,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 						"Purposefully skipping table test that has bad result for " + tableName);
 					continue;
 				}
-				assertNotNull(category);
 				Structure table = (Structure) category.getDataType(tableName);
 				assertNotNull(table);
 				CompositeTestUtils.assertExpectedComposite(this, expectedTableDump, table, true);
 			}
 			// Make sure there are no extra tables
-			if (category != null) {
-				int count = 0;
-				DataType[] types = category.getDataTypes();
-				if (types != null) {
-					for (DataType type : category.getDataTypes()) {
-						if (ClassUtils.isVTable(type)) {
-							count++;
-						}
+			int count = 0;
+			DataType[] types = category.getDataTypes();
+			if (types != null) {
+				for (DataType type : category.getDataTypes()) {
+					if (ClassUtils.isVTable(type)) {
+						count++;
 					}
 				}
-				assertEquals(expectedTables.size(), count);
 			}
+			assertEquals(expectedTables.size(), count);
+		}
+	}
+
+	private void checkTables(Program program, MsVxtManager vxtManager,
+			Map<String, String> tableInfo) {
+
+		// next lines for aiding in creating expected results
+//		for (Address a : vxtManager.dumpVbtAddresses()) {
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"\");\n",
+//				a.toString()));
+//		}
+//		for (Address a : vxtManager.dumpVftAddresses()) {
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"\");\n",
+//				a.toString()));
+//		}
+
+		for (Map.Entry<String, String> entry : tableInfo.entrySet()) {
+			String addr = entry.getKey();
+			Address[] addresses = program.parseAddress(addr);
+			assertTrue(addresses.length == 1);
+			Address address = addresses[0];
+			CodeUnit cu = program.getListing().getCodeUnitAt(address);
+			// assume not instruction... will fail if so
+			Data d = (Data) cu;
+			DataType dt = d.getBaseDataType();
+			String pathName = dt.getPathName();
+			String expectedResult = entry.getValue();
+			// Following line is for aiding in creating expected results
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"%s\");\n",
+//				addr, pathName));
+			assertEquals(expectedResult, pathName);
 		}
 	}
 

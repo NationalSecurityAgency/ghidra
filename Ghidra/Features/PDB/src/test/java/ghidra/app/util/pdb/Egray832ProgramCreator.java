@@ -17643,6 +17643,146 @@ public class Egray832ProgramCreator extends ProgramCreator {
 
 	}
 
+	private static final Map<String, String> expectedVxtAddressTypes = new LinkedHashMap<>();
+	static {
+		expectedVxtAddressTypes.put("0044619c", "/G/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461a4", "/H/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461ac", "/GG1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461b4", "/GG2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461bc", "/GG3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461c4", "/GG4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461cc", "/I/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461d4", "/I/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004461dc", "/GX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461e4", "/HX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461ec", "/IX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004461f4", "/IX1/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("004461fc", "/G1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446208", "/H1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446214", "/I1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446220", "/I1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446228", "/I2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446234", "/I2/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446240", "/I3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044624c", "/I3/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446258", "/I4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446264", "/I5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446270", "/J1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044627c", "/J1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446284", "/J1/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446290", "/J1/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("0044629c", "/J2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004462a8", "/J2/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004462b4", "/J2/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("004462c0", "/J2/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("004462c8", "/J3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004462d4", "/J3/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004462e0", "/J3/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("004462ec", "/J3/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("004462f4", "/J4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446310", "/J4/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("0044631c", "/J4/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446324", "/J4/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("0044632c", "/J4/!internal/VTABLE_00000024");
+		expectedVxtAddressTypes.put("00446334", "/J4/!internal/VTABLE_0000004c");
+		expectedVxtAddressTypes.put("0044633c", "/J4/!internal/VTABLE_00000054");
+		expectedVxtAddressTypes.put("00446344", "/J5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446360", "/J5/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("0044636c", "/J5/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446374", "/J5/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("0044637c", "/J5/!internal/VTABLE_00000024");
+		expectedVxtAddressTypes.put("00446384", "/J5/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("0044638c", "/J5/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("00446394", "/J6/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004463a8", "/J6/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004463b0", "/J6/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("004463fc", "/T/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446414", "/U/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446434", "/AA3a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044643c", "/AA3b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446444", "/AA3c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446450", "/AA3c/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446458", "/AA3d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044646c", "/AA3d/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("00446474", "/AA3d/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("0044647c", "/AA3g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446488", "/AA4a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446490", "/AA4b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446498", "/AA4c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004464a0", "/AA4c/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004464a8", "/AA4d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004464b4", "/AA4d/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("004464bc", "/AA4e/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004464c8", "/AA4e/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("004464d0", "/AA4f/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004464e0", "/AA4f/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("004464e8", "/AA4f/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("004464f0", "/AA4g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004464f8", "/AA4j/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446500", "/AA4k/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446508", "/AA4m/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446510", "/AA4n/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446518", "/AA4p/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446520", "/AA4q/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446528", "/AA4q/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("00446530", "/AA5e/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446538", "/AA5f/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446540", "/AA5g/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("0044654c", "/AA5g/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446554", "/AA5h/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446560", "/AA5h/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446568", "/AA5j/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("0044657c", "/AA5j/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("00446588", "/AA5j/!internal/VTABLE_00000024");
+		expectedVxtAddressTypes.put("00446590", "/AA5j/!internal/VTABLE_00000034");
+		expectedVxtAddressTypes.put("00446598", "/AA6c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465a0", "/AA6g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465a8", "/AA6h/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465b4", "/AA6h/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004465bc", "/AA6j/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465c8", "/AA6j/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446624", "/AA7d/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00446630", "/BB1c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446638", "/BB1d/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446640", "/BB2a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446648", "/BB2b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446650", "/BB2c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044665c", "/BB2c/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("00446664", "/BB2d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446670", "/BB2d/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("0044667c", "/BB2d/!internal/VTABLE_0000001c");
+		expectedVxtAddressTypes.put("00446684", "/BB2e/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0044668c", "/BB3d/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446694", "/BB3e/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("004466a0", "/BB3f/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004466b0", "/BB3f/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("004466bc", "/BB3g/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("004466cc", "/BB3g/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("004466d4", "/CC1h/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004466f0", "/DD1b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004466f8", "/DD1c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446700", "/DD1d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463bc", "/P/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463c4", "/Q/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463d0", "/R/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463dc", "/S/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463e4", "/S/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004463f0", "/T/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004463f8", "/T/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("00446408", "/U/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446410", "/U/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00446420", "/V/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446428", "/W/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446430", "/WW/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465d4", "/AA7a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465e0", "/AA7b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465ec", "/AA7c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004465fc", "/AA7c/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00446608", "/AA7d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00446610", "/AA7d/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("0044661c", "/AA7d/!internal/VTABLE_00000014");
+	}
+
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
@@ -17682,6 +17822,10 @@ public class Egray832ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<String, String> getExpectedVxtAddressTypes() {
+		return expectedVxtAddressTypes;
 	}
 
 	@Override
