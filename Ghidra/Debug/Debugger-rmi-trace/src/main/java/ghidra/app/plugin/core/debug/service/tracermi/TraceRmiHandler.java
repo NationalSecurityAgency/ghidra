@@ -950,6 +950,18 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 				.build();
 	}
 
+	protected void checkRestoreEvents(OpenTrace open) {
+		final boolean restoreEvents;
+		synchronized (openTxes) {
+			restoreEvents = openTxes.keySet()
+					.stream()
+					.noneMatch(id -> id.doId.equals(open.doId));
+		}
+		if (restoreEvents) {
+			open.trace.setEventsEnabled(true);
+		}
+	}
+
 	protected ReplyEndTx handleEndTx(RequestEndTx req) {
 		OpenTx tx;
 		synchronized (openTxes) {
@@ -973,16 +985,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		}
 
 		tx.tx.close();
+		checkRestoreEvents(open);
 
-		final boolean restoreEvents;
-		synchronized (openTxes) {
-			restoreEvents = openTxes.keySet()
-					.stream()
-					.noneMatch(id -> id.doId.domObjId == req.getOid().getId());
-		}
-		if (restoreEvents) {
-			open.trace.setEventsEnabled(true);
-		}
 		Swing.runLater(
 			() -> plugin.listeners.invoke().transactionClosed(this, open.target, req.getAbort()));
 		return ReplyEndTx.getDefaultInstance();
@@ -1329,7 +1333,9 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 	@Override
 	public boolean isBusy() {
-		return !openTxes.isEmpty();
+		synchronized (openTxes) {
+			return !openTxes.isEmpty();
+		}
 	}
 
 	@Override
@@ -1339,11 +1345,33 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return false;
 		}
 
-		for (Tid tid : openTxes.keySet()) {
-			if (Objects.equals(openTrace.doId, tid.doId)) {
-				return true;
+		synchronized (openTxes) {
+			for (Tid tid : openTxes.keySet()) {
+				if (Objects.equals(openTrace.doId, tid.doId)) {
+					return true;
+				}
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
+		OpenTrace open = openTraces.getByTrace(target.getTrace());
+		if (open == null || open.target != target) {
+			return;
+		}
+		synchronized (openTxes) {
+			for (OpenTx tx : List.copyOf(openTxes.values())) {
+				if (Objects.equals(open.doId, tx.txId.doId)) {
+					openTxes.remove(tx.txId);
+					tx.tx.commit();
+					tx.tx.close();
+					Swing.runLater(
+						() -> plugin.listeners.invoke().transactionClosed(this, target, false));
+				}
+			}
+		}
+		open.trace.setEventsEnabled(true);
 	}
 }
