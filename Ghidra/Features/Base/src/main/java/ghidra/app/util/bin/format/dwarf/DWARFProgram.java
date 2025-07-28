@@ -19,6 +19,8 @@ import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -129,6 +131,7 @@ public class DWARFProgram implements Closeable {
 	private DWARFSectionProvider sectionProvider;
 	private StringTable debugStrings;
 	private StringTable lineStrings;
+	private Charset charset;
 	private int totalAggregateCount;
 	private long programBaseAddressFixup;
 
@@ -255,10 +258,11 @@ public class DWARFProgram implements Closeable {
 		this.locationListTable =
 			new DWARFIndirectTable(this.debugLocLists, DWARFCompilationUnit::getLocListsBase);
 
+		this.charset = importOptions.getCharset(StandardCharsets.UTF_8);
 		this.debugStrings =
-			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_STR, monitor));
+			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_STR, monitor), charset);
 		this.lineStrings =
-			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE_STR, monitor));
+			StringTable.of(getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE_STR, monitor), charset);
 
 		// if there are relocations (already handled by the ghidra loader) anywhere in the 
 		// debuginfo or debugrange sections, then we don't need to manually fix up addresses
@@ -1037,6 +1041,13 @@ public class DWARFProgram implements Closeable {
 		}
 		DebugInfoEntry die = getDIEByOffset(dieOffset);
 		return getAggregate(die);
+	}
+
+	/**
+	 * {@return charset to use when decoding debug strings}
+	 */
+	public Charset getCharset() {
+		return charset;
 	}
 
 	/**

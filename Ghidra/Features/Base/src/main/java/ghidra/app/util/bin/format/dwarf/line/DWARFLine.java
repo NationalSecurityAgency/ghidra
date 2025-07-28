@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,19 +107,21 @@ public class DWARFLine {
 		}
 		result.directories.add(new DWARFFile(defaultCompDir));
 
+		Charset charset = cu.getProgram().getCharset();
+
 		// Read all include directories, which are only a list of names in v4
-		String dirName = reader.readNextAsciiString();
+		String dirName = reader.readNextString(charset, 1);
 		while (dirName.length() != 0) {
 			DWARFFile dir = new DWARFFile(dirName);
 			dir = fixupDir(dir, defaultCompDir);
 
 			result.directories.add(dir);
-			dirName = reader.readNextAsciiString();
+			dirName = reader.readNextString(charset, 1);
 		}
 
 		// Read all files, ending when null (hit empty filename)
 		DWARFFile file;
-		while ((file = DWARFFile.readV4(reader)) != null) {
+		while ((file = DWARFFile.readV4(reader, cu)) != null) {
 			result.files.add(file);
 		}
 	}

@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import java.nio.charset.Charset;
+
 import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater;
 import ghidra.app.plugin.core.analysis.DWARFAnalyzer;
 import ghidra.app.services.Analyzer;
@@ -83,10 +85,15 @@ public class DWARFImportOptions {
 		"Maximum length for a source map entry.  Longer lengths will be replaced with 0";
 
 	private static final String OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS =
-		"Copy external debug file symbols";
+		"Copy External Debug File Symbols";
 	private static final String OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC =
 		"Copies symbols (which will typically be mangled) from a found external debug file into " +
 			"the main program";
+
+	private static final String OPTION_CHARSET_NAME = "Debug Strings Charset";
+	private static final String OPTION_CHARSET_NAME_DESC = """
+			Charset to use when decoding debug strings (symbols, filenames, etc).
+			Default is utf-8.  Typical values will be 'ascii' or 'utf-8'.""";
 
 	//==================================================================================================
 	// Old Option Names - Should stick around for multiple major versions after 10.2
@@ -126,6 +133,7 @@ public class DWARFImportOptions {
 	private String defaultCC = "";
 	private long maxSourceMapEntryLength = 2000;
 	private boolean copyExternalDebugFileSymbols = true;
+	private String charsetName = "";
 
 	/**
 	 * Create new instance
@@ -453,6 +461,25 @@ public class DWARFImportOptions {
 		copyExternalDebugFileSymbols = b;
 	}
 
+	public Charset getCharset(Charset defaultCharset) {
+		try {
+			return charsetName != null && !charsetName.isBlank()
+					? Charset.forName(charsetName)
+					: defaultCharset;
+		}
+		catch (Throwable th) {
+			return defaultCharset;
+		}
+	}
+
+	public String getCharsetName() {
+		return charsetName;
+	}
+
+	public void setCharsetName(String charsetName) {
+		this.charsetName = charsetName;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -498,6 +525,9 @@ public class DWARFImportOptions {
 
 		options.registerOption(OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS,
 			isCopyExternalDebugFileSymbols(), null, OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC);
+
+		options.registerOption(OPTION_CHARSET_NAME, getCharsetName(), null,
+			OPTION_CHARSET_NAME_DESC);
 	}
 
 	/**
@@ -529,6 +559,6 @@ public class DWARFImportOptions {
 			options.getLong(OPTION_MAX_SOURCE_ENTRY_LENGTH, getMaxSourceMapEntryLength()));
 		setCopyExternalDebugFileSymbols(options.getBoolean(OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS,
 			isCopyExternalDebugFileSymbols()));
-
+		setCharsetName(options.getString(OPTION_CHARSET_NAME, getCharsetName()));
 	}
 }
