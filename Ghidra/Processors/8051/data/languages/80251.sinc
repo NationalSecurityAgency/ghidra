@@ -225,7 +225,7 @@ macro pop24(val) {
 :ANL wrj47,wrj03	is $(GROUP3) & ophi=5 & oplo=13; wrj47 & wrj03  { wrj47 = wrj47 & wrj03; resultflags(wrj47); }
 
 # ANL Rm,#data
-:ADD rm47,Data	is $(GROUP3) & ophi=5 & oplo=14; rm47 & s03=0; Data    { rm47 = rm47 & Data; resultflags(rm47); }
+:ANL rm47,Data	is $(GROUP3) & ophi=5 & oplo=14; rm47 & s03=0; Data    { rm47 = rm47 & Data; resultflags(rm47); }
 
 # ANL WRj,#data16
 :ANL wrj47,Data16	is $(GROUP3) & ophi=5 & oplo=14; wrj47 & s03=4; Data16  { wrj47 = wrj47 & Data16; resultflags(wrj47); }
