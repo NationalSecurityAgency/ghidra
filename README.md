@@ -33,6 +33,7 @@ To install an official pre-built multi-platform Ghidra release:
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
     Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
+  - **NOTE:** Do not extract on top of an existing installation
 * Launch Ghidra: `./ghidraRun` (`ghidraRun.bat` for Windows)
   - or launch [PyGhidra][pyghidra]: `./support/pyGhidraRun` (`support\pyGhidraRun.bat` for Windows)
 
