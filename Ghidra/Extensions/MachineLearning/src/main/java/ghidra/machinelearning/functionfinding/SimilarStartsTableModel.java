@@ -167,9 +167,15 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 
 	private class DisassemblyTableColumn
 			extends AbstractDynamicTableColumn<SimilarStartRowObject, String, Object> {
+
 		@Override
 		public String getColumnName() {
 			return "Disassembly";
+		}
+
+		@Override
+		public String getColumnDescription() {
+			return "Disassembly (ignoring pre-bytes)";
 		}
 
 		@Override
@@ -177,47 +183,27 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 				ServiceProvider services) throws IllegalArgumentException {
 			PseudoDisassembler disasm = new PseudoDisassembler(program);
 
-			StringBuilder sb1 = new StringBuilder();
-			try {
-				Address addr = rowObject.funcStart().subtract(randomForestRow.getNumPreBytes());
-
-				while (addr.compareTo(rowObject.funcStart()) < 0) {
-					PseudoInstruction instr = disasm.disassemble(addr);
-					if (instr.isValid()) {
-						sb1.append(instr.toString());
-						sb1.append("  ");
-					}
-					else {
-						sb1.append("?  ");
-					}
-					addr = instr.getMaxAddress().add(1);
-				}
-			}
-			catch (Exception e) {
-				sb1 = new StringBuilder("??  ");
-			}
-
-			StringBuilder sb2 = new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			try {
 				Address addr = rowObject.funcStart();
 				while (addr.compareTo(
 					rowObject.funcStart().add(randomForestRow.getNumInitialBytes())) < 0) {
 					PseudoInstruction instr = disasm.disassemble(addr);
 					if (instr.isValid()) {
-						sb2.append(instr.toString());
-						sb2.append("  ");
+						sb.append(instr.toString());
+						sb.append("  ");
 					}
 					else {
-						sb2.append("?  ");
+						sb.append("?  ");
 					}
 					addr = instr.getMaxAddress().add(1);
 				}
 			}
 			catch (Exception e) {
-				sb2 = new StringBuilder("??");
+				sb = new StringBuilder("??");
 			}
 
-			return sb1.toString() + "*  " + sb2.toString();
+			return sb.toString();
 		}
 	}
 

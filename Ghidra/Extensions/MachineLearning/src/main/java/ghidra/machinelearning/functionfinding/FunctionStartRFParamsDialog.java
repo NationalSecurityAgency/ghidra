@@ -132,10 +132,11 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private static final String APPLY_MODEL_SELECTION_ACTION_NAME = "ApplyModelToSelection";
 	private static final String APPLY_MODEL_SELECTION_MENU_TEXT = "Apply Model To Selection";
 	private static final String DEBUG_MODEL_ACTION_NAME = "DebugModel";
-	private static final String DEBUG_MODEL_MENU_TEXT = "DEBUG - Show test set errors";
+	private static final String DEBUG_MODEL_MENU_TEXT = "DEBUG - Show Test Set Errors";
 
 	private static final String ACTION_GROUP_APPLY_LOCAL = "A0_ApplyLocal";
 	private static final String ACTION_GROUP_APPLY_OTHER = "A1_ApplyOther";
+	private static final String ACTION_GROUP_DEBUG = "A2_Debug";
 
 	private JTextField initialBytesField;
 	private JTextField preBytesField;
@@ -335,7 +336,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 				.popupWhen(c -> trainingSource != null)
 				.enabledWhen(c -> tableModel.getLastSelectedObjects().size() == 1)
 				.popupMenuPath(DEBUG_MODEL_MENU_TEXT)
-				.popupMenuGroup(ACTION_GROUP_APPLY_OTHER)
+				.popupMenuGroup(ACTION_GROUP_DEBUG)
 				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(c -> {
 					showTestErrors(tableModel.getLastSelectedObjects().get(0));
