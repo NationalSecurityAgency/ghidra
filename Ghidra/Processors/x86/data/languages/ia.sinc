@@ -468,7 +468,7 @@ define context contextreg
   evexBType=(47,47)     # Used for Disp8*N (see table 2-34 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
   evexTType=(44,47)     # Used for Disp8*N (see table 2-35 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
   evexDisp8=(44,46)
-  reservedHigh=(46,63)  # reserved for future use
+  reservedHigh=(48,63)  # reserved for future use
 
 ;
 
@@ -947,7 +947,8 @@ evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=0       [ offs 
 evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=1       [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
 evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=2       [ offs = 6; evexDisp8=offs; ] { export *[const]:1 offs; }
 evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=1 & rexWprefix=0  [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
-evexDisp8N: offs is evexD8Type=0 &               evexB=1 & rexWprefix=1  [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=1 & rexWprefix=1  [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=1 & rexWprefix=0  [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
 evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=0       [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
 evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=1       [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
 evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=2       [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
@@ -1588,7 +1589,7 @@ unlock:		is epsilon { }
 KReg_reg: opmaskreg is opmaskreg { export opmaskreg; }
 KReg_rm:  opmaskrm  is opmaskrm  { export opmaskrm; }
 # not used vexVVVV_KReg: evexVopmask is evexVopmask              { export evexVopmask; }
-vex1VVV_KReg: evexVopmask is evexVopmask & vexHighV=1 { export evexVopmask; }
+vex1VVV_KReg: evexVopmask is evexVopmask & vexHighV=0 { export evexVopmask; }
 
 XmmMaskMode: is evexZ=0 { }
 XmmMaskMode: "{z}" is evexZ=1 { XmmMask=0; }
