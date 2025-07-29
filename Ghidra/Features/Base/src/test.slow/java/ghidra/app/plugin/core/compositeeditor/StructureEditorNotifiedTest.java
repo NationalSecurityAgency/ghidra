@@ -94,14 +94,12 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		DialogComponentProvider dlg = waitForDialogComponent("Close Structure Editor?");
 		pressButton(dlg.getComponent(), "No");
-
 		waitForSwing();
 
 		// complexStructure* gets removed and becomes BadDataType in this editor.
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		assertTrue(BadDataType.dataType.isEquivalent(getDataType(10)));
-		assertEquals("Type 'complexStructure *' was deleted", getComment(10));
+		assertEquals("The original Structure has been deleted", model.getStatus());
 		assertEquals(4, getLength(10));
 	}
 
@@ -421,6 +419,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) origCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(origCopy.isEquivalent(model.viewComposite));
@@ -446,6 +445,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "No");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));

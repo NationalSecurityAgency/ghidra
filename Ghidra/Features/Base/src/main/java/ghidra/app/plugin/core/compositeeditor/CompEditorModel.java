@@ -55,6 +55,18 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 	 */
 	@Override
 	public void load(T dataType) {
+
+		if (dataType.isDeleted()) {
+			// This can occur when mayny events get lumped together and a change event triggers
+			// a delayed reload prior to datatype removal and its event
+			if (dataType == originalComposite) {
+				// Re-route to dataTypeRemoved callback after restoring listener.
+				originalDTM.addDataTypeManagerListener(this);
+				dataTypeRemoved(originalDTM, originalDataTypePath);
+			}
+			return;
+		}
+
 		super.load(dataType);
 		fixSelection();
 		selectionChanged();
@@ -1363,6 +1375,8 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			}
 
 			reloadFromView();
+
+			setStatus("The original " + getTypeName() + " has been deleted");
 		}
 		finally {
 			consideringReplacedDataType = false;
