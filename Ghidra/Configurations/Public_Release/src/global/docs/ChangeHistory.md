@@ -1,3 +1,55 @@
+# Ghidra 11.4.1 Change History (July 2025)
+
+### Improvements
+* _Debugger_. Added a __Forcibly Close Transactions__ maintenance action to the __Connections__ window. (GP-5788, Issue #8298)
+* _Debugger:GDB_. Added mapping from GDB's armv5te to Ghidra's ARM:LE:32:v5t. (GP-5738)
+* _Decompiler_. Improved Decompiler analysis of small variables through the INT_LEFT operator. (GP-5718)
+* _Importer:Mach-O_. Added support for importing and extracting from the iOS 26 BETA dyld_shared_cache. (GP-5767, Issue #8283)
+* _Importer:PE_. PE `IMAGE_FUNCTION_RUNTIME_ENTRY`s are now all marked as functions. (GP-5811, Issue #8321)
+* _Processors_. Fixed AAPCS calling convention and added soft float calling convention (`__stdcall_softfp`) for 32-bit ARM. (GP-4989, Issue #6958)
+* _Scripting_. Added option to the RecoverClassesFromRTTIScript to not change vfunctions to thiscalls. (GP-5764, Issue #8163)
+* _Scripting_. The new PyGhidra 2.2.1 no longer gets confused by the presense of a random `ghidra` or `java` directory on the current working directory. (GP-5810, Issue #8190)
+
+### Bugs
+* _Analysis_. The symbolic constant evaluation, `SymbolicPropogator`, has been changed to record pre/post values at the beginning and end of instructions by default.  This affected the `ResolveX86orX64LinuxSyscallsScript` and `GolangSymbolAnalyzer`. (GP-5804)
+* _Analysis_. Fixed a potential infinite looping problem that could occur during MIPS or PPC constant analysis.  The issue could occur on undefined functions when __Assume T9 set to Function entry__ option is set. (GP-5833)
+* _Analysis_. Adding MIPS64 instruction start patterns. (GP-5843)
+* _Assembler_. Fixed an issue with Debugger __Patch Data__ action being misapplied to the static Listing. (GP-5859)
+* _Assembler_. Fixed an issue with __Patch Instruction__ in certain Harvard architectures. (GP-5877, Issue #8382)
+* _CodeCompare_. Corrected occasional `IndexOutOfBoundsException` in decompiled code comparison algorithm. (GP-5361, Issue #7028, #8125, #8289)
+* _Debugger:Emulator_. The __Event Thread__, __PC__, and __Function__ columns are now populated for emulation traces. (GP-5796, Issue #8293)
+* _Debugger:GDB_. Fixed an issue with zero-length modules. (GP-5789)
+* _Debugger:Memory_. Fixed an issue with pc/watch-tracking in Debugger/Emulator's __Memory Bytes__ viewer. (GP-5852, Issue #8333)
+* _Debugger:Modules_. Fixed `NullPointerException` on __Select Current Module__ action when the cursor is not in a module. (GP-5790)
+* _Debugger:Objects_. Refrain from timing-out back-end actions when a Cancel button is displayed. The user can decide when it's had enough time. (GP-5553)
+* _Debugger:Scripting_. Fixed `NullPointerException` in example `InstallCustomLibraryScript.java`. (GP-5799, Issue #8296)
+* _Decompiler_. Fixed an error in the Decompiler's constant propagation that would occasionally prevent a function's parameters from being committed. (GP-5736, Issue #8183)
+* _Decompiler_. Fixed a regression in the Decompiler's recovery of the return value for AARCH64 and ARM. (GP-5816)
+* _Decompiler_. Fixed Decompiler bug where inlined functions cause _"Could not find op at target address"_ exceptions. (GP-5832, Issue #7383)
+* _Decompiler_. Provided a fix for an infinite loop problem in the Decompiler caused by `RulePtrsubUndo`. (GP-5856, Issue #7997)
+* _Eclipse Integration_. GhidraDev 5.0.1 fixes a bug that prevented Ghidra from discovering the Ghidra module project when launched with the PyGhidra run configuration. (GP-5836)
+* _ELF_. Corrected severe ELF-relocation-processing bug for MIPS 64-bit. (GP-5827)
+* _GUI_. Fixed the __Install Extensions__ dialog toolbar action enablement. (GP-5777, Issue #8294)
+* _GUI_. Corrected regression problem with __Set Comments__ dialog which should keep last tab selected when re-opened. (GP-5797)
+* _GUI_. Fixed the __Install Extensions__ dialog toolbar action enablement.  Previously, after pressing the plus toolbar button, the actions would get disabled and could not be re-enabled. (GP-5828, Issue #8294)
+* _Importer:ELF_. Corrected ELF PowerPC 64-bit relocation-processing bugs that affected ELFv2 use and R_PPC64_JMP_SLOT relocation. (GP-5846)
+* _Languages_. Fixed issue of missing characters at the end of instruction operands; for example, closing parenthesis added in a base sleigh instruction constructor. (GP-5752, Issue #8345)
+* _PDB_. Fixed an issue where Microsoft symbol truncation led to improper namespace parsing and PDB analysis error.  Also made changes to Microsoft Demangler to make the prefix dot character an optional character for mangled data type strings. (GP-5861, Issue #8358)
+* _Processors_. Fixed 6805 and HCS 08 X-indexed jump addresses. (GP-5336, Issue #7064, #7065)
+* _Processors_. Added eBPF ISA v4 instructions. (GP-5592, Issue #7982)
+* _Processors_. Corrected semantics for eBPF byte-swap instructions. (GP-5593, Issue #7985)
+* _Processors_. Corrected operand encoding for x86 AVX512 `vex.1vvv` operands. (GP-5766)
+* _Processors_. Corrected eBPF processor load instructions to correctly zero-extend. (GP-5857, Issue #7979)
+* _Processors_. Corrected eBPF `call` instruction operand decoding. (GP-5858, Issue #7929)
+* _References_. Fixed __Add Reference__ dialog to create memory references based on the word size of the address space. (GP-5865)
+* _Scripting_. Fixed a timing issue that prevented `FlatProgramAPI.analyzeAll(Program)` from picking up analyzer options set in the script. (GP-5802, Issue #8287)
+* _Scripting_. Fixed an issue that prevented Visual Studio Code projects from being recognized as Java projects. (GP-5820, Issue #8322)
+* _Version Tracking_. Fixed a table column `UnsupportedOperationException` seen when using Version Tracking. (GP-5876, Issue #8094)
+
+### Notable API Changes
+* _Debugger_. (GP-5788) Added `Target.forciblyCloseTransactions()`.
+* _Languages_. (GP-5752) Removed the second parameter of `InstructionPrototype.getSeparator()`, as it was unused.
+
 # Ghidra 11.4 Change History (June 2025)
 
 ### New Features
