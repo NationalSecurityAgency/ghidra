@@ -38,6 +38,10 @@ public class StructureEditorProvider
 	public StructureEditorProvider(Plugin plugin, Structure structureDataType,
 			boolean showHexNumbers) {
 		super(plugin);
+		if (structureDataType.isDeleted()) {
+			throw new IllegalArgumentException(
+				"Structure has been deleted: " + structureDataType.getPathName());
+		}
 		setIcon(STRUCTURE_EDITOR_ICON);
 		editorModel = new StructureEditorModel(this, showHexNumbers);
 		editorModel.load(structureDataType);

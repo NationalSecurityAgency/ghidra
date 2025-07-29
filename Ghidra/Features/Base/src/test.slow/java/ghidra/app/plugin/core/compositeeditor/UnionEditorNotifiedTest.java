@@ -250,6 +250,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		pressButtonByText(dialog, "No");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Union) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
