@@ -21,13 +21,23 @@ import java.util.stream.Stream;
 
 import com.microsoft.z3.Context;
 
+import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.symz3.SymZ3MemoryMap;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.emu.symz3.state.SymZ3PieceHandler;
+import ghidra.pcode.emu.symz3.state.SymZ3WriteDownHelper;
+import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.*;
 import ghidra.symz3.model.SymValueZ3;
 import ghidra.util.Msg;
 
+/**
+ * TODO: Delete me
+ * 
+ * NOTE: Cannot delete this yet. Needed as reference when fixing {@link SymZ3PieceHandler}.
+ */
+@Deprecated(forRemoval = true)
 public class SymZ3TraceMemorySpace extends SymZ3TraceSpace {
 	private final SymZ3MemoryMap mmap = new SymZ3MemoryMap(property.getLanguage());;
 
@@ -43,7 +53,7 @@ public class SymZ3TraceMemorySpace extends SymZ3TraceSpace {
 		if (!this.property.hasSpace(space)) {
 			// our map will create a symbolic value
 			Msg.info(this, "no backing, so our map created a missing symbolic value");
-			return mmap.load(offset, size, true);
+			return mmap.load(offset, size, true, Unfinished.TODO("Delete me"));
 		}
 		// if the address is concrete, we fetch using the address
 		BigInteger bi = offset.toBigInteger();
@@ -72,20 +82,25 @@ public class SymZ3TraceMemorySpace extends SymZ3TraceSpace {
 		}
 		Msg.info(this,
 			"we had a backing, but couldn't find the address, using map to create symbolic value");
-		return mmap.load(offset, size, true);
+		return mmap.load(offset, size, true, Unfinished.TODO("Delete me"));
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
 		if (mmap.hasValueFor(offset, size)) {
-			return mmap.load(offset, size, true);
+			return mmap.load(offset, size, true, cb);
 		}
 		return whenMissing(offset, size);
 	}
 
 	@Override
-	public void set(SymValueZ3 offset, int size, SymValueZ3 val) {
+	public void set(SymValueZ3 offset, int size, SymValueZ3 val, PcodeStateCallbacks cb) {
 		mmap.store(offset, size, val);
+	}
+
+	@Override
+	public Entry<Long, SymValueZ3> getNextEntry(long offset) {
+		return mmap.getNextEntry(offset);
 	}
 
 	@Override

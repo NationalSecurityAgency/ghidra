@@ -16,6 +16,7 @@
 package ghidra.pcode.exec;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -79,8 +80,13 @@ public class IndependentPairedPcodeExecutorState<L, R>
 	}
 
 	@Override
-	public IndependentPairedPcodeExecutorState<L, R> fork() {
-		return new IndependentPairedPcodeExecutorState<>(left.fork(), right.fork(), arithmetic);
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(left, right).flatMap(p -> p.streamPieces());
+	}
+
+	@Override
+	public IndependentPairedPcodeExecutorState<L, R> fork(PcodeStateCallbacks cb) {
+		return new IndependentPairedPcodeExecutorState<>(left.fork(cb), right.fork(cb), arithmetic);
 	}
 
 	@Override
@@ -105,11 +111,25 @@ public class IndependentPairedPcodeExecutorState<L, R>
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, Pair<L, R> offset, int size, Pair<L, R> val) {
+		left.setVarInternal(space, offset.getLeft(), size, val.getLeft());
+		right.setVarInternal(space, offset.getRight(), size, val.getRight());
+	}
+
+	@Override
 	public Pair<L, R> getVar(AddressSpace space, Pair<L, R> offset, int size, boolean quantize,
 			Reason reason) {
 		return Pair.of(
 			left.getVar(space, offset.getLeft(), size, quantize, reason),
 			right.getVar(space, offset.getRight(), size, quantize, reason));
+	}
+
+	@Override
+	public Pair<L, R> getVarInternal(AddressSpace space, Pair<L, R> offset, int size,
+			Reason reason) {
+		return Pair.of(
+			left.getVarInternal(space, offset.getLeft(), size, reason),
+			right.getVarInternal(space, offset.getRight(), size, reason));
 	}
 
 	@Override

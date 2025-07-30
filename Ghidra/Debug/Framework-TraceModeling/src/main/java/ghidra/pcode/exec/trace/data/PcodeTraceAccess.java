@@ -16,9 +16,7 @@
 package ghidra.pcode.exec.trace.data;
 
 import ghidra.pcode.emu.PcodeThread;
-import ghidra.pcode.exec.trace.TracePcodeMachine;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
@@ -35,50 +33,17 @@ import ghidra.trace.model.thread.TraceThread;
  * trace. The shim is associated with a chosen platform and snapshot. All methods are with respect
  * to that platform. In particular the addresses must all be in spaces of the platform's language.
  * Note that the platform may be the trace's host platform.
- * 
- * <p>
- * Typically, each component of an emulator and/or its state will accept a corresponding access
- * shim. Thus, each method in the chain of obtaining the shim is invoked during that piece's
- * construction or invoked and passed into the constructor by a factory method. A complete chain
- * starts with {@link DefaultPcodeTraceAccess}. Each method is listed with notes about where it is
- * typically invoked below:
- * 
- * <ul>
- * <li>Typically invoked by an overloaded constructor, which then passes it to {@code this(...)}.
- * Clients can also construct the shim and pass it to the shim-accepting constructor manually.
- * Similarly, {@link TracePcodeMachine#writeDown(TracePlatform, long, long)} will construct one and
- * pass it to the overloaded method, which can instead be done by the client.
- * 
- * <pre>
- * PcodeTraceAccess access =
- * 	new DefaultPcodeTraceAccess(trace.getPlatformManager().getHostPlatform(), 0, 0);
- * </pre>
- * 
- * </li>
- * <li>Typically invoked by a factory method for an emulator's shared executor state
- * 
- * <pre>
- * PcodeTraceMemoryAccess sharedData = access.getDataForSharedState();
- * </pre>
- * 
- * </li>
- * <li>Typically invoked by a factory method for an emulator thread's local executor state
- * 
- * <pre>
- * PcodeTraceRegisterAccess localData = access.getDataForLocalState(thread, 0);
- * </pre>
- * 
- * </li>
- * <li>Typically invoked by an auxiliary emulator state piece
- * 
- * <pre>{@code
- * PcodeTracePropertyAccess<String> property = data.getPropertyAccess("MyProperty", String.class);
- * }</pre>
- * 
- * </li>
- * </ul>
  */
 public interface PcodeTraceAccess {
+
+	/**
+	 * Derive an access for writing a snapshot, where this access was the emulator's source
+	 * 
+	 * @param snap the destination snapshot key
+	 * @return the derived access shim
+	 */
+	PcodeTraceAccess deriveForWrite(long snap);
+
 	/**
 	 * Get the language of the associated platform
 	 * 

@@ -17,7 +17,6 @@ package ghidra.pcode.emu.symz3;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.pcode.emu.symz3.plain.SymZ3Space;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.symz3.model.SymValueZ3;
@@ -27,5 +26,5 @@ public interface SymZ3PairedPcodeExecutorState
 
 	PcodeExecutorStatePiece<byte[], byte[]> getLeft();
 
-	AbstractSymZ3PcodeExecutorStatePiece<? extends SymZ3Space> getRight();
+	SymZ3PcodeExecutorStatePiece getRight();
 }

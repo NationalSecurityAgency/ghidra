@@ -33,16 +33,17 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider.PcodeRowHtmlFormatter;
-import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
-import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulatorFactory;
+import ghidra.app.plugin.core.debug.service.emulation.DefaultEmulatorFactory;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.emulation.PcodeDebuggerAccess;
+import ghidra.pcode.emu.PcodeEmulator;
+import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
@@ -103,7 +104,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 
 			PcodeExecutor<byte[]> init = TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
-			init.executeSleigh("pc = 0x00400000;");
+			init.executeSleigh("pc = 0x%s;".formatted(start));
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			iit = asm.assemble(start, "imm r0, #0x123");
@@ -154,10 +155,10 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 	public void testCustomUseropDisplay() throws Exception {
 		populateTrace();
 
-		emuService.setEmulatorFactory(new BytesDebuggerPcodeEmulatorFactory() {
+		emuService.setEmulatorFactory(new DefaultEmulatorFactory() {
 			@Override
-			public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
-				BytesDebuggerPcodeEmulator emu = new BytesDebuggerPcodeEmulator(access) {
+			public PcodeMachine<?> create(PcodeDebuggerAccess access, Writer writer) {
+				PcodeEmulator emu = new PcodeEmulator(access.getLanguage(), writer.callbacks()) {
 					@Override
 					protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 						return new AnnotatedPcodeUseropLibrary<byte[]>() {

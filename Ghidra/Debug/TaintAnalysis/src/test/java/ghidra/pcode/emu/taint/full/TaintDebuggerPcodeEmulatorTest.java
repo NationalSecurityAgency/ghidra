@@ -32,9 +32,11 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingService
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.taint.TaintEmulatorFactory;
+import ghidra.pcode.emu.taint.TaintPcodeEmulator;
+import ghidra.pcode.emu.taint.state.TaintPieceHandler;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeEmulatorTest;
-import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
@@ -61,7 +63,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 		assertEquals(1,
 			emuService.getEmulatorFactories()
 					.stream()
-					.filter(f -> f instanceof TaintDebuggerPcodeEmulatorFactory)
+					.filter(f -> f instanceof TaintEmulatorFactory)
 					.count());
 	}
 
@@ -74,7 +76,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 	@Test
 	public void testFactoryCreate() throws Exception {
-		emuService.setEmulatorFactory(new TaintDebuggerPcodeEmulatorFactory());
+		emuService.setEmulatorFactory(new TaintEmulatorFactory());
 
 		createAndOpenTrace();
 
@@ -99,13 +101,13 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				}
 			});
 
-		DebuggerPcodeMachine<?> emu = emuService.getCachedEmulator(tb.trace, result.schedule());
-		assertTrue(emu instanceof TaintDebuggerPcodeEmulator);
+		PcodeMachine<?> emu = emuService.getCachedEmulator(tb.trace, result.schedule());
+		assertTrue(emu instanceof TaintPcodeEmulator);
 	}
 
-	@Test
+	// @Test // I've decided to remove this feature.
 	public void testReadsProgramUsrProperties() throws Exception {
-		emuService.setEmulatorFactory(new TaintDebuggerPcodeEmulatorFactory());
+		emuService.setEmulatorFactory(new TaintEmulatorFactory());
 
 		createAndOpenTrace("x86:LE:64:default");
 		createProgramFromTrace();
@@ -135,7 +137,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 					.createInitializedBlock(".text", tb.addr(0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
 			StringPropertyMap progTaintMap = program.getUsrPropertyManager()
-					.createStringPropertyMap(TaintTracePcodeExecutorStatePiece.NAME);
+					.createStringPropertyMap(TaintPieceHandler.NAME);
 			progTaintMap.add(tb.addr(0x00400800), "test_0");
 			Assembler asm = Assemblers.getAssembler(program);
 
@@ -147,7 +149,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 		long scratch = emuService.emulate(tb.trace, time, TaskMonitor.DUMMY);
 
 		TracePropertyMap<String> traceTaintMap = tb.trace.getAddressPropertyManager()
-				.getPropertyMap(TaintTracePcodeExecutorStatePiece.NAME, String.class);
+				.getPropertyMap(TaintPieceHandler.NAME, String.class);
 		TracePropertyMapSpace<String> taintRegSpace =
 			traceTaintMap.getPropertyMapRegisterSpace(thread, 0, false);
 

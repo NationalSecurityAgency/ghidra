@@ -38,11 +38,11 @@ import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlug
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -533,7 +533,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertTrue(result1.error() instanceof InterruptPcodeExecutionException);
 
 		// Save this for comparison later
-		DebuggerPcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
+		PcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
 
 		// This will test if the one just hit gets ignored
 		EmulationResult result2 = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
@@ -604,7 +604,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertTrue(result1.error() instanceof InterruptPcodeExecutionException);
 
 		// Save this for comparison later
-		DebuggerPcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
+		PcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
 
 		// Now, step it forward to complete the instruction
 		emulationPlugin.emulate(trace.getPlatformManager().getHostPlatform(),
@@ -671,7 +671,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertTrue(result1.error() instanceof PcodeExecutionException);
 
 		// Save this for comparison later
-		DebuggerPcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
+		PcodeMachine<?> emu = Unique.assertOne(emulationPlugin.cache.values()).emulator();
 
 		// We shouldn't get any further
 		EmulationResult result2 = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
@@ -979,12 +979,13 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 			TracePlatform host = tb.trace.getPlatformManager().getHostPlatform();
 			DefaultPcodeDebuggerAccess access =
 				new DefaultPcodeDebuggerAccess(tool, null, host, restartEmuSnap);
-			BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(access);
+			Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(access);
+			PcodeEmulator emulator = new PcodeEmulator(access.getLanguage(), writer.callbacks());
 
 			TraceSnapshot snapshot =
 				tb.trace.getTimeManager().createSnapshot("created new emulator thread");
 			long newSnap = snapshot.getKey();
-			emulator.writeDown(host, newSnap, newSnap);
+			writer.writeDown(newSnap);
 
 			TraceThread newTraceThread = ProgramEmulationUtils.doLaunchEmulationThread(tb.trace,
 				newSnap, program, tb.addr(0x00400000), addr(program, 0x00400000));
