@@ -935,6 +935,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA1());
 	}
 
+	private static String getExpectedSourceHierarchyA1() {
+		String expected = "struct A1NS::A1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryA1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[A1NS::A1]");
@@ -1003,6 +1008,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructA2() {
 		return convertCommentsToSpeculative(getExpectedStructA2());
+	}
+
+	private static String getExpectedSourceHierarchyA2() {
+		String expected = "struct A2NS::A2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryA2() {
@@ -1150,6 +1160,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA());
 	}
 
+	private static String getExpectedSourceHierarchyA() {
+		String expected = "struct ANS::A : virtual A1NS::A1, virtual A2NS::A2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryA() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ANS::A]");
@@ -1271,6 +1286,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB1());
 	}
 
+	private static String getExpectedSourceHierarchyB1() {
+		String expected = "struct B1NS::B1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryB1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[B1NS::B1]");
@@ -1339,6 +1359,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructB2() {
 		return convertCommentsToSpeculative(getExpectedStructB2());
+	}
+
+	private static String getExpectedSourceHierarchyB2() {
+		String expected = "struct B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryB2() {
@@ -1484,6 +1509,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructB() {
 		return convertCommentsToSpeculative(getExpectedStructB());
+	}
+
+	private static String getExpectedSourceHierarchyB() {
+		String expected = "struct BNS::B : virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryB() {
@@ -1724,6 +1754,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructC() {
 		return convertCommentsToSpeculative(getExpectedStructC());
+	}
+
+	private static String getExpectedSourceHierarchyC() {
+		String expected =
+			"struct CNS::C : virtual A1NS::A1, virtual A2NS::A2, virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryC() {
@@ -2083,6 +2119,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructD() {
 		return convertCommentsToSpeculative(getExpectedStructD());
+	}
+
+	private static String getExpectedSourceHierarchyD() {
+		String expected = "struct DNS::D : CNS::C, ANS::A, BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryD() {
@@ -2469,6 +2510,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructE());
 	}
 
+	private static String getExpectedSourceHierarchyE() {
+		String expected = "struct ENS::E : ANS::A, virtual BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryE() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ENS::E, ANS::A]");
@@ -2706,6 +2752,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructF());
 	}
 
+	private static String getExpectedSourceHierarchyF() {
+		String expected = "struct FNS::F : virtual A1NS::A1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryF() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[FNS::F]");
@@ -2854,6 +2905,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructG());
 	}
 
+	private static String getExpectedSourceHierarchyG() {
+		String expected = "struct GNS::G : FNS::F";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryG() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[GNS::G, FNS::F]");
@@ -3000,6 +3056,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructH() {
 		return convertCommentsToSpeculative(getExpectedStructH());
+	}
+
+	private static String getExpectedSourceHierarchyH() {
+		String expected = "struct HNS::H : FNS::F";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryH() {
@@ -3197,6 +3258,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
 
+	private static String getExpectedSourceHierarchyI() {
+		String expected = "struct INS::I : GNS::G, HNS::H";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryI() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [GNS::G]	[INS::I, GNS::G, FNS::F]");
@@ -3341,6 +3407,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ() {
 		return convertCommentsToSpeculative(getExpectedStructJ());
+	}
+
+	private static String getExpectedSourceHierarchyJ() {
+		String expected = "struct JNS::J : virtual A1NS::A1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ() {
@@ -3489,6 +3560,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructK() {
 		return convertCommentsToSpeculative(getExpectedStructK());
+	}
+
+	private static String getExpectedSourceHierarchyK() {
+		String expected = "struct KNS::K : JNS::J";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryK() {
@@ -3657,6 +3733,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructL());
 	}
 
+	private static String getExpectedSourceHierarchyL() {
+		String expected = "struct LNS::L : KNS::K";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryL() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[LNS::L, KNS::K, JNS::J]");
@@ -3741,6 +3822,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructN1());
 	}
 
+	private static String getExpectedSourceHierarchyN1() {
+		String expected = "struct N1NS::N1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryN1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[N1NS::N1]");
@@ -3806,6 +3892,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructN2() {
 		return convertCommentsToSpeculative(getExpectedStructN2());
+	}
+
+	private static String getExpectedSourceHierarchyN2() {
+		String expected = "struct N2NS::N2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryN2() {
@@ -4500,6 +4591,18 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : virtual N1NS::N1, ENS::E, DNS::D, INS::I, LNS::L, virtual N2NS::N2";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : ENS::E, DNS::D, INS::I, LNS::L, virtual N1NS::N1, virtual N2NS::N2";
 		return expected;
 	}
 
@@ -5229,6 +5332,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO1());
 	}
 
+	private static String getExpectedSourceHierarchyO1() {
+		String expected = "struct O1NS::O1 : ANS::A, BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O1NS::O1, ANS::A]");
@@ -5581,6 +5689,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructO2() {
 		return convertCommentsToSpeculative(getExpectedStructO2());
+	}
+
+	private static String getExpectedSourceHierarchyO2() {
+		String expected = "struct O2NS::O2 : ANS::A, virtual BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryO2() {
@@ -5945,6 +6058,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO3());
 	}
 
+	private static String getExpectedSourceHierarchyO3() {
+		String expected = "struct O3NS::O3 : ANS::A, BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO3() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O3NS::O3, ANS::A]");
@@ -6297,6 +6415,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructO4() {
 		return convertCommentsToSpeculative(getExpectedStructO4());
+	}
+
+	private static String getExpectedSourceHierarchyO4() {
+		String expected = "struct O4NS::O4 : ANS::A, virtual BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryO4() {
@@ -6809,6 +6932,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO());
 	}
 
+	private static String getExpectedSourceHierarchyO() {
+		String expected = "struct ONS::O : O1NS::O1, O2NS::O2, virtual O3NS::O3, virtual O4NS::O4";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000",
@@ -7249,6 +7377,42 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		speculatedStructs.put(O, getSpeculatedStructO());
 	}
 
+	private static final Map<ClassID, String> expectedSourceHierarchy = new LinkedHashMap<>();
+	static {
+		expectedSourceHierarchy.put(A1, getExpectedSourceHierarchyA1());
+		expectedSourceHierarchy.put(A2, getExpectedSourceHierarchyA2());
+		expectedSourceHierarchy.put(A, getExpectedSourceHierarchyA());
+		expectedSourceHierarchy.put(B1, getExpectedSourceHierarchyB1());
+		expectedSourceHierarchy.put(B2, getExpectedSourceHierarchyB2());
+		expectedSourceHierarchy.put(B, getExpectedSourceHierarchyB());
+		expectedSourceHierarchy.put(C, getExpectedSourceHierarchyC());
+		expectedSourceHierarchy.put(D, getExpectedSourceHierarchyD());
+		expectedSourceHierarchy.put(E, getExpectedSourceHierarchyE());
+		expectedSourceHierarchy.put(F, getExpectedSourceHierarchyF());
+		expectedSourceHierarchy.put(G, getExpectedSourceHierarchyG());
+		expectedSourceHierarchy.put(H, getExpectedSourceHierarchyH());
+		expectedSourceHierarchy.put(I, getExpectedSourceHierarchyI());
+		expectedSourceHierarchy.put(J, getExpectedSourceHierarchyJ());
+		expectedSourceHierarchy.put(K, getExpectedSourceHierarchyK());
+		expectedSourceHierarchy.put(L, getExpectedSourceHierarchyL());
+		expectedSourceHierarchy.put(N1, getExpectedSourceHierarchyN1());
+		expectedSourceHierarchy.put(N2, getExpectedSourceHierarchyN2());
+		expectedSourceHierarchy.put(M, getExpectedSourceHierarchyM());
+		expectedSourceHierarchy.put(O1, getExpectedSourceHierarchyO1());
+		expectedSourceHierarchy.put(O2, getExpectedSourceHierarchyO2());
+		expectedSourceHierarchy.put(O3, getExpectedSourceHierarchyO3());
+		expectedSourceHierarchy.put(O4, getExpectedSourceHierarchyO4());
+		expectedSourceHierarchy.put(O, getExpectedSourceHierarchyO());
+	}
+
+	private static final Map<ClassID, String> speculatedSourceHierarchy =
+		new LinkedHashMap<>();
+	static {
+		speculatedSourceHierarchy.putAll(expectedSourceHierarchy);
+		// The following will replace entries as needed
+		speculatedSourceHierarchy.put(M, getSpeculatedSourceHierarchyM());
+	}
+
 	private static final Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 		new LinkedHashMap<>();
 	static {
@@ -7472,6 +7636,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, String> getSpeculatedStructs() {
 		return speculatedStructs;
+	}
+
+	public Map<ClassID, String> getExpectedSourceHierarchy() {
+		return expectedSourceHierarchy;
+	}
+
+	public Map<ClassID, String> getSpeculatedSourceHierarchy() {
+		return speculatedSourceHierarchy;
 	}
 
 	public Map<ClassID, Map<String, String>> getExpectedVxtPtrSummaries() {
