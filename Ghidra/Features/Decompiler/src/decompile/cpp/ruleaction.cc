@@ -3362,8 +3362,7 @@ int4 RuleSborrow::applyOp(PcodeOp *op,Funcdata &data)
   int4 zside;
 
 				// Check for trivial case
-  if ((op->getIn(1)->isConstant()&&op->getIn(1)->getOffset()==0)||
-      (op->getIn(0)->isConstant()&&op->getIn(0)->getOffset()==0)) {
+  if (op->getIn(1)->isConstant()&&op->getIn(1)->getOffset()==0) {
     data.opSetOpcode(op,CPUI_COPY);
     data.opSetInput(op,data.newConstant(1,0),0);
     data.opRemoveInput(op,1);
