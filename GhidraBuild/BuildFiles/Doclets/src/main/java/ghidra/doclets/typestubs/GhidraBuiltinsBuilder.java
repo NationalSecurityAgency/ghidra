@@ -133,6 +133,9 @@ class GhidraBuiltinsBuilder {
 			script.printField(field, printer, INDENT, false);
 			exports.add('"' + field.getSimpleName().toString() + '"');
 		}
+		printer.print(INDENT);
+		printer.println("this: GhidraScript");
+		exports.add("\"this\"");
 	}
 
 	/**
