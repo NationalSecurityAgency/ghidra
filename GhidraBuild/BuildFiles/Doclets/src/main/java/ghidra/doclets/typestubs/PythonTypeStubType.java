@@ -220,6 +220,7 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			}
 
 		}
+		// TODO: Incorporate super class overloads
 		// apparently overloads must come one after another
 		// therefore this must be sorted
 		methods.sort(null);
