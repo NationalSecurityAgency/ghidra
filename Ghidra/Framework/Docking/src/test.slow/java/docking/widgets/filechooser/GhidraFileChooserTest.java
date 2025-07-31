@@ -19,6 +19,7 @@
 package docking.widgets.filechooser;
 
 import static docking.widgets.filechooser.GhidraFileChooserMode.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -34,6 +35,7 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -1385,7 +1387,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForSwing();
 
 		// use a stubbed chooser model that has no Desktop
-		GhidraFileChooserModel gfcm = new LocalFileChooserModel() {
+		Supplier<GhidraFileChooser> gfc = () -> chooser;
+		GhidraFileChooserModel gfcm = new LocalFileChooserModel(gfc) {
 			@Override
 			public File getDesktopDirectory() {
 				return null;
@@ -1419,7 +1422,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		// use a stubbed chooser model that has a non-native Desktop value
 		final File fakeUserDesktopDir = createTempDirectory("faked_desktop_dir");
 
-		GhidraFileChooserModel gfcm = new LocalFileChooserModel() {
+		Supplier<GhidraFileChooser> gfc = () -> chooser;
+		GhidraFileChooserModel gfcm = new LocalFileChooserModel(gfc) {
 			@Override
 			public File getDesktopDirectory() {
 				return fakeUserDesktopDir;
@@ -2117,11 +2121,6 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	private File selectFile(DirectoryList list, int index) {
-
-		// TODO debug - remove when all tests passing on server
-		int size = list.getModel().getSize();
-		Msg.debug(this, "selectFile() - new index: " + index + "; list size: " + size);
-
 		runSwing(() -> list.setSelectedIndex(index));
 		return runSwing(() -> list.getSelectedFile());
 	}
