@@ -1238,6 +1238,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				""".formatted(PREAMBLE, addr);
 		try (LldbAndConnection conn = startAndConnectLldb(scriptSupplier)) {
 			conn.execute("script print('FINISHED')");
+			conn.success();
 		}
 	}
 }

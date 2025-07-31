@@ -231,13 +231,7 @@ public class DataGraph {
 					}
 				}
 			}
-
-			boolean outCast = true;
-			if ((out.sinks.size() == 1 && out.vn.isUnique()) || in.sources.size() == 0) {
-				outCast = false;
-			}
-
-			if (outCast) {
+			if (in.sources.size() == 1 && in.sinks.size() == 1 && in.vn.isUnique()) {
 				// PcodeOp defining CAST input, now defines CAST output
 				// input is isolated
 				DataVertex topOp = in.sources.get(0);

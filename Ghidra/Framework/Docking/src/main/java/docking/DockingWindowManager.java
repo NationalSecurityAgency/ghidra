@@ -2580,7 +2580,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 *
 	 * @param context the context
 	 */
-	void doContextChanged(ActionContext context) {
+	void notifyContextListeners(ActionContext context) {
+
+		if (context == null) {
+			return;
+		}
+
 		for (DockingContextListener listener : contextListeners) {
 			listener.contextChanged(context);
 		}

@@ -1,7 +1,7 @@
 # GhidraDev Eclipse Plugin
 GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 
-The information provided in this document is effective as of GhidraDev 5.0.0 and is subject to
+The information provided in this document is effective as of GhidraDev 5.0.1 and is subject to
 change with future releases.
 
 ## Table of Contents
@@ -31,6 +31,10 @@ change with future releases.
  12. [Building](#building)
 
 ## Change History
+__5.0.1:__
+* Fixed a bug that prevented Ghidra from discovering the Ghidra module project when launched with
+  the PyGhidra run configuration. 
+
 __5.0.0:__
 * Added support for PyGhidra.
 

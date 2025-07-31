@@ -1466,7 +1466,7 @@ class StackFrameDataType implements Structure {
 
 	@Override
 	public boolean isDeleted() {
-		throw new UnsupportedOperationException();
+		return function.isDeleted();
 	}
 
 	@Override

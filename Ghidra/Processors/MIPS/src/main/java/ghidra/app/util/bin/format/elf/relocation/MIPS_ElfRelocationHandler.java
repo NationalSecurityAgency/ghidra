@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -358,8 +358,7 @@ public class MIPS_ElfRelocationHandler
 				value = symbolValue;
 				if (elfRelocationContext.extractAddend()) {
 					// extract addend based upon pointer size
-					addend = elf.is64Bit() ? (int) memory.getLong(relocationAddress)
-							: memory.getInt(relocationAddress);
+					addend = memory.getInt(relocationAddress);
 				}
 
 				newValue = value + addend;

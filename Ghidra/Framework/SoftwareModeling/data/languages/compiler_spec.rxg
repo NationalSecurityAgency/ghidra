@@ -405,6 +405,11 @@
         <optional>
           <attribute name="stackspill"/>
         </optional>
+        <optional>
+          <attribute name="backfill">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
       </element>
       <element name="hidden_return">
         <optional>

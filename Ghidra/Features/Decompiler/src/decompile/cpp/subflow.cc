@@ -731,10 +731,15 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
       addNewConstant(rop,0,(uintb)0);
       return true;
     }
-    if ((newmask<<sa) != rvn->mask)
-      break;			// subvariable is truncated by shift
-    rop = createOp(CPUI_COPY,1,rvn);
-    if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+    if ((newmask<<sa) == rvn->mask) {
+      rop = createOp(CPUI_COPY,1,rvn);
+      if (!createLink(rop,newmask,0,op->getIn(0))) return false;
+      return true;
+    }
+    if ((rvn->mask & 1)==0) return false; // Can't assume zeroes are shifted into least sig bits
+    rop = createOp(CPUI_INT_LEFT,2,rvn);
+    if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
+    addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)); // Preserve the shift amount
     return true;
   case CPUI_INT_RIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift

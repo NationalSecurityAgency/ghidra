@@ -140,6 +140,17 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
 		}
 
+		if (dataType.isDeleted()) {
+			// This can occur when mayny events get lumped together and a change event triggers
+			// a delayed reload prior to datatype removal and its event
+			if (dataType == originalComposite) {
+				// Re-route to dataTypeRemoved callback after restoring listener.
+				originalDTM.addDataTypeManagerListener(this);
+				dataTypeRemoved(originalDTM, originalDataTypePath);
+			}
+			return;
+		}
+
 		long lastCompositeId = originalCompositeId;
 
 		if (isEditingField()) {

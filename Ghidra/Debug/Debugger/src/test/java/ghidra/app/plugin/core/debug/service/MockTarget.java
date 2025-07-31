@@ -278,4 +278,8 @@ public class MockTarget implements Target {
 	public boolean isBusy() {
 		return false;
 	}
+
+	@Override
+	public void forciblyCloseTransactions() {
+	}
 }

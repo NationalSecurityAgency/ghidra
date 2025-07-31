@@ -31,6 +31,10 @@ public class UnionEditorProvider extends CompositeEditorProvider<Union, UnionEdi
 
 	public UnionEditorProvider(Plugin plugin, Union unionDataType, boolean showInHex) {
 		super(plugin);
+		if (unionDataType.isDeleted()) {
+			throw new IllegalArgumentException(
+				"Union has been deleted: " + unionDataType.getPathName());
+		}
 		setIcon(UNION_EDITOR_ICON);
 		editorModel = new UnionEditorModel(this, showInHex);
 		editorModel.load(unionDataType);

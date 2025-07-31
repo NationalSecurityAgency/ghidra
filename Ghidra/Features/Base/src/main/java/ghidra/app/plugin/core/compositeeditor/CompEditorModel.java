@@ -55,6 +55,18 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 	 */
 	@Override
 	public void load(T dataType) {
+
+		if (dataType.isDeleted()) {
+			// This can occur when mayny events get lumped together and a change event triggers
+			// a delayed reload prior to datatype removal and its event
+			if (dataType == originalComposite) {
+				// Re-route to dataTypeRemoved callback after restoring listener.
+				originalDTM.addDataTypeManagerListener(this);
+				dataTypeRemoved(originalDTM, originalDataTypePath);
+			}
+			return;
+		}
+
 		super.load(dataType);
 		fixSelection();
 		selectionChanged();
@@ -75,7 +87,6 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			endFieldEditing();
 		}
 
-		FieldSelection saveSelection = new FieldSelection(selection);
 		T originalDt = getOriginalComposite();
 		if (originalDt == null || originalDTM == null) {
 			throw new IllegalStateException(
@@ -94,6 +105,9 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 		}
 		int transactionID = originalDTM.startTransaction(action + " " + getTypeName());
 		try {
+			// Disable change listener - will be re-enable during re-load
+			originalDTM.removeDataTypeManagerListener(this);
+
 			if (originalDtExists) {
 				// Update the original structure.
 				if (renamed) {
@@ -115,18 +129,18 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 				originalDt.setDescription(getDescription());
 				replaceOriginalComponents();
 				updateOriginalComponentSettings(viewComposite, originalDt);
-				load(originalDt);
+				originalDTM.flushEvents();
+				Swing.runLater(() -> load(originalDt));
 			}
 			else {
 				@SuppressWarnings("unchecked")
 				T dt = (T) originalDTM.resolve(viewComposite, null);
-				load(dt);
+				originalDTM.flushEvents();
+				Swing.runLater(() -> load(dt));
 			}
 			return true;
 		}
 		finally {
-			provider.updateTitle();
-			setSelection(saveSelection);
 			originalDTM.endTransaction(transactionID, true);
 		}
 	}
@@ -1287,7 +1301,10 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			}
 		}
 		if (reload) {
-			load(composite); // reload the structure
+			// reload the structure
+			originalDTM.removeDataTypeManagerListener(this);
+			originalDTM.flushEvents();
+			Swing.runLater(() -> load(composite));
 			setStatus("Editor reloaded");
 			return;
 		}
@@ -1358,6 +1375,8 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 			}
 
 			reloadFromView();
+
+			setStatus("The original " + getTypeName() + " has been deleted");
 		}
 		finally {
 			consideringReplacedDataType = false;
@@ -1478,14 +1497,18 @@ public abstract class CompEditorModel<T extends Composite> extends CompositeEdit
 						int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
 							provider.getComponent(), title, message);
 						if (response == OptionDialog.OPTION_ONE) {
-							load(getOriginalComposite());
+							originalDTM.removeDataTypeManagerListener(this);
+							originalDTM.flushEvents();
+							Swing.runLater(() -> load(getOriginalComposite()));
 						}
 					}
 					else {
 						Composite changedComposite = getOriginalComposite();
 						if ((changedComposite != null) &&
 							!viewComposite.isEquivalent(changedComposite)) {
-							load(getOriginalComposite());
+							originalDTM.removeDataTypeManagerListener(this);
+							originalDTM.flushEvents();
+							Swing.runLater(() -> load(getOriginalComposite()));
 							setStatus(viewComposite.getPathName() + " changed outside the editor.",
 								false);
 						}
