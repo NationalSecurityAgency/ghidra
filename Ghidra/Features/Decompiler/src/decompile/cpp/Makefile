@@ -99,7 +99,7 @@ SPECIAL=consolemain sleighexample test
 # Any additional modules for the command line decompiler
 EXTRA= $(filter-out $(CORE) $(DECCORE) $(SLEIGH) $(GHIDRA) $(SLACOMP) $(SPECIAL),$(ALL_NAMES))
 
-EXECS=decomp_dbg decomp_opt ghidra_test_dbg ghidra_dbg ghidra_opt sleigh_dbg sleigh_opt libdecomp_dbg.a libdecomp.a
+EXECS=decomp_dbg decomp_opt decomp_test_dbg ghidra_dbg ghidra_opt sleigh_dbg sleigh_opt libdecomp_dbg.a libdecomp.a
 
 # Possible conditional compilation flags
 #     __TERMINAL__             # Turn on terminal support for console mode
@@ -191,7 +191,7 @@ endif
 ifeq ($(MAKECMDGOALS),decomp_opt)
 	DEPNAMES=com_opt/depend
 endif
-ifneq (,$(filter $(MAKECMDGOALS),ghidra_test_dbg test))
+ifneq (,$(filter $(MAKECMDGOALS),decomp_test_dbg test))
 	DEPNAMES=test_dbg/depend
 endif
 ifeq ($(MAKECMDGOALS),reallyclean)
@@ -253,11 +253,12 @@ decomp_dbg:	$(COMMANDLINE_DBG_OBJS)
 decomp_opt:	$(COMMANDLINE_OPT_OBJS)
 	$(CXX) $(OPT_CXXFLAGS) $(ARCH_TYPE) -o decomp_opt $(COMMANDLINE_OPT_OBJS) $(BFDLIB) $(LNK)
 
-ghidra_test_dbg:	$(TEST_DEBUG_OBJS)
-	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o ghidra_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
+#decomp_test_dbg:	DBG_CXXFLAGS += -D_GLIBCXX_ASSERTIONS -fsanitize=address,undefined
+decomp_test_dbg:	$(TEST_DEBUG_OBJS)
+	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o decomp_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
 
-test: ghidra_test_dbg
-	./ghidra_test_dbg
+test: decomp_test_dbg
+	./decomp_test_dbg
 
 ghidra_dbg:	$(GHIDRA_DBG_OBJS)
 	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o ghidra_dbg $(GHIDRA_DBG_OBJS)
