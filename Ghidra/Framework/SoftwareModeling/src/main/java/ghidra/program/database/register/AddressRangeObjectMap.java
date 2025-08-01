@@ -23,16 +23,17 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Associates objects with address ranges.
+ * Optimized implementation using TreeMap for O(log n) operations.
  */
 public class AddressRangeObjectMap<T> {
-	private List<AddressValueRange<T>> ranges;
+	private TreeMap<Address, AddressValueRange<T>> rangeMap;
 	AddressValueRange<T> lastRange;
 
 	/**
 	 * Constructs a new ObjectRangeMap
 	 */
 	public AddressRangeObjectMap() {
-		ranges = new ArrayList<AddressValueRange<T>>();
+		rangeMap = new TreeMap<Address, AddressValueRange<T>>();
 	}
 
 	/**
@@ -54,7 +55,7 @@ public class AddressRangeObjectMap<T> {
 	 * given range.
 	 */
 	public AddressRangeIterator getAddressRangeIterator(Address start, Address end) {
-		return new RestrictedIndexRangeIterator(start, end);
+		return new RestrictedAddressRangeIterator(start, end);
 	}
 
 	/**
@@ -104,103 +105,114 @@ public class AddressRangeObjectMap<T> {
 	 */
 	public synchronized void setObject(Address start, Address end, T object) {
 		lastRange = null;
-		AddressValueRange<T> newRange = new AddressValueRange<T>(start, end, object);
-
-		// if ranges list is empty, just add the new entry
-		if (ranges.isEmpty()) {
-			ranges.add(newRange);
-			return;
+		
+		if (start.compareTo(end) > 0) {
+			return; // Invalid range
 		}
-
-		// Look at the stored range before the new range to see if it extends into the new range
-		int previousIndex = getPositionOfRangeBefore(newRange);
-		if (previousIndex >= 0) {
-			int oldSize = ranges.size();
-			newRange = adjustPreviousRangeForOverlap(start, end, object, newRange, previousIndex);
-			if (oldSize > ranges.size()) {  // if we removed the previous range
-				previousIndex--;
+		
+		// Find and remove all overlapping ranges
+		List<AddressValueRange<T>> toRemove = new ArrayList<>();
+		List<AddressValueRange<T>> toAdd = new ArrayList<>();
+		
+		// Find overlapping ranges using subMap for efficiency
+		Address searchStart = start;
+		try {
+			if (start.previous() != null) {
+				searchStart = start.previous();
+			}
+		} catch (AddressOutOfBoundsException e) {
+			// start is minimum address, use start itself
+		}
+		
+		NavigableMap<Address, AddressValueRange<T>> overlapping = 
+			rangeMap.tailMap(searchStart, true);
+		
+		for (Map.Entry<Address, AddressValueRange<T>> entry : overlapping.entrySet()) {
+			AddressValueRange<T> existing = entry.getValue();
+			
+			// If this range starts after our end, we're done
+			if (existing.getStart().compareTo(end) > 0) {
+				break;
+			}
+			
+			// Check for actual overlap
+			if (existing.getEnd().compareTo(start) >= 0) {
+				toRemove.add(existing);
+				
+				// Handle partial overlaps - create fragments for non-overlapping parts
+				if (existing.getStart().compareTo(start) < 0) {
+					// Part before our range
+					try {
+						toAdd.add(new AddressValueRange<T>(existing.getStart(), start.previous(), existing.getValue()));
+					} catch (AddressOutOfBoundsException e) {
+						// start is minimum address, no part before
+					}
+				}
+				
+				if (existing.getEnd().compareTo(end) > 0) {
+					// Part after our range
+					try {
+						toAdd.add(new AddressValueRange<T>(end.next(), existing.getEnd(), existing.getValue()));
+					} catch (AddressOutOfBoundsException e) {
+						// end is maximum address, no part after
+					}
+				}
 			}
 		}
-
-		int insertionIndex = Math.max(0, previousIndex + 1);
-		Address newEnd = newRange.getEnd();
-		removeCompletelyOverlappedRanges(insertionIndex, newEnd);
-
-		newRange = adjustRemainingRangeForOverlap(object, newRange, insertionIndex, newEnd);
-
-		ranges.add(insertionIndex, newRange);
-	}
-
-	private AddressValueRange<T> adjustRemainingRangeForOverlap(T object,
-			AddressValueRange<T> newRange, int insertionIndex, Address newEnd) {
-
-		if (insertionIndex >= ranges.size()) {
-			return newRange; // no record to adjust
+		
+		// Remove overlapping ranges
+		for (AddressValueRange<T> range : toRemove) {
+			rangeMap.remove(range.getStart());
 		}
-
-		AddressValueRange<T> range = ranges.get(insertionIndex);
-		if (range.getStart().compareTo(newEnd.next()) > 0) { // no overlap
-			return newRange;
+		
+		// Add back the non-overlapping fragments
+		for (AddressValueRange<T> range : toAdd) {
+			rangeMap.put(range.getStart(), range);
 		}
-
-		if (valuesEqual(range.getValue(), object)) { // merge records
-			ranges.remove(insertionIndex);
-			newRange = new AddressValueRange<T>(newRange.getStart(), range.getEnd(), object);
-		}
-		// overwrite the old record to start past the end of the new range
-		else {
-			ranges.set(insertionIndex, new AddressValueRange<T>(newEnd.next(), range.getEnd(),
-				range.getValue()));
-		}
-
-		return newRange;
-	}
-
-	private void removeCompletelyOverlappedRanges(int insertionIndex, Address newEnd) {
-		while (insertionIndex < ranges.size()) {
-			AddressValueRange<T> range = ranges.get(insertionIndex);
-			if (range.getEnd().compareTo(newEnd) > 0) {
-				return;
+		
+		// Try to merge with adjacent ranges having the same value
+		Address newStart = start;
+		Address newEnd = end;
+		
+		// Check range before
+		try {
+			if (start.previous() != null) {
+				Map.Entry<Address, AddressValueRange<T>> beforeEntry = rangeMap.floorEntry(start.previous());
+				if (beforeEntry != null) {
+					AddressValueRange<T> beforeRange = beforeEntry.getValue();
+					if (beforeRange.getEnd().equals(start.previous()) && valuesEqual(beforeRange.getValue(), object)) {
+						newStart = beforeRange.getStart();
+						rangeMap.remove(beforeRange.getStart());
+					}
+				}
 			}
-			ranges.remove(insertionIndex);
+		} catch (AddressOutOfBoundsException e) {
+			// start is minimum address
 		}
-	}
-
-	private AddressValueRange<T> adjustPreviousRangeForOverlap(Address start, Address end,
-			T object, AddressValueRange<T> newRange, int pos) {
-
-		AddressValueRange<T> previousRange = ranges.get(pos);
-		if ((start.previous() == null) ||
-			(previousRange.getEnd().compareTo(start.previous()) < 0)) {
-			return newRange;  // no overlap
-		}
-
-		Address oldStart = previousRange.getStart();
-		Address oldEnd = previousRange.getEnd();
-		T oldValue = previousRange.getValue();
-
-		if (valuesEqual(previousRange.getValue(), object)) {  // same objects, merge
-			ranges.remove(pos);
-			newRange = new AddressValueRange<T>(oldStart, getMax(oldEnd, end), object);
-		}
-		// break previous record into sub-ranges that exclude the new range
-		else {
-			ranges.set(pos, new AddressValueRange<T>(oldStart, start.previous(), oldValue));
-
-			// previous range extends past the new range
-			if (previousRange.getEnd().compareTo(end) > 0) {
-				ranges.add(pos + 1, new AddressValueRange<T>(end.next(), oldEnd, oldValue));
+		
+		// Check range after
+		try {
+			if (end.next() != null) {
+				AddressValueRange<T> afterRange = rangeMap.get(end.next());
+				if (afterRange != null && valuesEqual(afterRange.getValue(), object)) {
+					newEnd = afterRange.getEnd();
+					rangeMap.remove(afterRange.getStart());
+				}
 			}
+		} catch (AddressOutOfBoundsException e) {
+			// end is maximum address
 		}
-
-		return newRange;
+		
+		// Add the new merged range
+		AddressValueRange<T> newRange = new AddressValueRange<T>(newStart, newEnd, object);
+		rangeMap.put(newStart, newRange);
 	}
 
 	/**
 	 * Clears all objects from map
 	 */
 	public synchronized void clearAll() {
-		ranges.clear();
+		rangeMap.clear();
 		lastRange = null;
 	}
 
@@ -211,36 +223,69 @@ public class AddressRangeObjectMap<T> {
 	 */
 	public synchronized void clearRange(Address start, Address end) {
 		lastRange = null;
-
-		// check for range before that extends into cleared area
-		int pos = getPositionOfRangeBefore(new AddressValueRange<T>(start, end, null));
-		if (pos >= 0) {
-			AddressValueRange<T> range = ranges.get(pos);
-			if (range.getEnd().compareTo(start) >= 0) {				// truncate previous range if it needed
-				ranges.set(pos,
-					new AddressValueRange<T>(range.getStart(), start.previous(), range.getValue()));
-			}
-			if (range.getEnd().compareTo(end) > 0) {					// create leftover if previous range extends
-				// beyond cleared area.
-				ranges.add(pos + 1,
-					new AddressValueRange<T>(end.next(), range.getEnd(), range.getValue()));
-			}
+		
+		if (start.compareTo(end) > 0) {
+			return; // Invalid range
 		}
-
-		// now clear ranges until we find one past the cleared area
-		pos = Math.max(0, pos + 1);  						// start at 0 or 1 past the previous range
-		while (pos < ranges.size()) {
-			AddressValueRange<T> range = ranges.get(pos);
-			if (range.getEnd().compareTo(end) <= 0) {				// range totally inside cleared area
-				ranges.remove(pos);
+		
+		// Find overlapping ranges
+		List<AddressValueRange<T>> toRemove = new ArrayList<>();
+		List<AddressValueRange<T>> toAdd = new ArrayList<>();
+		
+		// Find overlapping ranges using subMap for efficiency
+		Address searchStart = start;
+		try {
+			if (start.previous() != null) {
+				searchStart = start.previous();
 			}
-			else if (range.getStart().compareTo(end) > 0) {			// range totally past clear area - done
+		} catch (AddressOutOfBoundsException e) {
+			// start is minimum address, use start itself
+		}
+		
+		NavigableMap<Address, AddressValueRange<T>> overlapping = 
+			rangeMap.tailMap(searchStart, true);
+		
+		for (Map.Entry<Address, AddressValueRange<T>> entry : overlapping.entrySet()) {
+			AddressValueRange<T> existing = entry.getValue();
+			
+			// If this range starts after our end, we're done
+			if (existing.getStart().compareTo(end) > 0) {
 				break;
 			}
-			else {										// intersects, fixup start
-				ranges.set(pos,
-					new AddressValueRange<T>(end.next(), range.getEnd(), range.getValue()));
+			
+			// Check for actual overlap
+			if (existing.getEnd().compareTo(start) >= 0) {
+				toRemove.add(existing);
+				
+				// Handle partial overlaps - keep non-overlapping parts
+				if (existing.getStart().compareTo(start) < 0) {
+					// Part before cleared range
+					try {
+						toAdd.add(new AddressValueRange<T>(existing.getStart(), start.previous(), existing.getValue()));
+					} catch (AddressOutOfBoundsException e) {
+						// start is minimum address, no part before
+					}
+				}
+				
+				if (existing.getEnd().compareTo(end) > 0) {
+					// Part after cleared range
+					try {
+						toAdd.add(new AddressValueRange<T>(end.next(), existing.getEnd(), existing.getValue()));
+					} catch (AddressOutOfBoundsException e) {
+						// end is maximum address, no part after
+					}
+				}
 			}
+		}
+		
+		// Remove overlapping ranges
+		for (AddressValueRange<T> range : toRemove) {
+			rangeMap.remove(range.getStart());
+		}
+		
+		// Add back the non-overlapping fragments
+		for (AddressValueRange<T> range : toAdd) {
+			rangeMap.put(range.getStart(), range);
 		}
 	}
 
@@ -256,12 +301,12 @@ public class AddressRangeObjectMap<T> {
 			return true;
 		}
 
-		int pos = getPositionOfRangeAtOrBefore(new AddressValueRange<T>(address, address, null));
-		if (pos < 0) {
+		Map.Entry<Address, AddressValueRange<T>> entry = rangeMap.floorEntry(address);
+		if (entry == null) {
 			return false;
 		}
-		lastRange = ranges.get(pos);
-
+		
+		lastRange = entry.getValue();
 		return lastRange.contains(address);
 	}
 
@@ -283,11 +328,13 @@ public class AddressRangeObjectMap<T> {
 			return lastRange.getValue();
 		}
 
-		int pos = getPositionOfRangeAtOrBefore(new AddressValueRange<T>(address, address, null));
-		if (pos < 0) {
+		// Use TreeMap's floorEntry to efficiently find the range that might contain this address
+		Map.Entry<Address, AddressValueRange<T>> entry = rangeMap.floorEntry(address);
+		if (entry == null) {
 			return null;
 		}
-		lastRange = ranges.get(pos);
+		
+		lastRange = entry.getValue();
 		if (lastRange.contains(address)) {
 			return lastRange.getValue();
 		}
@@ -295,45 +342,15 @@ public class AddressRangeObjectMap<T> {
 	}
 
 	public boolean isEmpty() {
-		return ranges.isEmpty();
-	}
-
-	int getPositionOfRangeAtOrBefore(AddressValueRange<T> valueRange) {
-
-		int pos = Collections.binarySearch(ranges, valueRange);
-
-		if (pos >= 0) {
-			return pos;
-		}
-
-		if (pos == -1) {	// index was less than first start range
-			return -1;
-		}
-
-		pos = -pos - 2;		// this is the range that is before;
-
-		return Math.min(pos, ranges.size());
-	}
-
-	int getPositionOfRangeBefore(AddressValueRange<T> valueRange) {
-
-		int pos = Collections.binarySearch(ranges, valueRange);
-
-		if (pos >= 0) {		// exact start match, return previous range
-			return pos - 1;
-		}
-
-		if (pos == -1) {	// index was less than first start range
-			return -1;
-		}
-
-		pos = -pos - 2;		// this is the range that is before;
-
-		return Math.min(pos, ranges.size());
+		return rangeMap.isEmpty();
 	}
 
 	class SimpleAddressRangeIterator implements AddressRangeIterator {
-		int pos = 0;
+		private Iterator<AddressValueRange<T>> iterator;
+
+		public SimpleAddressRangeIterator() {
+			this.iterator = rangeMap.values().iterator();
+		}
 
 		@Override
 		public Iterator<AddressRange> iterator() {
@@ -347,15 +364,14 @@ public class AddressRangeObjectMap<T> {
 
 		@Override
 		public boolean hasNext() {
-			return pos < ranges.size();
+			return iterator.hasNext();
 		}
 
 		@Override
 		public AddressRange next() {
-			AddressValueRange<T> valueRange = ranges.get(pos++);
+			AddressValueRange<T> valueRange = iterator.next();
 			return new AddressRangeImpl(valueRange.getStart(), valueRange.getEnd());
 		}
-
 	}
 
 	private boolean valuesEqual(Object value, Object obj) {
@@ -379,24 +395,32 @@ public class AddressRangeObjectMap<T> {
 		return addr2;
 	}
 
-	class RestrictedIndexRangeIterator implements AddressRangeIterator {
-		private int pos = 0;
-		private Address end;
+	class RestrictedAddressRangeIterator implements AddressRangeIterator {
+		private final Address start;
+		private final Address end;
 		private AddressRange nextRange;
+		private final Iterator<AddressValueRange<T>> iterator;
 
-		RestrictedIndexRangeIterator(Address start, Address end) {
+		RestrictedAddressRangeIterator(Address start, Address end) {
+			this.start = start;
 			this.end = end;
-			pos = getPositionOfRangeAtOrBefore(new AddressValueRange<T>(start, end, null));
-			if (pos >= 0) {
-				AddressValueRange<T> range = ranges.get(pos++);
-				if (range.contains(start)) {
-					nextRange = new AddressRangeImpl(start, getMin(range.getEnd(), end));
-				}
+			
+			// Find the first range that could intersect with our range
+			NavigableMap<Address, AddressValueRange<T>> subMap = rangeMap.tailMap(start, false);
+			
+			// Check if there's a range that starts before our start but might contain it
+			Map.Entry<Address, AddressValueRange<T>> floorEntry = rangeMap.floorEntry(start);
+			if (floorEntry != null && floorEntry.getValue().contains(start)) {
+				// Create a new map that includes this range
+				TreeMap<Address, AddressValueRange<T>> combinedMap = new TreeMap<>();
+				combinedMap.put(floorEntry.getKey(), floorEntry.getValue());
+				combinedMap.putAll(subMap);
+				this.iterator = combinedMap.values().iterator();
+			} else {
+				this.iterator = subMap.values().iterator();
 			}
-			if (nextRange == null) {
-				pos = Math.max(0, pos);
-				getNextRange();
-			}
+			
+			getNextRange();
 		}
 
 		@Override
@@ -425,23 +449,34 @@ public class AddressRangeObjectMap<T> {
 
 		private void getNextRange() {
 			nextRange = null;
-			if (pos < ranges.size()) {
-				AddressValueRange<T> range = ranges.get(pos++);
-				if (range.getStart().compareTo(end) <= 0) {
-					nextRange = new AddressRangeImpl(range.getStart(), getMin(range.getEnd(), end));
+			while (iterator.hasNext()) {
+				AddressValueRange<T> range = iterator.next();
+				
+				// Skip ranges that start after our end
+				if (range.getStart().compareTo(end) > 0) {
+					break;
 				}
+				
+				// Skip ranges that end before our start  
+				if (range.getEnd().compareTo(start) < 0) {
+					continue;
+				}
+				
+				// Found an overlapping range - create the intersection
+				Address intersectStart = getMax(range.getStart(), start);
+				Address intersectEnd = getMin(range.getEnd(), end);
+				nextRange = new AddressRangeImpl(intersectStart, intersectEnd);
+				break;
 			}
-
 		}
-
 	}
 
 	/**
 	 * Get the value or hole range containing the specified address
-	 * @param addr
+	 * @param addr the address
+	 * @return the range containing the address (either a value range or a hole range)
 	 */
 	public AddressRange getAddressRangeContaining(Address addr) {
-
 		if (lastRange != null && lastRange.contains(addr)) {
 			return new AddressRangeImpl(lastRange.getStart(), lastRange.getEnd());
 		}
@@ -449,36 +484,38 @@ public class AddressRangeObjectMap<T> {
 		Address min = addr.getAddressSpace().getMinAddress();
 		Address max = addr.getAddressSpace().getMaxAddress();
 
-		int pos = getPositionOfRangeAtOrBefore(new AddressValueRange<T>(addr, addr, null));
-		if (pos >= 0) {
-			lastRange = ranges.get(pos);
+		Map.Entry<Address, AddressValueRange<T>> entry = rangeMap.floorEntry(addr);
+		if (entry != null) {
+			lastRange = entry.getValue();
 			if (lastRange.getEnd().compareTo(addr) >= 0) {
 				return new AddressRangeImpl(lastRange.getStart(), lastRange.getEnd());
 			}
 			if (min.getAddressSpace().equals(lastRange.getEnd().getAddressSpace())) {
-				min = lastRange.getEnd().next();
+				try {
+					min = lastRange.getEnd().next();
+				} catch (AddressOutOfBoundsException e) {
+					// lastRange.getEnd() is max address, no hole after it
+					return null;
+				}
 			}
 		}
-		if (++pos < ranges.size()) {
-			lastRange = ranges.get(pos);
-			if (lastRange.getStart().compareTo(addr) == 0) {
-				return new AddressRangeImpl(lastRange.getStart(), lastRange.getEnd());
-			}
+		
+		Map.Entry<Address, AddressValueRange<T>> nextEntry = rangeMap.higherEntry(addr);
+		if (nextEntry != null) {
+			lastRange = nextEntry.getValue();
 			if (max.getAddressSpace().equals(lastRange.getStart().getAddressSpace())) {
-				max = lastRange.getStart().previous();
+				try {
+					max = lastRange.getStart().previous();
+				} catch (AddressOutOfBoundsException e) {
+					// lastRange.getStart() is min address, use max as is
+				}
 			}
 		}
+		
 		return new AddressRangeImpl(min, max);
-	}
-
-	public void clearCache() {
-		lastRange = null;
 	}
 }
 
-/**
- * Associates an integer value with a numeric range.
- */
 class AddressValueRange<T> implements Comparable<AddressValueRange<T>> {
 	private Address start;
 	private Address end;
