@@ -1438,7 +1438,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		return false;
 	}
 
-	private void goUpOneDirectoryLevel() {
+	public void goUpOneDirectoryLevel() {
 		cancelEdits();
 
 		if (currentDirectory() == null) {
