@@ -1069,6 +1069,16 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   static int4 evaluatePointerExpression(PcodeOp *op,int4 slot);
 };
+class RulePtrOffsetArith : public Rule {
+public:
+  RulePtrOffsetArith(const string &g) : Rule(g, 0, "ptroffsetarith") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePtrOffsetArith(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleStructOffset0 : public Rule {
 public:
   RuleStructOffset0(const string &g) : Rule(g, 0, "structoffset0") {}	///< Constructor
