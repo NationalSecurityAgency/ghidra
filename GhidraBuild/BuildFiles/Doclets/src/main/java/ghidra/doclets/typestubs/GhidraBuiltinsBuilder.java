@@ -133,6 +133,9 @@ class GhidraBuiltinsBuilder {
 			script.printField(field, printer, INDENT, false);
 			exports.add('"' + field.getSimpleName().toString() + '"');
 		}
+		printer.print(INDENT);
+		printer.println("this: JythonScript");
+		exports.add("\"this\"");
 	}
 
 	/**
@@ -200,6 +203,7 @@ class GhidraBuiltinsBuilder {
 		printer.println();
 		printer.println();
 		printer.println("from ghidra.app.script import *");
+		printer.println("from ghidra.jython import *");
 		printer.println();
 		printer.println();
 	}

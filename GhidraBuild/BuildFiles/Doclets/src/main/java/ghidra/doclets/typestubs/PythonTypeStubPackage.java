@@ -156,6 +156,8 @@ final class PythonTypeStubPackage extends PythonTypeStubElement<PackageElement> 
 		printer.println("import jpype # type: ignore");
 		printer.println("import jpype.protocol # type: ignore");
 		printer.println();
+		doclet.printReExports(printer, el);
+		printer.println();
 		doclet.printImports(printer, getImportedPackages());
 		printer.println();
 		printer.println();
