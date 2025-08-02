@@ -252,5 +252,8 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_REVERSESIGNIF = new AttributeId("reversesignif", 154);
 	public static final AttributeId ATTRIB_MATCHSIZE = new AttributeId("matchsize", 155);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 156);
+	// function parameter stacking direction
+	public static final AttributeId ATTRIB_ISRIGHTTOLEFT = new AttributeId("isrighttoleft", 156);
+
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 157);
 }
