@@ -850,29 +850,26 @@ E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 
 }
 
 :ext m16_ry, m16_rx, ext_imm_2226, size  	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=1 & ext_imm_1620 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0 [ size = ext_imm_1620+1; ] {
-    local tmpa:4 = 0xFFFFFFFF;
-	tmpa = tmpa >> (32 - size);
-	local tmpb:4 = m16_rx;
-	tmpb = (tmpb >> ext_imm_2226) & tmpa;
-	m16_ry = sext(tmpb);
+    local rs_tmp:$(REGSIZE) = m16_rx << ($(REGSIZE) * 8 - (size + ext_imm_2226));
+    rs_tmp = rs_tmp >> ($(REGSIZE) * 8 - size);
+    m16_ry = zext(rs_tmp);
 }
 :ins m16_ry, m16_rx, ext_imm_2226, size		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=1 & ext_imm_1620 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0 [ size = ext_imm_1620 - ext_imm_2226 + 1; ] {
-	local tmpa:4 = 0xFFFFFFFF;
-	tmpa = tmpa >> (32 - size);
-	local tmpb:4 = m16_rx & tmpa;
-	tmpa = tmpa << ext_imm_2226;
-	tmpa = ~tmpa;
-	tmpb = tmpb << ext_imm_2226;
-	m16_ry = (m16_ry & tmpa) | tmpb;
+    local tmpa:$(REGSIZE) = -1;
+    tmpa = tmpa >> ($(REGSIZE) * 8 - size);
+    local tmpb:$(REGSIZE) = m16_rx & tmpa;
+    tmpa = tmpa << ext_imm_2226;
+    tmpa = ~tmpa;
+    tmpb = tmpb << ext_imm_2226;
+    m16_ry = (m16_ry & tmpa) | tmpb;
+
 }
-:ins m16_ry, zero, ext_imm_2226, size		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=0 & ext_imm_1620 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0 & zero [ size = ext_imm_1620 - ext_imm_2226 + 1; ] {
-	local tmpa:4 = 0xFFFFFFFF;
-	tmpa = tmpa >> (32 - size);
-	local tmpb:4 = m16_rx & tmpa;
-	tmpa = tmpa << ext_imm_2226;
-	tmpa = ~tmpa;
-	tmpb = tmpb << ext_imm_2226;
-	m16_ry = (m16_ry & tmpa) | tmpb;
+:ins m16_ry, zero, ext_imm_2226, size		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=0 & ext_imm_1620 & m16_op=0b00110 & m16_rx=0 & m16_ry & m16_shft_sa=1 & m16_shft_f=0 & zero [ size = ext_imm_1620 - ext_imm_2226 + 1; ] {
+	local tmpa:$(REGSIZE) = -1;
+    tmpa = tmpa >> ($(REGSIZE) * 8 - size);
+    tmpa = tmpa << ext_imm_2226;
+    tmpa = ~tmpa;
+    m16_ry = (m16_ry & tmpa);
 }
 
 # LB/LBU/LH/LHU/LW - handled by mips16
