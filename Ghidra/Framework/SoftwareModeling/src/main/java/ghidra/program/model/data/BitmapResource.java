@@ -334,7 +334,7 @@ public class BitmapResource {
 		// create the color model
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
 		int[] nBits = { 8, 8, 8, 8 };
-		int[] bOffs = { 0, 1, 2, 3 };
+		int[] bOffs = { 2, 1, 0, 3 };
 		ColorModel colorModel =
 			new ComponentColorModel(cs, nBits, true, false, Transparency.TRANSLUCENT,
 				DataBuffer.TYPE_BYTE);
@@ -422,11 +422,14 @@ public class BitmapResource {
 	 */
 	protected DataImage getOnePlaneImage(MemBuffer buf) {
 		// create the color model
+		int[] colormapData = getRGBData(buf);
+		IndexColorModel model =
+			new IndexColorModel(1, getClrUsed(), colormapData, 0, false, -1, DataBuffer.TYPE_BYTE);
 
 		// create the image
 
 		BufferedImage image =
-			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_BYTE_BINARY, model);
 		byte[] dbuf = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
 		getPixelData(buf, dbuf);
 		return new BitmapDataImage(image);
