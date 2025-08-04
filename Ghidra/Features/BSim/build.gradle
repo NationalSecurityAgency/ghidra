@@ -24,7 +24,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Features BSim'
 
 import java.nio.file.Files
-import org.gradle.util.GUtil
 
 // NOTE: fetchDependencies.gradle must be updated if postgresql version changes
 def postgresql_distro = "postgresql-15.13.tar.gz"
