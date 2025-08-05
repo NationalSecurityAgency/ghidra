@@ -128,8 +128,10 @@ public class JythonPlugin extends ProgramPlugin
 
 		console =
 			getTool().getService(InterpreterPanelService.class).createInterpreterPanel(this, false);
-		welcome();
-		console.addFirstActivationCallback(() -> resetInterpreter());
+		console.addFirstActivationCallback(() -> {
+			welcome();
+			resetInterpreter();
+		});
 		createActions();
 	}
 
