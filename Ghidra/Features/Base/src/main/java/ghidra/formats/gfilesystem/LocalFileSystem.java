@@ -124,7 +124,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	public GFile getGFile(File f) {
 		List<File> parts = LocalFileSystem.getFilePathParts(f); // [/subdir/subroot/file, /subdir/subroot, /subdir, /]
 		GFile current = rootDir;
-		for (int i = parts.size() - 2; i >= 0; i--) {
+		for (int i = parts.size() - (isWindows ? 1 : 2); i >= 0; i--) {
 			File part = parts.get(i);
 			FSRL childFSRL = getLocalFSRL(part);
 			current =
@@ -221,6 +221,9 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	@Override
 	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		if (path == null || path.equals(rootDir.getPath() /* should be "/" */)) {
+			return rootDir;
+		}
 		File f = lookupFile(null, path, nameComp);
 		return f != null ? getGFile(f) : null;
 	}
