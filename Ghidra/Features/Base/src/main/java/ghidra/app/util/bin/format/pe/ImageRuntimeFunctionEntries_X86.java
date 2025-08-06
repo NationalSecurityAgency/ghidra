@@ -144,8 +144,10 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 		 */
 		public void markup(Program program) throws DuplicateNameException, IOException {
 			
-			AbstractProgramLoader.markAsFunction(program, null,
-				program.getImageBase().add(beginAddress));
+			if (!unwindInfo.hasChainedUnwindInfo()) {
+				AbstractProgramLoader.markAsFunction(program, null,
+					program.getImageBase().add(beginAddress));
+			}
 			
 			if (unwindInfoAddressOrData > 0) {
 				DataType dt = unwindInfo.toDataType();
