@@ -1090,12 +1090,16 @@ public class ResultsState {
 				return eillimnateCarryOp(pcodeOp, values, addrFactory, monitor);
 
 			case PcodeOp.INT_SCARRY:  		// TRUE if carry in signed addition of 2 ops 
+				if ((values[1].isConstant() && values[1].getOffset() == 0) ||
+					(values[0].isConstant() && values[0].getOffset() == 0)) {
+					result = new Varnode(addrFactory.getConstantAddress(0), 1);
+				}
+				break;
 
 // TODO: Implement constant case
 
 			case PcodeOp.INT_SBORROW:  		// TRUE if borrow in signed subtraction of 2 ops 
-				if ((values[1].isConstant() && values[1].getOffset() == 0) ||
-					(values[0].isConstant() && values[0].getOffset() == 0)) {
+				if (values[1].isConstant() && values[1].getOffset() == 0) {
 					result = new Varnode(addrFactory.getConstantAddress(0), 1);
 				}
 				break;
