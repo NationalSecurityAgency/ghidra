@@ -158,16 +158,25 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private Component buildMainPanel() {
-		JPanel panel = new JPanel(new PairLayout(5, 5));
+		JPanel panel = new JPanel(new ThreeColumnLayout(5, 5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
 		panel.add(new GLabel("Format: ", SwingConstants.RIGHT));
 		panel.add(buildLoaderChooser());
+		panel.add(buildLoaderButtons());
+
 		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
-		panel.add(buildLanguagePanel());
+		panel.add(buildLanguageField());
+		panel.add(buildLanguageButton());
+
 		panel.add(new GLabel("Destination Folder: ", SwingConstants.RIGHT));
-		panel.add(buildFolderPanel());
+		panel.add(buildFolderNameField());
+		panel.add(buildFolderNameBrowseButton());
+
 		panel.add(new GLabel("Program Name: ", SwingConstants.RIGHT));
 		panel.add(buildNameTextField());
+		panel.add(new JLabel());
+
 		panel.getAccessibleContext().setAccessibleName("Importer Details");
 		return panel;
 	}
@@ -215,29 +224,35 @@ public class ImporterDialog extends DialogComponentProvider {
 		return fsrl.getName();
 	}
 
-	private Component buildFolderPanel() {
+	private Component buildFolderNameField() {
 		folderNameTextField = new JTextField();
 		folderNameTextField.setEditable(false);
 		folderNameTextField.setFocusable(false);
 		folderNameTextField.getAccessibleContext().setAccessibleName("Folder Name");
-		folderButton = new BrowseButton();
-		folderButton.addActionListener(e -> chooseProjectFolder());
-		folderButton.getAccessibleContext().setAccessibleName("Folder");
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(folderNameTextField, BorderLayout.CENTER);
-		panel.add(folderButton, BorderLayout.EAST);
-		panel.getAccessibleContext().setAccessibleName("Folder");
-		return panel;
+		return folderNameTextField;
 	}
 
-	private JComponent buildLanguagePanel() {
+	private Component buildFolderNameBrowseButton() {
+		folderButton = new BrowseButton();
+		folderButton.addActionListener(e -> chooseProjectFolder());
+		folderButton.getAccessibleContext().setAccessibleName("Folder Name Browse");
+		Gui.registerFont(folderButton, Font.BOLD);
+
+		return folderButton;
+	}
+
+	private JComponent buildLanguageField() {
 		languageTextField = new JTextField();
 		languageTextField.setEditable(false);
 		languageTextField.setFocusable(false);
 		languageTextField.getAccessibleContext().setAccessibleName("Language");
 
+		return languageTextField;
+	}
+
+	private Component buildLanguageButton() {
 		languageButton = new BrowseButton();
-		languageButton.getAccessibleContext().setAccessibleName("Language");
+		languageButton.getAccessibleContext().setAccessibleName("Language Browse");
 		languageButton.addActionListener(e -> {
 			Object selectedItem = loaderComboBox.getSelectedItem();
 			if (selectedItem instanceof Loader) {
@@ -252,19 +267,12 @@ public class ImporterDialog extends DialogComponentProvider {
 			}
 			validateFormInput();
 		});
-
 		Gui.registerFont(languageButton, Font.BOLD);
 
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(languageTextField, BorderLayout.CENTER);
-		panel.add(languageButton, BorderLayout.EAST);
-		panel.getAccessibleContext().setAccessibleName("Language");
-		return panel;
+		return languageButton;
 	}
 
 	private Component buildLoaderChooser() {
-		JPanel panel = new JPanel(new BorderLayout());
-
 		Set<Loader> orderedLoaders = new LinkedHashSet<>(loaderMap.keySet()); // maintain order
 		loaderComboBox = new GhidraComboBox<>(orderedLoaders);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
@@ -276,21 +284,22 @@ public class ImporterDialog extends DialogComponentProvider {
 			loaderComboBox.setSelectedIndex(0);
 		}
 
-		panel.add(loaderComboBox, BorderLayout.CENTER);
-		panel.add(buildLoaderInfoButton(), BorderLayout.EAST);
-		panel.getAccessibleContext().setAccessibleName("Loader Choice");
-		return panel;
+		return loaderComboBox;
 	}
 
-	private Component buildLoaderInfoButton() {
-		JPanel panel = new JPanel(new BorderLayout());
+	private Component buildLoaderButtons() {
+
 		EmptyBorderButton helpButton = new EmptyBorderButton(new GIcon("icon.information"));
 		helpButton.setToolTipText("Show list of supported format/loaders");
 		helpButton.getAccessibleContext().setAccessibleName("Loader Info");
 		helpButton.addActionListener(e -> showSupportedImportFormats());
+
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+		panel.setBorder(BorderFactory.createEmptyBorder());
+
 		panel.add(helpButton);
-		panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
-		panel.getAccessibleContext().setAccessibleName("Loader Info");
+
 		return panel;
 	}
 
