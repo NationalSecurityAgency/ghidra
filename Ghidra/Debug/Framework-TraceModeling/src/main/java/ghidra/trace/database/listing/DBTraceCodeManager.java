@@ -115,30 +115,36 @@ import ghidra.util.task.TaskMonitor;
  * Here is the type hierarchy presented with notes regarding structural interface implementations:
  * <ul>
  * <li>{@link AbstractBaseDBTraceCodeUnitsView} structurally implements
- * {@link TraceBaseCodeUnitsView}</li>
+ * {@link TraceBaseCodeUnitsView}
  * <ul>
- * <li>{@link AbstractComposedDBTraceCodeUnitsView}</li>
+ * <li>{@link AbstractComposedDBTraceCodeUnitsView}
  * <ul>
  * <li>{@link DBTraceCodeUnitsView} nominally implements {@link TraceCodeUnitsView}</li>
  * <li>{@link DBTraceDataView} nominally implements {@link TraceDataView}</li>
  * <li>{@link DBTraceDefinedUnitsView} nominally implements {@link TraceDefinedUnitsView}</li>
  * </ul>
- * <li>{@link AbstractSingleDBTraceCodeUnitsView}</li>
+ * </li>
+ * <li>{@link AbstractSingleDBTraceCodeUnitsView}
  * <ul>
  * <li>{@link AbstractBaseDBTraceDefinedUnitsView} structurally implements
- * {@link TraceBaseDefinedUnitsView}</li>
+ * {@link TraceBaseDefinedUnitsView}
  * <ul>
  * <li>{@link DBTraceDefinedDataView} nominally implements {@link TraceDefinedDataView}</li>
  * <li>{@link DBTraceInstructionsView} nominally implements {@link TraceInstructionsView}</li>
  * </ul>
+ * </li>
  * <li>{@link DBTraceUndefinedDataView} nominally implements {@link TraceUndefinedDataView}</li>
  * </ul>
+ * </li>
+ * </ul>
+ * </li>
  * </ul>
  * 
  * <p>
  * The view composition is not hierarchical, as each may represent a different combination, and one
  * type may appear in several compositions. The single-type views are named first, then the composed
  * views:
+ * 
  * <ul>
  * <li>Instructions - single-type view</li>
  * <li>Defined Data - single-type view</li>

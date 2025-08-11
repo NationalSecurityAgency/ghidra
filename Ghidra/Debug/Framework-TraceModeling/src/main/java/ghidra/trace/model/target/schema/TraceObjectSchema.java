@@ -390,13 +390,13 @@ public interface TraceObjectSchema {
 	 * path. Thus, for a path of length n, the resulting list has n+1 entries. This is useful for
 	 * searches along the ancestry of a given path:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
 	 * for (; path != null; path = PathUtils.parent(path)) {
 	 * 	TargetObjectSchema schema = schemas.get(path.size());
 	 * 	// ...
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * All entries are non-null, though they may be {@link PrimitiveTraceObjectSchema#VOID}.
@@ -1009,17 +1009,17 @@ public interface TraceObjectSchema {
 	 * 
 	 * <p>
 	 * This places some conventional restrictions / expectations on models where registers are given
-	 * on a frame-by-frame basis. The schema should present the {@link TraceRegisterContainer}
-	 * as the same object or a successor to {@link TraceStackFrame}, which must in turn be a
-	 * successor to {@link TraceStack}. The frame level (an index) must be in the path from stack to
-	 * frame. There can be no wildcards between the frame and the register container. For example,
-	 * the container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
+	 * on a frame-by-frame basis. The schema should present the {@link TraceRegisterContainer} as
+	 * the same object or a successor to {@link TraceStackFrame}, which must in turn be a successor
+	 * to {@link TraceStack}. The frame level (an index) must be in the path from stack to frame.
+	 * There can be no wildcards between the frame and the register container. For example, the
+	 * container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
 	 * {@code n} is the frame level. {@code Threads[1].Stack} would have the {@link TraceStack}
 	 * interface, {@code Threads[1].Stack[0]} would have the {@link TraceStackFrame} interface, and
 	 * {@code Threads[1].Stack[0].Registers} would have the {@link TraceRegisterContainer}
-	 * interface. Note it is not sufficient for {@link TraceRegisterContainer} to be a
-	 * successor of {@link TraceStack} with a single index between. There <em>must</em> be an
-	 * intervening {@link TraceStackFrame}, and the frame level (index) must precede it.
+	 * interface. Note it is not sufficient for {@link TraceRegisterContainer} to be a successor of
+	 * {@link TraceStack} with a single index between. There <em>must</em> be an intervening
+	 * {@link TraceStackFrame}, and the frame level (index) must precede it.
 	 * 
 	 * @param frameLevel the frame level. May be ignored if not applicable
 	 * @param path the path of the seed object relative to the root

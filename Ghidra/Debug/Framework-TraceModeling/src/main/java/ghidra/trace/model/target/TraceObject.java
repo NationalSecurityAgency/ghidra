@@ -72,9 +72,9 @@ import ghidra.trace.model.thread.TraceThread;
  * <ol>
  * <li><b>The object itself:</b> Test if the context target object supports the desired interface.
  * If it does, take it.</li>
- * <li><b>Aggregate objects:</b> If the object is marked with {@link TraceAggregate}, collect
- * all attributes supporting the desired interface. If there are any, take them. This step is
- * applied recursively if any child attribute is also marked with {@link TraceAggregate}.</li>
+ * <li><b>Aggregate objects:</b> If the object is marked with {@link TraceAggregate}, collect all
+ * attributes supporting the desired interface. If there are any, take them. This step is applied
+ * recursively if any child attribute is also marked with {@link TraceAggregate}.</li>
  * <li><b>Ancestry:</b> Apply these same steps to the object's (canonical) parent, recursively.</li>
  * </ol>
  * 
@@ -92,44 +92,52 @@ import ghidra.trace.model.thread.TraceThread;
  * may be presented by a user-space debugger for a desktop operating system:
  * 
  * <ul>
- * <li>"Session" : {@link TraceObject}</li>
+ * <li>"Session" : {@link TraceObject}
  * <ul>
- * <li>"Process 789" : {@link TraceProcess}, {@link TraceAggregate}</li>
+ * <li>"Process 789" : {@link TraceProcess}, {@link TraceAggregate}
  * <ul>
- * <li>"Threads" : {@link TraceObject}</li>
+ * <li>"Threads" : {@link TraceObject}
  * <ul>
- * <li>"Thread 1" : {@link TraceThread}, {@link TraceExecutionStateful},
- * {@link TraceAggregate}</li>
+ * <li>"Thread 1" : {@link TraceThread}, {@link TraceExecutionStateful}, {@link TraceAggregate}
  * <ul>
- * <li>"Registers" : {@link TraceRegisterContainer}</li>
+ * <li>"Registers" : {@link TraceRegisterContainer}
  * <ul>
  * <li>"r1" : {@link TraceRegister}</li>
  * <li>...</li>
  * </ul>
+ * </li>
  * </ul>
+ * </li>
  * <li>...more threads</li>
  * </ul>
- * <li>"Memory" : {@link TraceMemory}</li>
+ * </li>
+ * <li>"Memory" : {@link TraceMemory}
  * <ul>
  * <li>"[0x00400000:0x00401234]" : {@link TraceMemoryRegion}</li>
  * <li>...more regions</li>
  * </ul>
- * <li>"Modules" : {@link TraceObject}</li>
+ * </li>
+ * <li>"Modules" : {@link TraceObject}
  * <ul>
- * <li>"/usr/bin/echo" : {@link TraceModule}</li>
+ * <li>"/usr/bin/echo" : {@link TraceModule}
  * <ul>
  * <li>".text" : {@link TraceSection}</li>
  * <li>...more sections</li>
  * </ul>
+ * </li>
  * <li>...more modules</li>
  * </ul>
+ * </li>
  * </ul>
- * <li>"Environment": {@link TraceEnvironment}</li>
+ * </li>
+ * <li>"Environment": {@link TraceEnvironment}
  * <ul>
  * <li>"Process 321" : {@link TraceObject}</li>
  * <li>...more processes</li>
  * </ul>
+ * </li>
  * </ul>
+ * </li>
  * </ul>
  * 
  * <p>

@@ -119,7 +119,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	 * Set the fields of this record
 	 * 
 	 * @param platform the platform
-	 * @param dataType the data type
+	 * @param dataTypeID the data type id
 	 */
 	protected void set(InternalTracePlatform platform, long dataTypeID) {
 		this.platformKey = platform.getIntKey();

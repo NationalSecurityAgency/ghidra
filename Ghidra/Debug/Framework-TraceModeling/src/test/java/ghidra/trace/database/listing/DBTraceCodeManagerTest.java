@@ -1418,12 +1418,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 					.create(Lifespan.nowOn(0), b.language.getRegister("r4"), LongDataType.dataType);
 		}
 
-		assertEquals(thread, regCode.codeUnits().getThread());
-		assertEquals(thread, regCode.data().getThread());
-		assertEquals(thread, regCode.definedUnits().getThread());
-		assertEquals(thread, regCode.instructions().getThread());
-		assertEquals(thread, regCode.definedData().getThread());
-		assertEquals(thread, regCode.undefinedData().getThread());
+		assertEquals(thread, regCode.getThread());
 
 		assertEquals(List.of(dR4), list(regCode.definedUnits().get(0, true)));
 
@@ -1441,7 +1436,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		}
 
 		assertEquals(1, frameCode.getFrameLevel());
-		assertEquals(thread, frameCode.codeUnits().getThread());
+		assertEquals(thread, frameCode.getThread());
 		assertEquals(List.of(dR5), list(frameCode.definedUnits().get(0, true)));
 	}
 
