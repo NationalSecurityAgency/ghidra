@@ -31,8 +31,8 @@ import ghidra.app.util.bin.ByteArrayProvider;
  */
 public class StringTableTest extends AbstractGenericTest {
 
-	private BinaryReader br(byte... bytes) {
-		return new BinaryReader(new ByteArrayProvider(bytes), true);
+	private BinaryReader br(int... intBytes) {
+		return new BinaryReader(new ByteArrayProvider(bytes(intBytes)), true);
 	}
 
 
@@ -40,9 +40,9 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testStr() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
-			/* str2 */ (byte) 'c', (byte) 0,
-			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
+			/* str1 */ 'a', 'b', 0, 
+			/* str2 */ 'c', 0,
+			/* str3 */ 'x', 'y', '\n', 0
 		);
 		// @formatter:on
 		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
@@ -55,12 +55,26 @@ public class StringTableTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testUtf8() throws IOException {
+		// @formatter:off
+		BinaryReader br = br(
+			/* str1 */ 0xc2, 0xbb, 'a', 'b', 'c', 0, 
+			/* str2 */ 0xe3, 0x91, 0xad, '1', '2', '3', 0
+		);
+		// @formatter:on
+		StringTable st = new StringTable(br, StandardCharsets.UTF_8);
+
+		assertEquals("\u00bbabc", st.getStringAtOffset(0));
+		assertEquals("\u346d123", st.getStringAtOffset(6));
+	}
+
+	@Test
 	public void testOffcutStr() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
-			/* str2 */ (byte) 'c', (byte) 0,
-			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
+			/* str1 */ 'a', 'b', 0, 
+			/* str2 */ 'c', 0,
+			/* str3 */ 'x', 'y', '\n', 0
 		);
 		// @formatter:on
 		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
@@ -75,9 +89,9 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testTrailingOffcutStr() {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
-			/* str2 */ (byte) 'c', (byte) 0,
-			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
+			/* str1 */ 'a', 'b', 0, 
+			/* str2 */ 'c', 0,
+			/* str3 */ 'x', 'y', '\n', 0
 		);
 		// @formatter:on
 		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);
@@ -95,9 +109,9 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testNegOffset() {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
-			/* str2 */ (byte) 'c', (byte) 0,
-			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
+			/* str1 */ 'a', 'b', 0, 
+			/* str2 */ 'c', 0,
+			/* str3 */ 'x', 'y', '\n', 0
 		);
 		// @formatter:on
 		StringTable st = new StringTable(br, StandardCharsets.US_ASCII);

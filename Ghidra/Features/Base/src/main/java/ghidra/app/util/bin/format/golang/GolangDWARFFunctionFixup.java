@@ -102,9 +102,12 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 			storageAllocator.setAbi0Mode();
 		}
 
-		dfunc.callingConventionName =
-			storageAllocator.isAbi0Mode() ? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
-					: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		String ccName = storageAllocator.isAbi0Mode()
+				? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
+				: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		if (goBinary.hasCallingConvention(ccName)) {
+			dfunc.callingConventionName = ccName;
+		}
 
 		GoFunctionMultiReturn multiReturnInfo = fixupFormalFuncDef(dfunc, storageAllocator, dtm);
 		fixupCustomStorage(dfunc, storageAllocator, dtm, multiReturnInfo);
@@ -164,7 +167,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		// WARNING: this code should be kept in sync with GoFunctionFixup
 
 		Program program = goBinary.getProgram();
-		
+
 		// Allocate custom storage for each parameter
 		List<DWARFVariable> spillVars = new ArrayList<>();
 		for (DWARFVariable dvar : dfunc.params) {
@@ -208,8 +211,8 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				// because we will do it manually
 				for (DataTypeComponent dtc : multiReturn.getComponentsInOriginalOrder()) {
 					allocateReturnStorage(dfunc, dfunc.retval,
-						dtc.getFieldName() + "_return_result_alias",
-						dtc.getDataType(), storageAllocator, false);
+						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
+						storageAllocator, false);
 				}
 
 				if (!program.getMemory().isBigEndian()) {
