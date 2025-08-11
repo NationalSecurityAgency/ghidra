@@ -4292,11 +4292,13 @@ void ActionConditionalConst::handlePhiNodes(Varnode *varVn,Varnode *constVn,vect
 /// For each read op, check that is in or dominated by a specific block we known
 /// the Varnode is constant in.
 /// \param varVn is the given Varnode
-/// \param constVn is the constant Varnode to replace with
+/// \param constVn is the constant Varnode to replace with (may be null)
+/// \param constVal is the constant value being propagated
 /// \param constBlock is the block which dominates ops reading the constant value
 /// \param useMultiequal is \b true if conditional constants can be applied to MULTIEQUAL ops
 /// \param data is the function being analyzed
-void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data)
+void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,uintb constVal,
+					       FlowBlock *constBlock,bool useMultiequal,Funcdata &data)
 
 {
   vector<PcodeOpNode> phiNodeEdges;
@@ -4333,6 +4335,8 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
 						// ...unless COPY is into something more interesting
     }
     if (constBlock->dominates(op->getParent())) {
+      if (constVn == (Varnode *)0)
+	constVn = data.newConstant(varVn->getSize(), constVal);
       if (opc == CPUI_RETURN){
           // CPUI_RETURN ops can't directly take constants
           // as inputs
@@ -4350,8 +4354,11 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
       count += 1;			// We made a change
     }
   }
-  if (!phiNodeEdges.empty())
+  if (!phiNodeEdges.empty()) {
+    if (constVn == (Varnode *)0)
+      constVn = data.newConstant(varVn->getSize(), constVal);
     handlePhiNodes(varVn, constVn, phiNodeEdges, data);
+  }
 }
 
 int4 ActionConditionalConst::apply(Funcdata &data)
@@ -4367,15 +4374,26 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       useMultiequal = false;	// Don't propagate into MULTIEQUAL
   }
   const BlockGraph &blockGraph(data.getBasicBlocks());
+  bool blockdom[2];
   for(int4 i=0;i<blockGraph.getSize();++i) {
     FlowBlock *bl = blockGraph.getBlock(i);
     PcodeOp *cBranch = bl->lastOp();
     if (cBranch == (PcodeOp *)0 || cBranch->code() != CPUI_CBRANCH) continue;
     Varnode *boolVn = cBranch->getIn(1);
+    blockdom[0] = bl->getOut(0)->restrictedByConditional(bl);	// Make sure boolean constant holds down false branch
+    blockdom[1] = bl->getOut(1)->restrictedByConditional(bl);
+    if (!blockdom[0] && !blockdom[1]) continue;
+    bool flipEdge = cBranch->isBooleanFlip();
+    if (boolVn->loneDescend() == (PcodeOp *)0) {	// If the boolean is read more than once
+      // Search for implied constants, bool=0 down false branch, bool=1 down true branch
+      if (blockdom[0])
+	propagateConstant(boolVn, (Varnode *)0, flipEdge ? 1 : 0, bl->getFalseOut(), useMultiequal, data);
+      if (blockdom[1])
+	propagateConstant(boolVn, (Varnode *)0, flipEdge ? 0 : 1, bl->getTrueOut(), useMultiequal, data);
+    }
     if (!boolVn->isWritten()) continue;
     PcodeOp *compOp = boolVn->getDef();
     OpCode opc = compOp->code();
-    bool flipEdge = cBranch->isBooleanFlip();
     if (opc == CPUI_BOOL_NEGATE) {
       flipEdge = !flipEdge;
       boolVn = compOp->getIn(0);
@@ -4400,11 +4418,11 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       constVn = varVn;
       varVn = tmp;
     }
+    if (varVn->loneDescend() != (PcodeOp *)0) continue;
     if (flipEdge)
       constEdge = 1 - constEdge;
-    FlowBlock *constBlock = bl->getOut(constEdge);
-    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
-    propagateConstant(varVn,constVn,constBlock,useMultiequal,data);
+    if (!blockdom[constEdge]) continue;	// Make sure condition holds
+    propagateConstant(varVn,constVn,0,bl->getOut(constEdge),useMultiequal,data);
   }
   return 0;
 }
