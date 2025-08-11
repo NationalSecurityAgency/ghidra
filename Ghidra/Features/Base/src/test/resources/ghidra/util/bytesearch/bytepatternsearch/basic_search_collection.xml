@@ -1,0 +1,153 @@
+<BytePatternSearchLibrary>
+	<Search Name="Search1" Description="1" Submitter="test">
+		<SearchItem Name="Constant 1" WordSize="QWord" SearchType="Constant" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search2" Description="">
+		<SearchItem Name="Constant 1" WordSize="DWord" SearchType="Table" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a </Bytes>
+			<Bytes> 85ae67bb </Bytes>
+			<Bytes> 67e6096a </Bytes>
+			<Bytes> 85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant"  WordSize="DWord" SearchType="Table" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a </Bytes>
+			<Bytes> 85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search3" Description="" Category="A" Type="Strict">
+		<SearchItem Name="Constant 1" WordSize="QWord" SearchType="Function" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 2"  WordSize="QWord" SearchType="Function" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 3" WordSize="QWord" SearchType="Function" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 4" WordSize="QWord" SearchType="Function"  Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 5" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 6" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 7" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 8" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+	</Search>
+		<Search Name="Search4" Description="">
+		<SearchItem Name="Constant 1" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 2"  WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 3" WordSize="QWord" SearchType="Function"     Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 4" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 5" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 6" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 7" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+		<SearchItem Name="Constant 8" WordSize="QWord" SearchType="Function"    Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search5" Description="1">
+		<SearchItem Name="Constant 1" WordSize="byte" SearchType="Table" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67 </Bytes>
+			<Bytes> e6 </Bytes>
+			<Bytes> 09 </Bytes>
+			<Bytes> 6a </Bytes>
+			<Bytes> 85 </Bytes>
+			<Bytes> ae </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> bb </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> e6 </Bytes>
+			<Bytes> 09 </Bytes>
+			<Bytes> 6a </Bytes>
+			<Bytes> 85 </Bytes>
+			<Bytes> ae </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> bb </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> e6 </Bytes>
+			<Bytes> 09 </Bytes>
+			<Bytes> 6a </Bytes>
+			<Bytes> 85 </Bytes>
+			<Bytes> ae </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> bb </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> e6 </Bytes>
+			<Bytes> 09 </Bytes>
+			<Bytes> 6a </Bytes>
+			<Bytes> 85 </Bytes>
+			<Bytes> ae </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> bb </Bytes>
+			<Bytes> 67 </Bytes>
+			<Bytes> e6 </Bytes>
+		</SearchItem>
+	</Search>
+		<Search Name="Search6" Description="1">
+		<SearchItem Name="Constant" WordSize="word" SearchType="Function" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6 </Bytes>
+			<Bytes> 096a </Bytes>
+			<Bytes> 85ae </Bytes>
+			<Bytes> 67bb </Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search7" Description="1">
+		<SearchItem Name="Constant" WordSize="QWord" SearchType="Constant" Submitter="Human" Description="Simple constant search" Reference="Dictionary">
+			<Bytes> 67e6096a85ae67bb </Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search8">
+		<SearchItem Name="TagTest" WordSize="Word" SearchType="orderedfunction">
+			<Bytes>01 23</Bytes>
+			<Bytes>45 67</Bytes>
+			<InvalidatorBytes>89 ab</InvalidatorBytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search9">
+		<SearchItem Name="ascii test" WordSize="Ascii" SearchType="Constant">
+			<Bytes>hello</Bytes>
+			<Bytes>world</Bytes>
+		</SearchItem>
+	</Search>
+</BytePatternSearchLibrary>
