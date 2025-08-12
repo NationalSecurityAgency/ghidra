@@ -149,8 +149,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * Check the preceding unit and see if it can be extended to "create" the desired one
 		 * 
 		 * <p>
-		 * For overwrite, the caller should first use
-		 * {@link #doAdjustExisting(Address, InstructionPrototype, Instruction)}.
+		 * For overwrite, the caller should first use *
+		 * {@link #doAdjustExisting(Address, Instruction)}.
 		 * 
 		 * @param address the starting address of the instruction
 		 * @param protoInstr the prototype instruction
@@ -228,7 +228,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * If it encounters a delay-slotted instruction, it will recurse on the group, iterating in
 		 * reverse order.
 		 * 
-		 * @param instructions the instructions to add
+		 * @param it the iterator of instructions to add
 		 * @param areDelaySlots true if the instructions are already reversed from being
 		 *            delay-slotted
 		 * @return the last instruction added

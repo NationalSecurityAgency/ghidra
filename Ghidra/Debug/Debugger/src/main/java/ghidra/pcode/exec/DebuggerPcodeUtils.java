@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,8 +64,7 @@ public enum DebuggerPcodeUtils {
 	 * A p-code parser that can resolve labels from a trace or its mapped programs.
 	 */
 	public static class LabelBoundPcodeParser extends ErrorCollectingPcodeParser {
-		record ProgSym(String sourceName, String nm, Address address) {
-		}
+		record ProgSym(String sourceName, String nm, Address address) {}
 
 		private final DebuggerStaticMappingService mappings;
 		private final DebuggerCoordinates coordinates;
@@ -447,8 +446,8 @@ public enum DebuggerPcodeUtils {
 	 * A p-code arithmetic on watch values
 	 * 
 	 * <p>
-	 * This is just a composition of four arithmetics. Using Pair<A,Pair<B,Pair<C,D>> would be
-	 * unwieldy.
+	 * This is just a composition of four arithmetics. Using {@code Pair<A,Pair<B,Pair<C,D>>} would
+	 * be unwieldy.
 	 */
 	public enum WatchValuePcodeArithmetic implements PcodeArithmetic<WatchValue> {
 		BIG_ENDIAN(BytesPcodeArithmetic.BIG_ENDIAN, LocationPcodeArithmetic.BIG_ENDIAN),

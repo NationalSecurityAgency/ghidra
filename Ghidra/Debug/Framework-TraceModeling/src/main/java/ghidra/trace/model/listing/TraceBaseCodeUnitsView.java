@@ -239,8 +239,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
-	 * @param span the span of snaps
-	 * @param range the address range
+	 * @param range the address-snap range
 	 * @return true if intersecting, false otherwise
 	 */
 	boolean intersectsRange(TraceAddressSnapRange range);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,12 +51,13 @@ import ghidra.taint.model.TaintVec;
  * <li>P-code Arithmetic: {@link TaintPcodeArithmetic}</li>
  * <li>Userop Library: {@link TaintPcodeUseropLibrary}</li>
  * <li>P-code Executor: {@link TaintPcodeThreadExecutor}</li>
- * <li>Machine State</li>
+ * <li>Machine State
  * <ul>
  * <li>Stand alone: {@link TaintPcodeExecutorState}</li>
  * <li>Trace integrated: {@link TaintTracePcodeExecutorState}</li>
  * <li>Debugger integrated: {@link TaintTracePcodeExecutorState} (same as Trace integrated)</li>
  * </ul>
+ * </li>
  * </ul>
  * 
  * <p>

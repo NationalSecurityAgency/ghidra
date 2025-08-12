@@ -214,8 +214,8 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * <p>
 	 * There are two cases:
 	 * <ul>
-	 * <li>PC:Register => location is PC.reg.address
-	 * <li>PC:Deref => location is [Stack]:PC.offset
+	 * <li>{@code PC:Register => location is PC.reg.address}</li>
+	 * <li>{@code PC:Deref => location is [Stack]:PC.offset}</li>
 	 * </ul>
 	 * 
 	 * @return the address (stack offset or register) of the return address

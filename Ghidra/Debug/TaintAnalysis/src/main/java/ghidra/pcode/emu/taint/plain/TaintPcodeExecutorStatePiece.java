@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,8 @@ import ghidra.program.model.lang.Language;
  * want to implement {@link TracePcodeExecutorState} directly, take the concrete piece provided, and
  * wrap it as you see fit. You may still benefit by referring to the implementation of
  * {@link PairedPcodeExecutorState}. When implementing your flavor of
- * {@link PairedPcodeExecutorState#getVar(AddressSpace, Pair, int, boolean)}, still consider that
- * you could benefit from the concrete element of the offset pair passed in.
+ * {@link PairedPcodeExecutorState#getVar(AddressSpace, Pair, int, boolean, Reason)}, still consider
+ * that you could benefit from the concrete element of the offset pair passed in.
  */
 public class TaintPcodeExecutorStatePiece extends AbstractTaintPcodeExecutorStatePiece<TaintSpace> {
 	/**

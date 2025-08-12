@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.pcode.emu.DefaultPcodeThread;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
-import ghidra.pcode.exec.PcodeExecutor;
-import ghidra.pcode.exec.PcodeFrame;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.taint.model.TaintVec;
 import ghidra.util.Msg;
@@ -52,9 +52,8 @@ public class TaintPcodeThreadExecutor extends PcodeThreadExecutor<Pair<byte[], T
 	 * This is invoked on every {@link PcodeOp#CBRANCH}, allowing us a decent place to instrument
 	 * the emulator and add some diagnostics. Refer to
 	 * {@link PcodeExecutor#executeConditionalBranch(PcodeOp, PcodeFrame)} to see the operations
-	 * inputs. Alternatively, we could override
-	 * {@link TaintPcodeArithmetic#isTrue(TaintVec, Purpose)}; however, we'd have access to less
-	 * contextual information at that position.
+	 * inputs. Alternatively, we could override {@link PcodeArithmetic#isTrue(Object, Purpose)};
+	 * however, we'd have access to less contextual information at that position.
 	 */
 	@Override
 	public void executeConditionalBranch(PcodeOp op, PcodeFrame frame) {
