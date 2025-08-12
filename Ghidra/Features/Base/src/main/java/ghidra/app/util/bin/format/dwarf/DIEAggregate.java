@@ -24,7 +24,8 @@ import java.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.util.bin.format.dwarf.attribs.*;
-import ghidra.app.util.bin.format.dwarf.expression.*;
+import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionEvaluator;
+import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf.line.DWARFFile;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.util.Msg;
@@ -544,12 +545,9 @@ public class DIEAggregate {
 			return assertValidInt(dnum.getValue());
 		}
 		else if (attr instanceof DWARFBlobAttribute dblob) {
-			byte[] exprBytes = dblob.getBytes();
 			DWARFExpressionEvaluator evaluator = new DWARFExpressionEvaluator(getCompilationUnit());
-			DWARFExpression expr = evaluator.readExpr(exprBytes);
-
-			evaluator.evaluate(expr, 0);
-			return assertValidInt(evaluator.pop());
+			evaluator.evaluate(dblob.getBytes(), 0);
+			return assertValidInt(evaluator.popLong());
 		}
 		else {
 			throw new IOException("Not integer attribute: %s".formatted(attr));
@@ -578,13 +576,10 @@ public class DIEAggregate {
 			return dnum.getUnsignedValue();
 		}
 		else if (attr instanceof DWARFBlobAttribute dblob) {
-			byte[] exprBytes = dblob.getBytes();
 			DWARFExpressionEvaluator evaluator =
 				new DWARFExpressionEvaluator(attrInfo.die().getCompilationUnit());
-			DWARFExpression expr = evaluator.readExpr(exprBytes);
-
-			evaluator.evaluate(expr, 0);
-			return evaluator.pop();
+			evaluator.evaluate(dblob.getBytes(), 0);
+			return evaluator.popLong();
 		}
 		else {
 			throw new IOException("Not integer attribute: %s".formatted(attr));
@@ -627,15 +622,13 @@ public class DIEAggregate {
 			return dnum.getUnsignedIntExact();
 		}
 		else if (attr instanceof DWARFBlobAttribute dblob) {
-			byte[] exprBytes = dblob.getBytes();
 			DWARFExpressionEvaluator evaluator = new DWARFExpressionEvaluator(getCompilationUnit());
-			DWARFExpression expr = evaluator.readExpr(exprBytes);
 
 			// DW_AT_data_member_location expects the address of the containing object
 			// to be on the stack before evaluation starts.  We don't have that so we
 			// fake it with zero.
-			evaluator.evaluate(expr, 0);
-			return assertValidUInt(evaluator.pop());
+			evaluator.evaluate(dblob.getBytes(), 0);
+			return assertValidUInt(evaluator.popLong());
 		}
 		else {
 			throw new DWARFException("DWARF attribute form not valid for data member offset: %s"

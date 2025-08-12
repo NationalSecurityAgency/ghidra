@@ -15,42 +15,40 @@
  */
 package ghidra.app.util.bin.format.dwarf.expression;
 
+import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.dwarf.DIEAggregate;
-import ghidra.program.model.data.LEB128;
-import ghidra.util.NumericUtilities;
+import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
+import ghidra.app.util.bin.format.dwarf.DWARFRegisterMappings;
 
 /**
- * A {@link DWARFExpression} is an immutable list of {@link DWARFExpressionOperation operations} and some factory methods to read
- * an expression from its binary representation.
+ * A {@link DWARFExpression} is an immutable list of {@link DWARFExpressionInstruction operations}
+ * and some factory methods to read an expression from its binary representation.
  * <p>
  * Use a {@link DWARFExpressionEvaluator} to execute a {@link DWARFExpression}.
  */
 public class DWARFExpression {
-	static long EMPTY_OPERANDS_VALUE[] = {};
 	public static final int MAX_SANE_EXPR = 256;
 
-	private final List<DWARFExpressionOperation> operations;
-
-	private final int lastActiveOpIndex;
-
-	public static String exprToString(byte[] exprBytes, DIEAggregate diea) {
-		try {
-			DWARFExpression expr =
-				new DWARFExpressionEvaluator(diea.getCompilationUnit()).readExpr(exprBytes);
-			return expr.toString();
-		}
-		catch (DWARFExpressionException e) {
-			return "Unable to parse DWARF expression.  Raw bytes: " +
-				NumericUtilities.convertBytesToString(exprBytes, " ");
-		}
+	/**
+	 * Deserializes a {@link DWARFExpression} from its raw bytes.
+	 * 
+	 * @param exprBytes bytes containing the expression
+	 * @param cu the {@link DWARFCompilationUnit} that contained the expression
+	 * @return new {@link DWARFExpression}, never null
+	 * @throws DWARFExpressionException if error reading the expression, check 
+	 * {@link DWARFExpressionException#getExpression()} for the partial results of the read 
+	 */
+	public static DWARFExpression read(byte[] exprBytes, DWARFCompilationUnit cu)
+			throws DWARFExpressionException {
+		return read(exprBytes, cu.getPointerSize(), cu.getProgram().isLittleEndian(),
+			cu.getIntSize());
 	}
 
-	public static DWARFExpression read(byte[] exprBytes, byte addrSize, boolean isLittleEndian,
+	private static DWARFExpression read(byte[] exprBytes, byte addrSize, boolean isLittleEndian,
 			int intSize) throws DWARFExpressionException {
 		ByteProvider provider = new ByteArrayProvider(exprBytes);
 		BinaryReader reader = new BinaryReader(provider, isLittleEndian);
@@ -58,147 +56,90 @@ public class DWARFExpression {
 		return read(reader, addrSize, intSize);
 	}
 
-	public static DWARFExpression read(BinaryReader reader, byte addrSize, int intSize)
+	private static DWARFExpression read(BinaryReader reader, byte addrSize, int intSize)
 			throws DWARFExpressionException {
-		List<DWARFExpressionOperation> operations = new ArrayList<>();
+		List<DWARFExpressionInstruction> instructions = new ArrayList<>();
 
 		try {
-			long opcodeoffset;
-			boolean invalidOpCodeEncountered = false;
-
-			while ((opcodeoffset = reader.getPointerIndex()) < reader.length()) {
-				int opcode = reader.readNextUnsignedByte();
-				if (!DWARFExpressionOpCodes.isValidOpcode(opcode)) {
-					// consume the remainder of the bytes in the expression because
-					// we've hit an invalid opcode and can not proceed any further.
-					int bytesLeft = (int) (reader.length() - reader.getPointerIndex());
-					operations.add(new DWARFExpressionOperation(opcode,
-						DWARFExpressionOpCodes.BLOBONLY_OPERANDTYPES, new long[] { 0 },
-						readSizedBlobOperand(reader, bytesLeft), (int) opcodeoffset));
-					invalidOpCodeEncountered = true;
-				}
-				else {
-					DWARFExpressionOperandType[] operandTypes =
-						DWARFExpressionOpCodes.getOperandTypesFor(opcode);
-
-					long[] operandValues =
-						(operandTypes.length != 0) ? new long[operandTypes.length]
-								: EMPTY_OPERANDS_VALUE;
-					byte[] blob = null;
-					for (int i = 0; i < operandTypes.length; i++) {
-						DWARFExpressionOperandType optype = operandTypes[i];
-						if (optype == DWARFExpressionOperandType.SIZED_BLOB) {
-							blob = readSizedBlobOperand(reader, operandValues[i - 1]);
-						}
-						else {
-							operandValues[i] = readOperandValue(optype, reader, addrSize, intSize);
-						}
-					}
-
-					DWARFExpressionOperation op = new DWARFExpressionOperation(opcode, operandTypes,
-						operandValues, blob, (int) opcodeoffset);
-					operations.add(op);
+			while (reader.hasNext()) {
+				DWARFExpressionInstruction instr =
+					DWARFExpressionInstruction.read(reader, addrSize, intSize);
+				instructions.add(instr);
+				if (instr.getOpCode() == DW_OP_unknown_opcode) {
+					throw new IOException("Unknown DWARF opcode(s) encountered");
 				}
 			}
 
-			if (invalidOpCodeEncountered) {
-				throw new IOException("Unknown DWARF opcode(s) encountered");
-			}
-
-			return new DWARFExpression(operations);
+			return new DWARFExpression(instructions);
 		}
 		catch (IOException ioe) {
-			DWARFExpression badExpr = new DWARFExpression(operations);
-			String s = badExpr.toString();
+			DWARFExpression badExpr = new DWARFExpression(instructions);
 			throw new DWARFExpressionException(
 				"Error reading DWARF expression, partial expression is: ", badExpr, -1, ioe);
 		}
 	}
 
-	private static long readOperandValue(DWARFExpressionOperandType operandType,
-			BinaryReader reader, byte addrSize, int intSize) throws IOException {
-		try {
-			switch (operandType) {
-				case ADDR:
-					return reader.readNextUnsignedValue(addrSize);
-				case S_BYTE:
-					return reader.readNextByte();
-				case S_SHORT:
-					return reader.readNextShort();
-				case S_INT:
-					return reader.readNextInt();
-				case S_LONG:
-					return reader.readNextLong();
-				case U_BYTE:
-					return reader.readNextUnsignedByte();
-				case U_SHORT:
-					return reader.readNextUnsignedShort();
-				case U_INT:
-					return reader.readNextUnsignedInt();
-				case U_LONG:
-					return reader.readNextLong(); /* & there is no mask for ulong */
-				case S_LEB128:
-					return reader.readNext(LEB128::signed);
-				case U_LEB128:
-					return reader.readNext(LEB128::unsigned);
-				case SIZED_BLOB:
-					throw new IOException("Can't read SIZED_BLOB as a Long value");
-				case DWARF_INT:
-					return reader.readNextUnsignedValue(intSize);
-			}
-		}
-		catch (ArrayIndexOutOfBoundsException aioob) {
-			throw new IOException("Not enough bytes to read " + operandType);
-		}
-		throw new IOException("Unknown DWARFExpressionOperandType " + operandType);
-	}
-
-	private static byte[] readSizedBlobOperand(BinaryReader reader, long previousOperandValue)
-			throws IOException {
-		return reader.readNextByteArray((int) previousOperandValue);
-	}
-
-	private DWARFExpression(List<DWARFExpressionOperation> operations) {
-		this.operations = operations;
-		this.lastActiveOpIndex = findLastActiveOpIndex();
-	}
-
-	public DWARFExpressionOperation getOp(int i) {
-		return operations.get(i);
-	}
-
-	public int getOpCount() {
-		return operations.size();
-	}
+	private final List<DWARFExpressionInstruction> instructions;
 
 	/**
-	 * Returns the index of the last operation that is not a NOP.
-	 * @return
+	 * Private constructor for {@link DWARFExpression}... use one of the static 
+	 * {@link #read(byte[], DWARFCompilationUnit) read} methods to create an instance.
+	 * 
+	 * @param instructions list of instructions
 	 */
-	public int getLastActiveOpIndex() {
-		return lastActiveOpIndex;
-	}
-
-	private int findLastActiveOpIndex() {
-		for (int i = operations.size() - 1; i >= 0; i--) {
-			if (operations.get(i).getOpCode() != DWARFExpressionOpCodes.DW_OP_nop) {
-				return i;
-			}
-		}
-		return operations.size() - 1;
+	private DWARFExpression(List<DWARFExpressionInstruction> instructions) {
+		this.instructions = instructions;
 	}
 
 	/**
-	 * Finds the index of an {@link DWARFExpressionOperation operation} by its offset
+	 * Converts this {@link DWARFExpression} into a generic form, lacking any operand values.
+	 * <p>
+	 * Useful for aggregating statistics about unsupported/problematic expressions encountered in
+	 * a binary.
+	 * 
+	 * @return new {@link DWARFExpression} instance where each instruction has been stripped of all
+	 * operands
+	 */
+	public DWARFExpression toGenericForm() {
+		List<DWARFExpressionInstruction> genericInstrs =
+			instructions.stream().map(DWARFExpressionInstruction::toGenericForm).toList();
+		return new DWARFExpression(genericInstrs);
+	}
+
+	/**
+	 * {@return the requested instruction}
+	 * @param i instruction index
+	 */
+	public DWARFExpressionInstruction getInstruction(int i) {
+		return instructions.get(i);
+	}
+
+	/**
+	 * {@return number of instructions in this expression}
+	 */
+	public int getInstructionCount() {
+		return instructions.size();
+	}
+
+	/**
+	 * {@return true if there are no instructions}
+	 */
+	public boolean isEmpty() {
+		return instructions.isEmpty();
+	}
+
+	/**
+	 * Finds the index of an {@link DWARFExpressionInstruction operation} by its offset
 	 * from the beginning of the expression.
 	 * 
-	 * @param offset
-	 * @return -1 if there is no op at the specified offset
+	 * @param offset byte offset of instruction to find
+	 * @return index of instruction at specified byte offset, or -1 if there is no instruction
+	 * at the specified offset
 	 */
-	public int findOpByOffset(long offset) {
-		for (int i = 0; i < operations.size(); i++) {
-			DWARFExpressionOperation op = getOp(i);
-			if (op.getOffset() == offset) {
+	public int findInstructionByOffset(long offset) {
+		for (int i = 0; i < instructions.size(); i++) {
+			DWARFExpressionInstruction instr = getInstruction(i);
+			if (instr.getOffset() == offset) {
 				return i;
 			}
 		}
@@ -207,64 +148,54 @@ public class DWARFExpression {
 
 	@Override
 	public String toString() {
-		return toString(-1, false, false);
+		return toString(-1, false, false, null);
 	}
 
-	public String toString(int caretPosition, boolean newlines, boolean offsets) {
-		StringBuilder sb = new StringBuilder();
-		for (int step = 0; step < operations.size(); step++) {
-			DWARFExpressionOperation op = operations.get(step);
+	public String toString(DWARFCompilationUnit cu) {
+		return toString(-1, false, false, cu.getProgram().getRegisterMappings());
+	}
 
-			if (step != 0) {
-				sb.append("; ");
-				if (newlines) {
-					sb.append('\n');
-				}
+	/**
+	 * Returns a formatted string representing this expression.
+	 * 
+	 * @param caretPosition index of which instruction to highlight as being the current
+	 * instruction, or -1 to not highlight any instruction
+	 * @param newlines boolean flag, if true each instruction will be on its own line
+	 * @param offsets boolean flag, if true the byte offset in the expression will be listed
+	 * next to each instruction
+	 * @param regMapping mapping of dwarf to ghidra registers
+	 * @return formatted string
+	 */
+	public String toString(int caretPosition, boolean newlines, boolean offsets,
+			DWARFRegisterMappings regMapping) {
+
+		StringBuilder sb = new StringBuilder();
+		for (int instrIndex = 0; instrIndex < instructions.size(); instrIndex++) {
+			DWARFExpressionInstruction instr = instructions.get(instrIndex);
+
+			if (instrIndex != 0) {
+				sb.append(newlines ? "\n" : "; ");
 			}
 			if (offsets) {
-				sb.append(String.format("%3d [%03x]: ", step, op.getOffset()));
+				sb.append("%3d [%03x]: ".formatted(instrIndex, instr.getOffset()));
 			}
-			if (caretPosition == step) {
+			if (caretPosition == instrIndex) {
 				sb.append(" ==> [");
 			}
-			int opcode = op.getOpCode();
-			if (DWARFExpressionOpCodes.isValidOpcode(opcode)) {
-				sb.append(DWARFExpressionOpCodes.toString(opcode));
-			}
-			else {
-				if (opcode >= DWARFExpressionOpCodes.DW_OP_lo_user &&
-					opcode <= DWARFExpressionOpCodes.DW_OP_hi_user) {
-					int relOpCode = opcode - DWARFExpressionOpCodes.DW_OP_lo_user;
-					sb.append(
-						DWARFExpressionOpCodes.toString(DWARFExpressionOpCodes.DW_OP_lo_user) +
-							"+" + relOpCode + "[" + opcode + "]");
-				}
-				else {
-					sb.append("DW_OP_UNKNOWN[" + opcode + "]");
-				}
-			}
-			for (int operandIndex = 0; operandIndex < op.operands.length; operandIndex++) {
+			sb.append(instr.getOpCode().toString(regMapping));
+			for (int operandIndex = 0; operandIndex < instr.getOperandCount(); operandIndex++) {
 				if (operandIndex == 0) {
 					sb.append(':');
 				}
 				sb.append(' ');
-				DWARFExpressionOperandType operandType = op.operandTypes[operandIndex];
-				if (operandType != DWARFExpressionOperandType.SIZED_BLOB) {
-					long operandValue = op.operands[operandIndex];
-
-					sb.append(DWARFExpressionOperandType.valueToString(operandValue, operandType));
-				}
-				else {
-					sb.append(NumericUtilities.convertBytesToString(op.blob, " "));
-				}
+				sb.append(instr.getOperandRepresentation(operandIndex));
 			}
-			if (caretPosition == step) {
+			if (caretPosition == instrIndex) {
 				sb.append(" ] <==");
 			}
-			if (opcode == DWARFExpressionOpCodes.DW_OP_bra ||
-				opcode == DWARFExpressionOpCodes.DW_OP_skip) {
-				long destOffset = op.getOperandValue(0) + op.getOffset();
-				int destIndex = findOpByOffset(destOffset);
+			if (instr.opcode == DW_OP_bra || instr.opcode == DW_OP_skip) {
+				long destOffset = instr.getOperandValue(0) + instr.getOffset();
+				int destIndex = findInstructionByOffset(destOffset);
 				sb.append(String.format(" /* dest index: %d, offset: %03x */", destIndex,
 					(int) destOffset));
 			}
@@ -272,4 +203,23 @@ public class DWARFExpression {
 
 		return sb.toString();
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(instructions);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof DWARFExpression)) {
+			return false;
+		}
+		DWARFExpression other = (DWARFExpression) obj;
+		return Objects.equals(instructions, other.instructions);
+	}
+
+
 }
