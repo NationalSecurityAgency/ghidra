@@ -1025,16 +1025,15 @@ public class CppCompositeType {
 	 * @throws CancelledException upon user cancellation
 	 */
 	private void createMembersOnlyClassLayout(TaskMonitor monitor) throws CancelledException {
-		TreeMap<Long, ClassPdbMember> map = new TreeMap<>();
+		List<ClassPdbMember> pdbMembers = new ArrayList<>();
 		for (Member member : layoutMembers) {
 			ClassPdbMember classPdbMember =
 				new ClassPdbMember(member.getName(), member.getDataType(),
 					member.isFlexibleArray(), member.getOffset(), member.getComment());
-			map.put((long) member.getOffset(), classPdbMember);
+			pdbMembers.add(classPdbMember);
 		}
-		List<ClassPdbMember> sm = new ArrayList<>(map.values());
 		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size,
-			sm, msg -> Msg.warn(this, msg), monitor)) {
+			pdbMembers, msg -> Msg.warn(this, msg), monitor)) {
 			clearComponents(composite);
 		}
 		selfBaseType = composite;
