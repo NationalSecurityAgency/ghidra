@@ -4565,7 +4565,14 @@ define pcodeop vexth.h.b;
 #lsx.txt vexth.h.b mask=0x729ee000	
 #0x729ee000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
 :vexth.h.b vrD, vrJ                   is op10_31=0x1ca7b8 & vrD & vrJ {
-	vrD = vexth.h.b(vrD, vrJ);
+	vrD[0,16] = sext(vrJ[64,8]);
+	vrD[16,16] = sext(vrJ[72,8]);
+	vrD[32,16] = sext(vrJ[80,8]);
+	vrD[48,16] = sext(vrJ[88,8]);
+	vrD[64,16] = sext(vrJ[96,8]);
+	vrD[80,16] = sext(vrJ[104,8]);
+	vrD[96,16] = sext(vrJ[112,8]);
+	vrD[112,16] = sext(vrJ[120,8]);
 }
 
 define pcodeop vexth.w.h;
@@ -4784,36 +4791,33 @@ define pcodeop vinsgr2vr.d;
 	vrD = vinsgr2vr.d(vrD, RJsrc, imm10_1:$(REGSIZE));
 }
 
-define pcodeop vpickve2gr.b;
-
-#lsx.txt vpickve2gr.b mask=0x72ef8000	
+#lsx.txt vpickve2gr.b mask=0x72ef8000
 #0x72ef8000	0xffffc000	r0:5,v5:5,u10:4	['reg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
-:vpickve2gr.b RD, vrJ, imm10_4        is op14_31=0x1cbbe & RD & vrJ & imm10_4 {
-	RD = vpickve2gr.b(RD, vrJ, imm10_4:$(REGSIZE));
+:vpickve2gr.b RD, vrJ.B.imm18_4       is op14_31=0x1cbbe & RD & vrJ.B.imm18_4 & vrJ & imm10_4 {
+	RD = sext(vrJ.B.imm18_4);
 }
 
-define pcodeop vpickve2gr.h;
-
-#lsx.txt vpickve2gr.h mask=0x72efc000	
+#lsx.txt vpickve2gr.h mask=0x72efc000
 #0x72efc000	0xffffe000	r0:5,v5:5,u10:3	['reg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
-:vpickve2gr.h RD, vrJ, imm10_3        is op13_31=0x3977e & RD & vrJ & imm10_3 {
-	RD = vpickve2gr.h(RD, vrJ, imm10_3:$(REGSIZE));
+:vpickve2gr.h RD, vrJ.H.imm18_3       is op13_31=0x3977e & RD & vrJ.H.imm18_3 & vrJ & imm10_3 {
+	RD = sext(vrJ.H.imm18_3);
 }
 
-define pcodeop vpickve2gr.w;
-
-#lsx.txt vpickve2gr.w mask=0x72efe000	
+#lsx.txt vpickve2gr.w mask=0x72efe000
 #0x72efe000	0xfffff000	r0:5,v5:5,u10:2	['reg0_5_s0', 'vreg5_5_s0', 'imm10_2_s0']
-:vpickve2gr.w RD, vrJ, imm10_2        is op12_31=0x72efe & RD & vrJ & imm10_2 {
-	RD = vpickve2gr.w(RD, vrJ, imm10_2:$(REGSIZE));
+:vpickve2gr.w RD, vrJ.W.imm18_2        is op12_31=0x72efe & RD & vrJ.W.imm18_2 & vrJ & imm10_2 {
+	RD = sext(vrJ.W.imm18_2);
 }
 
 define pcodeop vpickve2gr.d;
-
-#lsx.txt vpickve2gr.d mask=0x72eff000	
+#lsx.txt vpickve2gr.d mask=0x72eff000
 #0x72eff000	0xfffff800	r0:5,v5:5,u10:1	['reg0_5_s0', 'vreg5_5_s0', 'imm10_1_s0']
-:vpickve2gr.d RD, vrJ, imm10_1        is op11_31=0xe5dfe & RD & vrJ & imm10_1 {
+:vpickve2gr.d RD, vrJ.D.imm18_1        is op11_31=0xe5dfe & RD & vrJ.D.imm18_1 & vrJ & imm10_1 {
+@ifdef LA64
+	RD = sext(vrJ.D.imm18_1);
+@else
 	RD = vpickve2gr.d(RD, vrJ, imm10_1:$(REGSIZE));
+@endif
 }
 
 define pcodeop vpickve2gr.bu;
@@ -5688,19 +5692,122 @@ define pcodeop vnori.b;
 	vrD = vnori.b(vrD, vrJ, imm10_8:$(REGSIZE));
 }
 
-define pcodeop vldi;
-
 #lsx.txt vldi mask=0x73e00000	
 #0x73e00000	0xfffc0000	v0:5, s5:13	['vreg0_5_s0', 'simm5_13_s0']
 :vldi vrD, simm5_13                   is op18_31=0x1cf8 & vrD & simm5_13 {
-	vrD = vldi(vrD, simm5_13:$(REGSIZE));
+	local tmp2:8 = simm5_13:8;
+	local tmp3:4 = 0;
+	local tmp4:8 = 0;
+	local tmp5:8 = 0;
+	local tmp6:8 = 0;
+	local tmp7:8 = 0;
+	local tmp8:8 = 0;
+	vrD[0,64] = 0x0;
+	tmp4 = zext(tmp2);
+	vrD[64,64] = 0x0;
+	tmp5 = ((tmp4 << 0x36) s>> 0x36);
+	local tmp9:8 = (tmp2 >> 10) & 7;
+	if (tmp9 == 0) goto <block_8>;
+	if (tmp9 == 1) goto <block_10>;
+	if (tmp9 == 2) goto <block_12>;
+	if (tmp9 == 3) goto <block_14>;
+	goto <block_0>;
+	<block_0>
+	tmp6 = (tmp2 << 24);
+	tmp7 = zext(tmp2 & 63);
+	tmp5 = zext(tmp2 & 255);
+	tmp8 = zext((tmp2 >> 6) & 1);
+	local tmp10:8 = ((tmp2 >> 8) & 31) - 17;
+	if (tmp10 == 0) goto <block_11>;
+	if (tmp10 == 1) goto <block_1>;
+	if (tmp10 == 2) goto <block_2>;
+	if (tmp10 == 3) goto <block_10>;
+	if (tmp10 == 4) goto <block_9>;
+	if (tmp10 == 5) goto <block_3>;
+	if (tmp10 == 6) goto <block_4>;
+	if (tmp10 == 7) goto <block_8>;
+	if (tmp10 == 8) goto <block_13>;
+	if (tmp10 == 9) goto <block_5>;
+	if (tmp10 == 10) goto <block_6>;
+	if (tmp10 == 11) goto <block_7>;
+	goto <block_12>;
+	<block_1>
+	tmp5 = tmp5 << 0x10;
+	goto <block_12>;
+	<block_2>
+	tmp5 = tmp5 << 0x18;
+	goto <block_12>;
+	<block_3>
+	tmp5 = (tmp5 << 0x8) | 0xff;
+	goto <block_12>;
+	<block_4>
+	tmp5 = (tmp5 << 0x10) | 0xffff;
+	goto <block_12>;
+	<block_5>
+	tmp5 = ((tmp8 * 0x3e000000) | zext(((tmp6 & 0xc0000000) ^ 0x40000000))) | (tmp7 << 0x13);
+	goto <block_12>;
+	<block_6>
+	tmp5 = ((tmp8 * 0x3e000000) | zext(((tmp6 & 0xc0000000) ^ 0x40000000))) | (tmp7 << 0x13);
+	goto <block_14>;
+	<block_7>
+	tmp5 = (((tmp8 * 0x3fc0000000000000) | ((tmp4 << 0x38) & 0xc000000000000000)) | (tmp7 << 0x30)) ^ 0x4000000000000000;
+	goto <block_14>;
+	<block_8>
+	tmp5 = (tmp4 & 0xff) * 0x101010101010101;
+	vrD[64,64] = tmp5;
+	vrD[0,64] = tmp5;
+	goto <end>;
+	<block_9>
+	tmp5 = (tmp5 << 0x8);
+	<block_10>
+	tmp2 = tmp5;
+	vrD[112,16] = tmp2:2;
+	vrD[96,16] = tmp2:2;
+	vrD[80,16] = tmp2:2;
+	vrD[64,16] = tmp2:2;
+	vrD[48,16] = tmp2:2;
+	vrD[32,16] = tmp2:2;
+	vrD[16,16] = tmp2:2;
+	vrD[0,16] = tmp2:2;
+	goto <end>;
+	<block_11>
+	tmp5 = (tmp5 << 0x8);
+	<block_12>
+	tmp2 = tmp5;
+	vrD[96,32] = tmp2:4;
+	vrD[64,32] = tmp2:4;
+	vrD[32,32] = tmp2:4;
+	vrD[0,32] = tmp2:4;
+	goto <end>;
+	<block_13>
+	local b0:8 = 0;
+	local b1:8 = 0;
+	local b2:8 = 0;
+	select_value((tmp2 & 1), 0xff, 0x0, b0);
+	select_value((tmp2 & 2), 0xff00, 0x0, b1);
+	select_value((tmp2 & 4), 0xff0000, 0x0, b2);
+	tmp5 = ((((b1 | b0 | b2 | zext(((tmp2 << 28) s>> 7) & 0xff000000)) | (zext((tmp2 >> 4) & 1) * 0xff00000000)) | (zext(((tmp2 >> 5) & 1)) * 0xff0000000000)) | (tmp8 * 0xff000000000000)) + (zext(tmp6 s>> 31) << 0x38);
+	<block_14>
+	vrD[64,64] = tmp5;
+	vrD[0,64] = tmp5;
+	<end>
 }
-
-define pcodeop vpermi.w;
 
 #lsx.txt vpermi.w mask=0x73e40000	
 #0x73e40000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
-:vpermi.w vrD, vrJ, imm10_8           is op18_31=0x1cf9 & vrD & vrJ & imm10_8 {
-	vrD = vpermi.w(vrD, vrJ, imm10_8:$(REGSIZE));
+:vpermi.w vrD, vrJ, imm10_8, vrDN, vrJN
+is op18_31=0x1cf9 & vrD & vrJ & imm10_8 [ vrDN = 0x1000 + 32*vrD; vrJN = 0x1000 + 32*vrJ; ] {
+    local tmp1_idx:4 = imm10_8 & 3;
+    local tmp2_idx:4 = (imm10_8 >> 2) & 3;
+    local tmp3_idx:4 = (imm10_8 >> 4) & 3;
+    local tmp4_idx:4 = (imm10_8 >> 6) & 3;
+    local tmp1:4 = *[register]:4 (vrJN + 4*tmp1_idx);
+    local tmp2:4 = *[register]:4 (vrJN + 4*tmp2_idx);
+    local tmp3:4 = *[register]:4 (vrDN + 4*tmp3_idx);
+    local tmp4:4 = *[register]:4 (vrDN + 4*tmp4_idx);
+	vrD[0,32] = tmp1;
+	vrD[32,32] = tmp2;
+	vrD[64,32] = tmp3;
+	vrD[96,32] = tmp4;
 }
 
