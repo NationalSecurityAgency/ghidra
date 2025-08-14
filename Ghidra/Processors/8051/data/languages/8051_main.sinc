@@ -672,7 +672,7 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 :ANL Areg,rn     is $(GROUP2) & ophi=5 & Areg & rnfill=1 & rn					 { ACC = ACC & rn; resultflags(ACC); }
 :ANL Areg,Direct is $(GROUP1) & ophi=5 & oplo=5 & Areg; Direct		 { ACC = ACC & Direct; resultflags(ACC); }
 :ANL Areg,Ri     is $(GROUP2) & ophi=5 & Areg & rifill=3 & Ri					 { ACC = ACC & Ri; resultflags(ACC); }
-:ANL Areg,Data   is $(GROUP2) & ophi=5 & oplo=4 & Areg; Data		 { ACC = ACC & Data; resultflags(ACC); }
+:ANL Areg,Data   is $(GROUP1) & ophi=5 & oplo=4 & Areg; Data		 { ACC = ACC & Data; resultflags(ACC); }
 :ANL Direct,Areg is $(GROUP1) & ophi=5 & oplo=2 & Areg; Direct		 { tmp:1 = Direct & ACC; Direct = tmp; resultflags(tmp); }
 :ANL Direct,Data is $(GROUP1) & ophi=5 & oplo=3; Direct; Data		 { tmp:1 = Direct & Data; Direct = tmp; resultflags(tmp); }
 
