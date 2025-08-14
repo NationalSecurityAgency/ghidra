@@ -168,7 +168,7 @@ public class DWARFLine {
 		// read the directories, which are defined the same way files are
 		int directories_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < directories_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, result.intSize, cu);
 			dir = fixupDir(dir, defaultCompDir);
 			result.directories.add(dir);
 		}
@@ -182,7 +182,7 @@ public class DWARFLine {
 
 		int file_names_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < file_names_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, result.intSize, cu);
 			result.files.add(dir);
 		}
 	}
