@@ -1606,14 +1606,13 @@ public class ElfHeader implements StructConverter {
 	 * @return the section header that contains the address
 	 */
 	public ElfSectionHeader getSectionLoadHeaderContaining(long address) {
-// FIXME: verify 
 		for (ElfSectionHeader sectionHeader : sectionHeaders) {
 			if (!sectionHeader.isAlloc()) {
 				continue;
 			}
 			long start = sectionHeader.getAddress();
 			long end = start + sectionHeader.getSize();
-			if (start <= address && address <= end) {
+			if (start <= address && address < end) {
 				return sectionHeader;
 			}
 		}
