@@ -474,6 +474,11 @@ vrD.H.imm18_3: vrD, val is vrD & imm18_3 [ val = 0x1000 + 32*vrD + 2*imm18_3; ] 
 vrD.W.imm18_2: vrD, val is vrD & imm18_2 [ val = 0x1000 + 32*vrD + 4*imm18_2; ] { export *[register]:4 val; }
 vrD.D.imm18_1: vrD, val is vrD & imm18_1 [ val = 0x1000 + 32*vrD + 8*imm18_1; ] { export *[register]:8 val; }
 
+vrJ.B.imm18_4: vrJ, val is vrJ & imm18_4 [ val = 0x1000 + 32*vrJ + imm18_4; ] { export *[register]:1 val; }
+vrJ.H.imm18_3: vrJ, val is vrJ & imm18_3 [ val = 0x1000 + 32*vrJ + 2*imm18_3; ] { export *[register]:2 val; }
+vrJ.W.imm18_2: vrJ, val is vrJ & imm18_2 [ val = 0x1000 + 32*vrJ + 4*imm18_2; ] { export *[register]:4 val; }
+vrJ.D.imm18_1: vrJ, val is vrJ & imm18_1 [ val = 0x1000 + 32*vrJ + 8*imm18_1; ] { export *[register]:8 val; }
+
 # general pcodeops
 define pcodeop break;
 define pcodeop cpucfg;
@@ -581,3 +586,11 @@ macro tzcount64(input, count) {
 	count = count -  1 * zext((v & 0x5555555555555555) != 0);
 }
 
+macro select_value(cond, a, b, value) {
+	if (cond == 0) goto <l1>;
+	goto <l2>;
+	<l1>
+	value = b;
+	<l2>
+	value = a;
+}
