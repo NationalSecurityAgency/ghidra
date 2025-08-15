@@ -5944,13 +5944,9 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 :ubfx^COND Rd,Rm,lsbImm,widthMinus1	is $(AMODE) & ARMcond=1 & COND & c2127=0x3f & widthMinus1 & Rd & lsbImm & c0406=5 & Rm
 {
-	build COND;
-	build lsbImm;
-	build widthMinus1;
-	shift:4 = 31 - (lsbImm + widthMinus1);
-	Rd = Rm << shift;
-	shift = 31 - widthMinus1;
-	Rd = Rd >> shift;
+  build COND;
+  tmpmask:4 = ((1:4 << (1 + widthMinus1)) - 1);
+  Rd = (Rm >> lsbImm) & tmpmask;
 }
 
 @endif # VERSION_6T2
