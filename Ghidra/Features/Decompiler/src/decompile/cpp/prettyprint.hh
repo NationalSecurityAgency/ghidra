@@ -41,6 +41,7 @@ extern AttributeId ATTRIB_VARREF;	///< Marshaling attribute "varref"
 extern ElementId ELEM_BREAK;		///< Marshaling element \<break>
 extern ElementId ELEM_CLANG_DOCUMENT;	///< Marshaling element \<clang_document>
 extern ElementId ELEM_FUNCNAME;		///< Marshaling element \<funcname>
+extern ElementId ELEM_NORETURN;		///< Marshaling element \<noreturn>
 extern ElementId ELEM_FUNCPROTO;	///< Marshaling element \<funcproto>
 extern ElementId ELEM_LABEL;		///< Marshaling element \<label>
 extern ElementId ELEM_RETURN_TYPE;	///< Marshaling element \<return_type>
@@ -257,6 +258,12 @@ public:
   /// \param fd is the function
   /// \param op is the CALL operation associated within the syntax tree or null for a declaration
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)=0;
+
+  /// \brief Create a function noreturn identifiertoken
+  ///
+  /// \param hl indicates how the identifier should be highlighted
+  /// An identifier string representing noreturn information of the function is emitted
+  virtual void tagNoreturn(syntax_highlight hl)=0;
 
   /// \brief Emit a data-type identifier
   ///
@@ -525,6 +532,7 @@ public:
   virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
   virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op);
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
+  virtual void tagNoreturn(syntax_highlight hl);
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
@@ -572,6 +580,8 @@ public:
     *s << name; }
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op) {
     *s << name; }
+  virtual void tagNoreturn(syntax_highlight hl) {
+    *s << " noreturn "; }
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct) {
     *s << name; }
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op) {
@@ -640,6 +650,7 @@ public:
     vari_t,		///< A variable identifier
     op_t,		///< An operator
     fnam_t,		///< A function identifier
+    noret_t,		///< A function noreturn identifier
     type_t,		///< A data-type identifier
     field_t,		///< A field name for a structured data-type
     comm_t,		///< Part of a comment block
@@ -794,6 +805,12 @@ public:
   void tagFuncName(const string &name,EmitMarkup::syntax_highlight h,const Funcdata *f,const PcodeOp *o) {
     tok = name; size = tok.size();
     tagtype=fnam_t; delimtype=tokenstring; hl=h; ptr_second.fd=f; op=o; }
+
+  /// \ brief Create a function noreturn identifiertoken
+  ///
+  /// \parm h indicated how the identifier should be highlighted
+  void tagNoreturn(EmitMarkup::syntax_highlight h) {
+    tagtype=noret_t; delimtype=tokenstring; hl=h; }
 
   /// \brief Create a data-type identifier token
   ///
@@ -1086,6 +1103,7 @@ public:
   virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
   virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op);
   virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
+  virtual void tagNoreturn(syntax_highlight hl);
   virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
