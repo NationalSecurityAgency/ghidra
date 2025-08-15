@@ -59,12 +59,13 @@ public class DWARFFile {
 	 * @param reader BinaryReader
 	 * @param defs similar to a DIE's attributespec, a list of DWARFForms that define how values
 	 * will be deserialized from the stream
+	 * @param dwarfIntSize size of serialized dwarf ints (might be different than the CU's dwarfIntSize)
 	 * @param cu {@link DWARFCompilationUnit}
 	 * @return new DWARFFile
 	 * @throws IOException if error reading
 	 */
 	public static DWARFFile readV5(BinaryReader reader, List<DWARFLineContentType.Def> defs,
-			DWARFCompilationUnit cu) throws IOException {
+			int dwarfIntSize, DWARFCompilationUnit cu) throws IOException {
 
 		String name = null;
 		int directoryIndex = -1;
@@ -72,7 +73,7 @@ public class DWARFFile {
 		long length = 0;
 		byte[] md5 = null;
 		for (DWARFLineContentType.Def def : defs) {
-			DWARFFormContext context = new DWARFFormContext(reader, cu, def);
+			DWARFFormContext context = new DWARFFormContext(reader, cu, def, dwarfIntSize);
 			DWARFAttributeValue val = def.getAttributeForm().readValue(context);
 
 			switch (def.getAttributeId()) {

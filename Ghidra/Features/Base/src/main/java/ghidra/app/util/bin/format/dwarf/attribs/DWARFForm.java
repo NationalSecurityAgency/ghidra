@@ -177,8 +177,8 @@ public enum DWARFForm {
 
 			DWARFForm indirectForm = DWARFForm.of(indirectFormInt);
 			DWARFAttributeDef<?> indirectAS = context.def().withForm(indirectForm);
-			DWARFFormContext indirectContext =
-				new DWARFFormContext(context.reader(), context.compUnit(), indirectAS);
+			DWARFFormContext indirectContext = new DWARFFormContext(context.reader(),
+				context.compUnit(), indirectAS, context.dwarfIntSize());
 			long indirectSize = indirectForm.getSize(indirectContext);
 
 			return firstSize + indirectSize;
@@ -189,8 +189,8 @@ public enum DWARFForm {
 			int indirectFormInt = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
 			DWARFForm indirectForm = DWARFForm.of(indirectFormInt);
 			DWARFAttributeDef<?> indirectAS = context.def().withForm(indirectForm);
-			DWARFFormContext indirectContext =
-				new DWARFFormContext(context.reader(), context.compUnit(), indirectAS);
+			DWARFFormContext indirectContext = new DWARFFormContext(context.reader(),
+				context.compUnit(), indirectAS, context.dwarfIntSize());
 			return indirectForm.readValue(indirectContext);
 		}
 	},
@@ -335,7 +335,7 @@ public enum DWARFForm {
 	public long getSize(DWARFFormContext context) throws IOException {
 		switch (size) {
 			case DWARF_INTSIZE:
-				return context.compUnit().getIntSize();
+				return context.dwarfIntSize();
 			case LEB128_SIZE:
 				return context.reader().readNext(LEB128::getLength);
 			case DYNAMIC_SIZE:
