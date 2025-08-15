@@ -388,4 +388,19 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
   </language>
+
+  <language processor="PowerPC"
+            endian="big"
+            size="64"
+            variant="CellBE"
+            version="1.6"
+            slafile="ppc_64_isa_altivec_be.sla"
+            processorspec="ppc_64_cellbe.pspec"
+            manualindexfile="../manuals/PowerISA.idx"
+            id="PowerPC:BE:64:CELLBE">
+    <description>CellBE (PowerPC 64 Big Endian w/Altivec)</description>
+    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
 </language_definitions>
