@@ -1124,7 +1124,7 @@ string TypeOpIntZext::getOperatorName(const PcodeOp *op) const
 {
   ostringstream s;
   
-  s << name << dec << op->getIn(0)->getSize() << op->getOut()->getSize();
+  s << name << dec << op->getIn(0)->getSize() << "_" << op->getOut()->getSize();
   return s.str();
 }
 
@@ -1150,7 +1150,7 @@ string TypeOpIntSext::getOperatorName(const PcodeOp *op) const
 {
   ostringstream s;
   
-  s << name << dec << op->getIn(0)->getSize() << op->getOut()->getSize();
+  s << name << dec << op->getIn(0)->getSize() << "_" << op->getOut()->getSize();
   return s.str();
 }
 
@@ -2050,7 +2050,7 @@ string TypeOpPiece::getOperatorName(const PcodeOp *op) const
 {
   ostringstream s;
 
-  s << name << dec << op->getIn(0)->getSize() << op->getIn(1)->getSize();
+  s << name << dec << op->getIn(0)->getSize() << "_" << op->getIn(1)->getSize();
   return s.str();
 }
 
@@ -2129,7 +2129,7 @@ string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
 {
   ostringstream s;
 
-  s << name << dec << op->getIn(0)->getSize() << op->getOut()->getSize();
+  s << name << dec << op->getIn(0)->getSize() << "_" << op->getOut()->getSize();
   return s.str();
 }
 
