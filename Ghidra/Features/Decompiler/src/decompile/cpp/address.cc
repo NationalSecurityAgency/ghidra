@@ -630,8 +630,8 @@ void RangeList::decode(Decoder &decoder)
 #ifdef UINTB4
 uintb uintbmasks[9] = { 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
 #else
-uintb uintbmasks[9] = { 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffffffLL,
-			0xffffffffffffLL, 0xffffffffffffffLL, 0xffffffffffffffffLL };
+uintb uintbmasks[9] = { 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffffff,
+			0xffffffffffff, 0xffffffffffffff, 0xffffffffffffffff };
 #endif
 
 /// Treat the given \b val as a constant of \b size bytes
