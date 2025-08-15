@@ -65,7 +65,10 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			Map.entry("java.sql.Time", "datetime.time"),
 			Map.entry("java.sql.Date", "datetime.date"),
 			Map.entry("java.sql.Timestamp", "datetime.datetime"),
-			Map.entry("java.math.BigDecimal", "decimal.Decimal")));
+			Map.entry("java.math.BigDecimal", "decimal.Decimal"),
+			Map.entry("utility.function.ExceptionalCallback", "typing.Union[utility.function.ExceptionalCallback[E], typing.Callable[[], None]]"),
+			Map.entry("utility.function.ExceptionalSupplier", "typing.Union[utility.function.ExceptionalSupplier[T, E], typing.Callable[[], T]]"),
+			Map.entry("ghidra.program.util.string.FoundStringCallback", "typing.Union[ghidra.program.util.string.FoundStringCallback, typing.Callable[[ghidra.program.util.string.FoundString], None]]")));
 
 	// FIXME: list and set aren't automatically converted to java.util.List and java.util.Set :(
 	// if wanted they could be setup to be converted automatically by PyGhidra
@@ -225,6 +228,10 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			};
 		}
 
+		if (type.getKind() == TypeKind.VOID) {
+			return "None";
+		}
+
 		if (type instanceof DeclaredType dt) {
 			Element element = dt.asElement();
 			if (element instanceof QualifiedNameable nameable) {
@@ -314,16 +321,14 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 		printer.print(")");
 
 		TypeMirror res = el.getReturnType();
-		if (res.getKind() != TypeKind.VOID) {
-			printer.print(" -> ");
-			String convertedType = convertResultType(res);
-			if (convertedType != null) {
-				printer.print(convertedType);
-			}
-			else {
-				printer.print(sanitizeQualifiedName(res));
-			}
-		}
+        printer.print(" -> ");
+        String convertedType = convertResultType(res);
+        if (convertedType != null) {
+            printer.print(convertedType);
+        }
+        else {
+            printer.print(sanitizeQualifiedName(res));
+        }
 	}
 
 	/**
