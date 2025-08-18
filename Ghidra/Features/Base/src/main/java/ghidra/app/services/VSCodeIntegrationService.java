@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import java.io.*;
+import java.util.List;
 
 import ghidra.framework.options.ToolOptions;
 
@@ -35,6 +36,11 @@ public interface VSCodeIntegrationService {
 	 * @throws FileNotFoundException if the executable file does not exist
 	 */
 	public File getVSCodeExecutableFile() throws FileNotFoundException;
+
+	/**
+	 * {@return the Visual Studio Code executable arguments}
+	 */
+	public List<String> getVSCodeArguments();
 
 	/**
 	 * Launches Visual Studio Code
