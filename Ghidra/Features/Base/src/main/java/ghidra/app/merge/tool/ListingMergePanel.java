@@ -27,7 +27,7 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.TitledPanel;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
@@ -66,7 +66,7 @@ public class ListingMergePanel extends JPanel
 	private JComponent bottomComp;
 	protected TitledPanel[] titlePanels;
 	private ListingPanel[] listingPanels;
-	private FieldPanelCoordinator coordinator;
+	private FieldPanelScrollCoordinator coordinator;
 	private FormatManager formatMgr;
 	private MultiListingLayoutModel multiModel;
 	private Program[] programs = new Program[4];
@@ -120,7 +120,7 @@ public class ListingMergePanel extends JPanel
 		}
 
 		backgroundColorModel.addChangeListener(backgroundChangeListener);
-		coordinator = new FieldPanelCoordinator(fieldPanels);
+		coordinator = new FieldPanelScrollCoordinator(fieldPanels);
 
 		titlePanels[RESULT].addTitleComponent(new ShowHeaderButton());
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,10 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.listener.ViewListener;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 
-
 /**
  * Coordinates the scrolling of a set of field panels by sharing bound scroll models.
  */
-public class FieldPanelCoordinator implements ViewListener {
+public class FieldPanelScrollCoordinator implements ViewListener {
 	FieldPanel[] panels;
 	boolean valuesChanging;
 
@@ -33,19 +32,28 @@ public class FieldPanelCoordinator implements ViewListener {
 	 * Constructs a new FieldPanelCoordinatro to synchronize the scrolling of the given field panels.
 	 * @param panels the array of panels to synchronize.
 	 */
-	public FieldPanelCoordinator(FieldPanel[] panels) {
+	public FieldPanelScrollCoordinator(FieldPanel[] panels) {
 		this.panels = new FieldPanel[panels.length];
 		System.arraycopy(panels, 0, this.panels, 0, panels.length);
-		for(int i=0;i<panels.length;i++) {
-			addListeners(panels[i]);
+		for (FieldPanel panel : panels) {
+			addListeners(panel);
 		}
 	}
+
+	protected FieldPanel getOtherPanel(FieldPanel fp) {
+
+		if (panels[0] == fp) {
+			return panels[1];
+		}
+		return panels[0];
+	}
+
 	/**
 	 * Cleans up resources.
 	 */
 	public void dispose() {
-		for(int i=0;i<panels.length;i++) {
-			removeListeners(panels[i]);
+		for (FieldPanel panel : panels) {
+			removeListeners(panel);
 		}
 		panels = null;
 	}
@@ -56,53 +64,55 @@ public class FieldPanelCoordinator implements ViewListener {
 	 */
 	public void add(FieldPanel fp) {
 		addListeners(fp);
-		FieldPanel[] newPanels = new FieldPanel[panels.length+1];
+		FieldPanel[] newPanels = new FieldPanel[panels.length + 1];
 		System.arraycopy(panels, 0, newPanels, 0, panels.length);
 		newPanels[panels.length] = fp;
 		panels = newPanels;
 		ViewerPosition vp = fp.getViewerPosition();
 		viewChanged(fp, vp.getIndex(), vp.getXOffset(), vp.getYOffset());
 	}
-	
+
 	/**
 	 * Removes the given field panel from the list to be synchronized.
 	 */
 	public void remove(FieldPanel fp) {
 		removeListeners(fp);
-		FieldPanel[] newPanels = new FieldPanel[panels.length-1];
+		FieldPanel[] newPanels = new FieldPanel[panels.length - 1];
 		int j = 0;
-		for(int i=0;i<panels.length;i++) {
-			if (panels[i] != fp) {
-				newPanels[j++] = panels[i];
+		for (FieldPanel panel : panels) {
+			if (panel != fp) {
+				newPanels[j++] = panel;
 			}
 		}
 		panels = newPanels;
 	}
-	
+
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
-		if (valuesChanging) return;
+		if (valuesChanging) {
+			return;
+		}
 		valuesChanging = true;
 		try {
-			for(int i=0;i<panels.length;i++) {
-				if (panels[i] != fp) {
-					panels[i].setViewerPosition(index, xPos, yPos);
+			for (FieldPanel panel : panels) {
+				if (panel != fp) {
+					panel.setViewerPosition(index, xPos, yPos);
 				}
 			}
-		}finally {
-			valuesChanging = false;		
+		}
+		finally {
+			valuesChanging = false;
 		}
 	}
 
 	private void addListeners(FieldPanel fp) {
 		fp.addViewListener(this);
-	
-	
-	}
-	private void removeListeners(FieldPanel fp) {
-		fp.removeViewListener(this);
-	
+
 	}
 
+	private void removeListeners(FieldPanel fp) {
+		fp.removeViewListener(this);
+
+	}
 
 }

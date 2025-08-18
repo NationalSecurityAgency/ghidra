@@ -97,7 +97,8 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		//
 		// Clone the graph
 		//
-		FGController clonedController = cloneGraph();
+		FGProvider clonedProvider = cloneGraph();
+		FGController clonedController = clonedProvider.getController();
 		FGData clonedData = clonedController.getFunctionGraphData();
 		FunctionGraph clonedFunctionGraph = clonedData.getFunctionGraph();
 

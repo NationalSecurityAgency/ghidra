@@ -111,7 +111,7 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 	}
 
 	/**
-	 * Will schedule the fitting work to happen now if now work is being done, or later otherwis
+	 * Will schedule the fitting work to happen now if no work is being done, or later otherwise
 	 */
 	public void fitGraphToViewerLater() {
 		jobRunner.setFinalJob(new FitGraphToViewJob<>(primaryViewer));

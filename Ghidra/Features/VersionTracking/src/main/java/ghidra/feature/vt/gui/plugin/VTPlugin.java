@@ -87,9 +87,9 @@ public class VTPlugin extends Plugin {
 
 	private VTController controller;
 
-	// common resources
-
-	// destination-side resources
+	// plugins we have to add to our tool manually
+	private Set<String> additionalPluginNames = new HashSet<>(Set.of(
+		"ghidra.features.codecompare.plugin.FunctionComparisonPlugin"));
 
 	private VTMatchTableProvider matchesProvider;
 	private VTMarkupItemsTableProvider markupProvider;
@@ -99,16 +99,15 @@ public class VTPlugin extends Plugin {
 
 	public VTPlugin(PluginTool tool) {
 		super(tool);
+
+		tool.setUnconfigurable();
+
 		OWNER = getName();
 		controller = new VTControllerImpl(this);
-		matchesProvider = new VTMatchTableProvider(controller);
-		markupProvider = new VTMarkupItemsTableProvider(controller);
-		impliedMatchesTable = new VTImpliedMatchesTableProvider(controller);
-		functionAssociationProvider = new VTFunctionAssociationProvider(controller);
+		registerServiceProvided(VTController.class, controller);
+
 		toolManager = new VTSubToolManager(this);
 		createActions();
-		registerServiceProvided(VTController.class, controller);
-		tool.setUnconfigurable();
 
 		DockingActionIf saveAs = getToolAction("Save Tool As");
 		tool.removeAction(saveAs);
@@ -116,11 +115,7 @@ public class VTPlugin extends Plugin {
 		DockingActionIf export = getToolAction("Export Tool");
 		tool.removeAction(export);
 
-		new MatchStatusUpdaterAssociationHook(controller);
-		new ImpliedMatchAssociationHook(controller);
-
 		initializeOptions();
-
 	}
 
 	private DockingActionIf getToolAction(String actionName) {
@@ -145,8 +140,15 @@ public class VTPlugin extends Plugin {
 	protected void init() {
 
 		removeUnwantedPlugins();
-
 		addCustomPlugins();
+
+		matchesProvider = new VTMatchTableProvider(controller);
+		markupProvider = new VTMarkupItemsTableProvider(controller);
+		impliedMatchesTable = new VTImpliedMatchesTableProvider(controller);
+		functionAssociationProvider = new VTFunctionAssociationProvider(controller);
+
+		new MatchStatusUpdaterAssociationHook(controller);
+		new ImpliedMatchAssociationHook(controller);
 
 		maybeShowHelp();
 	}
@@ -161,11 +163,11 @@ public class VTPlugin extends Plugin {
 
 	private void addCustomPlugins() {
 
-		List<String> names =
-			new ArrayList<>(List.of("ghidra.features.codecompare.plugin.FunctionComparisonPlugin"));
 		List<Plugin> plugins = tool.getManagedPlugins();
-		Set<String> existingNames =
-			plugins.stream().map(c -> c.getName()).collect(Collectors.toSet());
+		Set<String> existingNames = new HashSet<>(
+			plugins.stream()
+					.map(c -> c.getName())
+					.collect(Collectors.toSet()));
 
 		// Note: we check to see if the plugins we want to add have already been added to the tool.
 		// We should not need to do this, but once the tool has been saved with the plugins added,
@@ -173,7 +175,7 @@ public class VTPlugin extends Plugin {
 		// easier than modifying the default to file to load the plugins, since the amount of xml
 		// required for that is non-trivial.
 		try {
-			for (String className : names) {
+			for (String className : additionalPluginNames) {
 				if (!existingNames.contains(className)) {
 					tool.addPlugin(className);
 				}

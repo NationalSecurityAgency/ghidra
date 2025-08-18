@@ -31,6 +31,7 @@ import docking.ComponentProvider;
 import docking.action.*;
 import docking.widgets.TitledPanel;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
@@ -41,17 +42,19 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.datastruct.Duo;
 import ghidra.util.datastruct.Duo.Side;
+import utility.function.Callback;
 
 /**
- * The CodeComparisonPanel class should be extended by any class that is to be 
+ * The {@link CodeComparisonView} class should be extended by any class that is to be 
  * discovered by the {@link FunctionComparisonPanel} class and included as a 
  * form of comparing two sections of code within the same or different programs
  * <p>
- * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN
- * <code>CodeComparisonPanel</code> so they are discoverable by the {@link ClassSearcher} 
+ * NOTE: ALL CodeComparisonView CLASSES MUST END IN
+ * <code>CodeComparisonView</code> so they are discoverable by the {@link ClassSearcher} 
  */
-public abstract class CodeComparisonPanel extends JPanel
+public abstract class CodeComparisonView extends JPanel
 		implements ExtensionPoint {
+
 	public static final String HELP_TOPIC = "FunctionComparison";
 	private static final Color ACTIVE_BORDER_COLOR = Palette.getColor("lightpink");
 	private static final int MINIMUM_PANEL_WIDTH = 50;
@@ -71,6 +74,7 @@ public abstract class CodeComparisonPanel extends JPanel
 	private ToggleOrientationAction toggleOrientationAction;
 	private JComponent northComponent;
 	private boolean showTitles = true;
+	private Callback orientationChangedCallback = Callback.dummy();
 
 	/**
 	 * Constructor
@@ -78,7 +82,7 @@ public abstract class CodeComparisonPanel extends JPanel
 	 * @param owner the name of the owner of this component 
 	 * @param tool the tool that contains the component
 	 */
-	protected CodeComparisonPanel(String owner, PluginTool tool) {
+	protected CodeComparisonView(String owner, PluginTool tool) {
 		this.owner = owner;
 		this.tool = tool;
 		toggleOrientationAction = new ToggleOrientationAction(getName());
@@ -89,6 +93,10 @@ public abstract class CodeComparisonPanel extends JPanel
 
 	public PluginTool getTool() {
 		return tool;
+	}
+
+	public void setSaveState(SaveState saveState) {
+		// for subclasses
 	}
 
 	/**
@@ -163,7 +171,7 @@ public abstract class CodeComparisonPanel extends JPanel
 	public abstract void dispose();
 
 	/**
-	 * Returns the context object which corresponds to the area of focus within this provider's 
+	 * Returns the context object which corresponds to the area of focus within this view's 
 	 * component. Null is returned when there is no context.
 	 * @param componentProvider the provider that includes this code comparison component.
 	 * @param event mouse event which corresponds to this request.
@@ -296,6 +304,12 @@ public abstract class CodeComparisonPanel extends JPanel
 				: JSplitPane.VERTICAL_SPLIT;
 		splitPane.setOrientation(orientation);
 		splitPane.setDividerLocation(0.5);
+
+		orientationChangedCallback.call();
+	}
+
+	public void setOrientationChangedCallback(Callback callback) {
+		this.orientationChangedCallback = Callback.dummyIfNull(callback);
 	}
 
 	private void setTitle(TitledPanel titlePanel, String titlePrefix, String title) {
@@ -343,7 +357,7 @@ public abstract class CodeComparisonPanel extends JPanel
 		setActiveSide(LEFT);
 	}
 
-	private void addMouseAndFocusListeners(Side side) {
+	protected void addMouseAndFocusListeners(Side side) {
 		JComponent comp = getComparisonComponent(side);
 		comp.addFocusListener(new FocusAdapter() {
 			@Override
@@ -374,6 +388,7 @@ public abstract class CodeComparisonPanel extends JPanel
 	}
 
 	private void addMouseListenerRecursively(Component component, MouseListener listener) {
+		component.removeMouseListener(listener);
 		component.addMouseListener(listener);
 		if (component instanceof Container container) {
 			for (int i = 0; i < container.getComponentCount(); i++) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,10 @@ import ghidra.util.task.*;
 /**
  * Provides the ability to synchronize concurrent connection task
  * instances within the same thread.  This can occur within the swing thread due to the presence
- * of a modal task dialog event queue.  It also allows password cancelation to be propogated to the
+ * of a modal task dialog event queue.  It also allows password cancellation to be propagated to the
  * other tasks(s).
  */
-public class BSimDBConnectTaskCoordinator {
+public class BSimDBConnectTaskManager {
 
 	private final BSimServerInfo serverInfo;
 
@@ -36,7 +36,7 @@ public class BSimDBConnectTaskCoordinator {
 	private boolean isCancelled = false;
 	private int count = 0;
 
-	public BSimDBConnectTaskCoordinator(BSimServerInfo serverInfo) {
+	public BSimDBConnectTaskManager(BSimServerInfo serverInfo) {
 		this.serverInfo = serverInfo;
 	}
 
@@ -50,7 +50,7 @@ public class BSimDBConnectTaskCoordinator {
 	 * Initiate a DB connection.
 	 * @param connectionSupplier DB connection supplier
 	 * @return DB connection
-	 * @throws SQLException if a database connection error occured
+	 * @throws SQLException if a database connection error occurred
 	 * @throws CancelledSQLException if task was cancelled (password entry cancelled)
 	 */
 	public Connection getConnection(DBConnectionSupplier connectionSupplier) throws SQLException {
@@ -66,7 +66,7 @@ public class BSimDBConnectTaskCoordinator {
                 .launchModal();
             //@formatter:on    
 
-			synchronized (BSimDBConnectTaskCoordinator.this) {
+			synchronized (BSimDBConnectTaskManager.this) {
 				Connection c = connectTask.getConnection();
 				if (c != null) {
 					return c;
@@ -85,7 +85,7 @@ public class BSimDBConnectTaskCoordinator {
 			}
 		}
 		finally {
-			synchronized (BSimDBConnectTaskCoordinator.this) {
+			synchronized (BSimDBConnectTaskManager.this) {
 				if (--count == 0) {
 					clear();
 				}
@@ -136,7 +136,7 @@ public class BSimDBConnectTaskCoordinator {
 		 */
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			synchronized (BSimDBConnectTaskCoordinator.this) {
+			synchronized (BSimDBConnectTaskManager.this) {
 				monitor.setMessage("Connecting...");
 				++count;
 				if (isCancelled) {

@@ -30,7 +30,7 @@ import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonView;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.features.codecompare.plugin.FunctionComparisonPlugin;
 import ghidra.features.codecompare.plugin.FunctionComparisonProvider;
@@ -102,8 +102,8 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 			FunctionComparisonPanel functionComparisonPanel = provider.getComponent();
 			runSwing(() -> {
 				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
-				ListingCodeComparisonPanel dualListing =
-					(ListingCodeComparisonPanel) functionComparisonPanel.getDisplayedPanel();
+				ListingCodeComparisonView dualListing =
+					(ListingCodeComparisonView) functionComparisonPanel.getDisplayedView();
 				ListingPanel leftPanel = dualListing.getListingPanel(LEFT);
 				leftPanel.goTo(addr(0x004119aa));
 			});

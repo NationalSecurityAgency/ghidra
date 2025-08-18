@@ -26,8 +26,7 @@ import javax.swing.*;
 import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.base.codecompare.model.FunctionComparisonModelListener;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
-import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
+import ghidra.features.base.codecompare.panel.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -60,16 +59,17 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
 	 * @param model the comparison data model
+	 * @param state the comparison save state
 	 */
 	public MultiFunctionComparisonPanel(FunctionComparisonProvider provider, PluginTool tool,
-			FunctionComparisonModel model) {
-		super(tool, provider.getName());
+			FunctionComparisonModel model, FunctionComparisonState state) {
+		super(tool, provider.getName(), state);
 		this.model = model;
 		model.addFunctionComparisonModelListener(this);
 
 		buildComboPanels();
 
-		getComparisonPanels().forEach(p -> p.setShowDataTitles(false));
+		getComparisonView().forEach(p -> p.setShowDataTitles(false));
 		setPreferredSize(new Dimension(1200, 600));
 		modelDataChanged();
 	}
@@ -94,7 +94,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
 	}
 
 	Side getActiveSide() {
-		CodeComparisonPanel currentComponent = getCurrentComponent();
+		CodeComparisonView currentComponent = getCurrentView();
 		return currentComponent.getActiveSide();
 	}
 

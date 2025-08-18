@@ -55,7 +55,8 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.ProgramUtilities;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.TaskUtilities;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
@@ -75,7 +76,7 @@ public class TestEnv {
 	private static Set<TestEnv> instances = new HashSet<>();
 
 	private FrontEndTool frontEndTool;
-	private PluginTool tool;
+	protected PluginTool tool;
 
 	private static TestProgramManager programManager = new TestProgramManager();
 
@@ -962,7 +963,7 @@ public class TestEnv {
 
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+			CancelledException, VersionException {
 		File file = AbstractGenericTest.getTestDataFile(programName);
 		if (file == null || !file.exists()) {
 			throw new FileNotFoundException("Can not find test program: " + programName);
@@ -971,8 +972,7 @@ public class TestEnv {
 	}
 
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
+			throws CancelledException, VersionException, IOException {
 		Language language =
 			DefaultLanguageService.getLanguageService().getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();

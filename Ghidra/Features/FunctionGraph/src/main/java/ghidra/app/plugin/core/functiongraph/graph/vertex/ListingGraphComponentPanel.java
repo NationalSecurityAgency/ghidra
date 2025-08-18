@@ -744,7 +744,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		@Override
 		protected void showPopup(JComponent comp, Field field, MouseEvent event,
 				Rectangle fieldBounds) {
-			if (!controller.arePopupsEnabled()) {
+			if (!controller.arePopupsVisible()) {
 				return;
 			}
 
