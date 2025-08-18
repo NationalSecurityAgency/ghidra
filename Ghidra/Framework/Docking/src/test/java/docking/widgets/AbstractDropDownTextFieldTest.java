@@ -19,8 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -30,6 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import docking.test.AbstractDockingTest;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 
 public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTest {
 
@@ -151,21 +151,30 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 		return item;
 	}
 
-	/** The item that is selected in the JList; not the 'selectedValue' in the text field */
+	/** 
+	 * The item that is selected in the JList; not the 'selectedValue' in the text field 
+	 * @param expected the expected value
+	 */
 	protected void assertSelectedListItem(int expected) {
 		JList<T> list = textField.getJList();
 		int actual = runSwing(() -> list.getSelectedIndex());
 		assertEquals(expected, actual);
 	}
 
-	/** The item that is selected in the JList; not the 'selectedValue' in the text field */
+	/** 
+	 * The item that is selected in the JList; not the 'selectedValue' in the text field 
+	 * @param expected the expected items
+	 */
 	protected void assertSelectedListItem(T expected) {
 		JList<T> list = textField.getJList();
 		T actual = runSwing(() -> list.getSelectedValue());
 		assertEquals(expected, actual);
 	}
 
-	/** The 'selectedValue' made after the user makes a choice */
+	/** 
+	 * The 'selectedValue' made after the user makes a choice 
+	 * @param expected the expected value
+	 */
 	protected void assertSelectedValue(T expected) {
 		T actual = runSwing(() -> textField.getSelectedValue());
 		assertEquals(expected, actual);
@@ -175,6 +184,24 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 		JList<T> list = textField.getJList();
 		T actual = runSwing(() -> list.getSelectedValue());
 		assertNull(actual);
+	}
+
+	protected void assertMatchesInList(String... expected) {
+
+		waitForSwing();
+		assertMatchingWindowShowing();
+
+		@SuppressWarnings("unchecked")
+		JList<String> list = (JList<String>) textField.getJList();
+		ListModel<String> model = list.getModel();
+		int n = model.getSize();
+		assertEquals("Expected item size is not the same as the matching list size",
+			expected.length, n);
+		HashSet<String> set = new HashSet<>(Arrays.asList(expected));
+		for (int i = 0; i < n; i++) {
+			String item = model.getElementAt(i);
+			assertTrue("Item in list not expected: " + item, set.contains(item));
+		}
 	}
 
 	protected void assertNoEditingCancelledEvent() {
@@ -252,6 +279,15 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 		runSwing(() -> textField.setText(text));
 	}
 
+	protected void setSearchMode(SearchMode newMode) {
+		runSwing(() -> textField.setSearchMode(newMode));
+	}
+
+	protected void assertSearchMode(SearchMode expected) {
+		SearchMode actual = runSwing(() -> textField.getSearchMode());
+		assertEquals(expected, actual);
+	}
+
 	protected void closeMatchingWindow() {
 		JWindow window = runSwing(() -> textField.getActiveMatchingWindow());
 		if (window == null) {
@@ -291,6 +327,16 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 
 	protected void down() {
 		tpyeActionKey(KeyEvent.VK_DOWN);
+		waitForSwing();
+	}
+
+	protected void left() {
+		tpyeActionKey(KeyEvent.VK_LEFT);
+		waitForSwing();
+	}
+
+	protected void right() {
+		tpyeActionKey(KeyEvent.VK_RIGHT);
 		waitForSwing();
 	}
 
