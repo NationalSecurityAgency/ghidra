@@ -42,7 +42,6 @@ tasks.assemblePyPackage {
 }
 
 task buildTlb(type: Exec) {
-	assert isCurrentX86_64() && isCurrentWindows() : "Can only build TLB on Windows x86"
 
 	def tmpBatch = file("build/buildTlb.bat")
 	def idl = file("src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl")
@@ -51,6 +50,7 @@ task buildTlb(type: Exec) {
 	outputs.file(tlb)
 
 	doFirst {
+		assert isCurrentX86_64() && isCurrentWindows() : "Can only build TLB on Windows x86"
 		file(tlb).parentFile.mkdirs()
 		def midlCmd = "midl /tlb \"${tlb}\" \"${idl}\""
 		println "Executing: " + midlCmd
@@ -69,7 +69,6 @@ task buildTlb(type: Exec) {
 }
 
 task prebuildTlb(type: Copy) {
-	assert file(BIN_REPO).exists() : "Bin repo doesn't exist"
 
 	dependsOn buildTlb
 
@@ -77,6 +76,7 @@ task prebuildTlb(type: Copy) {
 	into binRepoFile.parentFile
 
 	doFirst {
+		assert file(BIN_REPO).exists() : "Bin repo doesn't exist"
 		file(binRepoFile).parentFile.mkdirs()
 	}
 }
