@@ -586,7 +586,7 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
     m16_ry = zext(*[ram]:2 OFF_M16S1);  
 }
 
-:li m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b01101 & m16_rx & m16_ri_z=0 & EXT_LIU8 {
+:li m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b01101 & m16_rx & EXT_LIU8 {
 	m16_rx = zext(EXT_LIU8);
 }
 
