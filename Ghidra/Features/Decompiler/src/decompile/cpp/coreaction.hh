@@ -831,6 +831,7 @@ public:
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
   int4 numpass;			///< Number of passes performed for this function
+  static bool isCopyConstant(Varnode *vn);		///< Is the given Varnode a constant or a COPY of a constant
   static bool isDelayedConstant(Varnode *vn);		///< Determine if given Varnode is or will be a constant
   static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
   static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable
