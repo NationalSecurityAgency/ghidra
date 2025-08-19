@@ -89,6 +89,18 @@ public class ImageUtils {
 	}
 
 	/**
+	 * Pads the given image with space in the amount given.
+	 * 
+	 * @param i the image to pad
+	 * @param c the color to use for the padding background
+	 * @param padding the padding
+	 * @return a new image with the given image centered inside of padding
+	 */
+	public static Image padImage(Image i, Color c, Padding padding) {
+		return padImage(i, c, padding.top, padding.left, padding.right, padding.bottom);
+	}
+
+	/**
 	 * Crops the given image, keeping the given bounds
 	 * 
 	 * @param i the image to crop
@@ -473,5 +485,16 @@ public class ImageUtils {
 
 		destination[3] = rgbPixels[3];
 		return destination;
+	}
+
+	/**
+	 * Four int values that represent padding on each side of an image
+	 * @param top top padding
+	 * @param left left padding
+	 * @param right right padding
+	 * @param bottom bottom padding
+	 */
+	public record Padding(int top, int left, int right, int bottom) {
+
 	}
 }

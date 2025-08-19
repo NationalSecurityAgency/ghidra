@@ -787,7 +787,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		waitForSwing();
 
-		int tryCount = 3;
+		int tryCount = 0;
 		while (tryCount++ < 5 && updater.isBusy()) {
 			waitForConditionWithoutFailing(() -> !updater.isBusy());
 		}

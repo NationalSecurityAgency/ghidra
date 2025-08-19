@@ -317,6 +317,7 @@ src/main/help/help/topics/DataTypeEditors/images/BytesNumberInputDialog.png||GHI
 src/main/help/help/topics/DataTypeEditors/images/Dialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Create_Pointer.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Multiple_Match.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/Dialog_SearchMode.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Select_Tree.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Single_Match.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/EnumEditor.png||GHIDRA||||END|

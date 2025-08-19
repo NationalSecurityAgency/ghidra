@@ -151,6 +151,8 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		editorPanel.add(selectionField);
 		editorPanel.add(browsePanel);
 
+		// This listener is not installed under certain conditions, such as when 
+		// setTabCommitsEdit(true) is called.  
 		keyListener = new KeyAdapter() {
 
 			@Override

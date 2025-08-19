@@ -31,7 +31,9 @@ import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginPackage;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import resources.Icons;
+import utilities.util.reflection.ReflectionUtilities;
 
 public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 
@@ -145,6 +147,18 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 				public boolean isEnabledForContext(ActionContext context) {
 					return true;
 				}
+
+				@Override
+				public void setEnabled(boolean newValue) {
+
+					if (!newValue) {
+						Msg.debug(this, "disable Save As...",
+							ReflectionUtilities.createJavaFilteredThrowable());
+					}
+
+					super.setEnabled(newValue);
+				}
+
 			};
 			icon = Icons.SAVE_AS_ICON;
 			saveAsAction

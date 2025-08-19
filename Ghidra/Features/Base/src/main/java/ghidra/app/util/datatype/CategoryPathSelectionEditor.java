@@ -18,13 +18,17 @@ package ghidra.app.util.datatype;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.TreePath;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
@@ -407,15 +411,36 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 		}
 
 		@Override
+		public List<SearchMode> getSupportedSearchModes() {
+			return List.of(SearchMode.CONTAINS, SearchMode.STARTS_WITH, SearchMode.WILDCARD);
+		}
+
+		@Override
 		public List<CategoryPath> getMatchingData(String searchText) {
-			if (searchText == null || searchText.length() == 0) {
-				return Collections.emptyList();
+			throw new UnsupportedOperationException(
+				"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+		}
+
+		@Override
+		public List<CategoryPath> getMatchingData(String searchText, SearchMode mode) {
+			if (StringUtils.isBlank(searchText)) {
+				return new ArrayList<>(data);
 			}
 
+			if (!getSupportedSearchModes().contains(mode)) {
+				throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+			}
+
+			Pattern p = mode.createPattern(searchText);
+			return getMatchingDataRegex(p);
+		}
+
+		private List<CategoryPath> getMatchingDataRegex(Pattern p) {
 			List<CategoryPath> results = new ArrayList<>();
 			for (CategoryPath path : data) {
 				String pathString = path.getPath();
-				if (pathString.contains(searchText)) {
+				Matcher m = p.matcher(pathString);
+				if (m.matches()) {
 					results.add(path);
 				}
 			}
