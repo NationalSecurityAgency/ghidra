@@ -2169,8 +2169,19 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
   return 0;
 }
 
+/// \param vn is the given Varnode
+/// \return \b true if it is a constant or a COPY of a constant
+bool ActionRestructureVarnode::isCopyConstant(Varnode *vn)
+
+{
+  if (vn->isConstant()) return true;
+  if (!vn->isWritten()) return false;
+  if (vn->getDef()->code() != CPUI_COPY) return false;
+  return vn->getDef()->getIn(0)->isConstant();
+}
+
 /// Return \b true if either the Varnode is a constant or if it is the not yet simplified
-/// INT_ADD of constants.
+/// COPY or INT_ADD of constants.
 /// \param vn is the given Varnode to test
 /// \return \b true if the Varnode will be a constant
 bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
@@ -2179,14 +2190,13 @@ bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
   if (vn->isConstant()) return true;
   if (!vn->isWritten()) return false;
   PcodeOp *op = vn->getDef();
-  if (op->code() != CPUI_INT_ADD) return false;
-  if (!op->getIn(1)->isConstant()) return false;
-  Varnode *cvn = op->getIn(0);
-  if (cvn->isConstant()) return true;
-  if (!cvn->isWritten()) return false;
-  PcodeOp *copy = cvn->getDef();
-  if (copy->code() != CPUI_COPY) return false;
-  return copy->getIn(0)->isConstant();
+  OpCode opc = op->code();
+  if (opc == CPUI_COPY)
+    return op->getIn(0)->isConstant();
+  if (opc != CPUI_INT_ADD) return false;
+  if (!isCopyConstant(op->getIn(1))) return false;
+  if (!isCopyConstant(op->getIn(0))) return false;
+  return true;
 }
 
 /// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
@@ -5349,7 +5359,7 @@ void ActionDatabase::buildDefaultGroups(void)
   setGroup("decompile",members);
 
   const char *jumptab[] = { "base", "noproto", "localrecovery", "deadcode", "stackptrflow",
-			    "stackvars", "analysis", "segment", "subvar", "conditionalexe", "" };
+			    "stackvars", "analysis", "segment", "subvar", "normalizebranches", "conditionalexe", "" };
   setGroup("jumptable",jumptab);
 
  const  char *normali[] = { "base", "protorecovery", "protorecovery_b", "deindirect", "localrecovery",
