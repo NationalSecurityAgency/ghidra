@@ -174,10 +174,11 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		markerManager.getOverviewProvider().setProgram(program, indexMap);
 		listingPanel.setBackgroundColorModel(
 			new MarkerServiceBackgroundColorModel(markerManager, program, indexMap));
+		setUpAreaMarkerSets(program, name);
 		repaint();
 	}
 
-	void setUpAreaMarkerSets(Program program, String name) {
+	private void setUpAreaMarkerSets(Program program, String name) {
 		if (program == null) {
 			return;
 		}
