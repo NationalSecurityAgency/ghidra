@@ -20,7 +20,6 @@ import javax.swing.Icon;
 import ghidra.app.nav.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -28,14 +27,11 @@ import ghidra.util.UniversalIdGenerator;
 
 public class VTListingNavigator implements Navigatable {
 
-	private final ListingCodeComparisonPanel dualListingPanel;
 	private final ListingPanel listingPanel;
 	private long id;
 
-	public VTListingNavigator(ListingCodeComparisonPanel dualListingPanel,
-			ListingPanel listingPanel) {
+	public VTListingNavigator(ListingPanel listingPanel) {
 
-		this.dualListingPanel = dualListingPanel;
 		this.listingPanel = listingPanel;
 		id = UniversalIdGenerator.nextID().getValue();
 	}

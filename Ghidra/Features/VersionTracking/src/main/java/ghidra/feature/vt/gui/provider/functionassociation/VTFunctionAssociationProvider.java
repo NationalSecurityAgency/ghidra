@@ -39,6 +39,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.feature.vt.api.db.DeletedMatch;
 import ghidra.feature.vt.api.impl.VTEvent;
@@ -48,7 +49,7 @@ import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.duallisting.VTListingNavigator;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonView;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -218,10 +219,10 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		if (context.getComponentProvider() == this) {
-			ListingCodeComparisonPanel dualListingPanel =
-				functionComparisonPanel.getDualListingPanel();
-			if (dualListingPanel != null) {
-				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
+			ListingCodeComparisonView dualListingProvider =
+				functionComparisonPanel.getDualListingView();
+			if (dualListingProvider != null) {
+				ListingPanel leftPanel = dualListingProvider.getListingPanel(LEFT);
 				return leftPanel.getHeaderActions(getOwner());
 			}
 		}
@@ -247,22 +248,22 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		// Tool bar or function compare panel.
 		if (isToolbarButtonAction || functionComparisonPanel.isAncestorOf(sourceComponent)) {
 
-			ListingCodeComparisonPanel dualListingPanel =
-				functionComparisonPanel.getDualListingPanel();
+			ListingCodeComparisonView dualListingProvider =
+				functionComparisonPanel.getDualListingView();
 			boolean isShowingDualListing =
-				(dualListingPanel != null) && dualListingPanel.isVisible();
+				(dualListingProvider != null) && dualListingProvider.isVisible();
 			boolean sourceIsADualFieldPanel =
-				isShowingDualListing && dualListingPanel.isAncestorOf(sourceComponent) &&
+				isShowingDualListing && dualListingProvider.isAncestorOf(sourceComponent) &&
 					(sourceComponent instanceof FieldPanel);
 
 			ListingPanel listingPanel = null; // Default is don't create a function association listing context.
 			// Is the action being taken on the dual listing?
 			if (sourceIsADualFieldPanel) {
-				listingPanel = dualListingPanel.getListingPanel((FieldPanel) sourceComponent);
+				listingPanel = dualListingProvider.getListingPanel((FieldPanel) sourceComponent);
 			}
 			// Is the action being taken on a toolbar button while the dual listing is visible?
 			else if (isToolbarButtonAction && isShowingDualListing) {
-				listingPanel = dualListingPanel.getActiveListingPanel();
+				listingPanel = dualListingProvider.getActiveListingPanel();
 			}
 			// If the dual listing is showing and this is a toolbar action or the action is 
 			// on one of the listings in the ListingCodeComparisonPanel
@@ -270,14 +271,13 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			// popup actions for the ListingDiff and also the function association actions 
 			// for the functions selected in the tables.
 			if (listingPanel != null) {
-				VTListingNavigator vtListingNavigator =
-					new VTListingNavigator(dualListingPanel, listingPanel);
+				VTListingNavigator vtListingNavigator = new VTListingNavigator(listingPanel);
 				VTFunctionAssociationCompareContext vtListingContext =
 					new VTFunctionAssociationCompareContext(this, vtListingNavigator, tool,
 						sourceFunction, destinationFunction,
 						getExistingMatch(sourceFunction, destinationFunction));
-				vtListingContext.setCodeComparisonPanel(dualListingPanel);
-				vtListingContext.setContextObject(dualListingPanel);
+				vtListingContext.setCodeComparisonPanel(dualListingProvider);
+				vtListingContext.setContextObject(dualListingProvider);
 				vtListingContext.setSourceObject(source);
 				return vtListingContext;
 			}
@@ -334,6 +334,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionsTable.dispose();
 		destinationTableFilterPanel.dispose();
 
+		functionComparisonPanel.dispose();
+
 		tool.removePopupActionProvider(this);
 	}
 
@@ -368,9 +370,12 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		statusPanel.add(statusLabel, BorderLayout.CENTER);
 		dualTablePanel.add(statusPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel = new FunctionComparisonPanel(tool, getOwner());
+		// Note: this service should never be null, since it is added by the VTPlugin
+		FunctionComparisonService fcService = tool.getService(FunctionComparisonService.class);
+		functionComparisonPanel = fcService.createComparisonViewer();
+
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
+		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonView.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 
 		comparisonSplitPane =
@@ -760,12 +765,9 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		sourceFunctionsModel.setFilterSettings(filterSettings);
 		destinationFunctionsModel.setFilterSettings(filterSettings);
 		reload();
-		functionComparisonPanel.readConfigState(getName(), saveState);
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		// save config state here
-		functionComparisonPanel.writeConfigState(getName(), saveState);
 		saveState.putEnum(FILTER_SETTINGS_KEY, filterSettings);
 	}
 

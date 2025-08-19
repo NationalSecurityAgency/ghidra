@@ -37,8 +37,8 @@ import ghidra.app.plugin.core.functioncompare.actions.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.*;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanelActionContext;
+import ghidra.features.base.codecompare.panel.CodeComparisonViewActionContext;
+import ghidra.features.base.codecompare.panel.CodeComparisonView;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -57,12 +57,10 @@ import ghidra.util.task.TaskMonitor;
 import help.Help;
 
 /**
- * Panel that displays two listings for comparison.
+ * UI that displays two listings for comparison.
  */
-
-public class ListingCodeComparisonPanel
-		extends CodeComparisonPanel implements
-		FormatModelListener, OptionsChangeListener {
+public class ListingCodeComparisonView
+		extends CodeComparisonView implements FormatModelListener, OptionsChangeListener {
 
 	public static final String NAME = "Listing View";
 	private static final String DIFF_NAVIGATE_GROUP = "A2_DiffNavigate";
@@ -87,7 +85,7 @@ public class ListingCodeComparisonPanel
 
 	private ListingAddressCorrelation addressCorrelator;
 	private ListingDiff listingDiff;
-	private ListingCoordinator coordinator;
+	private ListingDisplaySynchronizer coordinator;
 	private boolean listingsLocked;
 
 	private ListingDiffActionManager diffActionManager;
@@ -107,7 +105,7 @@ public class ListingCodeComparisonPanel
 	 * @param owner the owner of this panel
 	 * @param tool the tool displaying this panel
 	 */
-	public ListingCodeComparisonPanel(String owner, PluginTool tool) {
+	public ListingCodeComparisonView(String owner, PluginTool tool) {
 		super(owner, tool);
 		Help.getHelpService().registerHelp(this, new HelpLocation(HELP_TOPIC, "Listing_View"));
 		initializeOptions();
@@ -450,7 +448,7 @@ public class ListingCodeComparisonPanel
 				.description("Show the tool options for the Listing Code Comparison.")
 				.popupMenuPath("Properties")
 				.helpLocation(new HelpLocation(HELP_TOPIC, "Listing_Code_Comparison_Options"))
-				.validContextWhen(c -> isValidPanelContext(c))
+				.validWhen(c -> isValidPanelContext(c))
 				.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
 				.onAction(c -> showOptionsDialog())
 				.build();
@@ -497,10 +495,10 @@ public class ListingCodeComparisonPanel
 	}
 
 	private boolean isValidPanelContext(ActionContext context) {
-		if (!(context instanceof CodeComparisonPanelActionContext comparisonContext)) {
+		if (!(context instanceof CodeComparisonViewActionContext comparisonContext)) {
 			return false;
 		}
-		CodeComparisonPanel comparisonPanel = comparisonContext.getCodeComparisonPanel();
+		CodeComparisonView comparisonPanel = comparisonContext.getCodeComparisonView();
 		return comparisonPanel == this;
 	}
 
@@ -521,7 +519,7 @@ public class ListingCodeComparisonPanel
 			coordinator = null;
 		}
 		if (listingsLocked) {
-			coordinator = new ListingCoordinator(displays, addressCorrelator);
+			coordinator = new ListingDisplaySynchronizer(displays, addressCorrelator);
 			coordinator.sync(activeSide);
 		}
 	}

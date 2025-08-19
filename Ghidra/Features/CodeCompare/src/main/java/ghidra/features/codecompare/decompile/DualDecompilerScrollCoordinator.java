@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
+import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.fieldpanel.internal.LineLockedFieldPanelScrollCoordinator;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -33,11 +35,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-/**
- * Class to coordinate the scrolling of two decompiler panels as well as cursor location 
- * highlighting due to cursor location changes.
- */
-public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoordinator {
+public class DualDecompilerScrollCoordinator extends LineLockedFieldPanelScrollCoordinator {
 
 	private BidiMap<Integer, Integer> leftToRightLineNumberPairing;
 	private List<ClangLine> leftLines = new ArrayList<ClangLine>();
@@ -51,12 +49,13 @@ public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoord
 
 	/**
 	 * Constructor
-	 * @param dualDecompilerPanel decomp comparison panel
+	 * @param comparisonProvider decomp comparison provider
 	 */
-	public CodeDiffFieldPanelCoordinator(DecompilerCodeComparisonPanel dualDecompilerPanel) {
-		super(dualDecompilerPanel);
-		this.leftDecompilerPanel = dualDecompilerPanel.getDecompilerPanel(LEFT);
-		this.rightDecompilerPanel = dualDecompilerPanel.getDecompilerPanel(RIGHT);
+	public DualDecompilerScrollCoordinator(DecompilerCodeComparisonView comparisonProvider) {
+		super(new FieldPanel[] { comparisonProvider.getDecompilerPanel(LEFT).getFieldPanel(),
+			comparisonProvider.getDecompilerPanel(RIGHT).getFieldPanel() });
+		this.leftDecompilerPanel = comparisonProvider.getDecompilerPanel(LEFT);
+		this.rightDecompilerPanel = comparisonProvider.getDecompilerPanel(RIGHT);
 		leftToRightLineNumberPairing = new DualHashBidiMap<>();
 	}
 
@@ -89,7 +88,6 @@ public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoord
 		}
 	}
 
-	@Override
 	public void leftLocationChanged(ProgramLocation leftLocation) {
 		DecompilerLocation leftDecompilerLocation = (DecompilerLocation) leftLocation;
 
@@ -107,7 +105,6 @@ public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoord
 		panelViewChanged(leftDecompilerPanel);
 	}
 
-	@Override
 	public void rightLocationChanged(ProgramLocation rightLocation) {
 		DecompilerLocation rightDecompilerLocation = (DecompilerLocation) rightLocation;
 
@@ -301,5 +298,4 @@ public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoord
 		return true;
 
 	}
-
 }

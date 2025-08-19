@@ -113,7 +113,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		providerName = provider.getName();
 		windowGroup = provider.getWindowGroup();
 
-		view.setSatelliteListener(new SatelliteListener());
+		view.addSatelliteListener(new SatelliteListener());
 
 		addActions(provider);
 	}

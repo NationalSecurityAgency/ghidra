@@ -36,14 +36,9 @@ public class ApplyGlobalNameFromMatchedTokensAction extends AbstractMatchedToken
 	public static final String ACTION_NAME = "Function Comparison Apply Global Variable Name";
 	private static final String MENU_GROUP = "A1_ApplyVariable";
 
-	/**
-	 * Construtor
-	 * @param diffPanel diff panel
-	 * @param tool tool
-	 */
-	public ApplyGlobalNameFromMatchedTokensAction(DecompilerCodeComparisonPanel diffPanel,
-			PluginTool tool) {
-		super(ACTION_NAME, tool.getName(), diffPanel, true);
+	public ApplyGlobalNameFromMatchedTokensAction(
+			DecompilerCodeComparisonView comparisonProvider, PluginTool tool) {
+		super(ACTION_NAME, tool.getName(), comparisonProvider, true);
 		this.tool = tool;
 
 		MenuData menuData =
@@ -83,7 +78,7 @@ public class ApplyGlobalNameFromMatchedTokensAction extends AbstractMatchedToken
 	public void dualDecompilerActionPerformed(DualDecompilerActionContext context) {
 		TokenPair currentPair = context.getTokenPair();
 
-		Side activeSide = diffPanel.getActiveSide();
+		Side activeSide = comparisonProvider.getActiveSide();
 		ClangVariableToken activeToken =
 			activeSide == Side.LEFT ? (ClangVariableToken) currentPair.leftToken()
 					: (ClangVariableToken) currentPair.rightToken();
@@ -96,7 +91,7 @@ public class ApplyGlobalNameFromMatchedTokensAction extends AbstractMatchedToken
 		HighSymbol otherHighSymbol =
 			otherToken.getHighSymbol(context.getHighFunction(activeSide.otherSide()));
 
-		Program activeProgram = context.getCodeComparisonPanel().getProgram(activeSide);
+		Program activeProgram = context.getCodeComparisonView().getProgram(activeSide);
 
 		Symbol activeSymbol = null;
 		if (activeHighSymbol instanceof HighCodeSymbol activeCodeSymbol) {

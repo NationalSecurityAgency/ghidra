@@ -130,9 +130,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private String stringContent;
 	private boolean includeQuotesForStringData;
 
-	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider codeViewerProvider) {
+	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider componentProvider) {
 		this.tool = tool;
-		this.componentProvider = codeViewerProvider;
+		this.componentProvider = componentProvider;
 
 		PAINT_CONTEXT.setTextCopying(true);
 
@@ -140,7 +140,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		includeQuotesForStringData =
 			!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		options.addOptionsChangeListener(this);
-
 	}
 
 	@Override

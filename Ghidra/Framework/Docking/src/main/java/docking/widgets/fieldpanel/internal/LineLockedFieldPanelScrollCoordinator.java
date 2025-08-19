@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,15 +29,28 @@ import ghidra.util.exception.AssertException;
  * In other words this coordinator tries to keep the indicated line for each field panel
  * side by side with the indicated line for each other field panel.
  */
-public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
+public class LineLockedFieldPanelScrollCoordinator extends FieldPanelScrollCoordinator {
 
 	// Keep an array of the line number for each field panel where we are locking
 	// these field panels together when scrolling or moving the cursor location.
 	protected BigInteger[] lockedLineNumbers;
 
-	public LineLockedFieldPanelCoordinator(FieldPanel[] panels) {
+	public LineLockedFieldPanelScrollCoordinator(FieldPanel[] panels) {
 		super(panels);
 		resetLockedLines();
+	}
+
+	protected BigInteger getLockedLineNumber(FieldPanel fp) {
+		int index = getIndex(fp);
+		return lockedLineNumbers[index];
+	}
+
+	private int getIndex(FieldPanel fp) {
+
+		if (panels[0] == fp) {
+			return 0;
+		}
+		return 1;
 	}
 
 	/**
@@ -117,8 +130,9 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
-		if (valuesChanging)
+		if (valuesChanging) {
 			return;
+		}
 		try {
 			valuesChanging = true;
 			BigInteger fpLineNumber = getLockedLineForPanel(fp);

@@ -35,7 +35,7 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedCalleeTo
 	 * @param diffPanel diff Panel
 	 * @param tool tool
 	 */
-	public CompareFuncsFromMatchedTokensAction(DecompilerCodeComparisonPanel diffPanel,
+	public CompareFuncsFromMatchedTokensAction(DecompilerCodeComparisonView diffPanel,
 			PluginTool tool) {
 		super(ACTION_NAME, tool.getName(), diffPanel, false);
 		this.tool = tool;

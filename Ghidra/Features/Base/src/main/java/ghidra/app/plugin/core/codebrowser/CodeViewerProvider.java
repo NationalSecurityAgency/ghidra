@@ -36,7 +36,7 @@ import docking.dnd.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
@@ -105,7 +105,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private ListingPanel otherPanel;
 	private CoordinatedListingPanelListener coordinatedListingPanelListener;
 	private FormatManager formatMgr;
-	private FieldPanelCoordinator coordinator;
+	private FieldPanelScrollCoordinator coordinator;
 	private ProgramSelectionListener liveProgramSelectionListener = (selection, trigger) -> {
 		liveSelection = selection;
 		updateSubTitle();
@@ -753,7 +753,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ListingModel otherAlignedModel = multiModel.getAlignedModel(1);
 		listingPanel.setListingModel(myAlignedModel);
 		lp.setListingModel(otherAlignedModel);
-		coordinator = new FieldPanelCoordinator(
+		coordinator = new FieldPanelScrollCoordinator(
 			new FieldPanel[] { listingPanel.getFieldPanel(), lp.getFieldPanel() });
 		addHoverServices(otherPanel);
 		HoverHandler hoverHandler = listingPanel.getFieldPanel().getHoverHandler();

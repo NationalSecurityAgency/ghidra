@@ -43,8 +43,8 @@ public class BSimH2FileDBConnectionManager {
 	private static boolean shutdownHookInstalled = false;
 
 	/**
-	 * Get all H2 File DB data sorces which exist in the JVM.
-	 * @return all H2 File DB data sorces
+	 * Get all H2 File DB data sources which exist in the JVM.
+	 * @return all H2 File DB data sources
 	 */
 	public static synchronized Collection<BSimH2FileDataSource> getAllDataSources() {
 		// Create copy to avoid potential concurrent modification
@@ -138,11 +138,11 @@ public class BSimH2FileDBConnectionManager {
 		private boolean successfulConnection = false;
 
 		private BasicDataSource bds = new BasicDataSource();
-		private BSimDBConnectTaskCoordinator taskCoordinator;
+		private BSimDBConnectTaskManager taskManager;
 
 		private BSimH2FileDataSource(BSimServerInfo serverInfo) {
 			this.serverInfo = serverInfo;
-			this.taskCoordinator = new BSimDBConnectTaskCoordinator(serverInfo);
+			this.taskManager = new BSimDBConnectTaskManager(serverInfo);
 		}
 
 		@Override
@@ -159,7 +159,7 @@ public class BSimH2FileDBConnectionManager {
 		 * Delete the database files associated with this H2 File DB.  This will fail immediately 
 		 * if active connections exist.  Otherwise removal will be attempted and this data source 
 		 * will no longer be valid.
-		 * @return true if DB sucessfully removed
+		 * @return true if DB successfully removed
 		 */
 		public synchronized boolean delete() {
 
@@ -278,7 +278,7 @@ public class BSimH2FileDBConnectionManager {
 		 * Get a connection to the H2 file database.
 		 * It is important to note that if the database does not exist and empty one will
 		 * be created.  The {@link #exists()} method should be used to check for the database
-		 * existance prior to connecting the first time.
+		 * existence prior to connecting the first time.
 		 * @return database connection
 		 * @throws SQLException if a database error occurs
 		 */
@@ -294,7 +294,7 @@ public class BSimH2FileDBConnectionManager {
 
 			setDefaultProperties();
 
-			return taskCoordinator.getConnection(() -> connect());
+			return taskManager.getConnection(() -> connect());
 		}
 
 		@Override

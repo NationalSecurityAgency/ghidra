@@ -33,14 +33,9 @@ public class ApplyCalleeFunctionNameFromMatchedTokensAction
 	private PluginTool tool;
 	public static final String ACTION_NAME = "Function Comparison Apply Callee Name";
 
-	/**
-	 * Construtor
-	 * @param diffPanel diff panel
-	 * @param tool tool
-	 */
 	public ApplyCalleeFunctionNameFromMatchedTokensAction(
-			DecompilerCodeComparisonPanel diffPanel, PluginTool tool) {
-		super(ACTION_NAME, tool.getName(), diffPanel, true);
+			DecompilerCodeComparisonView comparisonProvider, PluginTool tool) {
+		super(ACTION_NAME, tool.getName(), comparisonProvider, true);
 		this.tool = tool;
 
 		MenuData menuData =
@@ -52,7 +47,7 @@ public class ApplyCalleeFunctionNameFromMatchedTokensAction
 	@Override
 	protected void doCalleeActionPerformed(Function leftFunction, Function rightFunction) {
 
-		Side activeSide = diffPanel.getActiveSide();
+		Side activeSide = comparisonProvider.getActiveSide();
 
 		Function activeFunction = activeSide == Side.LEFT ? leftFunction : rightFunction;
 		Function otherFunction = activeSide == Side.LEFT ? rightFunction : leftFunction;

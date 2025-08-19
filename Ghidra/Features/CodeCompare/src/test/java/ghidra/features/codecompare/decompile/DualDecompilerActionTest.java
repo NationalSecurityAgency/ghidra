@@ -169,7 +169,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedCplusDemangle);
 		DockingActionIf localNameTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(localNameTransferAction);
@@ -182,7 +182,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("demangler", currentToken.getText());
 		assertNotEnabled(localNameTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedMain);
 		// Recreated provider, need to get new handle on action
 		localNameTransferAction = getLocalAction(provider, actionName);
@@ -225,7 +225,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedCplusDemangle);
 		DockingActionIf globalNameTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(globalNameTransferAction);
@@ -238,7 +238,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("program_name", currentToken.getText());
 		assertNotEnabled(globalNameTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedMain);
 		// Recreated provider, need to get new handle on action
 		globalNameTransferAction = getLocalAction(provider, actionName);
@@ -280,7 +280,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedCplusDemangle);
 		DockingActionIf typeTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(typeTransferAction);
@@ -301,7 +301,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("program_name", currentToken.getText());
 		assertNotEnabled(typeTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugMain, funcDemangler24StrippedMain);
 		// Recreated provider, need to get new handle on action
 		typeTransferAction = getLocalAction(provider, actionName);
@@ -436,13 +436,13 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 	 */
 
 	@Test
-	public void testFullStructTypeTransferAction() throws RuntimeException {
+	public void testFullStructTypeTransferAction() {
 		final String actionName = ApplyVariableTypeFromMatchedTokensAction.ACTION_NAME;
 		int line;
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedCplusDemangle);
 		DockingActionIf typeTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(typeTransferAction);
@@ -484,7 +484,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedCplusDemangle);
 		DockingActionIf typeTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(typeTransferAction);
@@ -524,7 +524,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedMain);
 		DockingActionIf calleeNameTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(calleeNameTransferAction);
@@ -537,7 +537,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("xstrdup", currentToken.getText());
 		assertNotEnabled(calleeNameTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedCplusDemangle);
 		// Recreated provider, need to get new handle on action
 		calleeNameTransferAction = getLocalAction(provider, actionName);
@@ -582,7 +582,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedMain);
 		DockingActionIf calleeFullSignatureTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(calleeFullSignatureTransferAction);
@@ -595,7 +595,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("xstrdup", currentToken.getText());
 		assertNotEnabled(calleeFullSignatureTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedCplusDemangle);
 		// Recreated provider, need to get new handle on action
 		calleeFullSignatureTransferAction = getLocalAction(provider, actionName);
@@ -669,7 +669,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		int col;
 		ClangToken currentToken;
 
-		DecompilerCodeComparisonPanel uncorrelatedPanel =
+		DecompilerCodeComparisonView uncorrelatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedMain);
 		DockingActionIf calleeFullSignatureTransferAction = getLocalAction(provider, actionName);
 		assertNotNull(calleeFullSignatureTransferAction);
@@ -682,7 +682,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		assertEquals("xstrdup", currentToken.getText());
 		assertNotEnabled(calleeFullSignatureTransferAction, getProviderContext());
 
-		DecompilerCodeComparisonPanel correlatedPanel =
+		DecompilerCodeComparisonView correlatedPanel =
 			preparePanel(funcDemangler24DebugCplusDemangle, funcDemangler24StrippedCplusDemangle);
 		// Recreated provider, need to get new handle on action
 		calleeFullSignatureTransferAction = getLocalAction(provider, actionName);
@@ -747,7 +747,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 
 	// Setup and focus to a decompiler comparison between the two selected functions. Wait for
 	// the decompilation to complete so that subsequent calls to navigation, etc. work correctly
-	private DecompilerCodeComparisonPanel preparePanel(Function leftFunc, Function rightFunc) {
+	private DecompilerCodeComparisonView preparePanel(Function leftFunc, Function rightFunc) {
 		if (provider != null) {
 			// Always want to clear out existing comparison
 			closeProvider(provider);
@@ -755,7 +755,7 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 
 		provider = compareFunctions(Set.of(leftFunc, rightFunc));
 
-		DecompilerCodeComparisonPanel decompPanel = findDecompilerPanel(provider);
+		DecompilerCodeComparisonView decompPanel = findDecompilerPanel(provider);
 		waitForDecompile(decompPanel);
 		decompPanel.setSynchronizedScrolling(true);
 		setActivePanel(provider, decompPanel);

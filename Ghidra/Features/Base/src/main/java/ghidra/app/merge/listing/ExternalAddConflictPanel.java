@@ -25,7 +25,7 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.TitledPanel;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.label.GIconLabel;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
@@ -214,7 +214,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		latestPanel.setProgram(latestProgram);
 		myPanel.setProgram(myProgram);
 
-		new FieldPanelCoordinator(
+		new FieldPanelScrollCoordinator(
 			new FieldPanel[] { latestPanel.getFieldPanel(), myPanel.getFieldPanel() });
 
 		buttonGroup = new ButtonGroup();
