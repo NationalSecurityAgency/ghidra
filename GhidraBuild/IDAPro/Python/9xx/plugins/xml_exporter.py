@@ -75,7 +75,7 @@ class XmlExporterPlugin(ida_idaapi.plugin_t):
                 msg = "XML Export cancelled!"
                 print("\n" + msg)
                 idc.warning(msg)
-            except:
+            except Exception as e:
                 ida_kernwin.hide_wait_box()
                 msg = "***** Exception occurred: XML Exporter failed! *****"
                 print(f"\n{msg}\n {type(e).__name__}: {e}")
