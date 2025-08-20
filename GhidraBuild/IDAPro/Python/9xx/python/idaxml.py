@@ -2206,6 +2206,9 @@ class XmlExporter(IdaXml):
             signedhex: Boolean indicating if hex representation of
                 value is signed.
         """
+        # Check if value is None and handle it gracefully
+        if value is None:
+            return
         if base == 10:
             temp = "%d" % value
         else:
