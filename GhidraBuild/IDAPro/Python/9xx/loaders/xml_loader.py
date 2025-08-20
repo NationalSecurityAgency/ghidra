@@ -31,11 +31,6 @@ import idaxml
 import idc
 import sys
 
-if sys.version_info.major >= 3:
-    from idaxml import _exc_info
-    sys.exc_value = lambda: _exc_info()[1]
-    sys.exc_type = lambda: _exc_info()[0]
-
 """
 Loader functions
 """
@@ -96,10 +91,10 @@ def load_file(li, neflags, format):
         msg += "\nimporting multiple address spaces."
         print("\n" + msg)
         idc.warning(msg)
-    except:
+    except Exception as e:
         print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print(f"\n{msg}\n{type(e).__name__}: {e}")
         print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:

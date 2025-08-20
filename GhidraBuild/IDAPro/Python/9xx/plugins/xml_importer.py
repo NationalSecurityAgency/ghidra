@@ -24,15 +24,11 @@ The file idaxml.py must be placed in the IDA python directory.
 
 from __future__ import print_function
 import ida_idaapi
+import ida_kernwin
 import ida_pro
 import idaxml
 import idc
 import sys
-
-if sys.version_info.major >= 3:
-    from idaxml import _exc_info
-    sys.exc_value = lambda: _exc_info()[1]
-    sys.exc_type = lambda: _exc_info()[0]
 
 class XmlImporterPlugin(ida_idaapi.plugin_t):
     """
@@ -82,9 +78,10 @@ class XmlImporterPlugin(ida_idaapi.plugin_t):
                 msg += "\nimporting multiple address spaces."
                 print("\n" + msg)
                 idc.warning(msg)
-            except:
+            except Exception as e:
+                ida_kernwin.hide_wait_box()
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+                print(f"\n{msg}\n{type(e).__name__}: {e}")
                 idc.warning(msg)
         finally:
             xml.cleanup()
