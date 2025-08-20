@@ -707,8 +707,8 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 :CLR BitAddr  is $(GROUP1) & ophi=12 & oplo=2; BitAddr & sfrbit	& BitByteAddr {  local tmp = ~(1<<sfrbit); BitByteAddr = BitByteAddr & tmp; }
 @endif
 
-:CPL Areg is $(GROUP2) & ophi=15 & oplo=4 & Areg					 { ACC = ~ACC; }
-:CPL CY    is $(GROUP2) & CY & ophi=11 & oplo=3					     {$(CY)=$(CY)^ 1; }
+:CPL Areg is $(GROUP1) & ophi=15 & oplo=4 & Areg					 { ACC = ~ACC; }
+:CPL CY    is $(GROUP1) & CY & ophi=11 & oplo=3					     {$(CY)=$(CY)^ 1; }
 
 :CPL BitAddr  is $(GROUP1) & ophi=11 & oplo=2; BitAddr & bitaddr57=7 & sfrbit3=0 & sfrbit & BitByteAddr { tmp:1 = (1<<sfrbit); BitByteAddr = BitByteAddr ^ tmp; }
 @if BIT_OPS == "BIT_ADDRS"
