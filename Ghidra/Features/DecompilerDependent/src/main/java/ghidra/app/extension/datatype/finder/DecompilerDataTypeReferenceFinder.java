@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,7 +130,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		}
 
 		results.addAll(callers);
-		
+
 		// Add any callers to external function that use any form of the data type
 		it = listing.getExternalFunctions();
 		callers = new HashSet<>();
@@ -142,7 +142,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				callers.addAll(callingFunctions);
 			}
 		}
-		
+
 		results.addAll(callers);
 
 		return results;
@@ -298,16 +298,12 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		private DataType dataType;
 		private FieldMatcher fieldMatcher;
 
-		private String dbgPrefix;
-
 		DecompilerDataTypeFinder(DecompileResults results, Function function, DataType dataType,
 				FieldMatcher fieldMatcher) {
 			this.decompilation = results;
 			this.function = function;
 			this.dataType = dataType;
 			this.fieldMatcher = fieldMatcher;
-
-			this.dbgPrefix = "f: " + function + "\n\t";
 		}
 
 		List<DataTypeReference> findUsage() {
@@ -331,16 +327,16 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				return;
 			}
 
-			DtrfDbg.println(dbgPrefix + "checking vars...");
+			DtrfDbg.println(function, "checking vars...");
 			List<DecompilerReference> variables = findVariableReferences(tokens);
-			DtrfDbg.println(dbgPrefix + "DONE searching decompilation\nMatching results");
+			DtrfDbg.println(function, "DONE searching decompilation\nMatching results");
 
 			variables.forEach(v -> matchUsage(v, results));
 		}
 
 		/** Finds any search input match in the given reference */
 		private void matchUsage(DecompilerReference reference, List<DataTypeReference> results) {
-			DtrfDbg.println("Checking " + reference);
+			DtrfDbg.println(function, "Checking " + reference);
 			reference.accumulateMatches(dataType, fieldMatcher, results);
 		}
 
@@ -388,12 +384,12 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			VariableAccessDR access = null;
 			for (ClangToken token : filteredTokens) {
 
-				DtrfDbg.println(dbgPrefix + "checking token: " + token);
+				DtrfDbg.println(function, "checking token: " + token);
 
 				if (token instanceof ClangTypeToken) {
 
 					if (token.Parent() instanceof ClangReturnType) {
-						DtrfDbg.println(dbgPrefix + "\treturn type: " + line);
+						DtrfDbg.println(function, "\treturn type: " + line);
 
 						results.add(new ReturnTypeDR(line, (ClangTypeToken) token));
 					}
@@ -401,13 +397,13 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 						// Note: variable refs will get their variable in an upcoming token
 						if (isFunctionPrototype(token.Parent())) {
 
-							DtrfDbg.println(dbgPrefix + "\tparameter: " + line);
+							DtrfDbg.println(function, "\tparameter: " + line);
 
 							declaration = new ParameterDR(line, (ClangTypeToken) token);
 						}
 						else {
 
-							DtrfDbg.println(dbgPrefix + "\tlocal var: " + line);
+							DtrfDbg.println(function, "\tlocal var: " + line);
 
 							declaration = new LocalVariableDR(line, (ClangTypeToken) token);
 						}
@@ -416,7 +412,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					}
 					else {
 
-						DtrfDbg.println(dbgPrefix + "\tadding a cast");
+						DtrfDbg.println(function, "\tadding a cast");
 
 						// Assumption: this is a cast inside of a ClangStatement
 						// Assumption: there can be multiple casts concatenated
@@ -438,7 +434,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					//
 					if (declaration != null) {
 
-						DtrfDbg.println(dbgPrefix + "\thave declaration - " + declaration);
+						DtrfDbg.println(function, "\thave declaration - " + declaration);
 
 						declaration.setVariable((ClangVariableToken) token);
 						declaration = null;
@@ -446,7 +442,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					else {
 						if (access == null || access.getVariable() != null) {
 
-							DtrfDbg.println(dbgPrefix + "\tcreating variable access: " + line);
+							DtrfDbg.println(function, "\tcreating variable access: " + line);
 
 							access = new VariableAccessDR(line);
 							results.add(access);
@@ -479,8 +475,8 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					ClangFieldToken field = (ClangFieldToken) token;
 					if (typesDoNotMatch(access, field)) {
 
-						DtrfDbg.println(
-							dbgPrefix + "\tcreating an anonymous variable access: " + line);
+						DtrfDbg.println(function,
+							"\tcreating an anonymous variable access: " + line);
 
 						// this can happen when a field is used anonymously, such as directly
 						// after a nested array index operation
