@@ -37,8 +37,7 @@ public class TaintTraceSpace extends TaintSpace {
 	 * Create the space
 	 * 
 	 * @param space the address space
-	 * @param backing if present, the backing object
-	 * @param snap the source snap
+	 * @param property the trace property backing this space
 	 */
 	public TaintTraceSpace(AddressSpace space, PcodeTracePropertyAccess<String> property) {
 		this.space = space;

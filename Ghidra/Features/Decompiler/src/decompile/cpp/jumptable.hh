@@ -382,6 +382,7 @@ protected:
   static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
   static uintb getMaxValue(Varnode *vn);	///< Get maximum value associated with the given Varnode
+  static bool duplicateVarnodes(const vector<Varnode *> &arr);	///< Return \b true if all array elements are the same Varnode
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
   void calcRange(Varnode *vn,CircleRange &rng) const;

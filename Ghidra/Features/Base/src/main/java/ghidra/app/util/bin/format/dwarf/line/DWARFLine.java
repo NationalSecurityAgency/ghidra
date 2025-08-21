@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,19 +107,21 @@ public class DWARFLine {
 		}
 		result.directories.add(new DWARFFile(defaultCompDir));
 
+		Charset charset = cu.getProgram().getCharset();
+
 		// Read all include directories, which are only a list of names in v4
-		String dirName = reader.readNextAsciiString();
+		String dirName = reader.readNextString(charset, 1);
 		while (dirName.length() != 0) {
 			DWARFFile dir = new DWARFFile(dirName);
 			dir = fixupDir(dir, defaultCompDir);
 
 			result.directories.add(dir);
-			dirName = reader.readNextAsciiString();
+			dirName = reader.readNextString(charset, 1);
 		}
 
 		// Read all files, ending when null (hit empty filename)
 		DWARFFile file;
-		while ((file = DWARFFile.readV4(reader)) != null) {
+		while ((file = DWARFFile.readV4(reader, cu)) != null) {
 			result.files.add(file);
 		}
 	}
@@ -165,7 +168,7 @@ public class DWARFLine {
 		// read the directories, which are defined the same way files are
 		int directories_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < directories_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, result.intSize, cu);
 			dir = fixupDir(dir, defaultCompDir);
 			result.directories.add(dir);
 		}
@@ -179,7 +182,7 @@ public class DWARFLine {
 
 		int file_names_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < file_names_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, result.intSize, cu);
 			result.files.add(dir);
 		}
 	}

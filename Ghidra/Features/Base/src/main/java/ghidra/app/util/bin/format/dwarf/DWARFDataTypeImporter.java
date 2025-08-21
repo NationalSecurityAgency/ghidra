@@ -120,8 +120,8 @@ public class DWARFDataTypeImporter {
 	 * @param defaultValue value to return if the specified DIEA is null or there is a problem
 	 * with the DWARF debug data.
 	 * @return a {@link DWARFDataType} wrapper around the new Ghidra {@link DataType}.
-	 * @throws IOException
-	 * @throws DWARFExpressionException
+	 * @throws IOException if error
+	 * @throws DWARFExpressionException if error with dwarf expression
 	 */
 	public DWARFDataType getDataType(DIEAggregate diea, DWARFDataType defaultValue)
 			throws IOException, DWARFExpressionException {
@@ -342,12 +342,8 @@ public class DWARFDataTypeImporter {
 		return result;
 	}
 
-	/**
+	/*
 	 * Gets the corresponding Ghidra base type.
-	 * 
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForBaseType(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -1084,10 +1080,15 @@ public class DWARFDataTypeImporter {
 		if (self != null) {
 			return self;
 		}
-		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 
+		if (elementType == voidDDT) {
+			// there was no info about the array's element, cheese something else
+			return new DWARFDataType(dwarfDTM.getUnspecifiedArrayType(), null, diea.getOffset());
+		}
+
+		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 		long explictArraySize = diea.getUnsignedLong(DW_AT_byte_size, -1);
-		if (elementType.dataType.isZeroLength() || explictArraySize == 0) {
+		if (DWARFUtil.isZeroByteDataType(elementType.dataType) || explictArraySize == 0) {
 			// don't bother checking range info, we are going to force a zero-element array
 			DataType zeroLenArray = new ArrayDataType(elementDT, 0, -1, dataTypeManager);
 			return new DWARFDataType(zeroLenArray, null, diea.getOffset());

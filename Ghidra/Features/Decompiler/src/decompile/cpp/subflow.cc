@@ -473,6 +473,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false; // Dynamic shift
       sa = (int4)op->getIn(1)->getOffset();
+      if (sa >= sizeof(uintb)*8) return false;	// Beyond precision of mask
       newmask = (rvn->mask << sa) & calc_mask( outvn->getSize() );
       if (newmask == 0) break;	// Subvar is cleared, truncate flow
       if (rvn->mask != (newmask >> sa)) return false; // subvar is clipped
@@ -498,9 +499,12 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       }
       if (!op->getIn(1)->isConstant()) return false;
       sa = (int4)op->getIn(1)->getOffset();
-      newmask = rvn->mask >> sa;
+      if (sa >= sizeof(uintb)*8)
+	newmask = 0;
+      else
+	newmask = rvn->mask >> sa;
       if (newmask == 0) {
-	if (op->code()==CPUI_INT_RIGHT) break; // subvar is set to zero, truncate flow
+	if (op->code()==CPUI_INT_RIGHT) break; // subvar does not pass thru, truncate flow
 	return false;
       }
       if (rvn->mask != (newmask << sa)) return false;
@@ -523,6 +527,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_SUBPIECE:
       sa = (int4)op->getIn(1)->getOffset() * 8;
+      if (sa >= sizeof(uintb)*8) break;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
       if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
@@ -725,7 +730,10 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_LEFT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
-    newmask = rvn->mask >> sa;	// What mask looks like before shift
+    if (sa >= sizeof(uintb)*8)
+      newmask = 0;
+    else
+      newmask = rvn->mask >> sa;	// What mask looks like before shift
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
       addNewConstant(rop,0,(uintb)0);
@@ -744,6 +752,8 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_RIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if (newmask == 0) {		// Subvariable filled with shifted zero
       rop = createOp(CPUI_COPY,1,rvn);
@@ -758,6 +768,8 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_SRIGHT:
     if (!op->getIn(1)->isConstant()) break; // Dynamic shift
     sa = (int4)op->getIn(1)->getOffset();
+    if (sa >= sizeof(uintb)*8)
+      break;			// Beyond precision of mask
     newmask = (rvn->mask << sa) & calc_mask(op->getIn(0)->getSize());
     if ((newmask>>sa) != rvn->mask)
       break;			// subvariable is truncated by shift
@@ -1581,8 +1593,11 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   Varnode *outvn = op->getOut();
   int4 flowsize = outvn->getSize();
+  int4 sa = op->getIn(1)->getOffset();
+  if (flowsize + sa > sizeof(uintb))	// Mask must fit in precision
+    return 0;
   uintb mask = calc_mask( flowsize );
-  mask <<= 8*((int4)op->getIn(1)->getOffset());
+  mask <<= 8*sa;
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
     if ((vn->getConsume() & mask) != vn->getConsume()) return 0;

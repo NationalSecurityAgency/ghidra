@@ -28,7 +28,7 @@ import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonView;
 import ghidra.features.codecompare.plugin.FunctionComparisonPlugin;
 import ghidra.features.codecompare.plugin.FunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
@@ -61,10 +61,10 @@ public abstract class AbstractDualDecompilerTest extends AbstractGhidraHeadedInt
 		return waitForComponentProvider(FunctionComparisonProvider.class);
 	}
 
-	protected DecompilerCodeComparisonPanel findDecompilerPanel(
+	protected DecompilerCodeComparisonView findDecompilerPanel(
 			FunctionComparisonProvider provider) {
-		for (CodeComparisonPanel panel : provider.getComponent().getComparisonPanels()) {
-			if (panel instanceof DecompilerCodeComparisonPanel decompPanel) {
+		for (CodeComparisonView p : provider.getComponent().getComparisonView()) {
+			if (p instanceof DecompilerCodeComparisonView decompPanel) {
 				return decompPanel;
 			}
 		}
@@ -72,24 +72,26 @@ public abstract class AbstractDualDecompilerTest extends AbstractGhidraHeadedInt
 		return null;
 	}
 
-	protected void setActivePanel(FunctionComparisonProvider provider, CodeComparisonPanel panel) {
-		runSwing(() -> provider.getComponent().setCurrentTabbedComponent(panel.getName()));
+	protected void setActivePanel(FunctionComparisonProvider provider,
+			CodeComparisonView comparisonProvider) {
+		runSwing(
+			() -> provider.getComponent().setCurrentTabbedComponent(comparisonProvider.getName()));
 		waitForSwing();
 	}
 
-	protected void waitForDecompile(DecompilerCodeComparisonPanel panel) {
+	protected void waitForDecompile(DecompilerCodeComparisonView panel) {
 		waitForSwing();
 		waitForCondition(() -> !panel.isBusy());
 		waitForSwing();
 	}
 
-	protected DecompilerPanel getDecompSide(DecompilerCodeComparisonPanel panel, Side side) {
+	protected DecompilerPanel getDecompSide(DecompilerCodeComparisonView panel, Side side) {
 		CDisplay sideDisplay = side == Side.LEFT ? panel.getLeftPanel() : panel.getRightPanel();
 		return sideDisplay.getDecompilerPanel();
 	}
 
 	// 1-indexed lines
-	protected ClangToken setDecompLocation(DecompilerCodeComparisonPanel comparePanel, Side side,
+	protected ClangToken setDecompLocation(DecompilerCodeComparisonView comparePanel, Side side,
 			int line, int charPos) {
 		DecompilerPanel panel = getDecompSide(comparePanel, side);
 		FieldPanel fp = panel.getFieldPanel();
@@ -107,7 +109,7 @@ public abstract class AbstractDualDecompilerTest extends AbstractGhidraHeadedInt
 	}
 
 	// Get the token under the cursor at the given side
-	protected ClangToken getCurrentToken(DecompilerCodeComparisonPanel comparePanel, Side side) {
+	protected ClangToken getCurrentToken(DecompilerCodeComparisonView comparePanel, Side side) {
 		DecompilerPanel panel = getDecompSide(comparePanel, side);
 		FieldLocation loc = panel.getCursorPosition();
 		int lineNumber = loc.getIndex().intValue();

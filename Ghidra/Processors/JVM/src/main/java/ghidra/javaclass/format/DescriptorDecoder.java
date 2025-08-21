@@ -272,7 +272,7 @@ public class DescriptorDecoder {
 		}
 		DataTypePath dataPath = new DataTypePath(sb.toString(), parts[parts.length - 1]);
 		DataType referencedType = dtManager.getDataType(dataPath);
-		return new PointerDataType(referencedType);
+		return dtManager.getPointer(referencedType);
 	}
 
 	/**

@@ -32,7 +32,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.gclass.ClassUtils;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
@@ -2074,16 +2074,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = egray832VxtManager;
 		Map<ClassID, String> expectedResults = egray832Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = egray832Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray832Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray832Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = egray832Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2100,7 +2103,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = egray832Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2118,13 +2121,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm32;
 		MsVxtManager vxtManager = egray832VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray832Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy =
+			egray832Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray832Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray832Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2143,16 +2148,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = egray864VxtManager;
 		Map<ClassID, String> expectedResults = egray864Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = egray864Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray864Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray864Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = egray864Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2169,7 +2177,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = egray864Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2187,13 +2195,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm64;
 		MsVxtManager vxtManager = egray864VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = egray864Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy =
+			egray832Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			egray864Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			egray864Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2212,16 +2222,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = vftm32VxtManager;
 		Map<ClassID, String> expectedResults = vftm32Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = vftm32Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm32Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm32Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = vftm32Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2238,7 +2251,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = vftm32Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2256,13 +2269,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm32;
 		MsVxtManager vxtManager = vftm32VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm32Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = vftm32Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm32Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm32Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2281,16 +2295,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = vftm64VxtManager;
 		Map<ClassID, String> expectedResults = vftm64Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = vftm64Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm64Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm64Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = vftm64Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2307,7 +2324,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = vftm64Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2325,13 +2342,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm64;
 		MsVxtManager vxtManager = vftm64VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = vftm64Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = vftm32Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			vftm64Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			vftm64Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2350,16 +2368,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = cfb432VxtManager;
 		Map<ClassID, String> expectedResults = cfb432Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = cfb432Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb432Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb432Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = cfb432Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2376,7 +2397,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = cfb432Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2394,13 +2415,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm32;
 		MsVxtManager vxtManager = cfb432VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb432Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = cfb432Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb432Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb432Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2419,16 +2441,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = program.getDataTypeManager();
 		MsVxtManager vxtManager = cfb464VxtManager;
 		Map<ClassID, String> expectedResults = cfb464Creator.getExpectedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = cfb464Creator.getExpectedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb464Creator.getExpectedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb464Creator.getExpectedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
+		Map<String, String> expectedTableInfo = cfb464Creator.getExpectedVxtAddressTypes();
+		checkTables(program, vxtManager, expectedTableInfo);
 	}
 
 	/**
@@ -2445,7 +2470,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		Map<ClassID, String> expectedResults = cfb464Creator.getFillerStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, classLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, null);
+				expectedResults, null, null);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		// Not checking vxt structures here.
@@ -2463,13 +2488,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		DataTypeManager dtm = dtm64;
 		MsVxtManager vxtManager = cfb464VxtManagerNoProgram;
 		Map<ClassID, String> expectedResults = cfb464Creator.getSpeculatedStructs();
+		Map<ClassID, String> expectedSourceHierarchy = cfb432Creator.getSpeculatedSourceHierarchy();
 		Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 			cfb464Creator.getSpeculatedVxtPtrSummaries();
 		Map<ClassID, Map<String, String>> expectedVxtStructs =
 			cfb464Creator.getSpeculatedVxtStructs();
 		dtm.withTransaction("Processing data.", () -> {
 			createAndTestStructures(program, dtm, speculativeLayoutChoice, pdb, is64Bit, vxtManager,
-				expectedResults, expectedVxtPtrSummaries);
+				expectedResults, expectedSourceHierarchy, expectedVxtPtrSummaries);
 			vxtManager.createTables(dtm, clearMode);
 		});
 		checkVxtStructures(dtm, expectedVxtStructs);
@@ -2480,6 +2506,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private void createAndTestStructures(Program program, DataTypeManager dtm,
 			ObjectOrientedClassLayout layoutChoice, MockPdb pdb, boolean is64Bit,
 			MsVxtManager vxtManager, Map<ClassID, String> expectedResults,
+			Map<ClassID, String> expectedSourceHierarchy,
 			Map<ClassID, Map<String, String>> expectedVxtPtrSummaries) throws Exception {
 
 		for (CppCompositeType cppType : pdb.getCppTypes()) {
@@ -2491,6 +2518,13 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 				continue;
 			}
 			CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+			String description = composite.getDescription();
+			if (expectedSourceHierarchy != null) {
+				String expectedSource = expectedSourceHierarchy.get(id);
+				// next line to aid in creating tests
+				//System.out.println(description);
+				assertEquals(expectedSource, description);
+			}
 			if (expectedVxtPtrSummaries == null) {
 				continue;
 			}
@@ -2519,10 +2553,14 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private void checkVxtStructures(DataTypeManager dtm,
 			Map<ClassID, Map<String, String>> expectedVxtStructs) {
 		for (Map.Entry<ClassID, Map<String, String>> entry : expectedVxtStructs.entrySet()) {
+			Map<String, String> expectedTables = entry.getValue();
+			if (expectedTables.isEmpty()) {
+				continue;
+			}
 			ClassID id = entry.getKey();
 			CategoryPath cp = ClassUtils.getClassInternalsPath(id);
 			Category category = dtm.getCategory(cp);
-			Map<String, String> expectedTables = entry.getValue();
+			assertNotNull(category);
 			for (Map.Entry<String, String> tableEntry : expectedTables.entrySet()) {
 				String tableName = tableEntry.getKey();
 				String expectedTableDump = tableEntry.getValue();
@@ -2531,24 +2569,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 						"Purposefully skipping table test that has bad result for " + tableName);
 					continue;
 				}
-				assertNotNull(category);
 				Structure table = (Structure) category.getDataType(tableName);
 				assertNotNull(table);
 				CompositeTestUtils.assertExpectedComposite(this, expectedTableDump, table, true);
 			}
 			// Make sure there are no extra tables
-			if (category != null) {
-				int count = 0;
-				DataType[] types = category.getDataTypes();
-				if (types != null) {
-					for (DataType type : category.getDataTypes()) {
-						if (ClassUtils.isVTable(type)) {
-							count++;
-						}
+			int count = 0;
+			DataType[] types = category.getDataTypes();
+			if (types != null) {
+				for (DataType type : category.getDataTypes()) {
+					if (ClassUtils.isVTable(type)) {
+						count++;
 					}
 				}
-				assertEquals(expectedTables.size(), count);
 			}
+			assertEquals(expectedTables.size(), count);
+		}
+	}
+
+	private void checkTables(Program program, MsVxtManager vxtManager,
+			Map<String, String> tableInfo) {
+
+		// next lines for aiding in creating expected results
+//		for (Address a : vxtManager.dumpVbtAddresses()) {
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"\");\n",
+//				a.toString()));
+//		}
+//		for (Address a : vxtManager.dumpVftAddresses()) {
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"\");\n",
+//				a.toString()));
+//		}
+
+		for (Map.Entry<String, String> entry : tableInfo.entrySet()) {
+			String addr = entry.getKey();
+			Address[] addresses = program.parseAddress(addr);
+			assertTrue(addresses.length == 1);
+			Address address = addresses[0];
+			CodeUnit cu = program.getListing().getCodeUnitAt(address);
+			// assume not instruction... will fail if so
+			Data d = (Data) cu;
+			DataType dt = d.getBaseDataType();
+			String pathName = dt.getPathName();
+			String expectedResult = entry.getValue();
+			// Following line is for aiding in creating expected results
+//			System.out.print(String.format("		expectedVxtAddressTypes.put(\"%s\", \"%s\");\n",
+//				addr, pathName));
+			assertEquals(expectedResult, pathName);
 		}
 	}
 

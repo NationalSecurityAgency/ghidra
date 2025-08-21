@@ -19,13 +19,13 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 
 /**
- * This is a base class for actions in a {@link DecompilerCodeComparisonPanel}
+ * This is a base class for actions in a {@link DecompilerCodeComparisonView}
  */
 public abstract class AbstractMatchedTokensAction extends DockingAction {
 	protected static final String MENU_PARENT = "Apply From Other Function";
 	protected static final String HELP_TOPIC = "FunctionComparison";
 
-	protected DecompilerCodeComparisonPanel diffPanel;
+	protected DecompilerCodeComparisonView comparisonProvider;
 	protected boolean disableOnReadOnly;
 
 	/**
@@ -33,13 +33,13 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 	 * 
 	 * @param actionName name of action
 	 * @param owner owner of action
-	 * @param diffPanel diff panel containing action
+	 * @param comparisonProvider diff panel containing action
 	 * @param disableOnReadOnly if true, action will be disabled for read-only programs
 	 */
 	public AbstractMatchedTokensAction(String actionName, String owner,
-			DecompilerCodeComparisonPanel diffPanel, boolean disableOnReadOnly) {
+			DecompilerCodeComparisonView comparisonProvider, boolean disableOnReadOnly) {
 		super(actionName, owner);
-		this.diffPanel = diffPanel;
+		this.comparisonProvider = comparisonProvider;
 		this.disableOnReadOnly = disableOnReadOnly;
 	}
 

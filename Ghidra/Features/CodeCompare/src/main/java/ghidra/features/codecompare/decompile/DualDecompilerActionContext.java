@@ -18,7 +18,6 @@ package ghidra.features.codecompare.decompile;
 import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.Component;
-import java.util.Iterator;
 import java.util.List;
 
 import docking.ComponentProvider;
@@ -38,26 +37,26 @@ import ghidra.util.datastruct.Duo.Side;
 public class DualDecompilerActionContext extends CodeComparisonActionContext
 		implements RestrictedAddressSetContext {
 
-	private DecompilerCodeComparisonPanel decompilerComparisonPanel = null;
+	private DecompilerCodeComparisonView comparisonProvider = null;
 	private TokenPair tokenPair;
 	private boolean overrideReadOnly = false;
 
 	/**
 	 * Creates an action context for a dual decompiler panel.
 	 * @param provider the provider for this context
-	 * @param panel the DecompilerComparisonPanel
+	 * @param comparisonProvider the DecompilerComparisonPanel
 	 * @param source the source of the action
 	 */
 	public DualDecompilerActionContext(ComponentProvider provider,
-			DecompilerCodeComparisonPanel panel, Component source) {
-		super(provider, panel, source);
-		decompilerComparisonPanel = panel;
+			DecompilerCodeComparisonView comparisonProvider, Component source) {
+		super(provider, comparisonProvider, source);
+		this.comparisonProvider = comparisonProvider;
 		tokenPair = computeTokenPair();
 	}
 
 	private TokenPair computeTokenPair() {
 		DecompilerPanel focusedPanel =
-			decompilerComparisonPanel.getActiveDisplay().getDecompilerPanel();
+			comparisonProvider.getActiveDisplay().getDecompilerPanel();
 
 		if (!(focusedPanel.getCurrentLocation() instanceof DecompilerLocation focusedLocation)) {
 			return null;
@@ -67,7 +66,7 @@ public class DualDecompilerActionContext extends CodeComparisonActionContext
 		if (focusedToken == null) {
 			return null;
 		}
-		List<TokenBin> tokenBin = decompilerComparisonPanel.getHighBins();
+		List<TokenBin> tokenBin = comparisonProvider.getHighBins();
 		if (tokenBin == null) {
 			return null;
 		}
@@ -80,13 +79,9 @@ public class DualDecompilerActionContext extends CodeComparisonActionContext
 			return null;
 		}
 
-		//loop over the tokens in the matching bin and return the first one in the same
-		//class as focusedToken
-		Iterator<ClangToken> tokenIter = matchedBin.iterator();
-		while (tokenIter.hasNext()) {
-			ClangToken currentMatch = tokenIter.next();
+		for (ClangToken currentMatch : matchedBin) {
 			if (currentMatch.getClass().equals(focusedToken.getClass())) {
-				return decompilerComparisonPanel.getActiveSide() == LEFT
+				return comparisonProvider.getActiveSide() == LEFT
 						? new TokenPair(focusedToken, currentMatch)
 						: new TokenPair(currentMatch, focusedToken);
 			}
@@ -95,12 +90,12 @@ public class DualDecompilerActionContext extends CodeComparisonActionContext
 	}
 
 	/**
-	 * Returns the {@link DecompilerCodeComparisonPanel} that generated this context
+	 * Returns the {@link DecompilerCodeComparisonView} that generated this context
 	 * @return the decompiler comparison panel that generated this context
 	 */
 	@Override
-	public DecompilerCodeComparisonPanel getCodeComparisonPanel() {
-		return decompilerComparisonPanel;
+	public DecompilerCodeComparisonView getCodeComparisonView() {
+		return comparisonProvider;
 	}
 
 	/**
@@ -111,7 +106,7 @@ public class DualDecompilerActionContext extends CodeComparisonActionContext
 	 * context
 	 */
 	public HighFunction getHighFunction(Side side) {
-		return decompilerComparisonPanel.getDecompilerPanel(side).getController().getHighFunction();
+		return comparisonProvider.getDecompilerPanel(side).getController().getHighFunction();
 	}
 
 	/**
@@ -144,7 +139,7 @@ public class DualDecompilerActionContext extends CodeComparisonActionContext
 		}
 
 		Program activeProgram =
-			decompilerComparisonPanel.getProgram(decompilerComparisonPanel.getActiveSide());
+			comparisonProvider.getProgram(comparisonProvider.getActiveSide());
 
 		if (activeProgram == null) {
 			return true;

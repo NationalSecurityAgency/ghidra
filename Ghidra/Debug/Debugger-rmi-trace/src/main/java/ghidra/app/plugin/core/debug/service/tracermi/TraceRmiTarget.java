@@ -1716,4 +1716,9 @@ public class TraceRmiTarget extends AbstractTarget {
 	public boolean isBusy() {
 		return connection.isBusy(this);
 	}
+
+	@Override
+	public void forciblyCloseTransactions() {
+		connection.forciblyCloseTransactions(this);
+	}
 }

@@ -115,7 +115,7 @@ public interface UnwoundFrame<T> {
 	 * assuming the callee has not saved that register to the stack.</li>
 	 * <li>The return address cannot be recovered. This happens when the function appears to be non
 	 * returning, or the analysis otherwise fails to recover the return address. In this case, this
-	 * method will throw an exception.
+	 * method will throw an exception.</li>
 	 * </ol>
 	 * 
 	 * @return the return address

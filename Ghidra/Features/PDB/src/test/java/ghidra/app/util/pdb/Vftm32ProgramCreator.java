@@ -860,6 +860,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructP1());
 	}
 
+	private static String getExpectedSourceHierarchyP1() {
+		String expected = "struct P1NS::P1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryP1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[P1NS::P1]");
@@ -951,6 +956,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructP2() {
 		return convertCommentsToSpeculative(getExpectedStructP2());
+	}
+
+	private static String getExpectedSourceHierarchyP2() {
+		String expected = "struct P2NS::P2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryP2() {
@@ -1082,6 +1092,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructQ1() {
 		return convertCommentsToSpeculative(getExpectedStructQ1());
+	}
+
+	private static String getExpectedSourceHierarchyQ1() {
+		String expected = "struct Q1NS::Q1 : P1NS::P1, P2NS::P2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryQ1() {
@@ -1244,6 +1259,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructQ2() {
 		return convertCommentsToSpeculative(getExpectedStructQ2());
+	}
+
+	private static String getExpectedSourceHierarchyQ2() {
+		String expected = "struct Q2NS::Q2 : P1NS::P1, P2NS::P2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryQ2() {
@@ -1414,6 +1434,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructQ3() {
 		return convertCommentsToSpeculative(getExpectedStructQ3());
+	}
+
+	private static String getExpectedSourceHierarchyQ3() {
+		String expected = "struct Q3NS::Q3 : P1NS::P1, P2NS::P2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryQ3() {
@@ -1624,6 +1649,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructQ4() {
 		return convertCommentsToSpeculative(getExpectedStructQ4());
+	}
+
+	private static String getExpectedSourceHierarchyQ4() {
+		String expected = "struct Q4NS::Q4 : P2NS::P2, virtual P1NS::P1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryQ4() {
@@ -1852,6 +1882,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructQ5());
 	}
 
+	private static String getExpectedSourceHierarchyQ5() {
+		String expected = "struct Q5NS::Q5 : P1NS::P1, virtual P2NS::P2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryQ5() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [P1NS::P1]	[Q5NS::Q5, P1NS::P1]");
@@ -2078,6 +2113,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructQ6());
 	}
 
+	private static String getExpectedSourceHierarchyQ6() {
+		String expected = "struct Q6NS::Q6 : P1NS::P1, virtual P2NS::P2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryQ6() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [P1NS::P1]	[Q6NS::Q6, P1NS::P1]");
@@ -2302,6 +2342,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructQ7() {
 		return convertCommentsToSpeculative(getExpectedStructQ7());
+	}
+
+	private static String getExpectedSourceHierarchyQ7() {
+		String expected = "struct Q7NS::Q7 : virtual P1NS::P1, virtual P2NS::P2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryQ7() {
@@ -2621,6 +2666,11 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructR1());
 	}
 
+	private static String getExpectedSourceHierarchyR1() {
+		String expected = "struct R1NS::R1 : virtual Q1NS::Q1, virtual Q2NS::Q2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryR1() {
 		Map<String, String> results = new TreeMap<>();
 		// This is the real expected result, but passing null tells the test to skip doing the
@@ -2827,6 +2877,26 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		speculatedStructs.put(R1, getSpeculatedStructR1());
 	}
 
+	private static final Map<ClassID, String> expectedSourceHierarchy = new LinkedHashMap<>();
+	static {
+		expectedSourceHierarchy.put(P1, getExpectedSourceHierarchyP1());
+		expectedSourceHierarchy.put(P2, getExpectedSourceHierarchyP2());
+		expectedSourceHierarchy.put(Q1, getExpectedSourceHierarchyQ1());
+		expectedSourceHierarchy.put(Q2, getExpectedSourceHierarchyQ2());
+		expectedSourceHierarchy.put(Q3, getExpectedSourceHierarchyQ3());
+		expectedSourceHierarchy.put(Q4, getExpectedSourceHierarchyQ4());
+		expectedSourceHierarchy.put(Q5, getExpectedSourceHierarchyQ5());
+		expectedSourceHierarchy.put(Q6, getExpectedSourceHierarchyQ6());
+		expectedSourceHierarchy.put(Q7, getExpectedSourceHierarchyQ7());
+		expectedSourceHierarchy.put(R1, getExpectedSourceHierarchyR1());
+	}
+
+	private static final Map<ClassID, String> speculatedSourceHierarchy =
+		new LinkedHashMap<>();
+	static {
+		speculatedSourceHierarchy.putAll(expectedSourceHierarchy);
+	}
+
 	private static final Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 		new TreeMap<>();
 	static {
@@ -2868,6 +2938,37 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		speculatedVxtStructs.putAll(expectedVxtStructs);
 	}
 
+	private static final Map<String, String> expectedVxtAddressTypes = new LinkedHashMap<>();
+	static {
+		expectedVxtAddressTypes.put("004503cc", "/Q4NS/Q4/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450434", "/Q5NS/Q5/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("0045049c", "/Q6NS/Q6/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450508", "/Q7NS/Q7/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("00450600", "/R1NS/R1/!internal/VTABLE_00000004");
+		expectedVxtAddressTypes.put("004501e4", "/P1NS/P1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045020c", "/P2NS/P2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450240", "/Q1NS/Q1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450270", "/Q1NS/Q1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("004502a4", "/Q2NS/Q2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004502dc", "/Q2NS/Q2/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450310", "/Q3NS/Q3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045033c", "/Q3NS/Q3/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("00450370", "/Q4NS/Q4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004503a8", "/Q4NS/Q4/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004503d8", "/Q5NS/Q5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450404", "/Q5NS/Q5/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("00450440", "/Q6NS/Q6/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("0045046c", "/Q6NS/Q6/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("004504a8", "/Q7NS/Q7/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("004504b0", "/Q7NS/Q7/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("004504d8", "/Q7NS/Q7/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00450518", "/R1NS/R1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("00450534", "/R1NS/R1/!internal/VTABLE_0000000c");
+		expectedVxtAddressTypes.put("00450564", "/R1NS/R1/!internal/VTABLE_00000014");
+		expectedVxtAddressTypes.put("00450598", "/R1NS/R1/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("004505d0", "/R1NS/R1/!internal/VTABLE_00000028");
+	}
+
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
@@ -2893,6 +2994,14 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 		return speculatedStructs;
 	}
 
+	public Map<ClassID, String> getExpectedSourceHierarchy() {
+		return expectedSourceHierarchy;
+	}
+
+	public Map<ClassID, String> getSpeculatedSourceHierarchy() {
+		return speculatedSourceHierarchy;
+	}
+
 	public Map<ClassID, Map<String, String>> getExpectedVxtPtrSummaries() {
 		return expectedVxtPtrSummaries;
 	}
@@ -2907,6 +3016,10 @@ public class Vftm32ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<String, String> getExpectedVxtAddressTypes() {
+		return expectedVxtAddressTypes;
 	}
 
 	@Override

@@ -113,9 +113,8 @@ class ConditionalExecution {
   int4 posta_outslot;		///< The \b out edge from iblock to posta
   BlockBasic *posta_block;	///< First block in posta path
   BlockBasic *postb_block;	///< First block in postb path
-  bool directsplit;		///< True if this the \e direct \e split variation
   map<int4,Varnode *> replacement;	///< Map from block to replacement Varnode for (current) Varnode
-  vector<PcodeOp *> returnop;	///< RETURN ops that have flow coming out of the iblock
+  vector<Varnode *> pullback;	///< Outputs of ops that have been pulled back from \b iblock for (current) Varnode
   vector<bool> heritageyes;	///< Boolean array indexed by address space indicating whether the space is heritaged
 
   void buildHeritageArray(void);
@@ -123,14 +122,16 @@ class ConditionalExecution {
   bool findInitPre(void);			///< Find \b initblock, based on \b iblock
   bool verifySameCondition(void);		///< Verify that \b initblock and \b iblock branch on the same condition
   bool testOpRead(Varnode *vn,PcodeOp *op);	///< Can we move the (non MULTIEQUAL) defining p-code of the given Varnode
-  bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we mave the MULTIEQUAL defining p-code of the given Varnode
+  bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we move the MULTIEQUAL defining p-code of the given Varnode
   bool testRemovability(PcodeOp *op);		///< Test if the given PcodeOp can be removed from \b iblock
-  void predefineDirectMulti(PcodeOp *op);
-  void adjustDirectMulti(void);			///< Update inputs to any MULTIEQUAL in the direct block
+  Varnode *findPullback(int4 inbranch);		///< Find previously constructed pull-back op
+  Varnode *pullbackSubpiece(PcodeOp *subOp,int4 inbranch);	///< Pull-back SUBPIECE out of the iblock
   Varnode *getNewMulti(PcodeOp *op,BlockBasic *bl);
+  Varnode *resolveRead(PcodeOp *op,BlockBasic *bl);	///< Resolve a read op coming through an arbitrary block
+  Varnode *resolveIblockRead(PcodeOp *op,int4 inbranch);	///< Resolve a read op coming through the \b iblock
+  Varnode *getMultiequalRead(PcodeOp *op,PcodeOp *readop,int4 slot);
   Varnode *getReplacementRead(PcodeOp *op,BlockBasic *bl);
   void doReplacement(PcodeOp *op);		///< Replace the data-flow for the given PcodeOp in \b iblock
-  void fixReturnOp(void);
   bool verify(void);				///< Verify that we have a removable \b iblock
 public:
   ConditionalExecution(Funcdata *f);		///< Constructor

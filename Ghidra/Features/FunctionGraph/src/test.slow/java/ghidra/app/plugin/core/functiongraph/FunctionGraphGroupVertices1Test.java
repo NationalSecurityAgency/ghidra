@@ -148,7 +148,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// First thing we need to do is close the function graph window.  It's opened on
 		// startup by default in this test suite but we want it closed until we clear the
 		// function code bytes.
-		this.getFunctionGraphController().getProvider().closeComponent();
+		this.getProvider().closeComponent();
 
 		// Set up some additional plugins we need.
 		try {

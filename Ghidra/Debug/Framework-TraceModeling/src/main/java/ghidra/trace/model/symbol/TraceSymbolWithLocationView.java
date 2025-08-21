@@ -216,7 +216,6 @@ public interface TraceSymbolWithLocationView<T extends TraceSymbol> extends Trac
 	 * Check if this view contains any symbols at the given point.
 	 * 
 	 * @param snap the snapshot key
-	 * @param thread the thread, if in register space
 	 * @param address the address of the symbols
 	 * @param includeDynamicSymbols true to include dynamically-generated symbols
 	 * @return true if any symbols in this view satisfy the query

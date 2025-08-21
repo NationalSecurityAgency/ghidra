@@ -76,6 +76,11 @@ import util.HistoryList;
  */
 public class GhidraFileChooser extends ReusableDialogComponentProvider implements FileFilter {
 
+	/**
+	 * Somewhat arbitrary file count threshold to signal when slow operations should be avoided.
+	 */
+	private static final int BIG_DATA_THRESHOLD = 200;
+
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = new GColor("color.fg.filechooser");
 	private static final Color BACKGROUND_COLOR = new GColor("color.bg.filechooser");
@@ -218,7 +223,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * @param parent the parent component
 	 */
 	public GhidraFileChooser(Component parent) {
-		this(new LocalFileChooserModel(), parent);
+		this(null, parent);
 	}
 
 	/**
@@ -238,8 +243,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private void init(GhidraFileChooserModel newModel) {
+		if (newModel == null) {
+			newModel = new LocalFileChooserModel(() -> this);
+		}
 		this.fileChooserModel = newModel;
-		this.fileChooserModel.setModelUpdateCallback(modelUpdater::update);
 
 		history.setAllowDuplicates(true);
 
@@ -810,6 +817,17 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	/**
+	 * Returns whether the current file data is a large number of files.   Exactly what constitutes 
+	 * large is up to the client.  This method allows the framework to avoid expensive operations
+	 * when the data set is large.
+	 * 
+	 * @return true if big data
+	 */
+	public boolean hasBigData() {
+		return directoryListModel.getSize() > BIG_DATA_THRESHOLD;
+	}
+
+	/**
 	 * Sets the text used in the <code>OK</code> button
 	 *
 	 * @param buttonText the text
@@ -935,22 +953,12 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 			throw new AssertException("Expected a directory and did not get one: " + directory);
 		}
 
-		File currentDirectory = currentDirectory();
-
 		// if we are forcing the update, then just do it! ...or, if the new dir is not already
 		// the current dir, then we need to update
+		File currentDirectory = currentDirectory();
 		if (force || !directory.equals(currentDirectory)) {
 			worker.schedule(new UpdateDirectoryContentsJob(directory, null, addToHistory));
-			return;
 		}
-
-		// we only get here if the new dir is the current dir and we are not forcing an update
-		// TODO this code causes unexpected behavior when in 'directories only' mode in that
-		// this will cause the current directory to change.  The behavior can be seen by
-		// putting this code back in and then running the tests.   No tests are failing with this
-		// code removed.  We are leaving this code here for a couple releases in case we find
-		// a code path that requires it.
-		// setSelectedFileAndUpdateDisplay((isFilesOnly() ? null : directory));
 	}
 
 	boolean pendingUpdate() {
@@ -986,13 +994,15 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private void setDirectoryList(File directory, List<File> files) {
 		// if the visible listing is still the same directory as this incoming list of files
 		if (currentDirectory().equals(directory)) {
+
 			// recompute list cell dims before causing an update to the model
 			directoryTableModel.setFiles(files);
 			directoryTable.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 			directoryListModel.setFiles(files);
 			directoryList.scrollRectToVisible(new Rectangle(0, 0, 0, 0));
 		}
-		updateShortCutPanel();
+
+		updateShortcutPanel();
 	}
 
 	/**
@@ -1351,6 +1361,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		});
 	}
 
+	void rootInfoUpdated() {
+		modelUpdater.update();
+	}
+
 	GhidraFileChooserModel getModel() {
 		return fileChooserModel;
 	}
@@ -1507,7 +1521,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		updateDirAndSelectFile(currentDir, currentSelectedFile, true, false);
 	}
 
-	private void updateShortCutPanel() {
+	private void updateShortcutPanel() {
 		// make sure that if one of the shortcut buttons is selected, the directory matches that button
 		File currentDirectory = currentDirectory();
 		checkShortCutButton(myComputerButton, currentDirectory);

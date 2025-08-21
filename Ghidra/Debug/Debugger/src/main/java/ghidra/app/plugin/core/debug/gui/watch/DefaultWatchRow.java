@@ -51,6 +51,7 @@ public class DefaultWatchRow implements WatchRow {
 	public static final int TRUNCATE_BYTES_LENGTH = 64;
 	private static final String KEY_EXPRESSION = "expression";
 	private static final String KEY_DATA_TYPE = "dataType";
+	private static final String KEY_COMMENT = "comment";
 	private static final String KEY_SETTINGS = "settings";
 
 	private final DebuggerWatchesProvider provider;
@@ -62,6 +63,7 @@ public class DefaultWatchRow implements WatchRow {
 	private DataType dataType;
 	private SettingsImpl settings = new SettingsImpl();
 	private SavedSettings savedSettings = new SavedSettings(settings);
+	private String comment;
 
 	private volatile PcodeExpression compiled;
 	private volatile TraceMemoryState state;
@@ -602,15 +604,27 @@ public class DefaultWatchRow implements WatchRow {
 		}
 	}
 
+	@Override
+	public String getComment() {
+		return comment;
+	}
+
+	@Override
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+
 	protected void writeConfigState(SaveState saveState) {
 		saveState.putString(KEY_EXPRESSION, expression);
 		saveState.putString(KEY_DATA_TYPE, typePath);
+		saveState.putString(KEY_COMMENT, comment);
 		saveState.putSaveState(KEY_SETTINGS, savedSettings.getState());
 	}
 
 	protected void readConfigState(SaveState saveState) {
 		setExpression(saveState.getString(KEY_EXPRESSION, ""));
 		setTypePath(saveState.getString(KEY_DATA_TYPE, null));
+		setComment(saveState.getString(KEY_COMMENT, ""));
 
 		savedSettings.setState(saveState.getSaveState(KEY_SETTINGS));
 		if (dataType != null) {

@@ -16,8 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 import db.DBRecord;
 import db.Field;
@@ -241,7 +240,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		ParameterDefinition[] definedArguments = funcDef.getArguments();
 		ParameterDefinitionDB[] myArguments = getArguments();
 		if (definedArguments.length != myArguments.length) {
-			throw new IllegalArgumentException("mismatched definition datatype");
+			throw new ConcurrentModificationException(
+				"Resolve failure: unexpected argument count detected for '" +
+					definitionDt.getPathName() + "' (" + definedArguments.length + " vs " +
+					myArguments.length + ")");
 		}
 		for (int i = 0; i < definedArguments.length; i++) {
 			ParameterDefinition arg = definedArguments[i];

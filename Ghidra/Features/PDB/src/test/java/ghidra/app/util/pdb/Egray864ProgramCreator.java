@@ -2045,6 +2045,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA());
 	}
 
+	private static String getExpectedSourceHierarchyA() {
+		String expected = "struct A";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryA() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -2101,6 +2106,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB());
 	}
 
+	private static String getExpectedSourceHierarchyB() {
+		String expected = "struct B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryB() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -2143,6 +2153,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructC() {
 		return convertCommentsToSpeculative(getExpectedStructC());
+	}
+
+	private static String getExpectedSourceHierarchyC() {
+		String expected = "struct C";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryC() {
@@ -2188,6 +2203,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1());
 	}
 
+	private static String getExpectedSourceHierarchyCC1() {
+		String expected = "struct CC1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -2231,6 +2251,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2());
 	}
 
+	private static String getExpectedSourceHierarchyCC2() {
+		String expected = "struct CC2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -2269,6 +2294,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC3() {
 		return convertCommentsToSpeculative(getExpectedStructCC3());
+	}
+
+	private static String getExpectedSourceHierarchyCC3() {
+		String expected = "struct CC3";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC3() {
@@ -2324,6 +2354,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructD());
 	}
 
+	private static String getExpectedSourceHierarchyD() {
+		String expected = "struct D : C";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryD() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -2365,6 +2400,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructE() {
 		return convertCommentsToSpeculative(getExpectedStructE());
+	}
+
+	private static String getExpectedSourceHierarchyE() {
+		String expected = "struct E";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryE() {
@@ -2428,6 +2468,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructF() {
 		return convertCommentsToSpeculative(getExpectedStructF());
+	}
+
+	private static String getExpectedSourceHierarchyF() {
+		String expected = "struct F : C, E";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryF() {
@@ -2518,6 +2563,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructG() {
 		return convertCommentsToSpeculative(getExpectedStructG());
+	}
+
+	private static String getExpectedSourceHierarchyG() {
+		String expected = "struct G : virtual C";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryG() {
@@ -2626,6 +2676,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructH());
 	}
 
+	private static String getExpectedSourceHierarchyH() {
+		String expected = "struct H : virtual C";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryH() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[H]");
@@ -2730,6 +2785,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructGG1() {
 		return convertCommentsToSpeculative(getExpectedStructGG1());
+	}
+
+	private static String getExpectedSourceHierarchyGG1() {
+		String expected = "struct GG1 : virtual CC1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryGG1() {
@@ -2838,6 +2898,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructGG2());
 	}
 
+	private static String getExpectedSourceHierarchyGG2() {
+		String expected = "struct GG2 : virtual CC2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryGG2() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[GG2]");
@@ -2944,6 +3009,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructGG3());
 	}
 
+	private static String getExpectedSourceHierarchyGG3() {
+		String expected = "struct GG3 : virtual CC2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryGG3() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[GG3]");
@@ -3044,6 +3114,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructGG4() {
 		return convertCommentsToSpeculative(getExpectedStructGG4());
+	}
+
+	private static String getExpectedSourceHierarchyGG4() {
+		String expected = "struct GG4 : virtual CC3";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryGG4() {
@@ -3197,6 +3272,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
 
+	private static String getExpectedSourceHierarchyI() {
+		String expected = "struct I : G, H";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryI() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [G]	[I, G]");
@@ -3315,6 +3395,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructGX1());
 	}
 
+	private static String getExpectedSourceHierarchyGX1() {
+		String expected = "struct GX1 : virtual C";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryGX1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[GX1]");
@@ -3417,6 +3502,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructHX1() {
 		return convertCommentsToSpeculative(getExpectedStructHX1());
+	}
+
+	private static String getExpectedSourceHierarchyHX1() {
+		String expected = "struct HX1 : virtual C";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryHX1() {
@@ -3563,6 +3653,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructIX1());
 	}
 
+	private static String getExpectedSourceHierarchyIX1() {
+		String expected = "struct IX1 : GX1, HX1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryIX1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [GX1]	[IX1, GX1]");
@@ -3697,6 +3792,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructG1());
 	}
 
+	private static String getExpectedSourceHierarchyG1() {
+		String expected = "struct G1 : virtual C, virtual E";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryG1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[G1]");
@@ -3814,6 +3914,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructH1() {
 		return convertCommentsToSpeculative(getExpectedStructH1());
+	}
+
+	private static String getExpectedSourceHierarchyH1() {
+		String expected = "struct H1 : virtual E, virtual C";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryH1() {
@@ -3977,6 +4082,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructI1() {
 		return convertCommentsToSpeculative(getExpectedStructI1());
+	}
+
+	private static String getExpectedSourceHierarchyI1() {
+		String expected = "struct I1 : G1, H";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryI1() {
@@ -4159,6 +4269,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI2());
 	}
 
+	private static String getExpectedSourceHierarchyI2() {
+		String expected = "struct I2 : G, H1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryI2() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [G]	[I2, G]");
@@ -4339,6 +4454,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI3());
 	}
 
+	private static String getExpectedSourceHierarchyI3() {
+		String expected = "struct I3 : G1, H1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryI3() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [G1]	[I3, G1]");
@@ -4490,6 +4610,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructI4() {
 		return convertCommentsToSpeculative(getExpectedStructI4());
+	}
+
+	private static String getExpectedSourceHierarchyI4() {
+		String expected = "struct I4 : G1, virtual E, virtual C";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryI4() {
@@ -4676,6 +4801,16 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyI5() {
+		String expected = "struct I5 : virtual E, G1, virtual C";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyI5() {
+		String expected = "struct I5 : G1, virtual E, virtual C";
 		return expected;
 	}
 
@@ -4929,6 +5064,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ1() {
 		return convertCommentsToSpeculative(getExpectedStructJ1());
+	}
+
+	private static String getExpectedSourceHierarchyJ1() {
+		String expected = "struct J1 : I1, I2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ1() {
@@ -5231,6 +5371,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ2() {
 		return convertCommentsToSpeculative(getExpectedStructJ2());
+	}
+
+	private static String getExpectedSourceHierarchyJ2() {
+		String expected = "struct J2 : I2, I1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ2() {
@@ -5554,6 +5699,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ3() {
 		return convertCommentsToSpeculative(getExpectedStructJ3());
+	}
+
+	private static String getExpectedSourceHierarchyJ3() {
+		String expected = "struct J3 : I2, I1, A";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ3() {
@@ -5967,6 +6117,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ4() {
 		return convertCommentsToSpeculative(getExpectedStructJ4());
+	}
+
+	private static String getExpectedSourceHierarchyJ4() {
+		String expected = "struct J4 : I3, GG1, I, A, virtual GG2, virtual GG3";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ4() {
@@ -6476,6 +6631,16 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getExpectedSourceHierarchyJ5() {
+		String expected = "struct J5 : virtual GG2, virtual GG3, I3, GG1, I, A";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyJ5() {
+		String expected = "struct J5 : I3, GG1, I, A, virtual GG2, virtual GG3";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryJ5() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [G1]	[J5, I3, G1]");
@@ -6723,8 +6888,8 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			pack()
 			Structure J6 {
 			   0   J6   24      "Self Base"
-			   24   GG4   16      "Virtual Base"
-			   40   CC2   4      "Virtual Base and previous (Empty Virtual Base CC3)"
+			   24   GG4   16      "Virtual Base and previous (Empty Virtual Base CC3)"
+			   40   CC2   4      "Virtual Base"
 			   48   GG3   16      "Virtual Base"
 			}
 			Length: 64 Alignment: 8
@@ -6807,8 +6972,8 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			pack()
 			Structure J6 {
 			   0   J6   24      "Self Base"
-			   24   CC2   4      "Virtual Base - Speculative Placement and previous (Empty Virtual Base CC3)"
-			   32   GG4   16      "Virtual Base - Speculative Placement"
+			   24   GG4   16      "Virtual Base - Speculative Placement and previous (Empty Virtual Base CC3)"
+			   40   CC2   4      "Virtual Base - Speculative Placement"
 			   48   GG3   16      "Virtual Base - Speculative Placement"
 			}
 			Length: 64 Alignment: 8
@@ -6848,6 +7013,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyJ6() {
+		String expected = "struct J6 : A, virtual GG4, virtual GG3";
 		return expected;
 	}
 
@@ -6993,6 +7163,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructP());
 	}
 
+	private static String getExpectedSourceHierarchyP() {
+		String expected = "struct P";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryP() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[P]");
@@ -7070,6 +7245,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructQ());
 	}
 
+	private static String getExpectedSourceHierarchyQ() {
+		String expected = "struct Q : P";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryQ() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[Q, P]");
@@ -7135,6 +7315,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructR() {
 		return convertCommentsToSpeculative(getExpectedStructR());
+	}
+
+	private static String getExpectedSourceHierarchyR() {
+		String expected = "struct R";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryR() {
@@ -7232,6 +7417,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructS() {
 		return convertCommentsToSpeculative(getExpectedStructS());
+	}
+
+	private static String getExpectedSourceHierarchyS() {
+		String expected = "struct S : P, R";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryS() {
@@ -7396,6 +7586,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			}
 			Length: 24 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyT() {
+		String expected = "struct T : virtual P";
 		return expected;
 	}
 
@@ -7628,6 +7823,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getExpectedSourceHierarchyU() {
+		String expected = "struct U : T";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryU() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [T]	[U, T]");
@@ -7749,6 +7949,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructV());
 	}
 
+	private static String getExpectedSourceHierarchyV() {
+		String expected = "struct V";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryV() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[V]");
@@ -7818,6 +8023,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructW() {
 		return convertCommentsToSpeculative(getExpectedStructW());
+	}
+
+	private static String getExpectedSourceHierarchyW() {
+		String expected = "struct W : V";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryW() {
@@ -7902,6 +8112,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructWW());
 	}
 
+	private static String getExpectedSourceHierarchyWW() {
+		String expected = "struct WW : W";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryWW() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[WW, W, V]");
@@ -7954,6 +8169,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructX());
 	}
 
+	private static String getExpectedSourceHierarchyX() {
+		String expected = "struct X";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryX() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -7988,6 +8208,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructZ() {
 		return convertCommentsToSpeculative(getExpectedStructZ());
+	}
+
+	private static String getExpectedSourceHierarchyZ() {
+		String expected = "struct Z";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryZ() {
@@ -8028,6 +8253,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA1a());
 	}
 
+	private static String getExpectedSourceHierarchyAA1a() {
+		String expected = "struct AA1a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA1a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -8064,6 +8294,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA1b() {
 		return convertCommentsToSpeculative(getExpectedStructAA1b());
+	}
+
+	private static String getExpectedSourceHierarchyAA1b() {
+		String expected = "struct AA1b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA1b() {
@@ -8124,6 +8359,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA1());
 	}
 
+	private static String getExpectedSourceHierarchyAA1() {
+		String expected = "struct AA1 : AA1a, AA1b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA1() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -8162,6 +8402,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA2a());
 	}
 
+	private static String getExpectedSourceHierarchyAA2a() {
+		String expected = "struct AA2a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA2a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -8198,6 +8443,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA2b() {
 		return convertCommentsToSpeculative(getExpectedStructAA2b());
+	}
+
+	private static String getExpectedSourceHierarchyAA2b() {
+		String expected = "struct AA2b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA2b() {
@@ -8256,6 +8506,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA2() {
 		return convertCommentsToSpeculative(getExpectedStructAA2());
+	}
+
+	private static String getExpectedSourceHierarchyAA2() {
+		String expected = "struct AA2 : AA2a, AA2b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA2() {
@@ -8361,6 +8616,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA3a() {
 		return convertCommentsToSpeculative(getExpectedStructAA3a());
+	}
+
+	private static String getExpectedSourceHierarchyAA3a() {
+		String expected = "struct AA3a : virtual AA2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3a() {
@@ -8482,6 +8742,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA3b() {
 		return convertCommentsToSpeculative(getExpectedStructAA3b());
+	}
+
+	private static String getExpectedSourceHierarchyAA3b() {
+		String expected = "struct AA3b : virtual AA2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3b() {
@@ -8756,6 +9021,16 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getExpectedSourceHierarchyAA3c() {
+		String expected = "struct AA3c : virtual AA1, AA3a, AA3b";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyAA3c() {
+		String expected = "struct AA3c : AA3a, AA3b, virtual AA1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3c() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [AA3a]	[AA3c, AA3a]");
@@ -8970,8 +9245,8 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			pack()
 			Structure AA3d {
 			   0   AA3d   16      "Self Base"
-			   16   AA2   12      "Virtual Base - Speculative Placement"
-			   28   AA1   12      "Virtual Base - Speculative Placement"
+			   16   AA1   12      "Virtual Base - Speculative Placement"
+			   28   AA2   12      "Virtual Base - Speculative Placement"
 			   40   AA3a   16      "Virtual Base - Speculative Placement"
 			   56   AA3b   16      "Virtual Base - Speculative Placement"
 			}
@@ -9038,6 +9313,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyAA3d() {
+		String expected = "struct AA3d : virtual AA1, virtual AA3a, virtual AA3b";
 		return expected;
 	}
 
@@ -9160,6 +9440,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA3e());
 	}
 
+	private static String getExpectedSourceHierarchyAA3e() {
+		String expected = "struct AA3e : AA2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3e() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -9226,6 +9511,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA3f() {
 		return convertCommentsToSpeculative(getExpectedStructAA3f());
+	}
+
+	private static String getExpectedSourceHierarchyAA3f() {
+		String expected = "struct AA3f : AA2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3f() {
@@ -9365,6 +9655,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA3g());
 	}
 
+	private static String getExpectedSourceHierarchyAA3g() {
+		String expected = "struct AA3g : virtual AA3e, virtual AA3f";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA3g() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[AA3g]");
@@ -9487,6 +9782,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4a());
 	}
 
+	private static String getExpectedSourceHierarchyAA4a() {
+		String expected = "struct AA4a : virtual AA1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4a() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[AA4a]");
@@ -9606,6 +9906,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4b() {
 		return convertCommentsToSpeculative(getExpectedStructAA4b());
+	}
+
+	private static String getExpectedSourceHierarchyAA4b() {
+		String expected = "struct AA4b : virtual AA1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4b() {
@@ -9772,6 +10077,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4c() {
 		return convertCommentsToSpeculative(getExpectedStructAA4c());
+	}
+
+	private static String getExpectedSourceHierarchyAA4c() {
+		String expected = "struct AA4c : AA4a, AA4b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4c() {
@@ -9951,6 +10261,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4d());
 	}
 
+	private static String getExpectedSourceHierarchyAA4d() {
+		String expected = "struct AA4d : AA4b, virtual AA4a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4d() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [AA4b]	[AA4d, AA4b]");
@@ -10127,6 +10442,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4e() {
 		return convertCommentsToSpeculative(getExpectedStructAA4e());
+	}
+
+	private static String getExpectedSourceHierarchyAA4e() {
+		String expected = "struct AA4e : AA4a, virtual AA4b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4e() {
@@ -10308,6 +10628,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4f());
 	}
 
+	private static String getExpectedSourceHierarchyAA4f() {
+		String expected = "struct AA4f : virtual AA4a, virtual AA4b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4f() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [AA4f]	[AA4f]");
@@ -10482,6 +10807,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4g());
 	}
 
+	private static String getExpectedSourceHierarchyAA4g() {
+		String expected = "struct AA4g : AA4b, virtual AA1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4g() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[AA4g, AA4b]");
@@ -10534,6 +10864,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4h() {
 		return convertCommentsToSpeculative(getExpectedStructAA4h());
+	}
+
+	private static String getExpectedSourceHierarchyAA4h() {
+		String expected = "struct AA4h";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4h() {
@@ -10619,6 +10954,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4j() {
 		return convertCommentsToSpeculative(getExpectedStructAA4j());
+	}
+
+	private static String getExpectedSourceHierarchyAA4j() {
+		String expected = "struct AA4j : virtual AA4h";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4j() {
@@ -10720,6 +11060,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4k() {
 		return convertCommentsToSpeculative(getExpectedStructAA4k());
+	}
+
+	private static String getExpectedSourceHierarchyAA4k() {
+		String expected = "struct AA4k : virtual AA4h";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4k() {
@@ -10842,6 +11187,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4m());
 	}
 
+	private static String getExpectedSourceHierarchyAA4m() {
+		String expected = "struct AA4m : AA4j";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4m() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[AA4m, AA4j]");
@@ -10960,6 +11310,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4n() {
 		return convertCommentsToSpeculative(getExpectedStructAA4n());
+	}
+
+	private static String getExpectedSourceHierarchyAA4n() {
+		String expected = "struct AA4n : AA4k, virtual AA4h";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4n() {
@@ -11099,6 +11454,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA4p() {
 		return convertCommentsToSpeculative(getExpectedStructAA4p());
+	}
+
+	private static String getExpectedSourceHierarchyAA4p() {
+		String expected = "struct AA4p : AA4m, virtual AA4h";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4p() {
@@ -11285,6 +11645,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA4q());
 	}
 
+	private static String getExpectedSourceHierarchyAA4q() {
+		String expected = "struct AA4q : AA4n, AA4m";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA4q() {
 		Map<String, String> results = new TreeMap<>();
 		// This is the real expected result, but passing null tells the test to skip doing the
@@ -11363,6 +11728,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA5a());
 	}
 
+	private static String getExpectedSourceHierarchyAA5a() {
+		String expected = "struct AA5a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -11399,6 +11769,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5b() {
 		return convertCommentsToSpeculative(getExpectedStructAA5b());
+	}
+
+	private static String getExpectedSourceHierarchyAA5b() {
+		String expected = "struct AA5b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5b() {
@@ -11439,6 +11814,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA5c());
 	}
 
+	private static String getExpectedSourceHierarchyAA5c() {
+		String expected = "struct AA5c";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5c() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -11475,6 +11855,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5d() {
 		return convertCommentsToSpeculative(getExpectedStructAA5d());
+	}
+
+	private static String getExpectedSourceHierarchyAA5d() {
+		String expected = "struct AA5d";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5d() {
@@ -11577,6 +11962,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5e() {
 		return convertCommentsToSpeculative(getExpectedStructAA5e());
+	}
+
+	private static String getExpectedSourceHierarchyAA5e() {
+		String expected = "struct AA5e : AA5a, virtual AA5b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5e() {
@@ -11695,6 +12085,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5f() {
 		return convertCommentsToSpeculative(getExpectedStructAA5f());
+	}
+
+	private static String getExpectedSourceHierarchyAA5f() {
+		String expected = "struct AA5f : AA5c, virtual AA5d";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5f() {
@@ -11844,6 +12239,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5g() {
 		return convertCommentsToSpeculative(getExpectedStructAA5g());
+	}
+
+	private static String getExpectedSourceHierarchyAA5g() {
+		String expected = "struct AA5g : AA5c, virtual AA5e";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5g() {
@@ -12014,6 +12414,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA5h() {
 		return convertCommentsToSpeculative(getExpectedStructAA5h());
+	}
+
+	private static String getExpectedSourceHierarchyAA5h() {
+		String expected = "struct AA5h : AA5a, virtual AA5f";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5h() {
@@ -12280,6 +12685,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA5j());
 	}
 
+	private static String getExpectedSourceHierarchyAA5j() {
+		String expected = "struct AA5j : AA5g, AA5h, virtual AA5b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA5j() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000008", "     8 vbt [AA5g]	[AA5j, AA5g]");
@@ -12394,6 +12804,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA6a());
 	}
 
+	private static String getExpectedSourceHierarchyAA6a() {
+		String expected = "struct AA6a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -12440,6 +12855,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA6b() {
 		return convertCommentsToSpeculative(getExpectedStructAA6b());
+	}
+
+	private static String getExpectedSourceHierarchyAA6b() {
+		String expected = "struct AA6b : AA6a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6b() {
@@ -12527,6 +12947,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA6c());
 	}
 
+	private static String getExpectedSourceHierarchyAA6c() {
+		String expected = "struct AA6c : virtual AA6a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6c() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[AA6c]");
@@ -12589,6 +13014,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA6d());
 	}
 
+	private static String getExpectedSourceHierarchyAA6d() {
+		String expected = "struct AA6d";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6d() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -12637,6 +13067,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA6e() {
 		return convertCommentsToSpeculative(getExpectedStructAA6e());
+	}
+
+	private static String getExpectedSourceHierarchyAA6e() {
+		String expected = "struct AA6e : AA6a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6e() {
@@ -12697,6 +13132,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA6f() {
 		return convertCommentsToSpeculative(getExpectedStructAA6f());
+	}
+
+	private static String getExpectedSourceHierarchyAA6f() {
+		String expected = "struct AA6f : AA6b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6f() {
@@ -12809,6 +13249,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA6g() {
 		return convertCommentsToSpeculative(getExpectedStructAA6g());
+	}
+
+	private static String getExpectedSourceHierarchyAA6g() {
+		String expected = "struct AA6g : AA6c";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6g() {
@@ -12939,6 +13384,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA6h() {
 		return convertCommentsToSpeculative(getExpectedStructAA6h());
+	}
+
+	private static String getExpectedSourceHierarchyAA6h() {
+		String expected = "struct AA6h : virtual AA6c";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6h() {
@@ -13095,6 +13545,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA6j());
 	}
 
+	private static String getExpectedSourceHierarchyAA6j() {
+		String expected = "struct AA6j : virtual AA6c";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA6j() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [AA6j]	[AA6j]");
@@ -13182,6 +13637,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA7a());
 	}
 
+	private static String getExpectedSourceHierarchyAA7a() {
+		String expected = "struct AA7a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA7a() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[AA7a]");
@@ -13247,6 +13707,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA7b() {
 		return convertCommentsToSpeculative(getExpectedStructAA7b());
+	}
+
+	private static String getExpectedSourceHierarchyAA7b() {
+		String expected = "struct AA7b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA7b() {
@@ -13343,6 +13808,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructAA7c() {
 		return convertCommentsToSpeculative(getExpectedStructAA7c());
+	}
+
+	private static String getExpectedSourceHierarchyAA7c() {
+		String expected = "struct AA7c : AA7a, AA7b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryAA7c() {
@@ -13503,6 +13973,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructAA7d());
 	}
 
+	private static String getExpectedSourceHierarchyAA7d() {
+		String expected = "struct AA7d : virtual AA7a, virtual AA7b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryAA7d() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [AA7d]	[AA7d]");
@@ -13608,6 +14083,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB1a());
 	}
 
+	private static String getExpectedSourceHierarchyBB1a() {
+		String expected = "struct BB1a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB1a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -13654,6 +14134,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB1b() {
 		return convertCommentsToSpeculative(getExpectedStructBB1b());
+	}
+
+	private static String getExpectedSourceHierarchyBB1b() {
+		String expected = "struct BB1b : BB1a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB1b() {
@@ -13739,6 +14224,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB1c() {
 		return convertCommentsToSpeculative(getExpectedStructBB1c());
+	}
+
+	private static String getExpectedSourceHierarchyBB1c() {
+		String expected = "struct BB1c : virtual BB1a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB1c() {
@@ -13889,6 +14379,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB1d());
 	}
 
+	private static String getExpectedSourceHierarchyBB1d() {
+		String expected = "struct BB1d : BB1b, BB1c";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB1d() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000008", "     8 vbt []	[BB1d, BB1c]");
@@ -13941,6 +14436,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB2z() {
 		return convertCommentsToSpeculative(getExpectedStructBB2z());
+	}
+
+	private static String getExpectedSourceHierarchyBB2z() {
+		String expected = "struct BB2z";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2z() {
@@ -14026,6 +14526,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB2a() {
 		return convertCommentsToSpeculative(getExpectedStructBB2a());
+	}
+
+	private static String getExpectedSourceHierarchyBB2a() {
+		String expected = "struct BB2a : virtual BB2z";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2a() {
@@ -14148,6 +14653,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB2b());
 	}
 
+	private static String getExpectedSourceHierarchyBB2b() {
+		String expected = "struct BB2b : BB2a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2b() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[BB2b, BB2a]");
@@ -14268,6 +14778,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB2c() {
 		return convertCommentsToSpeculative(getExpectedStructBB2c());
+	}
+
+	private static String getExpectedSourceHierarchyBB2c() {
+		String expected = "struct BB2c : virtual BB2a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2c() {
@@ -14471,6 +14986,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB2d());
 	}
 
+	private static String getExpectedSourceHierarchyBB2d() {
+		String expected = "struct BB2d : BB2b, BB2c";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2d() {
 		Map<String, String> results = new TreeMap<>();
 		// This is the real expected result, but passing null tells the test to skip doing the
@@ -14652,6 +15172,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB2e());
 	}
 
+	private static String getExpectedSourceHierarchyBB2e() {
+		String expected = "struct BB2e : BB2b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB2e() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[BB2e, BB2b, BB2a]");
@@ -14706,6 +15231,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB3a());
 	}
 
+	private static String getExpectedSourceHierarchyBB3a() {
+		String expected = "struct BB3a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -14744,6 +15274,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB3b());
 	}
 
+	private static String getExpectedSourceHierarchyBB3b() {
+		String expected = "struct BB3b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3b() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -14780,6 +15315,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB3c() {
 		return convertCommentsToSpeculative(getExpectedStructBB3c());
+	}
+
+	private static String getExpectedSourceHierarchyBB3c() {
+		String expected = "struct BB3c";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3c() {
@@ -14899,6 +15439,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB3d() {
 		return convertCommentsToSpeculative(getExpectedStructBB3d());
+	}
+
+	private static String getExpectedSourceHierarchyBB3d() {
+		String expected = "struct BB3d : BB3a, BB3c, virtual BB3b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3d() {
@@ -15029,6 +15574,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB3e() {
 		return convertCommentsToSpeculative(getExpectedStructBB3e());
+	}
+
+	private static String getExpectedSourceHierarchyBB3e() {
+		String expected = "struct BB3e : BB3b, virtual BB3a, virtual BB3c";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3e() {
@@ -15233,6 +15783,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructBB3f() {
 		return convertCommentsToSpeculative(getExpectedStructBB3f());
+	}
+
+	private static String getExpectedSourceHierarchyBB3f() {
+		String expected = "struct BB3f : BB3d, BB3e";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3f() {
@@ -15456,6 +16011,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructBB3g());
 	}
 
+	private static String getExpectedSourceHierarchyBB3g() {
+		String expected = "struct BB3g : BB3e, BB3d";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryBB3g() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000008", "     8 vbt [BB3e]	[BB3g, BB3e]");
@@ -15528,6 +16088,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1a());
 	}
 
+	private static String getExpectedSourceHierarchyCC1a() {
+		String expected = "struct CC1a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -15564,6 +16129,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC1b() {
 		return convertCommentsToSpeculative(getExpectedStructCC1b());
+	}
+
+	private static String getExpectedSourceHierarchyCC1b() {
+		String expected = "struct CC1b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1b() {
@@ -15604,6 +16174,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1c());
 	}
 
+	private static String getExpectedSourceHierarchyCC1c() {
+		String expected = "struct CC1c";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1c() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -15640,6 +16215,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC1d() {
 		return convertCommentsToSpeculative(getExpectedStructCC1d());
+	}
+
+	private static String getExpectedSourceHierarchyCC1d() {
+		String expected = "struct CC1d";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1d() {
@@ -15680,6 +16260,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1e());
 	}
 
+	private static String getExpectedSourceHierarchyCC1e() {
+		String expected = "struct CC1e";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1e() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -15716,6 +16301,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC1f() {
 		return convertCommentsToSpeculative(getExpectedStructCC1f());
+	}
+
+	private static String getExpectedSourceHierarchyCC1f() {
+		String expected = "struct CC1f";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1f() {
@@ -15815,6 +16405,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC1g() {
 		return convertCommentsToSpeculative(getExpectedStructCC1g());
+	}
+
+	private static String getExpectedSourceHierarchyCC1g() {
+		String expected = "struct CC1g : CC1a, CC1b, CC1c, CC1d, CC1e, CC1f";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1g() {
@@ -16022,6 +16617,12 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return expected;
 	}
 
+	private static String getExpectedSourceHierarchyCC1h() {
+		String expected =
+			"struct CC1h : virtual CC1a, virtual CC1b, virtual CC1c, virtual CC1d, virtual CC1e, virtual CC1f";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1h() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[CC1h]");
@@ -16095,6 +16696,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1g_counterpoint());
 	}
 
+	private static String getExpectedSourceHierarchyCC1g_counterpoint() {
+		String expected = "struct CC1g_counterpoint";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1g_counterpoint() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16148,6 +16754,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1h_counterpoint());
 	}
 
+	private static String getExpectedSourceHierarchyCC1h_counterpoint() {
+		String expected = "struct CC1h_counterpoint";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1h_counterpoint() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16198,6 +16809,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC1g_counterpoint2() {
 		return convertCommentsToSpeculative(getExpectedStructCC1g_counterpoint2());
+	}
+
+	private static String getExpectedSourceHierarchyCC1g_counterpoint2() {
+		String expected = "struct CC1g_counterpoint2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1g_counterpoint2() {
@@ -16253,6 +16869,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC1h_counterpoint2());
 	}
 
+	private static String getExpectedSourceHierarchyCC1h_counterpoint2() {
+		String expected = "struct CC1h_counterpoint2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC1h_counterpoint2() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16291,6 +16912,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC2a() {
 		return convertCommentsToSpeculative(getExpectedStructCC2a());
+	}
+
+	private static String getExpectedSourceHierarchyCC2a() {
+		String expected = "struct CC2a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2a() {
@@ -16334,6 +16960,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2b());
 	}
 
+	private static String getExpectedSourceHierarchyCC2b() {
+		String expected = "struct CC2b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2b() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16373,6 +17004,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC2c() {
 		return convertCommentsToSpeculative(getExpectedStructCC2c());
+	}
+
+	private static String getExpectedSourceHierarchyCC2c() {
+		String expected = "struct CC2c";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2c() {
@@ -16416,6 +17052,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2d());
 	}
 
+	private static String getExpectedSourceHierarchyCC2d() {
+		String expected = "struct CC2d";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2d() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16455,6 +17096,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC2e() {
 		return convertCommentsToSpeculative(getExpectedStructCC2e());
+	}
+
+	private static String getExpectedSourceHierarchyCC2e() {
+		String expected = "struct CC2e";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2e() {
@@ -16498,6 +17144,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2f());
 	}
 
+	private static String getExpectedSourceHierarchyCC2f() {
+		String expected = "struct CC2f";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2f() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16537,6 +17188,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructCC2g() {
 		return convertCommentsToSpeculative(getExpectedStructCC2g());
+	}
+
+	private static String getExpectedSourceHierarchyCC2g() {
+		String expected = "struct CC2g";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2g() {
@@ -16580,6 +17236,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2h());
 	}
 
+	private static String getExpectedSourceHierarchyCC2h() {
+		String expected = "struct CC2h";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2h() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16621,6 +17282,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructCC2j());
 	}
 
+	private static String getExpectedSourceHierarchyCC2j() {
+		String expected = "struct CC2j";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryCC2j() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -16657,6 +17323,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD1a() {
 		return convertCommentsToSpeculative(getExpectedStructDD1a());
+	}
+
+	private static String getExpectedSourceHierarchyDD1a() {
+		String expected = "struct DD1a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD1a() {
@@ -16742,6 +17413,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD1b() {
 		return convertCommentsToSpeculative(getExpectedStructDD1b());
+	}
+
+	private static String getExpectedSourceHierarchyDD1b() {
+		String expected = "struct DD1b : virtual DD1a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD1b() {
@@ -16864,6 +17540,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructDD1c());
 	}
 
+	private static String getExpectedSourceHierarchyDD1c() {
+		String expected = "struct DD1c : DD1b, virtual DD1a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryDD1c() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[DD1c, DD1b]");
@@ -16984,6 +17665,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructDD1d());
 	}
 
+	private static String getExpectedSourceHierarchyDD1d() {
+		String expected = "struct DD1d : DD1b";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryDD1d() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[DD1d, DD1b]");
@@ -17038,6 +17724,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructDD2a());
 	}
 
+	private static String getExpectedSourceHierarchyDD2a() {
+		String expected = "struct DD2a";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryDD2a() {
 		Map<String, String> results = new TreeMap<>();
 		return results;
@@ -17074,6 +17765,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD2b() {
 		return convertCommentsToSpeculative(getExpectedStructDD2b());
+	}
+
+	private static String getExpectedSourceHierarchyDD2b() {
+		String expected = "struct DD2b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD2b() {
@@ -17122,6 +17818,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD2c() {
 		return convertCommentsToSpeculative(getExpectedStructDD2c());
+	}
+
+	private static String getExpectedSourceHierarchyDD2c() {
+		String expected = "struct DD2c : DD2a";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD2c() {
@@ -17180,6 +17881,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD2d() {
 		return convertCommentsToSpeculative(getExpectedStructDD2d());
+	}
+
+	private static String getExpectedSourceHierarchyDD2d() {
+		String expected = "struct DD2d : DD2a, DD2b";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD2d() {
@@ -17262,6 +17968,11 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructDD2e() {
 		return convertCommentsToSpeculative(getExpectedStructDD2e());
+	}
+
+	private static String getExpectedSourceHierarchyDD2e() {
+		String expected = "struct DD2e : DD2c, DD2d";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryDD2e() {
@@ -17657,6 +18368,162 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		speculatedStructs.put(DD2e, getSpeculatedStructDD2e());
 	}
 
+	private static final Map<ClassID, String> expectedSourceHierarchy = new LinkedHashMap<>();
+	static {
+		expectedSourceHierarchy.put(A, getExpectedSourceHierarchyA());
+		expectedSourceHierarchy.put(B, getExpectedSourceHierarchyB());
+		expectedSourceHierarchy.put(C, getExpectedSourceHierarchyC());
+		expectedSourceHierarchy.put(CC1, getExpectedSourceHierarchyCC1());
+		expectedSourceHierarchy.put(CC2, getExpectedSourceHierarchyCC2());
+		expectedSourceHierarchy.put(CC3, getExpectedSourceHierarchyCC3());
+		expectedSourceHierarchy.put(D, getExpectedSourceHierarchyD());
+		expectedSourceHierarchy.put(E, getExpectedSourceHierarchyE());
+		expectedSourceHierarchy.put(F, getExpectedSourceHierarchyF());
+		expectedSourceHierarchy.put(G, getExpectedSourceHierarchyG());
+		expectedSourceHierarchy.put(H, getExpectedSourceHierarchyH());
+		expectedSourceHierarchy.put(GG1, getExpectedSourceHierarchyGG1());
+		expectedSourceHierarchy.put(GG2, getExpectedSourceHierarchyGG2());
+		expectedSourceHierarchy.put(GG3, getExpectedSourceHierarchyGG3());
+		expectedSourceHierarchy.put(GG4, getExpectedSourceHierarchyGG4());
+		expectedSourceHierarchy.put(I, getExpectedSourceHierarchyI());
+		expectedSourceHierarchy.put(GX1, getExpectedSourceHierarchyGX1());
+		expectedSourceHierarchy.put(HX1, getExpectedSourceHierarchyHX1());
+		expectedSourceHierarchy.put(IX1, getExpectedSourceHierarchyIX1());
+		expectedSourceHierarchy.put(G1, getExpectedSourceHierarchyG1());
+		expectedSourceHierarchy.put(H1, getExpectedSourceHierarchyH1());
+		expectedSourceHierarchy.put(I1, getExpectedSourceHierarchyI1());
+		expectedSourceHierarchy.put(I2, getExpectedSourceHierarchyI2());
+		expectedSourceHierarchy.put(I3, getExpectedSourceHierarchyI3());
+		expectedSourceHierarchy.put(I4, getExpectedSourceHierarchyI4());
+		expectedSourceHierarchy.put(I5, getExpectedSourceHierarchyI5());
+		expectedSourceHierarchy.put(J1, getExpectedSourceHierarchyJ1());
+		expectedSourceHierarchy.put(J2, getExpectedSourceHierarchyJ2());
+		expectedSourceHierarchy.put(J3, getExpectedSourceHierarchyJ3());
+		expectedSourceHierarchy.put(J4, getExpectedSourceHierarchyJ4());
+		expectedSourceHierarchy.put(J5, getExpectedSourceHierarchyJ5());
+		expectedSourceHierarchy.put(J6, getExpectedSourceHierarchyJ6());
+		expectedSourceHierarchy.put(P, getExpectedSourceHierarchyP());
+		expectedSourceHierarchy.put(Q, getExpectedSourceHierarchyQ());
+		expectedSourceHierarchy.put(R, getExpectedSourceHierarchyR());
+		expectedSourceHierarchy.put(S, getExpectedSourceHierarchyS());
+		expectedSourceHierarchy.put(T, getExpectedSourceHierarchyT());
+		expectedSourceHierarchy.put(U, getExpectedSourceHierarchyU());
+		expectedSourceHierarchy.put(V, getExpectedSourceHierarchyV());
+		expectedSourceHierarchy.put(W, getExpectedSourceHierarchyW());
+		expectedSourceHierarchy.put(WW, getExpectedSourceHierarchyWW());
+		expectedSourceHierarchy.put(X, getExpectedSourceHierarchyX());
+		expectedSourceHierarchy.put(Z, getExpectedSourceHierarchyZ());
+		expectedSourceHierarchy.put(AA1a, getExpectedSourceHierarchyAA1a());
+		expectedSourceHierarchy.put(AA1b, getExpectedSourceHierarchyAA1b());
+		expectedSourceHierarchy.put(AA1, getExpectedSourceHierarchyAA1());
+		expectedSourceHierarchy.put(AA2a, getExpectedSourceHierarchyAA2a());
+		expectedSourceHierarchy.put(AA2b, getExpectedSourceHierarchyAA2b());
+		expectedSourceHierarchy.put(AA2, getExpectedSourceHierarchyAA2());
+		expectedSourceHierarchy.put(AA3a, getExpectedSourceHierarchyAA3a());
+		expectedSourceHierarchy.put(AA3b, getExpectedSourceHierarchyAA3b());
+		expectedSourceHierarchy.put(AA3c, getExpectedSourceHierarchyAA3c());
+		expectedSourceHierarchy.put(AA3d, getExpectedSourceHierarchyAA3d());
+		expectedSourceHierarchy.put(AA3e, getExpectedSourceHierarchyAA3e());
+		expectedSourceHierarchy.put(AA3f, getExpectedSourceHierarchyAA3f());
+		expectedSourceHierarchy.put(AA3g, getExpectedSourceHierarchyAA3g());
+		expectedSourceHierarchy.put(AA4a, getExpectedSourceHierarchyAA4a());
+		expectedSourceHierarchy.put(AA4b, getExpectedSourceHierarchyAA4b());
+		expectedSourceHierarchy.put(AA4c, getExpectedSourceHierarchyAA4c());
+		expectedSourceHierarchy.put(AA4d, getExpectedSourceHierarchyAA4d());
+		expectedSourceHierarchy.put(AA4e, getExpectedSourceHierarchyAA4e());
+		expectedSourceHierarchy.put(AA4f, getExpectedSourceHierarchyAA4f());
+		expectedSourceHierarchy.put(AA4g, getExpectedSourceHierarchyAA4g());
+		expectedSourceHierarchy.put(AA4h, getExpectedSourceHierarchyAA4h());
+		expectedSourceHierarchy.put(AA4j, getExpectedSourceHierarchyAA4j());
+		expectedSourceHierarchy.put(AA4k, getExpectedSourceHierarchyAA4k());
+		expectedSourceHierarchy.put(AA4m, getExpectedSourceHierarchyAA4m());
+		expectedSourceHierarchy.put(AA4n, getExpectedSourceHierarchyAA4n());
+		expectedSourceHierarchy.put(AA4p, getExpectedSourceHierarchyAA4p());
+		expectedSourceHierarchy.put(AA4q, getExpectedSourceHierarchyAA4q());
+		expectedSourceHierarchy.put(AA5a, getExpectedSourceHierarchyAA5a());
+		expectedSourceHierarchy.put(AA5b, getExpectedSourceHierarchyAA5b());
+		expectedSourceHierarchy.put(AA5c, getExpectedSourceHierarchyAA5c());
+		expectedSourceHierarchy.put(AA5d, getExpectedSourceHierarchyAA5d());
+		expectedSourceHierarchy.put(AA5e, getExpectedSourceHierarchyAA5e());
+		expectedSourceHierarchy.put(AA5f, getExpectedSourceHierarchyAA5f());
+		expectedSourceHierarchy.put(AA5g, getExpectedSourceHierarchyAA5g());
+		expectedSourceHierarchy.put(AA5h, getExpectedSourceHierarchyAA5h());
+		expectedSourceHierarchy.put(AA5j, getExpectedSourceHierarchyAA5j());
+		expectedSourceHierarchy.put(AA6a, getExpectedSourceHierarchyAA6a());
+		expectedSourceHierarchy.put(AA6b, getExpectedSourceHierarchyAA6b());
+		expectedSourceHierarchy.put(AA6c, getExpectedSourceHierarchyAA6c());
+		expectedSourceHierarchy.put(AA6d, getExpectedSourceHierarchyAA6d());
+		expectedSourceHierarchy.put(AA6e, getExpectedSourceHierarchyAA6e());
+		expectedSourceHierarchy.put(AA6f, getExpectedSourceHierarchyAA6f());
+		expectedSourceHierarchy.put(AA6g, getExpectedSourceHierarchyAA6g());
+		expectedSourceHierarchy.put(AA6h, getExpectedSourceHierarchyAA6h());
+		expectedSourceHierarchy.put(AA6j, getExpectedSourceHierarchyAA6j());
+		expectedSourceHierarchy.put(AA7a, getExpectedSourceHierarchyAA7a());
+		expectedSourceHierarchy.put(AA7b, getExpectedSourceHierarchyAA7b());
+		expectedSourceHierarchy.put(AA7c, getExpectedSourceHierarchyAA7c());
+		expectedSourceHierarchy.put(AA7d, getExpectedSourceHierarchyAA7d());
+		expectedSourceHierarchy.put(BB1a, getExpectedSourceHierarchyBB1a());
+		expectedSourceHierarchy.put(BB1b, getExpectedSourceHierarchyBB1b());
+		expectedSourceHierarchy.put(BB1c, getExpectedSourceHierarchyBB1c());
+		expectedSourceHierarchy.put(BB1d, getExpectedSourceHierarchyBB1d());
+		expectedSourceHierarchy.put(BB2z, getExpectedSourceHierarchyBB2z());
+		expectedSourceHierarchy.put(BB2a, getExpectedSourceHierarchyBB2a());
+		expectedSourceHierarchy.put(BB2b, getExpectedSourceHierarchyBB2b());
+		expectedSourceHierarchy.put(BB2c, getExpectedSourceHierarchyBB2c());
+		expectedSourceHierarchy.put(BB2d, getExpectedSourceHierarchyBB2d());
+		expectedSourceHierarchy.put(BB2e, getExpectedSourceHierarchyBB2e());
+		expectedSourceHierarchy.put(BB3a, getExpectedSourceHierarchyBB3a());
+		expectedSourceHierarchy.put(BB3b, getExpectedSourceHierarchyBB3b());
+		expectedSourceHierarchy.put(BB3c, getExpectedSourceHierarchyBB3c());
+		expectedSourceHierarchy.put(BB3d, getExpectedSourceHierarchyBB3d());
+		expectedSourceHierarchy.put(BB3e, getExpectedSourceHierarchyBB3e());
+		expectedSourceHierarchy.put(BB3f, getExpectedSourceHierarchyBB3f());
+		expectedSourceHierarchy.put(BB3g, getExpectedSourceHierarchyBB3g());
+		expectedSourceHierarchy.put(CC1a, getExpectedSourceHierarchyCC1a());
+		expectedSourceHierarchy.put(CC1b, getExpectedSourceHierarchyCC1b());
+		expectedSourceHierarchy.put(CC1c, getExpectedSourceHierarchyCC1c());
+		expectedSourceHierarchy.put(CC1d, getExpectedSourceHierarchyCC1d());
+		expectedSourceHierarchy.put(CC1e, getExpectedSourceHierarchyCC1e());
+		expectedSourceHierarchy.put(CC1f, getExpectedSourceHierarchyCC1f());
+		expectedSourceHierarchy.put(CC1g, getExpectedSourceHierarchyCC1g());
+		expectedSourceHierarchy.put(CC1h, getExpectedSourceHierarchyCC1h());
+		expectedSourceHierarchy.put(CC1g_counterpoint,
+			getExpectedSourceHierarchyCC1g_counterpoint());
+		expectedSourceHierarchy.put(CC1h_counterpoint,
+			getExpectedSourceHierarchyCC1h_counterpoint());
+		expectedSourceHierarchy.put(CC1g_counterpoint2,
+			getExpectedSourceHierarchyCC1g_counterpoint2());
+		expectedSourceHierarchy.put(CC1h_counterpoint2,
+			getExpectedSourceHierarchyCC1h_counterpoint2());
+		expectedSourceHierarchy.put(CC2a, getExpectedSourceHierarchyCC2a());
+		expectedSourceHierarchy.put(CC2b, getExpectedSourceHierarchyCC2b());
+		expectedSourceHierarchy.put(CC2c, getExpectedSourceHierarchyCC2c());
+		expectedSourceHierarchy.put(CC2d, getExpectedSourceHierarchyCC2d());
+		expectedSourceHierarchy.put(CC2e, getExpectedSourceHierarchyCC2e());
+		expectedSourceHierarchy.put(CC2f, getExpectedSourceHierarchyCC2f());
+		expectedSourceHierarchy.put(CC2g, getExpectedSourceHierarchyCC2g());
+		expectedSourceHierarchy.put(CC2h, getExpectedSourceHierarchyCC2h());
+		expectedSourceHierarchy.put(CC2j, getExpectedSourceHierarchyCC2j());
+		expectedSourceHierarchy.put(DD1a, getExpectedSourceHierarchyDD1a());
+		expectedSourceHierarchy.put(DD1b, getExpectedSourceHierarchyDD1b());
+		expectedSourceHierarchy.put(DD1c, getExpectedSourceHierarchyDD1c());
+		expectedSourceHierarchy.put(DD1d, getExpectedSourceHierarchyDD1d());
+		expectedSourceHierarchy.put(DD2a, getExpectedSourceHierarchyDD2a());
+		expectedSourceHierarchy.put(DD2b, getExpectedSourceHierarchyDD2b());
+		expectedSourceHierarchy.put(DD2c, getExpectedSourceHierarchyDD2c());
+		expectedSourceHierarchy.put(DD2d, getExpectedSourceHierarchyDD2d());
+		expectedSourceHierarchy.put(DD2e, getExpectedSourceHierarchyDD2e());
+	}
+	private static final Map<ClassID, String> speculatedSourceHierarchy =
+		new LinkedHashMap<>();
+	static {
+		speculatedSourceHierarchy.putAll(expectedSourceHierarchy);
+		// The following will replace entries as needed
+		speculatedSourceHierarchy.put(I5, getSpeculatedSourceHierarchyI5());
+		speculatedSourceHierarchy.put(J5, getSpeculatedSourceHierarchyJ5());
+		speculatedSourceHierarchy.put(AA3c, getSpeculatedSourceHierarchyAA3c());
+	}
+
 	private static final Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 		new LinkedHashMap<>();
 	static {
@@ -17809,7 +18676,6 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		speculatedVxtPtrSummaries.putAll(expectedVxtPtrSummaries);
 		// The following will replace entries as needed
 		speculatedVxtPtrSummaries.put(J5, getSpeculatedVxtPtrSummaryJ5());
-		speculatedVxtPtrSummaries.put(J6, getSpeculatedVxtPtrSummaryJ6());
 		// Need to implement values for classes P through DD2e
 	}
 
@@ -17963,12 +18829,151 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		speculatedVxtStructs.putAll(expectedVxtStructs);
 		// The following will replace entries as needed
 		speculatedVxtStructs.put(J5, getSpeculatedVxtStructsJ5());
-		speculatedVxtStructs.put(J6, getSpeculatedVxtStructsJ6());
 		// Need to implement values for classes P through DD2e
 
 		speculatedVxtStructs.put(T, getSpeculatedVxtStructsT());
 		speculatedVxtStructs.put(U, getSpeculatedVxtStructsU());
 
+	}
+
+	private static final Map<String, String> expectedVxtAddressTypes = new LinkedHashMap<>();
+	static {
+		expectedVxtAddressTypes.put("140056370", "/G/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056378", "/H/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056380", "/GG1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056388", "/GG2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056390", "/GG3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056398", "/GG4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563a0", "/I/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563a8", "/I/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("1400563b0", "/GX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563b8", "/HX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563c0", "/IX1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563c8", "/IX1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400563d0", "/G1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563e0", "/H1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400563f0", "/I1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056400", "/I1/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056408", "/I2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056418", "/I2/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056428", "/I3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056438", "/I3/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056448", "/I4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056458", "/I5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056468", "/J1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056478", "/J1/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056480", "/J1/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056490", "/J1/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("1400564a0", "/J2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400564b0", "/J2/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("1400564c0", "/J2/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("1400564d0", "/J2/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("1400564d8", "/J3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400564e8", "/J3/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("1400564f8", "/J3/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056508", "/J3/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("140056510", "/J4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056530", "/J4/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056540", "/J4/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056548", "/J4/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("140056550", "/J4/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("140056558", "/J4/!internal/VTABLE_00000080");
+		expectedVxtAddressTypes.put("140056560", "/J4/!internal/VTABLE_00000090");
+		expectedVxtAddressTypes.put("140056568", "/J5/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056588", "/J5/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056598", "/J5/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("1400565a0", "/J5/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("1400565a8", "/J5/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("1400565b0", "/J5/!internal/VTABLE_00000078");
+		expectedVxtAddressTypes.put("1400565b8", "/J5/!internal/VTABLE_00000088");
+		expectedVxtAddressTypes.put("1400565c0", "/J6/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400565d8", "/J6/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("1400565e0", "/J6/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("140056670", "/T/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056698", "/U/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400566d0", "/AA3a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400566d8", "/AA3b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400566e0", "/AA3c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400566f0", "/AA3c/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("1400566f8", "/AA3d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056710", "/AA3d/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056718", "/AA3d/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("140056720", "/AA3g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056730", "/AA4a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056738", "/AA4b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056740", "/AA4c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056748", "/AA4c/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056750", "/AA4d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056760", "/AA4d/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056768", "/AA4e/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056778", "/AA4e/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056780", "/AA4f/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056790", "/AA4f/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("140056798", "/AA4f/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("1400567a0", "/AA4g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567a8", "/AA4j/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567b0", "/AA4k/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567b8", "/AA4m/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567c0", "/AA4n/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567c8", "/AA4p/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567d0", "/AA4q/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400567d8", "/AA4q/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("1400567e0", "/AA5e/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400567e8", "/AA5f/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400567f0", "/AA5g/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056800", "/AA5g/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056808", "/AA5h/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056818", "/AA5h/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("140056820", "/AA5j/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056838", "/AA5j/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("140056848", "/AA5j/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("140056850", "/AA5j/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("140056858", "/AA6c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056860", "/AA6g/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056868", "/AA6h/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056878", "/AA6h/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("140056880", "/AA6j/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056890", "/AA6j/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("140056940", "/AA7d/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056950", "/BB1c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056958", "/BB1d/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056960", "/BB2a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056968", "/BB2b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056970", "/BB2c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056980", "/BB2c/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("140056988", "/BB2d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056998", "/BB2d/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("1400569a8", "/BB2d/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("1400569b0", "/BB2e/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400569b8", "/BB3d/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400569c0", "/BB3e/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400569d0", "/BB3f/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("1400569e0", "/BB3f/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("1400569f0", "/BB3g/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("140056a00", "/BB3g/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("140056a08", "/CC1h/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056a28", "/DD1b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056a30", "/DD1c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056a38", "/DD1d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400565f0", "/P/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056600", "/Q/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056618", "/R/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056630", "/S/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056640", "/S/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056658", "/T/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056668", "/T/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("140056680", "/U/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056690", "/U/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("1400566a8", "/V/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400566b8", "/W/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400566c8", "/WW/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400568a0", "/AA7a/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400568b8", "/AA7b/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400568d0", "/AA7c/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("1400568f0", "/AA7c/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("140056908", "/AA7d/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("140056918", "/AA7d/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("140056930", "/AA7d/!internal/VTABLE_00000028");
 	}
 
 	//==============================================================================================
@@ -17996,6 +19001,14 @@ public class Egray864ProgramCreator extends ProgramCreator {
 		return speculatedStructs;
 	}
 
+	public Map<ClassID, String> getExpectedSourceHierarchy() {
+		return expectedSourceHierarchy;
+	}
+
+	public Map<ClassID, String> getSpeculatedSourceHierarchy() {
+		return speculatedSourceHierarchy;
+	}
+
 	public Map<ClassID, Map<String, String>> getExpectedVxtPtrSummaries() {
 		return expectedVxtPtrSummaries;
 	}
@@ -18010,6 +19023,10 @@ public class Egray864ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<String, String> getExpectedVxtAddressTypes() {
+		return expectedVxtAddressTypes;
 	}
 
 	@Override

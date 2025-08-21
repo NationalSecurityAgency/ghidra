@@ -35,7 +35,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonView;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -137,7 +137,7 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 		DockingActionIf previousAction = getAction(plugin, "Compare Previous Function");
 
 		// since we are clicking the listing panel, bring that to the front first
-		setActivePanel(provider, provider.getComponent().getDualListingPanel());
+		setActivePanel(provider, provider.getComponent().getDualListingView());
 
 		// left panel has focus, so nextAction should be enabled and previous should be disabled
 		ActionContext context = provider.getActionContext(null);
@@ -145,7 +145,7 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 		assertNotEnabled(previousAction, context);
 
 		JPanel rightPanel =
-			provider.getComponent().getDualListingPanel().getListingPanel(RIGHT).getFieldPanel();
+			provider.getComponent().getDualListingView().getListingPanel(RIGHT).getFieldPanel();
 		clickMouse(rightPanel, 1, 30, 30, 1, 0);
 		waitForSwing();
 		provider.getComponent().updateActionEnablement();
@@ -291,8 +291,10 @@ public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegratio
 		assertFalse(runSwing(() -> action.isEnabledForContext(context)));
 	}
 
-	private void setActivePanel(FunctionComparisonProvider provider, CodeComparisonPanel panel) {
-		runSwing(() -> provider.getComponent().setCurrentTabbedComponent(panel.getName()));
+	private void setActivePanel(FunctionComparisonProvider provider,
+			CodeComparisonView comparisonProvider) {
+		runSwing(
+			() -> provider.getComponent().setCurrentTabbedComponent(comparisonProvider.getName()));
 		waitForSwing();
 	}
 

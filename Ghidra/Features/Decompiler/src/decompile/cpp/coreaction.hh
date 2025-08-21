@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -574,7 +574,7 @@ class ActionConditionalConst : public Action {
   static Varnode *placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *constVn,Funcdata &data);
   static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,Varnode *constVn,Funcdata &data);
   void handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
-  void propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data);
+  void propagateConstant(Varnode *varVn,Varnode *constVn,uintb constVal,FlowBlock *constBlock,bool useMultiequal,Funcdata &data);
 public:
   ActionConditionalConst(const string &g) : Action(0,"condconst",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -831,6 +831,7 @@ public:
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
   int4 numpass;			///< Number of passes performed for this function
+  static bool isCopyConstant(Varnode *vn);		///< Is the given Varnode a constant or a COPY of a constant
   static bool isDelayedConstant(Varnode *vn);		///< Determine if given Varnode is or will be a constant
   static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
   static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable

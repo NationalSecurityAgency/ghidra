@@ -845,6 +845,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		DefaultWatchRow row1 = watchesProvider.addWatch("*:4 r1");
 
 		row0.setDataType(LongLongDataType.dataType);
+		row0.setComment("My comment");
 		Settings settings = row0.getSettings();
 		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
 		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
@@ -873,6 +874,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 		DefaultWatchRow rRow0 = rows.get("r0");
 		assertTrue(LongLongDataType.dataType.isEquivalent(rRow0.getDataType()));
+		assertEquals("My comment", rRow0.getComment());
 		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(rRow0.getSettings()));
 	}
 

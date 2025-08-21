@@ -42,13 +42,13 @@ OP1: imm8 		is op4_6=3; imm8		{ export *:1 imm8; }
 OP1: imm16 		is op4_6=4; imm16     	{ export *:1 imm16; }
 OP1: imm16,X  	is op4_6=5 & X; imm16 	{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
 OP1: imm8,X   	is op4_6=6 & X; imm8  	{ tmp:2 = imm8 + zext(X); export *:1 tmp; }
-OP1: X			is op4_6=7 & X			{ tmp:2 = zext(X); export *:1 tmp; }
+OP1: ","X			is op4_6=7 & X			{ tmp:2 = zext(X); export *:1 tmp; }
 
 ADDR: imm8 			is op4_6=3; imm8		{ export *:1 imm8; }
 ADDR: imm16 		is op4_6=4; imm16   	{ export *:1 imm16; }
-ADDRI: imm16,X  	is op4_6=5 & X; imm16 	{ tmp:2 = imm16 + zext(X); export tmp; }
-ADDRI: imm8,X   	is op4_6=6 & X; imm8  	{ tmp:2 = imm8 + zext(X); export tmp; }
-ADDRI: X			is op4_6=7 & X			{ tmp:2 = zext(X); export tmp; }
+ADDRI: imm16,X  	is op4_6=5 & X; imm16 	{ tmp:2 = imm16 + zext(X); export *:1 tmp; }
+ADDRI: imm8,X   	is op4_6=6 & X; imm8  	{ tmp:2 = imm8 + zext(X); export *:1 tmp; }
+ADDRI: ","X			is op4_6=7 & X			{ tmp:2 = zext(X); export *:1 tmp; }
 
 
 DIRECT: imm8	is imm8					{ export *:1 imm8; }
@@ -666,4 +666,3 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 {
 	I = 0;
 }
- 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,17 @@
  */
 package ghidra.app.util.bin.format.dwarf.expression;
 
-import ghidra.app.util.bin.format.dwarf.DWARFCompilationUnit;
+public class DWARFExpressionUnsupportedOpException extends DWARFExpressionException {
 
-public record DWARFExpressionEvaluatorContext(DWARFCompilationUnit cu) {}
+	private DWARFExpressionInstruction instr;
+
+	public DWARFExpressionUnsupportedOpException(DWARFExpressionInstruction instr) {
+		super("Unsupported instruction %s".formatted(instr));
+		this.instr = instr;
+	}
+
+	public DWARFExpressionInstruction getInstruction() {
+		return instr;
+	}
+
+}

@@ -370,7 +370,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		AnimationUtils.setAnimationEnabled(animationEnabled);
 
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
-		DockingUtils.setTipWindowEnabled(showToolTips);
+		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
 		boolean compressDataBuffers =
 			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
@@ -397,7 +397,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
 		}
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
-			DockingUtils.setTipWindowEnabled((Boolean) newValue);
+			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
 		}
 		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);

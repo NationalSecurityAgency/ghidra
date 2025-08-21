@@ -357,8 +357,14 @@ public class MIPS_ElfRelocationHandler
 				}
 				value = symbolValue;
 				if (elfRelocationContext.extractAddend()) {
-					// extract addend based upon pointer size
-					addend = memory.getInt(relocationAddress);
+					// Extract addend based upon pointer size when saving 64-bit addend
+					// for packed relocation type
+					if (saveValue && program.getDefaultPointerSize() == 8) {
+						addend = memory.getLong(relocationAddress);
+					}
+					else {
+						addend = memory.getInt(relocationAddress);
+					}
 				}
 
 				newValue = value + addend;

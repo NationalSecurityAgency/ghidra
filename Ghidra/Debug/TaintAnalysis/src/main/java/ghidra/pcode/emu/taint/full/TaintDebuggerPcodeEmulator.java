@@ -42,8 +42,7 @@ public class TaintDebuggerPcodeEmulator extends AuxDebuggerPcodeEmulator<TaintVe
 	 * Here, we just return the singleton parts factory. This appears simple because all the
 	 * complexity is encapsulated in the factory. See {@link TaintPartsFactory} to see everything
 	 * the implementation actually entails. Notice that this is the same parts factory used by
-	 * {@link TaintPcodeEmulator}. The {@link AuxDebugggerPcodeEmulator} knows to use the more
-	 * capable state parts.
+	 * {@link TaintPcodeEmulator}.
 	 */
 	@Override
 	protected AuxDebuggerEmulatorPartsFactory<TaintVec> getPartsFactory() {

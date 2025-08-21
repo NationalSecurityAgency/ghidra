@@ -32,7 +32,7 @@ import docking.options.OptionsService;
 import generic.theme.GIcon;
 import ghidra.app.decompiler.component.DecompileData;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonView;
 import ghidra.features.codecompare.graphanalysis.TokenBin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
@@ -49,10 +49,9 @@ import resources.Icons;
 import resources.MultiIcon;
 
 /**
- * Panel that displays two decompilers for comparison
+ * UI that displays two decompilers for comparison
  */
-public class DecompilerCodeComparisonPanel
-		extends CodeComparisonPanel {
+public class DecompilerCodeComparisonView extends CodeComparisonView {
 
 	public static final String NAME = "Decompiler View";
 
@@ -61,7 +60,7 @@ public class DecompilerCodeComparisonPanel
 	private Duo<CDisplay> cDisplays = new Duo<>();
 
 	private DecompilerCodeComparisonOptions comparisonOptions;
-	private CodeDiffFieldPanelCoordinator coordinator;
+	private DualDecompilerScrollCoordinator coordinator;
 	private DecompileDataDiff decompileDataDiff;
 
 	private ToggleExactConstantMatching toggleExactConstantMatchingAction;
@@ -74,7 +73,7 @@ public class DecompilerCodeComparisonPanel
 	 * @param owner the owner of this panel
 	 * @param tool the tool displaying this panel
 	 */
-	public DecompilerCodeComparisonPanel(String owner, PluginTool tool) {
+	public DecompilerCodeComparisonView(String owner, PluginTool tool) {
 		super(owner, tool);
 		comparisonOptions = new DecompilerCodeComparisonOptions(tool, () -> repaint());
 
@@ -119,7 +118,7 @@ public class DecompilerCodeComparisonPanel
 	public void dispose() {
 		setSynchronizedScrolling(false); // disposes any exiting coordinator
 		cDisplays.each(CDisplay::dispose);
-		comparisonOptions = null;
+		comparisonOptions.dispose(tool);
 	}
 
 	/**
@@ -189,6 +188,7 @@ public class DecompilerCodeComparisonPanel
 		actions.add(new ApplyCalleeFunctionNameFromMatchedTokensAction(this, tool));
 		actions.add(new ApplyCalleeEmptySignatureFromMatchedTokensAction(this, tool));
 		actions.add(new ApplyCalleeSignatureWithDatatypesFromMatchedTokensAction(this, tool));
+
 	}
 
 	private void decompileDataSet(Side side, DecompileData dcompileData) {
@@ -272,8 +272,9 @@ public class DecompilerCodeComparisonPanel
 		}
 	}
 
-	private CodeDiffFieldPanelCoordinator createCoordinator() {
-		CodeDiffFieldPanelCoordinator panelCoordinator = new CodeDiffFieldPanelCoordinator(this);
+	private DualDecompilerScrollCoordinator createCoordinator() {
+		DualDecompilerScrollCoordinator panelCoordinator =
+			new DualDecompilerScrollCoordinator(this);
 		if (decompileDataDiff != null) {
 			TaskBuilder.withRunnable(monitor -> {
 				try {
@@ -371,7 +372,7 @@ public class DecompilerCodeComparisonPanel
 			this.setToolBarData(new ToolBarData(NO_EXACT_CONSTANT_MATCHING_ICON, "toggles"));
 
 			setDescription(HTMLUtilities.toHTML("Toggle whether or not constants must\n" +
-				"be exactly the same value to be a match\n" + "in the Decomiler Diff View."));
+				"be exactly the same value to be a match\nin the Decomiler Diff View."));
 			setSelected(false);
 			setEnabled(true);
 		}

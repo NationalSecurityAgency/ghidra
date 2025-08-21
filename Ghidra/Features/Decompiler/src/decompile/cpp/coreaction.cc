@@ -2169,8 +2169,19 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
   return 0;
 }
 
+/// \param vn is the given Varnode
+/// \return \b true if it is a constant or a COPY of a constant
+bool ActionRestructureVarnode::isCopyConstant(Varnode *vn)
+
+{
+  if (vn->isConstant()) return true;
+  if (!vn->isWritten()) return false;
+  if (vn->getDef()->code() != CPUI_COPY) return false;
+  return vn->getDef()->getIn(0)->isConstant();
+}
+
 /// Return \b true if either the Varnode is a constant or if it is the not yet simplified
-/// INT_ADD of constants.
+/// COPY or INT_ADD of constants.
 /// \param vn is the given Varnode to test
 /// \return \b true if the Varnode will be a constant
 bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
@@ -2179,14 +2190,13 @@ bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
   if (vn->isConstant()) return true;
   if (!vn->isWritten()) return false;
   PcodeOp *op = vn->getDef();
-  if (op->code() != CPUI_INT_ADD) return false;
-  if (!op->getIn(1)->isConstant()) return false;
-  Varnode *cvn = op->getIn(0);
-  if (cvn->isConstant()) return true;
-  if (!cvn->isWritten()) return false;
-  PcodeOp *copy = cvn->getDef();
-  if (copy->code() != CPUI_COPY) return false;
-  return copy->getIn(0)->isConstant();
+  OpCode opc = op->code();
+  if (opc == CPUI_COPY)
+    return op->getIn(0)->isConstant();
+  if (opc != CPUI_INT_ADD) return false;
+  if (!isCopyConstant(op->getIn(1))) return false;
+  if (!isCopyConstant(op->getIn(0))) return false;
+  return true;
 }
 
 /// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
@@ -2724,8 +2734,9 @@ int4 ActionSetCasts::apply(Funcdata &data)
       if (opc == CPUI_CAST) continue;
       if (opc == CPUI_PTRADD) {	// Check for PTRADD that no longer fits its pointer
 	int4 sz = (int4)op->getIn(2)->getOffset();
-	TypePointer *ct = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
-	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getAlignSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
+	Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
+	if (ct->getMetatype() != TYPE_PTR ||
+	    ((TypePointer *)ct)->getPtrTo()->getAlignSize() != AddrSpace::addressToByteInt(sz, ((TypePointer *)ct)->getWordSize()))
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
@@ -4291,11 +4302,13 @@ void ActionConditionalConst::handlePhiNodes(Varnode *varVn,Varnode *constVn,vect
 /// For each read op, check that is in or dominated by a specific block we known
 /// the Varnode is constant in.
 /// \param varVn is the given Varnode
-/// \param constVn is the constant Varnode to replace with
+/// \param constVn is the constant Varnode to replace with (may be null)
+/// \param constVal is the constant value being propagated
 /// \param constBlock is the block which dominates ops reading the constant value
 /// \param useMultiequal is \b true if conditional constants can be applied to MULTIEQUAL ops
 /// \param data is the function being analyzed
-void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data)
+void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,uintb constVal,
+					       FlowBlock *constBlock,bool useMultiequal,Funcdata &data)
 
 {
   vector<PcodeOpNode> phiNodeEdges;
@@ -4332,6 +4345,8 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
 						// ...unless COPY is into something more interesting
     }
     if (constBlock->dominates(op->getParent())) {
+      if (constVn == (Varnode *)0)
+	constVn = data.newConstant(varVn->getSize(), constVal);
       if (opc == CPUI_RETURN){
           // CPUI_RETURN ops can't directly take constants
           // as inputs
@@ -4349,8 +4364,11 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
       count += 1;			// We made a change
     }
   }
-  if (!phiNodeEdges.empty())
+  if (!phiNodeEdges.empty()) {
+    if (constVn == (Varnode *)0)
+      constVn = data.newConstant(varVn->getSize(), constVal);
     handlePhiNodes(varVn, constVn, phiNodeEdges, data);
+  }
 }
 
 int4 ActionConditionalConst::apply(Funcdata &data)
@@ -4366,15 +4384,26 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       useMultiequal = false;	// Don't propagate into MULTIEQUAL
   }
   const BlockGraph &blockGraph(data.getBasicBlocks());
+  bool blockdom[2];
   for(int4 i=0;i<blockGraph.getSize();++i) {
     FlowBlock *bl = blockGraph.getBlock(i);
     PcodeOp *cBranch = bl->lastOp();
     if (cBranch == (PcodeOp *)0 || cBranch->code() != CPUI_CBRANCH) continue;
     Varnode *boolVn = cBranch->getIn(1);
+    blockdom[0] = bl->getOut(0)->restrictedByConditional(bl);	// Make sure boolean constant holds down false branch
+    blockdom[1] = bl->getOut(1)->restrictedByConditional(bl);
+    if (!blockdom[0] && !blockdom[1]) continue;
+    bool flipEdge = cBranch->isBooleanFlip();
+    if (boolVn->loneDescend() == (PcodeOp *)0) {	// If the boolean is read more than once
+      // Search for implied constants, bool=0 down false branch, bool=1 down true branch
+      if (blockdom[0])
+	propagateConstant(boolVn, (Varnode *)0, flipEdge ? 1 : 0, bl->getFalseOut(), useMultiequal, data);
+      if (blockdom[1])
+	propagateConstant(boolVn, (Varnode *)0, flipEdge ? 0 : 1, bl->getTrueOut(), useMultiequal, data);
+    }
     if (!boolVn->isWritten()) continue;
     PcodeOp *compOp = boolVn->getDef();
     OpCode opc = compOp->code();
-    bool flipEdge = cBranch->isBooleanFlip();
     if (opc == CPUI_BOOL_NEGATE) {
       flipEdge = !flipEdge;
       boolVn = compOp->getIn(0);
@@ -4399,11 +4428,11 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       constVn = varVn;
       varVn = tmp;
     }
+    if (varVn->loneDescend() != (PcodeOp *)0) continue;
     if (flipEdge)
       constEdge = 1 - constEdge;
-    FlowBlock *constBlock = bl->getOut(constEdge);
-    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
-    propagateConstant(varVn,constVn,constBlock,useMultiequal,data);
+    if (!blockdom[constEdge]) continue;	// Make sure condition holds
+    propagateConstant(varVn,constVn,0,bl->getOut(constEdge),useMultiequal,data);
   }
   return 0;
 }
@@ -5355,7 +5384,7 @@ void ActionDatabase::buildDefaultGroups(void)
   setGroup("decompile",members);
 
   const char *jumptab[] = { "base", "noproto", "localrecovery", "deadcode", "stackptrflow",
-			    "stackvars", "analysis", "segment", "subvar", "conditionalexe", "" };
+			    "stackvars", "analysis", "segment", "subvar", "normalizebranches", "conditionalexe", "" };
   setGroup("jumptable",jumptab);
 
  const  char *normali[] = { "base", "protorecovery", "protorecovery_b", "deindirect", "localrecovery",

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
 import ghidra.app.services.InternalTraceRmiService;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.classfinder.ExtensionPoint;
 
@@ -30,15 +29,14 @@ import ghidra.util.classfinder.ExtensionPoint;
  * A factory of launch offers
  * 
  * <p>
- * Each factory is instantiated only once for the entire application, even when multiple tools are
- * open. Thus, {@link #init(PluginTool)} and {@link #dispose(PluginTool)} will be invoked for each
- * tool.
+ * Each opinion is instantiated only once for the entire application, even when multiple tools are
+ * open.
  */
 public interface TraceRmiLaunchOpinion extends ExtensionPoint {
 	/**
 	 * Register any options
 	 * 
-	 * @param tool the tool
+	 * @param options the tool options
 	 */
 	default void registerOptions(Options options) {
 	}
@@ -75,7 +73,7 @@ public interface TraceRmiLaunchOpinion extends ExtensionPoint {
 	 * @param plugin the Trace RMI launcher service plugin. <b>NOTE:</b> to get access to the Trace
 	 *            RMI (connection) service, use the {@link InternalTraceRmiService}, so that the
 	 *            offers can register the connection's resources. See
-	 *            {@link TraceRmiHandler#registerResources(Collection)}. Resource registration is
+	 *            {@link TraceRmiHandler#registerTerminals(Collection)}. Terminal registration is
 	 *            required for the Disconnect button to completely terminate the back end.
 	 * @param program the current program. While this is not <em>always</em> used by the launcher,
 	 *            it is implied that the user expects the debugger to do something with the current
