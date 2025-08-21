@@ -77,7 +77,7 @@ public interface DropDownTextFieldDataModel<T> {
 				case STARTS_WITH:
 					return createStartsWithPattern(input, false, Pattern.CASE_INSENSITIVE);
 				case WILDCARD:
-					return createSearchPattern(input, false);
+					return createContainsPattern(input, true, Pattern.CASE_INSENSITIVE);
 				default:
 					throw new IllegalStateException("Cannot create pattern for mode: " + this);
 			}
