@@ -120,7 +120,7 @@ public class CreateTargetIndexTask extends Task {
 		File engineFile = enginePath.toFile();
 
 		if (!engineFile.exists() || !engineFile.canExecute()) {
-			Msg.info(this, "The engine binary (" + engineFile.getAbsolutePath() +
+			Msg.info(this, "The engine binary (" + engineFile.toString() +
 				") cannot be found or executed.");
 			engineFile = getFilePath(enginePathName, "Select the engine binary");
 		}

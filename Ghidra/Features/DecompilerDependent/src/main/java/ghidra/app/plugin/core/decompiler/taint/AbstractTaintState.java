@@ -67,12 +67,12 @@ public abstract class AbstractTaintState implements TaintState {
 		this.plugin = plugin;
 	}
 
-	public abstract void buildQuery(List<String> param_list, String engine_path, File indexDBFile,
-			String index_directory);
+	public abstract void buildQuery(List<String> paramList, String enginePath, File indexDBFile,
+			String indexDirectory);
 
 	@Override
-	public abstract void buildIndex(List<String> param_list, String engine_path, String facts_path,
-			String index_path);
+	public abstract void buildIndex(List<String> paramList, String enginePath, String factsPath,
+			String indexDirectory);
 
 	protected abstract void writeHeader(PrintWriter writer);
 
