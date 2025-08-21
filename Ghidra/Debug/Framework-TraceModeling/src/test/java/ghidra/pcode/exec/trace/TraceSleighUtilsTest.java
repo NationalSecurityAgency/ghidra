@@ -27,7 +27,6 @@ import org.junit.Test;
 import db.Transaction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -241,10 +240,7 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 				thread = b.getOrAddThread("Threads[1]", 0);
 				b.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), b.host, 1);
 				PcodeExecutor<byte[]> executor =
-					new PcodeExecutor<>(sp.getLanguage(),
-						BytesPcodeArithmetic.forLanguage(b.language),
-						new DirectBytesTracePcodeExecutorState(b.host, 0, thread, 0),
-						Reason.EXECUTE_READ);
+					TraceSleighUtils.buildByteExecutor(b.host, 0, thread, 0);
 				sp.execute(executor, PcodeUseropLibrary.nil());
 			}
 

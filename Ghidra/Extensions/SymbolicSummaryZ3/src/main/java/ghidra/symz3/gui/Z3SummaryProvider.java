@@ -30,16 +30,16 @@ import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.util.pcode.StringPcodeFormatter;
-import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.pcode.emu.symz3.full.SymZ3DebuggerPcodeEmulator;
-import ghidra.pcode.emu.symz3.full.SymZ3DebuggerPcodeEmulatorFactory;
+import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.symz3.SymZ3EmulatorFactory;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
@@ -63,7 +63,7 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 	private final EmulatorStateListener emuListener = new EmulatorStateListener() {
 		@Override
 		public void stopped(CachedEmulator emu) {
-			if (!(emu.emulator() instanceof SymZ3DebuggerPcodeEmulator z3emu)) {
+			if (!(emu.emulator() instanceof SymZ3PcodeEmulator z3emu)) {
 				setFactoryToZ3();
 				return;
 			}
@@ -145,8 +145,8 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 		}
 
 		TraceSchedule time = current.getTime();
-		DebuggerPcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
-		if (!(emu instanceof SymZ3DebuggerPcodeEmulator z3Emu)) {
+		PcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
+		if (!(emu instanceof SymZ3PcodeEmulator z3Emu)) {
 			/** LATER: It'd be nice if the summary were written down somewhere */
 			setFactoryToZ3();
 			return;
@@ -156,8 +156,8 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 	}
 
 	private void setFactoryToZ3() {
-		for (DebuggerPcodeEmulatorFactory factory : emulationService.getEmulatorFactories()) {
-			if (factory instanceof SymZ3DebuggerPcodeEmulatorFactory z3factory) {
+		for (EmulatorFactory factory : emulationService.getEmulatorFactories()) {
+			if (factory instanceof SymZ3EmulatorFactory z3factory) {
 				emulationService.setEmulatorFactory(z3factory);
 				emulationService.invalidateCache();
 				return;
@@ -165,7 +165,7 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public void populateSummaryFromEmulator(SymZ3DebuggerPcodeEmulator emu) {
+	public void populateSummaryFromEmulator(SymZ3PcodeEmulator emu) {
 		try (Context ctx = new Context()) {
 			Z3InfixPrinter z3p = new Z3InfixPrinter(ctx);
 			information.setInformation(emu.streamValuations(ctx, z3p),

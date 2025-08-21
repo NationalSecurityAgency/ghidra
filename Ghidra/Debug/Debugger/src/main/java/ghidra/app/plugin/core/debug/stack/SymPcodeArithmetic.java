@@ -43,6 +43,11 @@ class SymPcodeArithmetic implements PcodeArithmetic<Sym> {
 	}
 
 	@Override
+	public Class<Sym> getDomain() {
+		return Sym.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return language.isBigEndian() ? Endian.BIG : Endian.LITTLE;
 	}

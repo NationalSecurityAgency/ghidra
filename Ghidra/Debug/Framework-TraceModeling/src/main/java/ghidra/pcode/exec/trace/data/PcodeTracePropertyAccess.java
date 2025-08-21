@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec.trace.data;
 
+import java.util.Map.Entry;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 
@@ -28,7 +30,7 @@ import ghidra.program.model.lang.Language;
  */
 public interface PcodeTracePropertyAccess<T> {
 	/**
-	 * @see PcodeTraceDataAccess#getLanguage()
+	 * {@return the language}
 	 */
 	Language getLanguage();
 
@@ -45,16 +47,36 @@ public interface PcodeTracePropertyAccess<T> {
 	T get(Address address);
 
 	/**
+	 * Get the property's entry at the given address
+	 * 
+	 * @param address the address
+	 * @return the entry, or null if not set
+	 */
+	Entry<AddressRange, T> getEntry(Address address);
+
+	/**
 	 * Set the property's value at the given address
 	 * 
 	 * <p>
-	 * The value is affective for future snapshots up to but excluding the next snapshot where
+	 * The value is effective for future snapshots up to but excluding the next snapshot where
 	 * another value is set at the same address.
 	 * 
 	 * @param address the address
 	 * @param value the value to set
 	 */
 	void put(Address address, T value);
+
+	/**
+	 * Set the property's value at the given range
+	 * 
+	 * <p>
+	 * The value is effective for future snapshots up to but excluding the next snapshot where
+	 * another value is set at the same address.
+	 * 
+	 * @param range the range
+	 * @param value the value to set
+	 */
+	void put(AddressRange range, T value);
 
 	/**
 	 * Clear the property's value across a range

@@ -25,14 +25,14 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.objectweb.asm.MethodTooLargeException;
 
-import ghidra.pcode.emu.PcodeEmulator;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
+import ghidra.pcode.emu.PcodeMachine.AccessKind;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.decode.JitPassageDecoder;
-import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -48,8 +48,8 @@ import ghidra.util.Msg;
  * 
  * <p>
  * This is meant as a near drop-in replacement for the class it extends. Aside from some additional
- * configuration, and some annotations you might add to a {@link PcodeUseropLibrary}, if applicable,
- * you can simply replace {@code new PcodeEmulator()} with {@code new JitPcodeEmulator(...)}.
+ * configuration, and some annotations you might add to a {@link PcodeUseropLibrary}, you can simply
+ * replace {@code new PcodeEmulator()} with {@code new JitPcodeEmulator(...)}.
  * 
  * <h1>A JIT-Accelerated P-code Emulator for the Java Virtual Machine</h1>
  * 
@@ -118,7 +118,7 @@ import ghidra.util.Msg;
  * <li><b>Translation target</b>: The target of the JIT translation, usually the <b>emulation
  * host</b>. For our purposes, this is always JVM bytecode.</li>
  * 
- * <li><b>Varnode</b>: The triple (space,offset,size) giving the address and size of a variable in
+ * <li><b>Varnode</b>: The triple (space, offset, size) giving the address and size of a variable in
  * the emulation target's machine state. This is distinct from a variable node (see {@link JitVal})
  * in the {@link JitDataFlowModel use-def} graph. The name "{@link Varnode}" is an unfortunate
  * inheritance from the Ghidra API, where they <em>can</em> represent genuine variable nodes in the
@@ -179,25 +179,44 @@ public class JitPcodeEmulator extends PcodeEmulator {
 	/**
 	 * Create a JIT-accelerated p-code emulator
 	 * 
-	 * @param language the emulation target langauge
+	 * @param language the emulation target language
+	 * @param cb callbacks to receive emulation events. WARNING. Callbacks are not completely
+	 *            implemented, and so are not recommended, yet. For that reason, this constructor is
+	 *            made private until the caveats are completely documented and/or some alternatives
+	 *            made available.
+	 * @param config configuration options for this emulator
+	 * @param lookup a lookup in case the emulator (or its target) needs access to non-public
+	 *            elements, e.g., to access a nested {@link PcodeUseropLibrary}.
+	 */
+	private JitPcodeEmulator(Language language, PcodeEmulationCallbacks<byte[]> cb,
+			JitConfiguration config, Lookup lookup) {
+		super(language, cb);
+		this.compiler = new JitCompiler(config);
+		this.lookup = lookup;
+	}
+
+	/**
+	 * Create a JIT-accelerated p-code emulator
+	 * 
+	 * @param language the emulation target language
 	 * @param config configuration options for this emulator
 	 * @param lookup a lookup in case the emulator (or its target) needs access to non-public
 	 *            elements, e.g., to access a nested {@link PcodeUseropLibrary}.
 	 */
 	public JitPcodeEmulator(Language language, JitConfiguration config, Lookup lookup) {
-		super(language);
-		this.compiler = new JitCompiler(config);
-		this.lookup = lookup;
+		this(language, PcodeEmulationCallbacks.none(), config, lookup);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createSharedState() {
-		return new JitDefaultBytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(null);
+		return new JitDefaultBytesPcodeExecutorState(language, scb);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-		return new JitDefaultBytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(thread);
+		return new JitDefaultBytesPcodeExecutorState(language, scb);
 	}
 
 	@Override

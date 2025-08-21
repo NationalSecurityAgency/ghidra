@@ -82,6 +82,12 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Class<Pair<L, R>> getDomain() {
+		return (Class) Pair.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}

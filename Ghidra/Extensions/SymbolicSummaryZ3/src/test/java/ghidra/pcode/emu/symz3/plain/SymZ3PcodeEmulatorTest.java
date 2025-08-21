@@ -34,6 +34,7 @@ import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest.Syscall;
 import ghidra.pcode.emu.symz3.SymZ3PcodeThread;
 import ghidra.pcode.emu.symz3.lib.*;
+import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.program.model.address.Address;

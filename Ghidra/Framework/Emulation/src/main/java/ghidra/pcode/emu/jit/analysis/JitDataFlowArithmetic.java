@@ -70,6 +70,11 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	}
 
 	@Override
+	public Class<JitVal> getDomain() {
+		return JitVal.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}

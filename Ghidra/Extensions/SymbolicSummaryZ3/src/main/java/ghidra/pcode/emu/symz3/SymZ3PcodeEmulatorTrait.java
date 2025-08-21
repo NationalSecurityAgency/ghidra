@@ -30,7 +30,6 @@ import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.pcode.StringPcodeFormatter;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
-import ghidra.pcode.emu.symz3.plain.SymZ3Space;
 import ghidra.symz3.model.SymValueZ3;
 
 public interface SymZ3PcodeEmulatorTrait
@@ -48,7 +47,7 @@ public interface SymZ3PcodeEmulatorTrait
 	@Override
 	SymZ3PairedPcodeExecutorState getSharedState();
 
-	default AbstractSymZ3PcodeExecutorStatePiece<? extends SymZ3Space> getSharedSymbolicState() {
+	default SymZ3PcodeExecutorStatePiece getSharedSymbolicState() {
 		return getSharedState().getRight();
 	}
 

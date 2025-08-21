@@ -22,7 +22,7 @@ import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.pcode.emu.symz3.trace.SymZ3TracePcodeExecutorStatePiece;
+import ghidra.pcode.emu.symz3.state.SymZ3PieceHandler;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
@@ -37,7 +37,7 @@ import ghidra.trace.model.property.TracePropertyMapSpace;
  * screen.
  */
 public class SymZ3DebuggerRegisterColumnFactory implements DebuggerRegisterColumnFactory {
-	protected static final String PROP_NAME = SymZ3TracePcodeExecutorStatePiece.NAME;
+	protected static final String PROP_NAME = SymZ3PieceHandler.NAME;
 	public static final String COL_NAME = "Symbolic Expression";
 
 	@Override

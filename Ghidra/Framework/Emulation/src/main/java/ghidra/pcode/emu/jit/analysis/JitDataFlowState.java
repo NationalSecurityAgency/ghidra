@@ -17,13 +17,14 @@ package ghidra.pcode.emu.jit.analysis;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -399,6 +400,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		return arithmetic;
 	}
 
+	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -442,6 +448,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		varnodesWritten.add(varnode);
 
 		mini.set(varnode, val);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, JitVal offset, int size, JitVal val) {
+		setVar(space, offset, size, false, val);
 	}
 
 	/**
@@ -519,6 +530,11 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 	}
 
 	@Override
+	public JitVal getVarInternal(AddressSpace space, JitVal offset, int size, Reason reason) {
+		return getVar(space, offset, size, false, reason);
+	}
+
+	@Override
 	public Map<Register, JitVal> getRegisterValues() {
 		throw new UnsupportedOperationException();
 	}
@@ -534,7 +550,7 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 	}
 
 	@Override
-	public PcodeExecutorState<JitVal> fork() {
+	public PcodeExecutorState<JitVal> fork(PcodeStateCallbacks cb) {
 		throw new UnsupportedOperationException();
 	}
 

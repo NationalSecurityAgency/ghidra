@@ -33,14 +33,16 @@ import ghidra.trace.model.memory.TraceMemoryState;
  * The p-code execute state piece for {@link TraceMemoryState}
  *
  * <p>
- * This state piece is meant to be used as an auxiliary to a concrete trace-bound state. See
- * {@link DirectBytesTracePcodeExecutorState#withMemoryState()}. It should be used with
- * {@link TraceMemoryStatePcodeArithmetic} as a means of computing the "state" of a Sleigh
- * expression's value. It essentially works like a rudimentary taint analyzer: If any part of any
- * input to the expression in tainted, i.e., not {@link TraceMemoryState#KNOWN}, then the result is
- * {@link TraceMemoryState#UNKNOWN}. This is best exemplified in
- * {@link #getUnique(long, int, Reason)}, though it's also exemplified in
- * {@link #getFromSpace(AddressSpace, long, int, Reason)}.
+ * This state piece is meant to be used as an auxiliary to a concrete trace-bound state. It should
+ * be used with {@link TraceMemoryStatePcodeArithmetic} as a means of computing the "state" of a
+ * Sleigh expression's value. It essentially works like a rudimentary taint analyzer: If any part of
+ * any input to the expression in tainted, i.e., not {@link TraceMemoryState#KNOWN}, then the result
+ * is {@link TraceMemoryState#UNKNOWN}. This is best exemplified in
+ * {@link #getUnique(long, int, Reason, PcodeStateCallbacks)}, though it's also exemplified in
+ * {@link #getFromSpace(AddressSpace, long, int, Reason, PcodeStateCallbacks)}.
+ * 
+ * <p>
+ * NOTE: This is backed directly by the trace rather than using {@link PcodeStateCallbacks}.
  */
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, AddressSpace> {
@@ -48,29 +50,30 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	protected final MutableULongSpanMap<TraceMemoryState> unique;
 	protected final PcodeTraceDataAccess data;
 
+	protected TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			MutableULongSpanMap<TraceMemoryState> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			TraceMemoryStatePcodeArithmetic.INSTANCE, PcodeStateCallbacks.NONE);
+		this.data = data;
+		this.unique = unique;
+	}
+
 	/**
 	 * Construct a piece
 	 * 
 	 * @param data the trace-data access shim
 	 */
 	public TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
-		super(data.getLanguage(),
-			BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			TraceMemoryStatePcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = new DefaultULongSpanMap<>();
-	}
-
-	protected TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data,
-			MutableULongSpanMap<TraceMemoryState> unique) {
-		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
-			TraceMemoryStatePcodeArithmetic.INSTANCE);
-		this.data = data;
-		this.unique = unique;
+		this(data, new DefaultULongSpanMap<>());
 	}
 
 	@Override
-	public TraceMemoryStatePcodeExecutorStatePiece fork() {
+	protected TraceMemoryState checkSize(int size, TraceMemoryState val) {
+		return val;
+	}
+
+	@Override
+	public TraceMemoryStatePcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 		MutableULongSpanMap<TraceMemoryState> copyUnique = new DefaultULongSpanMap<>();
 		copyUnique.putAll(unique);
 		return new TraceMemoryStatePcodeExecutorStatePiece(data, copyUnique);
@@ -86,12 +89,13 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected void setUnique(long offset, int size, TraceMemoryState val) {
+	protected void setUnique(long offset, int size, TraceMemoryState val, PcodeStateCallbacks cb) {
 		unique.put(ULongSpan.extent(offset, size), val);
 	}
 
 	@Override
-	protected TraceMemoryState getUnique(long offset, int size, Reason reason) {
+	protected TraceMemoryState getUnique(long offset, int size, Reason reason,
+			PcodeStateCallbacks cb) {
 		MutableULongSpanSet remains = new DefaultULongSpanSet();
 		ULongSpan span = ULongSpan.extent(offset, size);
 		remains.add(span);
@@ -110,19 +114,20 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected void setInSpace(AddressSpace space, long offset, int size, TraceMemoryState val) {
+	protected void setInSpace(AddressSpace space, long offset, int size, TraceMemoryState val,
+			PcodeStateCallbacks cb) {
 		// NB. Will ensure writes with unknown state are still marked unknown
 		data.setState(range(space, offset, size), val);
 	}
 
 	@Override
 	protected TraceMemoryState getFromSpace(AddressSpace space, long offset, int size,
-			Reason reason) {
+			Reason reason, PcodeStateCallbacks cb) {
 		return data.getViewportState(range(space, offset, size));
 	}
 
 	@Override
-	protected TraceMemoryState getFromNullSpace(int size, Reason reason) {
+	protected TraceMemoryState getFromNullSpace(int size, Reason reason, PcodeStateCallbacks cb) {
 		return TraceMemoryState.UNKNOWN;
 	}
 

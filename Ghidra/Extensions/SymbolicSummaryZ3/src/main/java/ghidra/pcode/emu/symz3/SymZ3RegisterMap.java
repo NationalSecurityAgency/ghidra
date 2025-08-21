@@ -34,7 +34,8 @@ public class SymZ3RegisterMap {
 
 	// TODO:  make this be private and provide appropriate methods
 	// in the map, all registers are base registers.
-	public Map<Register, SymValueZ3> regvals = new HashMap<Register, SymValueZ3>();
+	public Map<Register, SymValueZ3> regvals = new HashMap<>();
+	private NavigableMap<Long, SymValueZ3> byOffset;
 
 	//private List<String> createdSymbolics = new ArrayList<String>();
 	private final Set<String> registerNamesRead = new HashSet<String>();
@@ -85,6 +86,7 @@ public class SymZ3RegisterMap {
 	private void updateRegisterHelper(Context ctx, Register r, SymValueZ3 update) {
 		if (r.isBaseRegister()) {
 			regvals.put(r, update);
+			byOffset = null;
 			return;
 		}
 		// so, we want to update the base, but also need to keep portions of it.
@@ -114,6 +116,7 @@ public class SymZ3RegisterMap {
 			result = ctx.mkConcat(result, right);
 		}
 		regvals.put(base, new SymValueZ3(ctx, result));
+		byOffset = null;
 	}
 
 	public SymValueZ3 getRegister(Register r) {
@@ -227,5 +230,15 @@ public class SymZ3RegisterMap {
 			Register r = knownRegisters.get(n);
 			return valuationFor(ctx, z3p, r);
 		});
+	}
+
+	public Entry<Long, SymValueZ3> getNextEntry(long offset) {
+		if (byOffset == null) {
+			byOffset = new TreeMap<>();
+			for (Entry<Register, SymValueZ3> ent : regvals.entrySet()) {
+				byOffset.put(ent.getKey().getAddress().getOffset(), ent.getValue());
+			}
+		}
+		return byOffset.ceilingEntry(offset);
 	}
 }

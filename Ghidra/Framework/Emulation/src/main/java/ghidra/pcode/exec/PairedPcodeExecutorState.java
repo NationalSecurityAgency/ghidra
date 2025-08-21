@@ -16,6 +16,7 @@
 package ghidra.pcode.exec;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -87,13 +88,18 @@ public class PairedPcodeExecutorState<L, R> implements PcodeExecutorState<Pair<L
 	}
 
 	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return piece.streamPieces();
+	}
+
+	@Override
 	public Map<Register, Pair<L, R>> getRegisterValues() {
 		return piece.getRegisterValues();
 	}
 
 	@Override
-	public PairedPcodeExecutorState<L, R> fork() {
-		return new PairedPcodeExecutorState<>(piece.fork());
+	public PairedPcodeExecutorState<L, R> fork(PcodeStateCallbacks cb) {
+		return new PairedPcodeExecutorState<>(piece.fork(cb));
 	}
 
 	@Override
@@ -126,9 +132,42 @@ public class PairedPcodeExecutorState<L, R> implements PcodeExecutorState<Pair<L
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, Pair<L, R> offset, int size, Pair<L, R> val) {
+		piece.setVarInternal(space, offset.getLeft(), size, val);
+	}
+
+	@Override
+	public void setVar(AddressSpace space, long offset, int size, boolean quantize,
+			Pair<L, R> val) {
+		piece.setVar(space, offset, size, quantize, val);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, long offset, int size, Pair<L, R> val) {
+		piece.setVarInternal(space, offset, size, val);
+	}
+
+	@Override
 	public Pair<L, R> getVar(AddressSpace space, Pair<L, R> offset, int size, boolean quantize,
 			Reason reason) {
 		return piece.getVar(space, offset.getLeft(), size, quantize, reason);
+	}
+
+	@Override
+	public Pair<L, R> getVarInternal(AddressSpace space, Pair<L, R> offset, int size,
+			Reason reason) {
+		return piece.getVarInternal(space, offset.getLeft(), size, reason);
+	}
+
+	@Override
+	public Pair<L, R> getVar(AddressSpace space, long offset, int size, boolean quantize,
+			Reason reason) {
+		return piece.getVar(space, offset, size, quantize, reason);
+	}
+
+	@Override
+	public Pair<L, R> getVarInternal(AddressSpace space, long offset, int size, Reason reason) {
+		return piece.getVarInternal(space, offset, size, reason);
 	}
 
 	@Override
