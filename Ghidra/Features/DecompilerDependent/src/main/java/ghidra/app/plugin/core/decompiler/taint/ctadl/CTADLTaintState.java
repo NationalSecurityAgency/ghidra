@@ -42,9 +42,9 @@ public class CTADLTaintState extends AbstractTaintState {
 	}
 
 	@Override
-	public void buildQuery(List<String> paramList, Path engine, File indexDBFile,
+	public void buildQuery(List<String> paramList, String engine_path, File indexDBFile,
 			String indexDirectory) {
-		paramList.add(engine.toString());
+		paramList.add(engine_path);
 		paramList.add("--directory");
 		paramList.add(indexDirectory);
 		paramList.add("query");

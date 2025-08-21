@@ -55,10 +55,10 @@ public class AngrTaintState extends AbstractTaintState {
 	private Address start;
 
 	@Override
-	public void buildQuery(List<String> paramList, Path engine, File indexDBFile,
+	public void buildQuery(List<String> paramList, String engine_path, File indexDBFile,
 			String indexDirectory) {
 		paramList.add("python");
-		paramList.add(engine.toString());
+		paramList.add(engine_path);
 	}
 
 	@Override

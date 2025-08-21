@@ -125,7 +125,7 @@ public class CreateTargetIndexTask extends Task {
 			engineFile = getFilePath(enginePathName, "Select the engine binary");
 		}
 
-		consoleService.addMessage("Create Index", "using engine at: " + enginePath.toString());
+		consoleService.addMessage("Create Index", "using engine at: " + engineFile.toString());
 
 		Path factsPath = Path.of(factsDirectory);
 
