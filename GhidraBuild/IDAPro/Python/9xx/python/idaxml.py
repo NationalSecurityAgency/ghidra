@@ -90,7 +90,8 @@ def is_ida_version_supported():
 
 def get_struc(sid: int) -> Optional[ida_typeinf.tinfo_t]:
     try:
-        tif = ida_typeinf.tinfo_t(tid=sid)
+        tif = ida_typeinf.tinfo_t()
+        tif.get_type_by_tid(tid=sid)
         return tif if tif.is_udt() else None
     except ValueError:
         return None
@@ -139,7 +140,8 @@ def get_struc_qty():
 
 def get_enum_member_tid(eid: int, i: int) -> int:
     try:
-        tif = ida_typeinf.tinfo_t(tid=eid)
+        tif = ida_typeinf.tinfo_t()
+        tif.get_type_by_tid(tid=eid)
     except ValueError:
         return BADADDR 
     edm = ida_typeinf.edm_t()
@@ -152,7 +154,8 @@ def find_enum_member_serial(enum_id: int, member_value: int, member_name: str):
     Returns -1 on failure.
     """
     try:
-        tif = ida_typeinf.tinfo_t(tid=enum_id)
+        tif = ida_typeinf.tinfo_t()
+        tif.get_type_by_tid(tid=enum_id)
     except ValueError:
         return -1
     ei = ida_typeinf.enum_type_data_t()
@@ -980,7 +983,9 @@ class XmlExporter(IdaXml):
             #if bf:
             #    self.write_attribute(BIT_FIELD, "yes")
             regcmt = idc.get_enum_cmt(eid)
-            rptcmt = ida_typeinf.tinfo_t(tid=eid).get_type_rptcmt()
+            tif = ida_typeinf.tinfo_t()
+            tif.get_type_by_tid(tid=eid)
+            rptcmt = tif.get_type_rptcmt()
             has_children = ((idc.get_enum_size(eid) > 0) or
                             (regcmt is not None) or (rptcmt is not None) or
                             (ida_bytes.get_radix(eflags, 0) != 16) or
@@ -2201,6 +2206,9 @@ class XmlExporter(IdaXml):
             signedhex: Boolean indicating if hex representation of
                 value is signed.
         """
+        # Check if value is None and handle it gracefully
+        if value is None:
+            return
         if base == 10:
             temp = "%d" % value
         else:
@@ -2721,9 +2729,9 @@ class XmlImporter(IdaXml):
                 if ea == BADADDR:
                     idc.put_bookmark(addr, 0, 0, 0, slot, description)
                     break
-        except Exception:
+        except Exception as e:
             msg = "** Exception occurred in import_bookmark **"
-            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+            print(f"\n{msg}\n{type(e).__name__}: {e}")
     
 
     def import_cmts(self, element, sid, typ):
@@ -3055,9 +3063,9 @@ class XmlImporter(IdaXml):
             register_vars = function.findall(REGISTER_VAR)
             for register_var in register_vars:
                 self.import_register_var(register_var, func)
-        except Exception:
+        except Exception as e:
             msg = "** Exception occurred in import_function **"
-            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+            print(f"\n{msg}\n{type(e).__name__}: {e}")
 
 
     def import_function_def(self, function_def):
