@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,37 +21,91 @@ import static ghidra.util.MathUtilities.cmin;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import generic.util.PeekableIterator;
+import generic.util.*;
 import ghidra.program.model.address.*;
 import ghidra.util.TwoWayBreakdownAddressRangeIterator.Which;
 
+/**
+ * An iterator that takes two iterators over address ranges and "breaks down" where they do and do
+ * not overlap. Consider one iterator L that contains only [1,3], and another R that contains only
+ * [2,4]. The two could be plotted:
+ * 
+ * <pre>
+ *  1  2  3  4
+ * [---L---]
+ *    [---R---]
+ * </pre>
+ * 
+ * <p>
+ * This will return an iterator over range-which pairs. "Which" indicates which iterators include
+ * the given range, {@link Which#LEFT}, {@link Which#RIGHT}, or {@link Which#BOTH}. There is no
+ * {@code NONE}, so gaps are omitted. For the example above:
+ * 
+ * <pre>
+ *  1  2  3  4
+ * [L][-B--][R]
+ * </pre>
+ * 
+ * <p>
+ * This supports the computation of difference, symmetric difference, and intersection. <b>NOTE:</b>
+ * Clients cannot save the entries returned by the iterator. The entry is only valid during
+ * iteration, and it is reused by the iterator for each subsequent entry.
+ */
 public class TwoWayBreakdownAddressRangeIterator
 		extends AbstractPeekableIterator<Entry<AddressRange, Which>> {
 
+	/**
+	 * Indicates which of the input iterators contain a range
+	 */
 	public enum Which {
-		LEFT(true, false), RIGHT(false, true), BOTH(true, true);
+		/** Only the left included the range */
+		LEFT(true, false),
+		/** Only the right included the range */
+		RIGHT(false, true),
+		/** Both included the range */
+		BOTH(true, true);
 
 		private Which(boolean includesLeft, boolean includesRight) {
 			this.includesLeft = includesLeft;
 			this.includesRight = includesRight;
 		}
 
+		/** Indicates the the left iterator includes this range */
 		public final boolean includesLeft;
+		/** Indicates that the right iterator includes this range */
 		public final boolean includesRight;
 
+		/**
+		 * Check if this range is included in the difference: {@code left - right}
+		 * 
+		 * @return true if included
+		 */
 		public boolean inSubtract() {
 			return this == LEFT;
 		}
 
+		/**
+		 * Check if this range is included in the symmetric difference: {@code left Δ right}
+		 * 
+		 * @return true if included
+		 */
 		public boolean inXor() {
 			return this == LEFT || this == RIGHT;
 		}
 
+		/**
+		 * Check if this range is included in the intersection: {@code left ∩ right}
+		 * 
+		 * @return true if included
+		 */
 		public boolean inIntersect() {
 			return this == BOTH;
 		}
 	}
 
+	/**
+	 * A mutable map entry
+	 */
 	public static class MyEntry implements Entry<AddressRange, Which> {
 		private AddressRange key;
 		private Which val;
@@ -81,6 +135,14 @@ public class TwoWayBreakdownAddressRangeIterator
 
 	private final MyEntry entry = new MyEntry();
 
+	/**
+	 * Create an iterator that "breaks down" the two address range iterators.
+	 * 
+	 * @param lit the iterator of ranges on the left
+	 * @param rit the iterator of ranges on the right
+	 * @param forward true for forward iteration, false for reverse. The input iterators must be
+	 *            ordered according to this flag.
+	 */
 	public TwoWayBreakdownAddressRangeIterator(Iterator<AddressRange> lit,
 			Iterator<AddressRange> rit, boolean forward) {
 		this.lit = PeekableIterators.castOrWrap(lit);

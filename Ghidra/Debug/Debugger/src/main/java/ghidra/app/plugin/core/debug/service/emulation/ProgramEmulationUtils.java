@@ -28,6 +28,7 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.framework.model.DomainFile;
+import ghidra.pcode.emu.EmulatorUtilities;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -142,7 +143,7 @@ public class ProgramEmulationUtils {
 		EMU_SESSION_SCHEMA = EMU_CTX.getSchema(new SchemaName("EmuSession"));
 	}
 
-	public static final String BLOCK_NAME_STACK = "STACK";
+	public static final String BLOCK_NAME_STACK = EmulatorUtilities.BLOCK_NAME_STACK;
 
 	/**
 	 * Conventional prefix for first snapshot to identify "pure emulation" traces.
@@ -428,7 +429,7 @@ public class ProgramEmulationUtils {
 		final AddressRange alloc;
 		if (cSpec.stackGrowsNegative()) {
 			Address max = spAddr.subtractWrap(1);
-			Address min = spAddr.subtractWrapSpace(size);
+			Address min = spAddr.subtractWrap(size);
 			if (min.compareTo(max) > 0) {
 				alloc = new AddressRangeImpl(max.getAddressSpace().getMinAddress(), max);
 			}

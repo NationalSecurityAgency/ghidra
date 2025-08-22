@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,17 +22,15 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Before;
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.TwoWayBreakdownAddressRangeIterator.Which;
 
-public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadlessIntegrationTest {
-	protected Language toy;
+public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGTest {
+	protected AddressSpace rom = new GenericAddressSpace("rom", 64, AddressSpace.TYPE_RAM, 1);
+	protected AddressSpace ram = new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 2);
 
 	protected TwoWayBreakdownAddressRangeIterator makeIterator(AddressSet a, AddressSet b,
 			boolean forward) {
@@ -41,11 +39,11 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 	}
 
 	protected Address addr(long offset) {
-		return toy.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+		return rom.getAddress(offset);
 	}
 
 	protected Address dAddr(long offset) {
-		return toy.getAddressFactory().getAddressSpace("data").getAddress(offset);
+		return ram.getAddress(offset);
 	}
 
 	protected AddressRange rng(long min, long max) {
@@ -85,12 +83,6 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 			result.add(new ImmutablePair<>(ent.getKey(), ent.getValue()));
 		}
 		return result;
-	}
-
-	@Before
-	public void setUpIteratorTest() throws LanguageNotFoundException {
-		toy = DefaultLanguageService.getLanguageService()
-				.getLanguage(new LanguageID("Toy:BE:64:harvard"));
 	}
 
 	@Test

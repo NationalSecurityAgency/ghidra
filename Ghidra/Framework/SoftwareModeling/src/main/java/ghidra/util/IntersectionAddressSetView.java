@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,33 @@ package ghidra.util;
 import static ghidra.util.MathUtilities.cmax;
 import static ghidra.util.MathUtilities.cmin;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.EmptyAddressRangeIterator;
 
+/**
+ * A lazily computed {@link AddressSetView} defined as the intersection of two given
+ * {@link AddressSetView}s.
+ * <p>
+ * This is equivalent to using {@link AddressSetView#intersect(AddressSetView)}, but does not
+ * materialize the intersection. The choice of one over the other depends on the number of ranges in
+ * the inputs and the frequency of use of the result. With few ranges, or in cases where you need to
+ * access the entire result, anyway, just use the normal {@link AddressRange}. In cases with many,
+ * many ranges and where only a small part of the result needs to be computed, use this view. It may
+ * also be advantageous to use this view if the inputs are themselves computed lazily.
+ */
 public class IntersectionAddressSetView extends AbstractAddressSetView {
 	private final AddressSetView a;
 	private final AddressSetView b;
 
+	/**
+	 * Construct the intersection of two address sets
+	 * 
+	 * @param a the first set
+	 * @param b the second set
+	 */
 	public IntersectionAddressSetView(AddressSetView a, AddressSetView b) {
 		this.a = a;
 		this.b = b;

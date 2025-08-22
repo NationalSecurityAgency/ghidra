@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,34 @@
  */
 package ghidra.util;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSetView;
 
+/**
+ * A lazily computed {@link AddressSetView} defined as the symmetric difference between two given
+ * {@link AddressSetView}s.
+ * <p>
+ * There is no equivalent method in {@link AddressSetView}, but it could be computed using a
+ * combination of {@link AddressSetView#subtract(AddressSetView)} and
+ * {@link AddressSetView#union(AddressSetView)}. However, this class does not materialize the
+ * result. The choice of one over the other depends on the number of ranges in the inputs and the
+ * frequency of use of the result. With few ranges, or in cases where you need to access the entire
+ * result, anyway, just use the normal {@link AddressRange}. In cases with many, many ranges and
+ * where only a small part of the result needs to be computed, use this view. It may also be
+ * advantageous to use this if the inputs are themselves computed lazily.
+ */
 public class SymmetricDifferenceAddressSetView extends AbstractAddressSetView {
 	private final AddressSetView a;
 	private final AddressSetView b;
 
+	/**
+	 * Construct the symmetric difference between two address sets
+	 * 
+	 * @param a the first set
+	 * @param b the second set
+	 */
 	public SymmetricDifferenceAddressSetView(AddressSetView a, AddressSetView b) {
 		this.a = a;
 		this.b = b;

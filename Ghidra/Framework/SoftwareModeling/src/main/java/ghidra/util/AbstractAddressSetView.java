@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,23 @@ import java.util.List;
 
 import ghidra.program.model.address.*;
 
+/**
+ * An abstract implementation of {@link AddressSetView} that provides suitable defaults for as many
+ * of the required methods as reasonable.
+ */
 public abstract class AbstractAddressSetView implements AddressSetView {
 
+	/**
+	 * Adjust the given start address so that if it lands in the given iterator's next range, that
+	 * range would be entirely included.
+	 * 
+	 * @param rev the iterator. Note only the first element, if present, of this iterator is
+	 *            considered. The client must ensure it's properly positioned.
+	 * @param start the proposed start address
+	 * @param forward true for forward iteration, i.e., the adjustment will be to the range's
+	 *            minimum address, if applicable.
+	 * @return the adjusted start
+	 */
 	protected static Address fixStart(AddressRangeIterator rev, Address start, boolean forward) {
 		if (!rev.hasNext()) {
 			return start;
