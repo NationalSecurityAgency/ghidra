@@ -220,7 +220,7 @@ public class ScriptSelectionEditor {
 
 		@Override
 		public List<SearchMode> getSupportedSearchModes() {
-			return List.of(SearchMode.CONTAINS, SearchMode.WILDCARD, SearchMode.STARTS_WITH);
+			return List.of(SearchMode.WILDCARD, SearchMode.CONTAINS, SearchMode.STARTS_WITH);
 		}
 
 	}

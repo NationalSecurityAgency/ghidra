@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,8 @@ import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.actions.ToolActions;
+import docking.widgets.DropDownTextField;
+import docking.widgets.DropDownTextFieldDataModel.SearchMode;
 import ghidra.util.TaskUtilities;
 
 public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTest {
@@ -183,8 +185,11 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 //==================================================================================================	
 
 	private void pickScript(ScriptSelectionDialog dialog, String userText, String scriptName) {
-		JTextField textField =
-			findComponent(dialog.getComponent(), JTextField.class);
+		DropDownTextField<?> textField =
+			(DropDownTextField<?>) findComponent(dialog.getComponent(), JTextField.class);
+
+		runSwing(() -> textField.setSearchMode(SearchMode.WILDCARD));
+
 		triggerText(textField, userText);
 
 		TaskListenerFlag taskFlag = new TaskListenerFlag(scriptName);
