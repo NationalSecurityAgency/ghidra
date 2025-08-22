@@ -388,7 +388,7 @@ public class FGActionManager {
 		fullViewAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Full_View"));
 
-		DockingAction xrefsAction = new DockingAction("Jump to a XRef", owner) {
+		DockingAction xrefsAction = new DockingAction("Jump to XRef", owner) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				controller.showXRefsDialog();
@@ -410,7 +410,7 @@ public class FGActionManager {
 				return true;
 			}
 		};
-		menuData = new MenuData(new String[] { "Jump to a XRef" }, popupMutateGroup1);
+		menuData = new MenuData(new String[] { "Jump to XRef" }, popupMutateGroup1);
 		menuData.setIcon(XREFS_ICON);
 		menuData.setMenuSubGroup(Integer.toString(vertexGroupingSubgroupOffset++));
 		xrefsAction.setPopupMenuData(menuData);
