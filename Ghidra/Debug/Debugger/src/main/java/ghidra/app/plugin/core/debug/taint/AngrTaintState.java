@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.taint;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -55,14 +54,14 @@ public class AngrTaintState extends AbstractTaintState {
 	private Address start;
 
 	@Override
-	public void buildQuery(List<String> paramList, Path engine, File indexDBFile,
+	public void buildQuery(List<String> paramList, String enginePath, File indexDBFile,
 			String indexDirectory) {
 		paramList.add("python");
-		paramList.add(engine.toString());
+		paramList.add(enginePath);
 	}
 
 	@Override
-	public void buildIndex(List<String> paramList, String engine_path, String facts_path,
+	public void buildIndex(List<String> paramList, String enginePath, String factsPath,
 			String indexDirectory) {
 		// Unused
 	}
