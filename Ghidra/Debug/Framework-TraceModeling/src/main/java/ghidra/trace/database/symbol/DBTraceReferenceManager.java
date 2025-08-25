@@ -39,6 +39,7 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.UnionAddressSetView;
+import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -96,27 +97,27 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	}
 
 	protected void doAddXRef(DBTraceReferenceEntry entry) {
-		if (!entry.toAddress.isMemoryAddress()) {
+		if (!entry.toAddrMin.isMemoryAddress()) {
 			return;
 		}
-		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddress.getAddressSpace(), true);
+		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddrMin.getAddressSpace(), true);
 		space.doAddXRef(entry);
 	}
 
 	protected void doDelXRef(DBTraceReferenceEntry entry) {
-		if (!entry.toAddress.isMemoryAddress()) {
+		if (!entry.toAddrMin.isMemoryAddress()) {
 			return;
 		}
-		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddress.getAddressSpace(), false);
+		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddrMin.getAddressSpace(), false);
 		assert space != null;
 		space.doDelXRef(entry);
 	}
 
 	protected void doSetXRefLifespan(DBTraceReferenceEntry entry) {
-		if (!entry.toAddress.isMemoryAddress()) {
+		if (!entry.toAddrMin.isMemoryAddress()) {
 			return;
 		}
-		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddress.getAddressSpace(), false);
+		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddrMin.getAddressSpace(), false);
 		assert space != null;
 		space.doSetXRefLifespan(entry);
 	}
@@ -164,9 +165,9 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 
 	@Override
 	public DBTraceReference addMemoryReference(Lifespan lifespan, Address fromAddress,
-			Address toAddress, RefType refType, SourceType source, int operandIndex) {
+			AddressRange toRange, RefType refType, SourceType source, int operandIndex) {
 		return delegateWrite(fromAddress.getAddressSpace(), s -> s.addMemoryReference(lifespan,
-			fromAddress, toAddress, refType, source, operandIndex));
+			fromAddress, toRange, refType, source, operandIndex));
 	}
 
 	@Override
@@ -199,10 +200,10 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	}
 
 	@Override
-	public DBTraceReference getReference(long snap, Address fromAddress, Address toAddress,
+	public DBTraceReference getReference(long snap, Address fromAddress, AddressRange toRange,
 			int operandIndex) {
 		return delegateRead(fromAddress.getAddressSpace(),
-			s -> s.getReference(snap, fromAddress, toAddress, operandIndex));
+			s -> s.getReference(snap, fromAddress, toRange, operandIndex));
 	}
 
 	@Override
@@ -253,9 +254,9 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesToRange(Lifespan span,
-			AddressRange range) {
-		return delegateRead(range.getAddressSpace(), s -> s.getReferencesToRange(span, range),
-			Collections.emptyList());
+			AddressRange range, Rectangle2DDirection order) {
+		return delegateRead(range.getAddressSpace(),
+			s -> s.getReferencesToRange(span, range, order), Collections.emptyList());
 	}
 
 	@Override

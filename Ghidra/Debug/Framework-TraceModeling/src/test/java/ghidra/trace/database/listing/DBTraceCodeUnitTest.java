@@ -38,7 +38,6 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCommentAdapter.DBTraceCommentEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.listing.TraceData;
@@ -52,7 +51,6 @@ import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.*;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.map.TypeMismatchException;
 
@@ -620,7 +618,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(Set.of(mnemRef, opRef, stackRef, regRef), set(i4004.getReferencesFrom()));
 
-		DBTraceReference refTo;
+		TraceReference refTo;
 		try (Transaction tx = b.startTransaction()) {
 			refTo = b.trace.getReferenceManager()
 					.addMemoryReference(Lifespan.ALL, b.addr(0x3000), b.addr(0x4004),

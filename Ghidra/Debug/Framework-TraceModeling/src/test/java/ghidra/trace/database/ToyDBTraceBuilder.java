@@ -837,7 +837,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param to the to address
 	 * @return the reference
 	 */
-	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to) {
+	public DBTraceReference addMemoryReference(long creationSnap, Address from, AddressRange to) {
 		return addMemoryReference(creationSnap, from, to, -1);
 	}
 
@@ -850,7 +850,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param operandIndex the operand index, or -1 for mnemonic
 	 * @return the reference
 	 */
-	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to,
+	public DBTraceReference addMemoryReference(long creationSnap, Address from, AddressRange to,
 			int operandIndex) {
 		return trace.getReferenceManager()
 				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
