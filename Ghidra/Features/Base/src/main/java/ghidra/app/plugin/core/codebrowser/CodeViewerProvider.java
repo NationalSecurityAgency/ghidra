@@ -20,8 +20,7 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.Icon;
@@ -31,6 +30,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.dnd.*;
 import docking.widgets.EventTrigger;
@@ -62,8 +62,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
@@ -471,21 +470,37 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
 
+		buildQuickTogleFieldActions();
+
 	}
 
-	void fieldOptionChanged(String fieldName, Object newValue) {
-		//TODO		if (name.startsWith(OPERAND_OPTIONS_PREFIX) && (newValue instanceof Boolean)) {
-		//			for (int i = 0; i < toggleOperandMarkupActions.length; i++) {
-		//				ToggleOperandMarkupAction action = toggleOperandMarkupActions[i];
-		//				if (name.equals(action.getOptionName())) {
-		//					boolean newState = ((Boolean)newValue).booleanValue();
-		//					if (action.isSelected() != newState) {
-		//						action.setSelected(newState);
-		//					}
-		//					break;
-		//				}
-		//			}
-		//		}
+	private void buildQuickTogleFieldActions() {
+		List<String> quickToggleFieldNames = formatMgr.getQuickToggleFieldNames();
+		int count = 0;
+		for (String fieldName : quickToggleFieldNames) {
+			DockingAction toggleAction = new ActionBuilder("Toggle " + fieldName, plugin.getName())
+					.popupMenuPath("Toggle Field", fieldName)
+					.popupMenuGroup("Field", "" + count)
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Field"))
+					// only show this action when over the listing field header
+					.popupWhen(c -> c.getContextObject() instanceof FieldHeaderLocation)
+					.onAction(c -> formatMgr.toggleField(fieldName))
+					.buildAndInstallLocal(this);
+
+			// automatically assign keybindings to the first 5 toggle fields. 
+			if (count < 5) {
+				char c = (char) ('1' + count);
+				toggleAction.setKeyBindingData(
+					new KeyBindingData(c, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+			}
+			else {
+				Msg.debug(this,
+					"Excessive Field Toggle actions . No keybinding assigned for field: " +
+						fieldName);
+			}
+			count++;
+		}
+		tool.setMenuGroup(new String[] { "Toggle Field" }, "Disassembly");
 	}
 
 	public ListingPanel getListingPanel() {
