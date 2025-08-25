@@ -115,7 +115,7 @@ public class GetInfoFSBFileHandler implements FSBFileHandler {
 				fattrs.add(NAME_ATTR, file.getName());
 			}
 			if (!fattrs.contains(PATH_ATTR)) {
-				fattrs.add(PATH_ATTR, FilenameUtils.getFullPath(file.getPath()));
+				fattrs.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
 			}
 			if (!fattrs.contains(FSRL_ATTR)) {
 				fattrs.add(FSRL_ATTR, file.getFSRL());
