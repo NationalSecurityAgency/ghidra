@@ -2226,7 +2226,7 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 {
   opflags = PcodeOp::ternary | PcodeOp::nocollapse;
   addlflags = arithmetic_op;
-  behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
+  behave = new OpBehaviorPtradd();
 }
 
 Datatype *TypeOpPtradd::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -2296,7 +2296,7 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// allow this to be commutative.
   opflags = PcodeOp::binary|PcodeOp::nocollapse;
   addlflags = arithmetic_op;
-  behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
+  behave = new OpBehaviorPtrsub();
 }
 
 Datatype *TypeOpPtrsub::getOutputLocal(const PcodeOp *op) const
