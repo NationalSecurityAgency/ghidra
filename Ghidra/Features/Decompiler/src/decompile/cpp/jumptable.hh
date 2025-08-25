@@ -21,6 +21,7 @@
 
 #include "emulateutil.hh"
 #include "rangeutil.hh"
+#include "expression.hh"
 
 namespace ghidra {
 

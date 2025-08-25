@@ -5307,66 +5307,6 @@ int4 ActionInferTypes::apply(Funcdata &data)
   return 0;
 }
 
-/// Assuming root->getOut() is the root of an expression formed with the
-/// CPUI_INT_ADD op, collect all the Varnode \e terms of the expression.
-void TermOrder::collect(void)
-
-{
-  Varnode *curvn;
-  PcodeOp *curop;
-  PcodeOp *subop,*multop;
-
-  vector<PcodeOp *> opstack;	// Depth first traversal path
-  vector<PcodeOp *> multstack;
-
-  opstack.push_back(root);
-  multstack.push_back((PcodeOp *)0);
-
-  while(!opstack.empty()) {
-    curop = opstack.back();
-    multop = multstack.back();
-    opstack.pop_back();
-    multstack.pop_back();
-    for(int4 i=0;i<curop->numInput();++i) {
-      curvn = curop->getIn(i);	// curvn is a node of the subtree IF
-      if (!curvn->isWritten()) { // curvn is not defined by another operation
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      if (curvn->loneDescend() == (PcodeOp *)0) { // curvn has more then one use
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      subop = curvn->getDef();
-      if (subop->code() != CPUI_INT_ADD) { // or if curvn is defined with some other type of op
-	if ((subop->code()==CPUI_INT_MULT)&&(subop->getIn(1)->isConstant())) {
-	  PcodeOp *addop = subop->getIn(0)->getDef();
-	  if ((addop!=(PcodeOp *)0)&&(addop->code()==CPUI_INT_ADD)) {
-	    if (addop->getOut()->loneDescend()!=(PcodeOp *)0) {
-	      opstack.push_back(addop);
-	      multstack.push_back(subop);
-	      continue;
-	    }
-	  }
-	}
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      opstack.push_back(subop);
-      multstack.push_back(multop);
-    }
-  }
-}
-
-void TermOrder::sortTerms(void)
-
-{
-  for(vector<AdditiveEdge>::iterator iter=terms.begin();iter!=terms.end();++iter)
-    sorter.push_back( &(*iter) );
-
-  sort(sorter.begin(),sorter.end(),additiveCompare);
-}
-
 /// (Re)build the default \e root Actions: decompile, jumptable, normalize, paramid, register, firstpass
 void ActionDatabase::buildDefaultGroups(void)
 
@@ -5469,6 +5409,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePullsubIndirect("analysis"));
 	actprop->addRule( new RulePushMulti("nodejoin"));
 	actprop->addRule( new RuleSborrow("analysis") );
+	actprop->addRule( new RuleScarry("analysis") );
 	actprop->addRule( new RuleIntLessEqual("analysis") );
 	actprop->addRule( new RuleTrivialArith("analysis") );
 	actprop->addRule( new RuleTrivialBool("analysis") );
