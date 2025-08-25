@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,17 +21,26 @@ import static ghidra.util.MathUtilities.cmin;
 import java.util.Collection;
 import java.util.Iterator;
 
+import generic.util.AbstractPeekableIterator;
+import generic.util.MergeSortingIterator;
 import generic.util.PeekableIterator;
-import ghidra.program.model.address.*;
+import generic.util.PeekableIterators;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.AddressRangeIterator;
 
+/**
+ * The iterator implementation backing several methods in {@link UnionAddressSetView}
+ */
 public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressRange>
 		implements AddressRangeIterator {
-	private final PeekableIterator<AddressRange> mit;
+	private final PeekableIterator<AddressRange> it;
 	private final boolean forward;
 
 	/**
 	 * Coalesce (by union) ranges from a single iterator
-	 * 
+	 * <p>
 	 * The ranges must be returned in order: in the forward direction, by increasing min address; in
 	 * the reverse direction, by decreasing max address.
 	 * 
@@ -39,13 +48,13 @@ public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressR
 	 * @param forward true to coalesce in the forward direction, false for reverse
 	 */
 	public UnionAddressRangeIterator(Iterator<AddressRange> it, boolean forward) {
-		this.mit = PeekableIterators.castOrWrap(it);
+		this.it = PeekableIterators.castOrWrap(it);
 		this.forward = forward;
 	}
 
 	/**
 	 * Union into a single range iterator, several range iterators
-	 * 
+	 * <p>
 	 * The ranges will be coalesced so that each returned range is disconnected from any other. The
 	 * ranges of each iterator must be returned in order by direction. While not recommended, the
 	 * ranges of each iterator may overlap, so long as they are sorted as in
@@ -56,7 +65,7 @@ public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressR
 	 */
 	public UnionAddressRangeIterator(Collection<Iterator<AddressRange>> iterators,
 			boolean forward) {
-		this.mit = new MergeSortingIterator<AddressRange>(iterators,
+		this.it = new MergeSortingIterator<AddressRange>(iterators,
 			forward ? AddressRangeComparators.FORWARD : AddressRangeComparators.BACKWARD);
 		this.forward = forward;
 	}
@@ -68,18 +77,18 @@ public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressR
 
 	@Override
 	protected AddressRange seekNext() {
-		if (!mit.hasNext()) {
+		if (!it.hasNext()) {
 			return null;
 		}
-		AddressRange peek = mit.peek();
+		AddressRange peek = it.peek();
 		Address min = peek.getMinAddress();
 		Address max = peek.getMaxAddress();
 		while (true) {
-			mit.next();
-			if (!mit.hasNext()) {
+			it.next();
+			if (!it.hasNext()) {
 				break;
 			}
-			peek = mit.peek();
+			peek = it.peek();
 			if (peek.getAddressSpace() != min.getAddressSpace()) {
 				break;
 			}

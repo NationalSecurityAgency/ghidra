@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,10 @@ import org.apache.commons.collections4.IteratorUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.TwoWayBreakdownAddressRangeIterator.Which;
 
+/**
+ * Utilities for manipulating iterators over {@link AddressRange}s. Notably, this allows the
+ * creation of lazily computed set operations on {@link AddressSetView}s.
+ */
 public enum AddressRangeIterators {
 	;
 
@@ -50,13 +54,30 @@ public enum AddressRangeIterators {
 		}
 	}
 
+	/**
+	 * Utility for satisfying the type checker. This just forwards the method calls so that an
+	 * {@link Iterator} over {@link AddressRange} can be used where an {@link AddressRangeIterator}
+	 * is required. If only Java had type aliasing....
+	 * 
+	 * @param it the iterator
+	 * @return the wrapper, or the same iterator if it is already an {@link AddressRangeIterator}
+	 */
 	public static AddressRangeIterator castOrWrap(Iterator<AddressRange> it) {
-		if (it instanceof AddressRangeIterator) {
-			return (AddressRangeIterator) it;
+		if (it instanceof AddressRangeIterator ari) {
+			return ari;
 		}
 		return new WrappingAddressRangeIterator(it);
 	}
 
+	/**
+	 * Create an iterator over the union of address ranges in the given iterators
+	 * 
+	 * @see UnionAddressSetView
+	 * @param iterators the iterators to union
+	 * @param forward true for forward iteration. The given iterators must all return ranges in the
+	 *            order indicated by this flag.
+	 * @return the iterator over the union
+	 */
 	public static AddressRangeIterator union(Collection<Iterator<AddressRange>> iterators,
 			boolean forward) {
 		return new UnionAddressRangeIterator(iterators, forward);
@@ -70,6 +91,17 @@ public enum AddressRangeIterators {
 				: range.getMinAddress().compareTo(start) <= 0;
 	}
 
+	/**
+	 * Create an iterator over the difference between two address range iterators
+	 * 
+	 * @see DifferenceAddressSetView
+	 * @param a the minuend
+	 * @param b the subtrahend
+	 * @param start the starting address, or null
+	 * @param forward true for forward iteration. The given iterators must all return ranges in the
+	 *            order indicated by this flag.
+	 * @return the iterator over the difference
+	 */
 	public static AddressRangeIterator subtract(Iterator<AddressRange> a, Iterator<AddressRange> b,
 			Address start, boolean forward) {
 		return new WrappingAddressRangeIterator(IteratorUtils.transformedIterator(
@@ -78,6 +110,17 @@ public enum AddressRangeIterators {
 			e -> e.getKey()));
 	}
 
+	/**
+	 * Create an iterator over the symmetric difference between two address range iterators
+	 * 
+	 * @see SymmetricDifferenceAddressSetView
+	 * @param a the first iterator
+	 * @param b the second iterator
+	 * @param start the starting address, or null
+	 * @param forward true for forward iteration. The given iterators must all return ranges in the
+	 *            order indicated by this flag.
+	 * @return the iterator over the symmetric difference
+	 */
 	public static AddressRangeIterator xor(Iterator<AddressRange> a, Iterator<AddressRange> b,
 			Address start, boolean forward) {
 		Iterator<Entry<AddressRange, Which>> eit =
@@ -93,6 +136,16 @@ public enum AddressRangeIterators {
 		return new WrappingAddressRangeIterator(result);
 	}
 
+	/**
+	 * Create an iterator over the intersection between two address range iterators
+	 * 
+	 * @see IntersectionAddressSetView
+	 * @param a the first iterator
+	 * @param b the second iterator
+	 * @param forward true for forward iteration. The given iterators must all return ranges in the
+	 *            order indicated by this flag.
+	 * @return the iterator over the symmetric difference
+	 */
 	public static AddressRangeIterator intersect(Iterator<AddressRange> a, Iterator<AddressRange> b,
 			boolean forward) {
 		return new WrappingAddressRangeIterator(IteratorUtils.transformedIterator(

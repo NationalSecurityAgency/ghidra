@@ -15,14 +15,14 @@
  */
 package ghidra.pcode.exec;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.pcode.Varnode;
 
@@ -374,4 +374,175 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * dark.
 	 */
 	void clear();
+
+	/**
+	 * Convenience to set a variable to a concrete value
+	 * 
+	 * @param address the address in memory
+	 * @param value the value
+	 */
+	default void setConcrete(Address address, byte[] value) {
+		setVar(address, value.length, false, getArithmetic().fromConst(value));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable
+	 * 
+	 * @param address the address in memory
+	 * @param size the number of bytes to inspect
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default byte[] inspectConcrete(Address address, int size) {
+		return getArithmetic().toConcrete(getVar(address, size, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a variable to a concrete value as a {@link BigInteger}
+	 * 
+	 * @param address the address is memory
+	 * @param size the size of the variable (in bytes)
+	 * @param value the value
+	 */
+	default void setBigInteger(Address address, int size, BigInteger value) {
+		setVar(address, size, false, getArithmetic().fromConst(value, size));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable as a {@link BigInteger}
+	 * 
+	 * @param address the address in memory
+	 * @param size the number of bytes to inspect
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default BigInteger inspectBigInteger(Address address, int size) {
+		return getArithmetic().toBigInteger(getVar(address, size, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a variable to a concrete value as a {@code long}
+	 * 
+	 * @param address the address is memory
+	 * @param value the value
+	 */
+	default void setLong(Address address, long value) {
+		setVar(address, Long.BYTES, false, getArithmetic().fromConst(value, Long.BYTES));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable as a {@code long}
+	 * 
+	 * @param address the address in memory
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default long inspectLong(Address address) {
+		return getArithmetic().toLong(getVar(address, Long.BYTES, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a variable to a concrete value as an {@code int}
+	 * 
+	 * @param address the address is memory
+	 * @param value the value
+	 */
+	default void setInt(Address address, int value) {
+		setVar(address, Integer.BYTES, false, getArithmetic().fromConst(value, Integer.BYTES));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable as an {@code int}
+	 * 
+	 * @param address the address in memory
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default int inspectInt(Address address) {
+		return (int) getArithmetic().toLong(getVar(address, Integer.BYTES, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a variable to a concrete value as a {@code short}
+	 * 
+	 * @param address the address is memory
+	 * @param value the value
+	 */
+	default void setShort(Address address, short value) {
+		setVar(address, Short.BYTES, false, getArithmetic().fromConst(value, Short.BYTES));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable as a {@code short}
+	 * 
+	 * @param address the address in memory
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default short inspectShort(Address address) {
+		return (short) getArithmetic().toLong(getVar(address, Short.BYTES, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a variable to a concrete value as a {@code byte}
+	 * 
+	 * @param address the address is memory
+	 * @param value the value
+	 */
+	default void setByte(Address address, byte value) {
+		setVar(address, Byte.BYTES, false, getArithmetic().fromConst(value, Byte.BYTES));
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a variable as a {@code byte}
+	 * 
+	 * @param address the address in memory
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default byte inspectByte(Address address) {
+		return (byte) getArithmetic().toLong(getVar(address, Byte.BYTES, false, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
+
+	/**
+	 * Convenience to set a register variable to a concrete value as a {@link RegisterValue}
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> The register from the given value does not have to match the given register, but
+	 * their <em>sizes</em> should at least match. This permits simpler moving of values from one
+	 * register to another. If the sizes do not match, the behavior is undefined.
+	 * 
+	 * @param register the register
+	 * @param value the value
+	 */
+	default void setRegisterValue(Register register, RegisterValue value) {
+		setVar(register, getArithmetic().fromConst(value));
+	}
+
+	/**
+	 * Convenience to set a register variable to a concrete value as a {@link RegisterValue}
+	 * 
+	 * @param value the value
+	 */
+	default void setRegisterValue(RegisterValue value) {
+		setRegisterValue(value.getRegister(), value);
+	}
+
+	/**
+	 * Convenience to inspect the concrete value of a register variable as a {@link RegisterValue}
+	 * 
+	 * @param register the register
+	 * @return the value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default RegisterValue inspectRegisterValue(Register register) {
+		return getArithmetic().toRegisterValue(register, getVar(register, Reason.INSPECT),
+			Purpose.INSPECT);
+	}
 }

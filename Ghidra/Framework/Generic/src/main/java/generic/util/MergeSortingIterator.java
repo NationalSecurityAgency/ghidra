@@ -4,21 +4,24 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util;
+package generic.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import generic.util.PeekableIterator;
+import java.util.NoSuchElementException;
+import java.util.PriorityQueue;
 
 /**
  * An iterator which merges sorted iterators according to a comparator
@@ -87,13 +90,16 @@ public class MergeSortingIterator<T> implements PeekableIterator<T> {
 
 	/**
 	 * Construct a merge-sorting iterator which generates labeled values
-	 * 
 	 * <p>
 	 * The map of iterators is a map of entries, each giving a label and an iterator to be merged.
 	 * Each iterator must return values as sorted by the given comparator. The entries returned by
 	 * the combined iterator give the values in sorted order, but each has a the key indicating
 	 * which given iterator returned that value. Note that the returned entry may be re-used by the
 	 * underlying implementation, so users needing to keep the entry should create a copy.
+	 * <p>
+	 * The purpose of the iterator is to know which iterator provided a given entry in the merged
+	 * result. While this has general utility, at the moment, it is only used in our tests to verify
+	 * proper operation of the merge-sorting implementation.
 	 * 
 	 * @param iterMap a map of labeled iterators
 	 * @param comparator the comparator of values
@@ -110,6 +116,12 @@ public class MergeSortingIterator<T> implements PeekableIterator<T> {
 	protected final Comparator<? super T> comparator;
 	protected final PriorityQueue<PeekableIterator<? extends T>> queue;
 
+	/**
+	 * Construct a merge sorting iterator
+	 * 
+	 * @param iterators a collection of iterators to merge
+	 * @param comparator the comparator defining how the input and output iterators are sorted
+	 */
 	public MergeSortingIterator(Iterable<? extends Iterator<? extends T>> iterators,
 			Comparator<? super T> comparator) {
 		this.comparator = comparator;
