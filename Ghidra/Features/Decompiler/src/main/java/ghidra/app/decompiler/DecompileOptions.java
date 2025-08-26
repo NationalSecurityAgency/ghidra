@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import generic.theme.GColor;
 import generic.theme.Gui;
-import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.template.TemplateSimplifier;
@@ -444,6 +443,9 @@ public class DecompileOptions {
 
 	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
 	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.find");
+	
+	private static final String HIGHLIGHT_MIDDLE_MOUSE_MSG = "Display.Color for Middle Mouse";
+	private static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR = new GColor("color.bg.decompiler.highlights.middle.mouse");
 	//@formatter:on
 
 	private static final String BACKGROUND_COLOR_MSG = "Display.Background Color";
@@ -467,6 +469,7 @@ public class DecompileOptions {
 	private final static String MAX_INSTRUCTIONS = "Max Instructions per Function";
 	private final static String MAX_JUMPTABLE_ENTRIES = "Max Entries per Jumptable";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
+
 	private boolean displayLineNumbers;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
@@ -791,14 +794,20 @@ public class DecompileOptions {
 			"The maximum size of the decompiler result payload in MBYtes (Suggested value: 50).");
 		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
-			"The maximum number of instructions decompiled in a single function");
+			"The maximum number of instructions decompiled in a single function.");
 		opt.registerOption(MAX_JUMPTABLE_ENTRIES, SUGGESTED_MAX_JUMPTABLE_ENTRIES,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxJumptable"),
-			"The maximum number of entries that can be recovered from a single jumptable");
+			"The maximum number of entries that can be recovered from a single jumptable.");
 		opt.registerThemeColorBinding(HIGHLIGHT_CURRENT_VARIABLE_MSG,
 			HIGHLIGHT_CURRENT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
-			"Current variable highlight");
+			"Current variable highlight.");
+
+		opt.registerThemeColorBinding(HIGHLIGHT_MIDDLE_MOUSE_MSG,
+			HIGHLIGHT_MIDDLE_MOUSE_COLOR.getId(),
+			new HelpLocation(HelpTopics.DECOMPILER, "MiddleMouseColor"),
+			"The middle-mouse highlight color.");
+
 		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralCacheSize"), CACHE_RESULTS_DESCRIPTION);
 		grabFromToolAndProgram(fieldOptions, opt, program);
@@ -1122,7 +1131,7 @@ public class DecompileOptions {
 	 * @return color used to highlight token(s) selected with a middle button clock
 	 */
 	public Color getMiddleMouseHighlightColor() {
-		return GhidraOptions.DEFAULT_HIGHLIGHT_COLOR;
+		return HIGHLIGHT_MIDDLE_MOUSE_COLOR;
 	}
 
 	/**
