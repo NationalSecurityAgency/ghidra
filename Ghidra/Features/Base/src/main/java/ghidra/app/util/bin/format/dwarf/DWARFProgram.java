@@ -34,6 +34,8 @@ import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
+import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
+import ghidra.app.util.bin.format.dwarf.macro.entry.DWARFMacroInfoEntry;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.*;
 import ghidra.app.util.bin.format.golang.rtti.GoSymbolName;
 import ghidra.app.util.opinion.*;
@@ -158,6 +160,7 @@ public class DWARFProgram implements Closeable {
 	private BinaryReader debugAbbrBR;
 	private BinaryReader debugAddr; // v5+
 	private BinaryReader debugStrOffsets; // v5+
+	private BinaryReader debugMacros; // v5+
 
 	// dieOffsets, siblingIndexes, parentIndexes contain for each DIE the information needed 
 	// to read each DIE and to navigate to parent / child / sibling elements.
@@ -194,6 +197,8 @@ public class DWARFProgram implements Closeable {
 	// other {@link DIEAggregate}s with a DW_AT_type property.
 	// In other words, a map of inbound links to a DIEA.
 	private ListValuedMap<Long, Long> typeReferers = new ArrayListValuedHashMap<>();
+
+	private Map<Long, DWARFLine> cachedDWARFLines = new HashMap<>();
 
 	/**
 	 * Main constructor for DWARFProgram.
@@ -249,6 +254,8 @@ public class DWARFProgram implements Closeable {
 		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE, monitor);
 		this.debugAddr = getBinaryReaderFor(DWARFSectionNames.DEBUG_ADDR, monitor);
 		this.debugStrOffsets = getBinaryReaderFor(DWARFSectionNames.DEBUG_STROFFSETS, monitor);
+
+		this.debugMacros = getBinaryReaderFor(DWARFSectionNames.DEBUG_MACRO, monitor);
 
 		this.rangeListTable =
 			new DWARFIndirectTable(this.debugRngLists, DWARFCompilationUnit::getRangeListsBase);
@@ -374,7 +381,7 @@ public class DWARFProgram implements Closeable {
 				typeReferers.put(typeRef.getOffset(), diea.getOffset());
 			}
 		}
-
+		monitor.initialize(0, "");
 	}
 
 	protected void indexDIEAggregates(LongArrayList aggrTargets, TaskMonitor monitor)
@@ -1281,9 +1288,39 @@ public class DWARFProgram implements Closeable {
 			return DWARFLine.empty();
 		}
 		long stmtListOffset = attrib.getUnsignedValue();
-		DWARFLine result = DWARFLine.read(debugLineBR.clone(stmtListOffset), getDefaultIntSize(),
-			diea.getCompilationUnit());
+		return getLine(stmtListOffset, diea.getCompilationUnit(), true);
+	}
+
+	public DWARFLine getLine(long offset, DWARFCompilationUnit cu, boolean readIfMissing)
+			throws IOException {
+		DWARFLine result = cachedDWARFLines.get(offset);
+		if (result == null && readIfMissing) {
+			result = DWARFLine.read(debugLineBR.clone(offset), getDefaultIntSize(), cu);
+			cachedDWARFLines.put(offset, result);
+		}
 		return result;
+	}
+
+	public DWARFMacroHeader getMacroHeader(long offset, DWARFCompilationUnit cu) {
+		if (debugMacros != null) {
+			try {
+				return DWARFMacroHeader.readV5(debugMacros.clone(offset), cu);
+			}
+			catch (IOException e) {
+				// ignore, fall thru return emtpy
+			}
+		}
+		return DWARFMacroHeader.EMTPY;
+	}
+
+	public List<DWARFMacroInfoEntry> getMacroEntries(DWARFMacroHeader macroHeader)
+			throws IOException {
+		if (debugMacros == null) {
+			return List.of();
+		}
+
+		return DWARFMacroHeader.readMacroEntries(
+			debugMacros.clone(macroHeader.getEntriesStartOffset()), macroHeader);
 	}
 
 	/**
