@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Objects;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
@@ -76,8 +77,8 @@ public class DBTraceReference implements TraceReference {
 	}
 
 	@Override
-	public Address getToAddress() {
-		return ent.toAddress;
+	public AddressRange getToRange() {
+		return ent.toRange;
 	}
 
 	@Override
