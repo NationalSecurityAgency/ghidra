@@ -32,21 +32,6 @@
         <pentry minsize="1" maxsize="8" metatype="float" extension="float">
           <register name="f8"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
-          <register name="f9"/>
-        </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
-          <register name="f10"/>
-        </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
-          <register name="f11"/>
-        </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
-          <register name="f12"/>
-        </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
-          <register name="f13"/>
-        </pentry>
         <pentry minsize="1" maxsize="4">
           <register name="r3"/>
         </pentry>
@@ -74,6 +59,26 @@
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="8" space="stack"/>
         </pentry>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <goto_stack/>
+        </rule>
+        <rule>
+          <datatype name="struct"/>
+          <convert_to_ptr/>
+        </rule>
+        <rule>
+          <datatype name="union"/>
+          <convert_to_ptr/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>
+        </rule>
       </input>
       <output>
         <pentry minsize="1" maxsize="8" metatype="float" extension="float">
@@ -82,9 +87,17 @@
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="r3"/>
         </pentry>
-        <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="r4" piece2="r3"/>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="r4"/>
         </pentry>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
       <unaffected>
         <register name="r1"/>  <!-- stack pointer -->
@@ -108,10 +121,33 @@
         <register name="r29"/>
         <register name="r30"/>
         <register name="r31"/>
+        <register name="f14"/>
+        <register name="f15"/>
+        <register name="f16"/>
+        <register name="f17"/>
+        <register name="f18"/>
+        <register name="f19"/>
+        <register name="f20"/>
+        <register name="f21"/>
+        <register name="f22"/>
+        <register name="f23"/>
+        <register name="f24"/>
+        <register name="f25"/>
+        <register name="f26"/>
+        <register name="f27"/>
+        <register name="f28"/>
+        <register name="f29"/>
+        <register name="f30"/>
+        <register name="f31"/>
         <register name="cr2"/>
         <register name="cr3"/>
         <register name="cr4"/>
       </unaffected>
+      <killedbycall>
+        <register name="r3"/>
+        <register name="r4"/>
+        <register name="f1"/>
+      </killedbycall>
     </prototype>
   </default_proto>
 
