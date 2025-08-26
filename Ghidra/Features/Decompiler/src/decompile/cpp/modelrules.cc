@@ -609,12 +609,7 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
     action = new HiddenReturnAssign(res,hiddenret_specialreg);
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
-    bool consumeMostSig = false;
-    AddrSpace *spc = res->getSpacebase();
-    if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
-      consumeMostSig = true;
-     }
-    action = new MultiMemberAssign(TYPECLASS_GENERAL,false,consumeMostSig,res);
+    action = new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res);
   }
   else if (elemId == ELEM_JOIN_DUAL_CLASS) {
     action = new MultiSlotDualAssign(res);
@@ -674,6 +669,28 @@ AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListSta
     throw DecoderError("Expecting model rule sideeffect");
   action->decode(decoder);
   return action;
+}
+
+/// \brief Truncate a tiling by a given number of bytes
+///
+/// The extra bytes are considered padding and removed from one end of the tiling.
+/// The bytes removed depend on the endianness and how the data is justified within the tiling.
+/// \param pieces is the tiling of 2 or more Varnodes
+/// \param offset is the given number of bytes to truncate
+/// \param isBigEndian is true for big endian architectures
+/// \param consumeMostSig is true if the first tile in the list covers the most significant bytes
+/// \param justifyRight is true if the data is right justified within the tiling
+void AssignAction::justifyPieces(vector<VarnodeData> &pieces,int4 offset,bool isBigEndian,
+				 bool consumeMostSig,bool justifyRight)
+{
+  bool addOffset = isBigEndian ^ consumeMostSig ^ justifyRight;
+  int pos = justifyRight ? 0 : pieces.size() - 1;
+
+  VarnodeData &vndata(pieces[pos]);
+  if (addOffset) {
+    vndata.offset += offset;
+  }
+  vndata.size -= offset;
 }
 
 void GotoStack::initializeEntry(void)
@@ -784,6 +801,7 @@ MultiSlotAssign::MultiSlotAssign(const ParamListStandard *res)
   : AssignAction(res)
 {
   resourceType = TYPECLASS_GENERAL;	// Join general purpose registers
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   uint4 listType = res->getType();
   // Consume from stack on input parameters by default
@@ -791,8 +809,7 @@ MultiSlotAssign::MultiSlotAssign(const ParamListStandard *res)
   consumeMostSig = false;
   enforceAlignment = false;
   justifyRight = false;
-  AddrSpace *spc = res->getSpacebase();
-  if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
+  if (isBigEndian) {
     consumeMostSig = true;
     justifyRight = true;
   }
@@ -803,6 +820,7 @@ MultiSlotAssign::MultiSlotAssign(type_class store,bool stack,bool mostSig,bool a
   : AssignAction(res)
 {
   resourceType = store;
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   consumeFromStack = stack;
   consumeMostSig = mostSig;
@@ -870,12 +888,8 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
       tmp.offset = addr.getOffset();
       tmp.size = dt->getSize();
     }
-    else if (justifyRight) {
-      pieces.front().offset += -sizeLeft;	// Initial bytes of first entry are padding
-      pieces.front().size += sizeLeft;
-    }
     else {
-      pieces.back().size += sizeLeft;
+      justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
     }
   }
   status = tmpStatus;				// Commit resource usage for all the pieces
@@ -931,7 +945,10 @@ bool MultiSlotAssign::fillinOutputMap(ParamActive *active) const
       }
     }
   }
-  return (count > 0);
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiSlotAssign::decode(Decoder &decoder)
@@ -1023,7 +1040,10 @@ bool MultiMemberAssign::fillinOutputMap(ParamActive *active) const
       return false;			// Entry must be justified
     count += 1;
   }
-  return (count > 0);
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiMemberAssign::decode(Decoder &decoder)
@@ -1119,14 +1139,14 @@ int4 MultiSlotDualAssign::getTileClass(const PrimitiveExtractor &primitives,int4
 MultiSlotDualAssign::MultiSlotDualAssign(const ParamListStandard *res)
   : AssignAction(res)
 {
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   baseType = TYPECLASS_GENERAL;		// Tile from general purpose registers
   altType = TYPECLASS_FLOAT;		// Use specialized registers for floating-point components
   consumeFromStack = false;
   consumeMostSig = false;
   justifyRight = false;
-  AddrSpace *spc = res->getSpacebase();
-  if (spc != (AddrSpace *)0 && spc->isBigEndian()) {
+  if (isBigEndian) {
     consumeMostSig = true;
     justifyRight = true;
   }
@@ -1139,6 +1159,7 @@ MultiSlotDualAssign::MultiSlotDualAssign(type_class baseStore,type_class altStor
                      bool mostSig,bool justRight,bool fillAlt,const ParamListStandard *res)
   : AssignAction(res)
 {
+  isBigEndian = res->isBigEndian();
   fillinOutputActive = true;
   baseType = baseStore;
   altType = altStore;
@@ -1209,13 +1230,7 @@ uint4 MultiSlotDualAssign::assignAddress(Datatype *dt,const PrototypePieces &pro
     pieces.back().size = sizeLeft;
   }
   if (sizeLeft < 0) {			// Have odd data-type size
-    if (justifyRight) {
-      pieces.front().offset += -sizeLeft;	// Initial bytes of first entry are padding
-      pieces.front().size += sizeLeft;
-    }
-    else {
-      pieces.back().size += sizeLeft;
-    }
+    justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
   }
   status = tmpStatus;				// Commit resource usage for all the pieces
   res.flags = 0;
@@ -1276,8 +1291,10 @@ bool MultiSlotDualAssign::fillinOutputMap(ParamActive *active) const
       }
     }
   }
-  return (count > 0);
-
+  if (count==0) return false;
+  if (consumeMostSig)
+    active->setJoinReverse();
+  return true;
 }
 
 void MultiSlotDualAssign::decode(Decoder &decoder)

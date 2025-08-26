@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
@@ -42,6 +41,7 @@ import ghidra.xml.*;
 public class MultiSlotDualAssign extends AssignAction {
 	private StorageClass baseType;		// Resource list from which to consume general tiles
 	private StorageClass altType;		// Resource list from which to consume alternate tiles
+	private boolean isBigEndian;		// True for big endian architectures
 	private boolean consumeFromStack;   // True if resources can be consumed from the stack
 	private boolean consumeMostSig;		// True if resources are consumed starting with most significant bytes
 	private boolean justifyRight;		// True if initial bytes are padding for odd data-type sizes
@@ -151,12 +151,13 @@ public class MultiSlotDualAssign extends AssignAction {
 	 */
 	protected MultiSlotDualAssign(ParamListStandard res) {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		baseType = StorageClass.GENERAL;	// Tile from general purpose registers
 		altType = StorageClass.FLOAT;	// Use specialized registers for floating-point components
 		consumeFromStack = false;
 		consumeMostSig = false;
 		justifyRight = false;
-		if (res.getEntry(0).isBigEndian()) {
+		if (isBigEndian) {
 			consumeMostSig = true;
 			justifyRight = true;
 		}
@@ -180,6 +181,7 @@ public class MultiSlotDualAssign extends AssignAction {
 			boolean mostSig, boolean justRight, boolean fillAlt, ParamListStandard res)
 			throws InvalidInputException {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		baseType = baseStore;
 		altType = altStore;
 		consumeFromStack = stack;
@@ -294,21 +296,7 @@ public class MultiSlotDualAssign extends AssignAction {
 			pieces.add(vn);
 		}
 		if (sizeLeft < 0) {			// Have odd data-type size
-			if (justifyRight) {
-				// Initial bytes of first entry are padding
-				Varnode vn = pieces.get(0);
-				Address addr = vn.getAddress().add(-sizeLeft);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(addr, sz);
-				pieces.set(0, vn);
-			}
-			else {
-				int end = pieces.size() - 1;
-				Varnode vn = pieces.get(end);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(vn.getAddress(), sz);
-				pieces.set(end, vn);
-			}
+			justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
 		}
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
 		res.type = dt;
@@ -319,10 +307,10 @@ public class MultiSlotDualAssign extends AssignAction {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_JOIN_DUAL_CLASS);
-		if (resource.getEntry(0).isBigEndian() != justifyRight) {
+		if (resource.isBigEndian() != justifyRight) {
 			encoder.writeBool(ATTRIB_REVERSEJUSTIFY, true);
 		}
-		if (resource.getEntry(0).isBigEndian() != consumeMostSig) {
+		if (resource.isBigEndian() != consumeMostSig) {
 			encoder.writeBool(ATTRIB_REVERSESIGNIF, true);
 		}
 		if (baseType != StorageClass.GENERAL) {

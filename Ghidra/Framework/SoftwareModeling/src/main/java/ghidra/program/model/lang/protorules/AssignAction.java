@@ -18,11 +18,14 @@ package ghidra.program.model.lang.protorules;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Encoder;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.xml.*;
 
@@ -124,8 +127,7 @@ public abstract class AssignAction {
 			action = new HiddenReturnAssign(res, HIDDENRET_SPECIALREG);
 		}
 		else if (nm.equals(ELEM_JOIN_PER_PRIMITIVE.name())) {
-			boolean consumeMostSig = res.getEntry(0).isBigEndian();
-			action = new MultiMemberAssign(StorageClass.GENERAL, false, consumeMostSig, res);
+			action = new MultiMemberAssign(StorageClass.GENERAL, false, res.isBigEndian(), res);
 		}
 		else if (nm.equals(ELEM_JOIN_DUAL_CLASS.name())) {
 			action = new MultiSlotDualAssign(res);
@@ -190,5 +192,21 @@ public abstract class AssignAction {
 
 		action.restoreXml(parser);
 		return action;
+	}
+
+	public static void justifyPieces(ArrayList<Varnode> pieces, int offset, boolean isBigEndian,
+			boolean consumeMostSig,
+			boolean justifyRight) {
+		boolean addOffset = isBigEndian ^ consumeMostSig ^ justifyRight;
+		int pos = justifyRight ? 0 : pieces.size() - 1;
+
+		Varnode vn = pieces.get(pos);
+		Address addr = vn.getAddress();
+		if (addOffset) {
+			addr = addr.add(offset);
+		}
+		int sz = vn.getSize() - offset;
+		vn = new Varnode(addr, sz);
+		pieces.set(pos, vn);
 	}
 }
