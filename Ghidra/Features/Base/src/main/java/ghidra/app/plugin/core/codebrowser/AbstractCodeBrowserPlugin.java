@@ -437,10 +437,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME)) {
 				fieldPanel.setHorizontalScrollingEnabled((Boolean) newValue);
 			}
-
-			connectedProvider.fieldOptionChanged(optionName, newValue);
 		}
-
 	}
 
 	@Override

@@ -32,6 +32,7 @@ import ghidra.program.model.data.Array;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -252,6 +253,25 @@ public class FormatManager implements OptionsChangeListener {
 		return models[FieldFormatModel.OPEN_DATA];
 	}
 
+	/**
+	 * Toggle the enablement for the field with the given name.
+	 * @param name the of the field to toggle
+	 */
+	public void toggleField(String name) {
+		for (FieldFormatModel model : models) {
+			for (int i = 0; i < model.getNumRows(); i++) {
+				FieldFactory[] rowFactories = model.getFactorys(i);
+				for (FieldFactory fieldFactory : rowFactories) {
+					if (fieldFactory.getFieldName().equals(name)) {
+						fieldFactory.setEnabled(!fieldFactory.isEnabled());
+						return;
+					}
+				}
+			}
+		}
+		Msg.showError(this, null, "Toggle Field Failed!", "No field named \"" + name + "\"");
+	}
+
 	private boolean isPrimitiveArrayElement(Data data) {
 		Data parent = data.getParent();
 		if (parent == null) {
@@ -329,6 +349,13 @@ public class FormatManager implements OptionsChangeListener {
 			maxRowCount = Math.max(maxRowCount, element.getNumRows());
 		}
 		return maxRowCount;
+	}
+
+	/**
+	 * {@return a list of field names that should have quick toggle actions.}
+	 */
+	public List<String> getQuickToggleFieldNames() {
+		return List.of("PCode");
 	}
 
 	private Element getDefaultModel(int modelID) {
