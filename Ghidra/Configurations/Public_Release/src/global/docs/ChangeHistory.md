@@ -1,3 +1,21 @@
+# Ghidra 11.4.2 Change History (August 2025)
+
+### Improvements
+* _Build_. Ghidra now supports Gradle 9. (GP-5901)
+* _Decompiler_. Improved Decompiler's analysis of switches where the guard condition has been duplicated across multiple basic blocks that all feed into the same switch calculation. (GP-5889)
+* _Processors_. Added the SuperH GBR register to the unaffected list in the `.cspec` so that the Decompiler sees the value as preserved across subroutine calls. (GP-5912, Issue #4387)
+
+### Bugs
+* _Analysis_. Fixed switch recovery analysis speed degredation on functions with multiple potential switches. (GP-5917)
+* _Decompiler_. Fixed a bug in the Decompiler's analysis of duplicated boolean expressions that could reverse the meaning of an expression. (GP-5915, Issue #8310)
+* _Decompiler_. Fixed an uncaught exception in the Decompiler that resulted when `highSymbol` was null. (GP-5919, Issue #8413)
+* _Exporter_. The `IntelHexExpoter` no longer fails due to falsely identifying a 32-bit program as 64-bit.  Additionally, the address space option is no longer hidden. (GP-5910, Issue #8409)
+* _Importer:ELF_. Corrected ELF MIPS-64 packed REL relocation processing issue seen when the relocation type R_MIPS_REL32 is included (e.g., packed type 0x1203).  When 64-bit pointers are used, this relocation must read 8 bytes from memory instead of 4 bytes to produce the correct addend value. (GP-5918)
+* _Importer:PE_. Fixed a regression that caused bad functions to be created in the middle of good functions in PE files with chained `IMAGE_FUNCTION_RUNTIME_ENTRY`s, and prevented some PE binaries from importing. (GP-5916, Issue #8414)
+* _Importer:PE_. The `IMAGE_RESOURCE_DIRECTORY_ENTRY` data type is now correctly defined as a structure instead of a union. (GP-5935, Issue #8446)
+* _PDB_. Fixed structure member issue, broken with 11.4 release, that could cause improper structure layout and Decompiler low-level errors. (GP-5928)
+* _Processors_. Added additional SPE and APU instructions to e500 PowerPC variant. (GP-5945)
+
 # Ghidra 11.4.1 Change History (July 2025)
 
 ### Improvements
