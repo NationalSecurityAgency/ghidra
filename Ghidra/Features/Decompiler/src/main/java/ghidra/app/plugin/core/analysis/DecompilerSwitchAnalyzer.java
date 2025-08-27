@@ -57,7 +57,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	// cache for pcode callother injection payloads
 	private HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<>();
 
-	private boolean hitNonReturningFunction = false;
+	private boolean hitNonReturningThunkFunction = false;
 
 
 //==================================================================================================
@@ -103,12 +103,12 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
-			List<Function> definedFunctions = new ArrayList<>();
-			List<Function> undefinedFunctions = new ArrayList<>();
+			Collection<Function> definedFunctions = new HashSet<>();
+			Collection<Function> undefinedFunctions = new HashSet<>();
 			findFunctions(program, locations, definedFunctions, undefinedFunctions, monitor);
 
-			if (hitNonReturningFunction) {
-				hitNonReturningFunction = false;
+			if (hitNonReturningThunkFunction) {
+				hitNonReturningThunkFunction = false;
 				// if hit a non-returning function, code needs to be fixed up
 				//  before wasting time on analyzing potentially bad code
 				// This will also clean out locations that were thunks for the next go round.
@@ -209,8 +209,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			}
 			// kids, don't do thunks
 			if (function.isThunk()) {
+				// unless they are non-returning
 				if (function.hasNoReturn()) {
-					hitNonReturningFunction = true;
+					hitNonReturningThunkFunction = true;
 				}
 				continue;
 			}
@@ -428,7 +429,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						program.getFunctionManager().getFunctionContaining(location);
 					if (fixupFunc != null) {
 						CreateFunctionCmd.fixupFunctionBody(program, fixupFunc, monitor);
-						// send function back, so non-returning nature will be picked up by decompiler
+						// send function back, so non-returning nature will be picked up
 						if (fixupFunc.hasNoReturn()) {
 							return fixupFunc;
 						}

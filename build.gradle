@@ -16,7 +16,6 @@
 apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
-apply from: "gradle/support/eclipseLauncher.gradle"
 apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
