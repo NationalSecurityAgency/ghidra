@@ -831,7 +831,7 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 		Enum<?>[] enums = editor.getEnums();
 
 		final JComboBox<Enum<?>> applyComboBox = new GComboBox<>(enums);
-		applyComboBox.addActionListener(e -> changesMade(true));
+		applyComboBox.addItemListener(e -> changesMade(true));
 
 		return applyComboBox;
 	}

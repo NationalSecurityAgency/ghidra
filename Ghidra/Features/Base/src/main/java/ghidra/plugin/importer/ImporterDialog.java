@@ -266,7 +266,6 @@ public class ImporterDialog extends DialogComponentProvider {
 		Set<Loader> orderedLoaders = new LinkedHashSet<>(loaderMap.keySet()); // maintain order
 		loaderComboBox = new GhidraComboBox<>(orderedLoaders);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
-		loaderComboBox.setEnterKeyForwarding(true);
 		loaderComboBox.getAccessibleContext().setAccessibleName("Loader Choices");
 		loaderComboBox.setRenderer(
 			GComboBoxCellRenderer.createDefaultTextRenderer(loader -> loader.getName()));
