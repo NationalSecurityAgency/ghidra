@@ -38,9 +38,7 @@ public class GoPointerType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the element's type.
-	 * 
-	 * @return reference to the element's type
+	 * {@return a reference to the element's type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -49,9 +47,10 @@ public class GoPointerType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		DataType elementDT = goTypes.getGhidraDataType(getElement());
-		DataType self = goTypes.getGhidraDataType(this, DataType.class, true);
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType elementDT = goTypes.getDataType(getElement());
+		DataType self = goTypes.getDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}

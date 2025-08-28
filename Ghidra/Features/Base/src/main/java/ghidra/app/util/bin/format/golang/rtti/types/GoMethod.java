@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
-import ghidra.app.util.bin.format.golang.rtti.MethodInfo;
+import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.NumericUtilities;
@@ -66,9 +64,7 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 	}
 
 	/**
-	 * Returns the name of this method.
-	 * 
-	 * @return name of this method
+	 * {@return the name of this method}
 	 */
 	public String getName() {
 		GoName n = programContext.getSafeName(this::getGoName, this, "unnamed_method");
@@ -76,9 +72,7 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 	}
 
 	/**
-	 * Returns true if the funcdef is missing for this method.
-	 * 
-	 * @return true if the funcdef is missing for this method
+	 * {@return true if the funcdef is missing for this method}
 	 */
 	public boolean isSignatureMissing() {
 		return mtyp == 0 || mtyp == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG || mtyp == -1;
@@ -109,18 +103,14 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 	}
 
 	/**
-	 * Returns the address of the version of the function that is called via the interface.
-	 * 
-	 * @return address of the version of the function that is called via the interface
+	 * {@return the address of the version of the function that is called via the interface}
 	 */
 	public Address getIfn() {
 		return programContext.resolveTextOff(context.getStructureStart(), ifn);
 	}
 
 	/**
-	 * Returns the address of the version of the function that is called normally.
-	 * 
-	 * @return address of the version of the function that is called normally
+	 * {@return the address of the version of the function that is called normally}
 	 */
 	public Address getTfn() {
 		return programContext.resolveTextOff(context.getStructureStart(), tfn);

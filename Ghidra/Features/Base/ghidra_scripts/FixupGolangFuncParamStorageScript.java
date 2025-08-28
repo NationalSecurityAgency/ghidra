@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Assigns custom storage for params of a golang function to match golang's abi-internal
+// Assigns custom storage for params of a Go function to match Go's abi-internal
 // register-based calling convention, or abi0 (all stack based) if abi-internal is not 
 // specified for the arch.
 //@category Functions
-//@menupath Tools.Fix Golang Function Param Storage 
+//@menupath Tools.Fix Go Function Param Storage 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.golang.GoFunctionFixup;
 import ghidra.app.util.bin.format.golang.GoVer;
@@ -34,7 +34,7 @@ public class FixupGolangFuncParamStorageScript extends GhidraScript {
 		}
 		GoVer goVersion = GoVer.fromProgramProperties(currentProgram);
 		if (goVersion == GoVer.INVALID) {
-			goVersion = askChoice("Golang Version", "What is the golang version?",
+			goVersion = askChoice("Go Version", "What is the Go version?",
 				GoRttiMapper.getAllSupportedVersions(), GoVer.INVALID);
 		}
 		println("Fixing param storage for function %s@%s".formatted(func.getName(),

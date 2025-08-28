@@ -25,12 +25,16 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 /**
- * Golang type info about a specific map type.
+ * Go type info about a specific map type.
  * <p>
  * See {@link GoTypeManager#getMapGoType()} or the "runtime.hmap" type for the definition of
- * a instance of a map variable in memory. 
+ * a instance of a map variable in memory.
+ * <p>
+ * Maps are passed by address, and sizeof(mapvar) will always be ptrSize
  */
-@StructureMapping(structureName = {"runtime.maptype", "internal/abi.MapType"})
+@StructureMapping(
+	structureName = { "runtime.maptype", "internal/abi.MapType", "internal/abi.OldMapType" }
+)
 public class GoMapType extends GoType {
 
 	@FieldMapping
@@ -98,15 +102,15 @@ public class GoMapType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		GoType mapGoType = goTypes.getMapGoType();
-		if (mapGoType == null) {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType hmapDT = goTypes.findDataType("runtime.hmap");
+		if (hmapDT == null) {
 			// if we couldn't find the underlying/hidden runtime.hmap struct type, just return
 			// a void*
 			return goTypes.getVoidPtrDT();
 		}
-		DataType mapDT = goTypes.getGhidraDataType(mapGoType);
-		Pointer ptrMapDt = goTypes.getDTM().getPointer(mapDT);
+		Pointer ptrMapDt = goTypes.getDTM().getPointer(hmapDT);
 		if (typ.getSize() != ptrMapDt.getLength()) {
 			Msg.warn(this, "Size mismatch between map type and recovered type");
 		}

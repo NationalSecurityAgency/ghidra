@@ -1,103 +1,110 @@
+@ ["all","Funcs","bytes.Cut","Position"]
+- "$GOROOT/bytes/bytes.go:1271:6"
++ "$GOROOT/bytes/bytes.go:1291:6"
+@ ["all","Funcs","bytes.EqualFold","Position"]
+- "$GOROOT/bytes/bytes.go:1124:6"
++ "$GOROOT/bytes/bytes.go:1144:6"
+@ ["all","Funcs","bytes.Index","Position"]
+- "$GOROOT/bytes/bytes.go:1178:6"
++ "$GOROOT/bytes/bytes.go:1198:6"
+@ ["all","Funcs","bytes.Replace","Position"]
+- "$GOROOT/bytes/bytes.go:1076:6"
++ "$GOROOT/bytes/bytes.go:1096:6"
+@ ["all","Funcs","bytes.ReplaceAll","Position"]
+- "$GOROOT/bytes/bytes.go:1117:6"
++ "$GOROOT/bytes/bytes.go:1137:6"
+@ ["all","Funcs","bytes.Runes","Position"]
+- "$GOROOT/bytes/bytes.go:1058:6"
++ "$GOROOT/bytes/bytes.go:1078:6"
+@ ["all","Funcs","bytes.TrimLeft","Position"]
+- "$GOROOT/bytes/bytes.go:926:6"
++ "$GOROOT/bytes/bytes.go:930:6"
+@ ["all","Funcs","bytes.TrimRight","Position"]
+- "$GOROOT/bytes/bytes.go:972:6"
++ "$GOROOT/bytes/bytes.go:992:6"
+@ ["all","Funcs","bytes.TrimSpace","Position"]
+- "$GOROOT/bytes/bytes.go:1018:6"
++ "$GOROOT/bytes/bytes.go:1038:6"
+@ ["all","Funcs","bytes.trimLeftASCII","Position"]
+- "$GOROOT/bytes/bytes.go:946:6"
++ "$GOROOT/bytes/bytes.go:958:6"
+@ ["all","Funcs","bytes.trimLeftByte","Position"]
+- "$GOROOT/bytes/bytes.go:939:6"
++ "$GOROOT/bytes/bytes.go:947:6"
+@ ["all","Funcs","bytes.trimLeftUnicode","Position"]
+- "$GOROOT/bytes/bytes.go:956:6"
++ "$GOROOT/bytes/bytes.go:972:6"
+@ ["all","Funcs","bytes.trimRightASCII","Position"]
+- "$GOROOT/bytes/bytes.go:992:6"
++ "$GOROOT/bytes/bytes.go:1012:6"
+@ ["all","Funcs","bytes.trimRightByte","Position"]
+- "$GOROOT/bytes/bytes.go:985:6"
++ "$GOROOT/bytes/bytes.go:1005:6"
+@ ["all","Funcs","bytes.trimRightUnicode","Position"]
+- "$GOROOT/bytes/bytes.go:1002:6"
++ "$GOROOT/bytes/bytes.go:1022:6"
+@ ["all","Funcs","crypto/x509.appendToFreshChain","Position"]
+- "$GOROOT/crypto/x509/verify.go:813:6"
++ "$GOROOT/crypto/x509/verify.go:816:6"
+@ ["all","Funcs","crypto/x509.checkChainForKeyUsage","Position"]
+- "$GOROOT/crypto/x509/verify.go:1059:6"
++ "$GOROOT/crypto/x509/verify.go:1062:6"
 @ ["all","Funcs","crypto/x509.checkSignature","Params",4]
   {"DataType":"crypto.PublicKey","Name":"publicKey"}
 + {"DataType":"bool","Name":"allowSHA1"}
 ]
+@ ["all","Funcs","crypto/x509.matchExactly","Position"]
+- "$GOROOT/crypto/x509/verify.go:944:6"
++ "$GOROOT/crypto/x509/verify.go:947:6"
+@ ["all","Funcs","crypto/x509.matchHostnames","Position"]
+- "$GOROOT/crypto/x509/verify.go:951:6"
++ "$GOROOT/crypto/x509/verify.go:954:6"
+@ ["all","Funcs","crypto/x509.toLowerCaseASCII","Position"]
+- "$GOROOT/crypto/x509/verify.go:981:6"
++ "$GOROOT/crypto/x509/verify.go:984:6"
+@ ["all","Funcs","crypto/x509.validHostname","Position"]
+- "$GOROOT/crypto/x509/verify.go:900:6"
++ "$GOROOT/crypto/x509/verify.go:903:6"
+@ ["all","Funcs","crypto/x509.validHostnameInput","Position"]
+- "$GOROOT/crypto/x509/verify.go:895:6"
++ "$GOROOT/crypto/x509/verify.go:898:6"
+@ ["all","Funcs","crypto/x509.validHostnamePattern","Position"]
+- "$GOROOT/crypto/x509/verify.go:894:6"
++ "$GOROOT/crypto/x509/verify.go:897:6"
+@ ["all","Funcs","encoding/pem.Encode","Position"]
+- "$GOROOT/encoding/pem/pem.go:264:6"
++ "$GOROOT/encoding/pem/pem.go:238:6"
+@ ["all","Funcs","encoding/pem.EncodeToMemory","Position"]
+- "$GOROOT/encoding/pem/pem.go:334:6"
++ "$GOROOT/encoding/pem/pem.go:308:6"
 @ ["all","Funcs","encoding/pem.decodeError"]
-- {"Flags":0,"Params":[{"DataType":"[]byte","Name":"data"},{"DataType":"[]byte","Name":"rest"}],"Results":[{"DataType":"*encoding/pem.Block","Name":""},{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+- {"Params":[{"DataType":"[]byte","Name":"data"},{"DataType":"[]byte","Name":"rest"}],"Position":"$GOROOT/encoding/pem/pem.go:181:6","Results":[{"DataType":"*encoding/pem.Block"},{"DataType":"[]byte"}]}
+@ ["all","Funcs","encoding/pem.writeHeader","Position"]
+- "$GOROOT/encoding/pem/pem.go:258:6"
++ "$GOROOT/encoding/pem/pem.go:232:6"
+@ ["all","Funcs","go/types.flattenUnion","Position"]
+- "$GOROOT/go/types/union.go:184:6"
++ "$GOROOT/go/types/union.go:188:6"
+@ ["all","Funcs","go/types.overlappingTerm","Position"]
+- "$GOROOT/go/types/union.go:167:6"
++ "$GOROOT/go/types/union.go:166:6"
+@ ["all","Funcs","go/types.parseTilde","Position"]
+- "$GOROOT/go/types/union.go:140:6"
++ "$GOROOT/go/types/union.go:138:6"
+@ ["all","Funcs","go/types.replaceRecvType","Position"]
+- "$GOROOT/go/types/subst.go:399:6"
++ "$GOROOT/go/types/subst.go:403:6"
 @ ["all","Funcs","go/types.substVar"]
-+ {"Flags":0,"Params":[{"DataType":"*go/types.Var","Name":"v"},{"DataType":"go/types.Type","Name":"typ"}],"Results":[{"DataType":"*go/types.Var","Name":""}],"TypeParams":[]}
-@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["all","Types","func(error)","Params",0,"Name"]
-- "err"
-+ ""
++ {"Params":[{"DataType":"*go/types.Var","Name":"v"},{"DataType":"go/types.Type","Name":"typ"}],"Position":"$GOROOT/go/types/subst.go:299:6","Results":[{"DataType":"*go/types.Var"}]}
+@ ["all","Types","encoding/pem.lineBreaker","Position"]
+- "$GOROOT/encoding/pem/pem.go:211:6"
++ "$GOROOT/encoding/pem/pem.go:185:6"
 @ ["all","Types","go/internal/gcimporter.ident","Fields",0,"DataType"]
 - "string"
 + "*go/types.Package"
-@ ["all","Types","func(string) io.ReadCloser, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin","Funcs","crypto/x509.exportCertificate","Position"]
+- "$GOROOT/crypto/x509/root_darwin.go:98:6"
++ "$GOROOT/crypto/x509/root_darwin.go:103:6"
+@ ["darwin","Funcs","crypto/x509.loadSystemRoots","Position"]
+- "$GOROOT/crypto/x509/root_darwin.go:106:6"
++ "$GOROOT/crypto/x509/root_darwin.go:111:6"

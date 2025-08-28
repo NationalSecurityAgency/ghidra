@@ -39,12 +39,12 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
- * Analyzer that finds Golang strings (and optionally slices) and marks up the found instances.
+ * Analyzer that finds Go strings (and optionally slices) and marks up the found instances.
  * <p>
- * The char[] data for Golang strings does not contain null terminators, so the normal logic already
+ * The char[] data for Go strings does not contain null terminators, so the normal logic already
  * built into Ghidra to find terminated strings doesn't work.
  * <p>
- * This implementation looks for data that matches what a Golang string 
+ * This implementation looks for data that matches what a Go string 
  * struct { char* data, long len } would look like, and follows the pointer to the char[] data 
  * and creates a fixed-length string at that location using the length info from the struct.
  * <p>
@@ -53,7 +53,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 	<li>References from an instruction (see markupStaticStructRefsInFunction)</li>
  *  <li>Iterating through data segments and making educated guesses (see markupDataSegmentStructs)</li>
  * </ul>
- * Some char[] data is only referenced from Golang string structs that exist temporarily
+ * Some char[] data is only referenced from Go string structs that exist temporarily
  * in registers after being set by an instruction that statically references the char[] data,
  * and an instruction that statically contains the length. (see tryCreateInlineString) 
  * <p>
@@ -64,7 +64,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  */
 public class GolangStringAnalyzer extends AbstractAnalyzer {
 	private final static String NAME = "Golang Strings";
-	private final static String DESCRIPTION = "Finds and labels Golang string structures.";
+	private final static String DESCRIPTION = "Finds and labels Go string structures.";
 
 	private GolangStringAnalyzerOptions analyzerOptions = new GolangStringAnalyzerOptions();
 	private GoRttiMapper goBinary;
@@ -102,7 +102,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 		this.program = program;
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
-			Msg.error(this, "Golang string analyzer error: unable to get GoRttiMapper");
+			Msg.error(this, "Go string analyzer error: unable to get GoRttiMapper");
 			return false;
 		}
 
@@ -122,10 +122,10 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 			}
 		}
 		catch (IOException e) {
-			Msg.error(this, "Golang analysis failure", e);
+			Msg.error(this, "Go analysis failure", e);
 		}
 
-		Msg.info(this, "Golang strings found: %d".formatted(stringCount));
+		Msg.info(this, "Go strings found: %d".formatted(stringCount));
 
 		return true;
 	}
@@ -147,7 +147,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 	private int markupStaticStructRefsInFunctions(AddressSetView set, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor = new UnknownProgressWrappingTaskMonitor(monitor);
-		monitor.initialize(1, "Searching for Golang structure references in functions");
+		monitor.initialize(1, "Searching for Go structure references in functions");
 
 		FunctionManager funcManager = goBinary.getProgram().getFunctionManager();
 
@@ -266,8 +266,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 		AddressSet stringDataRange = new AddressSet(goBinary.getStringDataRange());
 
 		long initAddrCount = structDataRange.getNumAddresses();
-		monitor.initialize(initAddrCount,
-			"Searching for Golang strings & structures in data segments");
+		monitor.initialize(initAddrCount, "Searching for Go strings & structures in data segments");
 
 		int stringCount = 0;
 		int sliceCount = 0;
@@ -285,7 +284,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 				structDataRange.deleteFromMin(goBinary.getMaxAddressOfStructure(newObj));
 				stringCount += newObj instanceof GoString ? 1 : 0;
 				sliceCount += newObj instanceof GoSlice ? 1 : 0;
-				monitor.setMessage("Searching for Golang strings & slices in data segments: %d+%d"
+				monitor.setMessage("Searching for Go strings & slices in data segments: %d+%d"
 						.formatted(stringCount, sliceCount));
 			}
 			else {
