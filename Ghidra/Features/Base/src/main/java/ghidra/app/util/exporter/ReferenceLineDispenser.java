@@ -25,7 +25,6 @@ import ghidra.program.model.symbol.*;
 
 class ReferenceLineDispenser extends AbstractLineDispenser {
 
-	private static final Address[] EMPTY_ADDR_ARR = new Address[0];
 	private final static String XREFS_DELIM = ",";
 
 	private int headerWidth;
@@ -52,10 +51,10 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			options.getAddrWidth() + options.getBytesWidth() + options.getLabelWidth();
 		this.isHTML = options.isHTML();
 
-		Address[] refs = (forwardRefs ? getForwardRefs(cu) : getXRefList(cu));
-		Address[] offcuts = (forwardRefs ? EMPTY_ADDR_ARR : getOffcutXRefList(cu));
+		List<Reference> refs = (forwardRefs ? getForwardRefs(cu) : getXRefList(cu));
+		List<Reference> offcuts = (forwardRefs ? List.of() : getOffcutXRefList(cu));
 
-		processRefs(cu.getMinAddress(), refs, offcuts);
+		processRefs(cu.getMinAddress(), forwardRefs, refs, offcuts);
 	}
 
 	ReferenceLineDispenser(Variable var, Program program, ProgramTextOptions options) {
@@ -74,20 +73,14 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		List<Reference> xrefs = new ArrayList<>();
 		List<Reference> offcuts = new ArrayList<>();
 		XReferenceUtils.getVariableRefs(var, xrefs, offcuts);
-		Address[] xrefAddr = extractFromAddr(xrefs);
-		Address[] offcutsAddr = extractFromAddr(offcuts);
 
-		processRefs(var.getFunction().getEntryPoint(),
-			xrefAddr, offcutsAddr);
-	}
+		Comparator<? super Reference> comparator = (r1, r2) -> {
+			return r1.getFromAddress().compareTo(r2.getFromAddress());
+		};
+		xrefs.sort(comparator);
+		offcuts.sort(comparator);
 
-	private Address[] extractFromAddr(List<Reference> refs) {
-		Address[] addrs = new Address[refs.size()];
-		for (int i = 0; i < addrs.length; i++) {
-			addrs[i] = refs.get(i).getFromAddress();
-		}
-		Arrays.sort(addrs);
-		return addrs;
+		processRefs(var.getFunction().getEntryPoint(), false, xrefs, offcuts);
 	}
 
 	@Override
@@ -110,7 +103,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 
 	////////////////////////////////////////////////////////////////////
 
-	private Address[] getForwardRefs(CodeUnit cu) {
+	private List<Reference> getForwardRefs(CodeUnit cu) {
 		boolean showRefs = false;
 
 		Address cuAddr = cu.getMinAddress();
@@ -130,52 +123,48 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		}
 
 		if (!showRefs) {
-			return EMPTY_ADDR_ARR;
+			return List.of();
 		}
 
-		Reference[] mRefs = cu.getReferencesFrom();
-		Address[] refs = new Address[mRefs.length];
-		for (int i = 0; i < mRefs.length; ++i) {
-			refs[i] = mRefs[i].getToAddress();
-		}
-		Arrays.sort(refs);
+		List<Reference> refs = Arrays.asList(cu.getReferencesFrom());
+		refs.sort((r1, r2) -> {
+			return r1.getToAddress().compareTo(r2.getToAddress());
+		});
 		return refs;
 	}
 
-	////////////////////////////////////////////////////////////////////
-
-	private void processRefs(Address addr, Address[] refs, Address[] offcuts) {
+	private void processRefs(Address addr, boolean isForward, List<Reference> refs,
+			List<Reference> offcuts) {
 		if (width < 1) {
 			return;
 		}
-		if (refs.length == 0 && offcuts.length == 0) {
+		if (refs.isEmpty() && offcuts.isEmpty()) {
 			return;
 		}
 
 		StringBuffer buf = new StringBuffer();
-
-		Address[] all = new Address[refs.length + offcuts.length];
-		System.arraycopy(refs, 0, all, 0, refs.length);
-		System.arraycopy(offcuts, 0, all, refs.length, offcuts.length);
+		List<Reference> all = new ArrayList<>();
+		all.addAll(refs);
+		all.addAll(offcuts);
 
 		if (displayRefHeader) {
-			if (refs.length > 0 || offcuts.length > 0) {
-				StringBuffer tmp = new StringBuffer();
-				tmp.append(header);
-				tmp.append("[");
-				tmp.append(refs.length);
-				tmp.append(",");
-				tmp.append(offcuts.length);
-				tmp.append("]: ");
+			if (!refs.isEmpty() || !offcuts.isEmpty()) {
 
-				buf.append(clip(tmp.toString(), headerWidth));
+				String text;
+				if (!offcuts.isEmpty()) {
+					text = "%s[%d,%d]: ".formatted(header, refs.size(), offcuts.size());
+				}
+				else {
+					text = "%s[%d]: ".formatted(header, refs.size());
+				}
+				buf.append(clip(text, headerWidth));
 			}
 		}
 
-		int refsPerLine = width / (all[0].toString().length() + XREFS_DELIM.length());
+		int refsPerLine = width / (all.get(0).toString().length() + XREFS_DELIM.length());
 		int refsInCurrLine = 0;
 
-		for (int i = 0; i < all.length; ++i) {
+		for (int i = 0; i < all.size(); ++i) {
 			//if we are not displaying the xref header,
 			//then we need to append the comment prefix
 			if (i == 0 && !displayRefHeader) {
@@ -198,11 +187,17 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			}
 
 			//does memory contain this address? if so, then hyperlink it
-			boolean isInMem = memory.contains(all[i]);
+			Reference ref = all.get(i);
+			Address address = isForward ? ref.getToAddress() : ref.getFromAddress();
+			boolean isInMem = memory.contains(address);
 			if (isHTML && isInMem) {
-				buf.append("<A HREF=\"#" + getUniqueAddressString(all[i]) + "\">");
+				buf.append("<A HREF=\"#" + getUniqueAddressString(address) + "\">");
 			}
-			buf.append(all[i].toString());
+			buf.append(address);
+
+			String refType = getRefTypeDisplayString(ref);
+			buf.append(refType);
+
 			if (isHTML && isInMem) {
 				buf.append("</A>");
 			}
@@ -222,31 +217,62 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		}
 	}
 
-	public static Address[] getXRefList(CodeUnit cu) {
-		Program prog = cu.getProgram();
-		if (prog == null) {
-			return new Address[0];
+	// copied from XRefFieldFactory
+	private String getRefTypeDisplayString(Reference reference) {
+
+		if (reference.getReferenceType().isRead() && reference.getReferenceType().isWrite()) {
+			return "(RW)";
 		}
-		List<Address> xrefList = new ArrayList<>();
-		//lookup the direct xrefs to the current code unit
-		//
-		ReferenceIterator iter = prog.getReferenceManager().getReferencesTo(cu.getMinAddress());
-		while (iter.hasNext()) {
-			Reference ref = iter.next();
-			xrefList.add(ref.getFromAddress());
+
+		RefType refType = reference.getReferenceType();
+		if (reference instanceof ThunkReference) {
+			return "(T)";
 		}
-		Address[] arr = new Address[xrefList.size()];
-		xrefList.toArray(arr);
-		Arrays.sort(arr);
-		return arr;
+		if (refType instanceof DataRefType) {
+			if (refType.isRead() || refType.isIndirect()) {
+				return "(R)";
+			}
+			else if (refType.isWrite()) {
+				return "(W)";
+			}
+			else if (refType.isData()) {
+				return "(*)";
+			}
+		}
+		if (refType.isCall()) {
+			return "(c)";
+		}
+		else if (refType.isJump()) {
+			return "(j)";
+		}
+		return "";
 	}
 
-	private static Address[] getOffcutXRefList(CodeUnit cu) {
+	public static List<Reference> getXRefList(CodeUnit cu) {
 		Program prog = cu.getProgram();
 		if (prog == null) {
-			return new Address[0];
+			return List.of();
 		}
-		List<Address> offcutList = new ArrayList<>();
+
+		// default value taken from XRefFieldFactory
+		int maxXrefs = 20;
+		List<Reference> refs = XReferenceUtils.getXReferences(cu, maxXrefs + 1);
+		int maxOffcuts = Math.max(0, maxXrefs - refs.size());
+		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxOffcuts);
+		refs.addAll(offcuts);
+		refs.sort((r1, r2) -> {
+			return r1.getFromAddress().compareTo(r2.getFromAddress());
+		});
+		return refs;
+	}
+
+	private static List<Reference> getOffcutXRefList(CodeUnit cu) {
+		Program prog = cu.getProgram();
+		if (prog == null) {
+			return List.of();
+		}
+
+		List<Reference> offcutList = new ArrayList<>();
 		// Lookup the offcut xrefs...
 		//
 		if (cu.getLength() > 1) {
@@ -259,13 +285,14 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 				ReferenceIterator refIter = refMgr.getReferencesTo(addr);
 				while (refIter.hasNext()) {
 					Reference ref = refIter.next();
-					offcutList.add(ref.getFromAddress());
+					offcutList.add(ref);
 				}
 			}
 		}
-		Address[] arr = new Address[offcutList.size()];
-		offcutList.toArray(arr);
-		Arrays.sort(arr);
-		return arr;
+
+		offcutList.sort((r1, r2) -> {
+			return r1.getFromAddress().compareTo(r2.getFromAddress());
+		});
+		return offcutList;
 	}
 }
