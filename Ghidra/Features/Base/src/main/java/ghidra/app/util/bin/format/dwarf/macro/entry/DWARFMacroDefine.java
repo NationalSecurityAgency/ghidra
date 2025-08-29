@@ -34,7 +34,7 @@ public class DWARFMacroDefine extends DWARFMacroInfoEntry {
 	//@formatter:off
 	private static final Pattern PARSEMACROREGEX = Pattern.compile(
 		"([^( ]+)" +                    // "NAME" group=1 
-		"|([^( ]+) ([^ ()]+)" +         // "NAME VALUE" group=2,3
+		"|([^( ]+) (.+)" +              // "NAME VALUE" group=2,3
 		"|([^( ]+)\\(([^)]+)\\) (.*)"); // "NAME(arg, arg) BODY" group=4,5,6
 	//@formatter:on
 
@@ -77,7 +77,7 @@ public class DWARFMacroDefine extends DWARFMacroInfoEntry {
 		if (m.group(2) != null) {
 			return new MacroInfo(macroString, m.group(2), List.of(), false, m.group(3));
 		}
-		if (m.group(4) != null) {
+		if (m.group(5) != null) {
 			return new MacroInfo(macroString, m.group(4), Arrays.asList(m.group(5).split(",")),
 				true, m.group(6));
 		}
@@ -90,7 +90,7 @@ public class DWARFMacroDefine extends DWARFMacroInfoEntry {
 		operandValues[1] = new DWARFStringAttribute(defineString, operandDef(1));
 	}
 
-	public DWARFMacroDefine(DWARFMacroInfoEntry other){
+	public DWARFMacroDefine(DWARFMacroInfoEntry other) {
 		super(other);
 	}
 
