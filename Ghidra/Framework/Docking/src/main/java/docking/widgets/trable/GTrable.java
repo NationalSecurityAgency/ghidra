@@ -370,6 +370,10 @@ public class GTrable<T> extends JComponent
 		columnModel.setWidth(width);
 	}
 
+	public int getRow(Point p) {
+		return p.y / rowHeight;
+	}
+
 	private void notifySelectedRowConsumers() {
 		for (Consumer<Integer> consumer : selectedRowConsumers) {
 			consumer.accept(selectedRow);

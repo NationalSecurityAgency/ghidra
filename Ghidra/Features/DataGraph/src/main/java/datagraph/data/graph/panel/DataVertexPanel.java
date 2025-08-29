@@ -34,7 +34,10 @@ import docking.action.DockingActionIf;
 import docking.widgets.trable.GTrable;
 import docking.widgets.trable.GTrableColumnModel;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.NumericUtilities;
 import ghidra.util.datastruct.Range;
 import resources.Icons;
 
@@ -119,7 +122,34 @@ public class DataVertexPanel extends JPanel {
 			JComponent jComponent = (JComponent) source;
 			return jComponent.getToolTipText();
 		}
-		return null;
+		int row = gTrable.getRow(event.getPoint());
+		DataRowObject rowObject = model.getRow(row);
+		Data data = rowObject.getData();
+		StringBuilder sb = new StringBuilder(HTMLUtilities.HTML);
+		sb.append("<TABLE>");
+		DataType dataType = data.getDataType();
+		Address address = data.getAddress();
+		int rootOffset = data.getRootOffset();
+
+		sb.append(row("Address: ", address.toString()));
+		sb.append(row("Offset: ", NumericUtilities.toHexString(rootOffset)));
+		sb.append(row("Data Type: ", dataType.getName()));
+		sb.append("</TABLE>");
+		return sb.toString();
+	}
+
+	private String row(Object... cols) {
+		StringBuilder sb = new StringBuilder("<TR>");
+		for (Object col : cols) {
+			String escaped = escapeHtml(col);
+			sb.append("<TD>").append(escaped).append("</TD>");
+		}
+		sb.append("</TR>");
+		return sb.toString();
+	}
+
+	private String escapeHtml(Object obj) {
+		return obj == null ? "" : HTMLUtilities.friendlyEncodeHTML(obj.toString());
 	}
 
 	/**
