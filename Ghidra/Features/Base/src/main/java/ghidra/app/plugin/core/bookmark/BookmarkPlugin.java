@@ -298,12 +298,22 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (type == null) {
 			return null;
 		}
+
 		String typeString = type.getTypeString();
 		BookmarkNavigator nav = bookmarkNavigators.get(typeString);
-		if (nav == null) {
-			nav = new BookmarkNavigator(markerService, currentProgram.getBookmarkManager(), type);
-			bookmarkNavigators.put(typeString, nav);
+		if (nav != null) {
+			return nav;
 		}
+
+		BookmarkManager bookmarkManager = currentProgram.getBookmarkManager();
+		if (!bookmarkManager.isDefinedType(typeString)) {
+			// This implies the bookmark was created by a plugin that is no longer available in
+			// the current tool.
+			return null;
+		}
+
+		nav = new BookmarkNavigator(markerService, bookmarkManager, type);
+		bookmarkNavigators.put(typeString, nav);
 		return nav;
 	}
 
