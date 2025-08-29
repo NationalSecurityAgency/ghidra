@@ -204,6 +204,13 @@ class PyGhidraScript(dict):
 
     def get_static_view(self):
         return _StaticMap(self)
+    
+    def set(self, state, monitor, writer, error_writer):
+        """
+        see GhidraScript.set
+        """
+        from ghidra.app.script import ScriptControls
+        self._script.set(state, ScriptControls(writer, error_writer, monitor))
 
     def run(self, script_path: str = None, script_args: List[str] = None):
         """

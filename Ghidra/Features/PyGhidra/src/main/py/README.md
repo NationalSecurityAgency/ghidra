@@ -311,9 +311,11 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
 ```
 
-## Legacy API
+## Legacy API (deprecated)
 
 ### pyghidra.open_program()
+__NOTE:__ This function has been deprecated.
+
 To have PyGhidra setup a binary file for you, use the `open_program()` function. This will setup a 
 Ghidra project and import the given binary file as a program for you.
 
@@ -401,6 +403,8 @@ with pyghidra.open_program("binary_file.exe", project_name="MyProject", project_
 ```
 
 ### pyghidra.run_script()
+__NOTE:__ This function has been deprecated.
+
 PyGhidra can also be used to run an existing Ghidra Python script directly in your native CPython 
 interpreter using the `run_script()` function. However, while you can technically run an existing 
 Ghidra script unmodified, you may run into issues due to differences between Jython 2 and 
@@ -547,8 +551,8 @@ import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
 __3.0.0:__
-* Introduced many new functions to the PyGhidra API. PyGhidra 3.0.0 requires Ghidra 12.0 or later
-  to run.
+* Revised the the PyGhidra API. See the [API section](#api) for more details.
+* PyGhidra 3.0.0 requires Ghidra 12.0 or later to run.
 
 __2.2.1:__
 * PyGhidra now launches with the current working directory removed from `sys.path` to prevent

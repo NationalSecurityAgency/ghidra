@@ -20,6 +20,7 @@ from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Any
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
 if TYPE_CHECKING:
+    from pyghidra.launcher import PyGhidraLauncher
     from ghidra.program.model.listing import Program
     from ghidra.program.util import GhidraProgramUtilities
     from ghidra.framework.model import Project, DomainFile
@@ -31,6 +32,28 @@ if TYPE_CHECKING:
     from ghidra.app.util.importer import ProgramLoader
     from generic.jar import ResourceFile
     from java.lang import Object # type:ignore @UnresolvedImport
+
+def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
+    """
+    Starts the JVM and fully initializes Ghidra in Headless mode.
+
+    :param verbose: Enable verbose output during JVM startup (Defaults to False)
+    :param install_dir: The path to the Ghidra installation directory.
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
+    :return: The PyGhidraLauncher used to start the JVM
+    """
+    from pyghidra.launcher import HeadlessPyGhidraLauncher
+    launcher = HeadlessPyGhidraLauncher(verbose=verbose,  install_dir=install_dir)
+    launcher.start()
+    return launcher
+
+
+def started() -> bool:
+    """
+    Whether the PyGhidraLauncher has already started.
+    """
+    from pyghidra.launcher import PyGhidraLauncher
+    return PyGhidraLauncher.has_launched()
 
 def open_project(
         path: Union[str, Path],
