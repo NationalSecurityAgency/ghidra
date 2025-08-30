@@ -794,11 +794,11 @@ E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 
 }
 
 :di	    	    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00110 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=0b01100 {
-    Status = Status & -2;
+    Status = Status & ~1;
 }
 :di m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00010 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=0b01100 {
     m16_ry = Status;
-    Status = Status & -2;   # clearing last bit (ffff..fffe == -2 signed)
+    Status = Status & ~1;   # clearing last bit (ffff..fffe == -2 signed)
 }
 
 :dmt	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0b001 & ext_imm_1620=0b00110 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=1 {
