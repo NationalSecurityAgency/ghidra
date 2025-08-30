@@ -302,6 +302,8 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
 
 {				// Generic casting rules that apply for most ops
   if (curtype == reqtype) return (Datatype *)0; // Types are equal, no cast required
+  if (curtype->getMetatype()==TYPE_VOID)
+    return reqtype;		// If coming from "void" (as a dereferenced pointer) we need a cast
   Datatype *reqbase = reqtype;
   Datatype *curbase = curtype;
   bool isptr = false;
@@ -325,8 +327,9 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
   while(curbase->getTypedef() != (Datatype *)0)
     curbase = curbase->getTypedef();
   if (curbase == reqbase) return (Datatype *)0;	// Different typedefs could point to the same type
-  if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
-    return (Datatype *)0;	// Don't cast from or to VOID
+  if (reqbase->getMetatype()==TYPE_VOID || curbase->getMetatype()==TYPE_VOID) {
+    return (Datatype *)0;		// Don't cast to or from a void pointer
+  }
   if (reqbase->getSize() != curbase->getSize()) {
     if (reqbase->isVariableLength() && isptr && reqbase->hasSameVariableBase(curbase)) {
       return (Datatype *)0;	// Don't need a cast

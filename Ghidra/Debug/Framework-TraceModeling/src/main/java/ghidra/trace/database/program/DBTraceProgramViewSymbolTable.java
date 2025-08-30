@@ -18,8 +18,7 @@ package ghidra.trace.database.program;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
-import generic.NestedIterator;
-import generic.util.PeekableIterator;
+import generic.util.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -342,7 +341,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
 	@Override
 	public SymbolIterator getSymbols(AddressSetView set, SymbolType type, boolean forward) {
-		return new SymbolIteratorAdapter(NestedIterator.start(set.iterator(), range -> {
+		return new SymbolIteratorAdapter(FlattenedIterator.start(set.iterator(), range -> {
 			if (range.getAddressSpace().isMemorySpace()) {
 				if (type == SymbolType.LABEL) {
 					return symbolManager.labels()
@@ -426,7 +425,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
 	@Override
 	public SymbolIterator getPrimarySymbolIterator(AddressSetView asv, boolean forward) {
-		return new PrimarySymbolIterator(NestedIterator.start(asv.iterator(forward),
+		return new PrimarySymbolIterator(FlattenedIterator.start(asv.iterator(forward),
 			range -> symbolManager.labels()
 					.getIntersecting(Lifespan.at(program.snap), range, true, forward)
 					.iterator()));

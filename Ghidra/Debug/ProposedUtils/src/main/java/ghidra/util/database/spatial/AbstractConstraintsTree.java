@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import db.DBRecord;
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import generic.util.PeekableIterator;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -287,7 +287,7 @@ public abstract class AbstractConstraintsTree< //
 			}
 			nodes.add(n);
 		}
-		return NestedIterator.start(nodes.iterator(), n -> iterator(n, query));
+		return FlattenedIterator.start(nodes.iterator(), n -> iterator(n, query));
 	}
 
 	protected Iterator<DR> orderedIterator(Q query) {

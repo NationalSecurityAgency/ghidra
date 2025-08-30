@@ -22,19 +22,6 @@
 
 namespace ghidra {
 
-/// \brief A helper class for describing the similarity of the boolean condition between 2 CBRANCH operations
-///
-/// This class determines if two CBRANCHs share the same condition.  It also determines if the conditions
-/// are complements of each other, and/or they are shared along only one path.
-class BooleanExpressionMatch {
-  static const int4 maxDepth;	///< Maximum depth to trace a boolean expression
-  bool matchflip;		///< True if the compared CBRANCH keys on the opposite boolean value of the root
-public:
-  bool verifyCondition(PcodeOp *op, PcodeOp *iop);	///< Perform the correlation test on two CBRANCH operations
-  int4 getMultiSlot(void) const { return -1; }	///< Get the MULTIEQUAL slot in the critical path
-  bool getFlip(void) const { return matchflip; }	///< Return \b true if the expressions are anti-correlated
-};
-
 /// \brief A class for simplifying a series of conditionally executed statements.
 ///
 /// This class tries to perform transformations like the following:

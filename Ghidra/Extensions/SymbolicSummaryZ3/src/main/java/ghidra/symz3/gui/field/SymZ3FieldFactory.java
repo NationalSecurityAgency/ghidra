@@ -27,7 +27,7 @@ import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
-import ghidra.pcode.emu.symz3.trace.SymZ3TracePcodeExecutorStatePiece;
+import ghidra.pcode.emu.symz3.state.SymZ3PieceHandler;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
@@ -41,7 +41,7 @@ import ghidra.symz3.model.SymValueZ3;
  * framework. I used the "sample" module's {@code EntropyFieldFactory} for reference.
  */
 public class SymZ3FieldFactory extends FieldFactory {
-	public static final String PROPERTY_NAME = SymZ3TracePcodeExecutorStatePiece.NAME;
+	public static final String PROPERTY_NAME = SymZ3PieceHandler.NAME;
 	public static final GColor COLOR = new GColor("color.fg.listing.z3symbolic");
 	public static final String FIELD_NAME = "Z3 Symbolic Value";
 

@@ -17,12 +17,17 @@ package ghidra.pcode.exec;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.util.Msg;
 
 /**
  * An abstract executor state piece which internally uses {@code long} to address contents
@@ -38,150 +43,36 @@ import ghidra.program.model.lang.Register;
 public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		implements PcodeExecutorStatePiece<A, T> {
 
-	/**
-	 * A map of address spaces to objects which store or cache state for that space
-	 *
-	 * @param <S> the type of object for each address space
-	 */
-	public abstract static class AbstractSpaceMap<S> {
-		protected final Map<AddressSpace, S> spaces;
-
-		public AbstractSpaceMap() {
-			this.spaces = new HashMap<>();
-		}
-
-		protected AbstractSpaceMap(Map<AddressSpace, S> spaces) {
-			this.spaces = spaces;
-		}
-
-		public abstract S getForSpace(AddressSpace space, boolean toWrite);
-
-		public Collection<S> values() {
-			return spaces.values();
-		}
-
-		/**
-		 * Deep copy this map, for use in a forked state (or piece)
-		 * 
-		 * @return the copy
-		 */
-		public AbstractSpaceMap<S> fork() {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * Deep copy the given space
-		 * 
-		 * @param s the space
-		 * @return the copy
-		 */
-		public S fork(S s) {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * Produce a deep copy of the given map
-		 * 
-		 * @param spaces the map to copy
-		 * @return the copy
-		 */
-		public Map<AddressSpace, S> fork(Map<AddressSpace, S> spaces) {
-			return spaces.entrySet()
-					.stream()
-					.collect(Collectors.toMap(Entry::getKey, e -> fork(e.getValue())));
-		}
-	}
-
-	/**
-	 * Use this when each S contains the complete state for the address space
-	 * 
-	 * @param <S> the type of object for each address space
-	 */
-	public abstract static class SimpleSpaceMap<S> extends AbstractSpaceMap<S> {
-		public SimpleSpaceMap() {
-			super();
-		}
-
-		protected SimpleSpaceMap(Map<AddressSpace, S> spaces) {
-			super(spaces);
-		}
-
-		/**
-		 * Construct a new space internally associated with the given address space
-		 * 
-		 * <p>
-		 * As the name implies, this often simply wraps {@code S}'s constructor
-		 * 
-		 * @param space the address space
-		 * @return the new space
-		 */
-		protected abstract S newSpace(AddressSpace space);
-
-		@Override
-		public synchronized S getForSpace(AddressSpace space, boolean toWrite) {
-			return spaces.computeIfAbsent(space, s -> newSpace(s));
-		}
-	}
-
-	/**
-	 * Use this when each S is possibly a cache to some other state (backing) object
-	 *
-	 * @param <B> the type of the object backing the cache for each address space
-	 * @param <S> the type of cache for each address space
-	 */
-	public abstract static class CacheingSpaceMap<B, S> extends AbstractSpaceMap<S> {
-		public CacheingSpaceMap() {
-			super();
-		}
-
-		protected CacheingSpaceMap(Map<AddressSpace, S> spaces) {
-			super(spaces);
-		}
-
-		/**
-		 * Get the object backing the cache for the given address space
-		 * 
-		 * @param space the space
-		 * @return the backing object
-		 */
-		protected abstract B getBacking(AddressSpace space);
-
-		/**
-		 * Construct a new space internally associated with the given address space, having the
-		 * given backing
-		 * 
-		 * <p>
-		 * As the name implies, this often simply wraps {@code S}'s constructor
-		 * 
-		 * @param space the address space
-		 * @param backing the backing, if applicable. null for the unique space
-		 * @return the new space
-		 */
-		protected abstract S newSpace(AddressSpace space, B backing);
-
-		@Override
-		public synchronized S getForSpace(AddressSpace space, boolean toWrite) {
-			return spaces.computeIfAbsent(space,
-				s -> newSpace(s, s.isUniqueSpace() ? null : getBacking(s)));
+	protected static <S> void forkMap(Map<AddressSpace, S> into, Map<AddressSpace, S> from,
+			Function<S, S> forker) {
+		for (Entry<AddressSpace, S> ent : from.entrySet()) {
+			into.put(ent.getKey(), forker.apply(ent.getValue()));
 		}
 	}
 
 	protected final Language language;
 	protected final PcodeArithmetic<A> addressArithmetic;
 	protected final PcodeArithmetic<T> arithmetic;
+	protected final PcodeStateCallbacks cb;
 	protected final AddressSpace uniqueSpace;
 
 	/**
 	 * Construct a state piece for the given language and arithmetic
 	 * 
 	 * @param language the language (used for its memory model)
-	 * @param arithmetic an arithmetic used to generate default values of {@code T}
+	 * @param addressArithmetic an arithmetic used to generate default values of {@code A}
+	 * @param arithmetic an arithmetic used to generate default values of {@code T}. It must be able
+	 *            to derive concrete sizes, i.e., {@link PcodeArithmetic#sizeOf(Object)} must always
+	 *            return the correct value.
+	 * @param cb callbacks to receive emulation events
 	 */
 	public AbstractLongOffsetPcodeExecutorStatePiece(Language language,
-			PcodeArithmetic<A> addressArithmetic, PcodeArithmetic<T> arithmetic) {
+			PcodeArithmetic<A> addressArithmetic, PcodeArithmetic<T> arithmetic,
+			PcodeStateCallbacks cb) {
 		this.language = language;
 		this.addressArithmetic = addressArithmetic;
 		this.arithmetic = arithmetic;
+		this.cb = cb;
 		uniqueSpace = language.getAddressFactory().getUniqueSpace();
 	}
 
@@ -200,6 +91,11 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		return arithmetic;
 	}
 
+	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
 	/**
 	 * Set a value in the unique space
 	 * 
@@ -210,10 +106,11 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param offset the offset in unique space to store the value
 	 * @param size the number of bytes to write (the size of the value)
 	 * @param val the value to store
+	 * @param cb callbacks to receive emulation events
 	 */
-	protected void setUnique(long offset, int size, T val) {
+	protected void setUnique(long offset, int size, T val, PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, true);
-		setInSpace(s, offset, size, val);
+		setInSpace(s, offset, size, val, cb);
 	}
 
 	/**
@@ -225,11 +122,12 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param offset the offset in unique space to get the value
 	 * @param size the number of bytes to read (the size of the value)
 	 * @param reason the reason for reading state
+	 * @param cb callbacks to receive emulation events
 	 * @return the read value
 	 */
-	protected T getUnique(long offset, int size, Reason reason) {
+	protected T getUnique(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, false);
-		return getFromSpace(s, offset, size, reason);
+		return getFromSpace(s, offset, size, reason, cb);
 	}
 
 	/**
@@ -239,7 +137,6 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param toWrite in case internal spaces are generated lazily, this indicates the space must be
 	 *            present, because it is going to be written to.
 	 * @return the space, or {@code null}
-	 * @see AbstractSpaceMap
 	 */
 	protected abstract S getForSpace(AddressSpace space, boolean toWrite);
 
@@ -250,8 +147,10 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to write (the size of the value)
 	 * @param val the value to store
+	 * @param cb callbacks to receive emulation events
 	 */
-	protected abstract void setInSpace(S space, long offset, int size, T val);
+	protected abstract void setInSpace(S space, long offset, int size, T val,
+			PcodeStateCallbacks cb);
 
 	/**
 	 * Get a value from the given space
@@ -260,9 +159,11 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to read (the size of the value)
 	 * @param reason the reason for reading state
+	 * @param cb callbacks to receive emulation events
 	 * @return the read value
 	 */
-	protected abstract T getFromSpace(S space, long offset, int size, Reason reason);
+	protected abstract T getFromSpace(S space, long offset, int size, Reason reason,
+			PcodeStateCallbacks cb);
 
 	/**
 	 * In case spaces are generated lazily, and we're reading from a space that doesn't yet exist,
@@ -273,10 +174,27 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * 
 	 * @param size the number of bytes to read (the size of the value)
 	 * @param reason the reason for reading state
+	 * @param cb callbacks to receive emulation events
 	 * @return the default value
 	 */
-	protected T getFromNullSpace(int size, Reason reason) {
+	protected T getFromNullSpace(int size, Reason reason, PcodeStateCallbacks cb) {
 		return arithmetic.fromConst(0, size);
+	}
+
+	protected void setVarInternal(AddressSpace space, long offset, int size, boolean quantize,
+			T val, PcodeStateCallbacks cb) {
+		if (space.isConstantSpace()) {
+			throw new IllegalArgumentException("Cannot write to constant space");
+		}
+		if (space.isUniqueSpace()) {
+			setUnique(offset, size, val, cb);
+			return;
+		}
+		S s = getForSpace(space, true);
+		if (quantize) {
+			offset = quantizeOffset(space, offset);
+		}
+		setInSpace(s, offset, size, val, cb);
 	}
 
 	@Override
@@ -286,20 +204,70 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, A offset, int size, T val) {
+		long lOffset = addressArithmetic.toLong(offset, Purpose.STORE);
+		setVarInternal(space, lOffset, size, val);
+	}
+
+	/**
+	 * Check that the size of the value matches that given
+	 * 
+	 * <p>
+	 * Extensions may override this and do nothing when the abstract type has no defined size
+	 * 
+	 * @param size the size in bytes
+	 * @param val the value
+	 * @return the value, possibly adjusted
+	 */
+	protected T checkSize(int size, T val) {
+		int valSize = (int) arithmetic.sizeOf(val);
+		if (valSize > size) {
+			throw new IllegalArgumentException(
+				"Value is larger than variable: " + valSize + " > " + size);
+		}
+		if (valSize < size) {
+			Msg.warn(this, "Value is smaller than variable: " + valSize + " < " + size +
+				". Zero extending");
+			val = arithmetic.unaryOp(PcodeOp.INT_ZEXT, size, valSize, val);
+		}
+		return val;
+	}
+
+	@Override
 	public void setVar(AddressSpace space, long offset, int size, boolean quantize, T val) {
 		checkRange(space, offset, size);
+		val = checkSize(size, val);
+		setVarInternal(space, offset, size, quantize, val, cb);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, long offset, int size, T val) {
+		setVarInternal(space, offset, size, false, val, PcodeStateCallbacks.NONE);
+	}
+
+	protected T getVarInternal(AddressSpace space, long offset, int size, boolean quantize,
+			Reason reason, PcodeStateCallbacks cb) {
 		if (space.isConstantSpace()) {
-			throw new IllegalArgumentException("Cannot write to constant space");
+			return arithmetic.fromConst(offset, size);
 		}
 		if (space.isUniqueSpace()) {
-			setUnique(offset, size, val);
-			return;
+			return getUnique(offset, size, reason, cb);
 		}
-		S s = getForSpace(space, true);
+		S s = getForSpace(space, false);
+		if (s == null) {
+			AddressSet set = PcodeStateCallbacks.rngSet(space, offset, size);
+			if (set.equals(cb.readUninitialized(this, set))) {
+				return getFromNullSpace(size, reason, cb);
+			}
+			s = getForSpace(space, false);
+			if (s == null) {
+				return getFromNullSpace(size, reason, cb);
+			}
+		}
 		if (quantize) {
 			offset = quantizeOffset(space, offset);
 		}
-		setInSpace(s, offset, size, val);
+		return getFromSpace(s, offset, size, reason, cb);
 	}
 
 	@Override
@@ -309,23 +277,20 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	}
 
 	@Override
-	public T getVar(AddressSpace space, long offset, int size, boolean quantize,
-			Reason reason) {
+	public T getVarInternal(AddressSpace space, A offset, int size, Reason reason) {
+		long lOffset = addressArithmetic.toLong(offset, Purpose.LOAD);
+		return getVarInternal(space, lOffset, size, reason);
+	}
+
+	@Override
+	public T getVar(AddressSpace space, long offset, int size, boolean quantize, Reason reason) {
 		checkRange(space, offset, size);
-		if (space.isConstantSpace()) {
-			return arithmetic.fromConst(offset, size);
-		}
-		if (space.isUniqueSpace()) {
-			return getUnique(offset, size, reason);
-		}
-		S s = getForSpace(space, false);
-		if (s == null) {
-			return getFromNullSpace(size, reason);
-		}
-		if (quantize) {
-			offset = quantizeOffset(space, offset);
-		}
-		return getFromSpace(s, offset, size, reason);
+		return getVarInternal(space, offset, size, quantize, reason, cb);
+	}
+
+	@Override
+	public T getVarInternal(AddressSpace space, long offset, int size, Reason reason) {
+		return getVarInternal(space, offset, size, false, reason, PcodeStateCallbacks.NONE);
 	}
 
 	/**

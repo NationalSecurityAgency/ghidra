@@ -4894,13 +4894,13 @@ define pcodeop verw;
 #  of this instruction is always 64-bits and is always in memory".  Is it an error that the "Instruction" entry in the 
 #  box giving the definition does not specify m64?
 :VMPTRST m64    is vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=7 ) ... & m64  { vmptrst(m64); }
-:VMREAD rm32, Reg32  is vexMode=0 & opsize=1 & byte=0x0f; byte=0x78; rm32 & check_rm32_dest ... & Reg32 ...     { rm32 = vmread(Reg32); build check_rm32_dest; }
+:VMREAD rm32, Reg32  is $(PRE_NO) & vexMode=0 & opsize=1 & byte=0x0f; byte=0x78; rm32 & check_rm32_dest ... & Reg32 ...     { rm32 = vmread(Reg32); build check_rm32_dest; }
 @ifdef IA64
-:VMREAD rm64, Reg64  is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
+:VMREAD rm64, Reg64  is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
 @endif
-:VMWRITE Reg32, rm32 is vexMode=0 & opsize=1 & byte=0x0f; byte=0x79; rm32 & Reg32 ... & check_Reg32_dest ...   { vmwrite(rm32,Reg32); build check_Reg32_dest; }
+:VMWRITE Reg32, rm32 is $(PRE_NO) & vexMode=0 & opsize=1 & byte=0x0f; byte=0x79; rm32 & Reg32 ... & check_Reg32_dest ...   { vmwrite(rm32,Reg32); build check_Reg32_dest; }
 @ifdef IA64
-:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
+:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
 @endif
 :VMXOFF         is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc4                           { vmxoff(); }
 # NB: this opcode is incorrect in the 2005 edition of the Intel manual. Opcode below is taken from the 2008 version.
@@ -10457,4 +10457,46 @@ define pcodeop PackedSwapDWords;
 define pcodeop MaskedMoveQWord;
 :MASKMOVQ            mmxreg1, mmxreg2 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xF7; mmxmod = 3 & mmxreg1 & mmxreg2		{ mmxreg1 = MaskedMoveQWord(mmxreg1, mmxreg2); }
 
+
+####
+####  SSE4a instructions
+####
+
+bitLen: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
+lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
+:EXTRQ XmmReg2, bitLen, lsbOffset is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x78; reg_opcode=0 & XmmReg2; bitLen; lsbOffset {
+	local mask:16 = ((1 << bitLen) - 1) << lsbOffset;
+	local val:16 = (XmmReg2 & mask) >> lsbOffset;
+	XmmReg2 = val;
+}
+
+:EXTRQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x79; XmmReg1 & XmmReg2 {
+	local len = XmmReg2[0,6];
+	local offs = XmmReg2[6,6];
+	local mask = ((1 << len) - 1) << offs;
+	local val = (XmmReg1 & mask) >> offs;
+	XmmReg1 = val;
+}
+
+:INSERTQ XmmReg1, XmmReg2, bitLen, lsbOffset  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x78; XmmReg1 & XmmReg2; bitLen; lsbOffset {
+	local mask:16 = ((1 << bitLen) - 1) << lsbOffset;
+	local val:16 = (zext(XmmReg2[0,64]) & ((1 << bitLen) - 1));
+	XmmReg1 = (XmmReg1 & ~zext(mask)) | (zext(val) << lsbOffset);
+}
+
+:INSERTQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x79; XmmReg1 & XmmReg2 {
+	local len = XmmReg2[64,6];
+	local offs = XmmReg2[72,6];
+	local mask:16 = ((1 << len) - 1) << offs;
+	local val:16 = (zext(XmmReg2[0,64]) & ((1 << len) - 1));
+	XmmReg1 = (XmmReg1 & ~zext(mask)) | (zext(val) << offs);
+}
+
+:MOVNTSD m64, XmmReg1 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x2B; XmmReg1 ... & m64 {
+	m64 = XmmReg1[0,64];
+}
+
+:MOVNTSS m32, XmmReg1 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2B; XmmReg1 ... & m32 {
+	m32 = XmmReg1[0,32];
+}
 } # end with : lockprefx=0

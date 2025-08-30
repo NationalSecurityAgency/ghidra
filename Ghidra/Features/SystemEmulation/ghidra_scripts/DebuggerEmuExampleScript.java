@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,18 @@ import java.nio.charset.Charset;
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -135,7 +137,8 @@ public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebugg
 		 */
 		TracePlatform host = trace.getPlatformManager().getHostPlatform();
 		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool, null, host, 0);
-		BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(access) {
+		Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(access);
+		PcodeEmulator emulator = new PcodeEmulator(access.getLanguage(), writer.callbacks()) {
 			@Override
 			protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 				return new DemoPcodeUseropLibrary(language, DebuggerEmuExampleScript.this);
@@ -168,7 +171,7 @@ public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebugg
 				println("Executing: " + thread.getCounter());
 				thread.stepInstruction();
 				snapshot = time.createSnapshot("Stepped to " + thread.getCounter());
-				emulator.writeDown(host, snapshot.getKey(), 0);
+				writer.writeDown(snapshot.getKey());
 			}
 			printerr("We should not have completed 10 steps!");
 		}

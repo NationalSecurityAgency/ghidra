@@ -67,12 +67,12 @@ public abstract class AbstractTaintState implements TaintState {
 		this.plugin = plugin;
 	}
 
-	public abstract void buildQuery(List<String> param_list, Path engine, File indexDBFile,
-			String index_directory);
+	public abstract void buildQuery(List<String> paramList, String enginePath, File indexDBFile,
+			String indexDirectory);
 
 	@Override
-	public abstract void buildIndex(List<String> param_list, String engine_path, String facts_path,
-			String index_path);
+	public abstract void buildIndex(List<String> paramList, String enginePath, String factsPath,
+			String indexDirectory);
 
 	protected abstract void writeHeader(PrintWriter writer);
 
@@ -296,7 +296,7 @@ public abstract class AbstractTaintState implements TaintState {
 					plugin.consoleMessage("Unknown query type.");
 			}
 
-			buildQuery(paramList, engine, indexDBFile, indexDirectory.toString());
+			buildQuery(paramList, engineFile.toString(), indexDBFile, indexDirectory.toString());
 
 			if (queryType.equals(QueryType.SRCSINK) || queryType.equals(QueryType.CUSTOM)) {
 				// The datalog that specifies the query.

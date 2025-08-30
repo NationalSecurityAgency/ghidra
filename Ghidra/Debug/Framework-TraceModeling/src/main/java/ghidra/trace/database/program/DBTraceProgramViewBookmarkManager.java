@@ -23,7 +23,7 @@ import javax.swing.Icon;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkType;
@@ -310,7 +310,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	@Override
 	public Iterator<Bookmark> getBookmarksIterator() {
 		// TODO: This seems terribly inefficient. We'll have to see how/when it's used.
-		return NestedIterator.start(bookmarkManager.getActiveSpaces().iterator(),
+		return FlattenedIterator.start(bookmarkManager.getActiveSpaces().iterator(),
 			space -> filteredIterator(space.getAllBookmarks().iterator(),
 				bm -> program.viewport.containsAnyUpper(bm.getLifespan())));
 	}
@@ -327,7 +327,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		AddressSet allMemory = factory.getAddressSet();
 		AddressSet within = forward ? factory.getAddressSet(startAddress, allMemory.getMaxAddress())
 				: factory.getAddressSet(allMemory.getMinAddress(), startAddress);
-		return NestedIterator.start(within.iterator(forward), rng -> {
+		return FlattenedIterator.start(within.iterator(forward), rng -> {
 			DBTraceBookmarkSpace space =
 				bookmarkManager.getBookmarkSpace(rng.getAddressSpace(), false);
 			if (space == null) {

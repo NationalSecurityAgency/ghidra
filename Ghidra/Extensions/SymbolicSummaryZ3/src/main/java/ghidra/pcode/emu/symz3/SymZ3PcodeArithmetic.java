@@ -78,6 +78,11 @@ public enum SymZ3PcodeArithmetic implements PcodeArithmetic<SymValueZ3> {
 	}
 
 	@Override
+	public Class<SymValueZ3> getDomain() {
+		return SymValueZ3.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}

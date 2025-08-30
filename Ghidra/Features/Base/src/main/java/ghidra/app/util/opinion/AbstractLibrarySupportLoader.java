@@ -1121,6 +1121,23 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					continue;
 				}
 
+				if (fsService.isLocal(fsrl)) {
+					try {
+						// It might be a container file that we want to look inside of, so probe
+						if (fsService.getLocalFS().getLocalFile(fsrl).isFile()) {
+							FileSystemRef fileRef =
+								fsService.probeFileForFilesystem(fsrl, monitor, null);
+							if (fileRef != null) {
+								result.add(new LibrarySearchPath(fileRef, null));
+								continue;
+							}
+						}
+					}
+					catch (IOException e) {
+						log.appendMsg(e.getMessage());
+					}
+				}
+
 				try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
 					if (fileRef != null) {
 						result.add(

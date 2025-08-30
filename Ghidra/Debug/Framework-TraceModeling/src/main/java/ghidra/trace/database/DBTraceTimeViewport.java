@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import generic.util.MergeSortingIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
@@ -370,7 +371,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		List<Iterator<T>> iters = getOrderedSpans().stream()
 				.map(rng -> iterFunc.apply(rng.lmax()))
 				.collect(Collectors.toList());
-		return new UniqIterator<>(new MergeSortingIterator<>(iters, comparator));
+		return new DistinctIterator<>(new MergeSortingIterator<>(iters, comparator));
 	}
 
 	@Override

@@ -54,10 +54,10 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * @return the same language, cast to Sleigh
 	 */
 	protected static SleighLanguage assertSleigh(Language language) {
-		if (!(language instanceof SleighLanguage)) {
+		if (!(language instanceof SleighLanguage slang)) {
 			throw new IllegalArgumentException("Emulation requires a sleigh language");
 		}
-		return (SleighLanguage) language;
+		return slang;
 	}
 
 	protected final SleighLanguage language;
@@ -78,14 +78,18 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 	protected final SparseAddressRangeMap<AccessKind> accessBreakpoints =
 		new SparseAddressRangeMap<>();
+	protected final PcodeEmulationCallbacks<T> cb;
 
 	/**
 	 * Construct a p-code machine with the given language and arithmetic
 	 * 
 	 * @param language the processor language to be emulated
+	 * @param cb callbacks to receive emulation events
 	 */
-	public AbstractPcodeMachine(Language language) {
+	public AbstractPcodeMachine(Language language, PcodeEmulationCallbacks<T> cb) {
 		this.language = assertSleigh(language);
+		this.cb = cb;
+		cb.emulatorCreated(this);
 
 		this.arithmetic = createArithmetic();
 		this.library = createUseropLibrary();
@@ -205,6 +209,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * @param language the language requiring pluggable initialization
 	 * @return the initializer
 	 */
+	@Deprecated(forRemoval = true, since = "12.0")
 	protected static PcodeStateInitializer getPluggableInitializer(Language language) {
 		for (PcodeStateInitializer init : ClassSearcher.getInstances(PcodeStateInitializer.class)) {
 			if (init.isApplicable(language)) {
@@ -219,6 +224,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * 
 	 * @see #getPluggableInitializer(Language)
 	 */
+	@Deprecated(forRemoval = true, since = "12.0")
 	protected void doPluggableInitialization() {
 		if (initializer != null) {
 			initializer.initializeMachine(this);
@@ -237,6 +243,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		}
 		PcodeThread<T> thread = createThread(name);
 		threads.put(name, thread);
+		cb.threadCreated(thread);
 		return thread;
 	}
 
@@ -259,6 +266,7 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		if (sharedState == null) {
 			sharedState = createSharedState();
 			doPluggableInitialization();
+			cb.sharedStateCreated(this);
 		}
 		return sharedState;
 	}

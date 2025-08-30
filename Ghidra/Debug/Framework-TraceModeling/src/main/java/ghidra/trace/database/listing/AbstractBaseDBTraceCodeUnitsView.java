@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
@@ -124,7 +124,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 	 * @see TraceBaseCodeUnitsView#get(long, AddressSetView, boolean)
 	 */
 	public Iterable<? extends T> get(long snap, AddressSetView set, boolean forward) {
-		return () -> NestedIterator.start(set.iterator(forward),
+		return () -> FlattenedIterator.start(set.iterator(forward),
 			r -> this.get(snap, r, forward).iterator());
 	}
 

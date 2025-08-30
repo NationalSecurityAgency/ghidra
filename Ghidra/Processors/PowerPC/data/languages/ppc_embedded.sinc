@@ -49,6 +49,13 @@
 	dataCacheBlockClearToZero(ea);
 }
 
+#dcbzl 0,r0		0x7c 20 07 ec
+:dcbzl RA_OR_ZERO,B	is OP=31 & BITS_21_25=1 & B & XOP_1_10=1014 & BIT_0=0 & RA_OR_ZERO
+{
+        ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	dataCacheBlockClearToZero(ea);
+}
+
 define pcodeop memoryBarrier;
 #mbar 0         7c 00 06 ac
 :mbar MO        is OP=31 & MO & XOP_1_10=854

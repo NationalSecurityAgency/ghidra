@@ -20,7 +20,8 @@ import java.util.*;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import generic.NestedIterator;
+import generic.util.MergeSortingIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.code.InstructionDB;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -348,7 +349,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		}
 		// TODO: The property map doesn't heed forking.
 		return new WrappingCodeUnitIterator(
-			NestedIterator
+			FlattenedIterator
 					.start(map.getAddressSetView(Lifespan.at(program.snap)).iterator(forward),
 						rng -> getTopCodeIterator(
 							s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
@@ -371,7 +372,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		}
 		// TODO: The property map doesn't heed forking.
 		return new WrappingCodeUnitIterator(
-			NestedIterator
+			FlattenedIterator
 					.start(map.getAddressSetView(Lifespan.at(program.snap)).iterator(addr, forward),
 						rng -> getTopCodeIterator(
 							s -> codeOperations.codeUnits().get(s, rng, forward).iterator(),
@@ -394,7 +395,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
 		// TODO: The property map doesn't heed forking.
-		return new WrappingCodeUnitIterator(NestedIterator.start(
+		return new WrappingCodeUnitIterator(FlattenedIterator.start(
 			new IntersectionAddressSetView(map.getAddressSetView(Lifespan.at(program.snap)),
 				addrSet).iterator(forward),
 			rng -> getTopCodeIterator(

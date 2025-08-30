@@ -18,16 +18,16 @@ package ghidra.pcode.exec;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import ghidra.app.nav.NavigationUtils;
-import ghidra.app.plugin.core.debug.service.emulation.*;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.SleighProgramCompiler.ErrorCollectingPcodeParser;
@@ -241,28 +241,15 @@ public enum DebuggerPcodeUtils {
 			throw new IllegalArgumentException("Coordinates have no trace");
 		}
 		TracePlatform platform = coordinates.getPlatform();
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
 			throw new IllegalArgumentException(
 				"Given trace or platform does not use a Sleigh language");
 		}
 		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
 			coordinates.getTarget(), platform, coordinates.getViewSnap());
-		PcodeExecutorState<byte[]> shared =
-			new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RW);
-		if (coordinates.getThread() == null) {
-			return shared;
-		}
-		PcodeExecutorState<byte[]> local = new RWTargetRegistersPcodeExecutorState(
-			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()),
-			Mode.RW);
-		return new ThreadPcodeExecutorState<>(shared, local) {
-			@Override
-			public void clear() {
-				shared.clear();
-				local.clear();
-			}
-		};
+		PcodeStateCallbacks cb = DebuggerEmulationIntegration.bytesImmediateWriteTarget(access,
+			coordinates.getThread(), coordinates.getFrame());
+		return new BytesPcodeExecutorState(language, cb);
 	}
 
 	/**
@@ -279,9 +266,8 @@ public enum DebuggerPcodeUtils {
 	public static PcodeExecutor<byte[]> executorForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
 		PcodeExecutorState<byte[]> state = executorStateForCoordinates(provider, coordinates);
-
-		SleighLanguage slang = (SleighLanguage) state.getLanguage();
-		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state,
+		SleighLanguage language = (SleighLanguage) state.getLanguage();
+		return new PcodeExecutor<>(language, BytesPcodeArithmetic.forLanguage(language), state,
 			Reason.INSPECT);
 	}
 
@@ -476,6 +462,11 @@ public enum DebuggerPcodeUtils {
 		}
 
 		@Override
+		public Class<WatchValue> getDomain() {
+			return WatchValue.class;
+		}
+
+		@Override
 		public Endian getEndian() {
 			return bytes.getEndian();
 		}
@@ -590,9 +581,25 @@ public enum DebuggerPcodeUtils {
 		}
 
 		@Override
-		public WatchValuePcodeExecutorStatePiece fork() {
+		public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+			return Stream.of(bytesPiece, statePiece, locationPiece, readsPiece);
+		}
+
+		@Override
+		public WatchValuePcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 			return new WatchValuePcodeExecutorStatePiece(
-				bytesPiece.fork(), statePiece.fork(), locationPiece.fork(), readsPiece.fork());
+				bytesPiece.fork(cb),
+				statePiece.fork(cb),
+				locationPiece.fork(cb),
+				readsPiece.fork(cb));
+		}
+
+		@Override
+		public void setVarInternal(AddressSpace space, byte[] offset, int size, WatchValue val) {
+			bytesPiece.setVarInternal(space, offset, size, val.bytes.bytes);
+			statePiece.setVarInternal(space, offset, size, val.state);
+			locationPiece.setVarInternal(space, offset, size, val.location);
+			readsPiece.setVarInternal(space, offset, size, val.reads);
 		}
 
 		@Override
@@ -613,6 +620,17 @@ public enum DebuggerPcodeUtils {
 				statePiece.getVar(space, offset, size, quantize, reason),
 				locationPiece.getVar(space, offset, size, quantize, reason),
 				readsPiece.getVar(space, offset, size, quantize, reason));
+		}
+
+		@Override
+		public WatchValue getVarInternal(AddressSpace space, byte[] offset, int size,
+				Reason reason) {
+			return new WatchValue(
+				new PrettyBytes(getLanguage().isBigEndian(),
+					bytesPiece.getVarInternal(space, offset, size, reason)),
+				statePiece.getVarInternal(space, offset, size, reason),
+				locationPiece.getVarInternal(space, offset, size, reason),
+				readsPiece.getVarInternal(space, offset, size, reason));
 		}
 
 		@Override
@@ -646,54 +664,21 @@ public enum DebuggerPcodeUtils {
 		}
 	}
 
-	public static class WatchValuePcodeExecutorState implements PcodeExecutorState<WatchValue> {
-		private WatchValuePcodeExecutorStatePiece piece;
+	public static class WatchValuePcodeExecutorState
+			extends AbstractPcodeExecutorState<byte[], WatchValue> {
 
-		public WatchValuePcodeExecutorState(WatchValuePcodeExecutorStatePiece piece) {
-			this.piece = piece;
+		public WatchValuePcodeExecutorState(PcodeExecutorStatePiece<byte[], WatchValue> piece) {
+			super(piece);
 		}
 
 		@Override
-		public Language getLanguage() {
-			return piece.getLanguage();
+		protected byte[] extractAddress(WatchValue value) {
+			return value.bytes.bytes;
 		}
 
 		@Override
-		public PcodeArithmetic<WatchValue> getArithmetic() {
-			return piece.arithmetic;
-		}
-
-		@Override
-		public WatchValuePcodeExecutorState fork() {
-			return new WatchValuePcodeExecutorState(piece.fork());
-		}
-
-		@Override
-		public void setVar(AddressSpace space, WatchValue offset, int size, boolean quantize,
-				WatchValue val) {
-			piece.setVar(space, offset.bytes.bytes, size, quantize, val);
-		}
-
-		@Override
-		public WatchValue getVar(AddressSpace space, WatchValue offset, int size,
-				boolean quantize,
-				Reason reason) {
-			return piece.getVar(space, offset.bytes.bytes, size, quantize, reason);
-		}
-
-		@Override
-		public Map<Register, WatchValue> getRegisterValues() {
-			return piece.getRegisterValues();
-		}
-
-		@Override
-		public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
-			return piece.getConcreteBuffer(address, purpose);
-		}
-
-		@Override
-		public void clear() {
-			piece.clear();
+		public WatchValuePcodeExecutorState fork(PcodeStateCallbacks cb) {
+			return new WatchValuePcodeExecutorState(piece.fork(cb));
 		}
 	}
 

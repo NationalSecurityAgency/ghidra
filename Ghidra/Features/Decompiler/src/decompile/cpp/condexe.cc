@@ -17,22 +17,6 @@
 
 namespace ghidra {
 
-const int4 BooleanExpressionMatch::maxDepth = 1;
-
-bool BooleanExpressionMatch::verifyCondition(PcodeOp *op, PcodeOp *iop)
-
-{
-  int4 res = BooleanMatch::evaluate(op->getIn(1), iop->getIn(1), maxDepth);
-  if (res == BooleanMatch::uncorrelated)
-    return false;
-  matchflip = (res == BooleanMatch::complementary);
-  if (op->isBooleanFlip())
-    matchflip = !matchflip;
-  if (iop->isBooleanFlip())
-    matchflip = !matchflip;
-  return true;
-}
-
 /// \brief Calculate boolean array of all address spaces that have had a heritage pass run.
 ///
 /// Used to test if all the links out of the iblock have been calculated.

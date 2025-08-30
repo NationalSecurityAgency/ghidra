@@ -82,7 +82,7 @@ public class StringTable {
 	 */
 	public String getStringAtOffset(long offset) throws IOException {
 		if (!isValid(offset)) {
-			throw new IOException("Invalid offset requested " + offset);
+			throw new IOException("Invalid offset requested %d [0x%x]".formatted(offset, offset));
 		}
 
 		String s = cache.get(offset);

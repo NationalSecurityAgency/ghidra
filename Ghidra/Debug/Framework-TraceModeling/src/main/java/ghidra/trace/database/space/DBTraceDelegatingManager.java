@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.function.*;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.util.LockHold;
 
@@ -191,7 +191,7 @@ public interface DBTraceDelegatingManager<M> {
 		return new AbstractCollection<>() {
 			@Override
 			public Iterator<T> iterator() {
-				return NestedIterator.start(spaces.iterator(), func.andThen(Iterable::iterator));
+				return FlattenedIterator.start(spaces.iterator(), func.andThen(Iterable::iterator));
 			}
 
 			@Override

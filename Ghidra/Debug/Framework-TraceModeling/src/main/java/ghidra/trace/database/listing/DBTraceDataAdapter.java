@@ -24,7 +24,6 @@ import ghidra.program.model.data.TypeDefSettingsDefinition;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
-import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -63,7 +62,7 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 	@Override
 	default void removeValueReference(Address refAddr) {
 		try (LockHold hold = getTrace().lockWrite()) {
-			DBTraceReference ref = getTrace().getReferenceManager()
+			TraceReference ref = getTrace().getReferenceManager()
 					.getReference(getStartSnap(),
 						getAddress(), refAddr, DATA_OP_INDEX);
 			if (ref == null) {

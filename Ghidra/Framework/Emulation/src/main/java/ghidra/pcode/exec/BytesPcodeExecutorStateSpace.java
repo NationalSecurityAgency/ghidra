@@ -19,7 +19,9 @@ import java.util.*;
 
 import generic.ULongSpan;
 import generic.ULongSpan.*;
+import ghidra.app.emulator.AdaptedEmulator;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
+import ghidra.pcode.emu.PcodeEmulationCallbacks;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -28,40 +30,37 @@ import ghidra.util.Msg;
 
 /**
  * A p-code executor state space for storing and retrieving bytes as arrays
- * 
- * @param <B> if this space is a cache, the type of object backing this space
  */
-public class BytesPcodeExecutorStateSpace<B> {
+public class BytesPcodeExecutorStateSpace {
 	protected final static byte[] EMPTY = new byte[] {};
-	protected final SemisparseByteArray bytes;
+
 	protected final Language language; // for logging diagnostics
 	protected final AddressSpace space;
-	protected final B backing;
+	protected final AbstractBytesPcodeExecutorStatePiece<?> piece;
+	protected final SemisparseByteArray bytes;
 
 	/**
 	 * Construct an internal space for the given address space
 	 * 
 	 * @param language the language, for logging diagnostics
 	 * @param space the address space
-	 * @param backing the backing object, possibly {@code null}
+	 * @param piece the owning piece
 	 */
-	public BytesPcodeExecutorStateSpace(Language language, AddressSpace space, B backing) {
-		this.language = language;
-		this.space = space;
-		this.backing = backing;
-		this.bytes = new SemisparseByteArray();
+	public BytesPcodeExecutorStateSpace(Language language, AddressSpace space,
+			AbstractBytesPcodeExecutorStatePiece<?> piece) {
+		this(language, space, piece, new SemisparseByteArray());
 	}
 
-	protected BytesPcodeExecutorStateSpace(Language language, AddressSpace space, B backing,
-			SemisparseByteArray bytes) {
+	protected BytesPcodeExecutorStateSpace(Language language, AddressSpace space,
+			AbstractBytesPcodeExecutorStatePiece<?> piece, SemisparseByteArray bytes) {
 		this.language = language;
 		this.space = space;
-		this.backing = backing;
+		this.piece = piece;
 		this.bytes = bytes;
 	}
 
-	public BytesPcodeExecutorStateSpace<B> fork() {
-		return new BytesPcodeExecutorStateSpace<>(language, space, backing, bytes.fork());
+	public BytesPcodeExecutorStateSpace fork(AbstractBytesPcodeExecutorStatePiece<?> piece) {
+		return new BytesPcodeExecutorStateSpace(language, space, piece, bytes.fork());
 	}
 
 	/**
@@ -71,9 +70,11 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @param val the value
 	 * @param srcOffset offset within val to start
 	 * @param length the number of bytes to write
+	 * @param cb callbacks to receive emulation events
 	 */
-	public void write(long offset, byte[] val, int srcOffset, int length) {
+	public void write(long offset, byte[] val, int srcOffset, int length, PcodeStateCallbacks cb) {
 		bytes.putData(offset, val, srcOffset, length);
+		cb.dataWritten(piece, space.getAddress(offset), length, val);
 	}
 
 	/**
@@ -81,7 +82,14 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * 
 	 * @param uninitialized the ranges which need to be read.
 	 * @return the ranges which remain uninitialized
+	 * @deprecated Please use the {@link PcodeEmulationCallbacks} and/or {@link PcodeStateCallbacks}
+	 *             instead
+	 * @implNote This only remains because of {@link AdaptedEmulator}. Perhaps that should be
+	 *           refactored to use callbacks, too. That's only supposed to exist as an interim,
+	 *           though, so is it worth the effort? We could remove the entire {@code backing}
+	 *           concept if we did, though.
 	 */
+	@Deprecated(forRemoval = true)
 	protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
 		return uninitialized;
 	}
@@ -111,12 +119,15 @@ public class BytesPcodeExecutorStateSpace<B> {
 			range.getMaxAddress().getOffset());
 	}
 
-	protected AddressSet addrSet(ULongSpanSet set) {
-		AddressSet result = new AddressSet();
-		for (ULongSpan span : set.spans()) {
-			result.add(addrRng(span));
+	protected AddressSet addInPlace(AddressSet set, ULongSpanSet spanSet) {
+		for (ULongSpan span : spanSet.spans()) {
+			set.add(addrRng(span));
 		}
-		return result;
+		return set;
+	}
+
+	protected AddressSet addrSet(ULongSpanSet set) {
+		return addInPlace(new AddressSet(), set);
 	}
 
 	/**
@@ -157,8 +168,7 @@ public class BytesPcodeExecutorStateSpace<B> {
 		}
 	}
 
-	protected void warnUninit(ULongSpanSet uninit) {
-		AddressSet uninitialized = addrSet(uninit);
+	protected void warnUninit(AddressSetView uninitialized) {
 		warnAddressSet("Emulator read from uninitialized state", uninitialized);
 	}
 
@@ -169,16 +179,16 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @param size the number of bytes
 	 * @return the uninitialized offset ranges
 	 */
-	protected ULongSpanSet computeUninitialized(long offset, int size) {
+	protected AddressSetView computeUninitialized(long offset, int size) {
 		long max = offset + size - 1;
 		if (Long.compareUnsigned(max, space.getMaxAddress().getOffset()) <= 0 &&
 			Long.compareUnsigned(offset, max) <= 0) {
-			return bytes.getUninitialized(offset, max);
+			return addrSet(bytes.getUninitialized(offset, max));
 		}
 		long end = space.getMinAddress().getOffset() + max - space.getMaxAddress().getOffset() - 1;
-		MutableULongSpanSet result = new DefaultULongSpanSet();
-		result.addAll(bytes.getUninitialized(offset, space.getMaxAddress().getOffset()));
-		result.addAll(bytes.getUninitialized(space.getMinAddress().getOffset(), end));
+		AddressSet result = new AddressSet();
+		addInPlace(result, bytes.getUninitialized(offset, space.getMaxAddress().getOffset()));
+		addInPlace(result, bytes.getUninitialized(space.getMinAddress().getOffset(), end));
 		return result;
 	}
 
@@ -193,18 +203,17 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @param offset the offset
 	 * @param size the number of bytes to read (the size of the value)
 	 * @param reason the reason for reading state
+	 * @param cb callbacks to receive emulation events
 	 * @return the bytes read
 	 */
-	public byte[] read(long offset, int size, Reason reason) {
-		ULongSpanSet uninitialized = computeUninitialized(offset, size);
+	public byte[] read(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
+		AddressSetView uninitialized = computeUninitialized(offset, size);
 		if (uninitialized.isEmpty()) {
 			return readBytes(offset, size, reason);
 		}
-		if (backing != null) {
-			uninitialized = readUninitializedFromBacking(uninitialized);
-			if (uninitialized.isEmpty()) {
-				return readBytes(offset, size, reason);
-			}
+		uninitialized = cb.readUninitialized(piece, uninitialized);
+		if (uninitialized.isEmpty()) {
+			return readBytes(offset, size, reason);
 		}
 
 		/**
@@ -212,12 +221,12 @@ public class BytesPcodeExecutorStateSpace<B> {
 		 * initialized. If it's a (non-decode) read, give it everything, but invoke the warning.
 		 */
 		if (reason == Reason.EXECUTE_DECODE) {
-			Iterator<ULongSpan> it =
-				uninitialized.complement(ULongSpan.extent(offset, size)).iterator();
-			if (it.hasNext()) {
-				ULongSpan init = it.next();
-				if (init.min().longValue() == offset) {
-					return readBytes(offset, (int) init.length(), reason);
+			Address min = space.getAddress(offset);
+			AddressSet init = new AddressSet(min, min.add(size - 1));
+			init.delete(uninitialized);
+			if (!init.isEmpty()) {
+				if (init.getMinAddress().equals(min)) {
+					return readBytes(offset, (int) init.getFirstRange().getLength(), reason);
 				}
 			}
 		}

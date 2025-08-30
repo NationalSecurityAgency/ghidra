@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.database.DBTrace;
@@ -119,7 +119,7 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 	@Override
 	// TODO: Should probably include a lifespan parameter?
 	public Iterable<TraceStackFrame> getFramesIn(AddressSetView set) {
-		return () -> NestedIterator.start(set.iterator(),
+		return () -> FlattenedIterator.start(set.iterator(),
 			rng -> trace.getObjectManager()
 					.getObjectsIntersecting(Lifespan.ALL, rng, TraceStackFrame.KEY_PC,
 						TraceStackFrame.class)

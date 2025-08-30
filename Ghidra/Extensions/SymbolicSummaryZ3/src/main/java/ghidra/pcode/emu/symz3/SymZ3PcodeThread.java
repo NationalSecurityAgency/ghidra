@@ -30,7 +30,6 @@ import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
 import ghidra.pcode.emu.auxiliary.AuxPcodeThread;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
-import ghidra.pcode.emu.symz3.plain.SymZ3Space;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -76,7 +75,7 @@ public class SymZ3PcodeThread extends AuxPcodeThread<SymValueZ3>
 		return getState().getSharedState().getLeft();
 	}
 
-	public AbstractSymZ3PcodeExecutorStatePiece<? extends SymZ3Space> getSharedSymbolicState() {
+	public SymZ3PcodeExecutorStatePiece getSharedSymbolicState() {
 		return getState().getSharedState().getRight();
 	}
 
@@ -84,7 +83,7 @@ public class SymZ3PcodeThread extends AuxPcodeThread<SymValueZ3>
 		return getState().getLocalState().getLeft();
 	}
 
-	public AbstractSymZ3PcodeExecutorStatePiece<? extends SymZ3Space> getLocalSymbolicState() {
+	public SymZ3PcodeExecutorStatePiece getLocalSymbolicState() {
 		return getState().getLocalState().getRight();
 	}
 

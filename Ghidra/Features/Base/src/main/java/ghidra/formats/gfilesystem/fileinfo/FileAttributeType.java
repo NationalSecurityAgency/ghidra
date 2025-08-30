@@ -33,7 +33,7 @@ import ghidra.formats.gfilesystem.FSRL;
 public enum FileAttributeType {
 	FSRL_ATTR("FSRL", GENERAL_INFO, FSRL.class),
 	NAME_ATTR("Name", GENERAL_INFO, String.class),
-	PATH_ATTR("Path", GENERAL_INFO, String.class),
+	PATH_ATTR("Path", GENERAL_INFO, String.class), // the directory containing the file
 	FILE_TYPE_ATTR("File type", GENERAL_INFO, FileType.class),
 	PROJECT_FILE_ATTR("Project file", GENERAL_INFO, String.class),
 

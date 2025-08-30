@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
@@ -42,11 +41,15 @@ import ghidra.xml.*;
 public class MultiSlotDualAssign extends AssignAction {
 	private StorageClass baseType;		// Resource list from which to consume general tiles
 	private StorageClass altType;		// Resource list from which to consume alternate tiles
+	private boolean isBigEndian;		// True for big endian architectures
+	private boolean consumeFromStack;   // True if resources can be consumed from the stack
 	private boolean consumeMostSig;		// True if resources are consumed starting with most significant bytes
 	private boolean justifyRight;		// True if initial bytes are padding for odd data-type sizes
+	private boolean fillAlternate;      // True if a single primitive needs to fill an alternate tile
 	private int tileSize;				// Number of bytes in a tile
 	private ParamEntry[] baseTiles;		// General registers for joining
-	private ParamEntry[] altTiles;		// Alternate registers for joininig
+	private ParamEntry[] altTiles;		// Alternate registers for joining
+	private ParamEntry stackEntry;      // The stack resource
 
 	/**
 	 * Find the first ParamEntry matching the baseType, and the first matching altType.
@@ -55,6 +58,7 @@ public class MultiSlotDualAssign extends AssignAction {
 	private void initializeEntries() throws InvalidInputException {
 		baseTiles = resource.extractTiles(baseType);
 		altTiles = resource.extractTiles(altType);
+		stackEntry = resource.extractStack();
 		if (baseTiles.length == 0 || altTiles.length == 0) {
 			throw new InvalidInputException(
 				"Could not find matching resources for action: join_dual_class");
@@ -63,6 +67,10 @@ public class MultiSlotDualAssign extends AssignAction {
 		if (tileSize != altTiles[0].getSize()) {
 			throw new InvalidInputException(
 				"Storage class register sizes do not match for action: join_dual_class");
+		}
+		if (consumeFromStack && stackEntry == null) {
+			throw new InvalidInputException(
+				"Cannot find matching stack resource for action: join_dual_class");
 		}
 	}
 
@@ -101,6 +109,10 @@ public class MultiSlotDualAssign extends AssignAction {
 		int res = 1;
 		int count = 0;
 		int endBoundary = off + tileSize;
+		if (index[0] >= primitives.size()) {
+			return -1;
+		}
+		Primitive firstPrimitive = primitives.get(index[0]);
 		while (index[0] < primitives.size()) {
 			Primitive element = primitives.get(index[0]);
 			if (element.offset < off) {
@@ -122,6 +134,14 @@ public class MultiSlotDualAssign extends AssignAction {
 		if (count == 0) {
 			return -1;	// Must be at least one primitive in section
 		}
+		if (fillAlternate) { // Only use altType if the tile contains one primitive of exactly the tile size
+			if (count > 1) {
+				res = 0;
+			}
+			if (firstPrimitive.dt.getLength() != tileSize) {
+				res = 0;
+			}
+		}
 		return res;
 	}
 
@@ -131,31 +151,51 @@ public class MultiSlotDualAssign extends AssignAction {
 	 */
 	protected MultiSlotDualAssign(ParamListStandard res) {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		baseType = StorageClass.GENERAL;	// Tile from general purpose registers
 		altType = StorageClass.FLOAT;	// Use specialized registers for floating-point components
+		consumeFromStack = false;
 		consumeMostSig = false;
 		justifyRight = false;
-		if (res.getEntry(0).isBigEndian()) {
+		if (isBigEndian) {
 			consumeMostSig = true;
 			justifyRight = true;
 		}
+		fillAlternate = false;
 		tileSize = 0;
+		stackEntry = null;
 	}
 
-	public MultiSlotDualAssign(StorageClass baseStore, StorageClass altStore, boolean mostSig,
-			boolean justRight, ParamListStandard res) throws InvalidInputException {
+	/**
+	 * Constructor
+	 * @param baseStore resource list from which to consume general tiles
+	 * @param altStore resource list form which to consume alternate tiles
+	 * @param stack true if resources can be consumed from the stack
+	 * @param mostSig true if resources are consumed starting with most significant bytes
+	 * @param justRight true if initial bytes are padding for odd data-type sizes
+	 * @param fillAlt true if a single primitive needs to fill an alternate tile
+	 * @param res is the new resource set to associate with this action
+	 * @throws InvalidInputException if the required elements are not available in the resource list
+	 */
+	public MultiSlotDualAssign(StorageClass baseStore, StorageClass altStore, boolean stack,
+			boolean mostSig, boolean justRight, boolean fillAlt, ParamListStandard res)
+			throws InvalidInputException {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		baseType = baseStore;
 		altType = altStore;
+		consumeFromStack = stack;
 		consumeMostSig = mostSig;
 		justifyRight = justRight;
+		fillAlternate = fillAlt;
+		stackEntry = null;
 		initializeEntries();
 	}
 
 	@Override
 	public AssignAction clone(ParamListStandard newResource) throws InvalidInputException {
-		return new MultiSlotDualAssign(baseType, altType, consumeMostSig, justifyRight,
-			newResource);
+		return new MultiSlotDualAssign(baseType, altType, consumeFromStack, consumeMostSig,
+			justifyRight, fillAlternate, newResource);
 	}
 
 	@Override
@@ -164,8 +204,10 @@ public class MultiSlotDualAssign extends AssignAction {
 			return false;
 		}
 		MultiSlotDualAssign otherAction = (MultiSlotDualAssign) op;
-		if (consumeMostSig != otherAction.consumeMostSig ||
-			justifyRight != otherAction.justifyRight) {
+		if (consumeFromStack != otherAction.consumeFromStack ||
+			consumeMostSig != otherAction.consumeMostSig ||
+			justifyRight != otherAction.justifyRight ||
+			fillAlternate != otherAction.fillAlternate) {
 			return false;
 		}
 		if (baseType != otherAction.baseType || altType != otherAction.altType) {
@@ -203,6 +245,7 @@ public class MultiSlotDualAssign extends AssignAction {
 		int[] tmpStatus = status.clone();
 		ArrayList<Varnode> pieces = new ArrayList<>();
 		int typeSize = dt.getLength();
+		int align = dt.getAlignment();
 		int sizeLeft = typeSize;
 		int iterBase = 0;
 		int iterAlt = 0;
@@ -215,14 +258,20 @@ public class MultiSlotDualAssign extends AssignAction {
 			if (iterType == 0) {
 				iterBase = getFirstUnused(iterBase, baseTiles, tmpStatus);
 				if (iterBase == baseTiles.length) {
-					return FAIL;		// Out of general registers
+					if (!consumeFromStack) {
+						return FAIL; // Out of general registers
+					}
+					break;
 				}
 				entry = baseTiles[iterBase];
 			}
 			else {
 				iterAlt = getFirstUnused(iterAlt, altTiles, tmpStatus);
 				if (iterAlt == altTiles.length) {
-					return FAIL;		// Out of alternate registers
+					if (!consumeFromStack) {
+						return FAIL; // Out of alternate registers
+					}
+					break;
 				}
 				entry = altTiles[iterAlt];
 			}
@@ -233,22 +282,21 @@ public class MultiSlotDualAssign extends AssignAction {
 			pieces.add(vn);
 			sizeLeft -= trialSize;
 		}
+		if (sizeLeft > 0) {         // Have to use stack to get enough bytes
+			if (!consumeFromStack) {
+				return FAIL;
+			}
+			int grp = stackEntry.getGroup();
+			tmpStatus[grp] =
+				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);
+			if (param.address == null) {
+				return FAIL;
+			}
+			Varnode vn = new Varnode(param.address, sizeLeft);
+			pieces.add(vn);
+		}
 		if (sizeLeft < 0) {			// Have odd data-type size
-			if (justifyRight) {
-				// Initial bytes of first entry are padding
-				Varnode vn = pieces.get(0);
-				Address addr = vn.getAddress().add(-sizeLeft);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(addr, sz);
-				pieces.set(0, vn);
-			}
-			else {
-				int end = pieces.size() - 1;
-				Varnode vn = pieces.get(end);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(vn.getAddress(), sz);
-				pieces.set(end, vn);
-			}
+			justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
 		}
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
 		res.type = dt;
@@ -259,10 +307,10 @@ public class MultiSlotDualAssign extends AssignAction {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_JOIN_DUAL_CLASS);
-		if (resource.getEntry(0).isBigEndian() != justifyRight) {
+		if (resource.isBigEndian() != justifyRight) {
 			encoder.writeBool(ATTRIB_REVERSEJUSTIFY, true);
 		}
-		if (resource.getEntry(0).isBigEndian() != consumeMostSig) {
+		if (resource.isBigEndian() != consumeMostSig) {
 			encoder.writeBool(ATTRIB_REVERSESIGNIF, true);
 		}
 		if (baseType != StorageClass.GENERAL) {
@@ -271,6 +319,8 @@ public class MultiSlotDualAssign extends AssignAction {
 		if (altType != StorageClass.FLOAT) {
 			encoder.writeString(ATTRIB_B, altType.toString());
 		}
+		encoder.writeBool(ATTRIB_STACKSPILL, consumeFromStack);
+		encoder.writeBool(ATTRIB_FILL_ALTERNATE, fillAlternate);
 		encoder.closeElement(ELEM_JOIN);
 	}
 
@@ -294,6 +344,12 @@ public class MultiSlotDualAssign extends AssignAction {
 			}
 			else if (name.equals(ATTRIB_B.name())) {
 				altType = StorageClass.getClass(attrib.getValue());
+			}
+			else if (name.equals(ATTRIB_STACKSPILL.name())) {
+				consumeFromStack = SpecXmlUtils.decodeBoolean(attrib.getValue());
+			}
+			else if (name.equals(ATTRIB_FILL_ALTERNATE.name())) {
+				fillAlternate = SpecXmlUtils.decodeBoolean(attrib.getValue());
 			}
 		}
 		parser.end(elem);

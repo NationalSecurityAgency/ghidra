@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compiler_spec>
+  <data_organization>
+	<pointer_size value="8"/>
+	<integer_size value="4" />
+	<long_size value="8" />
+	<float_size value="4" />
+    <double_size value="8" />
+    <long_double_size value="16" /> 
+    <size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="4" />
+		<entry size="8" alignment="8" />
+	</size_alignment_map>
+  </data_organization>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <global>
+    <range space="ram"/>
+    <range space="register" first="0x2000" last="0x2fff"/>
+  </global>
+  <aggressivetrim signext="true"/>  <!-- Aggressively try to eliminate sign extensions -->
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f12"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="a0"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f13"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="a1"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f14"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="a2"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f15"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="a3"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f16"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="t0"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f17"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="t1"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f18"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="t2"/>
+	        </pentry>
+	    </group>
+	    <group>
+	        <pentry minsize="1" maxsize="8" metatype="float">
+	          <register name="f19"/>
+	        </pentry>
+	        <pentry minsize="1" maxsize="8">
+	          <register name="t3"/>
+	        </pentry>
+	    </group>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="0" space="stack"/>
+        </pentry>
+        <rule>
+          <datatype name="float"/>
+          <varargs first="0"/>
+          <consume storage="general"/>
+      	</rule>
+      	<rule>
+      	  <datatype name="struct"/>
+      	  <varargs first="0"/>
+      	  <join/>
+      	</rule>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="struct"/>
+          <join_dual_class stackspill="true" fillalternate="true"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
+      </input>
+      <output>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="f0"/>
+        </pentry>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="f2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="v0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="v1"/>
+        </pentry>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join_per_primitive storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
+      </output>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="sp"/>
+        <register name="gp"/>
+        <register name="f24"/>
+        <register name="f25"/>
+        <register name="f26"/>
+        <register name="f27"/>
+        <register name="f28"/>
+        <register name="f29"/>
+        <register name="f30"/>
+        <register name="f31"/>
+      </unaffected>
+      <killedbycall>
+        <register name="at"/>
+        <register name="v0"/>
+        <register name="v1"/>
+        <register name="f0"/>
+        <register name="f2"/>
+      </killedbycall>
+    </prototype>
+  </default_proto>
+</compiler_spec>

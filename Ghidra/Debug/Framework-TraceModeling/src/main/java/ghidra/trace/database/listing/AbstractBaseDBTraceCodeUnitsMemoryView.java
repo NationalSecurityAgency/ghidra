@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
@@ -361,7 +361,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 * @return an iterable of units
 	 */
 	public Iterable<? extends T> get(long snap, AddressSetView set, boolean forward) {
-		return () -> NestedIterator.start(set.iterator(forward),
+		return () -> FlattenedIterator.start(set.iterator(forward),
 			r -> get(snap, r, forward).iterator());
 	}
 
