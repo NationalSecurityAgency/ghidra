@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,13 +57,13 @@ class ProgramTextOptions {
 	private final static int DEFAULT_OPERAND_WIDTH = 40;
 	private final static int DEFAULT_EOL_WIDTH = 40;
 	private final static int DEFAULT_REF_HEADER_WIDTH = 13;
-	private final static int DEFAULT_REF_WIDTH = 40;
+	private final static int DEFAULT_REF_WIDTH = 50; // about 4 refs per line
 	private final static int DEFAULT_STACK_VAR_PRENAME_WIDTH = 10;
 	private final static int DEFAULT_STACK_VAR_NAME_WIDTH = 15;
 	private final static int DEFAULT_STACK_VAR_DATATYPE_WIDTH = 15;
 	private final static int DEFAULT_STACK_VAR_OFFSET_WIDTH = 8;
 	private final static int DEFAULT_STACK_VAR_COMMENT_WIDTH = 20;
-	private final static int DEFAULT_STACK_VAR_XREF_WIDTH = 50;
+	private final static int DEFAULT_STACK_VAR_XREF_WIDTH = 60; // about 5 refs per line
 	private final static int DEFAULT_DATA_FIELD_NAME_WIDTH = 12;
 
 	private final static String DEFAULT_LABEL_SUFFIX = ":";
