@@ -180,6 +180,8 @@ crs1: zero is cr0711 & zero & cop0711=0 { export 0:$(XLEN); }
 crd: cd0711 is cd0711 { export cd0711; }
 crd: zero is zero & cop0711=0 { export 0:$(XLEN); }
 
+nzcrd: cd0711 is cd0711 & cop0711!=0 { export cd0711; }
+
 crs2: cr0206 is cr0206 { export cr0206; }
 crs2: zero is cr0206 & zero & cop0206=0 { export 0:$(XLEN); }
 
