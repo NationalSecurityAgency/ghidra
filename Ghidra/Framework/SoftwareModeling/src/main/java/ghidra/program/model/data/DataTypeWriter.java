@@ -469,7 +469,7 @@ public class DataTypeWriter {
 
 		sb.append(annotator.getSuffix(composite, null));
 		sb.append("};").append(EOL);
-		sb.append("#pragma pack(pop)").append(EOL);
+		sb.append("#pragma pack(pop)");
 
 		writer.write(sb.toString());
 		writer.write(EOL);
