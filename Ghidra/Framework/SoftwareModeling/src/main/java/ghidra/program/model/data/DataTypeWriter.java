@@ -452,6 +452,8 @@ public class DataTypeWriter {
 		String compositeType = composite instanceof Structure ? "struct" : "union";
 
 		StringBuilder sb = new StringBuilder();
+		sb.append("#pragma pack(push, 1)").append(EOL);
+
 		sb.append(compositeType + " " + composite.getDisplayName() + " {");
 
 		String descrip = composite.getDescription();
@@ -466,7 +468,8 @@ public class DataTypeWriter {
 		}
 
 		sb.append(annotator.getSuffix(composite, null));
-		sb.append("};");
+		sb.append("};").append(EOL);
+		sb.append("#pragma pack(pop)").append(EOL);
 
 		writer.write(sb.toString());
 		writer.write(EOL);
