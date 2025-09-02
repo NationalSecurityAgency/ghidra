@@ -914,9 +914,9 @@ int4 ConstructTpl::decode(Decoder &decoder)
     result->decode(decoder);
   }
   while(decoder.peekElement() != 0) {
-    OpTpl *op = new OpTpl();
+    std::unique_ptr<OpTpl> op = std::make_unique<OpTpl>();
     op->decode(decoder);
-    vec.push_back(op);
+    vec.push_back(op.release());
   }
   decoder.closeElement(el);
   return sectionid;
