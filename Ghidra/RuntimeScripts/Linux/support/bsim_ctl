@@ -19,6 +19,6 @@ SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Some JVM's with class data sharing enabled have issues with BSim starting with Ghidra's custom 
 # classloader, so we will disable sharing
-VMARG_LIST="-Xshare:off"
+VMARG_LIST+="-Xshare:off"
 
 ${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSimControl" $MAXMEM "${VMARG_LIST}" ghidra.features.bsim.query.BSimControlLaunchable "$@"
