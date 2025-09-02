@@ -828,6 +828,9 @@ void OperandValue::decode(Decoder &decoder,Translate *trans)
   uintm ctid = decoder.readUnsignedInteger(sla::ATTRIB_CT);
   SleighBase *sleigh = (SleighBase *)trans;
   SubtableSymbol *tab = dynamic_cast<SubtableSymbol *>(sleigh->findSymbol(tabid));
+  if (ctid >= tab->getNumConstructors()) {
+    throw DecoderError("Invalid constructor id");
+  }
   ct = tab->getConstructor(ctid);
   decoder.closeElement(el);
 }
