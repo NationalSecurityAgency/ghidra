@@ -503,7 +503,7 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
   else if (el == sla::ELEM_NOT_EXP)
     res = new NotExpression();
   else
-    return (PatternExpression *)0;
+    throw DecoderError("Invalid pattern expression element");
 
   res->decode(decoder,trans);
   return res;
