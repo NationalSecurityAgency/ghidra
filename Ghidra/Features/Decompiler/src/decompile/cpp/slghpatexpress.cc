@@ -503,7 +503,7 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
   else if (el == sla::ELEM_NOT_EXP)
     res = new NotExpression();
   else
-    return (PatternExpression *)0;
+    throw DecoderError("Invalid pattern expression element");
   try {
     res->decode(decoder,trans);
   } catch(...) {
@@ -830,6 +830,9 @@ void OperandValue::decode(Decoder &decoder,Translate *trans)
   uintm ctid = decoder.readUnsignedInteger(sla::ATTRIB_CT);
   SleighBase *sleigh = (SleighBase *)trans;
   SubtableSymbol *tab = dynamic_cast<SubtableSymbol *>(sleigh->findSymbol(tabid));
+  if (ctid >= tab->getNumConstructors()) {
+    throw DecoderError("Invalid constructor id");
+  }
   ct = tab->getConstructor(ctid);
   decoder.closeElement(el);
 }
