@@ -653,22 +653,22 @@ AssignAction *AssignAction::decodePrecondition(Decoder &decoder,const ParamListS
 AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  std::unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
 
   if (elemId == ELEM_CONSUME_EXTRA) {
-    action = new ConsumeExtra(res);
+    action = std::make_unique<ConsumeExtra>(res);
   }
   else if (elemId == ELEM_EXTRA_STACK) {
-    action = new ExtraStack(res);
+    action = std::make_unique<ExtraStack>(res);
   }
   else if (elemId == ELEM_CONSUME_REMAINING) {
-	action = new ConsumeRemaining(res);
+	action = std::make_unique<ConsumeRemaining>(res);
   }
   else
     throw DecoderError("Expecting model rule sideeffect");
   action->decode(decoder);
-  return action;
+  return action.release();
 }
 
 /// \brief Truncate a tiling by a given number of bytes
