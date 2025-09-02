@@ -2375,9 +2375,9 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_DECISION) {
-      DecisionNode *subnode = new DecisionNode();
+      std::unique_ptr<DecisionNode> subnode = std::make_unique<DecisionNode>();
       subnode->decode(decoder,this,sub);
-      children.push_back(subnode);
+      children.push_back(subnode.release());
     }
     subel = decoder.peekElement();
   }
