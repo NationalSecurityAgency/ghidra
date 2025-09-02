@@ -451,18 +451,18 @@ void HomogeneousAggregate::decode(Decoder &decoder)
 QualifierFilter *QualifierFilter::decodeFilter(Decoder &decoder)
 
 {
-  QualifierFilter *filter;
+  std::unique_ptr<QualifierFilter> filter;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_VARARGS)
-    filter = new VarargsFilter();
+    filter = std::make_unique<VarargsFilter>();
   else if (elemId == ELEM_POSITION)
-    filter = new PositionMatchFilter(-1);
+    filter = std::make_unique<PositionMatchFilter>(-1);
   else if (elemId == ELEM_DATATYPE_AT)
-    filter = new DatatypeMatchFilter();
+    filter = std::make_unique<DatatypeMatchFilter>();
   else
     return (QualifierFilter *)0;
   filter->decode(decoder);
-  return filter;
+  return filter.release();
 }
 
 /// The AndFilter assumes ownership of all the filters in the array and the original vector is cleared
