@@ -300,7 +300,7 @@ public class BatchInfo {
 	private boolean processAsFS(FSRL fsrl, TaskMonitor taskMonitor) throws CancelledException {
 
 		try (FileSystemRef fsRef = fsService.probeFileForFilesystem(fsrl, taskMonitor,
-			FileSystemProbeConflictResolver.CHOOSEFIRST)) {
+			FileSystemProbeConflictResolver.GUI_PICKER)) {
 			if (fsRef == null) {
 				return false;
 			}
