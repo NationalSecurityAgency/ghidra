@@ -505,8 +505,10 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
   else
     throw DecoderError("Invalid pattern expression element");
 
-  res->decode(decoder,trans);
-  return res;
+  // Call PatternExpression::release on decoding failure
+  std::unique_ptr<PatternExpression, void(*)(PatternExpression *)> patexp(res, PatternExpression::release);
+  patexp->decode(decoder, trans);
+  return patexp.release();
 }
 
 static intb getInstructionBytes(ParserWalker &walker,int4 bytestart,int4 byteend,bool bigendian)
