@@ -141,7 +141,7 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 			sb.append("<TABLE>");
 			if (parent != null) {
 				DataType parentType = parent.getDataType();
-				sb.append(row("Parent: ", html(parentType.getDataTypePath())));
+				sb.append(row("Parent: ", parentType.getDataTypePath()));
 				int offset = (int) data.getAddress().subtract(parent.getAddress());
 				sb.append(row("Offset: ", NumericUtilities.toHexString(offset)));
 				sb.append(row("Field Name: ", nameLoc.getFieldName()));
@@ -149,7 +149,7 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 					DataTypeComponent dtc = pst.getComponentAt(offset);
 					String comment = dtc == null ? null : dtc.getComment();
 					if (comment != null) {
-						sb.append(row("Comment: ", html(comment)));
+						sb.append(row("Comment: ", comment));
 					}
 				}
 			}
@@ -160,16 +160,17 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 		return null;
 	}
 
-	private String row(String... cols) {
+	private String row(Object... cols) {
 		StringBuilder sb = new StringBuilder("<TR>");
-		for (String col : cols) {
-			sb.append("<TD>").append(col).append("</TD>");
+		for (Object col : cols) {
+			String escaped = escapeHtml(col);
+			sb.append("<TD>").append(escaped).append("</TD>");
 		}
 		sb.append("</TR>");
 		return sb.toString();
 	}
 
-	private String html(Object obj) {
+	private String escapeHtml(Object obj) {
 		return obj == null ? "" : HTMLUtilities.friendlyEncodeHTML(obj.toString());
 	}
 
@@ -182,10 +183,12 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 		if (StringDataInstance.isString(dataInstance)) {
 			StringDataInstance sdi = StringDataInstance.getStringDataInstance(dataInstance);
 			if (sdi.isShowTranslation()) {
-				result += String.format("<br>Original value: %s", html(sdi.getStringValue()));
+				String escaped = escapeHtml(sdi.getStringValue());
+				result += String.format("<br>Original value: %s", escaped);
 			}
 			if (!sdi.isShowTranslation() && sdi.getTranslatedValue() != null) {
-				result += String.format("<br>Translated value: %s", html(sdi.getTranslatedValue()));
+				String escaped = escapeHtml(sdi.getTranslatedValue());
+				result += String.format("<br>Translated value: %s", escaped);
 			}
 			if (sdi.isMissingNullTerminator()) {
 				result += "<br>Missing NULL terminator.";
