@@ -945,7 +945,9 @@ void OperandSymbol::defineOperand(TripleSymbol *tri)
 OperandSymbol::~OperandSymbol(void)
 
 {
-  PatternExpression::release(localexp);
+  if (localexp != (PatternExpression *)0)
+    PatternExpression::release(localexp);
+
   if (defexp != (PatternExpression *)0)
     PatternExpression::release(defexp);
 }
@@ -1630,29 +1632,29 @@ void Constructor::decode(Decoder &decoder,SleighBase *trans)
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_CONTEXT_OP) {
-      ContextOp *c_op = new ContextOp();
+      std::unique_ptr<ContextOp> c_op = std::make_unique<ContextOp>();
       c_op->decode(decoder,trans);
-      context.push_back(c_op);
+      context.push_back(c_op.release());
     }
     else if (subel == sla::ELEM_COMMIT) {
-      ContextCommit *c_op = new ContextCommit();
+      std::unique_ptr<ContextCommit> c_op = std::make_unique<ContextCommit>();
       c_op->decode(decoder,trans);
-      context.push_back(c_op);
+      context.push_back(c_op.release());
     }
     else {
-      ConstructTpl *cur = new ConstructTpl();
+      std::unique_ptr<ConstructTpl> cur = std::make_unique<ConstructTpl>();
       int4 sectionid = cur->decode(decoder);
       if (sectionid < 0) {
-	if (templ != (ConstructTpl *)0)
-	  throw LowlevelError("Duplicate main section");
-	templ = cur;
+        if (templ != (ConstructTpl *)0)
+          throw LowlevelError("Duplicate main section");
+        templ = cur.release();
       }
       else {
-	while(namedtempl.size() <= sectionid)
-	  namedtempl.push_back((ConstructTpl *)0);
-	if (namedtempl[sectionid] != (ConstructTpl *)0)
-	  throw LowlevelError("Duplicate named section");
-	namedtempl[sectionid] = cur;
+        while(namedtempl.size() <= sectionid)
+          namedtempl.push_back((ConstructTpl *)0);
+        if (namedtempl[sectionid] != (ConstructTpl *)0)
+          throw LowlevelError("Duplicate named section");
+        namedtempl[sectionid] = cur.release();
       }
     }
     subel = decoder.peekElement();
