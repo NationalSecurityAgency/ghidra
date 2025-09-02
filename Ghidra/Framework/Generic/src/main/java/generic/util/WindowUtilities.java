@@ -351,12 +351,11 @@ public class WindowUtilities {
 		// 'pad' is for checking to avoid full-size windows with odd OS borders.  This is an 
 		// arbitrary number that is larger than the 'move' amount below.
 		int pad = 50;
-		int screenArea = screen.width * screen.height;
-		int boundsArea = bounds.width * bounds.height;
-		if (boundsArea > screenArea) {
-			int newWidth = screen.width - pad;
-			int newHeight = screen.height - pad;
-			bounds.setSize(newWidth, newHeight);
+		if (bounds.width > screen.width) {
+			bounds.width = screen.width - pad;
+		}
+		if (bounds.height > screen.height) {
+			bounds.height = screen.height - pad;
 		}
 
 		// Next, move the window as little as possible to get fully on-screen.
