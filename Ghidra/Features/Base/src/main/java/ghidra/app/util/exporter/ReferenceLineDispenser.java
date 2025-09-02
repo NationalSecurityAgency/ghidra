@@ -32,6 +32,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 	private String header;
 	private Memory memory;
 	private ReferenceManager referenceManager;
+	private boolean forwardRefs;
 
 	private List<String> lines = new ArrayList<>();
 
@@ -50,11 +51,11 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		this.fillAmount =
 			options.getAddrWidth() + options.getBytesWidth() + options.getLabelWidth();
 		this.isHTML = options.isHTML();
+		this.forwardRefs = forwardRefs;
 
 		List<Reference> refs = (forwardRefs ? getForwardRefs(cu) : getXRefList(cu));
 		List<Reference> offcuts = (forwardRefs ? List.of() : getOffcutXRefList(cu));
-
-		processRefs(cu.getMinAddress(), forwardRefs, refs, offcuts);
+		processRefs(cu.getMinAddress(), refs, offcuts);
 	}
 
 	ReferenceLineDispenser(Variable var, Program program, ProgramTextOptions options) {
@@ -69,6 +70,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			options.getStackVarDataTypeWidth() + options.getStackVarOffsetWidth() +
 			options.getStackVarCommentWidth();
 		this.isHTML = options.isHTML();
+		this.forwardRefs = false;
 
 		List<Reference> xrefs = new ArrayList<>();
 		List<Reference> offcuts = new ArrayList<>();
@@ -80,7 +82,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		xrefs.sort(comparator);
 		offcuts.sort(comparator);
 
-		processRefs(var.getFunction().getEntryPoint(), false, xrefs, offcuts);
+		processRefs(var.getFunction().getEntryPoint(), xrefs, offcuts);
 	}
 
 	@Override
@@ -133,8 +135,9 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 		return refs;
 	}
 
-	private void processRefs(Address addr, boolean isForward, List<Reference> refs,
+	private void processRefs(Address addr, List<Reference> refs,
 			List<Reference> offcuts) {
+
 		if (width < 1) {
 			return;
 		}
@@ -142,7 +145,7 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			return;
 		}
 
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		List<Reference> all = new ArrayList<>();
 		all.addAll(refs);
 		all.addAll(offcuts);
@@ -160,60 +163,41 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 				buf.append(clip(text, headerWidth));
 			}
 		}
+		else {
+			buf.append(getFill(headerWidth));
+			buf.append(prefix);
+		}
 
-		int refsPerLine = width / (all.get(0).toString().length() + XREFS_DELIM.length());
-		int refsInCurrLine = 0;
-
+		int currentXrefWidth = 0;
 		for (int i = 0; i < all.size(); ++i) {
-			//if we are not displaying the xref header,
-			//then we need to append the comment prefix
-			if (i == 0 && !displayRefHeader) {
-				buf.append(getFill(headerWidth));
-				buf.append(prefix);
-			}
-			//if we have started a new line, then
-			//we need to append the comment prefix
-			if (refsInCurrLine == 0 && i != 0) {
-				buf.append(getFill(headerWidth));
-				if (!displayRefHeader) {
-					buf.append(prefix);
-				}
-			}
-			//if we already appended a ref to the line
-			//and we are about to append one more,
-			//then we need the delim
-			if (refsInCurrLine > 0) {
-				buf.append(XREFS_DELIM);
-			}
 
-			//does memory contain this address? if so, then hyperlink it
+			// does memory contain this address? if so, then hyperlink it
 			Reference ref = all.get(i);
-			Address address = isForward ? ref.getToAddress() : ref.getFromAddress();
-			boolean isInMem = memory.contains(address);
-			if (isHTML && isInMem) {
-				buf.append("<A HREF=\"#" + getUniqueAddressString(address) + "\">");
-			}
-			buf.append(address);
+			XrefItem xrefItem = new XrefItem(ref);
 
-			String refType = getRefTypeDisplayString(ref);
-			buf.append(refType);
-
-			if (isHTML && isInMem) {
-				buf.append("</A>");
-			}
-
-			refsInCurrLine++;
-
-			if (refsInCurrLine == refsPerLine) {
-				lines.add((displayRefHeader ? prefix : "") + buf.toString());
+			int nextWidth = currentXrefWidth + xrefItem.getDisplayableWidth();
+			if (nextWidth > width) {
+				// line is too long for the current xref, break
+				lines.add(prefix + buf.toString());
 				buf.delete(0, buf.length());
-				refsInCurrLine = 0;
+
+				// since we already have the next xref, add the next line's prefix
+				buf.append(getFill(headerWidth));
+
+				currentXrefWidth = 0;
+			}
+
+			currentXrefWidth += xrefItem.getDisplayableWidth();
+			buf.append(xrefItem.getRawText());
+
+			if (i < all.size() - 1) {
+				buf.append(XREFS_DELIM);
 			}
 		}
 
-		if (refsInCurrLine > 0) {
-			lines.add((displayRefHeader ? prefix : "") + buf.toString());
-			buf.delete(0, buf.length());
+		// add the last xref line
+		if (buf.length() != 0) {
+			lines.add(prefix + buf.toString());
 		}
 	}
 
@@ -294,5 +278,30 @@ class ReferenceLineDispenser extends AbstractLineDispenser {
 			return r1.getFromAddress().compareTo(r2.getFromAddress());
 		});
 		return offcutList;
+	}
+
+	private class XrefItem {
+		private Address address;
+		private String displayableString;
+
+		XrefItem(Reference ref) {
+			address = forwardRefs ? ref.getToAddress() : ref.getFromAddress();
+			String refType = getRefTypeDisplayString(ref);
+			this.displayableString = address.toString() + refType;
+		}
+
+		int getDisplayableWidth() {
+			return displayableString.length();
+		}
+
+		String getRawText() {
+			boolean isInMem = memory.contains(address);
+			if (isHTML && isInMem) {
+				String href = getUniqueAddressString(address);
+				return "<A HREF=\"#%s\">%s</A>".formatted(href, displayableString);
+			}
+
+			return displayableString;
+		}
 	}
 }
