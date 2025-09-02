@@ -252,23 +252,23 @@ PrimitiveExtractor::PrimitiveExtractor(Datatype *dt,bool unionIllegal,int offset
 DatatypeFilter *DatatypeFilter::decodeFilter(Decoder &decoder)
 
 {
-  DatatypeFilter *filter;
+  std::unique_ptr<DatatypeFilter> filter;
   uint4 elemId = decoder.openElement(ELEM_DATATYPE);
   string nm = decoder.readString(ATTRIB_NAME);
   if (nm == "any") {
-    filter = new SizeRestrictedFilter();
+    filter = std::make_unique<SizeRestrictedFilter>();
   }
   else if (nm == "homogeneous-float-aggregate") {
-    filter = new HomogeneousAggregate(TYPE_FLOAT,4,0,0);
+    filter = std::make_unique<HomogeneousAggregate>(TYPE_FLOAT,4,0,0);
   }
   else {
     // If no other name matches, assume this is a metatype
     type_metatype meta = string2metatype(nm);
-    filter = new MetaTypeFilter(meta);
+    filter = std::make_unique<MetaTypeFilter>(meta);
   }
   filter->decode(decoder);
   decoder.closeElement(elemId);
-  return filter;
+  return filter.release();
 }
 
 /// Parse the given string as a comma or space separated list of decimal integers,
