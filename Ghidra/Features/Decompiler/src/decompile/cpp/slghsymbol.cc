@@ -49,10 +49,12 @@ SymbolTable::~SymbolTable(void)
 {
   vector<SymbolScope *>::iterator iter;
   for(iter=table.begin();iter!=table.end();++iter)
-    delete *iter;
+    if (*iter)
+      delete *iter;
   vector<SleighSymbol *>::iterator siter;
   for(siter=symbollist.begin();siter!=symbollist.end();++siter)
-    delete *siter;
+    if (*siter)
+      delete *siter;
 }
 
 void SymbolTable::addScope(void)
@@ -175,8 +177,20 @@ void SymbolTable::decode(Decoder &decoder,SleighBase *trans)
   for(int4 i=0;i<table.size();++i) { // Decode the scopes
     int4 subel = decoder.openElement(sla::ELEM_SCOPE);
     uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
+    if (id >= table.size()) {
+      throw SleighError("Bad symbol scope id: exceeds symbol scope table size");
+    }
+
     uintm parent = decoder.readUnsignedInteger(sla::ATTRIB_PARENT);
+    if (parent >= table.size()) {
+      throw SleighError("Bad symbol scope parent id: exceeds symbol scope table size");
+    }
+
     SymbolScope *parscope = (parent==id) ? (SymbolScope *)0 : table[parent];
+    if (table[id]) {
+      throw SleighError("Bad symbol scope parent id: not unique");
+    }
+
     table[id] = new SymbolScope( parscope, id );
     decoder.closeElement(subel);
   }
@@ -202,39 +216,58 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
 
 {				// Put the shell of a symbol in the symbol table
 				// in order to allow recursion
-  SleighSymbol *sym;
+  std::unique_ptr<SleighSymbol> sym;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_USEROP_HEAD)
-    sym = new UserOpSymbol();
+    sym = std::make_unique<UserOpSymbol>();
   else if (el == sla::ELEM_EPSILON_SYM_HEAD)
-    sym = new EpsilonSymbol();
+    sym = std::make_unique<EpsilonSymbol>();
   else if (el == sla::ELEM_VALUE_SYM_HEAD)
-    sym = new ValueSymbol();
+    sym = std::make_unique<ValueSymbol>();
   else if (el == sla::ELEM_VALUEMAP_SYM_HEAD)
-    sym = new ValueMapSymbol();
+    sym = std::make_unique<ValueMapSymbol>();
   else if (el == sla::ELEM_NAME_SYM_HEAD)
-    sym = new NameSymbol();
+    sym = std::make_unique<NameSymbol>();
   else if (el == sla::ELEM_VARNODE_SYM_HEAD)
-    sym = new VarnodeSymbol();
+    sym = std::make_unique<VarnodeSymbol>();
   else if (el == sla::ELEM_CONTEXT_SYM_HEAD)
-    sym = new ContextSymbol();
+    sym = std::make_unique<ContextSymbol>();
   else if (el == sla::ELEM_VARLIST_SYM_HEAD)
-    sym = new VarnodeListSymbol();
+    sym = std::make_unique<VarnodeListSymbol>();
   else if (el == sla::ELEM_OPERAND_SYM_HEAD)
-    sym = new OperandSymbol();
+    sym = std::make_unique<OperandSymbol>();
   else if (el == sla::ELEM_START_SYM_HEAD)
-    sym = new StartSymbol();
+    sym = std::make_unique<StartSymbol>();
   else if (el == sla::ELEM_END_SYM_HEAD)
-    sym = new EndSymbol();
+    sym = std::make_unique<EndSymbol>();
   else if (el == sla::ELEM_NEXT2_SYM_HEAD)
-    sym = new Next2Symbol();
+    sym = std::make_unique<Next2Symbol>();
   else if (el == sla::ELEM_SUBTABLE_SYM_HEAD)
-    sym = new SubtableSymbol();
+    sym = std::make_unique<SubtableSymbol>();
   else
     throw SleighError("Bad symbol xml");
+
   sym->decodeHeader(decoder);	// Restore basic elements of symbol
-  symbollist[sym->id] = sym;	// Put the basic symbol in the table
-  table[sym->scopeid]->addSymbol(sym); // to allow recursion
+
+  if (sym->id >= symbollist.size()) {
+    throw SleighError("Bad symbol id: exceeds symbollist size");
+  }
+
+  if (symbollist[sym->id] != (SleighSymbol *)0) {
+    throw SleighError("Bad symbol id: not unique");
+  }
+
+  if (sym->scopeid >= table.size()) {
+    throw SleighError("Bad symbol scope id: too large");
+  }
+
+  if (table[sym->scopeid] == (SymbolScope *)0) {
+    throw SleighError("Bad symbol scope id: undefined");
+  }
+
+  SleighSymbol *res = sym.release();
+  symbollist[res->id] = res;	// Put the basic symbol in the table
+  table[res->scopeid]->addSymbol(res); // to allow recursion
 }
 
 void SymbolTable::purge(void)

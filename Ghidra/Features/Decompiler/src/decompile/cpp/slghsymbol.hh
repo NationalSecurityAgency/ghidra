@@ -326,7 +326,7 @@ private:
   void setVariableLength(void) { flags |= variable_len; }
   bool isVariableLength(void) const { return ((flags&variable_len)!=0); }
 public:
-  OperandSymbol(void) {}	// For use with decode
+  OperandSymbol(void) : localexp(nullptr), defexp(nullptr) {}	// For use with decode
   OperandSymbol(const string &nm,int4 index,Constructor *ct);
   uint4 getRelativeOffset(void) const { return reloffset; }
   int4 getOffsetBase(void) const { return offsetbase; }
