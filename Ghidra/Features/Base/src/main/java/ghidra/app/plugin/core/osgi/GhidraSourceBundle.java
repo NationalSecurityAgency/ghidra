@@ -324,14 +324,16 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private static void findPackageDirs(List<String> packages, ResourceFile dir) {
 		boolean added = false;
 		ResourceFile[] files = dir.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"));
-		for (ResourceFile file : files) {
-			if (!file.getName().matches("internal|private")) {
-				if (file.isDirectory()) {
-					findPackageDirs(packages, file);
-				}
-				else if (!added) {
-					added = true;
-					packages.add(dir.getAbsolutePath());
+		if (files != null) {
+			for (ResourceFile file : files) {
+				if (!file.getName().matches("internal|private")) {
+					if (file.isDirectory()) {
+						findPackageDirs(packages, file);
+					}
+					else if (!added) {
+						added = true;
+						packages.add(dir.getAbsolutePath());
+					}
 				}
 			}
 		}
@@ -699,14 +701,17 @@ public class GhidraSourceBundle extends GhidraBundle {
 				ClassMapper mapper = new ClassMapper(binarySubdir);
 
 				// for each source file, lookup class files by class name 
-				for (ResourceFile sourceFile : sourceSubdir.listFiles()) {
-					if (sourceFile.isDirectory()) {
-						stack.push(sourceFile);
-					}
-					else {
-						List<Path> classFiles = mapper.findAndRemove(sourceFile);
-						if (classFiles != null) {
-							discrepancy.found(sourceFile, classFiles);
+				ResourceFile[] sourceSubdirs = sourceSubdir.listFiles();
+				if (sourceSubdirs != null) {
+					for (ResourceFile sourceFile : sourceSubdirs) {
+						if (sourceFile.isDirectory()) {
+							stack.push(sourceFile);
+						}
+						else {
+							List<Path> classFiles = mapper.findAndRemove(sourceFile);
+							if (classFiles != null) {
+								discrepancy.found(sourceFile, classFiles);
+							}
 						}
 					}
 				}
