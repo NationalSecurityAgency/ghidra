@@ -592,32 +592,32 @@ bool AssignAction::fillinOutputMap(ParamActive *active) const
 AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandard *res)
 
 {
-  AssignAction *action;
+  std::unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_GOTO_STACK)
-    action = new GotoStack(res,0);
+    action = std::make_unique<GotoStack>(res,0);
   else if (elemId == ELEM_JOIN) {
-    action = new MultiSlotAssign(res);
+    action = std::make_unique<MultiSlotAssign>(res);
   }
   else if (elemId == ELEM_CONSUME) {
-    action = new ConsumeAs(TYPECLASS_GENERAL,res);
+    action = std::make_unique<ConsumeAs>(TYPECLASS_GENERAL,res);
   }
   else if (elemId == ELEM_CONVERT_TO_PTR) {
-    action = new ConvertToPointer(res);
+    action = std::make_unique<ConvertToPointer>(res);
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = new HiddenReturnAssign(res,hiddenret_specialreg);
+    action = std::make_unique<HiddenReturnAssign>(res,hiddenret_specialreg);
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
-    action = new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res);
+    action = std::make_unique<MultiMemberAssign>(TYPECLASS_GENERAL,false,res->isBigEndian(),res);
   }
   else if (elemId == ELEM_JOIN_DUAL_CLASS) {
-    action = new MultiSlotDualAssign(res);
+    action = std::make_unique<MultiSlotDualAssign>(res);
   }
   else
     throw DecoderError("Expecting model rule action");
   action->decode(decoder);
-  return action;
+  return action.release();
 }
 
 /// \brief Read the next model rule precondition element from the stream
