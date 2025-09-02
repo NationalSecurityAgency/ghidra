@@ -689,7 +689,10 @@ void PackedDecode::endIngest(int4 bufPos)
     }
     uint1 *buf = inStream.back().start;
     buf[bufPos] = ELEMENT_END;
+  } else {
+    throw DecoderError("Ended ingestion without any input");
   }
+
 }
 
 PackedDecode::~PackedDecode(void)
