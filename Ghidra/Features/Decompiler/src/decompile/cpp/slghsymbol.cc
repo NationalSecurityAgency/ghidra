@@ -2369,6 +2369,9 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
     if (subel == sla::ELEM_PAIR) {
       decoder.openElement();
       uintm id = decoder.readSignedInteger(sla::ATTRIB_ID);
+      if (id >= sub->getNumConstructors()) {
+        throw DecoderError("Invalid constructor id");
+      }
       Constructor *ct = sub->getConstructor(id);
       DisjointPattern *pat = DisjointPattern::decodeDisjoint(decoder);
       list.push_back(pair<DisjointPattern *,Constructor *>(pat,ct));
