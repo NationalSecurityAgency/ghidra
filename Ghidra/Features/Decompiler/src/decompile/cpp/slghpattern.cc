@@ -141,16 +141,16 @@ bool DisjointPattern::resolvesIntersect(const DisjointPattern *op1,const Disjoin
 DisjointPattern *DisjointPattern::decodeDisjoint(Decoder &decoder)
 
 {				// DisjointPattern factory
-  DisjointPattern *res;
+  std::unique_ptr<DisjointPattern> res;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_INSTRUCT_PAT)
-    res = new InstructionPattern();
+    res = std::make_unique<InstructionPattern>();
   else if (el == sla::ELEM_CONTEXT_PAT)
-    res = new ContextPattern();
+    res = std::make_unique<ContextPattern>();
   else
-    res = new CombinePattern();
+    res = std::make_unique<CombinePattern>();
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 void PatternBlock::normalize(void)
