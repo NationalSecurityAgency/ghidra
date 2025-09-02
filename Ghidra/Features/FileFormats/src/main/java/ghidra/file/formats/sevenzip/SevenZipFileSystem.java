@@ -401,8 +401,9 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 			// In our case, we only handle extract operations.
 			if (!currentItem.isFolder() && extractAskMode == ExtractAskMode.EXTRACT) {
 				try {
-					currentCacheEntryBuilder = fsService.createTempFile(currentItem.getSize());
-					monitor.initialize(currentItem.getSize(), "Extracting " + currentName);
+					long size = Objects.requireNonNullElse(currentItem.getSize(), -1L);
+					currentCacheEntryBuilder = fsService.createTempFile(size);
+					monitor.initialize(size, "Extracting " + currentName);
 				}
 				catch (IOException e) {
 					throw new SevenZipException(e);
