@@ -258,20 +258,20 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
 
 {
   uint4 elemId = decoder.peekElement();
-  AddrSpace *res;
+  std::unique_ptr<AddrSpace> res;
   if (elemId == ELEM_SPACE_BASE)
-    res = new SpacebaseSpace(this,trans);
+    res = std::make_unique<SpacebaseSpace>(this,trans);
   else if (elemId == ELEM_SPACE_UNIQUE)
-    res = new UniqueSpace(this,trans);
+    res = std::make_unique<UniqueSpace>(this,trans);
   else if (elemId == ELEM_SPACE_OTHER)
-    res = new OtherSpace(this,trans);
+    res = std::make_unique<OtherSpace>(this,trans);
   else if (elemId == ELEM_SPACE_OVERLAY)
-    res = new OverlaySpace(this,trans);
+    res = std::make_unique<OverlaySpace>(this,trans);
   else
-    res = new AddrSpace(this,trans,IPTR_PROCESSOR);
+    res = std::make_unique<AddrSpace>(this,trans,IPTR_PROCESSOR);
 
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 /// This routine initializes (almost) all the address spaces used
