@@ -720,9 +720,9 @@ void OpTpl::decode(Decoder &decoder)
     output->decode(decoder);
   }
   while(decoder.peekElement() != 0) {
-    VarnodeTpl *vn = new VarnodeTpl();
+    std::unique_ptr<VarnodeTpl> vn = std::make_unique<VarnodeTpl>();
     vn->decode(decoder);
-    input.push_back(vn);
+    input.push_back(vn.release());
   }
   decoder.closeElement(el);
 }
