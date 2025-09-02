@@ -741,23 +741,24 @@ void Architecture::decodeDynamicRule(Decoder &decoder)
 ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
-  ProtoModel *res;
+  std::unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    res = new ProtoModel(this);
+    model = std::make_unique<ProtoModel>(this);
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    res = new ProtoModelMerged(this);
+    model = std::make_unique<ProtoModelMerged>(this);
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  res->decode(decoder);
+  model->decode(decoder);
   
-  ProtoModel *other = getModel(res->getName());
+  ProtoModel *other = getModel(model->getName());
   if (other != (ProtoModel *)0) {
-    string errMsg = "Duplicate ProtoModel name: " + res->getName();
-    delete res;
+    string errMsg = "Duplicate ProtoModel name: " + model->getName();
     throw LowlevelError(errMsg);
   }
+
+  ProtoModel* res = model.release();
   protoModels[res->getName()] = res;
   return res;
 }
