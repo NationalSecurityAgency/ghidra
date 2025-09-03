@@ -367,7 +367,7 @@ void Override::decode(Decoder &decoder,Architecture *glb)
     }
     else if (subId == ELEM_PROTOOVERRIDE) {
       Address callpoint = Address::decode(decoder);
-      std::unique_ptr<FuncProto> fp = std::make_unique<FuncProto>();
+      std::unique_ptr<FuncProto> fp(new FuncProto());
       fp->setInternal(glb->defaultfp,glb->types->getTypeVoid());
       fp->decode(decoder,glb);
       insertProtoOverride(callpoint,fp.release());

@@ -219,31 +219,31 @@ void SymbolTable::decodeSymbolHeader(Decoder &decoder)
   std::unique_ptr<SleighSymbol> sym;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_USEROP_HEAD)
-    sym = std::make_unique<UserOpSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new UserOpSymbol());
   else if (el == sla::ELEM_EPSILON_SYM_HEAD)
-    sym = std::make_unique<EpsilonSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new EpsilonSymbol());
   else if (el == sla::ELEM_VALUE_SYM_HEAD)
-    sym = std::make_unique<ValueSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new ValueSymbol());
   else if (el == sla::ELEM_VALUEMAP_SYM_HEAD)
-    sym = std::make_unique<ValueMapSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new ValueMapSymbol());
   else if (el == sla::ELEM_NAME_SYM_HEAD)
-    sym = std::make_unique<NameSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new NameSymbol());
   else if (el == sla::ELEM_VARNODE_SYM_HEAD)
-    sym = std::make_unique<VarnodeSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new VarnodeSymbol());
   else if (el == sla::ELEM_CONTEXT_SYM_HEAD)
-    sym = std::make_unique<ContextSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new ContextSymbol());
   else if (el == sla::ELEM_VARLIST_SYM_HEAD)
-    sym = std::make_unique<VarnodeListSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new VarnodeListSymbol());
   else if (el == sla::ELEM_OPERAND_SYM_HEAD)
-    sym = std::make_unique<OperandSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new OperandSymbol());
   else if (el == sla::ELEM_START_SYM_HEAD)
-    sym = std::make_unique<StartSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new StartSymbol());
   else if (el == sla::ELEM_END_SYM_HEAD)
-    sym = std::make_unique<EndSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new EndSymbol());
   else if (el == sla::ELEM_NEXT2_SYM_HEAD)
-    sym = std::make_unique<Next2Symbol>();
+    sym = std::unique_ptr<SleighSymbol>(new Next2Symbol());
   else if (el == sla::ELEM_SUBTABLE_SYM_HEAD)
-    sym = std::make_unique<SubtableSymbol>();
+    sym = std::unique_ptr<SleighSymbol>(new SubtableSymbol());
   else
     throw SleighError("Bad symbol xml");
 
@@ -1685,17 +1685,17 @@ void Constructor::decode(Decoder &decoder,SleighBase *trans)
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_CONTEXT_OP) {
-      std::unique_ptr<ContextOp> c_op = std::make_unique<ContextOp>();
+      std::unique_ptr<ContextOp> c_op = std::unique_ptr<ContextOp>(new ContextOp());
       c_op->decode(decoder,trans);
       context.push_back(c_op.release());
     }
     else if (subel == sla::ELEM_COMMIT) {
-      std::unique_ptr<ContextCommit> c_op = std::make_unique<ContextCommit>();
+      std::unique_ptr<ContextCommit> c_op = std::unique_ptr<ContextCommit>(new ContextCommit());
       c_op->decode(decoder,trans);
       context.push_back(c_op.release());
     }
     else {
-      std::unique_ptr<ConstructTpl> cur = std::make_unique<ConstructTpl>();
+      std::unique_ptr<ConstructTpl> cur = std::unique_ptr<ConstructTpl>(new ConstructTpl());
       int4 sectionid = cur->decode(decoder);
       if (sectionid < 0) {
         if (templ != (ConstructTpl *)0)
@@ -2398,7 +2398,7 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
       decoder.closeElement(subel);
     }
     else if (subel == sla::ELEM_DECISION) {
-      std::unique_ptr<DecisionNode> subnode = std::make_unique<DecisionNode>();
+      std::unique_ptr<DecisionNode> subnode = std::unique_ptr<DecisionNode>(new DecisionNode());
       subnode->decode(decoder,this,sub);
       children.push_back(subnode.release());
     }

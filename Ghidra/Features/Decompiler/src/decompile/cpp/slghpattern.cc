@@ -144,11 +144,11 @@ DisjointPattern *DisjointPattern::decodeDisjoint(Decoder &decoder)
   std::unique_ptr<DisjointPattern> res;
   uint4 el = decoder.peekElement();
   if (el == sla::ELEM_INSTRUCT_PAT)
-    res = std::make_unique<InstructionPattern>();
+    res = std::unique_ptr<InstructionPattern>(new InstructionPattern());
   else if (el == sla::ELEM_CONTEXT_PAT)
-    res = std::make_unique<ContextPattern>();
+    res = std::unique_ptr<ContextPattern>(new ContextPattern());
   else
-    res = std::make_unique<CombinePattern>();
+    res = std::unique_ptr<CombinePattern>(new CombinePattern());
   res->decode(decoder);
   return res.release();
 }

@@ -615,7 +615,7 @@ void Funcdata::decodeJumpTable(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLELIST);
   while(decoder.peekElement() != 0) {
-    std::unique_ptr<JumpTable> jt = std::make_unique<JumpTable>(glb);
+    std::unique_ptr<JumpTable> jt = std::unique_ptr<JumpTable>(new JumpTable(glb));
     jt->decode(decoder);
     jumpvec.push_back(jt.release());
   }

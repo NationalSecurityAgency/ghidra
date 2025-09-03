@@ -744,9 +744,9 @@ ProtoModel *Architecture::decodeProto(Decoder &decoder)
   std::unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    model = std::make_unique<ProtoModel>(this);
+    model = std::unique_ptr<ProtoModel>(new ProtoModel(this));
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    model = std::make_unique<ProtoModelMerged>(this);
+    model = std::unique_ptr<ProtoModel>(new ProtoModelMerged(this));
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 

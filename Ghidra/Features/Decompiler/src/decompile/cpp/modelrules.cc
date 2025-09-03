@@ -256,15 +256,15 @@ DatatypeFilter *DatatypeFilter::decodeFilter(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_DATATYPE);
   string nm = decoder.readString(ATTRIB_NAME);
   if (nm == "any") {
-    filter = std::make_unique<SizeRestrictedFilter>();
+    filter = std::unique_ptr<DatatypeFilter>(new SizeRestrictedFilter());
   }
   else if (nm == "homogeneous-float-aggregate") {
-    filter = std::make_unique<HomogeneousAggregate>(TYPE_FLOAT,4,0,0);
+    filter = std::unique_ptr<DatatypeFilter>(new HomogeneousAggregate(TYPE_FLOAT,4,0,0));
   }
   else {
     // If no other name matches, assume this is a metatype
     type_metatype meta = string2metatype(nm);
-    filter = std::make_unique<MetaTypeFilter>(meta);
+    filter = std::unique_ptr<DatatypeFilter>(new MetaTypeFilter(meta));
   }
   filter->decode(decoder);
   decoder.closeElement(elemId);
@@ -454,11 +454,11 @@ QualifierFilter *QualifierFilter::decodeFilter(Decoder &decoder)
   std::unique_ptr<QualifierFilter> filter;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_VARARGS)
-    filter = std::make_unique<VarargsFilter>();
+    filter = std::unique_ptr<QualifierFilter>(new VarargsFilter());
   else if (elemId == ELEM_POSITION)
-    filter = std::make_unique<PositionMatchFilter>(-1);
+    filter = std::unique_ptr<QualifierFilter>(new PositionMatchFilter(-1));
   else if (elemId == ELEM_DATATYPE_AT)
-    filter = std::make_unique<DatatypeMatchFilter>();
+    filter = std::unique_ptr<QualifierFilter>(new DatatypeMatchFilter());
   else
     return (QualifierFilter *)0;
   filter->decode(decoder);
@@ -595,24 +595,24 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
   std::unique_ptr<AssignAction> action;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_GOTO_STACK)
-    action = std::make_unique<GotoStack>(res,0);
+    action = std::unique_ptr<AssignAction>(new GotoStack(res,0));
   else if (elemId == ELEM_JOIN) {
-    action = std::make_unique<MultiSlotAssign>(res);
+    action = std::unique_ptr<AssignAction>(new MultiSlotAssign(res));
   }
   else if (elemId == ELEM_CONSUME) {
-    action = std::make_unique<ConsumeAs>(TYPECLASS_GENERAL,res);
+    action = std::unique_ptr<AssignAction>(new ConsumeAs(TYPECLASS_GENERAL,res));
   }
   else if (elemId == ELEM_CONVERT_TO_PTR) {
-    action = std::make_unique<ConvertToPointer>(res);
+    action = std::unique_ptr<AssignAction>(new ConvertToPointer(res));
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = std::make_unique<HiddenReturnAssign>(res,hiddenret_specialreg);
+    action = std::unique_ptr<AssignAction>(new HiddenReturnAssign(res,hiddenret_specialreg));
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
-    action = std::make_unique<MultiMemberAssign>(TYPECLASS_GENERAL,false,res->isBigEndian(),res);
+    action = std::unique_ptr<AssignAction>(new MultiMemberAssign(TYPECLASS_GENERAL,false,res->isBigEndian(),res));
   }
   else if (elemId == ELEM_JOIN_DUAL_CLASS) {
-    action = std::make_unique<MultiSlotDualAssign>(res);
+    action = std::unique_ptr<AssignAction>(new MultiSlotDualAssign(res));
   }
   else
     throw DecoderError("Expecting model rule action");
@@ -657,13 +657,13 @@ AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListSta
   uint4 elemId = decoder.peekElement();
 
   if (elemId == ELEM_CONSUME_EXTRA) {
-    action = std::make_unique<ConsumeExtra>(res);
+    action = std::unique_ptr<AssignAction>(new ConsumeExtra(res));
   }
   else if (elemId == ELEM_EXTRA_STACK) {
-    action = std::make_unique<ExtraStack>(res);
+    action = std::unique_ptr<AssignAction>(new ExtraStack(res));
   }
   else if (elemId == ELEM_CONSUME_REMAINING) {
-	action = std::make_unique<ConsumeRemaining>(res);
+	action = std::unique_ptr<AssignAction>(new ConsumeRemaining(res));
   }
   else
     throw DecoderError("Expecting model rule sideeffect");

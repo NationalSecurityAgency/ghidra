@@ -260,15 +260,15 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
   uint4 elemId = decoder.peekElement();
   std::unique_ptr<AddrSpace> res;
   if (elemId == ELEM_SPACE_BASE)
-    res = std::make_unique<SpacebaseSpace>(this,trans);
+    res = std::unique_ptr<SpacebaseSpace>(new SpacebaseSpace(this,trans));
   else if (elemId == ELEM_SPACE_UNIQUE)
-    res = std::make_unique<UniqueSpace>(this,trans);
+    res = std::unique_ptr<UniqueSpace>(new UniqueSpace(this,trans));
   else if (elemId == ELEM_SPACE_OTHER)
-    res = std::make_unique<OtherSpace>(this,trans);
+    res = std::unique_ptr<OtherSpace>(new OtherSpace(this,trans));
   else if (elemId == ELEM_SPACE_OVERLAY)
-    res = std::make_unique<OverlaySpace>(this,trans);
+    res = std::unique_ptr<OverlaySpace>(new OverlaySpace(this,trans));
   else
-    res = std::make_unique<AddrSpace>(this,trans,IPTR_PROCESSOR);
+    res = std::unique_ptr<AddrSpace>(new AddrSpace(this,trans,IPTR_PROCESSOR));
 
   res->decode(decoder);
   return res.release();
