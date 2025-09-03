@@ -731,7 +731,7 @@ public class MachoProgramBuilder {
 			return;
 		}
 		try {
-			Address addr = MachoProgramUtils.addExternalBlock(program,
+			Address addr = AbstractProgramLoader.addExternalBlock(program,
 				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
 			monitor.initialize(undefinedSymbols.size(), "Processing undefined symbols...");
 			for (NList symbol : undefinedSymbols) {

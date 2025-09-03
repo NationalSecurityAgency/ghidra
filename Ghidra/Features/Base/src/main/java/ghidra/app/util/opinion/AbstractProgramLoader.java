@@ -35,8 +35,7 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.InvalidAddressException;
-import ghidra.program.model.mem.MemoryConflictException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
@@ -454,6 +453,39 @@ public abstract class AbstractProgramLoader implements Loader {
 		catch (OverlappingFunctionException e) {
 			// ignore
 		}
+	}
+
+	/**
+	 * Adds the {@link MemoryBlock#EXTERNAL_BLOCK_NAME EXERNAL block} to memory, or adds to an
+	 * existing one
+	 * 
+	 * @param program The {@link Program}
+	 * @param size The desired size of the new EXTERNAL block
+	 * @param log The {@link MessageLog}
+	 * @return The {@link Address} of the new (or new piece) of EXTERNAL block
+	 * @throws Exception if there was an issue creating or adding to the EXTERNAL block
+	 */
+	public static Address addExternalBlock(Program program, long size, MessageLog log)
+			throws Exception {
+		Memory mem = program.getMemory();
+		MemoryBlock externalBlock = mem.getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
+		Address ret;
+		if (externalBlock != null) {
+			ret = externalBlock.getEnd().add(1);
+			MemoryBlock newBlock =
+				mem.createBlock(externalBlock, MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size);
+			mem.join(externalBlock, newBlock);
+		}
+		else {
+			ret = MachoProgramUtils.getNextAvailableAddress(program);
+			externalBlock =
+				mem.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size, false);
+			externalBlock.setWrite(true);
+			externalBlock.setArtificial(true);
+			externalBlock.setComment(
+				"NOTE: This block is artificial and is used to make relocations work correctly");
+		}
+		return ret;
 	}
 
 	/**
