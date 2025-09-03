@@ -533,6 +533,9 @@ void ValueSymbol::encodeHeader(Encoder &encoder) const
 void ValueSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   decoder.closeElement(sla::ELEM_VALUE_SYM.getId());
@@ -614,6 +617,9 @@ void ValueMapSymbol::encodeHeader(Encoder &encoder) const
 void ValueMapSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -693,6 +699,9 @@ void NameSymbol::encodeHeader(Encoder &encoder) const
 void NameSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -827,6 +836,10 @@ void ContextSymbol::decode(Decoder &decoder,SleighBase *trans)
   if (lowMissing || highMissing) {
     throw DecoderError("Missing high/low attributes");
   }
+
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   decoder.closeElement(sla::ELEM_CONTEXT_SYM.getId());
@@ -931,6 +944,9 @@ void VarnodeListSymbol::encodeHeader(Encoder &encoder) const
 void VarnodeListSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (patval)
+    throw DecoderError("Already decoded symbol");
+
   patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
   patval->layClaim();
   while(decoder.peekElement() != 0) {
@@ -1075,6 +1091,9 @@ void OperandSymbol::encodeHeader(Encoder &encoder) const
 void OperandSymbol::decode(Decoder &decoder,SleighBase *trans)
 
 {
+  if (defexp || localexp)
+    throw DecoderError("Already decoded symbol");
+
   defexp = (PatternExpression *)0;
   triple = (TripleSymbol *)0;
   flags = 0;
@@ -1101,6 +1120,7 @@ void OperandSymbol::decode(Decoder &decoder,SleighBase *trans)
   localexp = (OperandValue *)PatternExpression::decodeExpression(decoder,trans);
   localexp->layClaim();
   if (decoder.peekElement() != 0) {
+
     defexp = PatternExpression::decodeExpression(decoder,trans);
     defexp->layClaim();
   }
