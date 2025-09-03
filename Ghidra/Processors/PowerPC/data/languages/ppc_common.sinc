@@ -1862,8 +1862,8 @@ TOm: ""			is TO { }
 CTR_DEC: "z"	is BO_3=1  	{CTR = CTR-1; tmp:1 = (CTR == 0); export tmp; }
 CTR_DEC: "nz"	is BO_3=0  	{CTR = CTR-1; tmp:1 = (CTR != 0); export tmp; }
 
-CC_TF: "t"		is BO_1=1	{}
-CC_TF: "f"		is BO_1=0	{}
+CC_TF: "t"		is BO_1=1	{ tmp:1 = 1; export tmp; }
+CC_TF: "f"		is BO_1=0	{ tmp:1 = 0; export tmp; }
 
 # OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=129 & BIT_0=0
 
