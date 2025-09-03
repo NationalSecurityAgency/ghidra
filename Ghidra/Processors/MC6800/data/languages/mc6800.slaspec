@@ -1,0 +1,927 @@
+# sleigh specification file for Motorola 6800/6802/6808
+
+define endian=big;
+define alignment=1;
+
+@define IRQ_VECTOR  "0xFFF8"
+@define SWI_VECTOR  "0xFFFA"
+@define NMI_VECTOR  "0xFFFC"
+@define RST_VECTOR  "0xFFFE"
+
+define space RAM     type=ram_space      size=2  default;
+define space register type=register_space size=1;
+
+# 8-bit registers A, B
+define register offset=0 size=1 [ A B ];
+
+# 8-bit condition code register
+define register offset=8 size=1 [ CC ];
+# 16-bit registers:
+#    PC: Program counter
+#    S:  Stack pointer
+#    X: index register
+define register offset=16 size=2 [ PC X S ];
+
+# define status bits: (See also 8051/z80).
+@define C "CC[0,1]" # C: Carry (or borrow) flag
+@define V "CC[1,1]" # V: Overflow flag
+@define Z "CC[2,1]" # Z: Zero result
+@define N "CC[3,1]" # N: Negative result (twos complement)
+@define I "CC[4,1]" # I: IRQ interrupt masked
+@define H "CC[5,1]" # H: Half carry flag
+
+define token opbyte (8)
+    op        = (0,7)
+    addrMode  = (4,5)
+    acc_4     = (4,4)
+;
+
+define token data8 (8)
+    imm8      = (0,7)
+    simm8     = (0,7) signed
+;
+
+define token data (16)
+    imm16     = (0,15)
+;
+
+attach variables acc_4 [ A B ];
+
+################################################################
+# Constructors
+################################################################
+
+REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
+
+# 1-byte operand, immediate/direct/indexed/extended addressing mode
+OP1: "#"imm8    is addrMode=0; imm8
+{
+	# For some reason this needs explicit sizing, or the p-code
+	# ends up picking up a zero value for all #imm8 operands.
+	local tmp:1 = imm8;
+    export tmp;
+}
+OP1: imm8    is addrMode=1; imm8
+{
+    export *:1 imm8;
+}
+OP1: imm8,X  is addrMode=2 & X; imm8
+{
+    local tmp:2 = imm8 + X;
+    export *:1 tmp;
+}
+OP1: imm16    is addrMode=3; imm16
+{
+    export *:1 imm16;
+}
+
+# 2-byte operand, direct/indexed/extended addressing mode
+OP2: "#"imm16    is addrMode=0; imm16
+{
+    local tmp:2 = imm16;
+    export tmp;
+}
+OP2: imm8    is addrMode=1; imm8
+{
+    export *:2 imm8;
+}
+OP2: imm8,X      is addrMode=2 & X; imm8
+{
+    local tmp:2 = X + imm8;
+    export *:2 tmp;
+}
+OP2: imm16      is addrMode=3; imm16
+{
+    export *:2 imm16;
+}
+
+# 2-byte EA operand for JMP/JSR
+EA2: imm8,X      is addrMode=2 & X; imm8
+{
+    local tmp:2 = X + imm8;
+    export tmp;
+}
+EA2: imm16    is addrMode=3; imm16
+{
+    local tmp:2 = imm16;
+    export tmp;
+}
+
+
+################################################################
+# Macros
+################################################################
+
+macro setNZFlags(result)
+{
+    $(Z) = (result == 0);
+    $(N) = (result s< 0);
+}
+
+macro setHFlag(reg, op)
+{
+    local mask = 0x0F; # Low nibble mask
+
+    $(H) = (((reg & mask) + (op & mask)) >> 4) & 1;
+}
+
+# Negate twos complement value in op.
+# P-code INT_2COMP.
+macro negate(op)
+{
+    op = -op;
+    $(V) = (op == 0x80);
+    $(C) = (op != 0);
+    setNZFlags(op);
+}
+
+# Logical complement of op. (0 => 1; 1 => 0)
+# P-code INT_NEGATE.
+macro complement(op)
+{
+    $(V) = 0;
+    $(C) = 1;
+    op = ~op;
+    setNZFlags(op);
+}
+
+macro logicalShiftRight(op)
+{
+    $(C) = op & 1;
+    op = op >> 1;
+    $(Z) = (op == 0);
+    $(N) = 0;
+}
+
+macro rotateRightWithCarry(op)
+{
+    local carryOut = $(C) << 7;
+    $(C) = op & 1;
+    op = (op s>> 1) | carryOut;
+    setNZFlags(op);
+}
+
+macro rotateLeftWithCarry(op)
+{
+    local carryIn = $(C);
+    $(C) = op >> 7;
+    op = (op << 1) | carryIn;
+    setNZFlags(op);
+}
+
+# Signed shift right.
+# P-code INT_SRIGHT.
+macro arithmeticShiftRight(op)
+{
+    $(C) = op & 1;
+    op = (op s>> 1);
+    setNZFlags(op);
+}
+
+macro logicalShiftLeft(op)
+{
+    $(C) = (op >> 7);
+    op = op << 1;
+    $(Z) = (op == 0);
+    $(N) = (op >> 7);
+}
+
+macro increment(op)
+{
+    $(V) = (op == 0x7F);
+    op = op + 1;
+    setNZFlags(op);
+}
+
+macro decrement(op)
+{
+    $(V) = (op == 0x80);
+    op = op - 1;
+    setNZFlags(op);
+}
+
+macro test(op)
+{
+    $(V) = 0;
+    setNZFlags(op);
+}
+
+macro clear(op)
+{
+    $(V) = 0;
+    op = 0;
+    $(Z) = 1;
+    $(N) = 0;
+}
+
+macro addition(reg, op)
+{
+    $(C) = carry(reg, op);
+    $(V) = scarry(reg, op);
+
+    reg = reg + op;
+
+    setNZFlags(reg);
+}
+
+macro additionWithCarry(reg, op)
+{
+    local carryIn = $(C);
+    local mask = 0x0F; # Low nibble mask
+    local tmpResult = reg + op;
+
+    $(H) = (((reg & mask) + (op & mask) + carryIn) >> 4) & 1;
+    $(C) = carry(reg, op) || carry(tmpResult, carryIn);
+    $(V) = scarry(reg, op) ^^ scarry(tmpResult, carryIn);
+
+    reg = tmpResult + carryIn;
+
+    setNZFlags(reg);
+}
+
+macro subtraction(reg, op)
+{
+    $(V) = sborrow(reg, op);
+    reg = reg - op;
+    setNZFlags(reg);
+    $(C) = (reg < op);
+}
+
+macro subtractionWithCarry(reg, op)
+{
+    local carryIn = $(C);
+    local tmpResult = reg - op;
+
+    $(C) = (reg < op) || (tmpResult < carryIn);
+    $(V) = sborrow(reg, op) ^^ sborrow(tmpResult, carryIn);
+
+    reg = tmpResult - carryIn;
+
+    setNZFlags(reg);
+}
+
+macro compare(reg, op)
+{
+    $(V) = sborrow(reg, op);
+    local tmp = reg - op;
+    setNZFlags(tmp);
+    $(C) = (tmp < op);
+}
+
+macro logicalAnd(reg, op)
+{
+    reg = reg & op;
+    setNZFlags(reg);
+    $(V) = 0;
+}
+
+macro logicalOr(reg, op)
+{
+    reg = reg | op;
+    setNZFlags(reg);
+    $(V) = 0;
+}
+
+macro logicalExclusiveOr(reg, op)
+{
+    reg = reg ^ op;
+    setNZFlags(reg);
+    $(V) = 0;
+}
+
+macro bitTest(reg, op)
+{
+    local tmp = reg & op;
+    setNZFlags(tmp);
+    $(V) = 0;
+}
+
+macro loadRegister(reg, op)
+{
+    reg = op;
+    setNZFlags(reg);
+    $(V) = 0;
+}
+
+macro storeRegister(reg, op)
+{
+    op = reg;
+    setNZFlags(reg);
+    $(V) = 0;
+}
+
+# Push 1 byte operand op
+macro Push1(reg, op)
+{
+    *:1 reg = op;
+    reg = reg - 1;
+}
+
+# Push 2 byte operand op
+macro Push2(reg, op)
+{
+    reg = reg - 1;
+    *:2 reg = op;
+    reg = reg - 1;
+}
+
+# Pull 1 byte operand op
+macro Pull1(reg, op)
+{
+    reg = reg + 1;
+    op = *:1 reg;
+}
+
+# Pull 2 byte operand op
+macro Pull2(reg, op)
+{
+    reg = reg + 1;
+    op = *:2 reg;
+    reg = reg + 1;
+}
+
+macro PushEntireState()
+{
+    local tmp:2 = inst_next;
+
+    Push2(S, tmp); # return PC address
+    Push2(S, X);
+    Push1(S, A);
+    Push1(S, B);
+    Push1(S, CC);
+}
+
+################################################################
+# Instructions
+################################################################
+
+################################################################
+# Opcode 0x00 - 0x0F, misc operations
+################################################################
+
+:NOP    is op=0x01
+{
+	# Intentional NOP.
+	goto inst_next;
+}
+
+:TAP    is op=0x06
+{
+    CC = A & 0x1F;
+}
+
+:TPA    is op=0x07
+{
+    A = CC;
+}
+
+:INX    is op=0x08
+{
+    X = X + 1;
+    $(Z) = (X == 0);
+}
+
+:DEX    is op=0x09
+{
+    X = X - 1;
+    $(Z) = (X == 0);
+}
+
+:CLV    is op=0x0A
+{
+    $(V) = 0;
+}
+
+:SEV     is op=0x0B
+{
+    $(V) = 1;
+}
+
+:CLC     is op=0x0C
+{
+    $(C) = 0;
+}
+
+:SEC     is op=0x0D
+{
+    $(C) = 1;
+}
+
+:CLI     is op=0x0E
+{
+    $(I) = 0;
+}
+
+:SEI     is op=0x0F
+{
+    $(I) = 1;
+}
+
+################################################################
+# Opcode 0x40 - 0x4F, register A addressing
+# Opcode 0x50 - 0x5F, register B addressing
+# Opcode 0x60 - 0x6F, indexed addressing
+# Opcode 0x70 - 0x7F, extended addressing
+################################################################
+
+:NEG^acc_4    is (op=0x40 | op=0x50) & acc_4
+{
+    negate(acc_4);
+}
+
+:NEG OP1    is (op=0x60 | op=0x70) ... & OP1
+{
+    negate(OP1);
+}
+
+:COM^acc_4 	is (op=0x43 | op=0x53) & acc_4
+{
+    complement(acc_4);
+}
+
+:COM OP1    is (op=0x63 | op=0x73) ... & OP1
+{
+    complement(OP1);
+}
+
+:LSR^acc_4 	is (op=0x44 | op=0x54) & acc_4
+{
+    logicalShiftRight(acc_4);
+}
+
+:LSR OP1    is (op=0x64 | op=0x74) ... & OP1
+{
+    logicalShiftRight(OP1);
+}
+
+:ROR^acc_4 	is (op=0x46 | op=0x56) & acc_4
+{
+    rotateRightWithCarry(acc_4);
+}
+
+:ROR OP1    is (op=0x66 | op=0x76) ... & OP1
+{
+    rotateRightWithCarry(OP1);
+}
+
+:ASR^acc_4 	is (op=0x47 | op=0x57) & acc_4
+{
+    arithmeticShiftRight(acc_4);
+}
+
+:ASR OP1    is (op=0x67 | op=0x77) ... & OP1
+{
+    arithmeticShiftRight(OP1);
+}
+
+:ASL^acc_4 	is (op=0x48 | op=0x58) & acc_4
+{
+    logicalShiftLeft(acc_4);
+}
+
+:ASL OP1    is (op=0x68 | op=0x78) ... & OP1
+{
+    logicalShiftLeft(OP1);
+}
+
+:ROL^acc_4    is (op=0x49 | op=0x59) & acc_4
+{
+    rotateLeftWithCarry(acc_4);
+}
+
+:ROL OP1    is (op=0x69 | op=0x79) ... & OP1
+{
+    rotateLeftWithCarry(OP1);
+}
+
+:DEC^acc_4    is (op=0x4A | op=0x5A) & acc_4
+{
+    decrement(acc_4);
+}
+
+:DEC OP1    is (op=0x6A | op=0x7A) ... & OP1
+{
+    decrement(OP1);
+}
+
+:INC^acc_4    is (op=0x4C | op=0x5C) & acc_4
+{
+    increment(acc_4);
+}
+
+:INC OP1    is (op=0x6C | op=0x7C) ... & OP1
+{
+    increment(OP1);
+}
+
+:TST^acc_4    is (op=0x4D | op=0x5D) & acc_4
+{
+    test(acc_4);
+}
+
+:TST OP1    is (op=0x6D | op=0x7D) ... & OP1
+{
+    test(OP1);
+}
+
+:JMP EA2    is (op=0x6E | op=0x7E) ... & EA2
+{
+    local target:2 = EA2;
+    goto [target];
+}
+
+:CLR^acc_4    is (op=0x4F | op=0x5F) & acc_4
+{
+    clear(acc_4);
+}
+
+:CLR OP1    is (op=0x6F | op=0x7F) ... & OP1
+{
+    clear(OP1);
+}
+
+################################################################
+# Opcode 0x10 - 0x1F, misc. addressing
+################################################################
+
+:SBA    is op=0x10
+{
+    subtraction(A, B);
+}
+
+:CBA    is op=0x11
+{
+    compare(A, B);
+}
+
+:TAB    is op=0x16
+{
+    loadRegister(B, A);
+}
+
+:TBA    is op=0x17
+{
+    loadRegister(A, B);
+}
+
+:DAA    is op=0x19
+{
+    local highA:1 = A >> 4;
+    local lowA:1  = A & 0x0F;
+    local cc1 = ($(C) == 1 | highA > 9 | (highA > 8) & (lowA > 9));
+    local cc2 = ($(H) == 1 | lowA > 9);
+
+    if ( cc1 & cc2 )
+    goto <case1>;
+    if ( cc1 )
+    goto <case2>;
+    if ( cc2 )
+    goto <case3>;
+    goto <exitDAA>;
+
+    <case1>
+    $(C) = carry(A, 0x66);
+    A = A + 0x66;
+    goto <exitDAA>;
+    <case2>
+    $(C) = carry(A, 0x60);
+    A = A + 0x60;
+    goto <exitDAA>;
+    <case3>
+    $(C) = carry(A, 0x06);
+    A = A + 0x06;
+    goto <exitDAA>;
+
+    <exitDAA>
+    setNZFlags(A);
+}
+
+:ABA    is op=0x1B
+{
+    addition(A, B);
+}
+
+################################################################
+# Opcode 0x20 - 0x2F, relative addressing
+################################################################
+
+:BRA REL    is op=0x20; REL
+{
+    goto REL;
+}
+
+:BHI REL    is op=0x22; REL
+{
+    local tmp = $(C) + $(Z);
+    if (tmp == 0) goto REL;
+}
+
+:BLS REL    is op=0x23; REL
+{
+    local tmp = $(C) + $(Z);
+    if (tmp) goto REL;
+}
+
+#:BHS REL    is op=0x24; REL # See BCC
+
+:BCC REL	is op=0x24; REL
+{
+    if ($(C) == 0) goto REL;
+}
+
+#:BLO REL    is op=0x25; REL # see BCS
+
+:BCS REL    is op=0x25; REL
+{
+    if ($(C)) goto REL;
+}
+
+:BNE REL     is op=0x26; REL
+{
+    if ($(Z) == 0) goto REL;
+}
+
+:BEQ REL    is op=0x27; REL
+{
+    if ($(Z)) goto REL;
+}
+
+:BVC REL    is op=0x28; REL
+{
+    if ($(V) == 0) goto REL;
+}
+
+:BVS REL    is op=0x29; REL
+{
+    if ($(V)) goto REL;
+}
+
+:BPL REL    is op=0x2A; REL
+{
+    if ($(N) == 0) goto REL;
+}
+
+:BMI REL    is op=0x2B; REL
+{
+    if ($(N)) goto REL;
+}
+
+:BGE REL    is op=0x2C; REL
+{
+    if ($(N) == $(V)) goto REL;
+}
+
+:BLT REL    is op=0x2D; REL
+{
+    local tmp = $(C) ^ $(Z);
+    if (tmp) goto REL;
+}
+
+:BGT REL    is op=0x2E; REL
+{
+    if (($(N) == $(V)) & $(C)) goto REL;
+}
+
+:BLE REL     is op=0x2F; REL
+{
+    local tmp = $(N) ^ $(V);
+    if (tmp | $(Z)) goto REL;
+}
+
+################################################################
+# Opcode 0x30 - 0x3F, misc. addressing
+################################################################
+
+:TSX    is op=0x30
+{
+    X = S + 1;
+}
+
+:INS    is op=0x31
+{
+    S = S + 1;
+}
+
+:PULA   is op=0x32
+{
+    Pull1(S, A);
+}
+
+:PULB   is op=0x33
+{
+    Pull1(S, B);
+}
+
+:DES    is op=0x34
+{
+    S = S - 1;
+}
+
+:TXS    is op=0x35
+{
+    S = X - 1;
+}
+
+:PSHA   is op=0x36
+{
+    Push1(S, A);
+}
+
+:PSHB   is op=0x37
+{
+    Push1(S, B);
+}
+
+:RTS    is op=0x39
+{
+    local addr:2;
+    Pull2(S, addr);
+    return [addr];
+}
+
+:RTI    is op=0x3B
+{
+    local addr:2;
+    Pull1(S, CC);
+    Pull1(S, B);
+    Pull1(S, A);
+    Pull2(S, X);
+    Pull2(S, addr);
+    return [addr];
+}
+
+:WAI    is op=0x3E
+{
+    PushEntireState();
+}
+
+:SWI    is op=0x3F
+{
+    PushEntireState();
+    $(I) = 1;
+    tmp:2 = $(SWI_VECTOR);
+    call[tmp];
+}
+
+################################################################
+# Opcode 0x80 - 0x8F, immediate addressing
+# Opcode 0x90 - 0x9F, direct addressing
+# Opcode 0xA0 - 0xAF, indexed addressing
+# Opcode 0xB0 - 0xBF, extended addressing
+# Opcode 0xC0 - 0xCF, immediate addressing
+# Opcode 0xD0 - 0xDF, direct addressing
+# Opcode 0xE0 - 0xEF, indexed addressing
+# Opcode 0xF0 - 0xFF, extended addressing
+################################################################
+
+:SUBA OP1    is (op=0x80 | op=0x90 | op=0xA0 | op=0xB0) ... & OP1
+{
+    subtraction(A, OP1);
+}
+
+:SUBB OP1    is (op=0xC0 | op=0xD0 | op=0xE0 | op=0xF0) ... & OP1
+{
+    subtraction(B, OP1);
+}
+
+:CMPA OP1    is (op=0x81 | op=0x91 | op=0xA1 | op=0xB1) ... & OP1
+{
+    compare(A, OP1);
+}
+
+:CMPB OP1    is (op=0xC1 | op=0xD1 | op=0xE1 | op=0xF1) ... & OP1
+{
+    compare(B, OP1);
+}
+
+:SBCA OP1    is (op=0x82 | op=0x92 | op=0xA2 | op=0xB2) ... & OP1
+{
+    subtractionWithCarry(A, OP1);
+}
+
+:SBCB OP1    is (op=0xC2 | op=0xD2 | op=0xE2 | op=0xF2) ... & OP1
+{
+    subtractionWithCarry(B, OP1);
+}
+
+:ANDA OP1    is (op=0x84 | op=0x94 | op=0xA4 | op=0xB4) ... & OP1
+{
+    logicalAnd(A, OP1);
+}
+
+:ANDB OP1    is (op=0xC4 | op=0xD4 | op=0xE4 | op=0xF4) ... & OP1
+{
+    logicalAnd(B, OP1);
+}
+
+:BITA OP1    is (op=0x85 | op=0x95 | op=0xA5 | op=0xB5) ... & OP1
+{
+    bitTest(A, OP1);
+}
+
+:BITB OP1    is (op=0xC5 | op=0xD5 | op=0xE5 | op=0xF5) ... & OP1
+{
+    bitTest(B, OP1);
+}
+
+:LDAA OP1    is (op=0x86 | op=0x96 | op=0xA6 | op=0xB6) ... & OP1
+{
+    loadRegister(A, OP1);
+}
+
+:LDAB OP1    is (op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
+{
+    loadRegister(B, OP1);
+}
+
+:STAA OP1    is (op=0x97 | op=0xA7 | op=0xB7) ... & OP1
+{
+    storeRegister(A, OP1);
+}
+
+:STAB OP1    is (op=0xD7 | op=0xE7 | op=0xF7) ... & OP1
+{
+    storeRegister(B, OP1);
+}
+
+:EORA OP1    is (op=0x88 | op=0x98 | op=0xA8 | op=0xB8) ... & OP1
+{
+    logicalExclusiveOr(A, OP1);
+}
+
+:EORB OP1    is (op=0xC8 | op=0xD8 | op=0xE8 | op=0xF8) ... & OP1
+{
+    logicalExclusiveOr(B, OP1);
+}
+
+:ADCA OP1    is (op=0x89 | op=0x99 | op=0xA9 | op=0xB9) ... & OP1
+{
+    additionWithCarry(A, OP1);
+}
+
+:ADCB OP1    is (op=0xC9 | op=0xD9 | op=0xE9 | op=0xF9) ... & OP1
+{
+    additionWithCarry(B, OP1);
+}
+
+:ORAA OP1    is (op=0x8A | op=0x9A | op=0xAA | op=0xBA) ... & OP1
+{
+    logicalOr(A, OP1);
+}
+
+:ORAB OP1    is (op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
+{
+    logicalOr(B, OP1);
+}
+
+:ADDA OP1    is (op=0x8B | op=0x9B | op=0xAB | op=0xBB) ... & OP1
+{
+    setHFlag(A, OP1);
+    addition(A, OP1);
+}
+
+:ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
+{
+    setHFlag(A, OP1);
+    addition(B, OP1);
+}
+
+:CPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+{
+    compare(X, OP2);
+}
+
+:BSR REL    is op=0x8D; REL
+{
+    local addr:2 = inst_next;
+    Push2(S, addr);
+    call REL;
+}
+
+:JSR EA2    is (op=0xAD | op=0xBD) ... & EA2
+{
+    local addr:2 = inst_next;
+    Push2(S, addr);
+    local target:2 = EA2;
+    call [target];
+}
+
+:LDS OP2    is (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
+{
+    loadRegister(S, OP2);
+}
+
+:LDX OP2    is (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
+{
+    loadRegister(X, OP2);
+}
+
+:STS OP2    is (op=0x9F | op=0xAF | op=0xBF) ... & OP2
+{
+    storeRegister(S, OP2);
+}
+
+:STX OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
+{
+    storeRegister(X, OP2);
+}
