@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import ghidra.util.Swing;
@@ -225,6 +226,14 @@ public class WindowUtilities {
 	 * the size of the given <code>child</code>.
 	 */
 	public static Point centerOnComponent(Component parent, Component child) {
+
+		// Clients inside of scroll panes can be much larger than what is visible.  We only wish to
+		// use the visible size when calculating the center position.
+		Container grandParent = parent.getParent();
+		if (grandParent instanceof JViewport) {
+			parent = grandParent.getParent();
+		}
+
 		Dimension parentSize = parent.getSize();
 		Dimension childSize = child.getSize();
 		int x = (parentSize.width >> 1) - (childSize.width >> 1);
