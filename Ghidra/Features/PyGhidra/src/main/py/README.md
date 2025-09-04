@@ -216,13 +216,19 @@ def program_loader() -> "ProgramLoader.Builder":
     """
 ```
 
-### pyghidra.dummy_monitor()
+### pyghidra.monitor()
 ```python
-def dummy_monitor() -> "TaskMonitor":
+def monitor(
+        timeout: Optional[int] = None,
+        change_callback: Callable[[str, int, int], None] = None
+    ) -> "PyGhidraTaskMonitor":
     """
-    Convenience function to get the Ghidra "TaskMonitor.DUMMY" object.
+    Convenience function to get a "PyGhidraTaskMonitor" object.
 
-    :return: The Ghidra "TaskMonitor.DUMMY" object.
+    :param timeout: An optional number of seconds to wait before canceling the monitor.
+    :param change_callback: A optional function that gets called any time the monitor receives an 
+        update.
+    :return: A "PyGhidraTaskMonitor"  object.
     """
 ```
 
@@ -281,22 +287,22 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
         for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
             loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
             with loader.load() as load_results:
-                load_results.save(pyghidra.dummy_monitor())
+                load_results.save(pyghidra.monitor())
 
-    # Analyze the windows decompiler program
+    # Analyze the windows decompiler program for a maximum of 10 seconds
     with pyghidra.program_context(project, "/win_x86_64/decompile.exe") as program:
         analysis_props = pyghidra.analysis_properties(program)
         with pyghidra.transaction(program):
             analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
-        pyghidra.analyze(program)
-        program.save("Analyzed", pyghidra.dummy_monitor())
+        pyghidra.analyze(program, pyghidra.monitor(10))
+        program.save("Analyzed", pyghidra.monitor())
     
     # Walk the project and set a propery in each decompiler program
     def set_property(domain_file, program):
         with pyghidra.transaction(program):
             program_info = pyghidra.program_info(program)
             program_info.setString("PyGhidra Property", "Set by PyGhidra!")
-        program.save("Setting property", pyghidra.dummy_monitor())
+        program.save("Setting property", pyghidra.monitor())
     pyghidra.walk_programs(project, set_property, program_filter=lambda f, p: p.name.startswith("decompile"))
 
     # Load some bytes as a new program
@@ -305,7 +311,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
     loader.loaders("BinaryLoader").language("DATA:LE:64:default")
     with loader.load() as load_results:
-        load_results.save(pyghidra.dummy_monitor())
+        load_results.save(pyghidra.monitor())
 
     # Run a GhidraScript
     pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
