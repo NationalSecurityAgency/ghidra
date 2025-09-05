@@ -68,6 +68,7 @@ extern ElementId ELEM_TYPEREF;			///< Marshaling element \<typeref>
 //extern ElementId ELEM_USE_MS_CONVENTION;	///< Marshaling element \<use_MS_convention>
 extern ElementId ELEM_WCHAR_SIZE;		///< Marshaling element \<wchar_size>
 //extern ElementId ELEM_ZERO_LENGTH_BOUNDARY;	///< Marshaling element \<zero_length_boundary>
+extern ElementId ELEM_BITFIELD;			///< Marshaling element \<bitfield>
 
 /// Print a hex dump of a data buffer to stream
 extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr);
@@ -155,6 +156,7 @@ extern type_class metatype2typeclass(type_metatype meta);
 class Architecture;		// Forward declarations
 class PcodeOp;
 class Scope;
+class TypeStruct;
 class TypeFactory;
 class TypeField;
 struct DatatypeCompare;
@@ -182,7 +184,8 @@ protected:
     force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
     truncate_bigendian = 0x8000,	///< Pointer can be truncated and is big endian
     pointer_to_array = 0x10000,	///< Data-type is a pointer to an array
-    warning_issued = 0x20000	///< Data-type has an associated \e warning string
+    warning_issued = 0x20000,	///< Data-type has an associated \e warning string
+    has_bitfields = 0x40000	///< Data-type contains bitfields
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -230,6 +233,7 @@ public:
   bool isIncomplete(void) const { return (flags & type_incomplete)!=0; }	///< Is \b this an incompletely defined data-type
   bool needsResolution(void) const { return (flags & needs_resolution)!=0; }	///< Is \b this a union or a pointer to union
   bool hasWarning(void) const { return (flags & warning_issued)!=0; }	///< Has a \e warning been issued about \b this data-type
+  bool hasBitfields(void) const { return (flags & has_bitfields)!=0; }	///< Return \b true if \b this contains/overlaps bitfields
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   uint4 getDisplayFormat(void) const;				///< Get the display format for constants with \b this data-type
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
@@ -266,6 +270,14 @@ public:
   /// \return the i-th component sub-type
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }
 
+  /// \brief If \b this is a pointer, return the large data-type \b this points into
+  ///
+  /// If \b this is not a pointer, null is returned.  For ordinary pointers, the data-type being pointed
+  /// at is returned.  For a relative pointer, the innermost structured data-type is returned and the offset passed back.
+  /// \param off is used to pass back any offset
+  /// \return the data-type being pointed into or null
+  virtual Datatype *getPtrInto(int4 &off) const { return (Datatype *)0; }
+
   /// \brief Print (part of) the name of \b this data-type as short prefix for a label
   ///
   /// This is used for building variable names to give some indication of the variable's underlying data-type
@@ -292,14 +304,50 @@ public:
 /// \brief A field within a structure or union
 class TypeField {
 public:
-  int4 ident;			///< Id for identifying \b this within its containing structure or union
+  int4 ident;			///< Identifier of \b this within its containing structure or union
   int4 offset;			///< Offset (into containing structure or union) of subfield
   string name;			///< Name of subfield
   Datatype *type;		///< Data-type of subfield
   TypeField(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this field from a stream
   TypeField(int4 id,int4 off,const string &nm,Datatype *ct) { ident=id; offset=off; name=nm; type=ct; }	///< Construct from components
-  bool operator<(const TypeField &op2) const { return (offset < op2.offset); }	///< Compare based on offset
-  void encode(Encoder &encoder) const;			///< Encode \b this field to a stream
+  int4 compare(const TypeField &op2) const;	///< Compare \b this with another TypeField for propagation ordering
+  int4 compareDependency(const TypeField &op2) const;	///< Compare \b this with another TypeField for functional equivalence
+  void encode(Encoder &encoder) const;		///< Encode \b this field to a stream
+  static bool compareMaxByte(int4 off,const TypeField &field) {	///< Compare field end-point to the given offset
+    return (off < field.offset + field.type->getSize());
+  }
+};
+
+/// \brief A field within a structure that is not aligned or sized on byte boundaries
+class TypeBitField {
+public:
+  string name;			///< Name of bitfield
+  Datatype *type;		///< Underlying (integer) data-type
+  BitRange bits;		///< Description of the bitfield within its structure
+  int4 ident;			///< Identifier of \b this within containing structure
+  TypeBitField(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this bitfield from a stream
+  TypeBitField(int4 id,int4 numBits,bool isBigEndian,const string &nm,Datatype *ct);	///< Construct from components
+  int4 compare(const TypeBitField &op2) const;	///< Compare definition of \b this with another TypeBitField for propagation ordering
+  int4 compareDependency(const TypeBitField &op2) const;	///< Compare \b this with another TypeBitField for functional equivalence
+  void encode(Encoder &encoder) const;		///< Encode \b this bitfield to a stream
+  static bool compareMaxByte(int4 off,const TypeBitField &bitfield) {	///< Compare byte container end-point to the given offset
+    return (off < bitfield.bits.byteOffset + bitfield.bits.byteSize);
+  }
+};
+
+/// \brief Helper class for collecting bitfields intersecting a byte range within a (possibly nested) structure
+///
+/// A bitfield description, along with its immediate container, and offset within a root container all in one record.
+class BitFieldTriple {
+public:
+  const TypeStruct *immedContainer;	///< Immediate container of the bitfield
+  const TypeBitField *bitfield;		///< Description of the bitfield
+  int4 offset;				///< Byte offset of the immediate container within parent
+  BitFieldTriple(const TypeStruct *contain,const TypeBitField *bits,int4 off) {
+    immedContainer = contain; bitfield = bits; offset = off; }	///< Constructor
+
+  /// \brief Comparator putting bitfields in byte order, least to most significant
+  static bool compare(const BitFieldTriple &op1,const BitFieldTriple &op2);
 };
 
 /// Compare two Datatype pointers for equivalence of their description
@@ -421,6 +469,7 @@ public:
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return ptrto; }
+  virtual Datatype *getPtrInto(int4 &off) const { off=0; return ptrto; }
   virtual void printNameBase(ostream &s) const { s << 'p'; ptrto->printNameBase(s); }
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
@@ -508,16 +557,32 @@ public:
 class TypeStruct : public Datatype {
 protected:
   friend class TypeFactory;
-  vector<TypeField> field;			///< The list of fields
-  void setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
+  vector<TypeField> field;			///< List of fields
+  vector<TypeBitField> bitfield;		///< List of fields not aligned/sized on byte boundaries
+  /// \brief Helper function for decoding TypeField objects
+  struct FieldAccum {
+    int4 lastOff;		///< Offset of last field
+    int4 calcSize;		///< Current accumulated size of structure
+    int4 calcAlign;		///< Maximum alignment seen so far
+    string warning;		///< Warning(s) produced during decode
+  };
+  void setFields(const vector<TypeField> &fd,const vector<TypeBitField> &bit,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
+  void decodeField(Decoder &decoder,TypeFactory &typegrp,FieldAccum &accum);
+  void decodeBitField(Decoder &decoder,TypeFactory &typegrp,FieldAccum &accum);
   string decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
+  static void assignContiguousBitfields(vector<TypeBitField> &bitlist,int4 &pos,int4 &offset,int4 &newAlign);
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
   TypeStruct(void) : Datatype(0,-1,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
+  int4 numBitFields(void) const { return bitfield.size(); }	///< Return the number of bitfields contained by \b this
+  const TypeBitField &getBitField(int4 i) const { return bitfield[i]; }	///< Return the i-th bitfield
+  const TypeBitField *findMatchingBitField(const BitRange &range) const;	///< Return bitfield matching the given bit range
+  void collectBitFields(int4 baseOffset,vector<BitFieldTriple> &res,int4 offset,int4 sz) const;	///< Collect bitfield records that overlap given range
+  bool hasBitFieldsInRange(int4 offset,int4 sz) const;	///< Return \b true if \b this structure has 1 or more bitfields in the given byte range
   virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
@@ -532,7 +597,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign);	///< Assign field offsets
+  static void assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,uint4 &flags);
   static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
@@ -674,6 +739,7 @@ public:
   /// \return the offset value in \e byte units
   int4 getByteOffset(void) const { return offset; }
   virtual void printRaw(ostream &s) const;
+  virtual Datatype *getPtrInto(int4 &off) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointerRel(*this); }
@@ -798,6 +864,8 @@ class TypeFactory {
   void insertWarning(Datatype *dt,string warn);	///< Register a new data-type warning with \b this factory
   void removeWarning(Datatype *dt);		///< Remove the warning associated with the given data-type
   void resolveIncompleteTypedefs(void);		///< Redefine incomplete typedefs of data-types that are now complete
+  void setFields(const vector<TypeField> &fd,const vector<TypeBitField> &bit,TypeStruct *ot,int4 newSize,int4 newAlign,uint4 flags);
+  void setFields(const vector<TypeField> &fd,TypeUnion *ot,int4 newSize,int4 newAlign,uint4 flags);	///< Set fields on a TypeUnion
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id
@@ -820,8 +888,6 @@ public:
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
   void setDisplayFormat(Datatype *ct,uint4 format);	///< Set the display format associated with the given data-type
-  void setFields(const vector<TypeField> &fd,TypeStruct *ot,int4 newSize,int4 newAlign,uint4 flags);	///< Set fields on a TypeStruct
-  void setFields(const vector<TypeField> &fd,TypeUnion *ot,int4 newSize,int4 newAlign,uint4 flags);	///< Set fields on a TypeUnion
   void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
   void setEnumValues(const map<uintb,string> &nmap,TypeEnum *te);	///< Set named values for an enumeration
   Datatype *decodeType(Decoder &decoder);	///< Restore Datatype from a stream
@@ -849,7 +915,10 @@ public:
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
   TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
   TypePointer *resizePointer(TypePointer *ptr,int4 newSize);	///< Build a resized pointer based on the given pointer
+  Datatype *resizeInteger(Datatype *ct,int4 newSize);		///< Build a resized integer based on the given integer
   Datatype *getExactPiece(Datatype *ct,int4 offset,int4 size);	///< Get the data-type associated with piece of a structured data-type
+  void assignRawFields(TypeStruct *ct,vector<TypeField> &fd,vector<TypeBitField> &bit);
+  void assignRawFields(TypeUnion *ct,vector<TypeField> &fd);
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order

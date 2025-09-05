@@ -167,6 +167,7 @@ public:
     optoken,			///< Emit atom as operator
     typetoken,			///< Emit atom as operator
     fieldtoken,			///< Emit atom as structure field
+    bitfieldtoken,		///< Emit atom as structure bitfield
     casetoken,			///< Emit atom as a \e case label
     blanktoken			///< For anonymous types
   };
@@ -429,6 +430,24 @@ protected:
   /// \param op is the given PcodeOp performing the final operation of the expression
   virtual void emitExpression(const PcodeOp *op)=0;
 
+  /// \brief Emit a call as a \e constructor expression
+  ///
+  /// Use language specific constructor syntax to represent the CALL.
+  /// \param op is the CALL op
+  virtual void emitConstructor(const PcodeOp *op)=0;
+
+  /// \brief Emit STORE to a bit field
+  ///
+  /// Printing for the sequence: `STORE( ptr, INSERT( LOAD(ptr), val, #pos, #sz ) )`
+  /// \param op is the STORE
+  virtual void emitBitFieldStore(const PcodeOp *op)=0;
+
+  /// \brief Emit expression writing to a bitfield
+  ///
+  /// Printing for an expression rooted at INSERT
+  /// \param op is the INSERT
+  virtual void emitBitFieldExpression(const PcodeOp *op)=0;
+
   /// \brief Emit a function declaration
   ///
   /// This prints the formal defining prototype for a function.
@@ -577,9 +596,10 @@ public:
   virtual void opCpoolRefOp(const PcodeOp *op)=0;			///< Emit a CPOOLREF operator
   virtual void opNewOp(const PcodeOp *op)=0;				///< Emit a NEW operator
   virtual void opInsertOp(const PcodeOp *op)=0;				///< Emit an INSERT operator
-  virtual void opExtractOp(const PcodeOp *op)=0;			///< Emit an EXTRACT operator
+  virtual void opZpullOp(const PcodeOp *op)=0;				///< Emit a ZPULL operator
   virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
   virtual void opLzcountOp(const PcodeOp *op)=0;			///< Emit a LZCOUNT operator
+  virtual void opSpullOp(const PcodeOp *op)=0;				///< Emit an SPULL operator
   virtual string unnamedField(int4 off,int4 size);			///< Generate an artificial field name
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer

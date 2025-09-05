@@ -677,7 +677,7 @@ define alignment=<emphasis role="bold">integer</emphasis>;
 </informalexample>
 This specifies the byte alignment of instructions within their address
 space. It defaults to 1 or no alignment. When disassembling an
-instruction at a particular, the disassembler checks the alignment of
+instruction at a particular address, the disassembler checks the alignment of
 the address against this value and can opt to flag an unaligned
 instruction as an error.
 </para>
@@ -837,7 +837,7 @@ Many processors define registers that either consist of a single bit
 or otherwise don't use an integral number of bytes. A recurring
 example in many processors is the status register which is further
 subdivided into the overflow and result flags for the arithmetic
-instructions. These flags are typically have labels like ZF for the
+instructions. These flags typically have labels like ZF for the
 zero flag or CF for the carry flag and can be considered logical
 registers contained within the status register. SLEIGH allows
 registers to be defined like this using
@@ -1097,10 +1097,10 @@ We list all of the symbols that are predefined by SLEIGH.
 </informalexample>
 The most important of these to be aware of
 are <emphasis>inst_start</emphasis>
-and <emphasis>inst_next</emphasis>. These are family symbols which map
-in the context of particular instruction to the integer offset of
-either the address of the instruction or the address of the next
-instruction respectively. These are used in any relative branching
+and <emphasis>inst_next</emphasis>. These are family symbols that map
+to the integer offset of either the instruction's address or the next
+instruction's address, depending on the context of a particular instruction.
+These are used in any relative branching
 situation. The <emphasis>inst_next2</emphasis> is intended for conditional
 skip instruction situations.  The remaining symbols are rarely
 used. The <emphasis>const</emphasis> and <emphasis>unique</emphasis>
@@ -1624,7 +1624,7 @@ field.
 <title>The '&amp;' and '|' Operators</title>
 <para>
 More complicated patterns are built out of logical operators. The
-meaning of these are fairly straightforward. We can force two or more
+meanings of these are fairly straightforward. We can force two or more
 constraints to be true at the same time, a <emphasis>logical
 and</emphasis> ‘&amp;’, or we can require that either one constraint or
 another must be true, a <emphasis>logical or</emphasis> ‘|’. By using these with
@@ -1933,7 +1933,7 @@ if, when all the variables are evaluated, the equation is true.
 <informalexample>
 <programlisting>
 :xor r1,r2 is opcode=0xcd &amp; r1 &amp; r2 { r1 = r1 ^ r2; }
-:clr r1    is opcode=0xcd &amp; r1 &amp; r2=r1 { r1 = 0; }
+:clr r1    is opcode=0xcd &amp; r1 &amp; r1=r2 { r1 = 0; }
 </programlisting>
 </informalexample>
 </para>
@@ -1949,10 +1949,10 @@ feature of <emphasis>clr</emphasis> from <emphasis>xor</emphasis> is
 that the two fields, specifying the two register inputs
 to <emphasis>xor</emphasis>, are equal. The easiest way to specify
 this special case is with the general constraint,
-“<emphasis>r2</emphasis> = <emphasis>r1</emphasis>”, as in the second
+“<emphasis>r1</emphasis> = <emphasis>r2</emphasis>”, as in the second
 line of the example. The SLEIGH compiler will implement this by
-enumerating all the cases where <emphasis>r2</emphasis>
-equals <emphasis>r1</emphasis>, creating as many states as there are
+enumerating all the cases where <emphasis>r1</emphasis>
+equals <emphasis>r2</emphasis>, creating as many states as there are
 registers. But the specification itself, at least, remains compact.
 </para>
 </sect3>

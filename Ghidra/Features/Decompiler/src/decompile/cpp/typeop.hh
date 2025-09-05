@@ -887,15 +887,29 @@ class TypeOpInsert : public TypeOpFunc {
 public:
   TypeOpInsert(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opInsertOp(op); }
 };
 
-/// \brief Information about the EXTRACT op-code
-class TypeOpExtract : public TypeOpFunc {
+/// \brief Information about the ZPULL op-code
+class TypeOpZpull : public TypeOpFunc {
 public:
-  TypeOpExtract(TypeFactory *t);			///< Constructor
+  TypeOpZpull(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opExtractOp(op); }
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opZpullOp(op); }
+};
+
+/// \brief Information about the SPULL op-code
+class TypeOpSpull : public TypeOpFunc {
+public:
+  TypeOpSpull(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSpullOp(op); }
 };
 
 /// \brief Information about the POPCOUNT op-code

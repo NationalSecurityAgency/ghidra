@@ -368,6 +368,25 @@ bool PrintC::checkArrayDeref(const Varnode *vn) const
   return true;
 }
 
+/// Bitfield accesses through a LOAD or STORE may have a PTRSUB accessing the
+/// bitfield storage range.  But with any additional PTRSUB or PTRADD, we can use
+/// member syntax.
+/// \param vn is the root of the pointer expression (the input into LOAD or STORE)
+/// \param field is the bitfield being displayed
+/// \return \b true if member syntax ('.') should be used or \b false for pointer syntax ('->')
+bool PrintC::checkBitFieldMember(const Varnode *vn,const TypeBitField *field) const
+
+{
+  if (field->bits.byteOffset != 0) {	// Bitfield not at offset 0, a PTRSUB should be present
+    const PcodeOp *op;
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+    if (op->code() != CPUI_PTRSUB) return false;
+    vn = op->getIn(0);			// Skip this PTRSUB
+  }
+  return checkArrayDeref(vn);
+}
+
 /// Check that the output data-type is a pointer to an array and then that
 /// the second data-type is a pointer to the element type (of the array).
 /// If this holds and the input variable represents a symbol with an \e array data-type,
@@ -1264,13 +1283,59 @@ void PrintC::opNewOp(const PcodeOp *op)
 void PrintC::opInsertOp(const PcodeOp *op)
 
 {
-  opFunc(op);	// If no other way to print it, print as functional operator
+  opFunc(op);
 }
 
-void PrintC::opExtractOp(const PcodeOp *op)
+void PrintC::opZpullOp(const PcodeOp *op)
 
 {
-  opFunc(op);	// If no other way to print it, print as functional operator
+  PullExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    return;
+  }
+  if (expr.loadOp != (const PcodeOp *)0) {
+    uint4 m = mods;
+    if (checkBitFieldMember(expr.loadOp->getIn(1),expr.bitfield)) {
+      m |= print_load_value;
+      pushOp(&object_member,op);
+    }
+    else
+      pushOp(&pointer_member,op);
+    pushVn(expr.structPtr,expr.loadOp,m);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+  else {
+    pushOp(&object_member,op);
+    pushSymbolDetail(op->getIn(0),op,true);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+}
+
+void PrintC::opSpullOp(const PcodeOp *op)
+
+{
+  PullExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    return;
+  }
+  if (expr.loadOp != (const PcodeOp *)0) {
+    uint4 m = mods;
+    if (checkBitFieldMember(expr.loadOp->getIn(1),expr.bitfield)) {
+      m |= print_load_value;
+      pushOp(&object_member,op);
+    }
+    else
+      pushOp(&pointer_member,op);
+    pushVn(expr.structPtr,expr.loadOp,m);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
+  else {
+    pushOp(&object_member,op);
+    pushSymbolDetail(op->getIn(0),op,true);
+    pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  }
 }
 
 /// \brief Push a constant with an integer data-type to the RPN stack
@@ -1982,6 +2047,10 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	ct = field->type;
 	succeeded = true;
       }
+      else if (op->code() == CPUI_ZPULL || op->code() == CPUI_SPULL) {
+	// Cannot resolve final byte field because it is a bit field
+	break;	// But we have fully resolved the Varnode
+      }
     }
     else if (ct->getMetatype() == TYPE_ARRAY) {
       int4 el;
@@ -2468,21 +2537,31 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
 void PrintC::emitExpression(const PcodeOp *op)
    
 {
+  if (op->doesSpecialPrinting()) {
+    if (op->isCall()) {
+      emitConstructor(op);
+      return;
+    }
+    OpCode opc = op->code();
+    if (opc == CPUI_STORE) {
+      emitBitFieldStore(op);
+      return;
+    }
+    else if (opc == CPUI_INSERT) {
+      emitBitFieldExpression(op);
+      return;
+    }
+    else if (opc == CPUI_SUBPIECE) {
+      // Don't modify printing here
+    }
+    else
+      throw LowlevelError("Unsupported special printing");
+  }
   const Varnode *outvn = op->getOut();
   if (outvn != (Varnode *)0) {
     if (option_inplace_ops && emitInplaceOp(op)) return;
     pushOp(&assignment,op);
     pushSymbolDetail(outvn,op,false);
-  }
-  else if (op->doesSpecialPrinting()) {
-    // Printing of constructor syntax
-    const PcodeOp *newop = op->getIn(1)->getDef();
-    outvn = newop->getOut();
-    pushOp(&assignment,newop);
-    pushSymbolDetail(outvn,newop,false);
-    opConstructor(op,true);
-    recurse();
-    return;
   }
     // If STORE, print  *( ) = ( )
     // If BRANCH, print nothing
@@ -2491,6 +2570,62 @@ void PrintC::emitExpression(const PcodeOp *op)
     // If CALL, CALLIND, CALLOTHER  print  call
     // If RETURN,   print return ( )
   op->getOpcode()->push(this,op,(PcodeOp *)0);
+  recurse();
+}
+
+void PrintC::emitConstructor(const PcodeOp *op)
+
+{
+  // Printing of constructor syntax
+  const PcodeOp *newop = op->getIn(1)->getDef();
+  const Varnode *outvn = newop->getOut();
+  pushOp(&assignment,newop);
+  pushSymbolDetail(outvn,newop,false);
+  opConstructor(op,true);
+  recurse();
+}
+
+void PrintC::emitBitFieldStore(const PcodeOp *op)
+
+{
+  InsertStoreExpression expr(op);
+  if (!expr.isValid()) {
+    op->getOpcode()->push(this,op,(PcodeOp *)0);
+    recurse();
+    return;
+  }
+
+  // We assume the STORE is a statement
+  pushOp(&assignment,op);	// This is an assignment
+  uint4 m = mods;
+  if (checkBitFieldMember(op->getIn(1),expr.bitfield)) {
+    m |= print_store_value;
+    pushOp(&object_member,expr.insertOp);
+  }
+  else
+    pushOp(&pointer_member,expr.insertOp);
+  pushVn(expr.structPtr,op,m);
+  pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  // implied vn's pushed on in reverse order for efficiency
+  // see PrintLanguage::pushVnImplied
+  pushVn(expr.insertOp->getIn(1),op,mods);
+  recurse();
+}
+
+void PrintC::emitBitFieldExpression(const PcodeOp *op)
+
+{
+  InsertExpression expr(op);
+  if (!expr.isValid()) {
+    opFunc(op);	// If no other way to print it, print as functional operator
+    recurse();
+    return;
+  }
+  pushOp(&assignment,op);	// This is an assignment
+  pushOp(&object_member,expr.insertOp);
+  pushPartialSymbol(expr.symbol, expr.offsetToBitStruct, expr.theStruct->getSize(), op->getOut(), op, -1, false);
+  pushAtom(Atom(expr.bitfield->name,bitfieldtoken,EmitMarkup::no_color,expr.theStruct,expr.bitfield->ident,op));
+  pushVn(op->getIn(1),op,mods);
   recurse();
 }
 
