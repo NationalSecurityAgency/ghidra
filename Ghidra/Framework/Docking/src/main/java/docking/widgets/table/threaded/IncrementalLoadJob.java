@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.exception.ExceptionUtils.*;
 
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -145,18 +146,48 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			Swing.runLater(() -> updateManager.addThreadedTableListener(IncrementalLoadJob.this));
 		}
 
-		waitForThreadedTableUpdateManagerToFinish();
+		waitForThreadedTableUpdateManagerToFinish(monitor);
 	}
 
-	private void waitForThreadedTableUpdateManagerToFinish() {
+	private void waitForThreadedTableUpdateManagerToFinish(TaskMonitor monitor) {
+		// 
+		// This job can be stopped in a few ways: cancelled from the UI, interrupted from the 
+		// update manager thread, or cancelled from an API call using the task monitor.  There is a
+		// deadlock condition between the update manager and when this job waits on for the latch to
+		// be counted down.  In this case, the update manager is attempting to start a new 
+		// incremental load job while this job has not yet completed.   If this job is waiting on 
+		// the update manager callback while the update manager is waiting for this job to finish,
+		// then they both wait forever.  It is not clear how this can happen, as this job should be
+		// interrupted before the update manager waits, which should trigger an interrupted 
+		// exception when we wait on the countdown latch.  There is a timing condition where this
+		// doesn't happen as expected.  We suspect that when the interrupt does not happen, the job
+		// instead has been marked as cancelled.  To catch this case, we need to periodically check
+		// the monitor.   Thus, instead of waiting forever on the countdown latch, wait for a time
+		// period, checking the monitor for cancelled each time.
+		//
+		while (!hasBeenCancelled(monitor)) {
+			if (doWaitForThreadedTableUpdateManagerToFinish()) {
+				return;
+			}
+		}
+	}
+
+	private boolean doWaitForThreadedTableUpdateManagerToFinish() {
 		try {
-			completedCallbackLatch.await();
+			// Don't wait forever.  There is a deadlock condition where the latch is not being 
+			// notified and this thread is not being interrupted.  To deal with this case, 
+			// periodically time out and let the caller of this method check for cancelled.  If the
+			// latch is not counted down, then we still have not received a callback from the 
+			// update manager.
+			completedCallbackLatch.await(5, TimeUnit.SECONDS);
+			return completedCallbackLatch.getCount() == 0;
 		}
 		catch (InterruptedException e) {
 			// This implies the user has cancelled the job by starting a new one or that we have
 			// been disposed.  Whatever the cause, we want to let the control flow continue as
 			// normal.
 			Thread.currentThread().interrupt(); // preserve the interrupt status
+			return true; // interrupted means we have been cancelled
 		}
 	}
 
