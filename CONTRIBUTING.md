@@ -62,8 +62,8 @@ smooth process when submitting a patch:
 - Isolate multiple patches from each other. If you wish to make several independent patches, do so 
   in separate, smaller pull requests that can be reviewed more easily.
 - Avoid submitting self-generated binary files as part of your pull request. Despite your best 
-  intentions, our policy forbids accepting them because we cannot effectly review and validate their
-  content.
+  intentions, our policy forbids accepting them because we cannot effectively review and validate 
+  their content.
 - Be prepared to answer questions from reviewers. They may have further questions before accepting
   your patch, and may even propose changes. Please accept this feedback constructively, and not as a
   rejection of your proposed change.
