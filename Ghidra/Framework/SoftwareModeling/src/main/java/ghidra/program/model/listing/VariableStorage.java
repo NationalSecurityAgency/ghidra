@@ -445,7 +445,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	 * @return true if storage consists of a single stack varnode
 	 */
 	public boolean isStackStorage() {
-		if (varnodes == null || varnodes.length == 0) {
+		if (varnodes == null || varnodes.length != 1) {
 			return false;
 		}
 		// check first varnode for stack use
@@ -454,14 +454,20 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
-	 * @return true if the last varnode for simple or compound storage is a stack varnode
+	 * @return true if the first or last varnode for simple or compound storage is a stack varnode
 	 */
 	public boolean hasStackStorage() {
 		if (varnodes == null || varnodes.length == 0) {
 			return false;
 		}
-		// check last varnode for stack use
-		Address storageAddr = getLastVarnode().getAddress();
+		Address storageAddr = getFirstVarnode().getAddress();
+		if (storageAddr.isStackAddress()) {
+			return true;
+		}
+		if (varnodes.length == 1) {
+			return false;
+		}
+		storageAddr = getLastVarnode().getAddress();
 		return storageAddr.isStackAddress();
 	}
 
@@ -497,14 +503,20 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * @return the stack offset associated with simple stack storage or compound 
-	 * storage where the last varnode is stack, see {@link #hasStackStorage()}. 
+	 * storage where the first or last varnode is stack, see {@link #hasStackStorage()}. 
 	 * @throws UnsupportedOperationException if storage does not have a stack varnode
 	 */
 	public int getStackOffset() {
 		if (varnodes != null && varnodes.length != 0) {
-			Address storageAddr = getLastVarnode().getAddress();
+			Address storageAddr = getFirstVarnode().getAddress();
 			if (storageAddr.isStackAddress()) {
 				return (int) storageAddr.getOffset();
+			}
+			if (varnodes.length > 1) {
+				storageAddr = getLastVarnode().getAddress();
+				if (storageAddr.isStackAddress()) {
+					return (int) storageAddr.getOffset();
+				}
 			}
 		}
 		throw new UnsupportedOperationException("Storage does not have a stack varnode");

@@ -1503,9 +1503,37 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	  loadval->setSpacebasePlaceholder();
 	  spacebase = (AddrSpace *)0;	// With a locked stack parameter, we don't need a stackplaceholder
 	}
+	continue;
       }
-      else
-	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+      if (spc->getType() == IPTR_JOIN) {
+	JoinRecord *join = data.getArch()->findJoin(off);
+	int4 index = -1;
+	if (join->getPiece(0).space->getType() == IPTR_SPACEBASE)
+	  index = 0;
+	else if (join->getPiece(join->numPieces()-1).space->getType() == IPTR_SPACEBASE)
+	  index = join->numPieces()-1;
+	if (index >= 0) {
+	  const VarnodeData &stack(join->getPiece(index));
+	  const VarnodeData &remain(data.getArch()->stripJoinPiece(join, index));
+	  Varnode *loadval = data.opStackLoad(stack.space,stack.offset,stack.size,op,(Varnode *)0,false);
+	  Varnode *remainval = data.newVarnode(remain.size, remain.space, remain.offset);
+	  PcodeOp *concatOp = data.newOp(2, op->getAddr());
+	  data.opSetOpcode(concatOp, CPUI_PIECE);
+	  if (index == 0) {
+	    data.opSetInput(concatOp,loadval,0);
+	    data.opSetInput(concatOp,remainval,1);
+	  }
+	  else {
+	    data.opSetInput(concatOp,remainval,0);
+	    data.opSetInput(concatOp,loadval,1);
+	  }
+	  Varnode *outvn = data.newUniqueOut(sz, concatOp);
+	  data.opInsertBefore(concatOp, op);
+	  data.opInsertInput(op,outvn,op->numInput());
+	  continue;
+	}
+      }
+      data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
   if (spacebase != (AddrSpace *)0)	// If we need it, create the stackplaceholder
@@ -1974,9 +2002,21 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
     for(int4 j=0;j<numparam;++j) {
       ProtoParameter *param = fc->getParam(j);
       Address addr = param->getAddress();
-      if (addr.getSpace()->getType() != IPTR_SPACEBASE) continue;
-      uintb off = addr.getSpace()->wrapOffset(fc->getSpacebaseOffset() + addr.getOffset());
-      data.getScopeLocal()->markNotMapped(addr.getSpace(),off,param->getSize(),true);
+      spacetype tp = addr.getSpace()->getType();
+      if (tp == IPTR_SPACEBASE) {
+	uintb off = addr.getSpace()->wrapOffset(fc->getSpacebaseOffset() + addr.getOffset());
+	data.getScopeLocal()->markNotMapped(addr.getSpace(),off,param->getSize(),true);
+      }
+      else if (tp == IPTR_JOIN) {
+	JoinRecord *joinRec = data.getArch()->findJoin(addr.getOffset());
+	for(int4 k=0;k<joinRec->numPieces();++k) {
+	  const VarnodeData &vdata(joinRec->getPiece(k));
+	  if (vdata.space->getType() == IPTR_SPACEBASE) {
+	    uintb off = vdata.space->wrapOffset(fc->getSpacebaseOffset() + vdata.offset);
+	    data.getScopeLocal()->markNotMapped(vdata.space,off,vdata.size,true);
+	  }
+	}
+      }
     }
   }
 
