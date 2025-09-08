@@ -114,8 +114,9 @@ class MemorySearchOptionsPanel extends JPanel {
 		innerPanel.add(label);
 
 		Integer[] decimalSizes = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 16 };
+		int decimalByteSize = model.getDecimalByteSize();
 		decimalByteSizeCombo = new GComboBox<>(decimalSizes);
-		decimalByteSizeCombo.setSelectedItem(4);
+		decimalByteSizeCombo.setSelectedItem(decimalByteSize);
 		decimalByteSizeCombo.addItemListener(this::byteSizeComboChanged);
 		decimalByteSizeCombo.setToolTipText("Size of decimal values in bytes");
 		innerPanel.add(decimalByteSizeCombo);
@@ -126,6 +127,7 @@ class MemorySearchOptionsPanel extends JPanel {
 			"Sets whether decimal values should be interpreted as unsigned values");
 		decimalUnsignedCheckbox.addActionListener(
 			e -> model.setDecimalUnsigned(decimalUnsignedCheckbox.isSelected()));
+		decimalUnsignedCheckbox.setSelected(model.isDecimalUnsigned());
 
 		panel.add(decimalUnsignedCheckbox);
 		return panel;
@@ -205,9 +207,10 @@ class MemorySearchOptionsPanel extends JPanel {
 		Charset[] supportedCharsets =
 			{ StandardCharsets.US_ASCII, StandardCharsets.UTF_8, StandardCharsets.UTF_16 };
 
+		Charset charSet = model.getStringCharset();
 		charsetCombo = new GComboBox<>(supportedCharsets);
 		charsetCombo.setName("Encoding Options");
-		charsetCombo.setSelectedIndex(0);
+		charsetCombo.setSelectedItem(charSet);
 		charsetCombo.addItemListener(this::encodingComboChanged);
 		charsetCombo.setToolTipText("Character encoding for translating strings to bytes");
 
