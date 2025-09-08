@@ -16,7 +16,6 @@
 package ghidra.plugin.importer;
 
 import java.awt.Window;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
@@ -43,6 +42,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.CryptoException;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
@@ -131,34 +131,30 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
-		RefdFile referencedFile = null;
-		try {
-			referencedFile = fsService.getRefdFile(fsrl, monitor);
-
-			FSRL fullFsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
-			boolean isFSContainer = fsService.isFileFilesystemContainer(fullFsrl, monitor);
-			if (referencedFile.file.getLength() == 0) {
-				Msg.showError(ImporterUtilities.class, null, "File is empty",
-					"File " + fsrl.getPath() + " is empty, nothing to import");
+		try (RefdFile referencedFile = fsService.getRefdFile(fsrl, monitor)) {
+			if (!ensureFileImportable(referencedFile, monitor)) {
 				return;
 			}
 
+			FSRL fullFsrl = fsService.getFullyQualifiedFSRL(fsrl, monitor);
 			GFileSystem fs = referencedFile.fsRef.getFilesystem();
 			if (fs instanceof GFileSystemProgramProvider) {
 				doFsImport(referencedFile, fullFsrl, destinationFolder, programManager, tool);
 				return;
 			}
 
-			if (!isFSContainer) {
+			if (fsService.isFileFilesystemContainer(fullFsrl, monitor)) {
+				// file is a container, ask user to pick single import, batch import or fs browser
+				importFromContainer(tool, programManager, destinationFolder, suggestedPath, monitor,
+					referencedFile, fullFsrl);
+			}
+			else {
 				// normal file; do a single-file import
 				showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
 					programManager, monitor);
 				return;
 			}
 
-			// file is a container, ask user to pick single import, batch import or fs browser
-			importFromContainer(tool, programManager, destinationFolder, suggestedPath, monitor,
-				referencedFile, fullFsrl);
 		}
 		catch (IOException ioe) {
 			String message = ioe.getMessage();
@@ -167,20 +163,6 @@ public class ImporterUtilities {
 		}
 		catch (CancelledException e) {
 			Msg.info(ImporterUtilities.class, "Show Import Dialog canceled");
-		}
-		finally {
-			close(referencedFile);
-		}
-	}
-
-	private static void close(Closeable c) {
-		if (c != null) {
-			try {
-				c.close();
-			}
-			catch (IOException e) {
-				// ignore
-			}
 		}
 	}
 
@@ -601,4 +583,35 @@ public class ImporterUtilities {
 		return getLoadSpec(provider, program);
 	}
 	
+	private static boolean ensureFileImportable(RefdFile refdFile, TaskMonitor monitor) {
+		GFile f = refdFile.file;
+		GFileSystem fs = refdFile.fsRef.getFilesystem();
+
+		monitor.initialize(0);
+		monitor.setMessage("Testing file access: " + f.getName());
+		try (ByteProvider bp = fs.getByteProvider(f, monitor)) {
+			if (bp.length() == 0) {
+				Msg.showError(ImporterUtilities.class, null, "File is empty",
+					"File %s is empty, nothing to import".formatted(f.getPath()));
+				return false;
+			}
+			return true;
+		}
+		catch (CryptoException e) {
+			Msg.showError(ImporterUtilities.class, null, "Crypto / Password Error",
+				"Unable to access the specified file.\n" +
+					"This could be caused by not entering the correct password or " +
+					"because of missing crypto information.\n\n" + e.getMessage());
+			return false;
+		}
+		catch (IOException e) {
+			Msg.showError(ImporterUtilities.class, null, "File IO Error",
+				"Unable to access the specified file.\n\n" + e.getMessage());
+			return false;
+		}
+		catch (CancelledException e) {
+			return false;
+		}
+	}
+
 }
