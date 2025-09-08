@@ -29,7 +29,11 @@ Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
 smooth process when submitting a patch:
 
-- Ensure that the patch compiles and does not break any build-time tests.
+- Ensure that the patch compiles and runs in at least our development environment, and ideally our
+  full build too. Even the most trivial change done in the GitHub editor has a chance to cause
+  problems in the full development environment for unexpected reasons.
+- If using "AI" to assist in development, please apply extra scrutity to its suggestions, in terms
+  of both correctness and adherence to our [legal](#legal) requirements.
 - Be understanding, patient, and friendly; developers may need time to review your submissions 
   before they can take action or respond. This does not mean your contribution is not valued. If 
   your contribution has not received a response in a reasonable time, consider commenting with a 
@@ -57,6 +61,9 @@ smooth process when submitting a patch:
   and a description of the changes.
 - Isolate multiple patches from each other. If you wish to make several independent patches, do so 
   in separate, smaller pull requests that can be reviewed more easily.
+- Avoid submitting self-generated binary files as part of your pull request. Despite your best 
+  intentions, our policy forbids accepting them because we cannot effectly review and validate their
+  content.
 - Be prepared to answer questions from reviewers. They may have further questions before accepting
   your patch, and may even propose changes. Please accept this feedback constructively, and not as a
   rejection of your proposed change.
