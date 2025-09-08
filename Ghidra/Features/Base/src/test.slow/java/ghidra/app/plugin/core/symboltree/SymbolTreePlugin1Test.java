@@ -508,8 +508,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 		JTree jTree = (JTree) AbstractGenericTest.getInstanceField("tree", tree);
 
-		Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, newNsNode,
-			true, true, true, row);
+		Container container = (Container) runSwing(
+			() -> cellEditor.getTreeCellEditorComponent(jTree, newNsNode, true, true, true, row));
 		JTextField textField = (JTextField) container.getComponent(0);
 		assertEquals("NewNamespace", textField.getText());
 	}
