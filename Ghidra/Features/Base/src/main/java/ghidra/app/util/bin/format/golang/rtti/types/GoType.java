@@ -303,7 +303,6 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 	 * <p>
 	 * This default implementation just creates an opaque blob of the appropriate size
 	 * 
-	 * @param goTypes {@link GoTypeManager} 
 	 * @return {@link DataType} that represents the Go type
 	 * @throws IOException if error getting name of the type
 	 */
