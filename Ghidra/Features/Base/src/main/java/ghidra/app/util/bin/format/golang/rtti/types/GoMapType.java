@@ -27,10 +27,7 @@ import ghidra.util.Msg;
 /**
  * Go type info about a specific map type.
  * <p>
- * See {@link GoTypeManager#getMapGoType()} or the "runtime.hmap" type for the definition of
- * a instance of a map variable in memory.
- * <p>
- * Maps are passed by address, and sizeof(mapvar) will always be ptrSize
+ * Maps are passed by address, and in Go sizeof(mapvar) will always be ptrSize
  */
 @StructureMapping(
 	structureName = { "runtime.maptype", "internal/abi.MapType", "internal/abi.OldMapType" }

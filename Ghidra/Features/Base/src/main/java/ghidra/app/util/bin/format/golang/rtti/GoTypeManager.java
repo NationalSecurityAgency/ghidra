@@ -320,9 +320,7 @@ public class GoTypeManager {
 	/**
 	 * Finds a Ghidra data type by its go-type name.
 	 * 
-	 * @param <T> Ghidra DataType generic type specifier
 	 * @param typeName go type name
-	 * @param clazz {@link DataType} class reference
 	 * @return Ghidra {@link DataType} corresponding to the requested name, coerced into a
 	 * specific {@link DataType} subclass, or {@code NULL} if not found
 	 * @throws IOException if error
