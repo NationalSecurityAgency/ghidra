@@ -70,7 +70,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setUpDialog();
 
-		grabActionsWithoutKeybinding();
+		grabActionsWithoutKeyBinding();
 	}
 
 	@After
@@ -545,7 +545,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	// find 2 actions that do not have key bindings so that we can add and change the values
-	private void grabActionsWithoutKeybinding() {
+	private void grabActionsWithoutKeyBinding() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			if (ignoreAction(action)) {

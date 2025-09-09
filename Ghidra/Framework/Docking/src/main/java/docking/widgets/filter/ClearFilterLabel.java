@@ -29,9 +29,8 @@ import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.util.AnimationUtils;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GIcon;
 import ghidra.util.SystemUtilities;
-import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * A label that displays an icon that, when clicked, will clear the contents of the 
@@ -39,8 +38,7 @@ import resources.ResourceManager;
  */
 public class ClearFilterLabel extends GIconLabel {
 
-	private Icon RAW_ICON = Icons.DELETE_ICON;
-	private Icon ICON = ResourceManager.getScaledIcon(RAW_ICON, 10, 10);
+	private Icon ICON = new GIcon("icon.text.field.clear");
 
 	private static final float FULLY_TRANSPARENT = 0F;
 	private static final float FULLY_OPAQUE = .6F;
