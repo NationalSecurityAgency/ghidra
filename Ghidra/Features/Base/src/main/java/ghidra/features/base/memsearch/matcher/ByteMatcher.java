@@ -27,12 +27,21 @@ import ghidra.features.base.memsearch.gui.SearchSettings;
  */
 public abstract class ByteMatcher {
 
+	private final String name;
 	private final String input;
 	private final SearchSettings settings;
 
-	protected ByteMatcher(String input, SearchSettings settings) {
+	protected ByteMatcher(String name, String input, SearchSettings settings) {
+		this.name = name;
 		this.input = input;
 		this.settings = settings;
+	}
+
+	/**
+	 * {@return the name of this byte matcher.}
+	 */
+	public String getName() {
+		return name;
 	}
 
 	/**
@@ -120,7 +129,10 @@ public abstract class ByteMatcher {
 
 	/**
 	 * Record class to contain a match specification.
+	 * @param start the offset in the buffer where the match starts
+	 * @param length the length of the match
+	 * @param matcher the matcher the found the match
 	 */
-	public record ByteMatch(int start, int length) {}
+	public record ByteMatch(int start, int length, ByteMatcher matcher) {}
 
 }

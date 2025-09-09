@@ -52,7 +52,7 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 	 */
 	public MaskedByteSequenceByteMatcher(String input, byte[] bytes, byte[] masks,
 			SearchSettings settings) {
-		super(input, settings);
+		super("Masked Byte Sequence Matcher", input, settings);
 
 		if (masks == null) {
 			masks = new byte[bytes.length];
@@ -145,7 +145,8 @@ public class MaskedByteSequenceByteMatcher extends ByteMatcher {
 			while (nextPossibleStart >= 0) {
 				startIndex = nextPossibleStart + 1;
 				if (isValidMatch(nextPossibleStart)) {
-					return new ByteMatch(nextPossibleStart, searchBytes.length);
+					return new ByteMatch(nextPossibleStart, searchBytes.length,
+						MaskedByteSequenceByteMatcher.this);
 				}
 				nextPossibleStart = findNextPossibleStart(startIndex);
 			}
