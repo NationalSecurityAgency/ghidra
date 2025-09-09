@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.pcode.PcodeException;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 import sarif.SarifService;
 
 /**
@@ -59,9 +60,10 @@ public abstract class AbstractTaintState implements TaintState {
 	protected TaintOptions taintOptions;
 	protected TaintPlugin plugin;
 	protected boolean usesIndex = true;
-	private boolean cancellation;
+	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
 	private TaskType taskType = TaskType.SET_TAINT;
+
 
 	public AbstractTaintState(TaintPlugin plugin) {
 		this.plugin = plugin;
@@ -83,13 +85,22 @@ public abstract class AbstractTaintState implements TaintState {
 	protected abstract void writeFooter(PrintWriter writer);
 
 	@Override
-	public boolean wasCancelled() {
-		return this.cancellation;
+	public void setMonitor(TaskMonitor monitor) {
+		if (monitor != null) {
+			monitor.setIndeterminate(true);
+			monitor.setShowProgressValue(false);
+		}
+		this.monitor = monitor;
 	}
 
 	@Override
-	public void setCancellation(boolean status) {
-		this.cancellation = status;
+	public boolean isCancelled() {
+		return monitor != null && monitor.isCancelled();
+	}
+
+	@Override
+	public void cancel() {
+		monitor.cancel();
 	}
 
 	@Override
@@ -319,6 +330,10 @@ public abstract class AbstractTaintState implements TaintState {
 				pb.directory(new File(taintOptions.getTaintOutputDirectory()));
 				pb.redirectError(Redirect.INHERIT);
 				Process p = pb.start();
+
+				monitor.addCancelledListener(() -> {
+					p.destroyForcibly();
+				});
 
 				readQueryResultsIntoDataFrame(program, p.getInputStream());
 
@@ -553,6 +568,11 @@ public abstract class AbstractTaintState implements TaintState {
 	@Override
 	public String getName() {
 		return ENGINE_NAME;
+	}
+
+	@Override
+	public String getQueryName() {
+		return null;
 	}
 
 }

@@ -92,6 +92,31 @@ public class SarifUtils {
 		return locations;
 	}
 
+	public static JsonArray setLocation(Address addr, String kind, String uri, String name, String fqname, int index) {
+		JsonArray locations = new JsonArray();
+		JsonObject element = new JsonObject();
+		locations.add(element);
+		JsonObject ploc = new JsonObject();
+		JsonArray lloc = new JsonArray();
+		element.add("physicalLocation", ploc);
+		element.add("logicalLocations", lloc);
+		JsonObject artifact = new JsonObject();
+		artifact.addProperty("uri", uri);
+		JsonObject address = new JsonObject();
+		ploc.add("artifactLocation", artifact);
+		ploc.add("address", address);
+		address.addProperty("absoluteAddress", addr.getOffset());
+		if (name != null) {
+			address.addProperty("name", name);
+		}
+		address.addProperty("kind", kind);
+		address.addProperty("fullyQualifiedName", fqname);
+		JsonObject ll = new JsonObject();
+		lloc.add(ll);
+		ll.addProperty("index", index);
+		return locations;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static AddressSet getLocations(Map<String, Object> result, Program program, AddressSet set)
 			throws AddressOverflowException {
