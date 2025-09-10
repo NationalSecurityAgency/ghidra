@@ -162,11 +162,12 @@ def program_context(
 def analyze(
         program: "Program", 
         monitor: Optional["TaskMonitor"] = None
-    ):
+    ) -> str:
     """
     Analyzes the given program.
 
     :param program: The Ghidra program to analyze.
+    :return: The analysis log.
     """
     from ghidra.app.script import GhidraScriptUtil
     from ghidra.program.util import GhidraProgramUtilities
@@ -181,12 +182,16 @@ def analyze(
             mgr: AutoAnalysisManager = AutoAnalysisManager.getAnalysisManager(program);
             mgr.initializeOptions();
             mgr.reAnalyzeAll(None);
-            analysisTool = mgr.getAnalysisTool();
-            if analysisTool is None or analysisTool.threadIsBackgroundTaskThread():
-                mgr.startAnalysis(monitor, True); # yields to analysis
-            else:
-                mgr.waitForAnalysis(None, monitor); # waits for all analysis to complete
+            mgr_log = ""
+            def get_log(manager, _is_cancelled):
+                nonlocal mgr_log
+                mgr_log += manager.getMessageLog().toString()
+            mgr.addListener(get_log)
+            mgr.startAnalysis(monitor, True); # yields to analysis
+            if not monitor.isCancelled():
+                monitor.cancel()
             GhidraProgramUtilities.markProgramAnalyzed(program)
+            return mgr_log
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
     

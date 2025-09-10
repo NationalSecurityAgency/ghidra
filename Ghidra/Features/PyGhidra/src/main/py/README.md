@@ -141,11 +141,15 @@ def program_context(
 
 ### pyghidra.analyze()
 ```python
-def analyze(program: "Program"):
+def analyze(
+        program: "Program", 
+        monitor: Optional["TaskMonitor"] = None
+    ) -> str:
     """
     Analyzes the given program.
 
     :param program: The Ghidra program to analyze.
+    :return: The analysis log.
     """
 ```
 
