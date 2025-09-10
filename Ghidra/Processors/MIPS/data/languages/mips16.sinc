@@ -919,51 +919,43 @@ E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 
 }
 
 :movz m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 {
-    if(m16_ry != 0) goto <end>;
+    if(m16_ry != 0) goto inst_next;
         m16_rx = ext_rb;
-    <end>
 }
 
 :movz m16_rx, zero, m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb=0 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 & zero {
-    if(m16_ry != 0) goto <end>;
+    if(m16_ry != 0) goto inst_next;
         m16_rx = 0;
-    <end>
 }
 
 :movn m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 {
-    if(m16_ry == 0) goto <end>;
+    if(m16_ry == 0) goto inst_next;
         m16_rx = ext_rb;
-    <end>
 }
 
 :movn m16_rx, zero, m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb=0 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 & zero {
-   if(m16_ry == 0) goto <end>;
+   if(m16_ry == 0) goto inst_next;
         m16_rx = 0;
-    <end>
 }
 
 :movtn m16_rx, zero	        	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0b10 & zero {
-    if(t8 == 0) goto <end>;
+    if(t8 == 0) goto inst_next;
         m16_rx = 0;
-    <end>
 }
 
 :movtn m16_rx, ext_rb	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0b10 {
-    if(t8 == 0) goto <end>;
+    if(t8 == 0) goto inst_next;
         m16_rx = ext_rb;
-    <end>
 }
 
 :movtz m16_rx, zero	           	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=5 & m16_shft_f=0b10 & zero {
-    if(t8 != 0) goto <end>;
+    if(t8 != 0) goto inst_next;
         m16_rx = 0;
-    <end>
 }
 
 :movtz m16_rx, ext_rb	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=5 & m16_shft_f=0b10 {
-    if(t8 != 0) goto <end>;
+    if(t8 != 0) goto inst_next;
         m16_rx = ext_rb;
-    <end>
 }
 
 :pause      is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0b00101 & ext_imm_21=0 & ext_imm_1620=0 & m16_op=0b00110 & m16_rx=0 & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0 {
