@@ -24,6 +24,9 @@ import ghidra.pcode.opbehavior.OpBehaviorBoolAnd;
  * @implNote It is the responsibility of the slaspec author to ensure boolean values are 0 or 1.
  *           This allows us to use bitwise logic instead of having to check for any non-zero value,
  *           just like {@link OpBehaviorBoolAnd}. Thus, this is identical to {@link IntAndOpGen}.
+ * @implNote Because having bits other than the least significant set in the inputs is "undefined
+ *           behavior," we could technically optimize this by only ANDing the least significant leg
+ *           when we're dealing with mp-ints.
  */
 public enum BoolAndOpGen implements BitwiseBinOpGen<JitBoolAndOp> {
 	/** The generator singleton */

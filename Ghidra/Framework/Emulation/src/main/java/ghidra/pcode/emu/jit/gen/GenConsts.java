@@ -91,7 +91,7 @@ public interface GenConsts {
 		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class));
 	public static final String MDESC_INTEGER__BIT_COUNT =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE);
-	public static final String MDESC_INTEGER__COMPARE_UNSIGNED =
+	public static final String MDESC_INTEGER__COMPARE =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE);
 	public static final String MDESC_INTEGER__NUMBER_OF_LEADING_ZEROS =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE);
@@ -135,6 +135,9 @@ public interface GenConsts {
 	public static final String MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP =
 		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(PcodeUseropDefinition.class),
 			Type.getType(Varnode.class), Type.getType(Varnode[].class));
+	public static final String MDESC_JIT_COMPILED_PASSAGE__MP_INT_BINOP =
+		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class),
+			Type.getType(int[].class), Type.getType(int[].class));
 	public static final String MDESC_JIT_COMPILED_PASSAGE__READ_INTX =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(byte[].class), Type.INT_TYPE);
 	public static final String MDESC_JIT_COMPILED_PASSAGE__READ_LONGX =
@@ -147,6 +150,9 @@ public interface GenConsts {
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE);
 	public static final String MDESC_JIT_COMPILED_PASSAGE__S_CARRY_LONG_RAW =
 		Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE, Type.LONG_TYPE);
+	public static final String MDESC_JIT_COMPILED_PASSAGE__S_CARRY_MP_INT =
+		Type.getMethodDescriptor(Type.INT_TYPE, Type.getType(int[].class),
+			Type.getType(int[].class), Type.INT_TYPE);
 	public static final String MDESC_JIT_COMPILED_PASSAGE__WRITE_INTX =
 		Type.getMethodDescriptor(Type.VOID_TYPE, Type.INT_TYPE, Type.getType(byte[].class),
 			Type.INT_TYPE);
@@ -182,10 +188,23 @@ public interface GenConsts {
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE);
 	public static final String MDESC_$LONG_BINOP =
 		Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE, Type.LONG_TYPE);
+	public static final String MDESC_$SHIFT_AA =
+		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.INT_TYPE,
+			Type.getType(int[].class), Type.getType(int[].class));
+	public static final String MDESC_$SHIFT_AJ =
+		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.INT_TYPE,
+			Type.getType(int[].class), Type.LONG_TYPE);
+	public static final String MDESC_$SHIFT_AI =
+		Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.INT_TYPE,
+			Type.getType(int[].class), Type.INT_TYPE);
+	public static final String MDESC_$SHIFT_JA =
+		Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE, Type.getType(int[].class));
 	public static final String MDESC_$SHIFT_JJ =
 		Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE, Type.LONG_TYPE);
 	public static final String MDESC_$SHIFT_JI =
 		Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE, Type.INT_TYPE);
+	public static final String MDESC_$SHIFT_IA =
+		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.getType(int[].class));
 	public static final String MDESC_$SHIFT_IJ =
 		Type.getMethodDescriptor(Type.INT_TYPE, Type.INT_TYPE, Type.LONG_TYPE);
 	public static final String MDESC_$SHIFT_II =

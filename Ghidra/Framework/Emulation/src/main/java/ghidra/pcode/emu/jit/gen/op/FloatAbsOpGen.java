@@ -33,7 +33,7 @@ import ghidra.pcode.emu.jit.op.JitFloatAbsOp;
  * This uses the unary operator generator and emits an invocation of {@link Math#abs(float)} or
  * {@link Math#abs(double)}, depending on the type.
  */
-public enum FloatAbsOpGen implements UnOpGen<JitFloatAbsOp> {
+public enum FloatAbsOpGen implements FloatUnOpGen<JitFloatAbsOp> {
 	/** The generator singleton */
 	GEN;
 

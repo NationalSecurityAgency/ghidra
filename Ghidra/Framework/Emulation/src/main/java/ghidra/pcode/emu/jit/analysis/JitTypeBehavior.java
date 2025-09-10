@@ -159,6 +159,9 @@ public enum JitTypeBehavior {
 		if (cls == long.class) {
 			return INTEGER;
 		}
+		if (cls == int[].class) {
+			return INTEGER;
+		}
 		if (cls == float.class) {
 			return FLOAT;
 		}

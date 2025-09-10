@@ -25,6 +25,7 @@ import org.objectweb.asm.Opcodes;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitPhiOp;
 import ghidra.pcode.emu.jit.var.JitMissingVar;
 
@@ -61,7 +62,7 @@ public enum MissingVarGen implements VarGen<JitMissingVar> {
 
 	@Override
 	public JitType generateValReadCode(JitCodeGenerator gen, JitMissingVar v,
-			JitTypeBehavior typeReq, MethodVisitor rv) {
+			JitTypeBehavior typeReq, Ext ext, MethodVisitor rv) {
 		// [...]
 		rv.visitTypeInsn(NEW, NAME_ASSERTION_ERROR);
 		// [...,error:NEW]
@@ -79,7 +80,7 @@ public enum MissingVarGen implements VarGen<JitMissingVar> {
 	}
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitMissingVar v, JitType type,
+	public void generateVarWriteCode(JitCodeGenerator gen, JitMissingVar v, JitType type, Ext ext,
 			MethodVisitor rv) {
 		throw new AssertionError();
 	}

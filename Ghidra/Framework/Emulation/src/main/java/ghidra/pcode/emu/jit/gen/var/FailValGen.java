@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitFailVal;
 
 /**
@@ -34,8 +35,8 @@ public enum FailValGen implements ValGen<JitFailVal> {
 	}
 
 	@Override
-	public JitType generateValReadCode(JitCodeGenerator gen, JitFailVal v,
-			JitTypeBehavior typeReq, MethodVisitor rv) {
+	public JitType generateValReadCode(JitCodeGenerator gen, JitFailVal v, JitTypeBehavior typeReq,
+			Ext ext, MethodVisitor rv) {
 		throw new AssertionError();
 	}
 }

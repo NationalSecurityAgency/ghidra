@@ -18,13 +18,15 @@ package ghidra.pcode.emu.jit.gen.op;
 import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.MethodVisitor;
 
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitIntCarryOp;
 
 /**
@@ -48,7 +50,7 @@ import ghidra.pcode.emu.jit.op.JitIntCarryOp;
  * <p>
  * NOTE: The multi-precision integer parts of this are a work in progress.
  */
-public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
+public enum IntCarryOpGen implements IntBinOpGen<JitIntCarryOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -59,35 +61,36 @@ public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
 		// [lleg1,...,llegN,rleg1,rlegN] (N is least-significant leg)
 		int legCount = type.legsAlloc();
 		int remSize = type.partialSize();
-		int firstIndex = gen.getAllocationModel().nextFreeLocal();
-		Label start = new Label();
-		Label end = new Label();
-		mv.visitLabel(start);
-		for (int i = 0; i < legCount; i++) {
-			mv.visitLocalVariable("temp" + i, Type.getDescriptor(int.class), null, start, end,
-				firstIndex + i);
-			mv.visitVarInsn(ISTORE, firstIndex + i);
-			// NOTE: More significant legs have higher indices (reverse of stack)
+
+		try (JvmTempAlloc temp = gen.getAllocationModel().allocateTemp(mv, "temp", legCount)) {
+			for (int i = 0; i < legCount; i++) {
+				mv.visitVarInsn(ISTORE, temp.idx(i));
+				// NOTE: More significant legs have higher indices (reverse of stack)
+			}
+			// [lleg1,...,llegN:INT]
+			for (int i = 0; i < legCount; i++) {
+				boolean takesCarry = i != 0; // not first
+				IntAddOpGen.generateMpIntLegAdd(gen, temp.idx(i), takesCarry, true, false, mv);
+			}
+			// [olegN:LONG]
+			if (remSize == 0) {
+				// The last leg was full, so extract bit 32
+				mv.visitLdcInsn(32);
+			}
+			else {
+				// The last leg was partial, so get the next more significant bit
+				mv.visitLdcInsn(remSize * Byte.SIZE);
+			}
+			mv.visitInsn(LUSHR);
+			TypeConversions.generateLongToInt(LongJitType.I8, IntJitType.I4, Ext.ZERO, mv);
+			mv.visitLdcInsn(1);
+			mv.visitInsn(IAND);
 		}
-		// [lleg1,...,llegN:INT]
-		for (int i = 0; i < legCount; i++) {
-			boolean takesCarry = i != 0; // not first
-			IntAddOpGen.generateMpIntLegAdd(gen, firstIndex + i, takesCarry, true, mv);
-		}
-		// [olegN:LONG]
-		if (remSize == 0) {
-			// The last leg was full, so extract bit 32
-			mv.visitLdcInsn(32);
-		}
-		else {
-			// The last leg was partial, so get the next more significant bit
-			mv.visitLdcInsn(remSize * Byte.SIZE);
-		}
-		mv.visitInsn(LUSHR);
-		TypeConversions.generateLongToInt(LongJitType.I8, IntJitType.I4, mv);
-		mv.visitLdcInsn(1);
-		mv.visitInsn(IAND);
-		mv.visitLabel(end);
+	}
+
+	@Override
+	public boolean isSigned() {
+		return false;
 	}
 
 	@Override
@@ -102,7 +105,7 @@ public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
 		 * On the other hand, if there is room to capture the carry, we can just add the two
 		 * operands and extract the carry bit. There is no need to duplicate the left operand.
 		 */
-		lType = TypeConversions.forceUniformZExt(lType, rType, rv);
+		lType = TypeConversions.forceUniform(gen, lType, rType, ext(), rv);
 		switch (lType) {
 			case IntJitType(int size) when size == Integer.BYTES -> rv.visitInsn(DUP);
 			case IntJitType lt -> {
@@ -110,7 +113,8 @@ public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
 			case LongJitType(int size) when size == Long.BYTES -> rv.visitInsn(DUP2);
 			case LongJitType lt -> {
 			}
-			case MpIntJitType lt -> TODO("MpInt");
+			case MpIntJitType lt -> {
+			}
 			default -> throw new AssertionError();
 		}
 		return lType;
@@ -119,7 +123,7 @@ public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
 	@Override
 	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntCarryOp op, JitBlock block,
 			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, ext(), rv);
 		switch (rType) {
 			case IntJitType(int size) when size == Integer.BYTES -> {
 				// [l,l,r]
@@ -128,7 +132,7 @@ public enum IntCarryOpGen implements BinOpGen<JitIntCarryOp> {
 				rv.visitInsn(SWAP); // spare an LDC,XOR
 				// [sum,l]
 				rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "compareUnsigned",
-					MDESC_INTEGER__COMPARE_UNSIGNED, false);
+					MDESC_INTEGER__COMPARE, false);
 				// [cmpU(sum,l)] sum < l iff sign bit is 1
 				rv.visitLdcInsn(31);
 				rv.visitInsn(IUSHR);

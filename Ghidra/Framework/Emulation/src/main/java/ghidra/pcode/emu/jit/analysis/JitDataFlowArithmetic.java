@@ -79,6 +79,10 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 		return endian;
 	}
 
+	public Varnode truncVnFromRight(Varnode vn, int amt) {
+		return new Varnode(vn.getAddress(), vn.getSize() - amt);
+	}
+
 	/**
 	 * Remove {@code amt} bytes from the right of the <em>varnode</em>.
 	 * 
@@ -94,8 +98,12 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the resulting value
 	 */
 	public JitVal truncFromRight(Varnode in1Vn, int amt, JitVal in1) {
-		Varnode outVn = new Varnode(in1Vn.getAddress(), in1Vn.getSize() - amt);
+		Varnode outVn = truncVnFromRight(in1Vn, amt);
 		return subpiece(outVn, endian.isBigEndian() ? amt : 0, in1);
+	}
+
+	public Varnode truncVnFromLeft(Varnode vn, int amt) {
+		return new Varnode(vn.getAddress().add(amt), vn.getSize() - amt);
 	}
 
 	/**
@@ -113,7 +121,7 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the resulting value
 	 */
 	public JitVal truncFromLeft(Varnode in1Vn, int amt, JitVal in1) {
-		Varnode outVn = new Varnode(in1Vn.getAddress().add(amt), in1Vn.getSize() - amt);
+		Varnode outVn = truncVnFromLeft(in1Vn, amt);
 		return subpiece(outVn, endian.isBigEndian() ? 0 : amt, in1);
 	}
 

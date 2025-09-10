@@ -37,7 +37,7 @@ import ghidra.pcode.emu.jit.op.JitFloatRoundOp;
  * {@code round(x) = floor(x + 0.5)}. This uses the unary operator generator and emits the bytecode
  * to implement that definition, applying type conversions as needed.
  */
-public enum FloatRoundOpGen implements UnOpGen<JitFloatRoundOp> {
+public enum FloatRoundOpGen implements FloatUnOpGen<JitFloatRoundOp> {
 	/** The generator singleton */
 	GEN;
 

@@ -15,14 +15,14 @@
  */
 package ghidra.pcode.emu.jit.analysis;
 
-import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.*;
+import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.maxAddr;
+import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.overlapsLeft;
 import static org.objectweb.asm.Opcodes.*;
 
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections4.iterators.ReverseListIterator;
 import org.objectweb.asm.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -33,6 +33,7 @@ import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.var.*;
 import ghidra.program.model.address.*;
@@ -258,6 +259,13 @@ public class JitAllocationModel {
 			generateLoadCode(rv);
 			VarGen.generateValWriteCodeDirect(gen, type, vn, rv);
 		}
+
+		/**
+		 * {@return the maximum address that would be occupied by the full primitive type}
+		 */
+		public Address maxPrimAddr() {
+			return vn.getAddress().add(type.ext().size() - 1);
+		}
 	}
 
 	/**
@@ -296,9 +304,10 @@ public class JitAllocationModel {
 		 * @param gen the code generator
 		 * @param type the p-code type of the value expected on the JVM stack by the proceeding
 		 *            bytecode
+		 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 */
-		void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv);
+		void generateLoadCode(JitCodeGenerator gen, JitType type, Ext ext, MethodVisitor rv);
 
 		/**
 		 * Emit bytecode to load the varnode's value onto the JVM stack.
@@ -306,9 +315,10 @@ public class JitAllocationModel {
 		 * @param gen the code generator
 		 * @param type the p-code type of the value produced on the JVM stack by the preceding
 		 *            bytecode
+		 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 */
-		void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv);
+		void generateStoreCode(JitCodeGenerator gen, JitType type, Ext ext, MethodVisitor rv);
 	}
 
 	/**
@@ -334,14 +344,16 @@ public class JitAllocationModel {
 		}
 
 		@Override
-		default void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
+		default void generateLoadCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
 			local().generateLoadCode(rv);
-			TypeConversions.generate(gen, this.type(), type, rv);
+			TypeConversions.generate(gen, this.type(), type, ext, rv);
 		}
 
 		@Override
-		default void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			TypeConversions.generate(gen, type, this.type(), rv);
+		default void generateStoreCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
+			TypeConversions.generate(gen, type, this.type(), ext, rv);
 			local().generateStoreCode(rv);
 		}
 	}
@@ -387,9 +399,9 @@ public class JitAllocationModel {
 	 * shifted to the right to place it into position.
 	 * 
 	 * @param local the local variable allocated to this part
-	 * @param shift the number of bytes and direction to shift
+	 * @param shift the number of bytes and direction to shift (+ is right)
 	 */
-	public record MultiLocalPart(JvmLocal local, int shift) {
+	public record MultiLocalSub(JvmLocal local, int shift) {
 		private JitType chooseLargerType(JitType t1, JitType t2) {
 			return t1.size() > t2.size() ? t1 : t2;
 		}
@@ -405,15 +417,17 @@ public class JitAllocationModel {
 		 * @param gen the code generator
 		 * @param type the p-code type of the value expected on the stack by the proceeding
 		 *            bytecode, which may be to load additional parts
+		 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 * 
 		 * @implNote We must keep temporary values in a variable of the larger of the local's or the
 		 *           expected type, otherwise bits may get dropped while positioning the value.
 		 */
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
+		public void generateLoadCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
 			local.generateLoadCode(rv);
 			JitType tempType = chooseLargerType(local.type, type);
-			TypeConversions.generate(gen, local.type, tempType, rv);
+			TypeConversions.generate(gen, local.type, tempType, ext, rv);
 			if (shift > 0) {
 				switch (tempType) {
 					case IntJitType t -> {
@@ -440,7 +454,7 @@ public class JitAllocationModel {
 					default -> throw new AssertionError();
 				}
 			}
-			TypeConversions.generate(gen, tempType, type, rv);
+			TypeConversions.generate(gen, tempType, type, ext, rv);
 		}
 
 		/**
@@ -454,14 +468,16 @@ public class JitAllocationModel {
 		 * @param gen the code generator
 		 * @param type the p-code type of the value expected on the stack by the proceeding
 		 *            bytecode, which may be to load additional parts
+		 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
 		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 		 * 
 		 * @implNote We must keep temporary values in a variable of the larger of the local's or the
 		 *           expected type, otherwise bits may get dropped while positioning the value.
 		 */
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
+		public void generateStoreCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
 			JitType tempType = chooseLargerType(local.type, type);
-			TypeConversions.generate(gen, type, tempType, rv);
+			TypeConversions.generate(gen, type, tempType, ext, rv);
 			switch (tempType) {
 				case IntJitType t -> {
 					if (shift > 0) {
@@ -483,9 +499,9 @@ public class JitAllocationModel {
 						rv.visitInsn(LUSHR);
 					}
 				}
-				default -> throw new AssertionError();
+				default -> throw new AssertionError("tempType = " + tempType);
 			}
-			TypeConversions.generate(gen, tempType, local.type, rv);
+			TypeConversions.generate(gen, tempType, local.type, ext, rv);
 			switch (local.type) {
 				case IntJitType t -> {
 					int mask = -1 >>> (Integer.SIZE - Byte.SIZE * type.size());
@@ -524,6 +540,34 @@ public class JitAllocationModel {
 		}
 	}
 
+	public record MultiLocalPart(List<MultiLocalSub> subs, SimpleJitType type) {
+		public void generateLoadCode(JitCodeGenerator gen, Ext ext, MethodVisitor rv) {
+			subs.get(0).generateLoadCode(gen, this.type, ext, rv);
+			for (MultiLocalSub sub : subs.subList(1, subs.size())) {
+				sub.generateLoadCode(gen, this.type, ext, rv);
+				switch (this.type) {
+					case IntJitType t -> rv.visitInsn(IOR);
+					case LongJitType t -> rv.visitInsn(LOR);
+					default -> throw new AssertionError("this.type = " + this.type);
+				}
+			}
+			TypeConversions.generate(gen, this.type, type, ext, rv);
+		}
+
+		public void generateStoreCode(JitCodeGenerator gen, Ext ext, MethodVisitor rv) {
+			TypeConversions.generate(gen, type, this.type, ext, rv);
+			for (MultiLocalSub sub : subs.subList(1, subs.size()).reversed()) {
+				switch (this.type) {
+					case IntJitType t -> rv.visitInsn(DUP);
+					case LongJitType t -> rv.visitInsn(DUP2);
+					default -> throw new AssertionError("this.type = " + this.type);
+				}
+				sub.generateStoreCode(gen, this.type, ext, rv);
+			}
+			subs.get(0).generateStoreCode(gen, this.type, ext, rv);
+		}
+	}
+
 	/**
 	 * The handler for a variable allocated in a composition of locals
 	 *
@@ -537,6 +581,7 @@ public class JitAllocationModel {
 	 */
 	public record MultiLocalVarHandler(List<MultiLocalPart> parts, JitType type)
 			implements VarHandler {
+
 		@Override
 		public void generateInitCode(JitCodeGenerator gen, MethodVisitor iv) {
 			// Generator calls local inits directly
@@ -549,31 +594,23 @@ public class JitAllocationModel {
 		}
 
 		@Override
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			parts.get(0).generateLoadCode(gen, this.type, rv);
-			for (MultiLocalPart part : parts.subList(1, parts.size())) {
-				part.generateLoadCode(gen, this.type, rv);
-				switch (this.type) {
-					case IntJitType t -> rv.visitInsn(IOR);
-					case LongJitType t -> rv.visitInsn(LOR);
-					default -> throw new AssertionError();
-				}
+		public void generateLoadCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
+			for (MultiLocalPart part : parts) {
+				part.generateLoadCode(gen, ext, rv);
+				// TODO: Optimize case where last sub of cur is first sub of next
 			}
-			TypeConversions.generate(gen, this.type, type, rv);
+			TypeConversions.generate(gen, this.type, type, ext, rv);
 		}
 
 		@Override
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			TypeConversions.generate(gen, type, this.type, rv);
-			for (MultiLocalPart part : parts.subList(1, parts.size()).reversed()) {
-				switch (this.type) {
-					case IntJitType t -> rv.visitInsn(DUP);
-					case LongJitType t -> rv.visitInsn(DUP2);
-					default -> throw new AssertionError();
-				}
-				part.generateStoreCode(gen, this.type, rv);
+		public void generateStoreCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
+			TypeConversions.generate(gen, type, this.type, ext, rv);
+			for (MultiLocalPart part : parts.reversed()) {
+				part.generateStoreCode(gen, ext, rv);
+				// TODO: Optimize case where last sub of cur is first sub of next
 			}
-			parts.get(0).generateStoreCode(gen, this.type, rv);
 		}
 	}
 
@@ -599,12 +636,14 @@ public class JitAllocationModel {
 		}
 
 		@Override
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
+		public void generateLoadCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
 			throw new AssertionError();
 		}
 
 		@Override
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
+		public void generateStoreCode(JitCodeGenerator gen, JitType type, Ext ext,
+				MethodVisitor rv) {
 			throw new AssertionError();
 		}
 	}
@@ -712,6 +751,15 @@ public class JitAllocationModel {
 		}
 
 		/**
+		 * Generate the initialization of this variable.
+		 * 
+		 * @param mv the method visitor
+		 * @param nameThis the name of the class defining the containing method
+		 */
+		default void generateInitCode(MethodVisitor mv, String nameThis) {
+		}
+
+		/**
 		 * Generate a load of this variable onto the JVM stack.
 		 * 
 		 * @param mv the method visitor
@@ -816,9 +864,7 @@ public class JitAllocationModel {
 			}
 
 			@Override
-			public void generateDeclCode(MethodVisitor mv, String nameThis, Label startLocals,
-					Label endLocals) {
-				super.generateDeclCode(mv, nameThis, startLocals, endLocals);
+			public void generateInitCode(MethodVisitor mv, String nameThis) {
 				mv.visitLdcInsn(0);
 				mv.visitVarInsn(ISTORE, index());
 			}
@@ -860,6 +906,54 @@ public class JitAllocationModel {
 		}
 	}
 
+	public class JvmTempAlloc implements AutoCloseable {
+		final MethodVisitor mv;
+		final String prefix;
+		final Class<?> primitiveType;
+		final int startIndex;
+		final int count;
+		final int step;
+		final Label start;
+		final Label end;
+
+		JvmTempAlloc(MethodVisitor mv, String prefix, Class<?> primitiveType, int count,
+				int startIndex, int step, Label start, Label end) {
+			this.mv = mv;
+			this.prefix = prefix;
+			this.primitiveType = primitiveType;
+			this.count = count;
+			this.startIndex = startIndex;
+			this.step = step;
+			this.start = start;
+			this.end = end;
+		}
+
+		public int idx(int i) {
+			if (i >= count) {
+				throw new IndexOutOfBoundsException(i);
+			}
+			return startIndex + i * step;
+		}
+
+		public void visitLocals() {
+			mv.visitLabel(end);
+			for (int i = 0; i < count; i++) {
+				String name = count == 1 ? prefix : (prefix + i);
+				mv.visitLocalVariable(name, Type.getDescriptor(primitiveType), null, start, end,
+					startIndex + step * i);
+			}
+		}
+
+		public int getCount() {
+			return count;
+		}
+
+		@Override
+		public void close() {
+			releaseTemp(this);
+		}
+	}
+
 	private final JitDataFlowModel dfm;
 	private final JitVarScopeModel vsm;
 	private final JitTypeModel tm;
@@ -871,12 +965,13 @@ public class JitAllocationModel {
 	private final Map<JitVal, VarHandler> handlers = new HashMap<>();
 	private final Map<Varnode, VarHandler> handlersPerVarnode = new HashMap<>();
 	private final NavigableMap<Address, JvmLocal> locals = new TreeMap<>();
+	private final Deque<JvmTempAlloc> tempAllocs = new LinkedList<>();
 
 	/**
 	 * Construct the allocation model.
 	 * 
 	 * @param context the analysis context
-	 * @param dfm the data flow moel
+	 * @param dfm the data flow model
 	 * @param vsm the variable scope model
 	 * @param tm the type model
 	 */
@@ -912,18 +1007,70 @@ public class JitAllocationModel {
 	}
 
 	/**
-	 * Get the next free local index without reserving it
+	 * Temporarily allocate the next {@code count} indices of local variables
 	 * 
 	 * <p>
-	 * This should be used by operator code generators <em>after</em> all the
-	 * {@link JitBytesPcodeExecutorState state} bypassing local variables have been allocated. The
-	 * variables should be scoped to that operator only, so that the ids used are freed for the next
-	 * operator.
+	 * These indices are reserved only within the scope of the {@code try-with-resources} block
+	 * creating the allocation. If the {@code primitiveType} is a {@code long} or {@code double},
+	 * then the number of actual indices allocated is multiplied by 2, such that the total number of
+	 * variables is given by {@code count}.
+	 * <p>
+	 * This should be used by operator code generators <em>after</em> all the local variables,
+	 * including those used to bypass {@link JitBytesPcodeExecutorState state}, have been allocated,
+	 * or else this may generate colliding indices. These variables ought to be released before the
+	 * next operator's code generator is invoked.
+	 * <p>
+	 * <b>NOTE:</b> This will automatically invoke
+	 * {@link MethodVisitor#visitLocalVariable(String, String, String, Label, Label, int)} and place
+	 * the appropriate labels for you.
 	 * 
-	 * @return the next id
+	 * @param mv the method visitor
+	 * @param prefix the name of the local variable, or its prefix if count > 1
+	 * @param primitiveType the type of each variable. NOTE: If heterogeneous allocations are
+	 *            needed, invoke this method more than once in the {@code try-with-resources}
+	 *            assignment.
+	 * @param count the number of variables to allocate
+	 * @return the handle to the allocation.
 	 */
-	public int nextFreeLocal() {
-		return nextLocal;
+	public JvmTempAlloc allocateTemp(MethodVisitor mv, String prefix, Class<?> primitiveType,
+			int count) {
+		if (count == 0) {
+			return null;
+		}
+		int startIndex = nextLocal;
+		int step = primitiveType == long.class || primitiveType == double.class ? 2 : 1;
+		int countIndices = count * step;
+		nextLocal += countIndices;
+
+		Label start = new Label();
+		Label end = new Label();
+		mv.visitLabel(start);
+		JvmTempAlloc temp =
+			new JvmTempAlloc(mv, prefix, primitiveType, count, startIndex, step, start, end);
+		tempAllocs.push(temp);
+		return temp;
+	}
+
+	/**
+	 * Temporarily allocate the next {@code count} indices of local {@code int} variables
+	 * 
+	 * @param mv the method visitor
+	 * @param prefix the name of the local variable, or its prefix if count > 1
+	 * @param count the number of variables to allocate
+	 * @return the handle to the allocation.
+	 * @see #allocateTemp(MethodVisitor, String, Class, int)
+	 */
+	public JvmTempAlloc allocateTemp(MethodVisitor mv, String prefix, int count) {
+		return allocateTemp(mv, prefix, int.class, count);
+	}
+
+	private void releaseTemp(JvmTempAlloc alloc) {
+		JvmTempAlloc popped = tempAllocs.pop();
+		if (popped != alloc) {
+			throw new AssertionError("Temp allocations must obey stack semantics");
+		}
+		alloc.visitLocals();
+		nextLocal = alloc.startIndex;
 	}
 
 	/**
@@ -934,12 +1081,10 @@ public class JitAllocationModel {
 	 * @param desc the (whole) variable's descriptor
 	 * @return the allocated JVM locals from most to least significant
 	 */
-	private List<JvmLocal> genFreeLocals(String name, List<SimpleJitType> types,
+	private List<JvmLocal> genFreeLocals(String name, List<? extends SimpleJitType> types,
 			VarDesc desc) {
 		JvmLocal[] result = new JvmLocal[types.size()];
-		Iterable<SimpleJitType> it = language.isBigEndian()
-				? types
-				: () -> new ReverseListIterator<SimpleJitType>(types);
+		Iterable<? extends SimpleJitType> it = language.isBigEndian() ? types : types.reversed();
 		long offset = desc.offset;
 		int i = 0;
 		for (SimpleJitType t : it) {
@@ -1022,20 +1167,55 @@ public class JitAllocationModel {
 	 *         locals.
 	 */
 	private VarHandler createComplicatedHandler(Varnode vn) {
-		Entry<Address, JvmLocal> leftEntry = locals.floorEntry(vn.getAddress());
-		assert overlapsLeft(leftEntry.getValue().vn, vn);
-		Address min = leftEntry.getKey();
-		NavigableMap<Address, JvmLocal> sub = locals.subMap(min, true, maxAddr(vn), true);
-
-		List<MultiLocalPart> parts = new ArrayList<>();
-		for (JvmLocal local : sub.values()) {
-			int offset = (int) switch (endian) {
-				case BIG -> maxAddr(leftEntry.getValue().vn).subtract(maxAddr(vn));
-				case LITTLE -> vn.getAddress().subtract(leftEntry.getKey());
-			};
-			parts.add(new MultiLocalPart(local, offset));
+		JitType type = JitTypeBehavior.INTEGER.type(vn.getSize());
+		NavigableMap<Varnode, MultiLocalPart> legs =
+			new TreeMap<>(Comparator.comparing(Varnode::getAddress));
+		switch (endian) {
+			case BIG -> {
+				Address address = vn.getAddress();
+				for (SimpleJitType legType : type.legTypes()) {
+					Varnode legVn = new Varnode(address, legType.size());
+					legs.put(legVn, new MultiLocalPart(new ArrayList<>(), legType));
+					address = address.add(legType.size());
+				}
+			}
+			case LITTLE -> {
+				Address address = maxAddr(vn);
+				for (SimpleJitType legType : type.legTypes()) {
+					address = address.subtract(legType.size() - 1);
+					Varnode legVn = new Varnode(address, legType.size());
+					legs.put(legVn, new MultiLocalPart(new ArrayList<>(), legType));
+					address = address.subtractWrap(1);
+				}
+			}
 		}
-		return new MultiLocalVarHandler(parts, JitTypeBehavior.INTEGER.type(vn.getSize()));
+
+		Entry<Address, JvmLocal> firstEntry = locals.floorEntry(vn.getAddress());
+		assert overlapsLeft(firstEntry.getValue().vn, vn);
+		Address min = firstEntry.getKey();
+		NavigableMap<Address, JvmLocal> sub = locals.subMap(min, true, maxAddr(vn), true);
+		for (JvmLocal local : sub.values()) {
+			Varnode startVn = legs.floorKey(local.vn);
+			if (startVn == null || !startVn.intersects(local.vn)) {
+				startVn = local.vn;
+			}
+			for (Entry<Varnode, MultiLocalPart> ent : legs.tailMap(startVn).entrySet()) {
+				Varnode legVn = ent.getKey();
+				if (!legVn.intersects(local.vn)) {
+					break;
+				}
+				int offset = (int) switch (endian) {
+					case BIG -> maxAddr(local.vn).subtract(maxAddr(legVn));
+					case LITTLE -> legVn.getAddress().subtract(local.vn.getAddress());
+				};
+				ent.getValue().subs.add(new MultiLocalSub(local, offset));
+			}
+		}
+		List<MultiLocalPart> parts = List.copyOf(legs.values());
+		return new MultiLocalVarHandler(switch (endian) {
+			case BIG -> parts;
+			case LITTLE -> parts.reversed();
+		}, type);
 	}
 
 	/**

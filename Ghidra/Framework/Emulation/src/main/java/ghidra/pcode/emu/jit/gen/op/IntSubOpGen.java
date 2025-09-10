@@ -17,13 +17,15 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.MethodVisitor;
 
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitIntSubOp;
 
 /**
@@ -36,9 +38,14 @@ import ghidra.pcode.emu.jit.op.JitIntSubOp;
  * <p>
  * NOTE: The multi-precision integer parts of this are a work in progress.
  */
-public enum IntSubOpGen implements BinOpGen<JitIntSubOp> {
+public enum IntSubOpGen implements IntBinOpGen<JitIntSubOp> {
 	/** The generator singleton */
 	GEN;
+
+	@Override
+	public boolean isSigned() {
+		return false;
+	}
 
 	private void generateMpIntLegSub(JitCodeGenerator gen, int idx, boolean takesBorrow,
 			boolean givesBorrow, MethodVisitor mv) {
@@ -50,19 +57,19 @@ public enum IntSubOpGen implements BinOpGen<JitIntSubOp> {
 			mv.visitInsn(DUP2_X1);
 			mv.visitInsn(POP2);
 			// [...,borrowinN:LONG,llegN:INT]
-			mv.visitInsn(I2L); // yes, signed
+			TypeConversions.generateIntToLong(IntJitType.I4, LongJitType.I8, Ext.ZERO, mv);
 			// [...,borrowinN:LONG,llegN:LONG]
 			mv.visitInsn(LADD); // Yes, add, because borrow is 0 or -1
 			// [...,diffpartN:LONG]
 		}
 		else {
 			// [...,legN:INT]
-			TypeConversions.generateIntToLong(IntJitType.I4, LongJitType.I8, mv);
+			TypeConversions.generateIntToLong(IntJitType.I4, LongJitType.I8, Ext.ZERO, mv);
 			// [...,diffpartN:LONG] (legN + 0)
 		}
 		mv.visitVarInsn(ILOAD, idx);
 		// [...,diffpartN:LONG,rlegN:INT]
-		TypeConversions.generateIntToLong(IntJitType.I4, LongJitType.I8, mv);
+		TypeConversions.generateIntToLong(IntJitType.I4, LongJitType.I8, Ext.ZERO, mv);
 		// [...,diffpartN:LONG,rlegN:LONG]
 		mv.visitInsn(LSUB);
 		// [...,olegN:LONG]
@@ -70,7 +77,7 @@ public enum IntSubOpGen implements BinOpGen<JitIntSubOp> {
 			mv.visitInsn(DUP2);
 		}
 		// [...,(olegN:LONG),olegN:LONG]
-		TypeConversions.generateLongToInt(LongJitType.I8, IntJitType.I4, mv);
+		TypeConversions.generateLongToInt(LongJitType.I8, IntJitType.I4, Ext.ZERO, mv);
 		// [...,(olegN:LONG),olegN:INT]
 		/** NB. The store will perform the masking */
 		mv.visitVarInsn(ISTORE, idx);
@@ -82,46 +89,34 @@ public enum IntSubOpGen implements BinOpGen<JitIntSubOp> {
 		 * The strategy is to allocate a temp local for each leg of the result. First, we'll pop the
 		 * right operand into the temp. Then, as we work with each leg of the left operand, we'll
 		 * execute the algorithm. Convert both right and left legs to a long and add them (along
-		 * with a possible carry in). Store the result back into the temp locals. Shift the leg
+		 * with a possible borrow in). Store the result back into the temp locals. Shift the leg
 		 * right 32 to get the carry out, then continue to the next leg up. The final carry out can
 		 * be dropped (overflow). The result legs are then pushed back to the stack.
 		 */
 		// [lleg1,...,llegN,rleg1,rlegN] (N is least-significant leg)
 		int legCount = type.legsAlloc(); // include partial
-		int firstIndex = gen.getAllocationModel().nextFreeLocal();
-		Label start = new Label();
-		Label end = new Label();
-		mv.visitLabel(start);
-		for (int i = 0; i < legCount; i++) {
-			mv.visitLocalVariable("result" + i, Type.getDescriptor(int.class), null, start, end,
-				firstIndex + i);
-			mv.visitVarInsn(ISTORE, firstIndex + i);
-			// NOTE: More significant legs have higher indices (reverse of stack)
+		try (JvmTempAlloc result = gen.getAllocationModel().allocateTemp(mv, "result", legCount)) {
+			OpGen.generateMpLegsIntoTemp(result, legCount, mv);
+			// [lleg1,...,llegN:INT]
+			for (int i = 0; i < legCount; i++) {
+				boolean isLast = i == legCount - 1;
+				boolean takesCarry = i != 0; // not first
+				generateMpIntLegSub(gen, result.idx(i), takesCarry, !isLast, mv);
+			}
+			OpGen.generateMpLegsFromTemp(result, legCount, mv);
 		}
-		// [lleg1,...,llegN:INT]
-		for (int i = 0; i < legCount; i++) {
-			boolean isLast = i == legCount - 1;
-			boolean takesCarry = i != 0; // not first
-			generateMpIntLegSub(gen, firstIndex + i, takesCarry, !isLast, mv);
-		}
-
-		// Push it all back, in reverse order
-		for (int i = 0; i < legCount; i++) {
-			mv.visitVarInsn(ILOAD, firstIndex + legCount - i - 1);
-		}
-		mv.visitLabel(end);
 	}
 
 	@Override
 	public JitType afterLeft(JitCodeGenerator gen, JitIntSubOp op, JitType lType, JitType rType,
 			MethodVisitor rv) {
-		return TypeConversions.forceUniformZExt(lType, rType, rv);
+		return TypeConversions.forceUniform(gen, lType, rType, Ext.ZERO, rv);
 	}
 
 	@Override
 	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSubOp op, JitBlock block,
 			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, Ext.ZERO, rv);
 		switch (rType) {
 			case IntJitType t -> rv.visitInsn(ISUB);
 			case LongJitType t -> rv.visitInsn(LSUB);
@@ -129,6 +124,6 @@ public enum IntSubOpGen implements BinOpGen<JitIntSubOp> {
 			case MpIntJitType t -> TODO("MpInt of differing sizes");
 			default -> throw new AssertionError();
 		}
-		return lType;
+		return rType;
 	}
 }
