@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import ghidra.pcode.emu.jit.analysis.JitAllocationModel.VarHandler;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitLocalOutVar;
 
 /**
@@ -31,8 +32,8 @@ public enum LocalOutVarGen implements LocalVarGen<JitLocalOutVar> {
 
 	@Override
 	public void generateVarWriteCode(JitCodeGenerator gen, JitLocalOutVar v, JitType type,
-			MethodVisitor rv) {
+			Ext ext, MethodVisitor rv) {
 		VarHandler handler = gen.getAllocationModel().getHandler(v);
-		handler.generateStoreCode(gen, type, rv);
+		handler.generateStoreCode(gen, type, ext, rv);
 	}
 }

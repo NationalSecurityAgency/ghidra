@@ -222,6 +222,11 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 	}
 
 	@Override
+	public Class<?> getOutputType() {
+		return void.class;
+	}
+
+	@Override
 	public Method getJavaMethod() {
 		return null;
 	}

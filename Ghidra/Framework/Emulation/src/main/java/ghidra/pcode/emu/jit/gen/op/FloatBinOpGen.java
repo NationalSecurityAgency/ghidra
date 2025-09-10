@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.emu.jit.gen.var;
+package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
-import ghidra.pcode.emu.jit.var.JitMemoryOutVar;
+import ghidra.pcode.emu.jit.op.JitFloatBinOp;
 
 /**
- * The generator for a memory output variable.
+ * An extension for floating-point binary operators
+ * 
+ * @param <T> the class of p-code op node in the use-def graph
  */
-public enum MemoryOutVarGen implements MemoryVarGen<JitMemoryOutVar> {
-	/** Singleton */
-	GEN;
-
+public interface FloatBinOpGen<T extends JitFloatBinOp> extends BinOpGen<T> {
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitMemoryOutVar v, JitType type, Ext ext,
-			MethodVisitor rv) {
-		VarGen.generateValWriteCodeDirect(gen, v, type, rv);
+	default boolean isSigned() {
+		return false;
 	}
 }

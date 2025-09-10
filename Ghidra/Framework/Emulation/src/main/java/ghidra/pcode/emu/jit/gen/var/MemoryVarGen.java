@@ -21,6 +21,7 @@ import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.type.TypedAccessGen;
 import ghidra.pcode.emu.jit.var.JitVarnodeVar;
 
@@ -41,7 +42,7 @@ public interface MemoryVarGen<V extends JitVarnodeVar> extends VarGen<V> {
 	}
 
 	@Override
-	default JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq,
+	default JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq, Ext ext,
 			MethodVisitor rv) {
 		return VarGen.generateValReadCodeDirect(gen, v, typeReq, rv);
 	}

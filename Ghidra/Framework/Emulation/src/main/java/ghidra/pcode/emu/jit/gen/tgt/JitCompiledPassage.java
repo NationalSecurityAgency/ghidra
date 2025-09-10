@@ -17,6 +17,8 @@ package ghidra.pcode.emu.jit.gen.tgt;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.objectweb.asm.Opcodes;
 
@@ -1059,6 +1061,35 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * The implementation of {@link PcodeOp#INT_SCARRY int_sborrow} on multi-precision ints.
+	 * 
+	 * @param a the first operand as in {@code a - b}
+	 * @param b the second operand as in {@code a - b}
+	 * @param shift one less than the number of bits in each most-significant leg, i.e., the number
+	 *            of bits to shift right such that the most-significant bit of the most-significant
+	 *            leg becomes the least-significant bit of the <em>most</em>-significant leg.
+	 * @return the one carry bit
+	 */
+	static int sBorrowMpInt(int[] a, int[] b, int shift) {
+		assert a.length == b.length;
+		long carry = 0;
+		for (int i = 0; i < a.length; i++) {
+			carry >>= Integer.SIZE;
+			carry += (a[i] & MASK_I2UL) - (b[i] & MASK_I2UL);
+		}
+		int msr = (int) carry;
+		int msa = a[a.length - 1];
+		int msb = b[b.length - 1];
+
+		msa ^= msr;
+		msr ^= msb;
+		msr ^= -1;
+		msa &= msr;
+
+		return (msa >> shift) & 1;
+	}
+
+	/**
 	 * The implementation of {@link PcodeOp#INT_SCARRY int_scarry} on JVM ints.
 	 * 
 	 * <p>
@@ -1099,6 +1130,199 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * The implementation of {@link PcodeOp#INT_SCARRY int_scarry} on multi-precision ints.
+	 * 
+	 * @param a the first operand as in {@code a + b}
+	 * @param b the second operand as in {@code a + b}
+	 * @param shift one less than the number of bits in each most-significant leg, i.e., the number
+	 *            of bits to shift right such that the most-significant bit of the most-significant
+	 *            leg becomes the least-significant bit of the <em>most</em>-significant leg.
+	 * @return the one carry bit
+	 */
+	static int sCarryMpInt(int[] a, int[] b, int shift) {
+		assert a.length == b.length;
+		long carry = 0;
+		for (int i = 0; i < a.length; i++) {
+			carry >>>= Integer.SIZE;
+			carry += (a[i] & MASK_I2UL) + (b[i] & MASK_I2UL);
+		}
+		int msr = (int) carry;
+		int msa = a[a.length - 1];
+		int msb = b[b.length - 1];
+
+		msr ^= msa;
+		msa ^= msb;
+		msa ^= -1;
+		msr &= msa;
+
+		return (msr >> shift) & 1;
+	}
+
+	enum MpShiftPrivate {
+		;
+		static void shl(int[] out, int[] val, int amt) {
+			int legs = amt >>> 5;
+			int bits = amt & 0x1f;
+			/*for (int i = 0; i < out.length && i < legs; i++) {
+				out[i] = 0;
+			}*/
+			if (bits == 0) {
+				for (int i = 0; i < val.length - legs & i < out.length - legs; i++) {
+					out[i + legs] = val[i];
+				}
+				return;
+			}
+			int prev = 0;
+			for (int i = 0; i < val.length - legs & i < out.length - legs; i++) {
+				out[i + legs] = (val[i] << bits) | (prev >>> (Integer.SIZE - bits));
+				prev = val[i];
+			}
+		}
+
+		static void ushr(int[] out, int[] val, int amt) {
+			int legs = amt >>> 5;
+			int bits = amt & 0x1f;
+			/*for (int i = 0; i < out.length && i < legs; i++) {
+				out[i + legs] = 0;
+			}*/
+			if (bits == 0) {
+				for (int i = 0; i < val.length - legs & i < out.length; i++) {
+					out[i] = val[i + legs];
+				}
+				return;
+			}
+			int prev = 0;
+			for (int i = Math.min(val.length - legs, out.length) - 1; i >= 0; i--) {
+				out[i] = (val[i + legs] >>> bits) | (prev << (Integer.SIZE - bits));
+				prev = val[i + legs];
+			}
+		}
+
+		static void sshr(int[] out, int[] val, int amt, int sign) {
+			int legs = amt >>> 5;
+			int bits = amt & 0x1f;
+			if (bits == 0) {
+				for (int i = 0; i < val.length - legs & i < out.length; i++) {
+					out[i] = val[i + legs];
+				}
+				if (sign != 0) {
+					for (int i = val.length - legs; i < out.length; i++) {
+						out[i] = sign;
+					}
+				}
+				return;
+			}
+			int prev = 0;
+			// Only apply signed shift to most-significant leg of val
+			if (val.length - legs - 1 >= 0) {
+				out[val.length - legs - 1] = (val[val.length - 1] >> bits);
+				prev = val[val.length - 1];
+			}
+			for (int i = Math.min(val.length - legs, out.length) - 2; i >= 0; i--) {
+				out[i] = (val[i + legs] >>> bits) | (prev << (Integer.SIZE - bits));
+				prev = val[i + legs];
+			}
+			if (sign != 0) {
+				for (int i = val.length - legs; i < out.length; i++) {
+					out[i] = sign;
+				}
+			}
+		}
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on multi-precision ints.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHL ishl}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val << amt}, in little-endian order
+	 * @param amt the amt as in {@code val << amt}, in little-endian order
+	 */
+	static void intLeft(int[] out, int outBytes, int[] val, int[] amt) {
+		if (Integer.compareUnsigned(amt[0], outBytes * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				Arrays.fill(out, 0);
+				return;
+			}
+		}
+		MpShiftPrivate.shl(out, val, amt[0]);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on an mp-int with a JVM long shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHL ishl}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val << amt}, in little-endian order
+	 * @param amt the amt as in {@code val << amt}
+	 */
+	static void intLeft(int[] out, int outBytes, int[] val, long amt) {
+		if (Long.compareUnsigned(amt, (outBytes & MASK_I2UL) * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		MpShiftPrivate.shl(out, val, (int) amt);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on an mp-int with a JVM int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHL ishl}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val << amt}, in little-endian order
+	 * @param amt the amt as in {@code val << amt}
+	 */
+	static void intLeft(int[] out, int outBytes, int[] val, int amt) {
+		if (Integer.compareUnsigned(amt, outBytes * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		MpShiftPrivate.shl(out, val, amt);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on a JVM long with an mp-int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHL ishl}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param val the value as in {@code val << amt}
+	 * @param amt the amt as in {@code val << amt}, in little-endian order
+	 * @return the value
+	 */
+	static long intLeft(long val, int[] amt) {
+		if (Long.compareUnsigned(Integer.toUnsignedLong(amt[0]), Long.SIZE) >= 0) {
+			return 0;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				return 0;
+			}
+		}
+		return val << amt[0];
+	}
+
+	/**
 	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on JVM longs.
 	 * 
 	 * <p>
@@ -1132,6 +1356,30 @@ public interface JitCompiledPassage {
 			return 0;
 		}
 		return val << amt;
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_LEFT int_left} on a JVM int with an mp-int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHL ishl}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param val the value as in {@code val << amt}
+	 * @param amt the amt as in {@code val << amt}, in little-endian order
+	 * @return the value
+	 */
+	static long intLeft(int val, int[] amt) {
+		if (Integer.compareUnsigned(amt[0], Integer.SIZE) >= 0) {
+			return 0;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				return 0;
+			}
+		}
+		return val << amt[0];
 	}
 
 	/**
@@ -1171,6 +1419,98 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on multi-precision ints.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#IUSHR iushr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val >> amt}, in little-endian order
+	 * @param amt the amt as in {@code val >> amt}, in little-endian order
+	 */
+	static void intRight(int[] out, int outBytes, int[] val, int[] amt) {
+		if (Integer.compareUnsigned(amt[0], outBytes * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				Arrays.fill(out, 0);
+				return;
+			}
+		}
+		MpShiftPrivate.ushr(out, val, amt[0]);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on an mp-int with a JVM long shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#IUSHR iushr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val >> amt}, in little-endian order
+	 * @param amt the amt as in {@code val >> amt}
+	 */
+	static void intRight(int[] out, int outBytes, int[] val, long amt) {
+		if (Long.compareUnsigned(amt, (outBytes & MASK_I2UL) * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		MpShiftPrivate.ushr(out, val, (int) amt);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on an mp-int with a JVM int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#IUSHR iushr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val >> amt}, in little-endian order
+	 * @param amt the amt as in {@code val >> amt}
+	 */
+	static void intRight(int[] out, int outBytes, int[] val, int amt) {
+		if (Integer.compareUnsigned(amt, outBytes * Byte.SIZE) >= 0) {
+			Arrays.fill(out, 0);
+			return;
+		}
+		MpShiftPrivate.ushr(out, val, amt);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on a JVM long with an mp-int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#IUSHR iushr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param val the value as in {@code val >> amt}
+	 * @param amt the amt as in {@code val >> amt}, in little-endian order
+	 * @return the value
+	 */
+	static long intRight(long val, int[] amt) {
+		if (Long.compareUnsigned(Integer.toUnsignedLong(amt[0]), Long.SIZE) >= 0) {
+			return 0;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				return 0;
+			}
+		}
+		return val >>> amt[0];
+	}
+
+	/**
 	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on JVM longs.
 	 * 
 	 * <p>
@@ -1207,6 +1547,30 @@ public interface JitCompiledPassage {
 	}
 
 	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on a JVM int with an mp-int shift
+	 * amount.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#IUSHR iushr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size clear the register.
+	 * 
+	 * @param val the value as in {@code val >> amt}
+	 * @param amt the amt as in {@code val >> amt}, in little-endian order
+	 * @return the value
+	 */
+	static long intRight(int val, int[] amt) {
+		if (Integer.compareUnsigned(amt[0], Integer.SIZE) >= 0) {
+			return 0;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				return 0;
+			}
+		}
+		return val >>> amt[0];
+	}
+
+	/**
 	 * The implementation of {@link PcodeOp#INT_RIGHT int_right} on JVM int with long amt.
 	 * 
 	 * <p>
@@ -1240,6 +1604,34 @@ public interface JitCompiledPassage {
 			return 0;
 		}
 		return val >>> amt;
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_RIGHT int_sright} on multi-precision ints.
+	 * 
+	 * <p>
+	 * The semantics here are subtly different than the JVM's {@link Opcodes#ISHR ishr}: 1) The
+	 * amount must be treated as unsigned. 2) Shifts in excess of val's size fill the register with
+	 * the sign bit.
+	 * 
+	 * @param out the array to receive the output, in little-endian order
+	 * @param outBytes the actual size in bytes of the output operand
+	 * @param val the value as in {@code val s>> amt}, in little-endian order
+	 * @param amt the amt as in {@code val s>> amt}, in little-endian order
+	 */
+	static void intSRight(int[] out, int outBytes, int[] val, int[] amt) {
+		int sign = val[val.length - 1] < 0 ? -1 : 0;
+		if (Integer.compareUnsigned(amt[0], outBytes * Byte.SIZE) >= 0) {
+			Arrays.fill(out, sign);
+			return;
+		}
+		for (int i = 1; i < amt.length; i++) {
+			if (amt[i] != 0) {
+				Arrays.fill(out, sign);
+				return;
+			}
+		}
+		MpShiftPrivate.sshr(out, val, amt[0], sign);
 	}
 
 	/**
@@ -1316,6 +1708,323 @@ public interface JitCompiledPassage {
 			return val >> (Integer.SIZE - 1);
 		}
 		return val >> amt;
+	}
+
+	static final long MASK_I2UL = 0x0000_0000_ffff_ffffL;
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_MULT} on mp-ints.
+	 * <p>
+	 * All arrays are in little-endian order
+	 * 
+	 * @param out the array allocated to receive the output
+	 * @param inL the array of left input legs
+	 * @param inR the array of right input legs
+	 */
+	static void mpIntMultiply(int[] out, int[] inL, int[] inR) {
+		long carry = 0;
+		long rp = inR[0] & MASK_I2UL;
+		for (int li = 0; li < inL.length && li < out.length; li++) {
+			long lp = inL[li] & MASK_I2UL;
+			carry += lp * rp;
+			out[li] = (int) carry;
+			carry >>>= Integer.SIZE;
+		}
+
+		for (int ri = 1; ri < inR.length && ri < out.length; ri++) {
+			carry = 0;
+			rp = inR[ri] & MASK_I2UL;
+			for (int li = 0; li < inL.length && ri + li < out.length; li++) {
+				long lp = inL[li] & MASK_I2UL;
+				long op = out[li + ri] & MASK_I2UL;
+				carry += op + lp * rp;
+				out[li + ri] = (int) carry;
+				carry >>>= Integer.SIZE;
+			}
+		}
+	}
+
+	public static String mpToString(int[] legs) {
+		if (legs == null) {
+			return "null";
+		}
+		List<String> list = IntStream.of(legs).mapToObj(i -> "%08x".formatted(i)).toList();
+		return list.reversed().stream().collect(Collectors.joining(":"));
+	}
+
+	enum MpDivPrivate {
+		;
+
+		/**
+		 * Count the number of leading 0 bits in the first non-zero leg, and identify that leg's
+		 * index
+		 * 
+		 * @param legs
+		 */
+		static int lz(int[] legs) {
+			// Least-significant leg is first
+			int count = 0;
+			for (int i = legs.length - 1; i >= 0; i--) {
+				int llz = Integer.numberOfLeadingZeros(legs[i]);
+				count += llz;
+				if (llz != Integer.SIZE) {
+					break;
+				}
+			}
+			return count;
+		}
+
+		static int size(int[] legs) {
+			// Least-significant leg is first
+			for (int i = legs.length - 1; i >= 0; i--) {
+				if (legs[i] != 0) {
+					return i + 1;
+				}
+			}
+			return 0;
+		}
+
+		/**
+		 * Shift the given mp-int legs left the given number of bits
+		 * 
+		 * @param legs the legs
+		 * @param shift the number of bits to shift left
+		 */
+		static void shl(int[] legs, int shift) {
+			if (shift == 0) {
+				return; // The extra leading leg is already 0
+			}
+			assert shift >= 0 && shift < Integer.SIZE;
+
+			long carry = 0;
+			for (int i = 0; i < legs.length; i++) {
+				carry |= (legs[i] & MASK_I2UL) << shift;
+				legs[i] = (int) carry;
+				carry >>>= Integer.SIZE;
+			}
+		}
+
+		static void shr(int[] legs, int shift) {
+			if (shift == 0) {
+				return;
+			}
+			assert shift >= 0 && shift < Integer.SIZE;
+
+			long carry = 0;
+			for (int i = legs.length - 1; i >= 0; i--) {
+				carry |= (legs[i] & MASK_I2UL) << (Integer.SIZE - shift);
+				legs[i] = (int) (carry >> Integer.SIZE);
+				carry <<= Integer.SIZE;
+			}
+		}
+
+		/**
+		 * Perform unsigned division for a multi-precision dividend and single-precision divisor
+		 * 
+		 * @param out the output for the quotient
+		 * @param inL the dividend, and the output for the remainder
+		 * @param sizeL the number of legs in the dividend
+		 * @param inR the divisor
+		 */
+		static void divideMpSp(int[] out, int[] inL, int sizeL, int inR) {
+			long r = 0;
+			for (int j = sizeL - 1; j >= 0; j--) {
+				r <<= Integer.SIZE;
+				r += inL[j] & MASK_I2UL;
+				out[j] = (int) (r / inR);
+				r %= inR;
+				inL[j] = 0; // So that the mp-int inL is truly the remainder
+			}
+			inL[0] = (int) r;
+		}
+
+		/**
+		 * Perform unsigned division (or division of magnitudes)
+		 * 
+		 * @param out the output for the quotient
+		 * @param inL the dividend, and the output for the remainder
+		 * @param inR the divisor
+		 * @implNote this is just Algorithm D from Knuth's TAOCP Volume 2 without any sophisticated
+		 *           optimizations. We don't really need to optimize for the "big" case, we just
+		 *           need to support the bigger-than-a-machine-word case.
+		 */
+		static void divide(int[] out, int[] inL, int[] inR) {
+			/**
+			 * Before we mutate anything, compute lengths for D2. We'll compute sizeR from the
+			 * leading-zeroes computation in D1.
+			 */
+			int sizeL = size(inL);
+
+			/**
+			 * D1 [Normalize]
+			 * 
+			 * My understanding of this step is to assure that the divisor (inR) has a 1 in the
+			 * most-significant bit of its most-significant leg ("digit" in the text's terminology).
+			 */
+			int shiftBits = lz(inR);
+
+			int truncR = shiftBits / Integer.SIZE;
+			int sizeR = inR.length - truncR;
+
+			if (sizeR == 1) {
+				/**
+				 * Never mind all this. Just do the simple algorithm (Exercise 16, in TAOCP Vol. 2,
+				 * Section 4.3.1). We actually can't use the full multi-precision algorithm, because
+				 * the adjustment of qHat in step D3 assumes the size of the divisor is >= 2 legs.
+				 */
+				divideMpSp(out, inL, sizeL, inR[0]);
+				return;
+			}
+
+			int shift = shiftBits % Integer.SIZE;
+
+			shl(inL, shift);
+			shl(inR, shift);
+
+			/**
+			 * D2 [Initialize j]
+			 * 
+			 * What should be an <em>easy</em> step here is complicated by the fact that every
+			 * operand has to (conventionally) have equal size is Sleigh. Thus, we need to seek out
+			 * the most-significant leg with a non-zero value for each, and then compute j. Probably
+			 * need to avoid an off-by-one error here, too.
+			 * 
+			 * dividend has size m + n "sizeL" (text calls dividend u_{m+n-1}...u_0)
+			 * 
+			 * divisor has size n "sizeR" (text calls divisor v_{n-1}...v_0})
+			 * 
+			 * Thus m = sizeL - sizeR
+			 */
+			for (int j = sizeL - sizeR; j >= 0; j--) { // step and test are D7
+				/**
+				 * D3 [Calculate q\^]
+				 */
+				// NOTE That inL is over-provisioned by 1, so we're good to index m+n
+				long qHat = (inL[sizeR + j] & MASK_I2UL) << Integer.SIZE;
+				qHat |= inL[sizeR + j - 1] & MASK_I2UL;
+				long rHat = qHat;
+				long vNm1 = inR[sizeR - 1] & MASK_I2UL; // v_{n-1}
+				qHat /= vNm1;
+				rHat %= vNm1;
+
+				do {
+					if (qHat == 1L << Integer.SIZE || Long.compareUnsigned(
+						qHat * (inR[sizeR - 2] & MASK_I2UL),
+						(rHat << Integer.SIZE) + (inL[sizeR + j - 2] & MASK_I2UL)) > 0) {
+						qHat--;
+						rHat += vNm1;
+					}
+					else {
+						break;
+					}
+				}
+				while (Long.compareUnsigned(rHat, 1L << Integer.SIZE) < 0);
+
+				/**
+				 * D4 [Multiply and subtract]
+				 * 
+				 * NOTE: borrow will become -1 if a borrow is needed, so add it to each subsequent
+				 * leg and use signed shift.
+				 */
+				long borrow = 0;
+				for (int i = 0; i < sizeR - 1; i++) {
+					borrow = (inL[j + i] & MASK_I2UL) - qHat * (inR[i] & MASK_I2UL) + borrow;
+					inL[j + i] = (int) borrow;
+					borrow >>= Integer.SIZE;
+				}
+				borrow = (inL[j + sizeR] & MASK_I2UL) + borrow;
+				inL[j + sizeR] = (int) borrow;
+				borrow >>= Integer.SIZE;
+
+				/**
+				 * D5 [Test remainder]
+				 */
+				if (borrow != 0) {
+					assert borrow == -1;
+					/**
+					 * D6 [Add back]
+					 */
+					qHat--;
+
+					long carry = 0;
+					for (int i = 0; i < sizeR; i++) {
+						carry += (inL[j + i] & MASK_I2UL) + inR[i];
+						inL[j + i] = (int) carry;
+						carry >>>= Integer.SIZE;
+					}
+				}
+				out[j] = (int) qHat; // Completion of D5
+
+				/**
+				 * D7 [Loop on j]
+				 * 
+				 * The step and test of the for loop that ends here implements D7
+				 */
+			}
+			/**
+			 * D8 [Unnormalize]
+			 */
+			shr(inL, shift);
+		}
+
+		static void neg(int[] legs, int count) {
+			long carry = 1;
+			for (int i = 0; i < count; i++) {
+				carry += (~legs[i] & MASK_I2UL);
+				legs[i] = (int) carry;
+				carry >>>= Integer.SIZE;
+			}
+		}
+
+		static void sdivide(int[] out, int[] inL, int[] inR) {
+			// NOTE: inL is over-provisioned by 1
+			boolean signL = inL[inL.length - 2] < 0;
+			boolean signR = inR[inR.length - 1] < 0;
+			if (signL) {
+				neg(inL, inL.length - 1);
+			}
+			if (signR) {
+				neg(inR, inR.length);
+			}
+			divide(out, inL, inR);
+			if (signL != signR) {
+				neg(out, out.length);
+			}
+			if (signL) {
+				neg(inL, inL.length - 1);
+			}
+		}
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_DIV} on mp-ints.
+	 * <p>
+	 * All arrays are in little-endian order. While this directly implements
+	 * {@link PcodeOp#INT_DIV}, it is also used for {@link PcodeOp#INT_REM},
+	 * {@link PcodeOp#INT_SDIV}, and {@link PcodeOp#INT_SREM}.
+	 * 
+	 * @param out the array allocated to receive the quotient
+	 * @param inL the array of dividend input legs, over-provisioned by 1, which will also receive
+	 *            the remainder
+	 * @param inR the array of divisor input legs
+	 */
+	static void mpIntDivide(int[] out, int[] inL, int[] inR) {
+		MpDivPrivate.divide(out, inL, inR);
+	}
+
+	/**
+	 * The implementation of {@link PcodeOp#INT_SDIV} on mp-ints.
+	 * <p>
+	 * All arrays are in little-endian order. While this directly implements
+	 * {@link PcodeOp#INT_SDIV}, it is also used for {@link PcodeOp#INT_SREM}.
+	 * 
+	 * @param out the array allocated to receive the quotient
+	 * @param inL the array of dividend input legs, over-provisioned by 1, which will also receive
+	 *            the remainder
+	 * @param inR the array of divisor input legs
+	 */
+	static void mpIntSignedDivide(int[] out, int[] inL, int[] inR) {
+		MpDivPrivate.sdivide(out, inL, inR);
 	}
 
 	/**

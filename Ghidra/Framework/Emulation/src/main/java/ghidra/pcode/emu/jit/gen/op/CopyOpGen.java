@@ -35,6 +35,11 @@ public enum CopyOpGen implements UnOpGen<JitCopyOp> {
 	GEN;
 
 	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	@Override
 	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitCopyOp op, JitBlock block,
 			JitType uType, MethodVisitor rv) {
 		return uType;

@@ -15,27 +15,13 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.op.JitIntRightOp;
+import ghidra.pcode.emu.jit.op.JitIntUnOp;
 
 /**
- * The generator for a {@link JitIntRightOp int_right}.
+ * An extension for integer unary operators
  * 
- * <p>
- * This uses the integer shift operator generator and simply invokes
- * {@link JitCompiledPassage#intRight(int, int)}, etc. depending on the types.
+ * @param <T> the class of p-code op node in the use-def graph
  */
-public enum IntRightOpGen implements ShiftIntBinOpGen<JitIntRightOp> {
-	/** The generator singleton */
-	GEN;
-
-	@Override
-	public boolean isSigned() {
-		return false;
-	}
-
-	@Override
-	public String methodName() {
-		return "intRight";
-	}
+public interface IntUnOpGen<T extends JitIntUnOp> extends UnOpGen<T> {
+	// Intentionally empty
 }

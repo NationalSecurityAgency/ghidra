@@ -30,6 +30,7 @@ import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.CBranchOpGen;
 import ghidra.pcode.emu.jit.gen.op.CallOtherOpGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.type.TypedAccessGen;
 import ghidra.pcode.emu.jit.var.*;
 import ghidra.program.model.address.Address;
@@ -307,7 +308,8 @@ public interface VarGen<V extends JitVar> extends ValGen<V> {
 	 * @param v the variable to write
 	 * @param type the p-code type (which also determines the expected JVM type) of the value on the
 	 *            stack
+	 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
 	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
 	 */
-	void generateVarWriteCode(JitCodeGenerator gen, V v, JitType type, MethodVisitor rv);
+	void generateVarWriteCode(JitCodeGenerator gen, V v, JitType type, Ext ext, MethodVisitor rv);
 }

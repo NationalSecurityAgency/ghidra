@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import org.objectweb.asm.MethodVisitor;
@@ -26,6 +25,7 @@ import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitIntSBorrowOp;
 
 /**
@@ -37,20 +37,25 @@ import ghidra.pcode.emu.jit.op.JitIntSBorrowOp;
  * {@link JitCompiledPassage#sBorrowLongRaw(long, long)} depending on the type. We must then emit a
  * shift and mask to extract the correct bit.
  */
-public enum IntSBorrowOpGen implements BinOpGen<JitIntSBorrowOp> {
+public enum IntSBorrowOpGen implements IntBinOpGen<JitIntSBorrowOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
+	public boolean isSigned() {
+		return true;
+	}
+
+	@Override
 	public JitType afterLeft(JitCodeGenerator gen, JitIntSBorrowOp op, JitType lType, JitType rType,
 			MethodVisitor rv) {
-		return TypeConversions.forceUniformSExt(lType, rType, rv);
+		return TypeConversions.forceUniform(gen, lType, rType, Ext.SIGN, rv);
 	}
 
 	@Override
 	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSBorrowOp op, JitBlock block,
 			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformSExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, Ext.SIGN, rv);
 		switch (rType) {
 			case IntJitType(int size) -> {
 				rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "sBorrowIntRaw",
@@ -74,7 +79,7 @@ public enum IntSBorrowOpGen implements BinOpGen<JitIntSBorrowOp> {
 				return IntJitType.I1;
 			}
 			case MpIntJitType t -> {
-				return TODO("MpInt");
+				return IntSCarryOpGen.generateMpIntSCarry(gen, t, "sBorrowMpInt", rv);
 			}
 			default -> throw new AssertionError();
 		}
