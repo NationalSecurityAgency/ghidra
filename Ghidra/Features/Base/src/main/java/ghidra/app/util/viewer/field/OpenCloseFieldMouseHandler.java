@@ -15,14 +15,15 @@
  */
 package ghidra.app.util.viewer.field;
 
+import java.awt.event.MouseEvent;
+
 import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 
-import java.awt.event.MouseEvent;
-
 public class OpenCloseFieldMouseHandler implements FieldMouseHandlerExtension {
-	private final static Class<?>[] SUPPORTED_CLASSES = new Class[] { OpenCloseField.class };
+	private final static Class<?>[] SUPPORTED_CLASSES =
+		new Class[] { OpenCloseField.class, VariableOpenCloseField.class };
 
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
@@ -32,7 +33,7 @@ public class OpenCloseFieldMouseHandler implements FieldMouseHandlerExtension {
 			return false;
 		}
 
-		OpenCloseField field = (OpenCloseField) clickedObject;
+		AbstractOpenCloseField field = (AbstractOpenCloseField) clickedObject;
 		field.toggleOpenCloseState();
 		return true;
 	}
