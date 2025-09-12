@@ -89,14 +89,14 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * @param useDataDir if true the getDataDir() method must return an appropriate 
 	 * directory for data storage.
 	 * @param create if true the data directory will be created
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	LocalFolderItem(LocalFileSystem fileSystem, ItemPropertyFile propertyFile, boolean useDataDir,
 			boolean create) throws IOException {
 		this.fileSystem = fileSystem;
 		this.propertyFile = propertyFile;
 		this.isVersioned = fileSystem.isVersioned();
-		this.useDataDir = useDataDir || isVersioned;
+		this.useDataDir = useDataDir;
 
 		boolean success = false;
 		try {

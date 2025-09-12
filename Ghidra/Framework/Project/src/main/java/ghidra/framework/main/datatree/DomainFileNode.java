@@ -46,7 +46,12 @@ public class DomainFileNode extends DataTreeNode {
 	private static final Icon UNKNOWN_FILE_ICON = new GIcon("icon.datatree.node.domain.file");
 	private static final String RIGHT_ARROW = "\u2192";
 
+	// NOTE: We must ensure anything used by sort comparator remains fixed
 	private final DomainFile domainFile;
+	private final boolean isFolderLink;
+
+	private LinkFileInfo linkInfo;
+	private boolean isLeaf;
 
 	private volatile String displayName; // name displayed in the tree
 	private volatile Icon icon = UNKNOWN_FILE_ICON;
@@ -54,15 +59,14 @@ public class DomainFileNode extends DataTreeNode {
 	private volatile String toolTipText;
 	private AtomicInteger refreshCount = new AtomicInteger();
 
-	private boolean isLeaf = true;
-	private LinkFileInfo linkInfo;
 	private DomainFileFilter filter; // relavent when expand folder-link which is a file
 
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 
 	DomainFileNode(DomainFile domainFile, DomainFileFilter filter) {
 		this.domainFile = domainFile;
-		this.linkInfo = domainFile.getLinkInfo();
+		linkInfo = domainFile.getLinkInfo();
+		isFolderLink = linkInfo != null && linkInfo.isFolderLink();
 		this.filter = filter != null ? filter : DomainFileFilter.ALL_FILES_FILTER;
 		displayName = domainFile.getName();
 		refresh();
@@ -85,6 +89,11 @@ public class DomainFileNode extends DataTreeNode {
 	}
 
 	@Override
+	public String getPathname() {
+		return domainFile.getPathname();
+	}
+
+	@Override
 	public boolean isLeaf() {
 		return isLeaf;
 	}
@@ -103,15 +112,11 @@ public class DomainFileNode extends DataTreeNode {
 	 * @return true if file is a folder-link
 	 */
 	public boolean isFolderLink() {
-		if (linkInfo != null) {
-			return linkInfo.isFolderLink();
-		}
-		return false;
+		return isFolderLink;
 	}
 
 	/**
-	 * Get linked folder which corresponds to this folder-link
-	 * (see {@link #isFolderLink()}).
+	 * Get linked folder which corresponds to this folder-link (see {@link #isFolderLink()}).
 	 * @return linked folder or null if this is not a folder-link
 	 */
 	LinkedDomainFolder getLinkedFolder() {
@@ -214,33 +219,42 @@ public class DomainFileNode extends DataTreeNode {
 	private void doRefresh() {
 
 		isLeaf = true;
-		linkInfo = null;
+		LinkFileInfo updatedLinkInfo = domainFile.getLinkInfo();
 
 		boolean brokenLink = false;
 		List<String> linkErrors = null;
-		if (domainFile.isLink()) {
-			linkInfo = domainFile.getLinkInfo();
-			List<String> errors = new ArrayList<>();
-			LinkStatus linkStatus =
-				LinkHandler.getLinkFileStatus(domainFile, msg -> errors.add(msg));
-			brokenLink = (linkStatus == LinkStatus.BROKEN);
-			if (brokenLink) {
-				linkErrors = errors;
-			}
-			else if (isFolderLink()) {
-				if (linkStatus == LinkStatus.INTERNAL) {
-					isLeaf = false;
+
+		if (isFolderLink != (updatedLinkInfo != null && updatedLinkInfo.isFolderLink())) {
+			// Linked-folder node state changed.  Since this alters sort order we can't handle this.
+			// Such a DomainFile state change must be handled by the ChangeManager
+			brokenLink = true;
+			linkErrors = List.of("Unsupported folder-link transition");
+		}
+		else {
+			linkInfo = updatedLinkInfo;
+			if (linkInfo != null) {
+				List<String> errors = new ArrayList<>();
+				LinkStatus linkStatus =
+					LinkHandler.getLinkFileStatus(domainFile, msg -> errors.add(msg));
+				brokenLink = (linkStatus == LinkStatus.BROKEN);
+				if (brokenLink) {
+					linkErrors = errors;
 				}
-				else if (linkStatus == LinkStatus.EXTERNAL &&
-					filter.followExternallyLinkedFolders()) {
-					isLeaf = false;
+				else if (isFolderLink) {
+					if (linkStatus == LinkStatus.INTERNAL) {
+						isLeaf = false;
+					}
+					else if (linkStatus == LinkStatus.EXTERNAL &&
+						filter.followExternallyLinkedFolders()) {
+						isLeaf = false;
+					}
 				}
 			}
 		}
 
-		if (isLeaf) {
-			unloadChildren();
-		}
+		// We must always unload any children since a leaf has no children and a folder-link
+		// may be transitioning to a state where its children may need to be re-loaded.
+		unloadChildren();
 
 		displayName = getFormattedDisplayName();
 
@@ -289,7 +303,25 @@ public class DomainFileNode extends DataTreeNode {
 
 	private String getFormattedLinkPath() {
 
-		String linkPath = linkInfo != null ? linkInfo.getLinkPath() : null;
+		String linkPath = null;
+
+		// If link-file is a LinkedDomainFile we must always show an absolute link-path since
+		// relative paths are relative to the real file's location and it would be rather confusing
+		// to show as relative
+		if (domainFile instanceof LinkedDomainFile) {
+			try {
+				// will return GhidraURL or absolute internal path
+				linkPath = LinkHandler.getAbsoluteLinkPath(domainFile);
+			}
+			catch (IOException e) {
+				// attempt to use stored path, although it may fail as well
+				linkPath = linkInfo.getLinkPath();
+			}
+		}
+		else if (linkInfo != null) {
+			linkPath = linkInfo.getLinkPath();
+		}
+
 		if (GhidraURL.isGhidraURL(linkPath)) {
 			try {
 				URL url = new URL(linkPath);

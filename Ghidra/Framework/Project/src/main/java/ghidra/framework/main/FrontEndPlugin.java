@@ -54,6 +54,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
+import ghidra.framework.store.FileSystem;
 import ghidra.util.*;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -137,6 +138,7 @@ public class FrontEndPlugin extends Plugin
 	private ProjectDataRenameAction renameAction;
 	private ProjectDataOpenDefaultToolAction openAction;
 	private ProjectDataFollowLinkAction followLinkAction;
+	private ProjectDataSelectRealFileOrFolderAction selectRealFileOrFolderAction;
 	private ProjectDataExpandAction<FrontEndProjectTreeContext> expandAction;
 	private ProjectDataCollapseAction<FrontEndProjectTreeContext> collapseAction;
 	private ProjectDataSelectAction selectAction;
@@ -221,6 +223,7 @@ public class FrontEndPlugin extends Plugin
 		// Top of popup menu actions - no group
 		openAction = new ProjectDataOpenDefaultToolAction(owner, null);
 		followLinkAction = new ProjectDataFollowLinkAction(this, null);
+		selectRealFileOrFolderAction = new ProjectDataSelectRealFileOrFolderAction(this, null);
 
 		String groupName = "Cut/copy/paste/new1";
 		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
@@ -258,6 +261,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addAction(deleteAction);
 		tool.addAction(openAction);
 		tool.addAction(followLinkAction);
+		tool.addAction(selectRealFileOrFolderAction);
 		tool.addAction(renameAction);
 		tool.addAction(expandAction);
 		tool.addAction(collapseAction);
@@ -1117,9 +1121,15 @@ public class FrontEndPlugin extends Plugin
 					showInViewedProject(LinkHandler.getLinkURL(lastLink), true);
 				}
 				else if (!dataTreePanel.isShowing()) {
-					// Filter table on absolute link path
 					String linkPath = LinkHandler.getAbsoluteLinkPath(domainFile);
-					dataTablePanel.setFilter(linkPath);
+					if (linkPath.startsWith(FileSystem.SEPARATOR) && linkPath.length() > 1) {
+						// Filter table on absolute internal link path
+						if (linkPath.endsWith(FileSystem.SEPARATOR)) {
+							// Remove trailing '/' from path to ensure we match
+							linkPath = linkPath.substring(0, linkPath.length() - 1);
+						}
+						dataTablePanel.setFilter(linkPath);
+					}
 				}
 			}
 			catch (IOException e) {
