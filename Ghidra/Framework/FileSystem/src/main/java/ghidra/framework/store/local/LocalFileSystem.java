@@ -556,7 +556,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	@Override
 	public synchronized LocalTextDataItem createTextDataItem(String parentPath, String name,
-			String fileID, String contentType, String textData, String ignoredComment)
+			String fileID, String contentType, String textData, String comment, String user)
 			throws InvalidNameException, IOException {
 
 		// comment is ignored
@@ -573,6 +573,12 @@ public abstract class LocalFileSystem implements FileSystem {
 		try {
 			ItemPropertyFile propertyFile = itemStorage.getPropertyFile();
 			linkFile = new LocalTextDataItem(this, propertyFile, fileID, contentType, textData);
+
+			if (isVersioned) {
+				Version singleVersion = new Version(1, System.currentTimeMillis(), user, comment);
+				linkFile.setVersionInfo(singleVersion);
+			}
+
 			linkFile.log("file created", getUserName());
 		}
 		finally {
@@ -822,30 +828,40 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	/**
-	 * Returns the full path for a specific folder or item
+	 * Returns the full path for a named folder or item within a parent folder
 	 * @param parentPath full parent path
 	 * @param name child folder or item name
 	 * @return pathname
 	 */
-	protected final static String getPath(String parentPath, String name) {
+	public final static String getPath(String parentPath, String name) {
 		if (parentPath.length() == 1) {
 			return parentPath + name;
 		}
 		return parentPath + SEPARATOR_CHAR + name;
 	}
 
-	protected final static String getParentPath(String path) {
-		if (path.length() == 1) {
-			return null;
-		}
+	/**
+	 * Returns the full parent path for a specific folder or item path
+	 * @param path full path of folder or item
+	 * @return parent path or null if "/" path was specified
+	 */
+	public final static String getParentPath(String path) {
 		int index = path.lastIndexOf(SEPARATOR_CHAR);
 		if (index == 0) {
+			if (path.length() == 1) {
+				return null;
+			}
 			return SEPARATOR;
 		}
 		return path.substring(0, index);
 	}
 
-	protected final static String getName(String path) {
+	/**
+	 * Returns the name for a specific folder or item path
+	 * @param path full path of folder or item
+	 * @return parent path or null if "/" path was specified
+	 */
+	public final static String getName(String path) {
 		if (path.length() == 1) {
 			return path;
 		}

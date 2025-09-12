@@ -229,7 +229,7 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 
 	@Override
 	public TextDataItem createTextDataItem(String parentPath, String name, String fileID,
-			String contentType, String textData, String comment)
+			String contentType, String textData, String comment, String ignoredUser)
 			throws InvalidNameException, IOException {
 		repository.createTextDataFile(parentPath, name, fileID, contentType, textData, comment);
 		return (TextDataItem) getItem(parentPath, name);

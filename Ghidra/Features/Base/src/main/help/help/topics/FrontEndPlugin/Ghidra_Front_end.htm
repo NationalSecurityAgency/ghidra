@@ -115,7 +115,9 @@
         "help/topics/VersionControl/project_repository.htm#SampleCheckOutIcon">checked out</A>.
         In addition, unique icons are used to reflect content-type and if it corresponds to 
         a link-file referring to another file or folder (see <A href="#Paste_Link">creating links</A>).
-        Open this view by activating the project window "Tree View" tab.</P>   
+        Open this view by activating the project window "Tree View" tab.  Within the tree view
+		internally linked-folders may be expanded to reveal the linked content which corresponds
+	    to another folder within the project.</P>   
 
 	  <P><IMG src="help/shared/tip.png" border="0">Although Ghidra allows a folder and file within 
 	  the same parent folder to have the same name, it is recommended this be avoided if possible.
@@ -311,6 +313,26 @@
 			  option.  The referenced file or folder will be selected if possible.  If associated 
 		  	  with an external project or repository the selection will occur in a READ-ONLY 
 		      project view once opened.</LI>
+          </OL>
+
+        </BLOCKQUOTE>
+		
+		<H4><A name="Select_Real_File_or_Folder"></A>Select Real File or Folder</H4>
+
+        <BLOCKQUOTE>
+          <P>Select a folder or file tree node from an expanded linked-folder or sub-folder
+			node.  Content is considered linked if one of its parent nodes corresponds to an 
+			expanded folder-link. This linked-content corresponds to a real file or folder 
+			contained within another folder.  The ability to select the real file or folder 
+			may be useful when trying to understand the true origin of such content since this 
+			path is not displayed.
+		  </P>
+
+          <OL>
+            <LI>
+			Select a folder or file tree node from an expanded linked-folder or linked-sub-folder
+		  	node, right mouse click and choose the <I>Select Real File</I> or <I>Select Real Folder</I> 
+			option.  The real file or folder will be selected within the tree if possible.</LI>
           </OL>
 
         </BLOCKQUOTE>
@@ -656,7 +678,8 @@
               See <A href="#GhidraURLFormats">Ghidra URL formats</A> below.
               Since a folder link is stored as a file, it may appear with various icon states which 
               correspond to version control.  Folder links only support a single version and may not 
-              be modified.
+              be modified.  The tree may permit expanding such nodes to reveal their linked-content 
+			  as files and sub-folders.
               </TD>
             </TR>
 			

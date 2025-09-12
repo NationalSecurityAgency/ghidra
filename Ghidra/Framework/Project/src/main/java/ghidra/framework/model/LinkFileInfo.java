@@ -59,8 +59,11 @@ public interface LinkFileInfo {
 	 * method on an {@link #isExternalLink() external-link} will cause the associated 
 	 * project or repository to be opened and associated with the active project as a
 	 * a viewed-project.  The resulting folder instance will return true to the method
-	 * {@link DomainFolder#isLinked()}.  This method will recurse all internal folder-links
-	 * which may be chained together.
+	 * {@link DomainFolder#isLinked()}.  
+	 * 
+	 * NOTE: This method will recurse all internal folder-links which may be chained together
+	 * and relies on link status checks to prevent possible recursion (See 
+	 * {@link LinkHandler#getLinkFileStatus(DomainFile, Consumer)}).
 	 * 
 	 * @return a linked domain folder or null if not a valid folder-link.
 	 */
@@ -71,7 +74,10 @@ public interface LinkFileInfo {
 	 * link-file's project or a Ghidra URL.
 	 * <P>
 	 * If you want to ensure that a project path returned is absolute and normalized, then
-	 * {@link #getAbsoluteLinkPath()} may be used.
+	 * {@link #getAbsoluteLinkPath()} may be used.  If this corresponds to a link-file that
+	 * implements {@link LinkedDomainFile} the absolute path form must be used to avoid treating
+	 * as relative to the incorrect parent folder.  A {@link LinkedDomainFile} can occur when
+	 * the link-file exists within a linked-folder or subfolder.
 	 * 
 	 * @return associated link path
 	 */

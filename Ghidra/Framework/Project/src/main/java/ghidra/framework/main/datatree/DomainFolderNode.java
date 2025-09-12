@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.swing.Icon;
 
+import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.model.*;
 import ghidra.util.*;
@@ -48,6 +49,7 @@ public class DomainFolderNode extends DataTreeNode {
 	private boolean isEditable;
 
 	DomainFolderNode(DomainFolder domainFolder, DomainFileFilter filter) {
+
 		this.domainFolder = domainFolder;
 		this.filter = filter;
 
@@ -71,6 +73,11 @@ public class DomainFolderNode extends DataTreeNode {
 	 */
 	public DomainFolder getDomainFolder() {
 		return domainFolder;
+	}
+
+	@Override
+	public String getPathname() {
+		return domainFolder.getPathname();
 	}
 
 	/**

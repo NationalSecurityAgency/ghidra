@@ -18,14 +18,17 @@ package ghidra.app.util.task;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
 import ghidra.app.util.dialog.CheckoutDialog;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.LinkFileInfo;
 import ghidra.framework.protocol.ghidra.GhidraURLQuery;
 import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.framework.protocol.ghidra.GhidraURLResultHandlerAdapter;
@@ -142,6 +145,18 @@ public class ProgramOpener {
 	}
 
 	private Program openNormal(DomainFile domainFile, TaskMonitor monitor) {
+
+		LinkFileInfo linkInfo = domainFile.getLinkInfo();
+		if (linkInfo != null) {
+			StringBuilder buf = new StringBuilder();
+			LinkStatus linkStatus = linkInfo.getLinkStatus(m -> buf.append(m));
+			if (linkStatus == LinkStatus.BROKEN) {
+				Msg.showError(this, null, "Error Opening " + domainFile.getName(),
+					"Failed to open Program Link " + domainFile.getPathname() + "\n" + buf);
+				return null;
+			}
+		}
+
 		String filename = domainFile.getName();
 		performOptionalCheckout(domainFile, monitor);
 		try {

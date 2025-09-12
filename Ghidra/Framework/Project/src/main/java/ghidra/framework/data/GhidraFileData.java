@@ -81,7 +81,12 @@ public class GhidraFileData {
 	private GhidraFolderData parent;
 	private String name;
 	private String fileID;
+	private String contentType;
+
 	private String linkPath;
+	private String absoluteLinkPath;
+	private boolean isLink;
+	private boolean isFolderLink;
 
 	private LocalFolderItem folderItem;
 	private FolderItem versionedFolderItem;
@@ -98,7 +103,10 @@ public class GhidraFileData {
 // longer used.
 
 	/**
-	 * Construct a file instance with a specified name and a correpsonding parent folder
+	 * Construct a file instance with a specified name and a correpsonding parent folder.
+	 * It is important that this object only be instantiated by the
+	 * {@link GhidraFolderData} parent supplied and properly cached and tracked to ensure proper
+	 * tracking and link registration.
 	 * @param parent parent folder
 	 * @param name file name
 	 * @throws IOException if an IO error occurs
@@ -118,7 +126,9 @@ public class GhidraFileData {
 
 	/**
 	 * Construct a new file instance with a specified name and a corresponding parent folder using
-	 * up-to-date folder items.
+	 * up-to-date folder items.  It is important that this object only be instantiated by the
+	 * {@link GhidraFolderData} parent supplied and properly cached and tracked to ensure proper
+	 * tracking and link registration.
 	 * @param parent parent folder
 	 * @param name file name
 	 * @param folderItem local folder item
@@ -138,10 +148,15 @@ public class GhidraFileData {
 
 		validateCheckout();
 		updateFileID();
+
+		registerLinkFile();
 	}
 
 	void refresh(LocalFolderItem localFolderItem, FolderItem verFolderItem) {
-		linkPath = null;
+
+		unregisterLinkFile();
+
+		contentType = null;
 		icon = null;
 		disabledIcon = null;
 
@@ -151,6 +166,8 @@ public class GhidraFileData {
 		validateCheckout();
 		boolean fileIDset = updateFileID();
 
+		registerLinkFile();
+
 		if (parent.visited()) {
 			// NOTE: we should maintain some cached data so we can determine if something really changed
 			listener.domainFileStatusChanged(getDomainFile(), fileIDset);
@@ -158,7 +175,13 @@ public class GhidraFileData {
 	}
 
 	private boolean refresh() throws IOException {
-		linkPath = null;
+
+		unregisterLinkFile();
+
+		contentType = null;
+		icon = null;
+		disabledIcon = null;
+
 		String parentPath = parent.getPathname();
 		if (folderItem == null) {
 			folderItem = fileSystem.getItem(parentPath, name);
@@ -183,7 +206,54 @@ public class GhidraFileData {
 		if (folderItem == null && versionedFolderItem == null) {
 			throw new FileNotFoundException(name + " not found");
 		}
-		return updateFileID();
+
+		boolean fileIDset = updateFileID();
+
+		registerLinkFile();
+
+		return fileIDset;
+	}
+
+	private void registerLinkFile() {
+		try {
+			ContentHandler<?> contentHandler = getContentHandler();
+			isLink = LinkHandler.class.isAssignableFrom(contentHandler.getClass());
+			if (!isLink) {
+				return;
+			}
+			isFolderLink =
+				FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(getContentType());
+
+			getLinkPath(true); // will cache linkPath and absoluteLinkPath
+
+			if (absoluteLinkPath == null) {
+				return;
+			}
+
+			// Avoid registering circular reference
+			if (isFolderLink && getPathname().startsWith(absoluteLinkPath)) {
+				return;
+			}
+
+			RootGhidraFolderData rootFolderData = projectData.getRootFolderData();
+			rootFolderData.registerInternalLinkPath(absoluteLinkPath);
+		}
+		catch (IOException e) {
+			// Too much noise if we report IOExceptions.  If it happens to one file it could happen
+			// with many files.
+			return;
+		}
+	}
+
+	private void unregisterLinkFile() {
+		if (absoluteLinkPath != null) {
+			RootGhidraFolderData rootFolderData = projectData.getRootFolderData();
+			rootFolderData.unregisterInternalLinkPath(absoluteLinkPath);
+		}
+		linkPath = null;
+		absoluteLinkPath = null;
+		isLink = false;
+		isFolderLink = false;
 	}
 
 	private boolean updateFileID() {
@@ -204,8 +274,6 @@ public class GhidraFileData {
 		if (mergeInProgress) {
 			return;
 		}
-		icon = null;
-		disabledIcon = null;
 		fileIDset |= refresh();
 		if (parent.visited()) {
 			// NOTE: we should maintain some cached data so we can determine if something really changed
@@ -267,6 +335,7 @@ public class GhidraFileData {
 	 */
 	void dispose() {
 		projectData.removeFromIndex(fileID);
+		unregisterLinkFile();
 // NOTE: clearing the following can cause issues since there may be some residual
 // activity/use which will get a NPE
 //		parent = null;
@@ -434,10 +503,6 @@ public class GhidraFileData {
 		}
 	}
 
-	boolean isFolderLink() {
-		return FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(getContentType());
-	}
-
 	/**
 	 * Returns content-type string for this file
 	 * @return the file content type or a reserved content type {@link ContentHandler#MISSING_CONTENT}
@@ -445,14 +510,22 @@ public class GhidraFileData {
 	 */
 	String getContentType() {
 		synchronized (fileSystem) {
-			FolderItem item = getFolderItem(DomainFile.DEFAULT_VERSION);
-			// this can happen when we are trying to load a version file from
-			// a server to which we are not connected
-			if (item == null) {
-				return ContentHandler.MISSING_CONTENT;
+			if (contentType != null) {
+				return contentType;
 			}
-			String contentType = item.getContentType();
-			return contentType != null ? contentType : ContentHandler.UNKNOWN_CONTENT;
+			FolderItem item = getFolderItem(DomainFile.DEFAULT_VERSION);
+			if (item == null) {
+				// This can happen when we are trying to load a version file from
+				// a server to which we are not connected
+				contentType = ContentHandler.MISSING_CONTENT;
+			}
+			else {
+				contentType = item.getContentType();
+				if (contentType == null) {
+					contentType = ContentHandler.UNKNOWN_CONTENT;
+				}
+			}
+			return contentType;
 		}
 	}
 
@@ -1235,7 +1308,7 @@ public class GhidraFileData {
 					else if (folderItem instanceof TextDataItem textDataItem) {
 						versionedFileSystem.createTextDataItem(parentPath, name,
 							folderItem.getFileID(), folderItem.getContentType(),
-							textDataItem.getTextData(), comment);
+							textDataItem.getTextData(), comment, user);
 					}
 					else {
 						throw new IOException(
@@ -2237,17 +2310,26 @@ public class GhidraFileData {
 	 * @return true if link file else false for a normal domain file
 	 */
 	boolean isLink() {
-		try {
-			return LinkHandler.class.isAssignableFrom(getContentHandler().getClass());
-		}
-		catch (IOException e) {
-			return false;
-		}
+		return isLink; // relies on refresh to initialize
+	}
+
+	/**
+	 * Determine if this file is a link file which corresponds to a folder link. 
+	 * If this is a folder-link it should not be used to obtain a {@link DomainObject}. 
+	 * The link path or URL stored within the link-file may be read using {@link #getLinkPath(boolean)}.
+	 * The content type (see {@link #getContentType()} of a folder-link will be 
+	 * {@link FolderLinkContentHandler}.
+	 * @return true if link file else false for a normal domain file
+	 */
+	boolean isFolderLink() {
+		return isFolderLink; // relies on refresh to initialize
 	}
 
 	/**
 	 * If this is a {@link #isLink() link file} this method will return the link-path which 
 	 * may be either an absolute or relative path within the the project or a Ghidra URL.
+	 * Invoking with {@code resolve==true} will ensure that both {@code linkPath} and 
+	 * {@code absoluteLinkPath} get properly cached.
 	 * 
 	 * @param resolve if true relative paths will always be converted to an absolute path 
 	 * @return associated link path or null if not a link file
@@ -2275,12 +2357,19 @@ public class GhidraFileData {
 			return linkPath;
 		}
 
-		String path = linkPath;
 		if (!GhidraURL.isGhidraURL(linkPath)) {
-			path = getAbsolutePath(linkPath);
+			if (absoluteLinkPath == null) {
+				try {
+					absoluteLinkPath = getAbsolutePath(linkPath);
+				}
+				catch (IllegalArgumentException e) {
+					return null;
+				}
+			}
+			return absoluteLinkPath;
 		}
 
-		return path;
+		return linkPath;
 	}
 
 	private String getAbsolutePath(String path) throws IOException {
@@ -2292,13 +2381,7 @@ public class GhidraFileData {
 			}
 			absPath += path;
 		}
-		try {
-			absPath = FileSystem.normalizePath(absPath);
-		}
-		catch (IllegalArgumentException e) {
-			throw new IOException("Invalid link path: " + linkPath);
-		}
-		return absPath;
+		return FileSystem.normalizePath(absPath);
 	}
 
 	/**
@@ -2396,7 +2479,7 @@ public class GhidraFileData {
 						if (!StringUtils.isBlank(lp)) {
 							newParent.getLocalFileSystem()
 									.createTextDataItem(pathname, targetName,
-										FileIDFactory.createFileID(), contentType, lp, null);
+										FileIDFactory.createFileID(), contentType, lp, null, null);
 						}
 						else {
 							throw new IOException(

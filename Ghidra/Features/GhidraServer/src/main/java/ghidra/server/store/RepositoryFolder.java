@@ -24,7 +24,8 @@ import org.apache.logging.log4j.Logger;
 
 import db.buffers.LocalManagedBufferFile;
 import ghidra.framework.store.*;
-import ghidra.framework.store.local.*;
+import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.server.Repository;
 import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
@@ -282,11 +283,8 @@ public class RepositoryFolder {
 				throw new DuplicateFileException(itemName + " already exists");
 			}
 
-			LocalTextDataItem textDataItem = fileSystem.createTextDataItem(getPathname(), itemName,
-				fileID, contentType, textData, null); // comment conveyed with Version info below
-
-			Version singleVersion = new Version(1, System.currentTimeMillis(), user, comment);
-			textDataItem.setVersionInfo(singleVersion);
+			fileSystem.createTextDataItem(getPathname(), itemName, fileID, contentType, textData,
+				comment, user);
 
 			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
 			fileMap.put(itemName, rf);

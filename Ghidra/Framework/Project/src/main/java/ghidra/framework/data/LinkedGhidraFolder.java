@@ -57,7 +57,8 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 	 * since an error will occur if there is no active project at the time the link is followed.
 	 * 
 	 * @param folderLinkFile link-file which corresponds to a linked-folder 
-	 * (see {@link LinkFileInfo#isFolderLink()}).
+	 * (see {@link LinkFileInfo#isFolderLink()}).  This file should used to establish the parent
+	 * of this linked-folder.
 	 * @param linkedFolderUrl linked folder URL
 	 */
 	LinkedGhidraFolder(DomainFile folderLinkFile, URL linkedFolderUrl) {
@@ -87,7 +88,8 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 	 * {@link #getProjectData() project data} instance.
 	 * 
 	 * @param folderLinkFile link-file which corresponds to a linked-folder 
-	 * (see {@link LinkFileInfo#isFolderLink()}).
+	 * (see {@link LinkFileInfo#isFolderLink()}).  This file should used to establish the parent
+	 * of this linked-folder.
 	 * @param linkedFolder locally-linked folder within same project
 	 */
 	LinkedGhidraFolder(DomainFile folderLinkFile, DomainFolder linkedFolder) {
@@ -114,7 +116,7 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 		if (!(obj instanceof LinkedGhidraFolder other)) {
 			return false;
 		}
-		return linkedPathname.equals(other.linkedPathname) &&
+		return getPathname().equals(other.getPathname()) &&
 			folderLinkFile.equals(other.folderLinkFile);
 	}
 
@@ -238,9 +240,9 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 	@Override
 	public String toString() {
 		if (linkedFolder != null) {
-			return "->" + getLinkedPathname();
+			return getPathname() + "->" + getLinkedPathname();
 		}
-		return "->" + linkedFolderUrl.toString();
+		return getPathname() + "->" + linkedFolderUrl.toString();
 	}
 
 	@Override

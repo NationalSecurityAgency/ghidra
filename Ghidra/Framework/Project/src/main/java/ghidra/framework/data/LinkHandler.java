@@ -103,7 +103,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 			String linkFilename) throws IOException, InvalidNameException {
 
 		fs.createTextDataItem(folderPath, linkFilename, FileIDFactory.createFileID(),
-			getContentType(), linkPath, null);
+			getContentType(), linkPath, null, null);
 	}
 
 	@Override
@@ -334,9 +334,20 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 		}
 
 		String path = linkPath;
+		boolean isRelative = false;
 		if (!GhidraURL.isGhidraURL(path)) {
 			if (!linkPath.startsWith(FileSystem.SEPARATOR)) {
-				path = linkFile.getParent().getPathname();
+				isRelative = true;
+				DomainFolder parent;
+				if (linkFile instanceof LinkedDomainFile linkedFile) {
+					// Relative to real file's parent
+					parent = linkedFile.getRealFile().getParent();
+				}
+				else {
+					// Relative to link-file's parent
+					parent = linkFile.getParent();
+				}
+				path = parent.getPathname();
 				if (!path.endsWith(FileSystem.SEPARATOR)) {
 					path += FileSystem.SEPARATOR;
 				}
@@ -346,7 +357,11 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 				return FileSystem.normalizePath(path);
 			}
 			catch (IllegalArgumentException e) {
-				throw new IOException("Invalid link path: " + linkPath);
+				String hint = "";
+				if (isRelative && linkFile instanceof LinkedDomainFile) {
+					hint = " (relative to real link-file)";
+				}
+				throw new IOException("Invalid link path: " + path + hint);
 			}
 		}
 		return path;
@@ -369,12 +384,17 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 
 	/**
 	 * Add real internal folder path for specified folder or folder-link and check for 
-	 * circular conflict.
+	 * circular conflict.  
+	 * 
+	 * NOTE: This is only useful in detecting a self-referencing 
+	 * path and not those that involve multiple independent linked-folders that could
+	 * form circular paths. 
+	 * 
 	 * @param pathSet real path accumulator
 	 * @param linkPath internal linkPath
 	 * @return true if no path conflict detected, false if path conflict is detected
 	 */
-	private static boolean addLinkPathPath(Set<String> pathSet, String linkPath) {
+	private static boolean addLinkPath(Set<String> pathSet, String linkPath) {
 		// Must ensure that all paths end with '/' separator - even if path is endpoint
 		if (!linkPath.endsWith(FileSystem.SEPARATOR)) {
 			linkPath += FileSystem.SEPARATOR;
@@ -418,7 +438,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 		if (parent instanceof LinkedDomainFolder lf) {
 			try {
 				projectData = lf.getLinkedProjectData();
-				addLinkPathPath(linkPathsVisited, lf.getLinkedPathname());
+				addLinkPath(linkPathsVisited, lf.getLinkedPathname());
 			}
 			catch (IOException e) {
 				throw new RuntimeException("Unexpected", e);
@@ -426,7 +446,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 		}
 		else {
 			projectData = parent.getProjectData();
-			addLinkPathPath(linkPathsVisited, file.getPathname());
+			addLinkPath(linkPathsVisited, file.getPathname());
 		}
 
 		String contentType = file.getContentType();
@@ -466,32 +486,34 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> implements Co
 				return nextLinkFile;
 			}
 
-			if (!addLinkPathPath(linkPathsVisited, linkPath)) {
-				errorConsumer.accept("Link has a circular reference");
-				break; // broken and can't continue
-			}
-
 			DomainFile linkedFile = null;
 			if (!linkPath.endsWith(FileSystem.SEPARATOR)) {
 				linkedFile = projectData.getFile(linkPath);
 			}
 
+			DomainFolder linkedFolder = null;
 			if (isFolderLink) {
-				// Check for folder existence at linkPath
-				if (getNonLinkedFolder(projectData, linkPath) != null) {
-					// Check for folder-link that conflicts with folder found
-					if (linkedFile != null) {
-						LinkFileInfo linkedFileLinkInfo = linkedFile.getLinkInfo();
-						if (linkedFileLinkInfo != null && linkedFileLinkInfo.isFolderLink()) {
-							errorConsumer.accept(
-								"Referenced folder name conflicts with folder-link in the same folder: " +
-									linkPath);
-							break;
-						}
+				linkedFolder = getNonLinkedFolder(projectData, linkPath);
+			}
+
+			if (linkedFolder == null && !addLinkPath(linkPathsVisited, linkPath)) {
+				errorConsumer.accept("Link has a circular reference");
+				break; // broken and can't continue
+			}
+
+			if (isFolderLink && linkedFolder != null) {
+				// Check for folder-link that conflicts with folder found
+				if (linkedFile != null) {
+					LinkFileInfo linkedFileLinkInfo = linkedFile.getLinkInfo();
+					if (linkedFileLinkInfo != null && linkedFileLinkInfo.isFolderLink()) {
+						errorConsumer.accept(
+							"Referenced folder name conflicts with folder-link in the same folder: " +
+								linkPath);
+						break;
 					}
-					statusConsumer.accept(LinkStatus.INTERNAL);
-					return nextLinkFile;
 				}
+				statusConsumer.accept(LinkStatus.INTERNAL);
+				return nextLinkFile;
 			}
 
 			if (linkedFile == null) {

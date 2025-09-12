@@ -174,7 +174,9 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 	private List<GTreeNode> getDomainParentNodes(List<GTreeNode> nodeList) {
 		List<GTreeNode> parentList = new ArrayList<>();
 		for (GTreeNode node : nodeList) {
-			if (!node.isLeaf()) {
+			if (node instanceof DomainFolderNode) {
+				// We want to ensure we treat link-file node as not being a parent
+				// for this operation.
 				parentList.add(node);
 			}
 		}

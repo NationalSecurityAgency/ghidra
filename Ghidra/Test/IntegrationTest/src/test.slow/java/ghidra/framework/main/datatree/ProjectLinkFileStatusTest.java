@@ -32,6 +32,7 @@ import ghidra.program.database.ProgramLinkContentHandler;
 import ghidra.program.model.listing.Program;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.*;
+import ghidra.util.Swing;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
 
@@ -50,13 +51,16 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 
 		/**
 			/abc/               (folder)
-			 	abc -> /xyz/abc (circular)
+			 	abc -> /xyz/abc (circular folder allowed as internal)
 			 	foo             (program file)
 			/xyz/     
 			 	abc -> /abc     (folder link)
-			 		abc ->      (circular)
+			 		abc -> /xyz/abc (circular folder allowed as internal)
 			 		foo
 			 	foo -> /abc/foo (program link)
+			/e -> f (circular folder link path)
+			/f -> g (circular folder link path)
+			/g -> e (circular folder link path)
 		**/
 
 		DomainFolder rootFolder = env.getRootFolder();
@@ -71,6 +75,18 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		p.release(this);
 
 		programFile.copyToAsLink(xyzFolder, false);
+
+		// Circular folder-link path without real folder
+		rootFolder.createLinkFile(rootFolder.getProjectData(), "/f", true, "e",
+			FolderLinkContentHandler.INSTANCE);
+		rootFolder.createLinkFile(rootFolder.getProjectData(), "/g", true, "f",
+			FolderLinkContentHandler.INSTANCE);
+		rootFolder.createLinkFile(rootFolder.getProjectData(), "/e", true, "g",
+			FolderLinkContentHandler.INSTANCE);
+
+		rootFolder.createLinkFile(rootFolder.getProjectData(),
+			"/home/tsharr2/Examples/linktest/usr/lib64/../lib64", true, "nested2lib64",
+			FolderLinkContentHandler.INSTANCE);
 
 		env.waitForTree();
 	}
@@ -257,23 +273,154 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
-	public void testBrokenFolderLink() throws Exception {
+	public void testCircularFolderLink1() throws Exception {
 
 		//
-		// Verify broken folder-link status for /abc/abc which has circular reference
+		// Verify broken folder-link status for /e which has circular reference
+		//
+		DomainFileNode eLinkNode = waitForFileNode("/e");
+		assertTrue(eLinkNode.isFolderLink());
+		String displayName = runSwing(() -> eLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" f"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(eLinkNode.getDomainFile(), null));
+		String tooltip = eLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("circular"));
+
+		//
+		// Verify broken folder-link status for /g which has circular reference
+		//
+		DomainFileNode gLinkNode = waitForFileNode("/g");
+		assertTrue(gLinkNode.isFolderLink());
+		displayName = runSwing(() -> gLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" e"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(gLinkNode.getDomainFile(), null));
+		tooltip = gLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("circular"));
+
+		//
+		// Verify broken folder-link status for /f which has circular reference
+		//
+		DomainFileNode fLinkNode = waitForFileNode("/f");
+		assertTrue(fLinkNode.isFolderLink());
+		displayName = runSwing(() -> fLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" g"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(fLinkNode.getDomainFile(), null));
+		tooltip = fLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("circular"));
+
+		//
+		// Rename folder /e to /ABC causing folder-links to have broken path
+		//
+		Swing.runNow(() -> eLinkNode.setName("ABC"));
+
+		env.waitForTree(); // give time for ChangeManager to update
+
+		// Verify /e node not found
+		assertNull(env.getRootNode().getChild("e"));
+
+		//
+		// Verify broken folder-link status for /ABC (final folder /e not found)
+		//
+		DomainFileNode abcLinkNode = waitForFileNode("/ABC");
+		assertTrue(abcLinkNode.isFolderLink());
+		displayName = runSwing(() -> abcLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" f"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(abcLinkNode.getDomainFile(), null));
+		tooltip = abcLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("folder not found: /e"));
+
+		//
+		// Verify broken folder-link status for /g (final folder /e not found)
+		//
+		waitForFileNode("/g");
+		assertTrue(gLinkNode.isFolderLink());
+		displayName = runSwing(() -> gLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" e"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(gLinkNode.getDomainFile(), null));
+		tooltip = gLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("folder not found: /e"));
+
+		//
+		// Verify broken folder-link status for /f (final folder /e not found)
+		//
+		waitForFileNode("/f");
+		assertTrue(fLinkNode.isFolderLink());
+		displayName = runSwing(() -> fLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" g"));
+		assertEquals(LinkStatus.BROKEN,
+			LinkHandler.getLinkFileStatus(fLinkNode.getDomainFile(), null));
+		tooltip = fLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertTrue(tooltip.contains("folder not found: /e"));
+
+		//
+		// Create folder /e
+		//
+		DomainFolder rootFolder = env.getRootFolder();
+		rootFolder.createFolder("e");
+
+		env.waitForTree(); // give time for ChangeManager to update
+
+		//
+		// Verify good folder-link status for /ABC
+		//
+		waitForFileNode("/ABC");
+		assertTrue(abcLinkNode.isFolderLink());
+		displayName = runSwing(() -> abcLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" f"));
+		assertEquals(LinkStatus.INTERNAL,
+			LinkHandler.getLinkFileStatus(abcLinkNode.getDomainFile(), null));
+		tooltip = gLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertFalse(tooltip.contains("folder not found"));
+		assertFalse(tooltip.contains("circular"));
+
+		//
+		// Verify good folder-link status for /g
+		//
+		waitForFileNode("/g");
+		assertTrue(gLinkNode.isFolderLink());
+		displayName = runSwing(() -> gLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" e"));
+		assertEquals(LinkStatus.INTERNAL,
+			LinkHandler.getLinkFileStatus(gLinkNode.getDomainFile(), null));
+		tooltip = gLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertFalse(tooltip.contains("folder not found"));
+		assertFalse(tooltip.contains("circular"));
+
+		//
+		// Verify good folder-link status for /f
+		//
+		waitForFileNode("/f");
+		assertTrue(fLinkNode.isFolderLink());
+		displayName = runSwing(() -> fLinkNode.getDisplayText());
+		assertTrue("Unexpected node display name: " + displayName, displayName.endsWith(" g"));
+		assertEquals(LinkStatus.INTERNAL,
+			LinkHandler.getLinkFileStatus(fLinkNode.getDomainFile(), null));
+		tooltip = fLinkNode.getToolTip().replace("&nbsp;", " ");
+		assertFalse(tooltip.contains("folder not found"));
+		assertFalse(tooltip.contains("circular"));
+	}
+
+	@Test
+	public void testCircularFolderLink2() throws Exception {
+
+		//
+		// Verify good folder-link internal status for /abc/abc which has allowed circular reference
 		//
 		DomainFileNode abcAbcLinkNode = waitForFileNode("/abc/abc");
 		assertTrue(abcAbcLinkNode.isFolderLink());
 		String displayName = runSwing(() -> abcAbcLinkNode.getDisplayText());
 		assertTrue("Unexpected node display name: " + displayName,
 			displayName.endsWith(" /xyz/abc"));
-		assertEquals(LinkStatus.BROKEN,
+		assertEquals(LinkStatus.INTERNAL,
 			LinkHandler.getLinkFileStatus(abcAbcLinkNode.getDomainFile(), null));
-		String tooltip = abcAbcLinkNode.getToolTip().replace("&nbsp;", " ");
-		assertTrue(tooltip.contains("circular"));
 
 		//
-		// Verify good folder-link internal status for /xyz/abc which has circular reference
+		// Verify good folder-link internal status for /xyz/abc which has allowed circular reference
 		//
 		DomainFileNode xyzAbcLinkNode = waitForFileNode("/xyz/abc");
 		assertTrue(xyzAbcLinkNode.isFolderLink());
@@ -283,17 +430,15 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 			LinkHandler.getLinkFileStatus(xyzAbcLinkNode.getDomainFile(), null));
 
 		//
-		// Verify broken folder-link status for /xyz/abc/abc which has circular reference
+		// Verify good folder-link internal status for /xyz/abc/abc which has allowed circular reference
 		//
 		DomainFileNode abcLinkedNode = waitForFileNode("/xyz/abc/abc");
 		assertTrue(abcLinkedNode.isFolderLink());
 		displayName = runSwing(() -> abcLinkedNode.getDisplayText());
 		assertTrue("Unexpected node display name: " + displayName,
 			displayName.endsWith(" /xyz/abc"));
-		assertEquals(LinkStatus.BROKEN,
+		assertEquals(LinkStatus.INTERNAL,
 			LinkHandler.getLinkFileStatus(abcLinkedNode.getDomainFile(), null));
-		tooltip = abcLinkedNode.getToolTip().replace("&nbsp;", " ");
-		assertTrue(tooltip.contains("circular"));
 
 		//
 		// Rename folder /abc to /ABC causing folder-link /xyz/abc to become broken
@@ -315,7 +460,7 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 			displayName.endsWith(" /xyz/abc"));
 		assertEquals(LinkStatus.BROKEN,
 			LinkHandler.getLinkFileStatus(ABCAbcLinkNode.getDomainFile(), null));
-		tooltip = ABCAbcLinkNode.getToolTip().replace("&nbsp;", " ");
+		String tooltip = ABCAbcLinkNode.getToolTip().replace("&nbsp;", " ");
 		assertTrue(tooltip.contains("folder not found: /abc"));
 
 		env.waitForTree(); // give time for ChangeManager to update

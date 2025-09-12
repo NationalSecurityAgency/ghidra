@@ -35,6 +35,6 @@ public interface LinkedDomainFile extends DomainFile {
 	 * @return domain file
 	 * @throws IOException if IO error occurs or file not found
 	 */
-	public DomainFile getLinkedFile() throws IOException;
+	public DomainFile getRealFile() throws IOException;
 
 }
