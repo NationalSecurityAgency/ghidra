@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,6 +175,21 @@ public class ListingModelConverter implements ListingModel {
 	@Override
 	public void toggleOpen(Data data) {
 		model.toggleOpen(data);
+	}
+
+	@Override
+	public void setFunctionVariablesOpen(Address functionAddress, boolean open) {
+		model.setFunctionVariablesOpen(functionAddress, open);
+	}
+
+	@Override
+	public void setAllFunctionVariablesOpen(boolean open) {
+		model.setAllFunctionVariablesOpen(open);
+	}
+
+	@Override
+	public boolean areFunctionVariablesOpen(Address FunctionAddress) {
+		return model.areFunctionVariablesOpen(FunctionAddress);
 	}
 
 	@Override

@@ -516,7 +516,13 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-		colElem.setAttribute("WIDTH", "90");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "70");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
 

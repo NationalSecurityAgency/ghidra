@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static ghidra.app.util.viewer.field.AbstractOpenCloseField.*;
-
 import java.awt.*;
 
 import javax.swing.JComponent;
@@ -25,38 +23,40 @@ import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-import ghidra.program.model.listing.Data;
+import ghidra.app.util.viewer.proxy.VariableProxy;
+import ghidra.program.model.address.Address;
 
 /**
- * FactoryField class for displaying the open/close field.
+ * FactoryField class for displaying the open/close field widget for function variables.
  */
-public class OpenCloseField extends AbstractOpenCloseField {
-	private int indentLevel;
-	private boolean isLast;
-	private int insetSpace = 1;
+public class VariableOpenCloseField extends AbstractOpenCloseField {
+	private static final Font HIDDEN_FONT = Gui.getFont("font.listing.base.hidden.field");
 
 	/**
 	 * Constructor
 	 * @param factory the FieldFactory that created this field.
 	 * @param proxy the object associated with this field.
-	 * @param indentLevel the indentation level of the data object.
 	 * @param metrics the FontMetrics used to render this field.
 	 * @param x the starting x position of this field.
 	 * @param width the width of this field.
-	 * @param isLast true if the data object is the last subcomponent at its level.
 	 */
-	public OpenCloseField(FieldFactory factory, ProxyObj<?> proxy, int indentLevel,
-			FontMetrics metrics, int x, int width, boolean isLast) {
+	public VariableOpenCloseField(FieldFactory factory, ProxyObj<?> proxy,
+			FontMetrics metrics, int x, int width) {
 		super(factory, proxy, metrics, x, width);
-		this.isOpen = proxy.getListingLayoutModel().isOpen((Data) proxy.getObject());
-		this.indentLevel = indentLevel;
-		this.isLast = isLast;
+		if (proxy instanceof VariableProxy variableProxy) {
+			Address functionAddress = variableProxy.getFunctionAddress();
+			this.isOpen = proxy.getListingLayoutModel().areFunctionVariablesOpen(functionAddress);
+		}
 	}
 
 	@Override
 	public int getWidth() {
-		return (indentLevel + 1) * fieldWidth;
+		if (isOpen) {
+			return fieldWidth;
+		}
+		return fieldWidth + 200;
 	}
 
 	@Override
@@ -67,9 +67,9 @@ public class OpenCloseField extends AbstractOpenCloseField {
 		// center in the heightAbove area (negative, since 0 is the baseline of text, which is at
 		// the bottom of the heightAbove)
 		int toggleHandleStartY = -((heightAbove / 2) + (toggleHandleSize / 2));
-		int toggleHandleStartX = startX + (indentLevel * fieldWidth) + insetSpace;
+		int toggleHandleStartX = startX;
 
-		// TODO: If we're in printing mode, trying to render these open/close images
+		//  If we're in printing mode, trying to render these open/close images
 		//       causes the JVM to bomb. We'd like to eventually figure out why but in
 		//       the meantime we can safely comment this out and still generate an acceptable
 		//       image.
@@ -87,39 +87,12 @@ public class OpenCloseField extends AbstractOpenCloseField {
 
 		g.setColor(Palette.LIGHT_GRAY);
 
-		// draw the vertical lines to the left of the toggle handle (these are shown when
-		// there are vertical bars drawn for inset data)
-		int fieldTopY = -heightAbove;
-		int fieldBottomY = heightBelow;
-		int toggleHandleHalfLength = toggleHandleSize / 2;
-		for (int i = 1; i < indentLevel; i++) {
-			int fieldOffset = i * fieldWidth;
-			int previousButtonStartX = startX + fieldOffset + insetSpace;
-			int midpointX = previousButtonStartX + toggleHandleHalfLength;
-			g.drawLine(midpointX, fieldTopY, midpointX, fieldBottomY);
+		if (!isOpen) {
+			Font font = g.getFont();
+			g.setFont(HIDDEN_FONT);
+			g.drawString("Variables", startX + fieldWidth + 10, 0);
+			g.setFont(font);
 		}
-
-		if (indentLevel > 0) {
-			// horizontal line to the right of the toggle handle
-			int indentOffset = getWidth();
-			int toggleHandleEndX = toggleHandleStartX + toggleHandleSize;
-			int midpointY = toggleHandleStartY + (toggleHandleSize / 2);
-			int endX = startX + indentOffset;
-			g.drawLine(toggleHandleEndX, midpointY, endX, midpointY);
-
-			// vertical line above toggle handle
-			int midpointX = toggleHandleStartX + toggleHandleHalfLength;
-			int endY = toggleHandleStartY - insetSpace;
-			g.drawLine(midpointX, fieldTopY, midpointX, endY);
-
-			boolean lastAndClosed = isLast && !isOpen;
-			if (!lastAndClosed) {
-				// extended vertical line below toggle handle
-				int buttonBottomY = toggleHandleStartY + toggleHandleSize;
-				g.drawLine(midpointX, buttonBottomY, midpointX, fieldBottomY);
-			}
-		}
-
 		paintCursor(g, context.getCursorColor(), cursorLoc);
 	}
 
@@ -128,6 +101,9 @@ public class OpenCloseField extends AbstractOpenCloseField {
 	 */
 	@Override
 	public void toggleOpenCloseState() {
-		proxy.getListingLayoutModel().toggleOpen((Data) proxy.getObject());
+		if (proxy instanceof VariableProxy variableProxy) {
+			Address functionAddress = variableProxy.getFunctionAddress();
+			proxy.getListingLayoutModel().setFunctionVariablesOpen(functionAddress, !isOpen);
+		}
 	}
 }

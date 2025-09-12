@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -32,7 +32,8 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
+import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -81,7 +82,8 @@ import ghidra.trace.model.program.TraceProgramView;
 	},
 	servicesProvided = {
 		DebuggerListingService.class,
-	})
+	}
+)
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
@@ -450,6 +452,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
 		SaveState connectedProviderState = new SaveState();
 		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
@@ -470,6 +473,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);

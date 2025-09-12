@@ -181,6 +181,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public P createNewDisconnectedProvider() {
 		P newProvider = createProvider(formatMgr.createClone(), false);
 		newProvider.setClipboardService(tool.getService(ClipboardService.class));
+
 		disconnectedProviders.add(newProvider);
 		if (dndProvider != null) {
 			newProvider.addProgramDropProvider(dndProvider);
