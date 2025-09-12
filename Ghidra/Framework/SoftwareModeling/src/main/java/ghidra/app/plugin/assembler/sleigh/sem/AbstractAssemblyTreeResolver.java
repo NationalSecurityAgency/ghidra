@@ -52,6 +52,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	public static final String INST_START = "inst_start";
 	public static final String INST_NEXT = "inst_next";
 	public static final String INST_NEXT2 = "inst_next2";
+	public static final String SEG_NEXT = "seg_next";
 
 	protected final AbstractAssemblyResolutionFactory<RP, ?> factory;
 	protected final SleighLanguage lang;

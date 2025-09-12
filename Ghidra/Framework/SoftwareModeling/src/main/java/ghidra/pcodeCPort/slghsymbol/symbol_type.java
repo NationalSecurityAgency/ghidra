@@ -28,6 +28,7 @@ public enum symbol_type {
 	start_symbol,  // inst_start, inst_ref, inst_def
 	end_symbol,    // inst_next
 	next2_symbol,    // inst_next2
+	seg_symbol,    // seg_next
 	subtable_symbol,
 	macro_symbol,
 	section_symbol,
