@@ -22,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf.DWARFImportOptions.MacroEnumSetting;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileInfo;
@@ -427,9 +428,17 @@ public class DWARFImporter {
 				}
 			}
 		}
+		MacroEnumSetting setting = importOptions.getMacroEnumSetting();
+		if (!setting.equals(MacroEnumSetting.NONE)) {
+			long macro_ts = System.currentTimeMillis();
+			DWARFMacroEnumCreator enumCreator = new DWARFMacroEnumCreator(prog);
+			enumCreator.createEnumsFromMacroInfo(setting.equals(MacroEnumSetting.ALL), monitor);
+			importSummary.macroElapsedMS = System.currentTimeMillis() - macro_ts;
+		}
 
 		importSummary.totalElapsedMS = System.currentTimeMillis() - start_ts;
 
 		return importSummary;
 	}
+
 }

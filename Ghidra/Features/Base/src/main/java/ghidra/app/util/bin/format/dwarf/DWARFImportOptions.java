@@ -142,6 +142,24 @@ public class DWARFImportOptions {
 	private boolean useStaticStackFrameRegisterValue = true;
 
 	/**
+	 * Used to control which macro info entries are used to create enums.
+	 */
+	public static enum MacroEnumSetting {
+		NONE,
+		IGNORE_COMMAND_LINE,
+		ALL;
+	}
+
+	private static final MacroEnumSetting OPTION_DEFAULT_MACRO_ENUM_SETTING =
+		MacroEnumSetting.IGNORE_COMMAND_LINE;
+
+	private MacroEnumSetting macroEnumSetting = OPTION_DEFAULT_MACRO_ENUM_SETTING;
+
+	private static final String OPTION_MACRO_ENUM_NAME = "Create Enums from Macros";
+	private static final String OPTION_MACRO_ENUM_DESC =
+		"Controls which DWARF macro info entries are used to create enums";
+
+	/**
 	 * Create new instance
 	 */
 	public DWARFImportOptions() {
@@ -502,6 +520,14 @@ public class DWARFImportOptions {
 		this.useStaticStackFrameRegisterValue = useStaticStackFrameRegisterValue;
 	}
 
+	public MacroEnumSetting getMacroEnumSetting() {
+		return macroEnumSetting;
+	}
+
+	public void setMacroEnumSetting(MacroEnumSetting setting) {
+		macroEnumSetting = setting;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -553,6 +579,9 @@ public class DWARFImportOptions {
 
 		options.registerOption(OPTION_SHOW_VARIABLE_STORAGE_INFO, isShowVariableStorageInfo(),
 			null, OPTION_SHOW_VARIABLE_STORAGE_DESC);
+
+		options.registerOption(OPTION_MACRO_ENUM_NAME, getMacroEnumSetting(), null,
+			OPTION_MACRO_ENUM_DESC);
 	}
 
 	/**
@@ -587,5 +616,6 @@ public class DWARFImportOptions {
 		setCharsetName(options.getString(OPTION_CHARSET_NAME, getCharsetName()));
 		setShowVariableStorageInfo(options.getBoolean(OPTION_SHOW_VARIABLE_STORAGE_INFO,
 			isShowVariableStorageInfo()));
+		setMacroEnumSetting(options.getEnum(OPTION_MACRO_ENUM_NAME, getMacroEnumSetting()));
 	}
 }

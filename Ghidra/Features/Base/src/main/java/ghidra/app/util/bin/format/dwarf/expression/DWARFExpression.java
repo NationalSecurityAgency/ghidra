@@ -194,7 +194,10 @@ public class DWARFExpression {
 				sb.append(" ] <==");
 			}
 			if (instr.opcode == DW_OP_bra || instr.opcode == DW_OP_skip) {
-				long destOffset = instr.getOperandValue(0) + instr.getOffset();
+				long destOffset = instr.getOffset();
+				if (instr.getOperandCount() > 0) {
+					destOffset += instr.getOperandValue(0);
+				}
 				int destIndex = findInstructionByOffset(destOffset);
 				sb.append(String.format(" /* dest index: %d, offset: %03x */", destIndex,
 					(int) destOffset));
@@ -220,6 +223,5 @@ public class DWARFExpression {
 		DWARFExpression other = (DWARFExpression) obj;
 		return Objects.equals(instructions, other.instructions);
 	}
-
 
 }
