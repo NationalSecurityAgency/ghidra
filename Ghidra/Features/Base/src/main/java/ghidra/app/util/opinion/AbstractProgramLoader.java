@@ -19,16 +19,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-import org.apache.commons.io.FilenameUtils;
-
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FSUtilities;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -67,33 +64,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * It is also the responsibility of the caller to close the returned {@link Loaded} 
 	 * {@link Program}s with {@link Loaded#close()} when they are no longer needed.
 	 *
-	 * @param provider The bytes to load.
-	 * @param loadedName A suggested name for the primary {@link Loaded} {@link Program}. 
-	 *   This is just a suggestion, and a {@link Loader} implementation reserves the right to change
-	 *   it. The {@link Loaded} {@link Program}s should be queried for their true names using 
-	 *   {@link Loaded#getName()}.
-	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
-	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
-	 *   libraries. Could be null if there is no project.
-	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
-	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
-	 *   reserves the right to change it for each {@link Loaded} result. The  {@link Loaded} 
-	 *   {@link Program}s should be queried for their true project folder paths using 
-	 *   {@link Loaded#getProjectFolderPath()}.
-	 * @param loadSpec The {@link LoadSpec} to use during load.
-	 * @param options The load options.
-	 * @param log The message log.
-	 * @param consumer A consumer object for generated {@link Program}s.
-	 * @param monitor A task monitor.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 * @return A {@link List} of one or more {@link Loaded} {@link Program}s (created but not 
 	 *   saved).
 	 * @throws LoadException if the load failed in an expected way.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract List<Loaded<Program>> loadProgram(ByteProvider provider, String loadedName,
-			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected abstract List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, LoadException, CancelledException;
 
 	/**
@@ -102,40 +80,32 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * <p>
 	 * NOTE: The loading that occurs in this method will automatically be done in a transaction.
 	 *
-	 * @param provider The bytes to load into the {@link Program}.
-	 * @param loadSpec The {@link LoadSpec} to use during load.
-	 * @param options The load options.
-	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
-	 * @param monitor A cancelable task monitor.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 * @throws LoadException if the load failed in an expected way.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog messageLog, Program program, TaskMonitor monitor)
+	protected abstract void loadProgramInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException;
 
 	@Override
-	public final LoadResults<? extends DomainObject> load(ByteProvider provider, String loadedName,
-			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, VersionException, LoadException {
+	public final LoadResults<? extends DomainObject> load(ImporterSettings settings)
+			throws IOException, CancelledException, VersionException, LoadException {
 
-		if (!loadSpec.isComplete()) {
+		if (!settings.loadSpec().isComplete()) {
 			throw new LoadException("Load spec is incomplete");
 		}
 
-		List<Loaded<Program>> loadedPrograms = loadProgram(provider, loadedName, project,
-			projectFolderPath, loadSpec, options, messageLog, consumer, monitor);
+		List<Loaded<Program>> loadedPrograms = loadProgram(settings);
 
 		boolean success = false;
 		try {
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				monitor.checkCancelled();
+				settings.monitor().checkCancelled();
 				Program program = loadedProgram.getDomainObject(this);
 				try {
-					applyProcessorLabels(options, program);
+					applyProcessorLabels(settings.options(), program);
 					program.setEventsEnabled(true);
 				}
 				finally {
@@ -144,7 +114,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog, monitor);
+			postLoadProgramFixups(loadedPrograms, settings);
 
 			// Discard temporary programs
 			Iterator<Loaded<Program>> iter = loadedPrograms.iterator();
@@ -168,11 +138,10 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	@Override
-	public final void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Program program, TaskMonitor monitor)
+	public final void loadInto(Program program, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 
-		if (!loadSpec.isComplete()) {
+		if (!settings.loadSpec().isComplete()) {
 			throw new LoadException("Load spec is incomplete");
 		}
 
@@ -180,7 +149,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		int transactionID = program.startTransaction("Loading - " + getName());
 		boolean success = false;
 		try {
-			loadProgramInto(provider, loadSpec, options, messageLog, program, monitor);
+			loadProgramInto(program, settings);
 			success = true;
 		}
 		finally {
@@ -191,7 +160,7 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		ArrayList<Option> list = new ArrayList<>();
 		list.add(new Option(APPLY_LABELS_OPTION_NAME, shouldApplyProcessorLabelsByDefault(),
 			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyLabels"));
@@ -223,17 +192,12 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * It provides subclasses an opportunity to do follow-on actions to the load.
 	 *
 	 * @param loadedPrograms The {@link Loaded loaded programs} to be fixed up.
-	 * @param project The {@link Project} to load into.  Could be null if there is no project.
-	 * @param loadSpec The {@link LoadSpec} to use during load.
-	 * @param options The load options.
-	 * @param messageLog The message log.
-	 * @param monitor A cancelable task monitor.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms,
+			ImporterSettings settings) throws CancelledException, IOException {
 		// Default behavior is to do nothing
 	}
 
@@ -262,21 +226,6 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * Joins the given path elements to form a single path.  Empty and null path elements
-	 * are ignored. The returned path's separators are converted to unix-style and
-	 * windows-specific characters like {@code :} are stripped out, making the path suitable
-	 * to be a project path
-	 * 
-	 * @param pathElements The path elements to append to one another
-	 * @return A single path consisting of the given path elements appended together
-	 * @see FSUtilities#appendPath(String...)
-	 */
-	protected String joinPaths(String... pathElements) {
-		String str = FSUtilities.appendPath(pathElements);
-		return str != null ? FilenameUtils.separatorsToUnix(str).replaceAll(":", "") : null;
-	}
-
-	/**
 	 * Generates a block name.
 	 *
 	 * @param program The {@link Program} for the block.
@@ -302,28 +251,26 @@ public abstract class AbstractProgramLoader implements Loader {
 	/**
 	 * Creates a {@link Program} with the specified attributes.
 	 *
-	 * @param provider The bytes that will make up the {@link Program}.
-	 * @param domainFileName The name for the DomainFile that will store the {@link Program}.
 	 * @param imageBase  The image base address of the {@link Program}.
-	 * @param executableFormatName The file format name of the {@link Program}.  Typically this will
-	 *   be the {@link Loader} name.
-	 * @param language The {@link Language} of the {@link Program}.
-	 * @param compilerSpec The {@link CompilerSpec} of the {@link Program}.
-	 * @param consumer A consumer object for the {@link Program} generated.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 * @return The newly created {@link Program}.
 	 * @throws IOException if there was an IO-related problem with creating the {@link Program}.
 	 */
-	protected Program createProgram(ByteProvider provider, String domainFileName,
-			Address imageBase, String executableFormatName, Language language,
-			CompilerSpec compilerSpec, Object consumer) throws IOException {
+	protected Program createProgram(Address imageBase, ImporterSettings settings)
+			throws IOException {
 
-		String programName = getProgramNameFromSourceData(provider, domainFileName);
-		Program prog = new ProgramDB(programName, language, compilerSpec, consumer);
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
+		Language language = getLanguageService().getLanguage(pair.languageID);
+		CompilerSpec compilerSpec = language.getCompilerSpecByID(pair.compilerSpecID);
+
+		String programName =
+			getProgramNameFromSourceData(settings.provider(), settings.importNameOnly());
+		Program prog = new ProgramDB(programName, language, compilerSpec, settings.consumer());
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
 		boolean success = false;
 		try {
-			setProgramProperties(prog, provider, executableFormatName);
+			setProgramProperties(prog, settings.provider(), getName());
 			try {
 				if (shouldSetImageBase(prog, imageBase)) {
 					prog.setImageBase(imageBase, true);
@@ -339,9 +286,28 @@ public abstract class AbstractProgramLoader implements Loader {
 		finally {
 			prog.endTransaction(id, true); // More efficient to commit when program will be discarded
 			if (!success) {
-				prog.release(consumer);
+				prog.release(settings.consumer());
 			}
 		}
+	}
+
+	/**
+	 * Creates a {@link Program} with the specified attributes at the {@link LoadSpec}'s desired 
+	 * image base
+	 *
+	 * @param settings The {@link Loader.ImporterSettings}.
+	 * @return The newly created {@link Program}.
+	 * @throws IOException if there was an IO-related problem with creating the {@link Program}.
+	 */
+	protected Program createProgram(ImporterSettings settings) throws IOException {
+
+		Address imageBaseAddr = getLanguageService()
+				.getLanguage(settings.loadSpec().getLanguageCompilerSpec().languageID)
+				.getAddressFactory()
+				.getDefaultAddressSpace()
+				.getAddress(settings.loadSpec().getDesiredImageBase());
+
+		return createProgram(imageBaseAddr, settings);
 	}
 
 	/**
@@ -387,13 +353,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Creates default memory blocks for the given {@link Program}.
 	 *
 	 * @param program The {@link Program} to create default memory blocks for.
-	 * @param language The {@link Program}s {@link Language}.
-	 * @param log The log to use during memory block creation.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 */
-	protected void createDefaultMemoryBlocks(Program program, Language language, MessageLog log) {
+	protected void createDefaultMemoryBlocks(Program program, ImporterSettings settings) {
+		MessageLog log = settings.log();
 		int id = program.startTransaction("Create default blocks");
 		try {
-
+			LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
+			Language language = getLanguageService().getLanguage(pair.languageID);
 			MemoryBlockDefinition[] defaultMemoryBlocks = language.getDefaultMemoryBlocks();
 			if (defaultMemoryBlocks == null) {
 				return;
@@ -422,6 +389,10 @@ public abstract class AbstractProgramLoader implements Loader {
 					log.appendMsg(" >> Processor specification error (pspec): " + e.getMessage());
 				}
 			}
+		}
+		catch (LanguageNotFoundException e) {
+			log.appendMsg("Failed get language for: " +
+				settings.loadSpec().getLanguageCompilerSpec().languageID);
 		}
 		finally {
 			program.endTransaction(id, true);

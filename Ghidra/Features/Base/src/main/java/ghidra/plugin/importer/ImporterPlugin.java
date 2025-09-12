@@ -42,7 +42,8 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
-import ghidra.framework.main.datatree.*;
+import ghidra.framework.main.datatree.DataTree;
+import ghidra.framework.main.datatree.JavaFileListHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -169,7 +170,7 @@ public class ImporterPlugin extends Plugin
 			return false;
 		}
 		return loadSpec.getLoader()
-				.getDefaultOptions(provider, loadSpec, null, false)
+				.getDefaultOptions(provider, loadSpec, null, false, false)
 				.stream()
 				.anyMatch(e -> e.getName()
 						.equals(AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME));

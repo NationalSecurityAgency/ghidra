@@ -66,6 +66,7 @@ for common use cases.
         [<a href="#-scriptlog-path-to-script-log-file">-scriptlog &lt;path to script log file&gt;</a>]
         [<a href="#-log-path-to-log-file">-log &lt;path to log file&gt;</a>]
         [<a href="#-overwrite">-overwrite</a>]
+        [<a href="#-mirror">-overwrite</a>]
         [<a href="#-recursive-depth">-recursive [&lt;depth&gt;]</a>]
         [<a href="#-readonly">-readOnly</a>]
         [<a href="#-deleteproject">-deleteProject</a>]
@@ -253,6 +254,10 @@ skipped (if not operating with the [`-readOnly`][readonly] option). If a conflic
 contained within a version repository, and the [`-commit`][commit] option has not been specified, 
 the overwrite will fail.  Removing a versioned file is also subject to other permission and in-use 
 restrictions which could also cause an overwrite failure.
+
+### `-mirror`
+Applies to [-import][import] mode only. If present, the absolute filesystem path of each imported
+file is mirrored in the project, rooted at the specified [folder path][projectname].
 
 ### `-recursive [<depth>]`
 If present, enables recursive descent into directories and project sub-folders when a directory/

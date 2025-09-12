@@ -24,6 +24,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.dwarf.external.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.options.Options;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -84,11 +85,13 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 
 				Loader origLoader = origLoadSpec.getLoader();
 				List<Option> defaultOptions = origLoader.getDefaultOptions(debugFileByteProvider,
-					origLoadSpec, debugProgram, false);
+					origLoadSpec, debugProgram, false, false);
 
 				ElfLoader elfLoader = new ElfLoader();
-				elfLoader.load(debugFileByteProvider, null, defaultOptions, debugProgram, monitor,
-					new MessageLog());
+				ImporterSettings settings =
+					new ImporterSettings(debugFileByteProvider, debugProgram.getName(), null, null,
+						false, origLoadSpec, defaultOptions, consumer, new MessageLog(), monitor);
+				elfLoader.load(debugProgram, settings);
 
 				ExternalDebugFileSectionProvider result = new ExternalDebugFileSectionProvider(
 					debugProgram, debugFileByteProvider.getFSRL());

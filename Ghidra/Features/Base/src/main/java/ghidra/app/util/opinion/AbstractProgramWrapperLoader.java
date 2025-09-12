@@ -18,15 +18,9 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.Option;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.Project;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * An abstract {@link Loader} that provides a convenience wrapper around 
@@ -38,69 +32,51 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 	/**
 	 * Loads bytes in a particular format into the given {@link Program}.
 	 *
-	 * @param provider The bytes to load.
-	 * @param loadSpec The {@link LoadSpec} to use during load.
-	 * @param options The load options.
 	 * @param program The {@link Program} to load into.
-	 * @param monitor A cancelable task monitor.
-	 * @param log The message log.
+	 * @param settings The {@link Loader.ImporterSettings}.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected abstract void load(Program program, ImporterSettings settings)
 			throws CancelledException, IOException;
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, CancelledException {
 
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
-		Language language = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec compilerSpec = language.getCompilerSpecByID(pair.compilerSpecID);
-
-		Address imageBaseAddr = language.getAddressFactory()
-				.getDefaultAddressSpace()
-				.getAddress(loadSpec.getDesiredImageBase());
-
-		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
-			compilerSpec, consumer);
-		List<Loaded<Program>> loadedList = List.of(
-			new Loaded<Program>(program, programName, project, programFolderPath, consumer));
+		Program program = createProgram(settings);
+		Loaded<Program> loaded = new Loaded<Program>(program, settings);
 
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
 		try {
-			load(provider, loadSpec, options, program, monitor, log);
-			createDefaultMemoryBlocks(program, language, log);
+			load(program, settings);
+			createDefaultMemoryBlocks(program, settings);
 			success = true;
-			return loadedList;
+			return List.of(loaded);
 		}
 		finally {
 			program.endTransaction(transactionID, true); // More efficient to commit when program will be discarded
 			if (!success) {
-				loadedList.forEach(Loaded::close);
+				loaded.close();
 			}
 		}
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program program, TaskMonitor monitor)
+	protected void loadProgramInto(Program program, ImporterSettings settings)
 			throws CancelledException, LoadException, IOException {
 
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		LanguageID languageID = program.getLanguageID();
 		CompilerSpecID compilerSpecID = program.getCompilerSpec().getCompilerSpecID();
 		if (!(pair.languageID.equals(languageID) && pair.compilerSpecID.equals(compilerSpecID))) {
-			String message = provider.getAbsolutePath() +
+			String message = settings.provider().getAbsolutePath() +
 				" does not have the same language/compiler spec as program " + program.getName();
-			log.appendMsg(message);
+			settings.log().appendMsg(message);
 			throw new LoadException(message);
 		}
-		load(provider, loadSpec, options, program, monitor, log);
+		load(program, settings);
 	}
 
 	@Override

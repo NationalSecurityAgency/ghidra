@@ -24,6 +24,7 @@ import generic.stl.Pair;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.*;
@@ -62,6 +63,7 @@ public class ProgramLoader {
 		private byte[] bytes;
 		private Project project;
 		private String projectFolderPath;
+		private boolean mirror;
 		private String importNameOverride;
 		private Predicate<Loader> loaderFilter = LoaderService.ACCEPT_ALL;
 		private List<Pair<String, String>> loaderArgs = new ArrayList<>();
@@ -175,19 +177,31 @@ public class ProgramLoader {
 		}
 
 		/**
-		 * Sets the suggested project folder path for the {@link Loaded} {@link Program}s. This is 
-		 * just a suggestion, and a {@link Loader} implementation reserves the right to change it 
-		 * for each {@link Loaded} result. The {@link Loaded} results should be queried for their 
-		 * true project folder paths using {@link Loaded#getProjectFolderPath()}.
+		 * Sets the project folder path to load into.
 		 * <p>
 		 * The default project folder path is the root of the project ({@code "/"}).
 		 * 
-		 * @param path The suggested project folder path. A {@code null} value will revert the path
-		 *   back to the default value of ({@code "/"}).
+		 * @param path The project folder path. A {@code null} value will revert the path back to 
+		 *   the default value of ({@code "/"}).
 		 * @return This {@link Builder}
 		 */
 		public Builder projectFolderPath(String path) {
 			this.projectFolderPath = path;
+			return this;
+		}
+
+		/**
+		 * Sets whether or not the absolute filesystem path of each {@link Loaded} {@link Program}
+		 * should be mirrored in the project, rooted at the specified
+		 * {@link #projectFolderPath(String) project folder path}.
+		 * <p>
+		 * By default, mirroring is off.
+		 * 
+		 * @param shouldMirror True if filesystem mirroring should happen; otherwise, false.
+		 * @return This {@link Builder}
+		 */
+		public Builder mirror(boolean shouldMirror) {
+			this.mirror = shouldMirror;
 			return this;
 		}
 
@@ -378,7 +392,7 @@ public class ProgramLoader {
 			this.compilerSpecId = cspec != null ? cspec.getCompilerSpecID() : null;
 			return this;
 		}
-		
+
 		/**
 		 * Sets the {@link MessageLog log} to use during import.
 		 * <p>
@@ -454,8 +468,21 @@ public class ProgramLoader {
 
 				LoadSpec loadSpec = getLoadSpec(p);
 				List<Option> loaderOptions = getLoaderOptions(p, loadSpec);
-				String importName = importNameOverride != null ? importNameOverride
-						: loadSpec.getLoader().getPreferredFileName(p);
+				String importName;
+				if (mirror) {
+					if (importNameOverride != null) {
+						throw new LoadException("Cannot override import name if mirroring");
+					}
+					FSRL f = p.getFSRL();
+					if (f == null) {
+						throw new LoadException("Mirroring requires a file-based source");
+					}
+					importName = f.getPath();
+				}
+				else {
+					importName = importNameOverride != null ? importNameOverride
+							: loadSpec.getLoader().getPreferredFileName(p);
+				}
 
 				// Load
 				Msg.info(ProgramLoader.class, "Using Loader: " + loadSpec.getLoader().getName());
@@ -463,9 +490,11 @@ public class ProgramLoader {
 					"Using Language/Compiler: " + loadSpec.getLanguageCompilerSpec());
 				Msg.info(ProgramLoader.class, "Using Library Search Path: " +
 					Arrays.toString(LibrarySearchPathManager.getLibraryPaths()));
-				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
-						.load(p, importName, project, projectFolderPath, loadSpec, loaderOptions,
-							log, Objects.requireNonNullElse(consumer, this), monitor);
+				ImporterSettings settings = new ImporterSettings(p, importName, project,
+					projectFolderPath, mirror, loadSpec, loaderOptions,
+					Objects.requireNonNullElse(consumer, this), log, monitor);
+				LoadResults<? extends DomainObject> loadResults =
+					loadSpec.getLoader().load(settings);
 
 				// Optionally echo loader message log to application.log
 				if (!Loader.loggingDisabled && log.hasMessages()) {
@@ -568,7 +597,8 @@ public class ProgramLoader {
 		 */
 		private List<Option> getLoaderOptions(ByteProvider p, LoadSpec loadSpec)
 				throws LanguageNotFoundException, LoadException {
-			List<Option> options = loadSpec.getLoader().getDefaultOptions(p, loadSpec, null, false);
+			List<Option> options =
+				loadSpec.getLoader().getDefaultOptions(p, loadSpec, null, false, mirror);
 			if (options == null) {
 				throw new LoadException("Cannot load with null options");
 			}

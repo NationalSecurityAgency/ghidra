@@ -179,7 +179,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		try {
 			FileData<METADATATYPE> baseDirData = getFileData(baseDir);
 			FileData<METADATATYPE> fileData =
-				lookup(baseDirData, splitPath(path), -1, false, nameComp);
+				lookup(baseDirData, FSUtilities.splitPath(path), -1, false, nameComp);
 			return (fileData != null) ? fileData.file : null;
 		}
 		catch (IOException e) {
@@ -222,7 +222,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 		symlinkPathDebug.append("[");
 		FileData<METADATATYPE> currentFile = Objects.requireNonNullElse(baseDir, rootDir);
-		String[] pathparts = splitPath(path);
+		String[] pathparts = FSUtilities.splitPath(path);
 		for (int i = 0; i < pathparts.length && currentFile != null; i++) {
 			String name = pathparts[i];
 			symlinkPathDebug.append(i != 0 ? "," : "").append(name);
@@ -309,7 +309,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public synchronized GFile storeFile(String path, long fileIndex, boolean isDirectory,
 			long length, METADATATYPE metadata) {
 
-		String[] nameparts = splitPath(path);
+		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
 			return rootDir.file;
 		}
@@ -369,7 +369,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 */
 	public synchronized GFile storeSymlink(String path, long fileIndex, String symlinkPath,
 			long length, METADATATYPE metadata) {
-		String[] nameparts = splitPath(path);
+		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
 			Msg.warn(this,
 				"Unable to create invalid symlink file [%s] -> [%s]".formatted(path, symlinkPath));
@@ -496,10 +496,6 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		FileData<METADATATYPE> parent =
 			lookup(rootDir, nameparts, nameparts.length - 1, true, nameComp);
 		return parent.file;
-	}
-
-	protected String[] splitPath(String path) {
-		return Objects.requireNonNullElse(path, "").replace('\\', '/').split("/");
 	}
 
 	protected FileData<METADATATYPE> lookupFileInDir(
