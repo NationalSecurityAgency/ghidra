@@ -241,7 +241,7 @@ class RootNode extends WindowNode {
 
 		Point location = loc == null ? new Point() : loc;
 		Dimension size = placeholderSize == null ? new Dimension() : placeholderSize;
-		windowNode.setInitialBounds(new Rectangle(location, size));
+		windowNode.setWindowContentsBounds(new Rectangle(location, size));
 
 		detachedWindows.add(windowNode);
 		placeholder.getNode().add(placeholder);
