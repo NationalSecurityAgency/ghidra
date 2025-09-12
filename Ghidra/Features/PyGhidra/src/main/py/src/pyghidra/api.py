@@ -301,21 +301,18 @@ def program_loader() -> "ProgramLoader.Builder":
     return ProgramLoader.builder()
 
 def monitor(
-        timeout: Optional[int] = None,
-        change_callback: Callable[[str, int, int], None] = None
+        timeout: Optional[int] = None
     ) -> "PyGhidraTaskMonitor":
     """
     Convenience function to get a "PyGhidraTaskMonitor" object.
 
     :param timeout: An optional number of seconds to wait before canceling the monitor.
-    :param change_callback: A optional function that gets called any time the monitor receives an 
-        update.
     :return: A "PyGhidraTaskMonitor"  object.
     """
     from ghidra.pyghidra import PyGhidraTaskMonitor
     from jpype.types import JInt
     t = None if timeout is None else JInt(timeout)
-    return PyGhidraTaskMonitor(t, change_callback)
+    return PyGhidraTaskMonitor(t, None)
 
 def walk_project(
         project: "Project",

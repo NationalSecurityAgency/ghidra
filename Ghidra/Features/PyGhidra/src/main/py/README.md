@@ -223,15 +223,12 @@ def program_loader() -> "ProgramLoader.Builder":
 ### pyghidra.monitor()
 ```python
 def monitor(
-        timeout: Optional[int] = None,
-        change_callback: Callable[[str, int, int], None] = None
+        timeout: Optional[int] = None
     ) -> "PyGhidraTaskMonitor":
     """
     Convenience function to get a "PyGhidraTaskMonitor" object.
 
     :param timeout: An optional number of seconds to wait before canceling the monitor.
-    :param change_callback: A optional function that gets called any time the monitor receives an 
-        update.
     :return: A "PyGhidraTaskMonitor"  object.
     """
 ```
@@ -289,7 +286,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     with pyghidra.open_filesystem(f"{os.environ['DOWNLOADS_DIR']}/ghidra_11.4_PUBLIC_20250620.zip") as fs:
         loader = pyghidra.program_loader().project(project)
         for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
-            loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
+            loader = loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
             with loader.load() as load_results:
                 load_results.save(pyghidra.monitor())
 
@@ -298,10 +295,10 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
         analysis_props = pyghidra.analysis_properties(program)
         with pyghidra.transaction(program):
             analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
-        pyghidra.analyze(program, pyghidra.monitor(10))
+        analysis_log = pyghidra.analyze(program, pyghidra.monitor(10))
         program.save("Analyzed", pyghidra.monitor())
     
-    # Walk the project and set a propery in each decompiler program
+    # Walk the project and set a property in each decompiler program
     def set_property(domain_file, program):
         with pyghidra.transaction(program):
             program_info = pyghidra.program_info(program)
@@ -313,7 +310,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     ByteArrayCls = jpype.JArray(jpype.JByte)
     my_bytes = ByteArrayCls(b"\xaa\xbb\xcc\xdd\xee\xff")
     loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
-    loader.loaders("BinaryLoader").language("DATA:LE:64:default")
+    loader = loader.loaders("BinaryLoader").language("DATA:LE:64:default")
     with loader.load() as load_results:
         load_results.save(pyghidra.monitor())
 

@@ -41,10 +41,16 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 	private Timer timer = new Timer();
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
-
 	private TriConsumer<String, Long, Long> changeCallback;
 
-
+	/**
+	 * Creates a new {@link PyGhidraTaskMonitor}
+	 *  
+	 * @param timeoutSecs The number of seconds before a cancellation timeout is triggered, or
+	 *   {@code null} for no timeout
+	 * @param changeCallback A function that gets called any time a change to the monitor occurred,
+	 *   or {@code null} for no callback
+	 */
 	public PyGhidraTaskMonitor(Integer timeoutSecs,
 			TriConsumer<String, Long, Long> changeCallback) {
 		isCancelled = false;
