@@ -1265,7 +1265,7 @@ A: "BANKED"			is a=1										{ }
 	#  0100 0011 0000 0000  ->	RRNCF REG0x0, f, BANKED
 	#  0100 0010 1101 1000  ->	RRNCF STATUS, f, ACCESS
 	#  0100 0011 1101 1000  ->	RRNCF REG0xD8, f, BANKED
-	tmp:1 = srcREG >> 1 || srcREG << 7;
+	tmp:1 = srcREG >> 1;
 	WREG = tmp;
 	setResultFlags(tmp);
 }
@@ -1280,7 +1280,7 @@ A: "BANKED"			is a=1										{ }
 	#  0100 0011 0000 0000  ->	RRNCF REG0x0, f, BANKED
 	#  0100 0010 1101 1000  ->	RRNCF STATUS, f, ACCESS
 	#  0100 0011 1101 1000  ->	RRNCF REG0xD8, f, BANKED
-	tmp:1 = srcREG >> 1 || srcREG << 7;
+	tmp:1 = srcREG >> 1;
 	srcREG = tmp;
 	setResultFlags(tmp);
 }
