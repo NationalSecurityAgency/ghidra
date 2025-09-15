@@ -24,14 +24,17 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.menu.ButtonState;
 import docking.menu.MultiStateButton;
 import docking.widgets.PopupWindow;
+import docking.widgets.combobox.GComboBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.features.base.memsearch.combiner.Combiner;
@@ -89,9 +92,11 @@ class MemorySearchControlPanel extends JPanel {
 		searchButton = new MultiStateButton<Combiner>(initialSearchButtonStates);
 		searchButton
 				.setStateChangedListener(state -> model.setMatchCombiner(state.getClientData()));
+		searchButton.setMnemonic('S');
 		searchButton.addActionListener(e -> search());
 		panel.add(searchButton, BorderLayout.WEST);
 		selectionCheckbox = new JCheckBox("Selection Only");
+		selectionCheckbox.setMnemonic('O');
 		selectionCheckbox.setSelected(model.isSearchSelectionOnly());
 		selectionCheckbox.setEnabled(model.hasSelection());
 		selectionCheckbox
@@ -132,9 +137,10 @@ class MemorySearchControlPanel extends JPanel {
 		if (!formatComboBox.getSelectedItem().equals(searchFormat)) {
 			formatComboBox.setSelectedItem(searchFormat);
 		}
+
 		selectionCheckbox.setSelected(model.isSearchSelectionOnly());
 		selectionCheckbox.setEnabled(model.hasSelection());
-		searchInputField.setToolTipText(searchFormat.getToolTip());
+		searchInputField.setToolTipText("Search Text: " + searchFormat.getToolTip());
 
 		String text = searchInputField.getText();
 		String convertedText = searchFormat.convertText(text, oldSettings, model.getSettings());
@@ -144,23 +150,53 @@ class MemorySearchControlPanel extends JPanel {
 	}
 
 	private JComponent buildLeftSearchInputPanel() {
-		createSearchInputField();
+
+		JPanel searchInputPanel = createSearchInputPanel();
+		GLabel searchLabel = new GLabel("Search Text:");
+		searchLabel.setDisplayedMnemonic('T');
+		searchLabel.setLabelFor(searchInputField);
+
+		JLabel bytesLabel = new GLabel("Byte Sequence:", SwingConstants.RIGHT);
+		bytesLabel.setToolTipText("The byte sequence that will be searched (if applicable)");
+		JPanel bytesPanel = createBytesPanel();
+
+		JPanel panel = new JPanel(new PairLayout(2, 10));
+
+		// row 1
+		panel.add(searchLabel);
+		panel.add(searchInputPanel);
+
+		// row 2
+		panel.add(bytesLabel);
+		panel.add(bytesPanel);
+		return panel;
+	}
+
+	private JPanel createBytesPanel() {
+
+		JPanel panel = new JPanel(new BorderLayout());
 		hexSearchSequenceField = new GDLabel();
-		hexSearchSequenceField.setName("HexSequenceField");
+		hexSearchSequenceField.setName("Hex Sequence Field");
 		Border outerBorder = BorderFactory.createLoweredBevelBorder();
 		Border innerBorder = BorderFactory.createEmptyBorder(0, 4, 0, 4);
 		Border border = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
 		hexSearchSequenceField.setBorder(border);
 
-		JPanel panel = new JPanel(new PairLayout(2, 10));
-		panel.add(buildSearchFormatCombo());
-		panel.add(searchInputField);
-		JLabel byteSequenceLabel = new JLabel("Byte Sequence:", SwingConstants.RIGHT);
-		byteSequenceLabel.setToolTipText(
-			"This field shows the byte sequence that will be search (if applicable)");
+		panel.add(hexSearchSequenceField, BorderLayout.CENTER);
+		int spaceWidth = formatComboBox.getPreferredSize().width;
+		panel.add(Box.createHorizontalStrut(spaceWidth), BorderLayout.EAST);
 
-		panel.add(byteSequenceLabel);
-		panel.add(hexSearchSequenceField);
+		return panel;
+	}
+
+	private JPanel createSearchInputPanel() {
+
+		createSearchInputField();
+
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(searchInputField, BorderLayout.CENTER);
+		panel.add(buildSearchFormatCombo(), BorderLayout.EAST);
+
 		return panel;
 	}
 
@@ -181,7 +217,7 @@ class MemorySearchControlPanel extends JPanel {
 		updateCombo();
 		searchInputField.setAutoCompleteEnabled(false); // this interferes with validation
 		searchInputField.setEditable(true);
-		searchInputField.setToolTipText(model.getSearchFormat().getToolTip());
+		searchInputField.setToolTipText("Search Text: " + model.getSearchFormat().getToolTip());
 		searchInputField.setDocument(new RestrictedInputDocument());
 		searchInputField.addActionListener(ev -> search());
 		JTextField searchTextField = searchInputField.getTextField();
@@ -220,11 +256,14 @@ class MemorySearchControlPanel extends JPanel {
 	}
 
 	private JComponent buildSearchFormatCombo() {
-		formatComboBox = new JComboBox<>(SearchFormat.ALL);
+		formatComboBox = new GComboBox<>(SearchFormat.ALL);
 		formatComboBox.setSelectedItem(model.getSearchFormat());
 		formatComboBox.addItemListener(this::formatComboChanged);
-		formatComboBox.setToolTipText("The selected format will determine how to " +
-			"interpret text typed into the input field");
+		formatComboBox.setToolTipText("Search Format: how to interpret search text");
+		Border inside = formatComboBox.getBorder();
+		CompoundBorder paddingBorder =
+			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0), inside);
+		formatComboBox.setBorder(paddingBorder);
 
 		return formatComboBox;
 	}
@@ -252,7 +291,7 @@ class MemorySearchControlPanel extends JPanel {
 		currentMatcher = byteMatcher;
 		String text = currentMatcher.getDescription();
 		hexSearchSequenceField.setText(text);
-		hexSearchSequenceField.setToolTipText(currentMatcher.getToolTip());
+		hexSearchSequenceField.setToolTipText("Search as hex: " + currentMatcher.getToolTip());
 		updateSearchButton();
 		provider.setByteMatcher(byteMatcher);
 	}
