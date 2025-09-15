@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -339,11 +339,7 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 		sharedFS.createFolder("/", "b");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 		assertEquals(3, root.getFolders().length);
-		assertEventsSize(3);
-
-		checkEvent(events.get(0), "Folder Added", null, "/a", null, null, null);
-		checkEvent(events.get(1), "Folder Added", null, "/b", null, null, null);
-		checkEvent(events.get(2), "Folder Added", null, "/c", null, null, null);
+		assertEventsSize(0);
 
 		sharedFS.createFolder("/b", "subB");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
@@ -487,12 +483,9 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 		root.getFolders(); // visit root folder to receive change events for it
 		sharedFS.renameFolder("/", "a", "bigA");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
-		assertEventsSize(4);
+		assertEventsSize(1);
 
-		checkEvent(events.get(0), "Folder Added", null, "/a", null, null, null);
-		checkEvent(events.get(1), "Folder Added", null, "/b", null, null, null);
-		checkEvent(events.get(2), "Folder Added", null, "/c", null, null, null);
-		checkEvent(events.get(3), "Folder Added", null, "/bigA", null, null, null);
+		checkEvent(events.get(0), "Folder Added", null, "/bigA", null, null, null);
 
 		// versioned folder was renamed to /bigA, but private folder /a should still exist
 
@@ -516,11 +509,9 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 		sharedFS.renameFolder("/a", "y", "bigY");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 
-		assertEventsSize(4);
-		checkEvent(events.get(0), "Folder Added", null, "/a/x", null, null, null);
-		checkEvent(events.get(1), "Folder Added", null, "/a/y", null, null, null);
-		checkEvent(events.get(2), "Folder Removed", "/a", null, null, null, "y");
-		checkEvent(events.get(3), "Folder Added", null, "/a/bigY", null, null, null);
+		assertEventsSize(2);
+		checkEvent(events.get(0), "Folder Removed", "/a", null, null, null, "y");
+		checkEvent(events.get(1), "Folder Added", null, "/a/bigY", null, null, null);
 
 	}
 
@@ -532,12 +523,9 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 		assertNull(root.getFolder("c"));
 		assertNotNull(root.getFolder("bigC"));
 
-		assertEventsSize(5);
-		checkEvent(events.get(0), "Folder Added", null, "/a", null, null, null);
-		checkEvent(events.get(1), "Folder Added", null, "/b", null, null, null);
-		checkEvent(events.get(2), "Folder Added", null, "/c", null, null, null);
-		checkEvent(events.get(3), "Folder Removed", "/", null, null, null, "c");
-		checkEvent(events.get(4), "Folder Added", null, "/bigC", null, null, null);
+		assertEventsSize(2);
+		checkEvent(events.get(0), "Folder Removed", "/", null, null, null, "c");
+		checkEvent(events.get(1), "Folder Added", null, "/bigC", null, null, null);
 	}
 
 	@Test
@@ -614,12 +602,9 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 
 		sharedFS.moveFolder("/", "a", "/c");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
-		assertEventsSize(4);
+		assertEventsSize(1);
 
-		checkEvent(events.get(0), "Folder Added", null, "/a", null, null, null);
-		checkEvent(events.get(1), "Folder Added", null, "/b", null, null, null);
-		checkEvent(events.get(2), "Folder Added", null, "/c", null, null, null);
-		checkEvent(events.get(3), "Folder Added", null, "/c/a", null, null, null);
+		checkEvent(events.get(0), "Folder Added", null, "/c/a", null, null, null);
 
 		// versioned folder was moved to /c/a, but private folder /a should still exist
 
