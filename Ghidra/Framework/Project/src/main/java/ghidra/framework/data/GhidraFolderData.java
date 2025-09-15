@@ -558,12 +558,14 @@ class GhidraFolderData {
 	}
 
 	/**
-	 * Refresh set of sub-folder names and identify added/removed folders.
+	 * Refresh set of sub-folder names and notify about adds/removes if appropriate
 	 * @param recursive recurse into visited subfolders if true
+	 * @param notifyAdd true if listener should be notified about newly discovered subfolders
 	 * @param monitor recursion task monitor - break from recursion if cancelled
 	 * @throws IOException if an IO error occurs during the refresh
 	 */
-	private void refreshFolders(boolean recursive, TaskMonitor monitor) throws IOException {
+	private void refreshFolders(boolean recursive, boolean notifyAdd, TaskMonitor monitor)
+			throws IOException {
 
 		// FIXME: inconsistent use of forced-recursive refresh and cached folderList
 
@@ -630,7 +632,7 @@ class GhidraFolderData {
 			GhidraFolderData folderData = addFolderData(folderName);
 			if (folderData != null) {
 				folderList.add(folderName);
-				if (visited) {
+				if (notifyAdd) {
 					listener.domainFolderAdded(folderData.getDomainFolder());
 				}
 			}
@@ -678,7 +680,13 @@ class GhidraFolderData {
 		return map;
 	}
 
-	private void refreshFiles(TaskMonitor monitor) throws IOException {
+	/**
+	 * Refresh set of files and notify about adds/removes if appropriate
+	 * @param notifyAdd true if listener should be notified about newly discovered files
+	 * @param monitor return immediately if cancelled
+	 * @throws IOException if an IO error occurs during the refresh
+	 */
+	private void refreshFiles(boolean notifyAdd, TaskMonitor monitor) throws IOException {
 
 		String path = getPathname();
 
@@ -744,7 +752,7 @@ class GhidraFolderData {
 			FolderItem versionedFolderItem = versionedItemMap.get(fileName);
 
 			GhidraFileData fileData = addFileData(fileName, localFolderItem, versionedFolderItem);
-			if (visited) {
+			if (notifyAdd) {
 				listener.domainFileAdded(fileData.getDomainFile());
 			}
 		}
@@ -791,6 +799,7 @@ class GhidraFolderData {
 				return;
 			}
 
+			boolean notifyAdd = visited;
 			visited = true;
 
 			try {
@@ -812,13 +821,13 @@ class GhidraFolderData {
 
 			// FIXME: If forced we should be refreshing folder/file lists
 
-			refreshFiles(monitor);
+			refreshFiles(notifyAdd, monitor);
 
 			if (monitor != null && monitor.isCancelled()) {
 				return; // break-out from recursion on cancel
 			}
 
-			refreshFolders(recursive, monitor);
+			refreshFolders(recursive, notifyAdd, monitor);
 		}
 	}
 
