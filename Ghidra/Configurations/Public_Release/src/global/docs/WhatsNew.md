@@ -152,6 +152,34 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
 ```
 
+## Z3 Concolic Emulation and Symbolic Summary
+We've added an experimental Z3-based symbolic emulator, which runs as a "auxilliary" domain to the 
+concrete emulator, effectively constructing what is commonly called a "concolic" emulator. The 
+symbolic emulator creates Z3 expressions and branching constraints, but it only follows the path 
+determined by concrete emulation. This is most easily accessed by installing the "SymbolicSummaryZ3"
+extension (**File** &rarr; **Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
+Debugger or Emulator tool, which includes a GUI for viewing and sorting through the results. Before 
+using the Z3 emulator, you must download and install z3-4.13.0 from https://github.com/Z3Prover/z3. 
+Depending on your platform, you may need to build it from source. Other versions may work, but our 
+current test configuration uses 4.13.0.
+
+## Emulation API
+The `PcodeEmulator` and related API has undergone substantial changes in preparation for integrating
+our JIT-accelerated emulator into the GUI. Please see the **Notable API Changes** section of our 
+[Change History](ChangeHistory.md). The goal is to facilitate integration by composition; whereas, 
+it had previously required inheritance, which is now considered poor design. Essentially, we've 
+introduced a set of callbacks that integrators can use to detect when certain things have happened
+in emulation, as well as offer some control of machine-state behavior, e.g., to facilitate lazily 
+loading from a snapshot.
+
+Extensions that currently integrate via inheritance can continue to do so, but will still need to
+apply some minimal changes to satisfy interface and constructor changes. The developers of such
+extensions ought to consider porting their integrations to the compositional/callback-based
+mechanism. A careful assessment may be required depending on the nature of the extension. Extensions
+that merely integrate with emulation should consider the compositional/callback-based mechanism. 
+Extensions that incorporate new domains (e.g. Z3) or novel behaviors (e.g. JIT) should continue 
+using inheritance.
+
 ## Other Improvements
  + Added the ability to toggle the displaying of function variables (parameters and locals) that are 
    normally displayed just below the function signature. The variables display can be turned on/off 
