@@ -15,8 +15,33 @@ applied Ghidra SRE capabilities to a variety of problems that involve analyzing 
 generating deep insights for NSA analysts who seek a better understanding of potential
 vulnerabilities in networks and systems.
 
-# What's coming in Ghidra 12.0
-This is a preview of what is coming in the future Ghidra 12.0 release.
+# What's New in Ghidra 12.0
+This release includes new features, enhancements, performance improvements, quite a few bug fixes,
+and many pull-request contributions. Thanks to all those who have contributed their time, thoughts,
+and code. The Ghidra user community thanks you too!
+	
+### The not-so-fine print: Please Read!
+Ghidra 12.0 is fully backward compatible with project data from previous releases. However, programs
+and data type archives which are created or modified in 12.0 will not be usable by an earlier Ghidra
+version.
+
+**IMPORTANT:** Ghidra 12.0 requires at minimum JDK 21 to run.
+
+**IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
+(3.9 to 3.13 supported) installed on your system.
+
+**NOTE:** There have been reports of certain features causing the XWindows server to crash. A fix
+for `CVE-2024-31083` in X.org software in April 2024 introduced a regression, which has been fixed
+in xwayland 23.2.6 and xorg-server 21.1.13.  If you experience any crashing of Ghidra, most likely
+causing a full logout, check if your xorg-server has been updated to at least the noted version.
+
+**NOTE:** Each build distribution will include native components (e.g., decompiler) for at least one
+platform (e.g., Windows x86-64). If you have another platform that is not included in the build
+distribution, you can build native components for your platform directly from the distribution.
+See the *Getting Started* document for additional information. Users running with older shared 
+libraries and operating systems (e.g., CentOS 7.x) may also run into compatibility errors when 
+launching native executables such as the Decompiler and GNU Demangler which may necessitate a 
+rebuild of native components.
 
 **NOTE:** Ghidra Server: The Ghidra 12.0 server is compatible with Ghidra 9.2 and later Ghidra
 clients although the presence of any newer link-files within a repository may not be handled properly
@@ -24,18 +49,38 @@ by client versions prior to 12.0 which lack support for the new storage format. 
 which introduce new link-files into a project will not be able to add such files into version 
 control if connected to older Ghidra Server versions.  
 
+**NOTE:** Ghidra Server: The Ghidra 12.x server is compatible with Ghidra 9.2 and later Ghidra
+clients although the presence of any newer link-files within a repository may not be handled 
+properly by client versions prior to 12.0 which lack support for the new storage format. Ghidra 12.0
+clients which introduce new link-files into a project will not be able to add such files into
+version control if connected to older Ghidra Server versions. Ghidra 12.x clients are compatible 
+with all  0.x and 9.x servers.  Although, due to potential Java version differences, it is 
+recommended that Ghidra Server installations older than 10.2 be upgraded. Those using 10.2 and newer
+should not need a server upgrade.
+	
+**NOTE:** Programs imported with a Ghidra beta version or code built directly from source code
+outside of a release tag may not be compatible, and may have flaws that won't be corrected by using
+this new release.  Any programs analyzed from a beta or other local master source build should be
+considered experimental and re-imported and analyzed with a release version.
+	
+Programs imported with previous release versions should upgrade correctly through various automatic
+upgrade mechanisms.  However, there may be improvements or bug fixes in the import and analysis 
+process that will provide better results than prior Ghidra versions.  You might consider comparing a
+fresh import of any program you will continue to reverse engineer to see if the latest Ghidra 
+provides better results.
+
 ## Project Link Files
-
 Support for link-files within a Ghidra Project has been significantly expanded with this release and
-with it a new file storage type has been introduced which can create some incompatibilities if projects
-and repositories containing such files are used by older version of Ghidra or the Ghidra Server.
+with it a new file storage type has been introduced which can create some incompatibilities if
+projects and repositories containing such files are used by older version of Ghidra or the Ghidra 
+Server.
 
-Previously only external folder and file links were supported through the use of a Ghidra URL.
-With 12.0 the ability to establish internal folder and file links has been introduced.  The new
-storage format avoids the use of a database and relies only on a light-weight property file.  Internal
+Previously only external folder and file links were supported through the use of a Ghidra URL. With
+12.0 the ability to establish internal folder and file links has been introduced.  The new storage 
+format avoids the use of a database and relies only on a light-weight property file. Internal 
 project links also allow for either absolute or relative links.  Due to the fact that Ghidra allows 
-a folder or file to have the same pathname, some ambiguities can result.  It is highly recommended that
-the use of conflicting folder and file pathnames be avoided.
+a folder or file to have the same pathname, some ambiguities can result.  It is highly recommended 
+that the use of conflicting folder and file pathnames be avoided.
 
 The use of internally linked folders and files allows batch import processing to more accurately
 reflect the native file-system and its use of symbolic links which allow for the same content to
@@ -49,126 +94,68 @@ Additional Ghidra API methods have been provided or refined on the following cla
 link-files: `DomainFolder`, `DomainFile`, `LinkFile`, `LinkHandler`, `DomainFileFilter`, 
 `DomainFileIterator`, etc.
 
-...TO BE CONTINUED...  
+...TO BE CONTINUED...
 
+## Filesystem Mirroring
+An option has been added to mirror the local filesystem when importing programs and their libraries.
+Programs and libraries that exist on the local filesystem as symbolic links will have both their 
+corresponding link file and resolved program file mirrored in the project. Filesystem mirroring
+can also be used in headless mode with the new `-mirror` command line option.
 
-# What's New in Ghidra 11.4
-This release includes new features, enhancements, performance improvements, quite a few bug fixes,
-and many pull-request contributions. Thanks to all those who have contributed their time, thoughts,
-and code. The Ghidra user community thanks you too!
-	
-### The not-so-fine print: Please Read!
-Ghidra 11.4 is fully backward compatible with project data from previous releases. However, programs
-and data type archives which are created or modified in 11.4 will not be usable by an earlier Ghidra
-version.
+## PyGhidra
+PyGhidra 3.0.0 (compatible with Ghidra 12.0 and later) introduces many new Python-specific API 
+methods with the goal of making the most common Ghidra tasks quick and easy, such as opening a 
+project, getting a program, running a GhidraScript, etc. Legacy API fuctions such as 
+`pyghidra.open_program()` and `pyghidra_run_script()` have been deprecated in favor of the new 
+methods. Below is an example program that showcases some of the new API functionality. See the 
+PyGhidra library README for more information.
+```python
+import os, jpype, pyghidra
+pyghidra.start()
 
-**IMPORTANT:** Ghidra 11.4 requires at minimum JDK 21 to run.
+# Open/create a project
+with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", create=True) as project:
 
-**IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
-(3.9 to 3.13 supported) installed on your system.
+    # Walk a Ghidra release zip file, load every decompiler binary, and save them to the project
+    with pyghidra.open_filesystem(f"{os.environ['DOWNLOADS_DIR']}/ghidra_11.4_PUBLIC_20250620.zip") as fs:
+        loader = pyghidra.program_loader().project(project)
+        for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
+            loader = loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
+            with loader.load() as load_results:
+                load_results.save(pyghidra.monitor())
 
-**NOTE:** There have been reports of certain features causing the XWindows server to crash. A fix
-for `CVE-2024-31083` in X.org software in April 2024 introduced a regression, which has been fixed
-in xwayland 23.2.6 and xorg-server 21.1.13.  If you experience any crashing of Ghidra, most likely
-causing a full logout, check if your xorg-server has been updated to at least the noted version.
+    # Analyze the windows decompiler program for a maximum of 10 seconds
+    with pyghidra.program_context(project, "/win_x86_64/decompile.exe") as program:
+        analysis_props = pyghidra.analysis_properties(program)
+        with pyghidra.transaction(program):
+            analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
+        analysis_log = pyghidra.analyze(program, pyghidra.monitor(10))
+        program.save("Analyzed", pyghidra.monitor())
+    
+    # Walk the project and set a property in each decompiler program
+    def set_property(domain_file, program):
+        with pyghidra.transaction(program):
+            program_info = pyghidra.program_info(program)
+            program_info.setString("PyGhidra Property", "Set by PyGhidra!")
+        program.save("Setting property", pyghidra.monitor())
+    pyghidra.walk_programs(project, set_property, program_filter=lambda f, p: p.name.startswith("decompile"))
 
-**NOTE:** Each build distribution will include native components (e.g., decompiler) for at least one
-platform (e.g., Windows x86-64). If you have another platform that is not included in the build
-distribution, you can build native components for your platform directly from the distribution.
-See the *Getting Started* document for additional information. Users running with older shared libraries
-and operating systems (e.g., CentOS 7.x) may also run into compatibility errors when launching 
-native executables such as the Decompiler and GNU Demangler which may necessitate a rebuild of 
-native components.
+    # Load some bytes as a new program
+    ByteArrayCls = jpype.JArray(jpype.JByte)
+    my_bytes = ByteArrayCls(b"\xaa\xbb\xcc\xdd\xee\xff")
+    loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
+    loader = loader.loaders("BinaryLoader").language("DATA:LE:64:default")
+    with loader.load() as load_results:
+        load_results.save(pyghidra.monitor())
 
-**NOTE:** Ghidra Server: The Ghidra 11.x server is compatible with Ghidra 9.2 and later Ghidra
-clients. Ghidra 11.x clients are compatible with all 10.x and 9.x servers.  Although, due to
-potential Java version differences, it is recommended that Ghidra Server installations older than 
-10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.
-	
-**NOTE:** Programs imported with a Ghidra beta version or code built directly from source code
-outside of a release tag may not be compatible, and may have flaws that won't be corrected by using
-this new release.  Any programs analyzed from a beta or other local master source build should be
-considered experimental and re-imported and analyzed with a release version.
-	
-Programs imported with previous release versions should upgrade correctly through various automatic
-upgrade mechanisms.  However, there may be improvements or bug fixes in the import and analysis 
-process that will provide better results than prior Ghidra versions.  You might consider comparing a
-fresh import of any program you will continue to reverse engineer to see if the latest Ghidra 
-provides better results.
-
-
-## Search
-
-A new "Search and Replace" feature allows searching for string patterns in a wide variety
-of Ghidra elements and replacing that text with a different text sequence. Using this feature, many different
-Ghidra elements can be renamed all at once including labels, functions, name-spaces, parameters, data-types,
-field names, and enum values. This feature also supports regular expressions (including capture groups).
-After initiating a search and replace, a results table is displayed with a list of items that match the
-search. From this table, the replace actions can be applied in bulk or individually, one item at a time
-as they are reviewed.
-
-## Taint Engine Support
-
-Extended support for using taint engines, particularly CTADL (https://github.com/sandialabs/ctadl)
-and AngryGhidra (https://github.com/Nalen98/AngryGhidra), from the decompiler. Allows users to mark
-pcode varnodes as sources and sinks, displaying paths from sources to sinks as both address selections
-in the disassembly and token selections in the decompiler.
-
-## Dockerized Ghidra
-
-A new capability to build a docker image that demonstrates Ghidra's various entrypoint executions for `headless`,
-`ghidra-server`, `bsim-server`, `bsim`, `pyghidra`, and `gui` within the docker container has been included. The Docker
-image can be used as is, or can be tailored to your workflow needs.   Configuration such as the base
-image (linux distro), additional packages, and more is possible using Docker.
-
-See the `docker/README.md` for information about building a docker image for Ghidra and running within the Ghidra container. 
-
-
-## Binary Formats
-
-+ New loaders for the a.out and OMF-51 binary file formats.
-+ Support for Mach-O "re-exports".
-+ New ability to load Mach-O binaries directly from a Universal Binary without needing to open the File System Browser.
-+ DWARF will now load external debug files during analysis as is done for PDB files.
-
-## Debugger
-
-There have been numerous improvements, extensions for new targets, better launching and configuration, and bug fixes to the debugger.
-
-## Analysis Speed
-
-Constant and Stack analysis time has been greatly decreased through algorithm improvements and better threading.  There has been additional
-work to loosen locking of the program database where possible.  By locking only when necessary, multiple threads can better analyze the program
-and interaction with the GUI during analysis should be more responsive.
-
-## Golang
-
-Golang binary analysis analysis has been improved.
-+ Analysis has been improved to model closures, interface methods, and generic functions more accurately.
-+ Function signatures for core golang library functions are automatically applied.
-+ Decompilation results are improved by filtering some verbose golang garbage collection function logic.
-+ Addressed finding the Golang bootstrap information in stripped PE binaries.
-
-## BSim
-
-PostgreSQL for BSim has been updated to version 15.13 and the JDBC driver to 42.7.6.  This resolves issues with building PostgreSQL
-server on newer releases of Linux and compiler toolchains which compile with -std=c23 option by default.  In addition,
-building of PostgreSQL for linux_arm_64 and mac_arm_64 based platforms is supported.
-
-+ BSim is now installed in the default Codebrowser tool.
-+ Function names now update in BSim search results overview if the name is changed elsewhere in Ghidra.
-
-## Processors
-
-+ Enhanced support for the x86 AVX-512 processor extension with additional instruction support - including the BF16, FP16 and VNNI extensions.
-+ Implemented many AARCH64 Neon instruction semantics to improve decompilation.
-+ Upgraded pcodetest framework scripts to python3 and improved command-line options.
+    # Run a GhidraScript
+    pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
+```
 
 ## Other Improvements
- + Many calling conventions for various processors/compilers have been improved using the more flexible decompiler rules 
- when the data types for parameters and return values are known.
- + Upgraded many 3rd party dependencies to address potential bugs and CVE's, including jars for Bouncy Castle,
- Apache Commons Compress, Apache Commons Lang3, Apache Commons IO, protobuf, and JUnit.
+ + Added the ability to toggle the displaying of function variables (parameters and locals) that are 
+   normally displayed just below the function signature. The variables display can be turned on/off 
+   globally or individually per function.
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
