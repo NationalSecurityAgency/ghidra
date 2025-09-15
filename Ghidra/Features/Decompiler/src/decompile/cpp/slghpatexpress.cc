@@ -15,6 +15,7 @@
  */
 #include "slghpatexpress.hh"
 #include "sleighbase.hh"
+#include <memory>
 
 namespace ghidra {
 

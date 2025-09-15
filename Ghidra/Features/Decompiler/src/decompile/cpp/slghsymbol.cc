@@ -16,6 +16,7 @@
 #include "slghsymbol.hh"
 #include "sleighbase.hh"
 #include <cmath>
+#include <memory>
 
 namespace ghidra {
 

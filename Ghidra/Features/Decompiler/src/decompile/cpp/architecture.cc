@@ -23,6 +23,7 @@
 #ifdef CPUI_STATISTICS
 #include <cmath>
 #endif
+#include <memory>
 
 namespace ghidra {
 

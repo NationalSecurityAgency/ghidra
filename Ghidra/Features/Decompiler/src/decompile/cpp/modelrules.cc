@@ -15,6 +15,7 @@
  */
 #include "modelrules.hh"
 #include "funcdata.hh"
+#include <memory>
 
 namespace ghidra {
 

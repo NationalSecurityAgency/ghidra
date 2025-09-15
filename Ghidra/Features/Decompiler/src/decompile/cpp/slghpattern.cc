@@ -15,6 +15,7 @@
  */
 #include "slghpattern.hh"
 #include "slaformat.hh"
+#include <memory>
 
 namespace ghidra {
 

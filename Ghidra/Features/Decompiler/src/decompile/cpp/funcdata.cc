@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "funcdata.hh"
+#include <memory>
 
 namespace ghidra {
 

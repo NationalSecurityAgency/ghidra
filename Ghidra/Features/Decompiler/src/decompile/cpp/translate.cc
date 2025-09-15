@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "translate.hh"
+#include <memory>
 
 namespace ghidra {
 

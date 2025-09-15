@@ -15,6 +15,7 @@
  */
 #include "override.hh"
 #include "funcdata.hh"
+#include <memory>
 
 namespace ghidra {
 
