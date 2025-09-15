@@ -83,10 +83,26 @@ class DetachedWindowNode extends WindowNode {
 		child = processChildElement(childElement, mgr, this, list);
 	}
 
-	void setInitialBounds(Rectangle r) {
+	// Set the bounds for the component that is being placed in this window when the window is first
+	// created.  This is useful when dragging a component provider out of an existing window into
+	// its own window.
+	void setWindowContentsBounds(Rectangle r) {
+		// The rectangle will be empty when there is no size information for the component being
+		// added to this window node.
 		if (r == null) {
 			r = new Rectangle();
 		}
+
+		if (!r.isEmpty()) {
+			// We need to create window bounds from the given component bounds.  The window has
+			// extra size for the toolbar and menus.
+			int nonComponentWidth = 12;
+			int nonComponentHeight = 120;
+
+			r.width += nonComponentWidth;
+			r.height += nonComponentHeight;
+		}
+
 		restoreBounds = r;
 	}
 
@@ -372,6 +388,7 @@ class DetachedWindowNode extends WindowNode {
 	private Rectangle getNewBounds(Window newWindow) {
 
 		Rectangle updatedBounds = new Rectangle(restoreBounds);
+		restoreBounds = null;
 		if (updatedBounds.isEmpty()) {
 			// No bounds to restore; pick something reasonable
 			window.pack();
@@ -379,20 +396,8 @@ class DetachedWindowNode extends WindowNode {
 			updatedBounds.height = d.height;
 			updatedBounds.width = d.width;
 		}
-		else {
-
-			// Update the desired window bounds for the size of the component.  The window size
-			// has to account for things like the menu and toolbars.  These value were picked 
-			// through trial-and-error.
-			int nonComponentWidth = 12;
-			int nonComponentHeight = 120;
-
-			updatedBounds.width += nonComponentWidth;
-			updatedBounds.height += nonComponentHeight;
-		}
 
 		ensureValidLocation(updatedBounds);
-
 		WindowUtilities.ensureEntirelyOnScreen(newWindow, updatedBounds);
 
 		return updatedBounds;
