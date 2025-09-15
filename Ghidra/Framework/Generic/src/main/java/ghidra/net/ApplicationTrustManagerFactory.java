@@ -165,6 +165,17 @@ public class ApplicationTrustManagerFactory {
 		}
 		return wrappedTrustManagers.clone();
 	}
+	
+	/**
+     * Get trust manager after performing any necessary initialization.
+     * @return trust managers
+     */
+    public static synchronized X509TrustManager getTrustManager() {
+        if (trustManager == null) {
+            init();
+        }
+        return trustManager;
+    }
 
 	/**
 	 * Invalidate the active keystore and key manager 
