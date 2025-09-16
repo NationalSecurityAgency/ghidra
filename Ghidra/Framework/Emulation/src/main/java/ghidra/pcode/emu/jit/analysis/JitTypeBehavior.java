@@ -21,6 +21,7 @@ import java.util.Objects;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.op.JitCopyOp;
 import ghidra.pcode.emu.jit.op.JitPhiOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * The behavior/requirement for an operand's type.
@@ -176,6 +177,9 @@ public enum JitTypeBehavior {
 		}
 		if (cls == void.class) {
 			return null;
+		}
+		if (cls == Varnode.class) {
+			return ANY;
 		}
 		if (cls.isPrimitive()) {
 			throw new AssertionError();
