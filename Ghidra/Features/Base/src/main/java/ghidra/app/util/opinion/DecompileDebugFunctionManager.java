@@ -63,14 +63,14 @@ public class DecompileDebugFunctionManager {
 	}
 
 	/**
-	 * Setup functions from within the <symbollist> tag.
+	 * Setup functions from within the {@code <symbollist>} tag.
 	 * Functions referenced by the central function are loaded the same except we do not 
 	 * (currently) have the memory/program context for them. Thus, they will show up in the Listing
 	 * with a red "X". 
 	 * NOTE: This is the expected functionality. 
 	 * 
 	 * @param parser XmlPullParser
-	 * @param scopeMap Map<String, Namespace> used for getting parent namespace 
+	 * @param scopeMap {@code Map<String, Namespace>} used for getting parent namespace 
 	 * @param log XmlMessageLog
 	 */
 	public void parseFunctionSignature(XmlPullParser parser, Map<Long, Namespace> scopeMap,

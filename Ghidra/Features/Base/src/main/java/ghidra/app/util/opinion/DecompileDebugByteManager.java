@@ -32,7 +32,8 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.xml.*;
 
 /**
- * Manager to hold byte information from the <bytechunk> tags inside the Decompiler Debug's XML.
+ * Manager to hold byte information from the {@code <bytechunk>} tags inside the Decompiler Debug's 
+ * XML.
  */
 public class DecompileDebugByteManager {
 
@@ -53,7 +54,7 @@ public class DecompileDebugByteManager {
 	}
 
 	/**
-	 * Parse the <bytechunk> tag - has the memory offset and the raw bytes
+	 * Parse the {@code <bytechunk>} tag - has the memory offset and the raw bytes
 	 * 
 	 * @param parser XmlPullParser
 	 * @param log Xml
@@ -66,7 +67,7 @@ public class DecompileDebugByteManager {
 	}
 
 	/**
-	 * Handle parsing and creating bytechunks & pulling out the byte string as a byte array.
+	 * Handle parsing and creating bytechunks and pulling out the byte string as a byte array.
 	 * 
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog
@@ -89,7 +90,7 @@ public class DecompileDebugByteManager {
 	}
 
 	/**
-	 *  Create memory blocks with the raw bytes from the central function and any other blocks
+	 * Create memory blocks with the raw bytes from the central function and any other blocks
 	 * such as for pointers or other data types that the Decompile.xml file was generated from. 
 	 * 
 	 * @param rawBytes raw program bytes

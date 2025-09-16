@@ -64,7 +64,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	private ProgramContext contextMgr;
 	private ReferenceManager refManager;
 	private PropertyMapManager propertyMapMgr;
-	private VoidPropertyMapDB compositeMgr;
 	private IntPropertyMapDB lengthMgr;
 
 	private boolean contextLockingEnabled = false;
@@ -97,8 +96,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		cache = new DBObjectCache<>(1000);
 		protoMgr = new PrototypeManager(handle, addrMap, openMode, monitor);
-		compositeMgr =
-			new VoidPropertyMapDB(dbHandle, openMode, this, null, addrMap, "Composites", monitor);
 		lengthMgr =
 			new IntPropertyMapDB(dbHandle, openMode, this, null, addrMap, "Lengths", monitor);
 
@@ -128,6 +125,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			new LongPropertyMapDB(dbHandle, openMode, this, null, addrMap, "FallFroms", monitor);
 		if (oldFallThroughs.getSize() != 0 || oldFallFroms.getSize() != 0) {
 			throw new VersionException(true);
+		}
+	}
+
+	private void removeOldCompositeMap() throws IOException {
+		// Remove old Composites Void property map associated with tracking composite 
+		// placement in memory.  This tracking mechanism was never used.
+		String oldTableName = "Property Map - Composites";
+		if (dbHandle.getTable(oldTableName) != null) {
+			dbHandle.deleteTable(oldTableName);
 		}
 	}
 
@@ -235,6 +241,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			throws IOException, CancelledException {
 		if (openMode == OpenMode.UPGRADE) {
 			upgradeOldFallThroughMaps(monitor);
+			removeOldCompositeMap();
 		}
 	}
 
@@ -751,7 +758,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		boolean success = false;
 		try {
-			compositeMgr.removeRange(start, end);
 			monitor.checkCancelled();
 			instAdapter.deleteRecords(start, end);
 			monitor.checkCancelled();
@@ -2061,12 +2067,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			data = getDataDB(record);
 			baseDt = data.getBaseDataType();
 
-			if (dataType instanceof Composite || dataType instanceof Array ||
-				dataType instanceof Dynamic) {
-				compositeMgr.add(addr);
-				program.setChanged(ProgramEvent.COMPOSITE_ADDED, addr, endAddr, null, null);
-			}
-
 			// fire event
 			program.setChanged(ProgramEvent.CODE_ADDED, addr, endAddr, null, data);
 
@@ -2397,43 +2397,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			program.dbError(e);
 		}
 		return 0;
-	}
-
-	/**
-	  * Returns a composite data iterator beginning at the specified start address.
-	  *
-	  * @param start the address to begin iterator
-	  * @param forward true means get iterator in forward direction
-	  * @return the composite data iterator
-	  */
-	public DataIterator getCompositeData(Address start, boolean forward) {
-		try {
-			return new DataKeyIterator(this, addrMap,
-				compositeMgr.getAddressKeyIterator(start, forward));
-		}
-		catch (IOException e) {
-			program.dbError(e);
-		}
-		return null;
-	}
-
-	/**
-	 * Returns a composite data iterator limited to the addresses in the specified address set.
-	 *
-	 * @param addrSet the address set to limit the iterator
-	 * @param forward determines if the iterator will go from the lowest address to the highest or 
-	 * the other way around. 
-	 * @return DataIterator the composite data iterator
-	 */
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward) {
-		try {
-			return new DataKeyIterator(this, addrMap,
-				compositeMgr.getAddressKeyIterator(addrSet, forward));
-		}
-		catch (IOException e) {
-			program.dbError(e);
-		}
-		return null;
 	}
 
 	/**
@@ -2856,7 +2819,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		try {
 			Address endAddr = startAddr.add(length - 1);
 
-			compositeMgr.moveRange(startAddr, endAddr, newStartAddr);
 			monitor.checkCancelled();
 
 			lengthMgr.moveRange(startAddr, endAddr, newStartAddr);
@@ -3205,7 +3167,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		try {
 			cache.invalidate();
 			lengthMgr.invalidate();
-			compositeMgr.invalidate();
 			protoMgr.clearCache();
 		}
 		finally {
@@ -3227,12 +3188,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 */
 	public void memoryChanged(Address addr, Address end) {
 		lock.acquire();
-//    	CodeUnit cu = getCodeUnitContaining(addr);
-//    	if (cu != null) {
-//    		addr = cu.getMinAddress();
-//    	}
 		try {
-//    		cache.invalidate(addrMap.getKey(addr), addrMap.getKey(end));
 			cache.invalidate();
 		}
 		finally {

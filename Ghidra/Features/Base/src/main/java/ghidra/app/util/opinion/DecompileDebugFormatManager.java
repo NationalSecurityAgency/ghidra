@@ -30,6 +30,8 @@ import org.xml.sax.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DecompileDebugXmlLoader.DecompileDebugProgramInfo;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -65,16 +67,16 @@ public class DecompileDebugFormatManager {
 		this.file = file;
 	}
 
-	/*
+	/**
 	 * Constructs a new program Decompiler Debug XML manager using the provided ByteProvider.
-	 *  <p>
+	 * <p>
 	 * If {@link ByteProvider} has a {@link FSRL} and it is a simple local filepath,
 	 * convert that to a normal local java.io.File instance instead of using the
 	 * {@link ByteProvider}'s File property which is probably located in the
 	 * {@link FileSystemService} filecache directory, which will break the ability
 	 * to find the *.bytes file associated with this .xml file.
-	 * <p>
-	 * @param provider
+	 * 
+	 * @param provider The provider
 	 */
 	public DecompileDebugFormatManager(ByteProvider provider) {
 		this.file = (provider.getFSRL() != null && provider.getFSRL().getNestingDepth() == 1)
@@ -82,10 +84,12 @@ public class DecompileDebugFormatManager {
 				: provider.getFile();
 	}
 
-	/*
+	/**
 	 * Initial parsing of the XML file to obtain the binary image info with load specs.
 	 * 
 	 * @return DecompileDebugProgramInfo binary image / load spec details 
+	 * @throws SAXException If there was a problem parsing the XML
+	 * @throws IOException If there was an IO-related error
 	 */
 	public DecompileDebugProgramInfo getProgramInfo() throws SAXException, IOException {
 		XmlPullParser parser =
@@ -118,22 +122,26 @@ public class DecompileDebugFormatManager {
 	 * Perform the parsing from the underlying decompile debug XML file and populates the program fields.
 	 * See @DecompileDebug.java for reference on the generation of the XML file.
 	 * Tags currently supported/expected: 
-	 * - <binaryimage>
-	 * - <coretypes>
-	 * - <typegrp>
-	 * - <save_state>
-	 * - <db>
-	 * - <commentdb>
-	 * - <stringmanage>
+	 * <ul>
+	 * <li>{@code <binaryimage>}</li>
+	 * <li>{@code <coretypes>}</li>
+	 * <li>{@code <typegrp>}</li>
+	 * <li>{@code <save_state>}</li>
+	 * <li>{@code <db>}</li>
+	 * <li>{@code <commentdb>}</li>
+	 * <li>{@code <stringmanage>}</li>
+	 *</ul>
 	 *
 	 * NOTE: the following subtree tags are not yet supported:
-	 * - <context_points>
-	 * - <optionslist> 
+	 * <ul>
+	 * <li>{@code <context_points>}</li>
+	 * <li>{@code <optionslist>}</li>
+	 * </ul>
 	 *
 	 * @param prog created program 
 	 * @param monitor task monitor
 	 * @param programName  name of program
-	 *@return MessageLog
+	 * @return MessageLog
 	 * @throws LoadException If there is a parsing issue with the XML file. 
 	 */
 	public MessageLog read(Program prog, TaskMonitor monitor, String programName)
@@ -234,8 +242,10 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Parse elements in the <db> subtree. Elements we currently handle include:
-	 * - <scope> 
+	 * Parse elements in the {@code <db>} subtree. Elements we currently handle include:
+	 * <ul>
+	 * <li>{@code <scope>}</li>
+	 * </ul>
 	 * 
 	 * @param parser XmlPullParser
 	 * @param monitor TaskMonitor
@@ -292,12 +302,12 @@ public class DecompileDebugFormatManager {
 
 	/**
 	 * Parse element subtrees within the scope tag. 
-	 * 
+	 * <p>
 	 * NOTE: The scope tag must be parsed prior to a call to this message with the value 
 	 * of the namespace object sent as the first parameter. 
-	 *  
-	 * NOTE: it is expected that the wrapper <symbollist> tag is being used around the collection of 
-	 * <mapsymp> tags.
+	 * <p>
+	 * NOTE: it is expected that the wrapper {@code <symbollist>} tag is being used around the 
+	 * collection of {@code <mapsymp>} tags.
 	 * 
 	 * @param namespace Namespace
 	 * @param parser XmlPullParser
@@ -355,7 +365,8 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Handle the <binaryimage> tag and subtree which includes the <bytechunk> tag(s).
+	 * Handle the {@code <binaryimage>} tag and subtree which includes the {@code <bytechunk>} 
+	 * tag(s).
 	 * 
 	 * @param parser XmlPullparser
 	 * @param monitor TaskMonitor
@@ -382,7 +393,7 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Handle generation of labels from the <labelsym> tag
+	 * Handle generation of labels from the {@code <labelsym>} tag
 	 * @param prog program 
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog
@@ -415,9 +426,9 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Parse <symbol> tag under the <mapsym> tag -- meaning, they are outside of a function, 
-	 * most likely these are data references.
-	 * 
+	 * Parse {@code <symbol>} tag under the {@code <mapsym>} tag -- meaning, they are outside of a 
+	 * function, most likely these are data references.
+	 * <p>
 	 * NOTE: We are currently not pulling the bytes for referenced functions or data, as a result
 	 * we need to generate an initialized memory block for data references to avoid errors 
 	 * in the Listing pane. 
@@ -500,10 +511,11 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Parse comments from the <commentdb> tag and add to listing via setupComments method. 
-	 * 
-	 * Note: <commentdb> has two <addr> tags.  The first is the function address, and the second 
-	 * is the (CodeUnit) address where the comment should be placed. Discard the first address.   
+	 * Parse comments from the {@code <commentdb>} tag and add to listing via setupComments method. 
+	 * <p>
+	 * Note: {@code <commentdb>} has two {@code <addr>} tags.  The first is the function address, 
+	 * and the second is the {@link CodeUnit} address where the comment should be placed. Discard 
+	 * the first address.   
 	 * 
 	 * @param parser XmlPullParser
 	 * @param prog Program
@@ -550,14 +562,15 @@ public class DecompileDebugFormatManager {
 
 	/**
 	 * See @DecompileCallback.java for the encoding of the comments by @DecompileDebug.java. 
-	 * The method <encodeCommentsType> encodes the comment types found in @CodeUnit.java 
+	 * The method {@code <encodeCommentsType>} encodes the comment types found in @CodeUnit.java 
 	 * in 4 alternative labels:
-	 * CodeUnit.EOL_COMMENT = "user1"
-	 * CodeUnit.PRE_COMMENT = "user2"
-	 * CodeUnit.POST_COMMENT = "user3"
-	 * CodeUnit.PLATE_COMMENT = "header"
-	 * 
-	 * In order to generate comments using @CodeUnit.java, we will need to re-encode the user<1-3> 
+	 * <ul>
+	 * <li>{@code CodeUnit.EOL_COMMENT = "user1"}</li>
+	 * <li>{@code CodeUnit.PRE_COMMENT = "user2"}</li>
+	 * <li>{@code CodeUnit.POST_COMMENT = "user3"}</li>
+	 * <li>{@code CodeUnit.PLATE_COMMENT = "header"}</li>
+	 * </ul>
+	 * In order to generate comments using @CodeUnit.java, we will need to re-encode the user[1-3] 
 	 * and header type labels from the DecompileDebug XML back into the CodeUnit constant values of:
 	 * 0-3 (respectively).
 	 * 
@@ -566,29 +579,17 @@ public class DecompileDebugFormatManager {
 	 * @return CodeUnit comment type (0-3) 
 	 */
 	private CommentType decodeCommentType(String typeName) {
-		CommentType commentType;
-		switch (typeName) {
-			case "user1":
-				commentType = CommentType.EOL;
-				break;
-			case "user2":
-				commentType = CommentType.PRE;
-				break;
-			case "user3":
-				commentType = CommentType.POST;
-				break;
-			case "header":
-				commentType = CommentType.PLATE;
-				break;
-			default:
-				commentType = CommentType.valueOf("");
-				break;
-		}
-		return commentType;
+		return switch (typeName) {
+			case "user1" -> CommentType.EOL;
+			case "user2" -> CommentType.PRE;
+			case "user3" -> CommentType.POST;
+			case "header" -> CommentType.PLATE;
+			default -> CommentType.valueOf("");
+		};
 	}
 
 	/**
-	 * Loop through the <type> tags in the <coretypes> subtree
+	 * Loop through the {@code <type>} tags in the {@code <coretypes>} subtree
 	 * 
 	 * @param parser XmlPullParser
 	 * @param prog built program
@@ -605,7 +606,7 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Parse the <stringmanage> subtree 
+	 * Parse the {@code <stringmanage>} subtree 
 	 * 
 	 * @param parser XmlPullParser
 	 * @param monitor TaskMonitor
@@ -620,7 +621,7 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Parse the <string> tag and insert into the program
+	 * Parse the {@code <string>} tag and insert into the program
 	 * 
 	 * @param parser XmlPullParser 
 	 * @param monitor TaskMonitor
@@ -650,7 +651,7 @@ public class DecompileDebugFormatManager {
 	}
 
 	/**
-	 * Handle the parsing of the context pointset inside of the <contextpointset> subtree
+	 * Handle the parsing of the context pointset inside of the {@code <contextpointset>} subtree
 	 * 
 	 * @param parser XmlPullParser
 	 * @param monitor TaskMonitor
