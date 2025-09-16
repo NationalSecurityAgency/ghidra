@@ -115,8 +115,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            Multiple blocks are permitted within a single overlay space.
 	 * 13-Dec-2024 - version 29   Added source file manager. 
 	 *  3-Jun-2025 - version 30   Symbol Table schema V4 with external symbol data indexing
+	 * 15-Sep-2025 - version 31   Code Mananger dropped Composites property map use
 	 */
-	static final int DB_VERSION = 30;
+	static final int DB_VERSION = 31;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
