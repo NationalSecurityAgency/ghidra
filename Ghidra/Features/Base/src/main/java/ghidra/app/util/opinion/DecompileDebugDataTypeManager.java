@@ -34,7 +34,7 @@ import ghidra.xml.*;
 
 /**
  * Manager for parsing and storing data type objects from the XML - identified by 
- * the <coretypes> and <typegrp> tags. 
+ * the {@code <coretypes>} and {@code <typegrp>} tags. 
  * 
  * NOTE: In the typegrp subtree, ID is often on a different line from the element's name and 
  * metatype, so we need a way to reference this for use in the map -- String idHolder var 
@@ -62,13 +62,15 @@ public class DecompileDebugDataTypeManager {
 
 	/**
 	 * Parse Data Type tag, handling types:
-	 * <type>
-	 * <typeref>
-	 * <def>
-	 * <void>
+	 * <ul>
+	 * <li>{@code <type>}</li>
+	 * <li>{@code <typeref>}</li>
+	 * <li>{@code <def>}</li>
+	 * <li>{@code <void>}</li>
+	 * </ul>
+	 * 
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog
-	 * 
 	 * @return retrieved DataType 
 	 */
 	public DataType parseDataTypeTag(XmlPullParser parser, XmlMessageLog log) {
@@ -98,7 +100,7 @@ public class DecompileDebugDataTypeManager {
 	}
 
 	/**
-	 *  Parse the <type> tag
+	 * Parse the {@code <type>} tag
 	 *  
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog
@@ -138,7 +140,7 @@ public class DecompileDebugDataTypeManager {
 	}
 
 	/**
-	 * TypeDefs (<def> tags) are new definitions of types - basically, a re-naming.
+	 * TypeDefs ({@cod <def>} tags) are new definitions of types - basically, a re-naming.
 	 * 
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog
@@ -197,7 +199,7 @@ public class DecompileDebugDataTypeManager {
 	}
 
 	/**
-	 * Parse & create union types 
+	 * Parse and create union types 
 	 * @param parser XmlPullParser
 	 * @param log XmlMessageLog 
 	 * 
