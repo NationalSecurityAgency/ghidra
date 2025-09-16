@@ -274,8 +274,6 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	private void addFileNode(DataTreeNode node, String fileName, boolean isFolderLink) {
 
-		Msg.debug(this, "addFileNode: " + node.getPathname() + "  " + fileName + "  " +
-			Boolean.toString(isFolderLink));
 		if (node.isLeaf() || !node.isLoaded()) {
 			return;
 		}
