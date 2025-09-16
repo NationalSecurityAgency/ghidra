@@ -534,13 +534,26 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		AddressFactory af = program.getAddressFactory();
-		AddressSpace space = af.getDefaultAddressSpace();
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 		SymbolTable symTable = program.getSymbolTable();
-		Listing listing = program.getListing();
 		ReferenceManager refManager = program.getReferenceManager();
+		ExternalManager extManager = program.getExternalManager();
+		FunctionManager funcManager = program.getFunctionManager();
 
+		// If we have any forwarders, set up the EXTERNAL block
 		ExportInfo[] exports = edd.getExports();
+		Address extAddr = null;
+		long forwardedCount = Arrays.stream(exports).filter(ExportInfo::isForwarded).count();
+		if (forwardedCount > 0) {
+			try {
+				extAddr = AbstractProgramLoader.addExternalBlock(program,
+					forwardedCount * program.getDefaultPointerSize(), log);
+			}
+			catch (Exception e) {
+				log.appendException(e);
+			}
+		}
+
 		for (ExportInfo export : exports) {
 			if (monitor.isCancelled()) {
 				return;
@@ -548,65 +561,51 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 			Address address = space.getAddress(export.getAddress());
 			setComment(CommentType.PRE, address, export.getComment());
-			symTable.addExternalEntryPoint(address);
 
-			String name = export.getName();
-			try {
-				symTable.createLabel(address, name, SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				// Don't create invalid symbol
-			}
-
-			try {
-				symTable.createLabel(address, SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(),
-					SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				// Don't create invalid symbol
-			}
-
-			// When exported symbol is a forwarder,
-			// a string exists at the address of the export
-			// Therefore, create a string data object to prevent
-			// disassembler from attempting to create
-			// code here. If code was created, it would be incorrect
-			// and offcut.
 			if (export.isForwarded()) {
-				try {
-					listing.createData(address, TerminatedStringDataType.dataType, -1);
-					Data data = listing.getDataAt(address);
-					if (data != null) {
-						Object obj = data.getValue();
-						if (obj instanceof String) {
-							String str = (String) obj;
-							int dotpos = str.indexOf('.');
+				Data data =
+					PeUtils.createData(program, address, TerminatedStringDataType.dataType, log);
+				if (extAddr != null && data != null && data.getValue() instanceof String str) {
+					int dotpos = str.indexOf('.');
+					if (dotpos < 0) {
+						dotpos = 0; // TODO
+					}
+					String libName = str.substring(0, dotpos) + ".dll";
+					String extSymbolName = str.substring(dotpos + 1);
 
-							if (dotpos < 0) {
-								dotpos = 0;//TODO
-							}
-
-							// get the name of the dll
-							String dllName = str.substring(0, dotpos) + ".dll";
-
-							// get the name of the symbol
-							String expName = str.substring(dotpos + 1);
-
-							try {
-								refManager.addExternalReference(address, dllName.toUpperCase(),
-									expName, null, SourceType.IMPORTED, 0, RefType.DATA);
-							}
-							catch (DuplicateNameException e) {
-								log.appendMsg("External location not created: " + e.getMessage());
-							}
-							catch (InvalidInputException e) {
-								log.appendMsg("External location not created: " + e.getMessage());
-							}
-						}
+					try {
+						symTable.addExternalEntryPoint(extAddr);
+						Function function = funcManager.createFunction(export.getName(), extAddr,
+							new AddressSet(extAddr), SourceType.IMPORTED);
+						ExternalLocation loc = extManager.addExtLocation(libName.toUpperCase(),
+							extSymbolName, null, SourceType.IMPORTED);
+						function.setThunkedFunction(loc.createFunction());
+						symTable.createLabel(extAddr,
+							SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(),
+							SourceType.IMPORTED);
+						refManager.addMemoryReference(address, extAddr, RefType.DATA,
+							SourceType.IMPORTED, 0);
+						setComment(CommentType.PLATE, extAddr, export.getComment());
+					}
+					catch (InvalidInputException | DuplicateNameException
+							| OverlappingFunctionException e) {
+						log.appendMsg("External location not created: " + e.getMessage());
+					}
+					finally {
+						extAddr = extAddr.add(program.getDefaultPointerSize());
 					}
 				}
-				catch (CodeUnitInsertionException e) {
-					// Nothing to do...just continue on
+			}
+			else {
+				symTable.addExternalEntryPoint(address);
+
+				try {
+					symTable.createLabel(address, export.getName(), SourceType.IMPORTED);
+					symTable.createLabel(address,
+						SymbolUtilities.ORDINAL_PREFIX + export.getOrdinal(), SourceType.IMPORTED);
+				}
+				catch (InvalidInputException e) {
+					// Don't create invalid symbol
 				}
 			}
 		}
