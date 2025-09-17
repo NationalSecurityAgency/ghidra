@@ -26,10 +26,10 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 /**
- * Subclass of the {@link QuckFixTableProvider} that customizes it specifically for search and replace
+ * Subclass of the {@link QuickFixTableProvider} that customizes it specifically for search and replace
  * operations.
  */
-public class SearchAndReplaceProvider extends QuckFixTableProvider {
+public class SearchAndReplaceProvider extends QuickFixTableProvider {
 
 	private SearchAndReplacePlugin plugin;
 	private SearchAndReplaceQuery query;

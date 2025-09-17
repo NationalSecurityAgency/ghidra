@@ -40,7 +40,7 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
-import docking.actions.KeyBindingUtils;
+import docking.actions.*;
 import docking.menu.DockingToolBarUtils;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
@@ -86,6 +86,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * Somewhat arbitrary file count threshold to signal when slow operations should be avoided.
 	 */
 	private static final int BIG_DATA_THRESHOLD = 200;
+
+	private static final String ACTION_NAME_BACK = "Last Folder Visited";
+	private static final String ACTION_NAME_FORWARD = "Previous Folder Visited";
+	private static final String ACTION_NAME_UP = "Up One Level";
 
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = new GColor("color.fg.filechooser");
@@ -285,16 +289,19 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		String owner = getClass().getSimpleName();
 		upAction = new ActionBuilder("Up One Level", owner)
+				.sharedKeyBinding()
 				.keyBinding("Alt Up")
 				.onAction(c -> goUp())
 				.build();
 
 		backAction = new ActionBuilder("Last Folder Visited", owner)
+				.sharedKeyBinding()
 				.keyBinding("Alt Left")
 				.onAction(c -> goBack())
 				.build();
 
 		forwardAction = new ActionBuilder("Previous Folder Visited", owner)
+				.sharedKeyBinding()
 				.keyBinding("Alt Right")
 				.onAction(c -> goForward())
 				.build();
@@ -308,6 +315,18 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		addAction(forwardAction);
 
 		updateNavigationButtonToolTips();
+	}
+
+	public static void registerSharedActions(Tool tool, ToolActions toolActions) {
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_BACK, "Alt Left"));
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_FORWARD, "Alt Right"));
+
+		toolActions.registerSharedActionPlaceholder(
+			new GfcActionPlaceholder(ACTION_NAME_UP, "Alt Up"));
 	}
 
 	private JComponent buildWorkPanel() {
@@ -2530,4 +2549,30 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	}
 
+	// A class that allows us to register actions and keybindings before this dialog is instantiated
+	private static class GfcActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String name;
+		private String keyBinding;
+
+		GfcActionPlaceholder(String name, String keyBinding) {
+			this.name = name;
+			this.keyBinding = keyBinding;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public KeyStroke getKeyBinding() {
+			return KeyBindingUtils.parseKeyStroke(keyBinding);
+		}
+
+		@Override
+		public String getOwner() {
+			return GhidraFileChooser.class.getSimpleName();
+		}
+	}
 }

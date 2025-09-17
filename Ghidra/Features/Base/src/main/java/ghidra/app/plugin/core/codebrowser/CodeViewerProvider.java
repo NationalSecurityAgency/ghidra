@@ -481,22 +481,23 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
 
-		toggleVariablesAction = new ToggleActionBuilder("Show Function Variables", plugin.getName())
-				.popupMenuPath("Show/Hide All Variables")
-				.popupMenuGroup("Variables")
-				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_All_Variables"))
-				.selected(true)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::isInFunctionArea)
-				.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))
-				.buildAndInstallLocal(this);
+		toggleVariablesAction =
+			new ToggleActionBuilder("Show All Function Variables", plugin.getName())
+					.popupMenuPath("Function", "Show/Hide All Variables")
+					.popupMenuGroup("Variables")
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_All_Variables"))
+					.selected(true)
+					.withContext(ProgramLocationActionContext.class)
+					.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))
+					.buildAndInstallLocal(this);
 
 		new ActionBuilder("Toggle Show Function Variables", plugin.getName())
-				.popupMenuPath("Show/Hide Variables")
+				.popupMenuPath("Function", "Show/Hide Variables")
 				.popupMenuGroup("Variables")
 				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
 				.keyBinding("SPACE")
 				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInFunctionArea)
 				.enabledWhen(this::isInFunctionArea)
 				.onAction(c -> toggleShowVariables(c.getAddress()))
 				.buildAndInstallLocal(this);

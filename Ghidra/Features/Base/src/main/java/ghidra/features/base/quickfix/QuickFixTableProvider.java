@@ -47,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * Component Provider for displaying lists of {@link QuickFix}s and the actions to execute them
  * in bulk or individually. 
  */
-public class QuckFixTableProvider extends ComponentProvider {
+public class QuickFixTableProvider extends ComponentProvider {
 	private static final Icon EXECUTE_ICON = new GIcon("icon.base.plugin.quickfix.done");
 	private JComponent component;
 	private QuickFixTableModel tableModel;
@@ -57,7 +57,7 @@ public class QuckFixTableProvider extends ComponentProvider {
 	private ToggleDockingAction toggleAutoDeleteAction;
 	private boolean autoDelete;
 
-	public QuckFixTableProvider(PluginTool tool, String title, String owner, Program program,
+	public QuickFixTableProvider(PluginTool tool, String title, String owner, Program program,
 			TableDataLoader<QuickFix> loader) {
 		super(tool, title, owner);
 		setIcon(new GIcon("icon.plugin.table.service"));
@@ -168,7 +168,7 @@ public class QuckFixTableProvider extends ComponentProvider {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			dockingTool.contextChanged(QuckFixTableProvider.this);
+			dockingTool.contextChanged(QuickFixTableProvider.this);
 		});
 
 		table.setActionsEnabled(true);
@@ -314,7 +314,7 @@ public class QuckFixTableProvider extends ComponentProvider {
 //==================================================================================================
 	private class QuickFixActionContext extends DefaultActionContext {
 		QuickFixActionContext() {
-			super(QuckFixTableProvider.this, table);
+			super(QuickFixTableProvider.this, table);
 		}
 
 		public int getSelectedRowCount() {
