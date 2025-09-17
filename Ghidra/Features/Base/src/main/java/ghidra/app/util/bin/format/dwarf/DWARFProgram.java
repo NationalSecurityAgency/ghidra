@@ -83,16 +83,13 @@ public class DWARFProgram implements Closeable {
 	public static boolean isDWARF(Program program) {
 		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
 
-		switch (format) {
-			case ElfLoader.ELF_NAME:
-			case PeLoader.PE_NAME:
-				return hasExpectedDWARFSections(program) ||
-					ExternalDebugInfo.fromProgram(program) != null;
-			case MachoLoader.MACH_O_NAME:
-				return hasExpectedDWARFSections(program) ||
-					DSymSectionProvider.getDSYMForProgram(program) != null;
-		}
-		return false;
+		return switch (format) {
+			case ElfLoader.ELF_NAME, PeLoader.PE_NAME -> hasExpectedDWARFSections(program) ||
+				ExternalDebugInfo.fromProgram(program) != null;
+			case MachoLoader.MACH_O_NAME -> hasExpectedDWARFSections(program) ||
+				DSymSectionProvider.getDSYMForProgram(program) != null;
+			default -> false;
+		};
 	}
 
 	private static boolean hasExpectedDWARFSections(Program program) {
@@ -193,8 +190,8 @@ public class DWARFProgram implements Closeable {
 	protected WeakValueHashMap<Long, DebugInfoEntry> diesByOffset = new WeakValueHashMap<>();
 	private WeakValueHashMap<Long, DIEAggregate> aggsByOffset = new WeakValueHashMap<>();
 
-	// Map of DIE offsets of {@link DIEAggregate}s that are being pointed to by
-	// other {@link DIEAggregate}s with a DW_AT_type property.
+	// Map of DIE offsets of DIEAggregates that are being pointed to by
+	// other DIEAggregates with a DW_AT_type property.
 	// In other words, a map of inbound links to a DIEA.
 	private ListValuedMap<Long, Long> typeReferers = new ArrayListValuedHashMap<>();
 

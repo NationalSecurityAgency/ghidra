@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,69 +18,77 @@ package ghidra.app.util.bin.format.dwarf.external;
 import java.io.*;
 import java.util.zip.CRC32;
 
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A {@link SearchLocation} that recursively searches for dwarf external debug files 
- * under a configured directory. 
+ * Searches for DWARF external debug files specified via a debug-link filename / crc in a directory.
  */
-public class LocalDirectorySearchLocation implements SearchLocation {
+public class LocalDirDebugLinkProvider implements DebugFileProvider {
 
-	private static final String LOCAL_DIR_PREFIX = "dir://";
+	private static final String DEBUGLINK_NAME_PREFIX = "debuglink://";
 
 	/**
-	 * Returns true if the specified location string specifies a LocalDirectorySearchLocation.
+	 * Returns true if the specified name string specifies a LocalDirDebugLinkProvider.
 	 *  
-	 * @param locString string to test
-	 * @return boolean true if locString specifies a local dir search location
+	 * @param name string to test
+	 * @return boolean true if name specifies a LocalDirDebugLinkProvider name
 	 */
-	public static boolean isLocalDirSearchLoc(String locString) {
-		return locString.startsWith(LOCAL_DIR_PREFIX);
+	public static boolean matches(String name) {
+		return name.startsWith(DEBUGLINK_NAME_PREFIX);
 	}
 
 	/**
-	 * Creates a new {@link LocalDirectorySearchLocation} instance using the specified location string.
+	 * Creates a new {@link LocalDirDebugLinkProvider} instance using the specified name string.
 	 * 
-	 * @param locString string, earlier returned from {@link #getName()}
-	 * @param context {@link SearchLocationCreatorContext} to allow accessing information outside
-	 * of the location string that might be needed to create a new instance
-	 * @return new {@link LocalDirectorySearchLocation} instance
+	 * @param name string, earlier returned from {@link #getName()}
+	 * @param context {@link DebugInfoProviderCreatorContext} to allow accessing information outside
+	 * of the name string that might be needed to create a new instance
+	 * @return new {@link LocalDirDebugLinkProvider} instance
 	 */
-	public static LocalDirectorySearchLocation create(String locString,
-			SearchLocationCreatorContext context) {
-		locString = locString.substring(LOCAL_DIR_PREFIX.length());
-		return new LocalDirectorySearchLocation(new File(locString));
+	public static LocalDirDebugLinkProvider create(String name,
+			DebugInfoProviderCreatorContext context) {
+		String dir = name.substring(DEBUGLINK_NAME_PREFIX.length());
+		return new LocalDirDebugLinkProvider(new File(dir));
 	}
 
 	private final File searchDir;
 
 	/**
-	 * Creates a new {@link LocalDirectorySearchLocation} at the specified location.
+	 * Creates a new {@link LocalDirDebugLinkProvider} at the specified dir.
 	 *  
 	 * @param searchDir path to the root directory of where to search
 	 */
-	public LocalDirectorySearchLocation(File searchDir) {
+	public LocalDirDebugLinkProvider(File searchDir) {
 		this.searchDir = searchDir;
 	}
 
 	@Override
 	public String getName() {
-		return LOCAL_DIR_PREFIX + searchDir.getPath();
+		return DEBUGLINK_NAME_PREFIX + searchDir.getPath();
 	}
 
 	@Override
 	public String getDescriptiveName() {
-		return searchDir.getPath();
+		return searchDir.getPath() + " (debug-link dir)";
 	}
 
 	@Override
-	public FSRL findDebugFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
+	public DebugInfoProviderStatus getStatus(TaskMonitor monitor) {
+		return isValid()
+				? DebugInfoProviderStatus.VALID
+				: DebugInfoProviderStatus.INVALID;
+	}
+
+	private boolean isValid() {
+		return searchDir.isDirectory();
+	}
+
+	@Override
+	public File getFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		if (!debugInfo.hasFilename()) {
+		if (!debugInfo.hasDebugLink() || !isValid()) {
 			return null;
 		}
 		ensureSafeFilename(debugInfo.getFilename());
@@ -94,24 +102,26 @@ public class LocalDirectorySearchLocation implements SearchLocation {
 		}
 	}
 
-	FSRL findFile(File dir, ExternalDebugInfo debugInfo, TaskMonitor monitor)
+	File findFile(File dir, ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!debugInfo.hasFilename()) {
+		if (!debugInfo.hasDebugLink()) {
 			return null;
 		}
 		File file = new File(dir, debugInfo.getFilename());
 		if (file.isFile()) {
 			int fileCRC = calcCRC(file);
 			if (fileCRC == debugInfo.getCrc()) {
-				return FileSystemService.getInstance().getLocalFSRL(file);
+				return file; // success
 			}
-			Msg.info(this, "DWARF external debug file found with mismatching crc, ignored: " +
-				file + ", (" + Integer.toHexString(fileCRC) + ")");
+			Msg.info(this,
+				"DWARF external debug file found with mismatching crc, ignored: %s (%08x)"
+						.formatted(file, fileCRC));
 		}
 		File[] subDirs;
 		if ((subDirs = dir.listFiles(f -> f.isDirectory())) != null) {
+			// TODO: prevent recursing into symlinks?
 			for (File subDir : subDirs) {
-				FSRL result = findFile(subDir, debugInfo, monitor);
+				File result = findFile(subDir, debugInfo, monitor);
 				if (result != null) {
 					return result;
 				}
