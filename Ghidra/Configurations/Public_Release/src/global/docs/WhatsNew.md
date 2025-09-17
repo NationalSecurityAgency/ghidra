@@ -49,14 +49,9 @@ by client versions prior to 12.0 which lack support for the new storage format. 
 which introduce new link-files into a project will not be able to add such files into version 
 control if connected to older Ghidra Server versions.  
 
-**NOTE:** Ghidra Server: The Ghidra 12.x server is compatible with Ghidra 9.2 and later Ghidra
-clients although the presence of any newer link-files within a repository may not be handled 
-properly by client versions prior to 12.0 which lack support for the new storage format. Ghidra 12.0
-clients which introduce new link-files into a project will not be able to add such files into
-version control if connected to older Ghidra Server versions. Ghidra 12.x clients are compatible 
-with all  0.x and 9.x servers.  Although, due to potential Java version differences, it is 
+**NOTE:** Ghidra Server: Due to potential Java version differences, it is 
 recommended that Ghidra Server installations older than 10.2 be upgraded. Those using 10.2 and newer
-should not need a server upgrade.
+should not need a server upgrade unless they need to work with link-files within a shared repository.
 	
 **NOTE:** Programs imported with a Ghidra beta version or code built directly from source code
 outside of a release tag may not be compatible, and may have flaws that won't be corrected by using
