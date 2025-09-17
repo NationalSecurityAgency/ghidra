@@ -1294,7 +1294,7 @@ A: "BANKED"			is a=1										{ }
 	srcREG = 0xff;
 }
 
-:SUBFWB srcREG, D, A		is op6=0x15	& srcREG & d & D & A		{
+:SUBFWB srcREG, D, A		is op6=0x15	& srcREG & d=0 & D & A		{
 	#  0101 01da ffff ffff
 	#  0101 0100 0000 0000  ->	SUBFWB DAT_DATA_0000, w, ACCESS
 	#  0101 0101 0000 0000  ->	SUBFWB REG0x0, w, BANKED
@@ -1308,7 +1308,25 @@ A: "BANKED"			is a=1										{ }
 	tmp:1 = srcREG;
 	setSubtractCFlags(WREG, tmp); 
 	tmp = WREG - tmp - notC;
-	destREG = tmp;
+	WREG = tmp;
+	setResultFlags(tmp);
+}
+
+:SUBFWB srcREG, D, A		is op6=0x15	& srcREG & d=1 & D & A		{
+	#  0101 01da ffff ffff
+	#  0101 0100 0000 0000  ->	SUBFWB DAT_DATA_0000, w, ACCESS
+	#  0101 0101 0000 0000  ->	SUBFWB REG0x0, w, BANKED
+	#  0101 0100 1101 1000  ->	SUBFWB STATUS, w, ACCESS
+	#  0101 0101 1101 1000  ->	SUBFWB REG0xD8, w, BANKED
+	#  0101 0110 0000 0000  ->	SUBFWB DAT_DATA_0000, f, ACCESS
+	#  0101 0111 0000 0000  ->	SUBFWB REG0x0, f, BANKED
+	#  0101 0110 1101 1000  ->	SUBFWB STATUS, f, ACCESS
+	#  0101 0111 1101 1000  ->	SUBFWB REG0xD8, f, BANKED
+	local notC = ~(C & 1);
+	tmp:1 = srcREG;
+	setSubtractCFlags(WREG, tmp); 
+	tmp = WREG - tmp - notC;
+	srcREG = tmp;
 	setResultFlags(tmp);
 }
 
