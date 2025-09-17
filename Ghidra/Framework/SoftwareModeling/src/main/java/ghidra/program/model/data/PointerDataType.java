@@ -259,7 +259,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		while (ref != null && ref.isMemoryReference()) {
 			Address toAddr = ref.getToAddress();
 			if (!refAddrs.add(toAddr)) {
-				break;
+				return PointerReferenceClassification.LOOP;
 			}
 			if (++depth > 2) {
 				return PointerReferenceClassification.DEEP;
