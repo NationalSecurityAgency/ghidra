@@ -509,7 +509,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private void toggleShowVariables(Address address) {
 		ListingModel model = listingPanel.getListingModel();
 		boolean open = model.areFunctionVariablesOpen(address);
-		model.setAllFunctionVariablesOpen(!open);
+		model.setFunctionVariablesOpen(address, !open);
 		setLocation(new VariablesOpenCloseLocation(program, address));
 	}
 
