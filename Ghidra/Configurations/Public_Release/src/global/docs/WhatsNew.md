@@ -153,10 +153,12 @@ concrete emulator, effectively constructing what is commonly called a "concolic"
 symbolic emulator creates Z3 expressions and branching constraints, but it only follows the path 
 determined by concrete emulation. This is most easily accessed by installing the "SymbolicSummaryZ3"
 extension (**File** &rarr; **Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
-Debugger or Emulator tool, which includes a GUI for viewing and sorting through the results. Before 
-using the Z3 emulator, you must download and install z3-4.13.0 from https://github.com/Z3Prover/z3. 
-Depending on your platform, you may need to build it from source. Other versions may work, but our 
-current test configuration uses 4.13.0.
+Debugger or Emulator tool, which includes a GUI for viewing and sorting through the results. The Z3
+emulator requires z3-4.13.0, available from https://github.com/Z3Prover/z3. Other versions may work,
+but our current test configuration uses 4.13.0. Depending on the release and your platform, the
+required libraries may be missing or incompatible. If this is the case, you will need to download
+Z3, or build it from source with Java bindings, and install the libraries into 
+`Ghidra/Extensions/SymbolicSummaryZ3/os/<platform>/`.
 
 ## Emulation API
 The `PcodeEmulator` and related API has undergone substantial changes in preparation for integrating
