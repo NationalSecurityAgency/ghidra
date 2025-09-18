@@ -17,14 +17,16 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.MethodVisitor;
 
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitBinOp;
 
 /**
@@ -32,7 +34,11 @@ import ghidra.pcode.emu.jit.op.JitBinOp;
  * 
  * @param <T> the class of p-code op node in the use-def graph
  */
-public interface BitwiseBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
+public interface BitwiseBinOpGen<T extends JitBinOp> extends IntBinOpGen<T> {
+	@Override
+	default boolean isSigned() {
+		return false;
+	}
 
 	/**
 	 * The JVM opcode to implement this operator with int operands on the stack.
@@ -49,7 +55,7 @@ public interface BitwiseBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
 	int longOpcode();
 
 	/**
-	 * <b>WIP</b>: The implementation for multi-precision ints.
+	 * The implementation for multi-precision ints.
 	 * 
 	 * @param gen the code generator
 	 * @param type the type of each operand, including the reuslt
@@ -66,37 +72,25 @@ public interface BitwiseBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
 		 */
 		// [lleg1,...,llegN,rleg1,rlegN] (N is least-significant leg)
 		int legCount = type.legsAlloc();
-		int firstIndex = gen.getAllocationModel().nextFreeLocal();
-		Label start = new Label();
-		Label end = new Label();
-		mv.visitLabel(start);
-		for (int i = 0; i < legCount; i++) {
-			mv.visitLocalVariable("result" + i, Type.getDescriptor(int.class), null, start, end,
-				firstIndex + i);
-			mv.visitVarInsn(ISTORE, firstIndex + i);
-			// NOTE: More significant legs have higher indices (reverse of stack)
+		try (JvmTempAlloc result = gen.getAllocationModel().allocateTemp(mv, "result", legCount)) {
+			OpGen.generateMpLegsIntoTemp(result, legCount, mv);
+			for (int i = 0; i < legCount; i++) {
+				// [lleg1,...,llegN:INT]
+				mv.visitVarInsn(ILOAD, result.idx(i));
+				// [lleg1,...,llegN:INT,rlegN:INT]
+				mv.visitInsn(intOpcode());
+				// [lleg1,...,olegN:INT]
+				mv.visitVarInsn(ISTORE, result.idx(i));
+				// [lleg1,...]
+			}
+			OpGen.generateMpLegsFromTemp(result, legCount, mv);
 		}
-		for (int i = 0; i < legCount; i++) {
-			// [lleg1,...,llegN:INT]
-			mv.visitVarInsn(ILOAD, firstIndex + i);
-			// [lleg1,...,llegN:INT,rlegN:INT]
-			mv.visitInsn(intOpcode());
-			// [lleg1,...,olegN:INT]
-			mv.visitVarInsn(ISTORE, firstIndex + i);
-			// [lleg1,...]
-		}
-
-		// Push it all back, in reverse order
-		for (int i = 0; i < legCount; i++) {
-			mv.visitVarInsn(ILOAD, firstIndex + legCount - i - 1);
-		}
-		mv.visitLabel(end);
 	}
 
 	@Override
 	default JitType afterLeft(JitCodeGenerator gen, T op, JitType lType, JitType rType,
 			MethodVisitor rv) {
-		return TypeConversions.forceUniformZExt(lType, rType, rv);
+		return TypeConversions.forceUniform(gen, lType, rType, Ext.ZERO, rv);
 	}
 
 	/**
@@ -110,7 +104,7 @@ public interface BitwiseBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
 	@Override
 	default JitType generateBinOpRunCode(JitCodeGenerator gen, T op, JitBlock block, JitType lType,
 			JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, Ext.ZERO, rv);
 		switch (rType) {
 			case IntJitType t -> rv.visitInsn(intOpcode());
 			case LongJitType t -> rv.visitInsn(longOpcode());
@@ -118,6 +112,6 @@ public interface BitwiseBinOpGen<T extends JitBinOp> extends BinOpGen<T> {
 			case MpIntJitType t -> TODO("MpInt of differing sizes");
 			default -> throw new AssertionError();
 		}
-		return lType;
+		return rType;
 	}
 }

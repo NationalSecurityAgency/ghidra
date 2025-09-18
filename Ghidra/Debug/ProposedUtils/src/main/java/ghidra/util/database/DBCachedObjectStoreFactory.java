@@ -41,7 +41,7 @@ import ghidra.util.exception.VersionException;
  * See {@link DBAnnotatedObject} for more documentation, including an example object definition. To
  * create a store, e.g., for {@code Person}:
  * 
- * <pre>
+ * <pre>{@code
  * interface MyDomainObject {
  * 	Person createPerson(String name, String address);
  * 
@@ -71,7 +71,7 @@ import ghidra.util.exception.VersionException;
  * 		}
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Person createPerson(String name, String address) {
  * 		// Locking details elided
  * 		DBPerson person = people.create();
@@ -79,19 +79,19 @@ import ghidra.util.exception.VersionException;
  * 		return person;
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Person getPerson(int id) {
  * 		// Locking details elided
  * 		return people.getAt(id);
  * 	}
  * 
- * 	&#64;Override
+ * 	@Override
  * 	public Collection<Person> getPeopleNamed(String name) {
  * 		// Locking details elided
  * 		return peopleByName.get(name);
  * 	}
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * The factory manages tables on behalf of the domain object, so it is typically the first thing
@@ -159,7 +159,7 @@ public class DBCachedObjectStoreFactory {
 	 * {@link DBAnnotatedObject} is sufficient. If context is required, then additional interfaces
 	 * can be required via type intersection:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * public interface MyContext {
 	 * 	// ...
 	 * }
@@ -175,14 +175,14 @@ public class DBCachedObjectStoreFactory {
 	 * 		super(MyType.class, objectType, BinaryField.class, field, column);
 	 * 	}
 	 * 
-	 * 	&#64;Override
+	 * 	@Override
 	 * 	protected void doStore(OT obj, DBRecord record) {
 	 * 		MyContext ctx = obj.getContext();
 	 * 		// ...
 	 * 	}
 	 * 	// ...
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * Note that this implementation uses {@link AbstractDBFieldCodec}, which is highly recommended.
@@ -194,25 +194,25 @@ public class DBCachedObjectStoreFactory {
 	 * {@link BinaryField}. See {@link ByteDBFieldCodec} for the simplest example with actual
 	 * encoding and decoding implementations. To use the example codec in an object:
 	 * 
-	 * <pre>
-	 * &#64;DBAnnotatedObjectInfo(version = 1)
+	 * <pre>{@code
+	 * @DBAnnotatedObjectInfo(version = 1)
 	 * public static class SomeObject extends DBAnnotatedObject implements ContextProvider {
 	 * 	static final String MY_COLUMN_NAME = "My";
 	 * 
-	 * 	&#64;DBAnnotatedColumn(MY_COLUMN_NAME)
+	 * 	@DBAnnotatedColumn(MY_COLUMN_NAME)
 	 * 	static DBObjectColumn MY_COLUMN;
 	 * 
-	 * 	&#64;DBAnnotatedField(column = MY_COLUMN_NAME, codec = MyDBFieldCodec.class)
+	 * 	@DBAnnotatedField(column = MY_COLUMN_NAME, codec = MyDBFieldCodec.class)
 	 * 	private MyType my;
 	 * 
 	 * 	// ...
 	 * 
-	 * 	&#64;Override
+	 * 	@Override
 	 * 	public MyContext getContext() {
 	 * 		// ...
 	 * 	}
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * Notice that {@code SomeObject} must implement {@code ContextProvider}. This restriction is
@@ -406,7 +406,7 @@ public class DBCachedObjectStoreFactory {
 				throws IllegalArgumentException, IllegalAccessException;
 
 		/**
-		 * Same as {@link #load(DBAnnotatedObject, DBRecord), but permits exceptions
+		 * Same as {@link #load(DBAnnotatedObject, DBRecord)}, but permits exceptions
 		 */
 		protected abstract void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException;

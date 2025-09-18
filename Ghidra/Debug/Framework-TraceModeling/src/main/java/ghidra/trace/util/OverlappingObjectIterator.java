@@ -20,11 +20,11 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import generic.util.AbstractPeekableIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.util.AbstractPeekableIterator;
 
 /**
  * An iterator of overlapping objects return from two given iterators.

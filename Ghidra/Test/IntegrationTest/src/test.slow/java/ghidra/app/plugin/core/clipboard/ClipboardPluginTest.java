@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,7 +149,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		builder.createComment("0x0100415a",
 			"\n;|||||||||||||||||||| FUNCTION ||||||||||||||||||||||||||||||||||||||||||||||||||\n ",
-			CodeUnit.PLATE_COMMENT);
+			CommentType.PLATE);
 
 		builder.setBytes("0x0100418c", "ff 15 08 10 00 01");
 		builder.disassemble("0x0100418c", 6);
@@ -633,7 +633,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// 3)
 		// 0100415a PreCommentFieldLocation
 		CommentFieldLocation commentFieldLocation = new CommentFieldLocation(program,
-			addr("0100415a"), null, new String[] { "" }, CodeUnit.PRE_COMMENT, 5, 10);
+			addr("0100415a"), null, new String[] { "" }, CommentType.PRE, 5, 10);
 
 		codeBrowserPlugin.goTo(plateFieldLocation);
 
@@ -1008,8 +1008,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Rectangle bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		ProgramSelection selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001050"), addr("1001052"));
+		ProgramSelection selection = new ProgramSelection(addr("1001050"), addr("1001052"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);
@@ -1034,8 +1033,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001050"), addr("1001052"));
+		selection = new ProgramSelection(addr("1001050"), addr("1001052"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);
@@ -1058,8 +1056,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001050"), addr("1001052"));
+		selection = new ProgramSelection(addr("1001050"), addr("1001052"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);
@@ -1100,8 +1097,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Rectangle bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		ProgramSelection selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001051"), addr("1001070"));
+		ProgramSelection selection = new ProgramSelection(addr("1001051"), addr("1001070"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);
@@ -1127,8 +1123,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001051"), addr("1001070"));
+		selection = new ProgramSelection(addr("1001051"), addr("1001070"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);
@@ -1151,8 +1146,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		bounds = bc.getBounds();
 		clickMouse(bc, 1, bounds.x + 20, bounds.y + 20, 1, 0);
 
-		selection =
-			new ProgramSelection(program.getAddressFactory(), addr("1001051"), addr("1001070"));
+		selection = new ProgramSelection(addr("1001051"), addr("1001070"));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, program));
 
 		waitForBusyTool(tool);

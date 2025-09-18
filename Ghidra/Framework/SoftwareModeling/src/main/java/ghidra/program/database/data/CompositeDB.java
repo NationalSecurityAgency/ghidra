@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.ConcurrentModificationException;
 import java.util.Objects;
 
 import db.DBRecord;
@@ -24,6 +25,7 @@ import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.Msg;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
@@ -697,7 +699,13 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		DataTypeComponent[] definedComponents = composite.getDefinedComponents();
 		DataTypeComponentDB[] myDefinedComponents = getDefinedComponents();
 		if (definedComponents.length != myDefinedComponents.length) {
-			throw new IllegalArgumentException("mismatched definition datatype");
+			Msg.error(this,
+				"Resolve failure: unexpected component count detected\nDefinition Type:\n" +
+					definitionDt.toString() + "\nResolving Type:\n" + this.toString());
+			throw new ConcurrentModificationException(
+				"Resolve failure: unexpected component count detected for '" +
+					definitionDt.getPathName() + "' (" + definedComponents.length + " vs " +
+					myDefinedComponents.length + ")");
 		}
 		for (int i = 0; i < definedComponents.length; i++) {
 			DataTypeComponent dtc = definedComponents[i];

@@ -638,6 +638,17 @@ JumpTable *FlowBlock::getJumptable(void) const
   return jt;
 }
 
+/// Print a single unique identifier for \b this block
+/// \param s is the output stream
+void FlowBlock::printShortHeader(ostream &s) const
+
+{
+  s << "Block_" << dec << index;
+  if (!getStart().isInvalid()) {
+    s << ':' << getStart();
+  }
+}
+
 /// Given a string describing a FlowBlock type, return the block_type.
 /// This is currently only used by the decode() process.
 /// TODO: Fill in the remaining names and types
@@ -1293,8 +1304,24 @@ void BlockGraph::printRaw(ostream &s) const
 
   printHeader(s);
   s << endl;
-  for(iter=list.begin();iter!=list.end();++iter)
-    (*iter)->printRaw(s);
+  if (list.empty()) return;
+  iter = list.begin();
+  FlowBlock *lastBl = *iter;
+  ++iter;
+  lastBl->printRaw(s);
+  for(;iter!=list.end();++iter) {
+    FlowBlock *curBl = *iter;
+    lastBl->printRawImpliedGoto(s, curBl);
+    curBl->printRaw(s);
+    lastBl = curBl;
+  }
+}
+
+void BlockGraph::printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const
+
+{
+  if (list.empty()) return;
+  list.back()->printRawImpliedGoto(s, nextBlock);
 }
 
 PcodeOp *BlockGraph::firstOp(void) const
@@ -2656,6 +2683,24 @@ void BlockBasic::printRaw(ostream &s) const
     inst->printRaw(s);
     s << endl;
   }
+}
+
+void BlockBasic::printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const
+
+{
+  if (sizeOut() != 1) return;
+  const FlowBlock *outBlock = getOut(0);
+  if (nextBlock->getType() != t_basic) {
+    nextBlock = nextBlock->getFrontLeaf();
+    if (nextBlock == (const FlowBlock *)0) return;
+    nextBlock = nextBlock->subBlock(0);
+  }
+  if (getOut(0) == nextBlock) return;
+  if (!op.empty() && op.back()->isBranch()) return;
+  getStop().printRaw(s);
+  s << ":   \t[ goto ";
+  outBlock->printShortHeader(s);
+  s << " ]" << endl;
 }
 
 /// \brief Check for values created in \b this block that flow outside the block.

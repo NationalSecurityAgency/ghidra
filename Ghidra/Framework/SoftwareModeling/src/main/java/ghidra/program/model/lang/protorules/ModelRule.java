@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ public class ModelRule {
 	private DatatypeFilter filter;			// Which data-types this rule applies to
 	private QualifierFilter qualifier;		// Additional qualifiers for when the rule should apply (if non-null)
 	private AssignAction assign;			// How the Address should be assigned
+	private AssignAction[] preconditions;   // Extra actions that happen before assignment, discarded on failure
 	private AssignAction[] sideeffects;		// Extra actions that happen on success
 
 	public ModelRule() {
@@ -72,6 +73,12 @@ public class ModelRule {
 		else {
 			assign = null;
 		}
+
+		preconditions = new AssignAction[op2.preconditions.length];
+		for (int i = 0; i < op2.preconditions.length; ++i) {
+			preconditions[i] = op2.preconditions[i].clone(res);
+		}
+
 		sideeffects = new AssignAction[op2.sideeffects.length];
 		for (int i = 0; i < op2.sideeffects.length; ++i) {
 			sideeffects[i] = op2.sideeffects[i].clone(res);
@@ -94,6 +101,7 @@ public class ModelRule {
 		filter = typeFilter.clone();
 		qualifier = null;
 		assign = action.clone(res);
+		preconditions = new AssignAction[0];
 		sideeffects = new AssignAction[0];
 	}
 
@@ -131,6 +139,14 @@ public class ModelRule {
 		else {
 			return false;
 		}
+		if (preconditions.length != op.preconditions.length) {
+			return false;
+		}
+		for (int i = 0; i < preconditions.length; ++i) {
+			if (!preconditions[i].isEquivalent(op.preconditions[i])) {
+				return false;
+			}
+		}
 		if (sideeffects.length != op.sideeffects.length) {
 			return false;
 		}
@@ -165,8 +181,15 @@ public class ModelRule {
 		if (qualifier != null && !qualifier.filter(proto, pos)) {
 			return AssignAction.FAIL;
 		}
-		int response = assign.assignAddress(dt, proto, pos, dtManager, status, res);
+
+		int[] tmpStatus = status.clone();
+		for (int i = 0; i < preconditions.length; ++i) {
+			preconditions[i].assignAddress(dt, proto, pos, dtManager, tmpStatus, res);
+		}
+
+		int response = assign.assignAddress(dt, proto, pos, dtManager, tmpStatus, res);
 		if (response != AssignAction.FAIL) {
+			System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);
 			for (int i = 0; i < sideeffects.length; ++i) {
 				sideeffects[i].assignAddress(dt, proto, pos, dtManager, status, res);
 			}
@@ -184,6 +207,9 @@ public class ModelRule {
 		filter.encode(encoder);
 		if (qualifier != null) {
 			qualifier.encode(encoder);
+		}
+		for (int i = 0; i < preconditions.length; ++i) {
+			preconditions[i].encode(encoder);
 		}
 		assign.encode(encoder);
 		for (int i = 0; i < sideeffects.length; ++i) {
@@ -222,6 +248,16 @@ public class ModelRule {
 		else {
 			qualifier = new AndFilter(qualifierList);
 		}
+		ArrayList<AssignAction> preList = new ArrayList<>();
+		for (;;) {
+			AssignAction preAction = AssignAction.restorePreconditionXml(parser, res);
+			if (preAction == null) {
+				break;
+			}
+			preList.add(preAction);
+		}
+		preconditions = new AssignAction[preList.size()];
+		preList.toArray(preconditions);
 		assign = AssignAction.restoreActionXml(parser, res);
 		ArrayList<AssignAction> sideList = new ArrayList<>();
 		for (;;) {

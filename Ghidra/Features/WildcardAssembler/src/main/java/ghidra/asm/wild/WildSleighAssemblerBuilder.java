@@ -24,7 +24,6 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.languages.sleigh.InputContextScraper;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
@@ -72,10 +71,8 @@ public class WildSleighAssemblerBuilder
 	}
 
 	protected void buildInputContexts() {
-		try (DbgCtx dc = dbg.start("Building input contexts")) {
-			InputContextScraper scraper = new InputContextScraper(lang);
-			this.inputContexts = scraper.scrapeInputContexts();
-		}
+		InputContextScraper scraper = new InputContextScraper(lang);
+		this.inputContexts = scraper.scrapeInputContexts();
 	}
 
 	@Override

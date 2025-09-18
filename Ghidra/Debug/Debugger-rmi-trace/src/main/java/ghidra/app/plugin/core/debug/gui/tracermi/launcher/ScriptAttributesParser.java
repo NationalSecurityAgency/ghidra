@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 
 import javax.swing.Icon;
 
+import generic.jar.ResourceFile;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.debug.api.ValStr;
@@ -40,12 +41,15 @@ import ghidra.util.*;
  */
 public abstract class ScriptAttributesParser {
 	public static final String ENV_GHIDRA_HOME = "GHIDRA_HOME";
+	public static final String ENV_MODULE_HOME = "MODULE_HOME";
+	public static final String ENV_MODULE_HOME_PAT = "MODULE_%s_HOME";
 	public static final String ENV_GHIDRA_TRACE_RMI_ADDR = "GHIDRA_TRACE_RMI_ADDR";
 	public static final String ENV_GHIDRA_TRACE_RMI_HOST = "GHIDRA_TRACE_RMI_HOST";
 	public static final String ENV_GHIDRA_TRACE_RMI_PORT = "GHIDRA_TRACE_RMI_PORT";
 
 	public static final String AT_ARG = "@arg";
 	public static final String AT_ARGS = "@args";
+	public static final String AT_DEPENDS = "@depends";
 	public static final String AT_DESC = "@desc";
 	public static final String AT_ENUM = "@enum";
 	public static final String AT_ENV = "@env";
@@ -341,8 +345,8 @@ public abstract class ScriptAttributesParser {
 
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
-			Map<String, LaunchParameter<?>> parameters, Map<String, TtyCondition> extraTtys,
-			int timeoutMillis, LaunchParameter<?> imageOpt) {
+			Map<String, LaunchParameter<?>> parameters, Set<String> dependencies,
+			Map<String, TtyCondition> extraTtys, int timeoutMillis, LaunchParameter<?> imageOpt) {
 	}
 
 	/**
@@ -355,14 +359,35 @@ public abstract class ScriptAttributesParser {
 	 * @param script the script file
 	 * @param parameters the descriptions of the parameters
 	 * @param args the arguments to process
+	 * @param dependencies a set of module names this script needs
 	 * @param address the address of the listening TraceRmi socket
 	 */
 	public static void processArguments(List<String> commandLine, Map<String, String> env,
 			File script, Map<String, LaunchParameter<?>> parameters, Map<String, ValStr<?>> args,
-			SocketAddress address) {
+			Set<String> dependencies, SocketAddress address) {
 
 		commandLine.add(script.getAbsolutePath());
-		env.put(ENV_GHIDRA_HOME, Application.getInstallationDirectory().getAbsolutePath());
+
+		env.put(ENV_GHIDRA_HOME, Application.getApplicationRootDirectory().getAbsolutePath());
+		ResourceFile myModule =
+			Application.getModuleContainingResourceFile(new ResourceFile(script));
+		if (myModule == null) {
+			Msg.warn(ScriptAttributes.class, "Launch script is not contained in a module");
+		}
+		else {
+			env.put(ENV_MODULE_HOME, myModule.getAbsolutePath());
+		}
+		for (String dep : dependencies) {
+			ResourceFile module = Application.getModuleRootDir(dep);
+			if (module == null) {
+				Msg.warn(ScriptAttributes.class, "Could not find module " + dep);
+			}
+			else {
+				env.put(ENV_MODULE_HOME_PAT.formatted(dep.replace('-', '_')),
+					module.getAbsolutePath());
+			}
+		}
+
 		if (address != null) {
 			env.put(ENV_GHIDRA_TRACE_RMI_ADDR, sockToString(address));
 			if (address instanceof InetSocketAddress tcp) {
@@ -402,8 +427,9 @@ public abstract class ScriptAttributesParser {
 	private List<String> menuPath;
 	private final Map<String, UserType<?>> userTypes = new HashMap<>();
 	private final Map<String, LaunchParameter<?>> parameters = new LinkedHashMap<>();
+	private final Set<String> dependencies = new LinkedHashSet<>();
 	private final Map<String, TtyCondition> extraTtys = new LinkedHashMap<>();
-	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_TIMEOUT_MILLIS;
+	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_CONNECTION_TIMEOUT_MILLIS;
 	private String imageOptKey;
 
 	/**
@@ -493,6 +519,7 @@ public abstract class ScriptAttributesParser {
 			switch (parts[0].trim()) {
 				case AT_ARG -> parseArg(loc, parts[1], ++argc);
 				case AT_ARGS -> parseArgs(loc, parts[1]);
+				case AT_DEPENDS -> parseDepends(loc, parts[1]);
 				case AT_DESC -> parseDesc(loc, parts[1]);
 				case AT_ENUM -> parseEnum(loc, parts[1]);
 				case AT_ENV -> parseEnv(loc, parts[1]);
@@ -546,6 +573,13 @@ public abstract class ScriptAttributesParser {
 			"args", parts.get(0), parts.get(1), false, ValStr.str(""));
 		if (parameters.put(KEY_ARGS, parameter) != null) {
 			reportWarning("%s: Duplicate %s. Replaced".formatted(loc, AT_ARGS));
+		}
+	}
+
+	protected void parseDepends(Location loc, String str) {
+		String moduleName = str.trim();
+		if (!dependencies.add(moduleName)) {
+			reportWarning("%s: Duplicate %s %s. Ignored.".formatted(loc, AT_DEPENDS, str));
 		}
 	}
 
@@ -796,9 +830,11 @@ public abstract class ScriptAttributesParser {
 					AT_IMAGE_OPT, imageOptKey));
 			}
 		}
+		// NOTE: Don't use copyOf, or else we lose ordering
 		return new ScriptAttributes(title, getDescription(), List.copyOf(menuPath), menuGroup,
 			menuOrder, new GIcon(iconId), helpLocation,
 			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)),
+			Collections.unmodifiableSet(new LinkedHashSet<>(dependencies)),
 			Collections.unmodifiableMap(new LinkedHashMap<>(extraTtys)), timeoutMillis, imageOpt);
 	}
 

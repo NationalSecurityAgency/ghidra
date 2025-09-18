@@ -8,8 +8,10 @@
 @define ALIGN "1"
 @endif
 
+@ifndef ALREADY_ENDIAN_ALIGN
 define endian=$(ENDIAN);
 define alignment=$(ALIGN);
+@endif
 
 define space ram type=ram_space size=$(SIZE) wordsize=$(WORDSIZE) default;
 

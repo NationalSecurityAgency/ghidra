@@ -120,6 +120,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			s -> RectangleUtils.convert(s.getBounds2D());
 
 		if (options.usesIcons()) {
+
 			// set up the shape and color functions
 			IconShapeFunction<AttributedVertex> nodeShaper =
 				new IconShapeFunction<>(new EllipseShapeFunction<>());

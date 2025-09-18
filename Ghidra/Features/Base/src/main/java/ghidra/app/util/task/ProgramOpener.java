@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,15 +18,19 @@ package ghidra.app.util.task;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
 import ghidra.app.util.dialog.CheckoutDialog;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.LinkFileInfo;
 import ghidra.framework.protocol.ghidra.GhidraURLQuery;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.framework.protocol.ghidra.GhidraURLResultHandlerAdapter;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.ExclusiveCheckoutException;
@@ -103,13 +107,13 @@ public class ProgramOpener {
 
 		AtomicReference<Program> openedProgram = new AtomicReference<>();
 		try {
-			GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
+			GhidraURLQuery.queryUrl(ghidraUrl, Program.class, new GhidraURLResultHandlerAdapter() {
 				@Override
 				public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
 					Program p = openProgram(locator, domainFile, m);  // may return null
 					openedProgram.set(p);
 				}
-			}, monitor);
+			}, LinkFileControl.FOLLOW_EXTERNAL, monitor);
 		}
 		catch (IOException | CancelledException e) {
 			// IOException reported to user by GhidraURLResultHandlerAdapter
@@ -141,6 +145,18 @@ public class ProgramOpener {
 	}
 
 	private Program openNormal(DomainFile domainFile, TaskMonitor monitor) {
+
+		LinkFileInfo linkInfo = domainFile.getLinkInfo();
+		if (linkInfo != null) {
+			StringBuilder buf = new StringBuilder();
+			LinkStatus linkStatus = linkInfo.getLinkStatus(m -> buf.append(m));
+			if (linkStatus == LinkStatus.BROKEN) {
+				Msg.showError(this, null, "Error Opening " + domainFile.getName(),
+					"Failed to open Program Link " + domainFile.getPathname() + "\n" + buf);
+				return null;
+			}
+		}
+
 		String filename = domainFile.getName();
 		performOptionalCheckout(domainFile, monitor);
 		try {
@@ -148,7 +164,7 @@ public class ProgramOpener {
 		}
 		catch (VersionException e) {
 			String contentType = domainFile.getContentType();
-			VersionExceptionHandler.showVersionError(null, filename, contentType, "Open", e);
+			VersionExceptionHandler.showVersionError(null, filename, contentType, "Open", false, e);
 		}
 		catch (CancelledException e) {
 			// we don't care, the task has been cancelled
@@ -197,7 +213,7 @@ public class ProgramOpener {
 		}
 		catch (VersionException e) {
 			VersionExceptionHandler.showVersionError(null, domainFile.getName(), contentType,
-				"Open", e);
+				"Open", false, e);
 		}
 		return null;
 	}

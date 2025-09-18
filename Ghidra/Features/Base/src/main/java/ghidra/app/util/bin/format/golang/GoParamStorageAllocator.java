@@ -41,12 +41,12 @@ public class GoParamStorageAllocator {
 	private String archDescription;
 
 	/**
-	 * Creates a new golang function call storage allocator for the specified Ghidra Language.
+	 * Creates a new Go function call storage allocator for the specified Ghidra Language.
 	 * <p>
 	 * See {@link GoRegisterInfoManager#getRegisterInfoForLang(Language, GoVer)}
 	 * 
 	 * @param program {@link Program}
-	 * @param goVersion version of go used to create the program
+	 * @param goVersion version of Go used to create the program
 	 */
 	public GoParamStorageAllocator(Program program, GoVer goVersion) {
 		Language lang = program.getLanguage();

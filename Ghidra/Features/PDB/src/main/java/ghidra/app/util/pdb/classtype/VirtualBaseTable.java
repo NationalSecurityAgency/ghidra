@@ -72,7 +72,7 @@ public abstract class VirtualBaseTable implements VBTable {
 	public void addEntry(int tableIndex, ClassID baseId) {
 		VirtualBaseTableEntry entry = getNewEntry(baseId);
 		entryByTableIndex.put(tableIndex, entry);
-		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+		witnessTableIndex(tableIndex);
 	}
 
 	int getMaxTableIndex() {
@@ -115,7 +115,7 @@ public abstract class VirtualBaseTable implements VBTable {
 		else {
 			entry.setClassId(baseId);
 		}
-		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+		witnessTableIndex(tableIndex);
 	}
 
 	/**
@@ -130,8 +130,12 @@ public abstract class VirtualBaseTable implements VBTable {
 		if (entry == null) {
 			return null;
 		}
-		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+		witnessTableIndex(tableIndex);
 		return entry.getClassId();
+	}
+
+	private void witnessTableIndex(int tableIndex) {
+		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
 	}
 
 	/**

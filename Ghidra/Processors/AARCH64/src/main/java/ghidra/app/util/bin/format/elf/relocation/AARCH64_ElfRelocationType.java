@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,17 @@
 package ghidra.app.util.bin.format.elf.relocation;
 
 public enum AARCH64_ElfRelocationType implements ElfRelocationType {
+
+	// Comment macros:
+	//   S - symbol address
+	//   A - addend
+	//   P - relocation address
+	//   X - result of a relocation operation
+	//   PG(expr) = Page(expr) = expr & ~0xFFF
+	//   G(expr) = Address of GOT entry corresponding to expr
+	//   GDAT(expr) = GOT entry for expression expr value
+	//
+	// Reference: https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst
 
 	R_AARCH64_NONE(0),
 	R_AARCH64_P32_ABS32(1),					// .word: (S+A)
@@ -40,10 +51,10 @@ public enum AARCH64_ElfRelocationType implements ElfRelocationType {
 	R_AARCH64_P32_JUMP26(20),				// B:  ((S+A-P) >> 2) & 0x3ffffff.  
 	R_AARCH64_P32_CALL26(21),				// BL: ((S+A-P) >> 2) & 0x3ffffff.
 
-	R_AARCH64_P32_GOT_LD_PREL19(25),
-	R_AARCH64_P32_ADR_GOT_PAGE(26),
-	R_AARCH64_P32_LD32_GOT_LO12_NC(27),
-	R_AARCH64_P32_LD32_GOTPAGE_LO14(28),
+	R_AARCH64_P32_GOT_LD_PREL19(25),		// G(GDAT(S))- P
+	R_AARCH64_P32_ADR_GOT_PAGE(26),			// ADRP: Page(G(GDAT(S)))-Page(P)
+	R_AARCH64_P32_LD32_GOT_LO12_NC(27),		// LD/ST: G(GDAT(S))
+	R_AARCH64_P32_LD32_GOTPAGE_LO14(28),	// LD/ST: G(GDAT(S))-Page(GOT)
 
 	R_AARCH64_P32_TLSGD_ADR_PREL21(80),
 	R_AARCH64_P32_TLSGD_ADR_PAGE21(81),
@@ -82,9 +93,9 @@ public enum AARCH64_ElfRelocationType implements ElfRelocationType {
 	R_AARCH64_P32_TLSDESC_ADD_LO12_NC(126),
 	R_AARCH64_P32_TLSDESC_CALL(127),
 
-	R_AARCH64_P32_COPY(180),			// Copy symbol at runtime.
-	R_AARCH64_P32_GLOB_DAT(181),		// Create GOT entry.
-	R_AARCH64_P32_JUMP_SLOT(182),		// Create PLT entry. 
+	R_AARCH64_P32_COPY(180),			// Copy symbol value at runtime.
+	R_AARCH64_P32_GLOB_DAT(181),		// Relocate GOT entry.
+	R_AARCH64_P32_JUMP_SLOT(182),		// Relocate PLT entry. 
 
 	// Adjust by program base.  
 	R_AARCH64_P32_RELATIVE(183),
@@ -127,28 +138,28 @@ public enum AARCH64_ElfRelocationType implements ElfRelocationType {
 	R_AARCH64_LDST16_ABS_LO12_NC(284),	// LD/ST16: (S+A) & 0xffe
 	R_AARCH64_LDST32_ABS_LO12_NC(285),	// LD/ST32: (S+A) & 0xffc
 	R_AARCH64_LDST64_ABS_LO12_NC(286),	// LD/ST64: (S+A) & 0xff8
-	R_AARCH64_MOVW_PREL_G0(287),
-	R_AARCH64_MOVW_PREL_G0_NC(288),
-	R_AARCH64_MOVW_PREL_G1(289),
-	R_AARCH64_MOVW_PREL_G1_NC(290),
-	R_AARCH64_MOVW_PREL_G2(291),
-	R_AARCH64_MOVW_PREL_G2_NC(292),
-	R_AARCH64_MOVW_PREL_G3(293),
+	R_AARCH64_MOVW_PREL_G0(287),		// S+A-P
+	R_AARCH64_MOVW_PREL_G0_NC(288),		// S+A-P
+	R_AARCH64_MOVW_PREL_G1(289),		// S+A-P
+	R_AARCH64_MOVW_PREL_G1_NC(290),		// S+A-P
+	R_AARCH64_MOVW_PREL_G2(291),		// S+A-P
+	R_AARCH64_MOVW_PREL_G2_NC(292),		// S+A-P
+	R_AARCH64_MOVW_PREL_G3(293),		// S+A-P
 	R_AARCH64_LDST128_ABS_LO12_NC(299),	// LD/ST128: (S+A) & 0xff0
-	R_AARCH64_MOVW_GOTOFF_G0(300),
-	R_AARCH64_MOVW_GOTOFF_G0_NC(301),
-	R_AARCH64_MOVW_GOTOFF_G1(302),
-	R_AARCH64_MOVW_GOTOFF_G1_NC(303),
-	R_AARCH64_MOVW_GOTOFF_G2(304),
-	R_AARCH64_MOVW_GOTOFF_G2_NC(305),
-	R_AARCH64_MOVW_GOTOFF_G3(306),
-	R_AARCH64_GOTREL64(307),
-	R_AARCH64_GOTREL32(308),
-	R_AARCH64_GOT_LD_PREL19(309),
-	R_AARCH64_LD64_GOTOFF_LO15(310),
-	R_AARCH64_ADR_GOT_PAGE(311),
-	R_AARCH64_LD64_GOT_LO12_NC(312),
-	R_AARCH64_LD64_GOTPAGE_LO15(313),
+	R_AARCH64_MOVW_GOTOFF_G0(300),		// MOV[NZ]: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G0_NC(301),	// MOVK: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G1(302),		// MOV[NZ]: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G1_NC(303),	// MOVK: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G2(304),		// MOV[NZ]: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G2_NC(305),	// MOVK: G(GDAT(S)) -GOT
+	R_AARCH64_MOVW_GOTOFF_G3(306),		// MOV[NZ]: G(GDAT(S)) -GOT
+	R_AARCH64_GOTREL64(307),			// S+A-GOT
+	R_AARCH64_GOTREL32(308),			// S+A-GOT
+	R_AARCH64_GOT_LD_PREL19(309),		// G(GDAT(S))- P
+	R_AARCH64_LD64_GOTOFF_LO15(310),	// LD/ST: G(GDAT(S))- GOT
+	R_AARCH64_ADR_GOT_PAGE(311),		// ADRP: Page(G(GDAT(S)))-Page(P)
+	R_AARCH64_LD64_GOT_LO12_NC(312),	// LD/ST: G(GDAT(S))
+	R_AARCH64_LD64_GOTPAGE_LO15(313),	// LD/ST: G(GDAT(S))-Page(GOT)
 
 	R_AARCH64_TLSGD_ADR_PREL21(512),
 	R_AARCH64_TLSGD_ADR_PAGE21(513),
@@ -226,9 +237,9 @@ public enum AARCH64_ElfRelocationType implements ElfRelocationType {
 	R_AARCH64_TLS_DTPMOD64(1028),
 	R_AARCH64_TLS_DTPREL64(1029),
 	R_AARCH64_TLS_TPREL64(1030),
-	R_AARCH64_TLS_DTPMOD(1028),
-	R_AARCH64_TLS_DTPREL(1029),
-	R_AARCH64_TLS_TPREL(1030),
+	R_AARCH64_TLS_DTPMOD(1028),		// aka R_AARCH64_TLS_DTPMOD64
+	R_AARCH64_TLS_DTPREL(1029),		// aka R_AARCH64_TLS_DTPREL64
+	R_AARCH64_TLS_TPREL(1030),		// aka R_AARCH64_TLS_TPREL64
 	R_AARCH64_TLSDESC(1031),
 	R_AARCH64_IRELATIVE(1032);
 

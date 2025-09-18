@@ -28,11 +28,11 @@ import ghidra.util.StringUtilities;
 
 public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
 	private AddressIterator iterator;
-	private final int commentType;
+	private final CommentType commentType;
 	private Program program;
 
 	public CommentFieldSearcher(Program program, ProgramLocation startLoc, AddressSetView set,
-			boolean forward, Pattern pattern, int commentType) {
+			boolean forward, Pattern pattern, CommentType commentType) {
 
 		super(pattern, forward, startLoc, set);
 		this.commentType = commentType;
@@ -89,16 +89,16 @@ public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
 		int charOffset = getRelativeCharOffset(index, rowIndex, comments);
 		int[] dataPath = getDataComponentPath(address);
 		switch (commentType) {
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				return new EolCommentFieldLocation(program, address, dataPath, comments, rowIndex,
 					charOffset, rowIndex);
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				return new PlateFieldLocation(program, address, dataPath, rowIndex, charOffset,
 					comments, rowIndex);
-			case CodeUnit.REPEATABLE_COMMENT:
+			case REPEATABLE:
 				return new RepeatableCommentFieldLocation(program, address, dataPath, comments,
 					rowIndex, charOffset, rowIndex); // TODO One of searchStrIndex parameters is wrong.
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				return new PostCommentFieldLocation(program, address, dataPath, comments, rowIndex,
 					charOffset);
 			default:

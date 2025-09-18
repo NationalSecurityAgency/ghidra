@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.ExtensionFileFilter;
+import org.apache.commons.io.FilenameUtils;
 
 public class DebugDecompilerAction extends DockingAction {
 
@@ -56,6 +57,10 @@ public class DebugDecompilerAction extends DockingAction {
 		fileChooser.dispose();
 		if (file == null) {
 			return;
+		}
+		// If user did not specify an extension, add .xml
+		if (FilenameUtils.getExtension(file.getPath()).isEmpty()) {
+			file = new File(file.getAbsolutePath() + ".xml");
 		}
 		if (file.exists()) {
 			if (OptionDialog.showYesNoDialog(parentComponent, "Overwrite Existing File?",

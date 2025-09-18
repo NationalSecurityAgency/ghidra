@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
+import help.Help;
 
 /**
  * Plugin to show a "tab" for each open program; the selected tab is the activated program.
@@ -262,6 +263,8 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 		tabPanel.setToolTipFunction(p -> getToolTip(p));
 		tabPanel.setSelectedTabConsumer(p -> programSelected(p));
 		tabPanel.setCloseTabConsumer(p -> progService.closeProgram(p, false));
+		Help.getHelpService()
+				.registerHelp(tabPanel, new HelpLocation("ProgramManagerPlugin", "Navigate_File"));
 
 		initOptions();
 

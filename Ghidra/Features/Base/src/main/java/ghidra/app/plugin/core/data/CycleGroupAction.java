@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,7 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CycleGroup;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
 
@@ -83,7 +82,7 @@ public class CycleGroupAction extends ListingContextAction {
 
 		// Handle selection case
 		if (selection != null && !selection.isEmpty()) {
-			BackgroundCommand cmd = null;
+			BackgroundCommand<Program> cmd = null;
 			DataType dt = null;
 			Address addr = selection.getMinAddress();
 			Data data = listing.getDataContaining(addr);

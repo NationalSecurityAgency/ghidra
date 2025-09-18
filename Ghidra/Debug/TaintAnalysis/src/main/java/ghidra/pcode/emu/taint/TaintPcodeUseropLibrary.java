@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,8 +72,8 @@ public class TaintPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<Pair<by
 	 * the Sleigh code {@code RAX = taint_arr(RAX)} will cause RAX to be tainted as
 	 * [arr_0_0][arr_0_1]...[arr_0_7].
 	 * 
-	 * @param in
-	 * @return
+	 * @param in the input value
+	 * @return the same value, with the generated taint unioned in
 	 */
 	@PcodeUserop
 	public Pair<byte[], TaintVec> taint_arr(Pair<byte[], TaintVec> in) {

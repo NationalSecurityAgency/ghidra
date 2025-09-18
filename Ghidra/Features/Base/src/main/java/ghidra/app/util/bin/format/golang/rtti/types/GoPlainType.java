@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.Set;
 
-import ghidra.app.util.bin.format.golang.rtti.GoString;
 import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.StructureMapping;
 import ghidra.app.util.bin.format.golang.structmapping.StructureReader;
@@ -28,7 +27,7 @@ import ghidra.util.Msg;
 /**
  * WARNING: tricky code / class layout here!
  * <p>
- * To coerce java inheritance and structmapping features to match the layout of go rtti type structs,
+ * To coerce java inheritance and structmapping features to match the layout of Go rtti type structs,
  * this class is constructed strangely.
  * <p>
  * {@link GoType} structure that defines a built-in primitive type.
@@ -41,39 +40,21 @@ public class GoPlainType extends GoType implements StructureReader<GoType> {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		DataTypeManager dtm = goTypes.getDTM();
-		int ptrSize = programContext.getPtrSize();
-		DataType dt = switch (typ.getKind()) {
-			case Bool -> BooleanDataType.dataType;
-			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
-			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
-			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm);
-			case Int8 -> AbstractIntegerDataType.getSignedDataType(8 / 8, null);
-			case Int16 -> AbstractIntegerDataType.getSignedDataType(16 / 8, null);
-			case Int32 -> AbstractIntegerDataType.getSignedDataType(32 / 8, null);
-			case Int64 -> AbstractIntegerDataType.getSignedDataType(64 / 8, null);
-			case Uint -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);
-			case Uint8 -> AbstractIntegerDataType.getUnsignedDataType(8 / 8, null);
-			case Uint16 -> AbstractIntegerDataType.getUnsignedDataType(16 / 8, null);
-			case Uint32 -> AbstractIntegerDataType.getUnsignedDataType(32 / 8, null);
-			case Uint64 -> AbstractIntegerDataType.getUnsignedDataType(64 / 8, null);
-			case Uintptr -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);
-			case String -> programContext.getStructureDataType(GoString.class);
-			case UnsafePointer -> goTypes.getVoidPtrDT();
-			default -> null;
-		};
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType dt = goTypes.recoverPlainDataType(typ.getKind());
 		if (dt == null) {
-			dt = super.recoverDataType(goTypes);
+			dt = super.recoverDataType();
 		}
 
 		String name = goTypes.getTypeName(this);
 		if (!dt.getName().equalsIgnoreCase(name)) {
+			DataTypeManager dtm = goTypes.getDTM();
 			dt = new TypedefDataType(goTypes.getCP(this), name, dt, dtm);
 		}
 		if (dt.getLength() != typ.getSize()) {
 			Msg.warn(this,
-				"Recovered golang data type size mismatch: %s, %d != %d".formatted(getDebugId(),
+				"Recovered Go data type size mismatch: %s, %d != %d".formatted(getDebugId(),
 					typ.getSize(), dt.getLength()));
 		}
 		return dt;

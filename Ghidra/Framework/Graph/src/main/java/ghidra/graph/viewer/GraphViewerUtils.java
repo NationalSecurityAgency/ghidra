@@ -117,9 +117,15 @@ public class GraphViewerUtils {
 
 	public static <V, E> Point getVertexUpperLeftCornerInLayoutSpace(
 			VisualizationServer<V, E> viewer, V vertex) {
+		Point vertexCenterInLayoutSpace = getVertexCenterPointInLayoutSpace(viewer, vertex);
 
-		Point vertexGraphSpaceLocation = getVertexUpperLeftCornerInGraphSpace(viewer, vertex);
-		return translatePointFromGraphSpaceToLayoutSpace(vertexGraphSpaceLocation, viewer);
+		RenderContext<V, E> renderContext = viewer.getRenderContext();
+		Shape shape = renderContext.getVertexShapeTransformer().apply(vertex);
+		Rectangle shapeBounds = shape.getBounds();
+		Point vertexUpperLeftPointRelativeToVertexCenter = shapeBounds.getLocation();
+
+		return new Point(vertexCenterInLayoutSpace.x + vertexUpperLeftPointRelativeToVertexCenter.x,
+			vertexCenterInLayoutSpace.y + vertexUpperLeftPointRelativeToVertexCenter.y);
 	}
 
 	public static <V, E> Point getVertexUpperLeftCornerInViewSpace(VisualizationServer<V, E> viewer,
@@ -215,17 +221,8 @@ public class GraphViewerUtils {
 	public static <V, E> Point getVertexUpperLeftCornerInGraphSpace(
 			VisualizationServer<V, E> viewer, V vertex) {
 
-		Point vertexCenterInLayoutSpace = getVertexCenterPointInLayoutSpace(viewer, vertex);
-		Point vertexCenterInGraphSpace =
-			translatePointFromLayoutSpaceToGraphSpace(vertexCenterInLayoutSpace, viewer);
-
-		RenderContext<V, E> renderContext = viewer.getRenderContext();
-		Shape shape = renderContext.getVertexShapeTransformer().apply(vertex);
-		Rectangle shapeBounds = shape.getBounds();
-		Point vertexUpperLeftPointRelativeToVertexCenter = shapeBounds.getLocation();
-
-		return new Point(vertexCenterInGraphSpace.x + vertexUpperLeftPointRelativeToVertexCenter.x,
-			vertexCenterInGraphSpace.y + vertexUpperLeftPointRelativeToVertexCenter.y);
+		Point layoutPoint = getVertexUpperLeftCornerInLayoutSpace(viewer, vertex);
+		return translatePointFromLayoutSpaceToGraphSpace(layoutPoint, viewer);
 	}
 
 	public static <V, E> Point translatePointFromLayoutSpaceToGraphSpace(Point2D pointInLayoutSpace,
@@ -688,31 +685,10 @@ public class GraphViewerUtils {
 		double endY = (float) endVertexCenter.getY();
 
 		RenderContext<V, E> renderContext = viewer.getRenderContext();
-		if (isLoop) {
-			//
-			// Our edge loops are sized and positioned according to the shared
-			// code in the utils class.  We do this so that our hit detection matches our rendering.
-			//
-			Function<? super V, Shape> vertexShapeTransformer =
-				renderContext.getVertexShapeTransformer();
-			Shape vertexShape = getVertexShapeForEdge(endVertex, vertexShapeTransformer);
-			return createHollowEgdeLoopInGraphSpace(vertexShape, startX, startY);
-		}
 
 		// translate the edge from 0,0 to the starting vertex point
 		AffineTransform xform = AffineTransform.getTranslateInstance(startX, startY);
 		Shape edgeShape = renderContext.getEdgeShapeTransformer().apply(e);
-
-		double deltaX = endX - startX;
-		double deltaY = endY - startY;
-
-		// rotate the edge to the angle between the vertices
-		double theta = Math.atan2(deltaY, deltaX);
-		xform.rotate(theta);
-
-		// stretch the edge to span the distance between the vertices
-		double dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-		xform.scale(dist, 1.0f);
 
 		// apply the transformations; converting the given shape from model space into graph space
 		return xform.createTransformedShape(edgeShape);

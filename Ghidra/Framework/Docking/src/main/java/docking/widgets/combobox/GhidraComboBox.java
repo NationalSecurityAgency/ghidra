@@ -64,8 +64,6 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	private List<KeyListener> keyListeners = new ArrayList<>();
 	private boolean setSelectedFlag = false;
 
-	private boolean forwardEnter;
-	private Action defaultSystemEnterForwardingAction;
 	private Document document;
 	private PassThroughActionListener passThroughActionListener;
 	private PassThroughKeyListener passThroughKeyListener;
@@ -125,43 +123,12 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 			setDocument(document);
 		}
 
-		// HACK ALERT:  see setEnterKeyForwarding(boolean)
-		ActionMap am = getActionMap();
-		if (am != null) {
-			defaultSystemEnterForwardingAction = am.get("enterPressed");
-			am.put("enterPressed", new AbstractAction() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					if (forwardEnter) {
-						defaultSystemEnterForwardingAction.actionPerformed(e);
-					}
-				}
-			});
-		}
-
 		// As mentioned above, the default editor gets replaced.  In that case, restore the columns
 		// if the client has set the value.
 		if (oldColumns > 0) {
 			JTextField tf = getTextField();
 			tf.setColumns(oldColumns);
 		}
-	}
-
-	/**
-	 * HACK ALERT:  By default, the JComboBoxUI forwards the &lt;Enter&gt; key actions to the root
-	 * pane of the JComboBox's container (which is used primarily by any installed 'default
-	 * button'). The problem is that the forwarding does not happen always.  In the case that the
-	 * &lt;Enter&gt; key will trigger a selection in the combo box, the action is NOT forwarded.
-	 * <p>
-	 * By default Ghidra disables the forwarding altogether, since most users of
-	 * {@link GhidraComboBox} will add an action listener to handle &lt;Enter&gt; actions.
-	 * <p>
-	 * To re-enable the default behavior, set the <code>forwardEnter</code> value to true.
-	 *
-	 * @param forwardEnter true to enable default &lt;Enter&gt; key handling.
-	 */
-	public void setEnterKeyForwarding(boolean forwardEnter) {
-		this.forwardEnter = forwardEnter;
 	}
 
 	/**

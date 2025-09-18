@@ -20,6 +20,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
+import ghidra.util.exception.AssertException;
 
 /**
  * QuickFix for updating listing comments.
@@ -80,11 +81,11 @@ public class UpdateCommentQuickFix extends QuickFix {
 			case POST:
 				return new PostCommentFieldLocation(program, address, null, null, 0, 0);
 			case PRE:
-				return new CommentFieldLocation(program, address, null, null, type.ordinal(), 0, 0);
+				return new CommentFieldLocation(program, address, null, null, type, 0, 0);
 			case REPEATABLE:
 				return new RepeatableCommentFieldLocation(program, address, null, null, 0, 0, 0);
 			default:
-				return null;
+				throw new AssertException("Unsupported comment type: " + type.name());
 		}
 	}
 

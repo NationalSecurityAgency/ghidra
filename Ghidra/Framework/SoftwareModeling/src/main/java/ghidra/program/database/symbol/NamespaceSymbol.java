@@ -31,12 +31,10 @@ public class NamespaceSymbol extends SymbolDB {
 	 * Construct a new namespace symbol
 	 * @param mgr the symbol manager.
 	 * @param cache symbol object cache
-	 * @param addr the address for this symbol.
 	 * @param record the record for this symbol.
 	 */
-	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr,
-			DBRecord record) {
-		super(mgr, cache, addr, record);
+	NamespaceSymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, DBRecord record) {
+		super(mgr, cache, Address.NO_ADDRESS, record);
 	}
 
 	@Override
@@ -56,15 +54,20 @@ public class NamespaceSymbol extends SymbolDB {
 	}
 
 	@Override
-	public Object getObject() {
-		return getNamespace();
-	}
-
-	private Namespace getNamespace() {
-		if (namespace == null) {
-			namespace = new NamespaceDB(this, symbolMgr.getProgram().getNamespaceManager());
+	public Namespace getObject() {
+		lock.acquire();
+		try {
+			if (!checkIsValid()) {
+				return null;
+			}
+			if (namespace == null) {
+				namespace = new NamespaceDB(this, symbolMgr.getProgram().getNamespaceManager());
+			}
+			return namespace;
 		}
-		return namespace;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override

@@ -124,6 +124,10 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	public GhidraTOCFile getSourceTOCFile() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return null;
+		}
 		return inputHelp.getSourceTOCFile();
 	}
 
@@ -258,6 +262,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 	@Override
 	public Map<String, TOCItemDefinition> getTocDefinitionsByID() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return Map.of();
+		}
+
 		Map<String, TOCItemDefinition> map = new HashMap<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		map.putAll(TOC.getTOCDefinitionByIDMapping());
@@ -267,7 +276,6 @@ public class HelpModuleCollection implements TOCItemProvider {
 	@Override
 	public Map<String, TOCItemExternal> getExternalTocItemsById() {
 		Map<String, TOCItemExternal> map = new HashMap<>();
-
 		if (externalHelpSets.isEmpty()) {
 			return map;
 		}
@@ -325,6 +333,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 	 * @return the items
 	 */
 	public Collection<TOCItem> getInputTOCItems() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return List.of();
+		}
+
 		Collection<TOCItem> items = new ArrayList<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		items.addAll(TOC.getAllTOCItems());
@@ -332,6 +345,11 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	public Collection<HREF> getTOC_HREFs() {
+		if (inputHelp == null) {
+			// this collection of help modules is only external inputs (e.g., jar files)
+			return List.of();
+		}
+
 		Collection<HREF> definitions = new ArrayList<>();
 		GhidraTOCFile TOC = inputHelp.getSourceTOCFile();
 		definitions.addAll(getTOC_HREFs(TOC));

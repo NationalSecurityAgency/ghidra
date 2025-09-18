@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,19 +107,21 @@ public class DWARFLine {
 		}
 		result.directories.add(new DWARFFile(defaultCompDir));
 
+		Charset charset = cu.getProgram().getCharset();
+
 		// Read all include directories, which are only a list of names in v4
-		String dirName = reader.readNextAsciiString();
+		String dirName = reader.readNextString(charset, 1);
 		while (dirName.length() != 0) {
 			DWARFFile dir = new DWARFFile(dirName);
 			dir = fixupDir(dir, defaultCompDir);
 
 			result.directories.add(dir);
-			dirName = reader.readNextAsciiString();
+			dirName = reader.readNextString(charset, 1);
 		}
 
 		// Read all files, ending when null (hit empty filename)
 		DWARFFile file;
-		while ((file = DWARFFile.readV4(reader)) != null) {
+		while ((file = DWARFFile.readV4(reader, cu)) != null) {
 			result.files.add(file);
 		}
 	}
@@ -165,7 +168,7 @@ public class DWARFLine {
 		// read the directories, which are defined the same way files are
 		int directories_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < directories_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, result.intSize, cu);
 			dir = fixupDir(dir, defaultCompDir);
 			result.directories.add(dir);
 		}
@@ -179,7 +182,7 @@ public class DWARFLine {
 
 		int file_names_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < file_names_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, result.intSize, cu);
 			result.files.add(dir);
 		}
 	}
@@ -270,6 +273,8 @@ public class DWARFLine {
 		return lpe;
 	}
 
+	public record SourceFileInfo(String filePath, byte[] md5) {}
+
 	public record SourceFileAddr(long address, String fileName, byte[] md5, int lineNum,
 			boolean isEndSequence) {}
 
@@ -278,16 +283,27 @@ public class DWARFLine {
 		try (DWARFLineProgramExecutor lpe = getLineProgramexecutor(cu, reader)) {
 			List<SourceFileAddr> results = new ArrayList<>();
 			for (DWARFLineProgramState row : lpe.allRows()) {
-				byte[] md5 = null;
-				if (cu.getDWARFVersion() >= 5 && (row.file < cu.getLine().getNumFiles())) {
-					md5 = cu.getLine().getFile(row.file).getMD5();
+				try {
+					DWARFFile file = getFile(row.file);
+					results.add(new SourceFileAddr(row.address, file.getPathName(this),
+						file.getMD5(), row.line, row.isEndSequence));
 				}
-				results.add(new SourceFileAddr(row.address, getFilePath(row.file, true), md5,
-					row.line, row.isEndSequence));
+				catch (IOException e) {
+					cu.getProgram().getImportSummary().badSourceFileCount++;
+				}
 			}
 
 			return results;
 		}
+	}
+
+	public List<SourceFileInfo> getAllSourceFileInfos() {
+		List<SourceFileInfo> result = new ArrayList<>();
+		files.forEach(df -> {
+			// TODO: last_mod info not included yet
+			result.add(new SourceFileInfo(df.getPathName(this), df.getMD5()));
+		});
+		return result;
 	}
 
 	public DWARFFile getDir(int index) throws IOException {
@@ -301,7 +317,7 @@ public class DWARFLine {
 	/**
 	 * Get a file name given a file index.
 	 * 
-	 * @param index index of the file
+	 * @param index index of the file, where index may not be zero based depending on dwarf version
 	 * @return file {@link DWARFFile}
 	 * @throws IOException if invalid index
 	 */
@@ -319,30 +335,6 @@ public class DWARFLine {
 		}
 		throw new IOException(
 			"Invalid file index %d for line table at 0x%x: ".formatted(index, startOffset));
-	}
-
-	/**
-	 * Returns the number of indexed files
-	 * @return num files
-	 */
-	public int getNumFiles() {
-		return files.size();
-	}
-
-	public String getFilePath(int index, boolean includePath) {
-		try {
-			DWARFFile f = getFile(index);
-			if (!includePath) {
-				return f.getName();
-			}
-
-			String dir = f.getDirectoryIndex() >= 0 ? getDir(f.getDirectoryIndex()).getName() : "";
-
-			return FSUtilities.appendPath(dir, f.getName());
-		}
-		catch (IOException e) {
-			return null;
-		}
 	}
 
 	@Override

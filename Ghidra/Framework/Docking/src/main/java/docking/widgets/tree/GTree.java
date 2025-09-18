@@ -468,13 +468,22 @@ public class GTree extends JPanel implements BusyListener {
 	public void collapseAll(GTreeNode node) {
 
 		runSwingNow(() -> {
+
+			if (!isFiltered() && lastFilterTask != null) {
+				// When the user clears the filter, the filter task may be running to restore state.
+				// If the user wishes to collapse nodes, it does not make sense to keep restoring
+				// expanded/selected state.  This call allows users to cancel any long running tree
+				// state restoring by executing a collapse action.
+				lastFilterTask.cancel();
+			}
+
 			node.fireNodeStructureChanged();
 			tree.collapsePath(node.getTreePath());
 
 			boolean nodeIsRoot = node.equals(model.getRoot());
 
 			if (nodeIsRoot && !tree.isRootAllowedToCollapse()) {
-				runTask(new GTreeExpandNodeToDepthTask(this, getJTree(), node, 1));
+				runTask(new GTreeExpandNodeToDepthTask(this, node, 1));
 			}
 
 		});
@@ -1686,7 +1695,7 @@ public class GTree extends JPanel implements BusyListener {
 
 			if (!allowed) {
 				if (model != null && model.getRoot() != null) {
-					runTask(new GTreeExpandNodeToDepthTask(GTree.this, getJTree(),
+					runTask(new GTreeExpandNodeToDepthTask(GTree.this,
 						model.getModelRoot(), 1));
 				}
 			}

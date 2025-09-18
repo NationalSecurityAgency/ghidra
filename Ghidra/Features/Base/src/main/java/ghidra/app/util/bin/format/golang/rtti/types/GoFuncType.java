@@ -59,32 +59,28 @@ public class GoFuncType extends GoType {
 	}
 
 	/**
-	 * Returns true if this function type is defined to be vararg
-	 * @return true if this function type is defined to be vararg
+	 * {@return true if this function type is defined to be vararg}
 	 */
 	public boolean isVarArg() {
 		return (outCount & 0x8000) != 0;
 	}
 
 	/**
-	 * Returns the number of inbound parameters
-	 * @return number of inbound parameters
+	 * {@return the number of inbound parameters}
 	 */
 	public int getInCount() {
 		return inCount;
 	}
 
 	/**
-	 * Returns the number of outbound result values
-	 * @return number of outbound result values
+	 * {@return the number of outbound result values}
 	 */
 	public int getOutCount() {
 		return outCount & 0x7fff;
 	}
 
 	/**
-	 * Returns the total number of in and out parameters
-	 * @return total number of in and out parameters
+	 * {@return the total number of in and out parameters}
 	 */
 	public int getParamCount() {
 		return inCount + (outCount & 0x7fff);
@@ -104,8 +100,7 @@ public class GoFuncType extends GoType {
 	}
 
 	/**
-	 * Returns a list of {@link GoType}s for each parameter
-	 * @return list of {@link GoType}s for each parameter
+	 * {@return a list of {@link GoType}s for each parameter}
 	 * @throws IOException if error read type info
 	 */
 	@Markup
@@ -124,10 +119,10 @@ public class GoFuncType extends GoType {
 	}
 
 	/**
-	 * Returns a string that describes the function type as a golang-ish function decl.
+	 * Returns a string that describes the function type as a Go-ish function decl.
 	 * 
 	 * @param funcName optional name of a function
-	 * @return golang func decl string
+	 * @return Go func decl string
 	 */
 	public String getFuncPrototypeString(String funcName) {
 		if (funcName != null && !funcName.isBlank()) {
@@ -182,7 +177,8 @@ public class GoFuncType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		DataTypeManager dtm = goTypes.getDTM();
 		String name = goTypes.getTypeName(this);
 		CategoryPath cp = goTypes.getCP(this);
@@ -192,7 +188,7 @@ public class GoFuncType extends GoType {
 
 		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(cp, name + "_F", dtm);
 		struct.replace(0, dtm.getPointer(funcDef), -1, "F", null);
-		struct.add(new ArrayDataType(goTypes.getUint8DT(), 0), "context", null);
+		struct.add(new ArrayDataType(goTypes.getDataType("uint8"), 0), "context", null);
 		struct.setToDefaultPacking();
 
 		// pre-push an partially constructed struct into the cache to prevent endless recursive loops
@@ -207,7 +203,7 @@ public class GoFuncType extends GoType {
 			new ParameterDefinitionImpl(GOLANG_CLOSURE_CONTEXT_NAME, dtm.getPointer(struct), null));
 
 		for (GoType paramType : inParamTypes) {
-			DataType paramDT = goTypes.getGhidraDataType(paramType);
+			DataType paramDT = goTypes.getDataType(paramType);
 			params.add(new ParameterDefinitionImpl(null, paramDT, null));
 		}
 
@@ -216,12 +212,12 @@ public class GoFuncType extends GoType {
 			returnDT = VoidDataType.dataType;
 		}
 		else if (outParamTypes.size() == 1) {
-			returnDT = goTypes.getGhidraDataType(outParamTypes.get(0));
+			returnDT = goTypes.getDataType(outParamTypes.get(0));
 		}
 		else {
 			List<DataType> paramDataTypes = new ArrayList<>();
 			for (GoType outParamType : outParamTypes) {
-				paramDataTypes.add(goTypes.getGhidraDataType(outParamType));
+				paramDataTypes.add(goTypes.getDataType(outParamType));
 			}
 			returnDT = goTypes.getFuncMultiReturn(paramDataTypes);
 		}
@@ -236,7 +232,7 @@ public class GoFuncType extends GoType {
 	}
 
 	public FunctionDefinition getFunctionSignature(GoTypeManager goTypes) throws IOException {
-		DataType dt = goTypes.getGhidraDataType(this);
+		DataType dt = goTypes.getDataType(this);
 		FunctionDefinition funcdef = dt instanceof Pointer ptrDT &&
 			ptrDT.getDataType() instanceof Structure closureStructDT &&
 			closureStructDT.getNumComponents() > 1 &&

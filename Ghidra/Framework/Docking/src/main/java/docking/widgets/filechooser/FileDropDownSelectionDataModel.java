@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,14 @@ package docking.widgets.filechooser;
 import java.awt.Component;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
@@ -85,11 +90,57 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 	}
 
 	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH, SearchMode.CONTAINS, SearchMode.WILDCARD);
+	}
+
+	@Override
 	public List<File> getMatchingData(String searchText) {
-		if (searchText == null || searchText.length() == 0) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
+
+	@Override
+	public List<File> getMatchingData(String searchText, SearchMode mode) {
+
+		if (StringUtils.isBlank(searchText)) {
+			// full data display not support, as we don't know how big the data may be
 			return Collections.emptyList();
 		}
 
+		if (!getSupportedSearchModes().contains(mode)) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+		}
+
+		if (mode == SearchMode.STARTS_WITH) {
+			return getMatchDataStartsWith(searchText);
+		}
+
+		Pattern p = mode.createPattern(searchText);
+		return getMatchingDataRegex(p);
+	}
+
+	private List<File> getMatchingDataRegex(Pattern p) {
+
+		List<File> matches = new ArrayList<>();
+		List<File> list = getSortedFiles();
+		for (File file : list) {
+			String name = file.getName();
+			Matcher m = p.matcher(name);
+			if (m.matches()) {
+				matches.add(file);
+			}
+		}
+
+		return matches;
+	}
+
+	private List<File> getMatchDataStartsWith(String searchText) {
+		List<File> list = getSortedFiles();
+		return getMatchingSubList(searchText, searchText + END_CHAR, list);
+	}
+
+	private List<File> getSortedFiles() {
 		File directory = chooser.getCurrentDirectory();
 		File[] files = directory.listFiles();
 		if (files == null) {
@@ -101,8 +152,7 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 		}
 
 		Collections.sort(list, sortComparator);
-
-		return getMatchingSubList(searchText, searchText + END_CHAR, list);
+		return list;
 	}
 
 	private List<File> getMatchingSubList(String searchTextStart, String searchTextEnd,

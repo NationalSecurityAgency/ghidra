@@ -19,9 +19,9 @@ package ghidra.app.util.bin.format.macho.dyld;
  * Stores information needed to perform a dyld pointer fixup
  * 
  * @param offset The offset of where to perform the fixup (from some base address/index)
- * @param value The fixed up value
+ * @param value The fixed up value, or {@code null} if this fixup is unsupported
  * @param size The size of the fixup in bytes
  * @param symbol The symbol associated with the fixup (could be null)
  * @param libOrdinal The library ordinal associated with the fixup (could be null)
  */
-public record DyldFixup(long offset, long value, int size, String symbol, Integer libOrdinal) {}
+public record DyldFixup(long offset, Long value, int size, String symbol, Integer libOrdinal) {}

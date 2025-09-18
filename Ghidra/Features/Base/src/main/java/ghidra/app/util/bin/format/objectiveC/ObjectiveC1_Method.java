@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.objectiveC;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC1_Method extends ObjectiveC_Method {
 	private String name;
@@ -46,9 +44,10 @@ public class ObjectiveC1_Method extends ObjectiveC_Method {
 	}
 	@Override
 	public long getImplementation() {
-		return address & Conv.INT_MASK;
+		return Integer.toUnsignedLong(address);
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("objc_method", 0);
 		struct.setCategoryPath(ObjectiveC1_Constants.CATEGORY_PATH);

@@ -29,9 +29,10 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRefreshSelectedMemoryAction;
-import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
+import ghidra.debug.api.action.AutoReadMemorySpec;
+import ghidra.debug.api.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectChangeRecord;
@@ -149,8 +150,7 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoRead;
 	protected RefreshSelectedMemoryAction actionRefreshSelected;
 
-	private final AutoReadMemorySpec defaultAutoSpec =
-		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+	private final AutoReadMemorySpec defaultAutoSpec = BasicAutoReadMemorySpec.VIS_RO_ONCE;
 
 	@AutoConfigStateField(codec = AutoReadMemorySpecConfigFieldCodec.class)
 	protected AutoReadMemorySpec autoSpec = defaultAutoSpec;

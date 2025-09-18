@@ -192,6 +192,11 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 		}
 
 		@Override
+		public Class<?> getOutputType() {
+			return void.class;
+		}
+
+		@Override
 		public PcodeUseropLibrary<?> getDefiningLibrary() {
 			return syslib;
 		}

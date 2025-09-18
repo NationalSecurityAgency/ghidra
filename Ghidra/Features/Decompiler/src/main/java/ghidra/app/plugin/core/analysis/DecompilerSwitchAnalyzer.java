@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	// cache for pcode callother injection payloads
 	private HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<>();
 
-	private boolean hitNonReturningFunction = false;
+	private boolean hitNonReturningThunkFunction = false;
 
 
 //==================================================================================================
@@ -103,12 +103,12 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
-			List<Function> definedFunctions = new ArrayList<>();
-			List<Function> undefinedFunctions = new ArrayList<>();
+			Collection<Function> definedFunctions = new HashSet<>();
+			Collection<Function> undefinedFunctions = new HashSet<>();
 			findFunctions(program, locations, definedFunctions, undefinedFunctions, monitor);
 
-			if (hitNonReturningFunction) {
-				hitNonReturningFunction = false;
+			if (hitNonReturningThunkFunction) {
+				hitNonReturningThunkFunction = false;
 				// if hit a non-returning function, code needs to be fixed up
 				//  before wasting time on analyzing potentially bad code
 				// This will also clean out locations that were thunks for the next go round.
@@ -209,8 +209,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			}
 			// kids, don't do thunks
 			if (function.isThunk()) {
+				// unless they are non-returning
 				if (function.hasNoReturn()) {
-					hitNonReturningFunction = true;
+					hitNonReturningThunkFunction = true;
 				}
 				continue;
 			}
@@ -428,7 +429,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						program.getFunctionManager().getFunctionContaining(location);
 					if (fixupFunc != null) {
 						CreateFunctionCmd.fixupFunctionBody(program, fixupFunc, monitor);
-						// send function back, so non-returning nature will be picked up by decompiler
+						// send function back, so non-returning nature will be picked up
 						if (fixupFunc.hasNoReturn()) {
 							return fixupFunc;
 						}
@@ -479,7 +480,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
 
 			final AtomicInteger foundCount = new AtomicInteger(0);
-			SymbolicPropogator prop = new SymbolicPropogator(program);
+			SymbolicPropogator prop = new SymbolicPropogator(program,false);
 			prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
 				new ContextEvaluatorAdapter() {
 					@Override

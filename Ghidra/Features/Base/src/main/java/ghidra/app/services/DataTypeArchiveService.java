@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A service that manages a set of data type archives, allowing re-use of already open
- * archives.
+ * A service that manages a set of data type archives, allowing re-use of already open archives.
  */
 //@formatter:off
 @ServiceInfo(
@@ -95,12 +94,12 @@ public interface DataTypeArchiveService {
 	 * Opens the specified project-located data type archive.
 	 *  
 	 * @param domainFile archive file located in the current project
-	 * @param monitor {@link TaskMonitor} to display progess during the opening
+	 * @param monitor {@link TaskMonitor} to display progress during the opening
 	 * @return the data type archive 
 	 * @throws IOException if an i/o error occurs opening the data type archive
 	 * @throws DuplicateIdException if another archive with the same ID is already open
-	 * @throws VersionException
-	 * @throws CancelledException
+	 * @throws VersionException if there is a version exception
+	 * @throws CancelledException if the user cancels
 	 */
 	public DataTypeManager openArchive(DomainFile domainFile, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException, DuplicateIdException;
@@ -127,6 +126,5 @@ public interface DataTypeArchiveService {
 	@Deprecated
 	public Archive openArchive(File file, boolean acquireWriteLock)
 			throws IOException, DuplicateIdException;
-
 
 }

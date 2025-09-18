@@ -28,6 +28,7 @@ import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.tree.GTreeNode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -41,7 +42,8 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
-import ghidra.framework.main.datatree.*;
+import ghidra.framework.main.datatree.DataTree;
+import ghidra.framework.main.datatree.JavaFileListHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -168,7 +170,7 @@ public class ImporterPlugin extends Plugin
 			return false;
 		}
 		return loadSpec.getLoader()
-				.getDefaultOptions(provider, loadSpec, null, false)
+				.getDefaultOptions(provider, loadSpec, null, false, false)
 				.stream()
 				.anyMatch(e -> e.getName()
 						.equals(AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME));
@@ -441,17 +443,14 @@ public class ImporterPlugin extends Plugin
 	}
 
 	private static DomainFolder getFolderFromContext(ActionContext context) {
+		DomainFolder folder = null;
 		Object contextObj = context.getContextObject();
-		if (contextObj instanceof DomainFolderNode) {
-			DomainFolderNode node = (DomainFolderNode) contextObj;
-			return node.getDomainFolder();
+		if (contextObj instanceof GTreeNode dataTreeNode) {
+			folder = DataTree.getRealInternalFolderForNode(dataTreeNode);
 		}
-		if (contextObj instanceof DomainFileNode) {
-			DomainFileNode node = (DomainFileNode) contextObj;
-			DomainFile domainFile = node.getDomainFile();
-			return domainFile != null ? domainFile.getParent() : null;
+		if (folder != null && folder.isInWritableProject()) {
+			return folder;
 		}
-
 		return AppInfo.getActiveProject().getProjectData().getRootFolder();
 	}
 
@@ -525,7 +524,7 @@ public class ImporterPlugin extends Plugin
 		Program program = manager.getCurrentProgram();
 
 		TaskLauncher.launchModal("Show Load Libraries Dialog", monitor -> {
-			ImporterUtilities.showLoadLibrariesDialog(program, tool, manager, monitor);
+			ImporterUtilities.showLoadLibrariesDialog(program, tool, monitor);
 		});
 	}
 

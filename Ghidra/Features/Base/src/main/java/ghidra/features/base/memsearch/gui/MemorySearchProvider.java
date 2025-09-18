@@ -698,10 +698,18 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
+	protected ActionContext createContext(Component focusedComponent, Object contextObject) {
 		ActionContext context = new NavigatableActionContext(this, navigatable);
 		context.setContextObject(contextObject);
-		context.setSourceComponent(sourceComponent);
+
+		// the 'sourceComponent' will be the focused item if the focus owner is in our provider, 
+		// otherwise it will be the main component
+		context.setSourceObject(focusedComponent);
+
+		// we make the source component be the table so that the 'activate filter' action works
+		// from anywhere in this provider
+		GhidraTable table = resultsPanel.getTable();
+		context.setSourceComponent(table);
 		return context;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.framework.GModule;
 public abstract class ApplicationLayout {
 
 	protected ApplicationProperties applicationProperties;
-	protected Collection<ResourceFile> applicationRootDirs;
+	protected SequencedCollection<ResourceFile> applicationRootDirs;
 	protected ResourceFile applicationInstallationDir;
 	protected Map<String, GModule> modules;
 	protected File userTempDir;
@@ -55,9 +55,9 @@ public abstract class ApplicationLayout {
 	/**
 	 * Gets the application root directories from the application layout.
 	 *
-	 * @return A collection of application root directories (or null if not set).
+	 * @return A {@link SequencedCollection} of application root directories (or null if not set).
 	 */
-	public final Collection<ResourceFile> getApplicationRootDirs() {
+	public final SequencedCollection<ResourceFile> getApplicationRootDirs() {
 		return applicationRootDirs;
 	}
 

@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import ghidra.program.database.*;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Data type merge tests for aligned data types.
@@ -654,7 +653,7 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 				Structure s =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
-				dtm.remove(s, TaskMonitor.DUMMY);
+				dtm.remove(s);
 
 				// Offsets change to 0,2,4,8.
 				Structure intStruct =

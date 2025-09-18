@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.datamgr;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.awt.Container;
@@ -959,12 +960,32 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Now also turn off typedefs
 		performAction(action, provider, false);
 		dialog = waitForDialogComponent(DtFilterDialog.class);
-		setToggleButtonSelected(dialog.getComponent(), "StructuresTypedefs", false);
+		setToggleButtonSelected(dialog.getComponent(), "StructuresTypeDefs", false);
 		pressButtonByText(dialog, "OK");
 		waitForTree();
 
 		assertStructures(false);
 		assertType("TypeDefToMyStruct", false);
+	}
+
+	@Test
+	public void testFilter_Structures_HideTypeDefs() {
+
+		assertStructures(true);
+		assertType("TypeDefToMyStruct", true);
+
+		// press the filter button
+		DockingActionIf action = getAction(plugin, "Show Filter");
+		performAction(action, provider, false);
+		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
+
+		// turn off Structure TypeDefs
+		setToggleButtonSelected(dialog.getComponent(), "StructuresTypeDefs", false);
+		pressButtonByText(dialog, "OK");
+		waitForTree();
+
+		assertStructures(true); // still have structures
+		assertType("TypeDefToMyStruct", false); // no longer have structure typedefs
 	}
 
 	@Test
@@ -1058,14 +1079,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private Map<String, DataTypeNode> getNodes(DataTypeManager dtm) {
-	
+
 		DataTypeArchiveGTree gTree = provider.getGTree();
 		GTreeNode rootNode = gTree.getViewRoot();
 		GTreeNode dtmNode = rootNode.getChild(dtm.getName());
 		assertNotNull(dtmNode);
-	
+
 		expandNode(dtmNode);
-	
+
 		Map<String, DataTypeNode> nodesByName = new HashMap<>();
 		Iterator<GTreeNode> it = dtmNode.iterator(true);
 		for (GTreeNode node : CollectionUtils.asIterable(it)) {
@@ -1076,7 +1097,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			DataType dt = dtNode.getDataType();
 			nodesByName.put(dt.getName(), dtNode);
 		}
-	
+
 		return nodesByName;
 	}
 

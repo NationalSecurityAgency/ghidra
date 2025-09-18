@@ -56,6 +56,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
@@ -123,9 +124,9 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			dialog = new DataTypeSelectionDialog(tool, program.getDataTypeManager(), -1,
 				AllowedDataTypes.ALL) {
 				@Override
-				protected DataTypeSelectionEditor createEditor(PluginTool pluginTool,
+				protected DataTypeSelectionEditor createEditor(ServiceProvider sp,
 						AllowedDataTypes allowedDataTypes) {
-					return new DataTypeSelectionEditor(null, pluginTool, allowedDataTypes) {
+					return new DataTypeSelectionEditor(null, sp, allowedDataTypes) {
 
 						@Override
 						protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(

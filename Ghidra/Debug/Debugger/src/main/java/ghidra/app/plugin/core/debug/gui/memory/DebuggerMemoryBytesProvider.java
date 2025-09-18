@@ -43,12 +43,11 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
-import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
-import ghidra.debug.api.action.GoToInput;
-import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
 import ghidra.features.base.memsearch.bytesource.EmptyByteSource;
@@ -56,8 +55,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -66,7 +64,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
@@ -100,8 +97,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 		}
 
-		private void bytesChanged(TraceAddressSpace space) {
-			if (space.getAddressSpace().isMemorySpace()) {
+		private void bytesChanged(AddressSpace space) {
+			if (space.isMemorySpace()) {
 				currCache.invalidate();
 				prevCache.invalidate();
 			}
@@ -216,8 +213,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 	}
 
-	private final AutoReadMemorySpec defaultReadMemorySpec =
-		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+	private final AutoReadMemorySpec defaultReadMemorySpec = BasicAutoReadMemorySpec.VIS_RO_ONCE;
 
 	private final DebuggerMemoryBytesPlugin myPlugin;
 

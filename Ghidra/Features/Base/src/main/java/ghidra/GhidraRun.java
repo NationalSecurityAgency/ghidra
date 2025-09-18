@@ -16,6 +16,8 @@
 package ghidra;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 import javax.swing.ToolTipManager;
 
@@ -23,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.framework.SplashScreen;
+import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.Application;
 import ghidra.framework.GhidraApplicationConfiguration;
@@ -77,6 +80,8 @@ public class GhidraRun implements GhidraLaunchable {
 			log.info("User temp directory: " + Application.getUserTempDirectory());
 			log.info("User cache directory: " + Application.getUserCacheDirectory());
 
+			writeLastRun();
+
 			initializeTooltips();
 
 			updateSplashScreenStatusMessage("Populating Ghidra help...");
@@ -97,6 +102,22 @@ public class GhidraRun implements GhidraLaunchable {
 		// Start main thread in GhidraThreadGroup
 		Thread mainThread = new Thread(new GhidraThreadGroup(), mainTask, "Ghidra");
 		mainThread.start();
+	}
+
+	private void writeLastRun() {
+		// Write the Ghidra installation location to the "lastrun" file
+		File settingsDir = Application.getUserSettingsDirectory();
+		ResourceFile rootDir = Application.getApplicationRootDirectory();
+		if (settingsDir != null && rootDir != null) {
+			File lastRunFile = new File(settingsDir.getParentFile(), "lastrun");
+			try {
+				Files.writeString(lastRunFile.toPath(),
+					rootDir.getParentFile().getCanonicalPath() + "\n");
+			}
+			catch (IOException e) {
+				log.error("Failed to write 'lastrun' file", e);
+			}
+		}
 	}
 
 	private String processArguments(String[] args) {

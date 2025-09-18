@@ -1,5 +1,5 @@
 # Getting Started with Ghidra
-The information provided in this document is effective as of Ghidra 11.4 and is subject to change 
+The information provided in this document is effective as of Ghidra 12.0 and is subject to change 
 with future releases.
 
 ## Table of Contents
@@ -65,6 +65,8 @@ a specific need.
 ## Installing Ghidra
 To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem destination
 using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
+
+__NOTE:__ Do not extract Ghidra on top of an existing installation.
 
 ### Installation Notes
 * Ghidra does not use a traditional installer program.  Instead, the Ghidra distribution file is
@@ -214,7 +216,7 @@ binaries for your platform, you will need the following installed on your system
     App Store while _Command Line Tools for Xcode_ may be installed using the command:
     `xcode-select --install`.
   * __Linux/FreeBSD:__ the 64-bit versions of the following packages should installed:
-    * gcc/g++ or clang
+    * GCC or Clang
     * make
   * __Windows:__
       [Microsoft Visual Studio](https://visualstudio.microsoft.com/vs/community) 2017 or later, or 

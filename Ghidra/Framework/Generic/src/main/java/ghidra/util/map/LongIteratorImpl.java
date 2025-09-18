@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,8 @@ class LongIteratorImpl implements LongIterator {
 	/**
 	 * Returns true if the iterator has more indexes.
 	 */
-    public boolean hasNext(){
+    @Override
+	public boolean hasNext(){
 
 		if (doesHaveNext) {
 			return true;
@@ -93,7 +94,8 @@ class LongIteratorImpl implements LongIterator {
 	/**
 	 * Returns the next index in the iterator.
 	 */
-    public long next() {
+    @Override
+	public long next() {
 		if (hasNext()) {
 			doesHaveNext = false;
             doesHavePrevious = true;
@@ -105,7 +107,8 @@ class LongIteratorImpl implements LongIterator {
 	/**
 	 * Return true if the iterator has a previous index.
 	 */
-    public boolean hasPrevious() {
+    @Override
+	public boolean hasPrevious() {
         if (doesHavePrevious) {
 			return true;
 		}
@@ -116,7 +119,8 @@ class LongIteratorImpl implements LongIterator {
 	/**
 	 * Returns the previous index in the iterator.
 	 */
-    public long previous() {
+    @Override
+	public long previous() {
         if (hasPrevious()) {
 			doesHavePrevious = false;
             doesHaveNext = true;

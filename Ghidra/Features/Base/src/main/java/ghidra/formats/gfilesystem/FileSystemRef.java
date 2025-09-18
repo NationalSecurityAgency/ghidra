@@ -80,4 +80,9 @@ public class FileSystemRef implements Closeable {
 			Msg.warn(this, "Unclosed FilesytemRef: " + fs.toString());
 		}
 	}
+
+	@Override
+	public String toString() {
+		return fs.getFSRL().toString();
+	}
 }

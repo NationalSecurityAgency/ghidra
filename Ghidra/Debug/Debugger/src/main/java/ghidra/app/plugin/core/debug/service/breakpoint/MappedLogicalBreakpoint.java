@@ -28,8 +28,8 @@ import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
@@ -309,8 +309,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints() {
-		Set<TraceBreakpoint> result = new HashSet<>();
+	public Set<TraceBreakpointLocation> getTraceBreakpoints() {
+		Set<TraceBreakpointLocation> result = new HashSet<>();
 		synchronized (traceBreaks) {
 			for (TraceBreakpointSet breaks : traceBreaks.values()) {
 				result.addAll(breaks.getBreakpoints());
@@ -320,7 +320,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Set<TraceBreakpoint> getTraceBreakpoints(Trace trace) {
+	public Set<TraceBreakpointLocation> getTraceBreakpoints(Trace trace) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(trace);
@@ -400,7 +400,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return progMode.combineTrace(traceMode, Perspective.TRACE);
 	}
 
-	protected TraceMode computeTraceModeForLocation(TraceBreakpoint loc) {
+	protected TraceMode computeTraceModeForLocation(TraceBreakpointLocation loc) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(loc.getTrace());
@@ -412,7 +412,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public State computeStateForLocation(TraceBreakpoint loc) {
+	public State computeStateForLocation(TraceBreakpointLocation loc) {
 		ProgramMode progMode = progBreak.computeMode();
 		TraceMode traceMode = computeTraceModeForLocation(loc);
 		return progMode.combineTrace(traceMode, Perspective.TRACE);
@@ -478,7 +478,8 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean canMerge(TraceBreakpoint breakpoint, long snap) throws TrackedTooSoonException {
+	public boolean canMerge(TraceBreakpointLocation breakpoint, long snap)
+			throws TrackedTooSoonException {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());
@@ -530,7 +531,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean trackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean trackBreakpoint(TraceBreakpointLocation breakpoint) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());
@@ -556,7 +557,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean untrackBreakpoint(TraceBreakpoint breakpoint) {
+	public boolean untrackBreakpoint(TraceBreakpointLocation breakpoint) {
 		TraceBreakpointSet breaks;
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(breakpoint.getTrace());

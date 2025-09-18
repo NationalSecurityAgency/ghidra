@@ -35,6 +35,7 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * The interface for the methods that collect desired taint information from the decompiler window and store them
@@ -92,6 +93,8 @@ public interface TaintState extends ExtensionPoint {
 	 */
 	public boolean queryIndex(Program program, PluginTool tool, QueryType queryType);
 
+	public String getQueryName();
+
 	public TaintLabel toggleMark(MarkType mtype, ClangToken token) throws PcodeException;
 
 	public Set<TaintLabel> getTaintLabels(MarkType mtype);
@@ -121,9 +124,11 @@ public interface TaintState extends ExtensionPoint {
 	// predicate that indicates there are sources, sinks, or gates.
 	public boolean hasMarks();
 
-	public boolean wasCancelled();
+	public void setMonitor(TaskMonitor monitor);
 
-	public void setCancellation(boolean status);
+	public boolean isCancelled();
+
+	public void cancel();
 
 	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta);
 

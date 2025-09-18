@@ -17,22 +17,6 @@
 
 namespace ghidra {
 
-const int4 BooleanExpressionMatch::maxDepth = 1;
-
-bool BooleanExpressionMatch::verifyCondition(PcodeOp *op, PcodeOp *iop)
-
-{
-  int4 res = BooleanMatch::evaluate(op->getIn(1), iop->getIn(1), maxDepth);
-  if (res == BooleanMatch::uncorrelated)
-    return false;
-  matchflip = (res == BooleanMatch::complementary);
-  if (op->isBooleanFlip())
-    matchflip = !matchflip;
-  if (iop->isBooleanFlip())
-    matchflip = !matchflip;
-  return true;
-}
-
 /// \brief Calculate boolean array of all address spaces that have had a heritage pass run.
 ///
 /// Used to test if all the links out of the iblock have been calculated.
@@ -106,14 +90,6 @@ bool ConditionalExecution::verifySameCondition(void)
 
   if (tester.getFlip())
     init2a_true = !init2a_true;
-  int4 multislot = tester.getMultiSlot();
-  if (multislot != -1) {
-    // This is a direct split
-    directsplit = true;
-    posta_outslot = (multislot == prea_inslot) ? 0 : 1;
-    if (init2a_true)
-      posta_outslot = 1 - posta_outslot;
-  }
   return true;
 }
 
@@ -126,15 +102,12 @@ bool ConditionalExecution::testMultiRead(Varnode *vn,PcodeOp *op)
 
 {
   if (op->getParent() == iblock) {
-    if (!directsplit) {
-      if (op->code() == CPUI_COPY) // The COPY is tested separately
-	return true;		// If the COPY's output reads can be altered, then -vn- can be altered
-      return false;
-    }
+    if (op->code() == CPUI_COPY || op->code() == CPUI_SUBPIECE) // The copy-like tested separately
+      return true;		// If the COPY's output reads can be altered, then -vn- can be altered
+    return false;
   }
   if (op->code() == CPUI_RETURN) {
     if ((op->numInput() < 2)||(op->getIn(1) != vn)) return false; // Only test for flow thru to return value
-    returnop.push_back(op);	// mark that CPUI_RETURN needs special handling
   }
   return true;
 }
@@ -148,78 +121,72 @@ bool ConditionalExecution::testOpRead(Varnode *vn,PcodeOp *op)
 
 {
   if (op->getParent() == iblock) return true;
-  if ((op->code() == CPUI_RETURN)&&(!directsplit)) {
-    if ((op->numInput() < 2)||(op->getIn(1) != vn)) return false; // Only test for flow thru to return value
-    PcodeOp *copyop = vn->getDef();
-    if (copyop->code() == CPUI_COPY) {
-      // Ordinarily, if -vn- is produced by a COPY we want to return false here because the propagation
-      // hasn't had time to happen here.  But if the flow is into a RETURN this can't propagate, so
-      // we allow this as a read that can be altered.  (We have to move the COPY)
-      Varnode *invn = copyop->getIn(0);
-      if (!invn->isWritten()) return false;
+  PcodeOp *writeOp = vn->getDef();
+  OpCode opc = writeOp->code();
+  if (opc == CPUI_COPY || opc == CPUI_SUBPIECE || opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+    if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+      if (!writeOp->getIn(1)->isConstant())
+	return false;
+    }
+    Varnode *invn = writeOp->getIn(0);
+    if (invn->isWritten()) {
       PcodeOp *upop = invn->getDef();
       if ((upop->getParent() == iblock)&&(upop->code() != CPUI_MULTIEQUAL))
 	return false;
-      returnop.push_back(op);
-      return true;
     }
+    else if (invn->isFree())
+      return false;
+    return true;
   }
   return false;
 }
 
-/// \brief Prebuild a replacement MULTIEQUAL for output Varnode of the given PcodeOp in \b posta_block
-///
-/// The new op will hold the same data-flow as the original Varnode once a new
-/// edge into \b posta_block is created.
-/// \param op is the given PcodeOp
-void ConditionalExecution::predefineDirectMulti(PcodeOp *op)
+/// \param inbranch is the iblock incoming branch to pullback through
+/// \return the output of the previous pullback op, or null
+Varnode *ConditionalExecution::findPullback(int4 inbranch)
 
 {
-  PcodeOp *newop = fd->newOp(posta_block->sizeIn()+1,posta_block->getStart());
-  Varnode *outvn = op->getOut();
-  Varnode *newoutvn;
-  newoutvn = fd->newVarnodeOut(outvn->getSize(),outvn->getAddr(),newop);
-  fd->opSetOpcode(newop,CPUI_MULTIEQUAL);
-  Varnode *vn;
-  int4 inslot = iblock->getOutRevIndex(posta_outslot);
-  for(int4 i=0;i<posta_block->sizeIn();++i) {
-    if (i==inslot)
-      vn = op->getIn(1-camethruposta_slot);
-    else
-      vn = newoutvn;
-    fd->opSetInput(newop,vn,i);
-  }
-  fd->opSetInput(newop,op->getIn(camethruposta_slot),posta_block->sizeIn());
-  fd->opInsertBegin(newop,posta_block);
-
-  // Cache this new data flow holder
-  replacement[posta_block->getIndex()] = newoutvn;
+  while(pullback.size() <= inbranch)
+    pullback.push_back((Varnode *)0);
+  return pullback[inbranch];
 }
 
-/// In the \e direct \e split case, MULTIEQUALs in the body block (\b posta_block)
-/// must update their flow to account for \b iblock being removed and a new
-/// block flowing into the body block.
-void ConditionalExecution::adjustDirectMulti(void)
+/// Create a duplicate PcodeOp outside the iblock. The first input to the PcodeOp can
+/// be defined by a MULTIEQUAL in the iblock, in which case the duplicate's input will be
+/// selected from the MULTIEQUAL input.  Any other inputs must be constants.
+/// \param op is the PcodeOp in the iblock being replaced
+/// \param inbranch is the direction to pullback from
+/// \return the output Varnode of the new op
+Varnode *ConditionalExecution::pullbackOp(PcodeOp *op,int4 inbranch)
 
 {
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *op;
-  iter = posta_block->beginOp();
-  int4 inslot = iblock->getOutRevIndex(posta_outslot);
-  while(iter != posta_block->endOp()) {
-    op = *iter++;
-    if (op->code() != CPUI_MULTIEQUAL) continue;
-    Varnode *vn = op->getIn(inslot);
-    if (vn->isWritten()&&(vn->getDef()->getParent() == iblock)) {
-      if (vn->getDef()->code() != CPUI_MULTIEQUAL)
-	throw LowlevelError("Cannot push non-trivial operation");
-      // Flow that stays in iblock, comes from modified side
-      fd->opSetInput(op,vn->getDef()->getIn(1-camethruposta_slot),inslot);
-      // Flow from unmodified side, forms new branch
-      vn = vn->getDef()->getIn(camethruposta_slot);
+  Varnode *invn = findPullback(inbranch);	// Look for pullback constructed for a previous read
+  if (invn != (Varnode *)0)
+    return invn;
+  invn = op->getIn(0);
+  BlockBasic *bl;
+  if (invn->isWritten()) {
+    PcodeOp *defOp = invn->getDef();
+    if (defOp->getParent() == iblock) {
+      bl = (BlockBasic *)iblock->getIn(inbranch);
+      invn = defOp->getIn(inbranch);		// defOp must by MULTIEQUAL
     }
-    fd->opInsertInput(op,vn,op->numInput());
+    else
+      bl = (BlockBasic *)iblock->getImmedDom();
   }
+  else {
+    bl = (BlockBasic *)iblock->getImmedDom();
+  }
+  PcodeOp *newOp = fd->newOp(op->numInput(),op->getAddr());
+  Varnode *origOutVn = op->getOut();
+  Varnode *outVn = fd->newVarnodeOut(origOutVn->getSize(),origOutVn->getAddr(),newOp);
+  fd->opSetOpcode(newOp,op->code());
+  fd->opSetInput(newOp,invn,0);
+  for(int4 i=1;i<op->numInput();++i)
+    fd->opSetInput(newOp,op->getIn(i),i);
+  fd->opInsertEnd(newOp, bl);
+  pullback[inbranch] = outVn;		// Cache pullback in case there are other reads
+  return outVn;
 }
 
 /// \brief Create a MULTIEQUAL in the given block that will hold data-flow from the given PcodeOp
@@ -247,6 +214,68 @@ Varnode *ConditionalExecution::getNewMulti(PcodeOp *op,BlockBasic *bl)
 
   fd->opInsertBegin(newop,bl);
   return newoutvn;
+}
+
+/// Given an op in the \b iblock and the basic block of another op that reads the output Varnode,
+/// calculate the replacement Varnode for the read.
+/// \param op is the given op in the \b iblock
+/// \param bl is the basic block of the read
+/// \return the replacement Varnode
+Varnode *ConditionalExecution::resolveRead(PcodeOp *op,BlockBasic *bl)
+
+{
+  Varnode *res;
+  if (bl->sizeIn()==1) {
+    // Since dominator is iblock, In(0) must be iblock
+    // Figure what side of -iblock- we came through
+    int4 slot = (bl->getInRevIndex(0) == posta_outslot) ? camethruposta_slot : 1-camethruposta_slot;
+    res = resolveIblockRead(op,slot);
+  }
+  else
+    res = getNewMulti(op,bl);
+  return res;
+}
+
+/// \param op is the \b iblock op whose output is being read
+/// \param inbranch is the known direction of the reading op
+/// \return the replacement Varnode to use for the read
+Varnode *ConditionalExecution::resolveIblockRead(PcodeOp *op,int4 inbranch)
+
+{
+  if (op->code() == CPUI_COPY) {
+    Varnode *vn = op->getIn(0);
+    if (vn->isWritten()) {
+      PcodeOp *defOp = vn->getDef();
+      if (defOp->code() == CPUI_MULTIEQUAL && defOp->getParent() == iblock)
+	op = defOp;
+    }
+    else
+      return vn;
+  }
+  OpCode opc = op->code();
+  if (opc == CPUI_MULTIEQUAL)
+   return op->getIn(inbranch);
+  else if (opc == CPUI_SUBPIECE || opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+    return pullbackOp(op, inbranch);
+  }
+  throw LowlevelError("Conditional execution: Illegal op in iblock");
+}
+
+/// \brief Get the replacement Varnode for the output of a MULTIEQUAL in the \b iblock, given the op reading it
+///
+/// \param op is the MULTIEQUAL from \b iblock
+/// \param readop is the PcodeOp reading the output Varnode
+/// \param slot is the input slot being read
+/// \return the Varnode to use as a replacement
+Varnode *ConditionalExecution::getMultiequalRead(PcodeOp *op,PcodeOp *readop,int4 slot)
+
+{
+  BlockBasic *bl = readop->getParent();
+  BlockBasic *inbl = (BlockBasic *)bl->getIn(slot);
+  if (inbl != iblock)
+    return getReplacementRead(op, inbl);
+  int4 s = (bl->getInRevIndex(slot) == posta_outslot) ? camethruposta_slot : 1-camethruposta_slot;
+  return resolveIblockRead(op,s);
 }
 
 /// \brief Find a replacement Varnode for the output of the given PcodeOp that is read in the given block
@@ -278,15 +307,7 @@ Varnode *ConditionalExecution::getReplacementRead(PcodeOp *op,BlockBasic *bl)
     replacement[bl->getIndex()] = (*iter).second;
     return (*iter).second;
   }
-  Varnode *res;
-  if (curbl->sizeIn()==1) {
-    // Since dominator is iblock, In(0) must be iblock
-    // Figure what side of -iblock- we came through
-    int4 slot = (curbl->getInRevIndex(0) == posta_outslot) ? camethruposta_slot : 1-camethruposta_slot;
-    res = op->getIn(slot);
-  }
-  else
-    res = getNewMulti(op,curbl);
+  Varnode *res = resolveRead(op,curbl);
   replacement[curbl->getIndex()] = res;
   if (curbl != bl)
     replacement[bl->getIndex()] = res;
@@ -299,14 +320,8 @@ Varnode *ConditionalExecution::getReplacementRead(PcodeOp *op,BlockBasic *bl)
 void ConditionalExecution::doReplacement(PcodeOp *op)
 
 {
-  if (op->code() == CPUI_COPY) {
-    if (op->getOut()->hasNoDescend()) // Verify that this has been dealt with by fixReturnOp
-      return;
-    // It could be a COPY internal to iblock, we need to remove it like any other op
-  }
   replacement.clear();
-  if (directsplit)
-    predefineDirectMulti(op);
+  pullback.clear();
   Varnode *vn = op->getOut();
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
   while(iter != vn->endDescend()) {
@@ -315,20 +330,22 @@ void ConditionalExecution::doReplacement(PcodeOp *op)
     BlockBasic *bl = readop->getParent();
     Varnode *rvn;
     if (bl == iblock) {
-      if (directsplit)
-	fd->opSetInput(readop,op->getIn(1-camethruposta_slot),slot);	// We know op is MULTIEQUAL
-      else
-	fd->opUnsetInput(readop,slot);
+      fd->opUnsetInput(readop,slot);
     }
     else {
       if (readop->code() == CPUI_MULTIEQUAL) {
-	BlockBasic *inbl = (BlockBasic *)bl->getIn(slot);
-	if (inbl == iblock) {
-	  int4 s = (bl->getInRevIndex(slot) == posta_outslot) ? camethruposta_slot : 1-camethruposta_slot;
-	  rvn = op->getIn(s);
-	}
-	else
-	  rvn = getReplacementRead(op,inbl);
+	rvn = getMultiequalRead(op, readop, slot);
+      }
+      else if (readop->code() == CPUI_RETURN) {		// Cannot replace input of RETURN directly, create COPY to hold input
+	Varnode *retvn = readop->getIn(1);
+	PcodeOp *newcopyop = fd->newOp(1,readop->getAddr());
+	fd->opSetOpcode(newcopyop,CPUI_COPY);
+	Varnode *outvn = fd->newVarnodeOut(retvn->getSize(),retvn->getAddr(),newcopyop); // Preserve the CPUI_RETURN storage address
+	fd->opSetInput(readop,outvn,1);
+	fd->opInsertBefore(newcopyop,readop);
+	readop = newcopyop;
+	slot = 0;
+	rvn = getReplacementRead(op,bl);
       }
       else
 	rvn = getReplacementRead(op,bl);
@@ -336,28 +353,6 @@ void ConditionalExecution::doReplacement(PcodeOp *op)
     }
     // The last descendant is now gone
     iter = vn->beginDescend();
-  }
-}
-
-/// \brief Reproduce COPY data-flow into RETURN ops affected by the removal of \b iblock
-void ConditionalExecution::fixReturnOp(void)
-
-{
-  for(int4 i=0;i<returnop.size();++i) {
-    PcodeOp *retop = returnop[i];
-    Varnode *retvn = retop->getIn(1);
-    PcodeOp *iblockop = retvn->getDef();
-    Varnode *invn;
-    if (iblockop->code() == CPUI_COPY)
-      invn = iblockop->getIn(0); // This must either be from MULTIEQUAL or something written outside of iblock
-    else
-      invn = retvn;
-    PcodeOp *newcopyop = fd->newOp(1,retop->getAddr());
-    fd->opSetOpcode(newcopyop,CPUI_COPY);
-    Varnode *outvn = fd->newVarnodeOut(retvn->getSize(),retvn->getAddr(),newcopyop); // Preserve the CPUI_RETURN storage address
-    fd->opSetInput(newcopyop,invn,0);
-    fd->opSetInput(retop,outvn,1);
-    fd->opInsertBefore(newcopyop,retop);
   }
 }
 
@@ -385,6 +380,7 @@ bool ConditionalExecution::testRemovability(PcodeOp *op)
     if (op->code()==CPUI_INDIRECT) return false;
 
     vn = op->getOut();
+    if (vn->isAddrTied()) return false;
     if (vn != (Varnode *)0) {
       bool hasnodescend = true;
       for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
@@ -408,7 +404,6 @@ bool ConditionalExecution::verify(void)
 {
   prea_inslot = 0;
   posta_outslot = 0;
-  directsplit = false;
 
   if (!testIBlock()) return false;
   if (!findInitPre()) return false;
@@ -420,7 +415,6 @@ bool ConditionalExecution::verify(void)
   posta_block = (BlockBasic *)iblock->getOut(posta_outslot);
   postb_block = (BlockBasic *)iblock->getOut(1-posta_outslot);
 
-  returnop.clear();
   list<PcodeOp *>::const_iterator iter;
   iter = iblock->endOp();
   if (iter != iblock->beginOp())
@@ -456,50 +450,7 @@ bool ConditionalExecution::trial(BlockBasic *ib)
 {
   iblock = ib;
   if (!verify()) return false;
-
-  PcodeOp *cbranch_copy;
-  BlockBasic *initblock_copy;
-  BlockBasic *iblock_copy;
-  int4 prea_inslot_copy;
-  bool init2a_true_copy;
-  bool iblock2posta_true_copy;
-  int4 camethruposta_slot_copy;
-  int4 posta_outslot_copy;
-  BlockBasic *posta_block_copy;
-  BlockBasic *postb_block_copy;
-  bool directsplit_copy;
-
-  for(;;) {
-    if (!directsplit) return true;
-    // Save off the data for current iblock
-    cbranch_copy = cbranch;
-    initblock_copy = initblock;
-    iblock_copy = iblock;
-    prea_inslot_copy = prea_inslot;
-    init2a_true_copy = init2a_true;
-    iblock2posta_true_copy = iblock2posta_true;
-    camethruposta_slot_copy = camethruposta_slot;
-    posta_outslot_copy = posta_outslot;
-    posta_block_copy = posta_block;
-    postb_block_copy = postb_block;
-    directsplit_copy = directsplit;
-
-    iblock = posta_block;
-    if (!verify()) {
-      cbranch = cbranch_copy;
-      initblock = initblock_copy;
-      iblock = iblock_copy;
-      prea_inslot = prea_inslot_copy;
-      init2a_true = init2a_true_copy;
-      iblock2posta_true = iblock2posta_true_copy;
-      camethruposta_slot = camethruposta_slot_copy;
-      posta_outslot = posta_outslot_copy;
-      posta_block = posta_block_copy;
-      postb_block = postb_block_copy;
-      directsplit = directsplit_copy;
-      return true;
-    }
-  }
+  return true;
 }
 
 /// We assume the last call to verify() returned \b true
@@ -508,31 +459,20 @@ void ConditionalExecution::execute(void)
 {
   list<PcodeOp *>::iterator iter;
   PcodeOp *op;
+  bool notdone;
 
-  fixReturnOp();		// Patch any data-flow thru to CPUI_RETURN
-  if (!directsplit) {
-    iter = iblock->beginOp();
-    while(iter != iblock->endOp()) {
-      op = *iter++;
-      if (!op->isBranch())
-	doReplacement(op);	// Remove all read refs of op
-      fd->opDestroy(op);	// Then destroy op
-    }
-    fd->removeFromFlowSplit(iblock,(posta_outslot != camethruposta_slot));
-  }
-  else {
-    adjustDirectMulti();
-    iter = iblock->beginOp();
-    while(iter != iblock->endOp()) {
-      op = *iter++;
-      if (op->code() == CPUI_MULTIEQUAL) { // Only adjust MULTIEQUALs
-	doReplacement(op);
-	fd->opDestroy(op);
-      }
-      // Branch stays, other operations stay
-    }
-    fd->switchEdge(iblock->getIn(camethruposta_slot),iblock,posta_block);
-  }
+  iter = iblock->endOp();		// Remove ops in reverse order
+  --iter;
+  do {
+    op = *iter;
+    notdone = iter != iblock->beginOp();
+    if (notdone)
+      --iter;
+    if (!op->isBranch())
+      doReplacement(op);	// Remove all read refs of op
+    fd->opDestroy(op);	// Then destroy op
+  } while(notdone);
+  fd->removeFromFlowSplit(iblock,(posta_outslot != camethruposta_slot));
 }
 
 int4 ActionConditionalExe::apply(Funcdata &data)

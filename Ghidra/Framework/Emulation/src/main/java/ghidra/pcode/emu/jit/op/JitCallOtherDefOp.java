@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
+import java.util.Objects;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowState.MiniDFState;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
@@ -38,6 +39,10 @@ import ghidra.program.model.pcode.PcodeOp;
 public record JitCallOtherDefOp(PcodeOp op, JitOutVar out, JitTypeBehavior type,
 		PcodeUseropDefinition<Object> userop, List<JitVal> args, List<JitTypeBehavior> inputTypes,
 		MiniDFState dfState) implements JitCallOtherOpIf, JitDefOp {
+
+	public JitCallOtherDefOp {
+		Objects.requireNonNull(type);
+	}
 
 	@Override
 	public boolean canBeRemoved() {

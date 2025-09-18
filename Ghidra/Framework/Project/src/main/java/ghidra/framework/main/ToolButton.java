@@ -21,7 +21,9 @@ import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 
@@ -33,6 +35,8 @@ import docking.dnd.*;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
+import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -507,7 +511,33 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			plugin.getActiveWorkspace().runTool(template);
 		}
 		else {
-			PluginTool tool = toolServices.launchTool(template.getName(), domainFiles);
+			List<DomainFile> files = new ArrayList<>();
+			domainFiles.forEach(file -> {
+				if (file.isLink()) {
+					if (file.getLinkInfo().isFolderLink()) {
+						return; // ignore folder links
+					}
+					AtomicReference<String> errorMsg = new AtomicReference<>();
+					LinkStatus status =
+						LinkHandler.getLinkFileStatus(file, error -> errorMsg.set(error));
+					if (status == LinkStatus.BROKEN) {
+						String msg = errorMsg.get();
+						String pathname = file.getPathname();
+						if (!msg.contains(pathname)) {
+							msg += ": " + pathname;
+						}
+						Msg.showError(this, getParent(), "Failed to Open File",
+							msg + ": " + file.getPathname());
+						return;
+					}
+				}
+				files.add(file);
+			});
+			if (files.isEmpty()) {
+				return;
+			}
+
+			PluginTool tool = toolServices.launchTool(template.getName(), files);
 			if (tool == null) {
 				Msg.showError(this, getParent(), "Failed to Launch Tool",
 					"Failed to launch " + template.getName() + " tool.\nSee log for details.");

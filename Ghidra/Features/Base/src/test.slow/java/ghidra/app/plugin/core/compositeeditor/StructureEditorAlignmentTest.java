@@ -145,7 +145,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 				(pAction instanceof DuplicateMultipleAction) || (pAction instanceof DeleteAction) ||
 				(pAction instanceof ArrayAction) ||
 				(pAction instanceof CreateInternalStructureAction) ||
-				(pAction instanceof ShowComponentPathAction) || (pAction instanceof ApplyAction)) {
+				(pAction instanceof ShowComponentPathAction) || (pAction instanceof ApplyAction) ||
+				(pAction instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(pAction, true);
 			}
 			else {

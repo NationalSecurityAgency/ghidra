@@ -77,6 +77,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void setUpTraceProgramViewListingTest() throws LanguageNotFoundException, IOException {
 		b = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY64_BE);
 		try (Transaction tx = b.startTransaction()) {
+			b.createRootObject("Target");
 			b.trace.getTimeManager().createSnapshot("Created");
 		}
 		memory = b.trace.getMemoryManager();

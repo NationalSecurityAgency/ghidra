@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -193,7 +193,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 		// get the resulting implied matches and verify that none of the matches that were already
 		// created
 		VTMatchSet impliedMatchSet = getVTMatchSet("Implied Match");
-		Assert.assertNotEquals("vtMatchSet does not exist", null, impliedMatchSet);
+		assertNotNull(impliedMatchSet);
 
 		// Now test that only the expected items are in this set for the given function we just
 		// applied
@@ -276,9 +276,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 	protected VTMatch getMatch(VTMatchSet matches, Address sourceAddress,
 			Address destinationAddress) {
 
-		Iterator<VTMatch> it = matches.getMatches().iterator();
-		while (it.hasNext()) {
-			VTMatch match = it.next();
+		for (VTMatch match : matches.getMatches()) {
 			if (match.getSourceAddress().equals(sourceAddress) &&
 				match.getDestinationAddress().equals(destinationAddress)) {
 				return match;

@@ -21,6 +21,8 @@ import java.util.*;
 
 import org.objectweb.asm.Opcodes;
 
+import ghidra.lifecycle.Unfinished;
+
 /**
  * The p-code type of an operand.
  * 
@@ -124,6 +126,9 @@ public interface JitType {
 		 * @return this type as an int
 		 */
 		SimpleJitType asInt();
+
+		@Override
+		SimpleJitType ext();
 	}
 
 	/**
@@ -200,6 +205,11 @@ public interface JitType {
 		@Override
 		public IntJitType asInt() {
 			return this;
+		}
+
+		@Override
+		public List<IntJitType> legTypes() {
+			return List.of(this);
 		}
 	}
 
@@ -278,6 +288,11 @@ public interface JitType {
 		public LongJitType asInt() {
 			return this;
 		}
+
+		@Override
+		public List<LongJitType> legTypes() {
+			return List.of(this);
+		}
 	}
 
 	/**
@@ -325,6 +340,11 @@ public interface JitType {
 		@Override
 		public IntJitType asInt() {
 			return IntJitType.I4;
+		}
+
+		@Override
+		public List<FloatJitType> legTypes() {
+			return List.of(this);
 		}
 	}
 
@@ -374,10 +394,20 @@ public interface JitType {
 		public LongJitType asInt() {
 			return LongJitType.I8;
 		}
+
+		@Override
+		public List<DoubleJitType> legTypes() {
+			return List.of(this);
+		}
 	}
 
 	/**
-	 * <b>WIP</b>: The p-code types for integers of size 9 and greater.
+	 * The p-code types for integers of size 9 and greater.
+	 * 
+	 * <p>
+	 * We take the strategy of inlined manipulation of int locals, composed to form the full
+	 * variable. When stored on the stack, the least-significant portion is always toward the top,
+	 * no matter the language endianness.
 	 * 
 	 * @param size the size in bytes
 	 */
@@ -432,22 +462,14 @@ public interface JitType {
 			return size % Integer.BYTES;
 		}
 
-		/**
-		 * Get the p-code type that describes the part of the variable in each leg
-		 * 
-		 * <p>
-		 * Each whole leg will have the type {@link IntJitType#I4}, and the partial leg, if
-		 * applicable, will have its appropriate smaller integer type.
-		 * 
-		 * @return the list of types, each fitting in a JVM int.
-		 */
-		public List<SimpleJitType> legTypes() {
+		@Override
+		public List<IntJitType> legTypes() {
 			IntJitType[] types = new IntJitType[legsAlloc()];
 			int i = 0;
 			if (partialSize() != 0) {
 				types[i++] = IntJitType.forSize(partialSize());
 			}
-			for (; i < legsWhole(); i++) {
+			for (; i < types.length; i++) {
 				types[i] = IntJitType.I4;
 			}
 			return Arrays.asList(types);
@@ -492,6 +514,11 @@ public interface JitType {
 		public MpFloatJitType ext() {
 			return this;
 		}
+
+		@Override
+		public List<SimpleJitType> legTypes() {
+			return Unfinished.TODO("MpFloat");
+		}
 	}
 
 	/**
@@ -526,4 +553,15 @@ public interface JitType {
 	 * @return the extended type
 	 */
 	JitType ext();
+
+	/**
+	 * Get the p-code type that describes the part of the variable in each leg
+	 * 
+	 * <p>
+	 * Each whole leg will have the type {@link IntJitType#I4}, and the partial leg, if applicable,
+	 * will have its appropriate smaller integer type.
+	 * 
+	 * @return the list of types, each fitting in a JVM int, in big-endian order.
+	 */
+	List<? extends SimpleJitType> legTypes();
 }

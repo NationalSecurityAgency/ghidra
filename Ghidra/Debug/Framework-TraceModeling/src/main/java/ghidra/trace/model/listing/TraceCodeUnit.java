@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Saveable;
 import ghidra.util.map.TypeMismatchException;
 
@@ -49,13 +48,6 @@ public interface TraceCodeUnit extends CodeUnit {
 
 	@Override
 	TraceProgramView getProgram();
-
-	/**
-	 * Get a key that can be used to obtain the same space in another manager
-	 * 
-	 * @return the space, including thread and frame, if applicable
-	 */
-	TraceAddressSpace getTraceSpace();
 
 	/**
 	 * Get the thread associated with this code unit

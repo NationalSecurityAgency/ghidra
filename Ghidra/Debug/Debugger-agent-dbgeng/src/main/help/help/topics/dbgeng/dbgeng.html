@@ -260,18 +260,38 @@ exdi:CLSID={29f9906e-9dbe-4d4b-b0fb-6acf7fb6d014},Kd=Guess,DataBreaks=Exdi
 
     <H2><A name="ttd"></A>TTD (Time-Travel Debugging)</H2>
 
-    <P>This is a nascent extension to our launcher for the Windows Debugger. The launcher itself
-    functions, but lacks full integration. In particular, Ghidra's concept of time is not mapped
-    directly to the TTD concept of time. TTD uses a major/minor scheme for ordering events, where
-    the major index changes when TTD must record a change in state. Events, including thread
-    creation/termination, module loads/unloads, syscalls, and other asynchronous changes, merit new
-    major indices. When you step forward or backward in a trace, the dbgeng API will increment and
-    decrement correspondingly. Ghidra, on the other hand, will only increment.</P>
+    <P>This is an extension to our launcher for the Windows Debugger to support TTD. WinDbg TTD
+    uses <CODE>event:ticks</CODE> to denote its times. This corresponds well to Ghidra's
+    <CODE>snapshot:steps</CODE> syntax, when we let snapshot be an event and ticks count the number
+    of instruction steps. Upon expanding the "Events" node in the Model tree, we create a snapshot
+    for every TTD event, including thread create/terminate, module load/unload, syscall, and other
+    asynchronous changes. Then, when Ghidra navigates to a schedule of the form
+    <CODE>snapshot:steps</CODE>, we command WinDbg to navigate to the corresponding
+    <CODE>event:ticks</CODE> instead of using Ghidra's emulator. Conversely, time navigation from
+    the WinDbg CLI will correspondingly navigate Ghidra. Thus, the two are synchronized in time. We
+    also add <EM>reverse</EM> variants of the <B>Go</B> and <B>Step</B> control commands.</P>
 
     <H3>Options</H3>
 
     <P>This launcher has basically the same options as the WinDbg launcher, except that arguments
     are not included and the DLL path must contain <TT>TTDReplay.dll</TT> and the scripts that
     implement TTD. These are most easily obtained by installing WinDbg Preview or later.</P>
+
+    <H3>Setup</H3>
+
+    <P>Depending on how you acquire WinDbg TTD, you may need to copy the installation to a
+    directory Ghidra is allowed to access. It's best not to try cherry-picking files. Just
+    copy/unpack the entire WinDbg installation. Point the launch dialog to the directory containing
+    <TT>dbgeng.dll</TT> as usual.</P>
+
+    <P><B>NOTE:</B> It's possible, especially if you have anti-virus software installed, that
+    <TT>dbghelp.dll</TT> is forcefully loaded into the Python process before our connector package
+    tries to load <TT>dbgeng.dll</TT>. This can cause <TT>dbghelp.dll</TT> to be loaded from
+    <TT>System32</TT>, but <TT>dbgeng.dll</TT> to be loaded from the WinDbg installation, often
+    leading to DLL compatibility problems. This usually manifests in module load and/or Python
+    import errors. The only real way to be sure is to use a system utility and inspect the DLLs
+    loaded by the <TT>python.exe</TT> process. You may be able to work around the issue by copying
+    <TT>dbghelp.dll</TT> (and any other affected WinDbg DLLs) from the WinDbg installation into
+    your Python installation, e.g., <TT>C:\Python313\dbghelp.dll</TT>.</P>
   </BODY>
 </HTML>

@@ -15,8 +15,8 @@
  */
 package ghidra.app.emulator;
 
-import generic.ULongSpan;
-import generic.ULongSpan.ULongSpanSet;
+import java.util.Arrays;
+
 import ghidra.app.emulator.memory.MemoryLoadImage;
 import ghidra.app.emulator.state.RegisterState;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -33,8 +33,7 @@ import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.pcoderaw.PcodeOpRaw;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
@@ -50,7 +49,8 @@ import ghidra.util.task.TaskMonitor;
  * should use the {@link PcodeEmulator} directly. Older use cases still being actively maintained
  * should begin work porting to {@link PcodeEmulator}. Old use cases without active maintenance may
  * try this wrapper, but may have to remain using {@link DefaultEmulator}. At a minimum, to update
- * such old use cases, `new Emulator(...)` must be replaced by `new DefaultEmulator(...)`.
+ * such old use cases, {@code new Emulator(...)} must be replaced by
+ * {@code new DefaultEmulator(...)}.
  */
 @Transitional
 public class AdaptedEmulator implements Emulator {
@@ -67,14 +67,12 @@ public class AdaptedEmulator implements Emulator {
 
 		@Override
 		protected PcodeExecutorState<byte[]> createSharedState() {
-			return new AdaptedBytesPcodeExecutorState(language,
-				new StateBacking(faultHandler, loadImage));
+			return new AdaptedBytesPcodeExecutorState(language, faultHandler, loadImage);
 		}
 
 		@Override
 		protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-			return new AdaptedBytesPcodeExecutorState(language,
-				new StateBacking(faultHandler, null));
+			return new AdaptedBytesPcodeExecutorState(language, faultHandler, null);
 		}
 
 		@Override
@@ -147,11 +145,50 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
-	record StateBacking(MemoryFaultHandler faultHandler, MemoryLoadImage loadImage) {}
+	class AdaptedStateCallbacks implements PcodeStateCallbacks {
+		private final MemoryLoadImage loadImage;
+
+		public AdaptedStateCallbacks(MemoryLoadImage loadImage) {
+			this.loadImage = loadImage;
+		}
+
+		@Override
+		public <A, T> AddressSetView readUninitialized(PcodeExecutorStatePiece<A, T> piece,
+				AddressSetView set) {
+			PcodeExecutorStatePiece<A, byte[]> bytesPiece =
+				PcodeStateCallbacks.checkValueDomain(piece, byte[].class);
+			if (bytesPiece == null) {
+				return set;
+			}
+			if (set.isEmpty()) {
+				return set;
+			}
+			AddressSpace space = set.getMinAddress().getAddressSpace();
+			if (loadImage == null) {
+				if (space.isUniqueSpace()) {
+					throw new AccessPcodeExecutionException(
+						"Attempted to read from uninitialized unique: " + set);
+				}
+				return set;
+			}
+			AddressRange bound = new AddressRangeImpl(set.getMinAddress(), set.getMaxAddress());
+			byte[] data = new byte[(int) bound.getLength()];
+			loadImage.loadFill(data, data.length, bound.getMinAddress(), 0, false);
+			for (AddressRange range : set) {
+				int offset = (int) range.getMinAddress().subtract(bound.getMinAddress());
+				byte[] portion = Arrays.copyOfRange(data, offset, offset + (int) range.getLength());
+				bytesPiece.setVarInternal(space, range.getMinAddress().getOffset(), portion.length,
+					portion);
+			}
+			return new AddressSet();
+		}
+	}
 
 	class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
-		public AdaptedBytesPcodeExecutorState(Language language, StateBacking backing) {
-			super(new AdaptedBytesPcodeExecutorStatePiece(language, backing));
+		public AdaptedBytesPcodeExecutorState(Language language, MemoryFaultHandler faultHandler,
+				MemoryLoadImage loadImage) {
+			super(new AdaptedBytesPcodeExecutorStatePiece(language,
+				new AdaptedStateCallbacks(loadImage), faultHandler));
 		}
 
 		@Override
@@ -193,63 +230,41 @@ public class AdaptedEmulator implements Emulator {
 
 	static class AdaptedBytesPcodeExecutorStatePiece
 			extends AbstractBytesPcodeExecutorStatePiece<AdaptedBytesPcodeExecutorStateSpace> {
-		private final StateBacking backing;
+		private final MemoryFaultHandler faultHandler;
 
-		public AdaptedBytesPcodeExecutorStatePiece(Language language, StateBacking backing) {
-			super(language);
-			this.backing = backing;
+		public AdaptedBytesPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb,
+				MemoryFaultHandler faultHandler) {
+			super(language, cb);
+			this.faultHandler = faultHandler;
 		}
 
 		@Override
-		protected AbstractSpaceMap<AdaptedBytesPcodeExecutorStateSpace> newSpaceMap() {
-			return new SimpleSpaceMap<>() {
-				@Override
-				protected AdaptedBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
-					return new AdaptedBytesPcodeExecutorStateSpace(language, space, backing);
-				}
-			};
+		protected AdaptedBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
+			return new AdaptedBytesPcodeExecutorStateSpace(language, space, this, faultHandler);
 		}
 	}
 
-	static class AdaptedBytesPcodeExecutorStateSpace
-			extends BytesPcodeExecutorStateSpace<StateBacking> {
+	static class AdaptedBytesPcodeExecutorStateSpace extends BytesPcodeExecutorStateSpace {
+		private final MemoryFaultHandler faultHandler;
+
 		public AdaptedBytesPcodeExecutorStateSpace(Language language, AddressSpace space,
-				StateBacking backing) {
-			super(language, space, backing);
+				AbstractBytesPcodeExecutorStatePiece<?> piece, MemoryFaultHandler faultHandler) {
+			super(language, space, piece);
+			this.faultHandler = faultHandler;
 		}
 
 		@Override
-		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
-			if (uninitialized.isEmpty()) {
-				return uninitialized;
-			}
-			if (backing.loadImage == null) {
-				if (space.isUniqueSpace()) {
-					throw new AccessPcodeExecutionException(
-						"Attempted to read from uninitialized unique: " + uninitialized);
-				}
-				return uninitialized;
-			}
-			ULongSpan bound = uninitialized.bound();
-			byte[] data = new byte[(int) bound.length()];
-			backing.loadImage.loadFill(data, data.length, space.getAddress(bound.min()), 0,
-				false);
-			for (ULongSpan span : uninitialized.spans()) {
-				bytes.putData(span.min(), data, (int) (span.min() - bound.min()),
-					(int) span.length());
-			}
-			return bytes.getUninitialized(bound.min(), bound.max());
-		}
-
-		@Override
-		protected void warnUninit(ULongSpanSet uninit) {
-			ULongSpan bound = uninit.bound();
-			byte[] data = new byte[(int) bound.length()];
-			if (backing.faultHandler.uninitializedRead(space.getAddress(bound.min()), data.length,
-				data, 0)) {
-				for (ULongSpan span : uninit.spans()) {
-					bytes.putData(span.min(), data, (int) (span.min() - bound.min()),
-						(int) span.length());
+		protected void warnUninit(AddressSetView uninitialized) {
+			AddressRange bound = new AddressRangeImpl(
+				uninitialized.getMinAddress(),
+				uninitialized.getMaxAddress());
+			byte[] data = new byte[(int) bound.getLength()];
+			if (faultHandler.uninitializedRead(bound.getMinAddress(), data.length, data, 0)) {
+				for (AddressRange range : uninitialized) {
+					int offset = (int) range.getMinAddress().subtract(bound.getMinAddress());
+					byte[] portion =
+						Arrays.copyOfRange(data, offset, offset + (int) range.getLength());
+					bytes.putData(range.getMinAddress().getOffset(), portion, 0, portion.length);
 				}
 			}
 		}

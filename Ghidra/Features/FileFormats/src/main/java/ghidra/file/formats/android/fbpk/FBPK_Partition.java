@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.RefType;
 import ghidra.util.task.TaskMonitor;
 
@@ -99,7 +97,8 @@ public abstract class FBPK_Partition implements StructConverter {
 	 * @param log the message log
 	 * @throws Exception if any exception occurs during markup
 	 */
-	public void markup(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+	public void markup(Program program, Address address, TaskMonitor monitor, MessageLog log)
+			throws Exception {
 		FlatProgramAPI api = new FlatProgramAPI(program);
 
 		DataType partitionDataType = toDataType();
@@ -112,8 +111,7 @@ public abstract class FBPK_Partition implements StructConverter {
 		}
 
 		program.getListing()
-				.setComment(address, CodeUnit.PLATE_COMMENT,
-					getName() + " - " + getPartitionIndex());
+				.setComment(address, CommentType.PLATE, getName() + " - " + getPartitionIndex());
 
 		api.createFragment(getName(), address, partitionDataType.getLength());
 

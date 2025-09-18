@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -484,7 +484,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// note: we want to test a specific code path, so we must delete more than 20 items
 
 		// add more to our current set
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01001110"), "Type1", "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01001120"), "Type1", "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01001120"), "Type1", "Cat1b", "Cmt1C"));
@@ -545,7 +545,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(addressSet.contains(addr("01001100")));
 		assertFalse(addressSet.contains(addr("01001120")));
 
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01001100"), "Type1", "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01001120"), "Type1", "Cat1a", "Cmt1B"));
 		applyCmd(program, addCmd);
@@ -558,7 +558,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDeleteOffcutBookmarks() throws Exception {
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		Address a = addr("0100b6db");
 		for (int i = 0; i < 20; i++) {
 			addCmd.add(new BookmarkEditCmd(a, "Type1", "Cat1a", "Cmt1A"));
@@ -706,7 +706,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		applyCmd(program, delCmd);
 
 		// Add specific bookmarks
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
+		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		addCmd.add(new BookmarkEditCmd(addr("01001010"), "Type1", "Cat1a", "Cmt1A"));
 		addCmd.add(new BookmarkEditCmd(addr("01001020"), "Type1", "Cat1a", "Cmt1B"));
 		addCmd.add(new BookmarkEditCmd(addr("01001020"), "Type1", "Cat1b", "Cmt1C"));

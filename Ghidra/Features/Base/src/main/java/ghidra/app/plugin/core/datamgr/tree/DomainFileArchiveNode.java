@@ -57,7 +57,7 @@ public abstract class DomainFileArchiveNode extends ArchiveNode {
 		DomainFile domainFile = ((DomainFileArchive) archive).getDomainFile();
 
 		isChanged = domainObject.isChanged();
-		isReadOnly = domainFile.isReadOnly();
+		isReadOnly = domainFile.isReadOnly() || !domainFile.isInWritableProject();
 		isHijacked = domainFile.isHijacked();
 		isVersioned = domainFile.isVersioned();
 		version = (isVersioned || !domainFile.canSave()) ? domainFile.getVersion()

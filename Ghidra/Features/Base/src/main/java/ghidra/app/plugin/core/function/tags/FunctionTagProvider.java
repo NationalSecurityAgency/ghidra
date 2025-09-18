@@ -126,8 +126,6 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		createActions();
 	}
 
-
-
 	@Override
 	public void componentShown() {
 		updateView();
@@ -445,7 +443,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 				dropped.add(name);
 			}
 			else {
-				Command cmd = new CreateFunctionTagCmd(name);
+				Command<Program> cmd = new CreateFunctionTagCmd(name);
 				tool.execute(cmd, program);
 			}
 		}

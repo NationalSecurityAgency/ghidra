@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +28,12 @@ public interface GhidraFileFilter {
      * A default implementation that shows all files.
      */
     public final static GhidraFileFilter ALL = new GhidraFileFilter() {
-        public String getDescription() {
+        @Override
+		public String getDescription() {
             return "All Files (*.*)";
         }
-        public boolean accept(File pathname, GhidraFileChooserModel model) {
+        @Override
+		public boolean accept(File pathname, GhidraFileChooserModel model) {
             return true;
         }
     };

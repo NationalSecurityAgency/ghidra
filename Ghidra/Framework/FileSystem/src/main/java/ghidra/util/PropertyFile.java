@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,23 +15,22 @@
  */
 package ghidra.util;
 
-import generic.stl.Pair;
-import ghidra.framework.store.FileSystem;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.xml.sax.*;
+
+import ghidra.framework.store.local.ItemPropertyFile;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.xml.XmlUtilities;
 import ghidra.xml.NonThreadedXmlPullParserImpl;
 import ghidra.xml.XmlElement;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
-import org.xml.sax.*;
-
 /**
- * Class that represents a file of property names and values. The file
- * extension used is PROPERTY_EXT.
- *
+ * {@link ItemPropertyFile} provides basic property storage.  The file extension 
+ * used is {@link #PROPERTY_EXT}.
  */
 public class PropertyFile {
 
@@ -40,15 +39,17 @@ public class PropertyFile {
 	 */
 	public final static String PROPERTY_EXT = ".prp";
 
-	private static final String FILE_ID = "FILE_ID";
-
 	protected File propertyFile;
 	protected String storageName;
-	protected String parentPath;
-	protected String name;
 
+	//@formatter:off
 	private static enum PropertyEntryType {
-		INT_TYPE("int"), LONG_TYPE("long"), BOOLEAN_TYPE("boolean"), STRING_TYPE("string");
+		INT_TYPE("int"), 
+		LONG_TYPE("long"), 
+		BOOLEAN_TYPE("boolean"), 
+		STRING_TYPE("string");
+	//@formatter:on
+
 		PropertyEntryType(String rep) {
 			this.rep = rep;
 		}
@@ -65,25 +66,25 @@ public class PropertyFile {
 		}
 	}
 
-	private HashMap<String, Pair<PropertyEntryType, String>> map =
-		new HashMap<String, Pair<PropertyEntryType, String>>();
+	private record PropertyMapEntry(PropertyEntryType entityType, String value) {
+		// no behaviors
+	}
+
+	private Map<String, PropertyMapEntry> basicInfoMap = new HashMap<String, PropertyMapEntry>();
 
 	/**
 	 * Construct a new or existing PropertyFile.
-	 * This form ignores retained property values for NAME and PARENT path.
-	 * @param dir parent directory
+	 * This constructor ignores retained property values for NAME and PARENT path.
+	 * This constructor will not throw an exception if the file does not exist.
+	 * @param dir native directory where this file is stored
 	 * @param storageName stored property file name (without extension)
-	 * @param parentPath path to parent
-	 * @param name name of the property file
-	 * @throws IOException 
+	 * @throws InvalidObjectException if a file parse error occurs
+	 * @throws IOException if an IO error occurs reading an existing file
 	 */
-	public PropertyFile(File dir, String storageName, String parentPath, String name)
-			throws IOException {
+	public PropertyFile(File dir, String storageName) throws IOException {
 		if (!dir.isAbsolute()) {
 			throw new IllegalArgumentException("dir must be specified by an absolute path");
 		}
-		this.name = name;
-		this.parentPath = parentPath;
 		this.storageName = storageName;
 		propertyFile = new File(dir, storageName + PROPERTY_EXT);
 		if (propertyFile.exists()) {
@@ -91,73 +92,31 @@ public class PropertyFile {
 		}
 	}
 
-	/**
-	 * Return the name of this PropertyFile.  A null value may be returned
-	 * if this is an older property file and the name was not specified at
-	 * time of construction.
-	 */
-	public String getName() {
-		return name;
+	protected boolean contains(String key) {
+		return basicInfoMap.containsKey(key);
 	}
 
 	/**
-	 * Returns true if file is writable
+	 * {@return true if file is read-only as reported by underlying native file-system}
 	 */
 	public boolean isReadOnly() {
 		return !propertyFile.canWrite();
 	}
 
 	/**
-	 * Return the path to this PropertyFile.  A null value may be returned
-	 * if this is an older property file and the name and parentPath was not specified at
-	 * time of construction.
+	 * {@return the native parent storage directory containing this PropertyFile.}
 	 */
-	public String getPath() {
-		if (parentPath == null || name == null) {
-			return null;
-		}
-		if (parentPath.length() == 1) {
-			return parentPath + name;
-		}
-		return parentPath + FileSystem.SEPARATOR_CHAR + name;
-	}
-
-	/**
-	 * Return the path to the parent of this PropertyFile.
-	 */
-	public String getParentPath() {
-		return parentPath;
-	}
-
-	/**
-	 * Return the parent file to this PropertyFile.
-	 */
-	public File getFolder() {
+	public File getParentStorageDirectory() {
 		return propertyFile.getParentFile();
 	}
 
 	/**
-	 * Return the storage name of this PropertyFile.  This name does not include the property
+	 * Return the native storage name for this PropertyFile.  This name does not include the property
 	 * file extension (.prp)
+	 * @return native storage name
 	 */
 	public String getStorageName() {
 		return storageName;
-	}
-
-	/**
-	 * Returns the FileID associated with this file.
-	 * @return FileID associated with this file
-	 */
-	public String getFileID() {
-		return getString(FILE_ID, null);
-	}
-
-	/**
-	 * Set the FileID associated with this file.
-	 * @param fileId
-	 */
-	public void setFileID(String fileId) {
-		putString(FILE_ID, fileId);
 	}
 
 	/**
@@ -167,13 +126,12 @@ public class PropertyFile {
 	 * @return int value
 	 */
 	public int getInt(String propertyName, int defaultValue) {
-		Pair<PropertyEntryType, String> pair = map.get(propertyName);
-		if (pair == null || pair.first != PropertyEntryType.INT_TYPE) {
+		PropertyMapEntry entry = basicInfoMap.get(propertyName);
+		if (entry == null || entry.entityType != PropertyEntryType.INT_TYPE) {
 			return defaultValue;
 		}
 		try {
-			String value = pair.second;
-			return Integer.parseInt(value);
+			return Integer.parseInt(entry.value);
 		}
 		catch (NumberFormatException e) {
 			return defaultValue;
@@ -186,8 +144,8 @@ public class PropertyFile {
 	 * @param value value to set
 	 */
 	public void putInt(String propertyName, int value) {
-		map.put(propertyName, new Pair<PropertyEntryType, String>(PropertyEntryType.INT_TYPE,
-			Integer.toString(value)));
+		basicInfoMap.put(propertyName,
+			new PropertyMapEntry(PropertyEntryType.INT_TYPE, Integer.toString(value)));
 	}
 
 	/**
@@ -197,13 +155,12 @@ public class PropertyFile {
 	 * @return long value
 	 */
 	public long getLong(String propertyName, long defaultValue) {
-		Pair<PropertyEntryType, String> pair = map.get(propertyName);
-		if (pair == null || pair.first != PropertyEntryType.LONG_TYPE) {
+		PropertyMapEntry entry = basicInfoMap.get(propertyName);
+		if (entry == null || entry.entityType != PropertyEntryType.LONG_TYPE) {
 			return defaultValue;
 		}
 		try {
-			String value = pair.second;
-			return Long.parseLong(value);
+			return Long.parseLong(entry.value);
 		}
 		catch (NumberFormatException e) {
 			return defaultValue;
@@ -216,8 +173,8 @@ public class PropertyFile {
 	 * @param value value to set
 	 */
 	public void putLong(String propertyName, long value) {
-		map.put(propertyName,
-			new Pair<PropertyEntryType, String>(PropertyEntryType.LONG_TYPE, Long.toString(value)));
+		basicInfoMap.put(propertyName,
+			new PropertyMapEntry(PropertyEntryType.LONG_TYPE, Long.toString(value)));
 	}
 
 	/**
@@ -227,12 +184,11 @@ public class PropertyFile {
 	 * @return string value
 	 */
 	public String getString(String propertyName, String defaultValue) {
-		Pair<PropertyEntryType, String> pair = map.get(propertyName);
-		if (pair == null || pair.first != PropertyEntryType.STRING_TYPE) {
+		PropertyMapEntry entry = basicInfoMap.get(propertyName);
+		if (entry == null || entry.entityType != PropertyEntryType.STRING_TYPE) {
 			return defaultValue;
 		}
-		String value = pair.second;
-		return value;
+		return entry.value;
 	}
 
 	/**
@@ -241,8 +197,13 @@ public class PropertyFile {
 	 * @param value value to set
 	 */
 	public void putString(String propertyName, String value) {
-		map.put(propertyName, new Pair<PropertyEntryType, String>(PropertyEntryType.STRING_TYPE,
-			value));
+		if (value == null) {
+			basicInfoMap.remove(propertyName);
+		}
+		else {
+			basicInfoMap.put(propertyName,
+				new PropertyMapEntry(PropertyEntryType.STRING_TYPE, value));
+		}
 	}
 
 	/**
@@ -252,12 +213,11 @@ public class PropertyFile {
 	 * @return boolean value
 	 */
 	public boolean getBoolean(String propertyName, boolean defaultValue) {
-		Pair<PropertyEntryType, String> pair = map.get(propertyName);
-		if (pair == null || pair.first != PropertyEntryType.BOOLEAN_TYPE) {
+		PropertyMapEntry entry = basicInfoMap.get(propertyName);
+		if (entry == null || entry.entityType != PropertyEntryType.BOOLEAN_TYPE) {
 			return defaultValue;
 		}
-		String value = pair.second;
-		return Boolean.parseBoolean(value);
+		return Boolean.parseBoolean(entry.value);
 	}
 
 	/**
@@ -266,20 +226,21 @@ public class PropertyFile {
 	 * @param value value to set
 	 */
 	public void putBoolean(String propertyName, boolean value) {
-		map.put(propertyName, new Pair<PropertyEntryType, String>(PropertyEntryType.BOOLEAN_TYPE,
-			Boolean.toString(value)));
+		basicInfoMap.put(propertyName,
+			new PropertyMapEntry(PropertyEntryType.BOOLEAN_TYPE, Boolean.toString(value)));
 	}
 
 	/**
 	 * Remove the specified property
-	 * @param propertyName
+	 * @param propertyName name of property to be removed
 	 */
 	public void remove(String propertyName) {
-		map.remove(propertyName);
+		basicInfoMap.remove(propertyName);
 	}
 
 	/**
-	 * Return the time of last modification in number of milliseconds. 
+	 * Return the time of last modification in number of milliseconds
+	 * @return time of last modification
 	 */
 	public long lastModified() {
 		return propertyFile.lastModified();
@@ -290,15 +251,17 @@ public class PropertyFile {
 	 * @throws IOException thrown if there was a problem writing the file
 	 */
 	public void writeState() throws IOException {
+		// NOTE: To avoid severe incompatibility with older versions of Ghidra this XML
+		// schema should not be changed.
 		PrintWriter writer = new PrintWriter(propertyFile);
 		try {
 			writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			writer.println("<FILE_INFO>");
 			writer.println("    <BASIC_INFO>");
-			for (Entry<String, Pair<PropertyEntryType, String>> entry : map.entrySet()) {
+			for (Entry<String, PropertyMapEntry> entry : basicInfoMap.entrySet()) {
 				String propertyName = entry.getKey();
-				String propertyType = entry.getValue().first.rep;
-				String propertyValue = entry.getValue().second;
+				String propertyType = entry.getValue().entityType.rep;
+				String propertyValue = entry.getValue().value;
 				writer.print("        <STATE NAME=\"");
 				writer.print(XmlUtilities.escapeElementEntities(propertyName));
 				writer.print("\" TYPE=\"");
@@ -334,6 +297,7 @@ public class PropertyFile {
 
 	/**
 	 * Read in this PropertyFile into a SaveState object.
+	 * @throws InvalidObjectException if a file parse error occurs
 	 * @throws IOException thrown if there was a problem reading the file
 	 */
 	public void readState() throws IOException {
@@ -341,6 +305,7 @@ public class PropertyFile {
 		try {
 			parser = new NonThreadedXmlPullParserImpl(propertyFile, HANDLER, false);
 			XmlElement file_info = parser.start("FILE_INFO");
+
 			XmlElement basic_info = parser.start("BASIC_INFO");
 			XmlElement state;
 			while ((state = parser.softStart("STATE")) != null) {
@@ -348,16 +313,16 @@ public class PropertyFile {
 				String propertyTypeString = state.getAttribute("TYPE");
 				String propertyValue = state.getAttribute("VALUE");
 				PropertyEntryType propertyType = PropertyEntryType.lookup(propertyTypeString);
-				map.put(propertyName, new Pair<PropertyEntryType, String>(propertyType,
-					propertyValue));
+				basicInfoMap.put(propertyName, new PropertyMapEntry(propertyType, propertyValue));
 				parser.end(state);
 			}
 			parser.end(basic_info);
 			parser.end(file_info);
 		}
 		catch (Exception e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			throw new InvalidObjectException("XML parse error in properties file");
+			String msg = "XML parse error in properties file";
+			Msg.error(this, msg + ": " + propertyFile);
+			throw new InvalidObjectException(msg);
 		}
 		finally {
 			if (parser != null) {
@@ -368,20 +333,19 @@ public class PropertyFile {
 
 	/**
 	 * Move this PropertyFile to the newParent file.
-	 * @param newParent new parent of the file
-	 * @param newStorageName new storage name
-	 * @param newParentPath parent path of the new parent
-	 * @param newName new name for this PropertyFile
+	 * @param newStorageParent new storage parent of the native file
+	 * @param newStorageName new storage name for this property file
 	 * @throws IOException thrown if there was a problem accessing the
 	 * @throws DuplicateFileException thrown if a file with the newName
 	 * already exists
 	 */
-	public void moveTo(File newParent, String newStorageName, String newParentPath, String newName)
+	public void moveTo(File newStorageParent, String newStorageName)
 			throws DuplicateFileException, IOException {
-		if (!newParent.equals(propertyFile.getParentFile()) || !newStorageName.equals(storageName)) {
-			File newPropertyFile = new File(newParent, newStorageName + PROPERTY_EXT);
+		if (!newStorageParent.equals(propertyFile.getParentFile()) ||
+			!newStorageName.equals(storageName)) {
+			File newPropertyFile = new File(newStorageParent, newStorageName + PROPERTY_EXT);
 			if (newPropertyFile.exists()) {
-				throw new DuplicateFileException(newName + " already exists");
+				throw new DuplicateFileException(newPropertyFile + " already exists");
 			}
 			if (!propertyFile.renameTo(newPropertyFile)) {
 				throw new IOException("move failed");
@@ -389,12 +353,11 @@ public class PropertyFile {
 			propertyFile = newPropertyFile;
 			storageName = newStorageName;
 		}
-		parentPath = newParentPath;
-		name = newName;
 	}
 
 	/**
 	 * Return whether the file for this PropertyFile exists.
+	 * @return true if this file exists
 	 */
 	public boolean exists() {
 		return propertyFile.exists();
@@ -409,10 +372,7 @@ public class PropertyFile {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((propertyFile == null) ? 0 : propertyFile.hashCode());
-		return result;
+		return propertyFile.hashCode();
 	}
 
 	@Override
@@ -426,15 +386,8 @@ public class PropertyFile {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		PropertyFile other = (PropertyFile) obj;
-		if (propertyFile == null) {
-			if (other.propertyFile != null) {
-				return false;
-			}
-		}
-		else if (!propertyFile.equals(other.propertyFile)) {
-			return false;
-		}
-		return true;
+		ItemPropertyFile other = (ItemPropertyFile) obj;
+		return propertyFile.equals(other.propertyFile);
 	}
+
 }

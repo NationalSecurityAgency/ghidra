@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.model.*;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
 import ghidra.trace.model.listing.*;
@@ -138,7 +138,7 @@ public interface TraceEvent<T, U> extends EventType {
 		}
 	}
 
-	enum TraceBreakpointEvent implements TraceEvent<TraceBreakpoint, Void> {
+	enum TraceBreakpointEvent implements TraceEvent<TraceBreakpointLocation, Void> {
 		BREAKPOINT_ADDED, BREAKPOINT_CHANGED, BREAKPOINT_DELETED;
 
 		private final int id = DomainObjectEventIdGenerator.next();
@@ -149,7 +149,7 @@ public interface TraceEvent<T, U> extends EventType {
 		}
 	}
 
-	enum TraceBreakpointLifespanEvent implements TraceEvent<TraceBreakpoint, Lifespan> {
+	enum TraceBreakpointLifespanEvent implements TraceEvent<TraceBreakpointLocation, Lifespan> {
 		BREAKPOINT_LIFESPAN_CHANGED;
 
 		private final int id = DomainObjectEventIdGenerator.next();

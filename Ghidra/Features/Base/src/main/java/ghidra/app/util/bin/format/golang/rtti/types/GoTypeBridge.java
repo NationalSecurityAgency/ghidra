@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 
 /**
  * A limited use wrapper/bridge between a GoType and a Ghidra DataType, this
- * wrapper only supports the {@link #recoverDataType(GoTypeManager)} call.
+ * wrapper only supports the {@link #recoverDataType()} call.
  */
 public class GoTypeBridge extends GoType {
 
@@ -46,9 +46,10 @@ public class GoTypeBridge extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		if (ghidraType == null) {
-			ghidraType = goTypes.getGhidraDataType(delegateGoType);
+			ghidraType = goTypes.getDataType(delegateGoType);
 		}
 		return ghidraType;
 	}

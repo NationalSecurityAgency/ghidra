@@ -1,5 +1,5 @@
 <decompilertest>
-<binaryimage arch="x86:LE:32:default:gcc">
+<binaryimage arch="x86:LE:32:default:win">
 <!--
     Example function returning a structure stored across multiple registers
 -->

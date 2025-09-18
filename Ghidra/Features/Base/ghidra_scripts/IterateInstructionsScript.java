@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +14,7 @@
  * limitations under the License.
  */
 //Iterates over all instructions in the current program.
-//@category Iteration
+//@category Examples
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Instruction;
@@ -46,7 +45,7 @@ public class IterateInstructionsScript extends GhidraScript {
 
 			int nOperands = instruction.getNumOperands();
 
-			for (int i = 0 ; i < nOperands ; ++i) {
+			for (int i = 0; i < nOperands; ++i) {
 				String operand = instruction.getDefaultOperandRepresentation(i);
 				buffer.append(operand);
 				buffer.append(' ');

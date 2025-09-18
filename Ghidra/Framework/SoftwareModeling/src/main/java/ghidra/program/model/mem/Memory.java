@@ -97,20 +97,20 @@ public interface Memory extends AddressSetView {
 	public static final long MAX_BLOCK_SIZE = (long) MAX_BLOCK_SIZE_GB << GBYTE_SHIFT_FACTOR;
 
 	/**
-	 * Returns the program that this memory belongs to.
+	 * {@return the program that this memory belongs to}
 	 */
 	public Program getProgram();
 
 	/**
-	 * Returns the set of addresses which correspond to all the "loaded" memory blocks that have
-	 * initialized data.  This does not include initialized memory blocks that contain data from
+	 * {@return the set of addresses which correspond to all the "loaded" memory blocks that have
+	 * initialized data.}  This does not include initialized memory blocks that contain data from
 	 * the program's file header such as debug sections.
 	 */
 	public AddressSetView getLoadedAndInitializedAddressSet();
 
 	/**
-	 * Returns the set of addresses which correspond to all memory blocks that have
-	 * initialized data.  This includes initialized memory blocks that contain data from
+	 * {@return the set of addresses which correspond to all memory blocks that have
+	 * initialized data.}  This includes initialized memory blocks that contain data from
 	 * the program's file header that are not actually in the running in memory image,
 	 * such as debug sections.  Use {@link #getLoadedAndInitializedAddressSet} if you only want
 	 * the addressed of the loaded in memory blocks.
@@ -118,19 +118,21 @@ public interface Memory extends AddressSetView {
 	public AddressSetView getAllInitializedAddressSet();
 
 	/**
-	 * Use {@link #getLoadedAndInitializedAddressSet} instead.
-	 * @deprecated
+	 * {@return the set of addresses which correspond to all the "loaded" memory blocks that have
+	 * initialized data.}  This does not include initialized memory blocks that contain data from
+	 * the program's file header such as debug sections.
+	 * @deprecated Use {@link #getLoadedAndInitializedAddressSet} instead
 	 */
 	@Deprecated
 	public AddressSetView getInitializedAddressSet();
 
 	/**
-	 * Returns the set of addresses which correspond to the executable memory.
+	 * {@return the set of addresses which correspond to the executable memory}
 	 */
 	public AddressSetView getExecuteSet();
 
 	/**
-	 * Returns true if the memory is bigEndian, false otherwise.
+	 * {@return true if the memory is bigEndian, false otherwise}
 	 */
 	public boolean isBigEndian();
 
@@ -429,7 +431,7 @@ public interface Memory extends AddressSetView {
 	public void removeBlock(MemoryBlock block, TaskMonitor monitor) throws LockException;
 
 	/**
-	 * Get the memory size in bytes.
+	 * {@return the memory size in bytes}
 	 */
 	public long getSize();
 
@@ -449,7 +451,7 @@ public interface Memory extends AddressSetView {
 	public MemoryBlock getBlock(String blockName);
 
 	/**
-	 * Returns an array containing all the memory blocks.
+	 * {@return an array containing all the memory blocks}
 	 */
 	public MemoryBlock[] getBlocks();
 
@@ -500,10 +502,10 @@ public interface Memory extends AddressSetView {
 			throws LockException, MemoryBlockException, NotFoundException;
 
 	/**
-	 * Convert an existing uninitialized block with an
-	 * initialized block.
+	 * Convert an existing uninitialized block with an initialized block.
 	 * @param uninitializedBlock uninitialized block to convert
 	 * @param initialValue initial value for the bytes
+	 * @return the converted block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryBlockException if there is no block in memory
 	 * at the same address as block or if the block lengths are not
@@ -526,6 +528,7 @@ public interface Memory extends AddressSetView {
 	  *              if all bits of each byte is to be checked (ie: all mask bytes are 0xff),
 	  *              then pass a null for masks.
 	  * @param forward if true, search in the forward direction.
+	  * @param monitor the monitor
 	  *
 	  * @return The address of where the first match is found. Null is returned
 	  * if there is no match.
@@ -547,6 +550,7 @@ public interface Memory extends AddressSetView {
 	  *              if all bits of each byte is to be checked (ie: all mask bytes are 0xff),
 	  *              then pass a null for masks.
 	  * @param forward if true, search in the forward direction.
+	  * @param monitor the monitor
 	  *
 	  * @return The address of where the first match is found. Null is returned
 	  * if there is no match.

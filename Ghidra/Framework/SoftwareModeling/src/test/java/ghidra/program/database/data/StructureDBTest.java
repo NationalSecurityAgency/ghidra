@@ -27,8 +27,6 @@ import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class StructureDBTest extends AbstractGenericTest {
 
@@ -65,7 +63,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	private void transitionToBigEndian() {
 
 		Structure structClone = struct.clone(null);
-		dataMgr.remove(struct, TaskMonitor.DUMMY);
+		dataMgr.remove(struct);
 
 		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
 		dataOrg.setBigEndian(true);
@@ -1167,7 +1165,7 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 8 Alignment: 1", struct);
 		//@formatter:on
 
-		dataMgr.remove(dataMgr.resolve(IntegerDataType.dataType, null), TaskMonitor.DUMMY);
+		dataMgr.remove(dataMgr.resolve(IntegerDataType.dataType, null));
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1208,7 +1206,7 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
 
-		dataMgr.remove(td, TaskMonitor.DUMMY);
+		dataMgr.remove(td);
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
@@ -1841,7 +1839,7 @@ public class StructureDBTest extends AbstractGenericTest {
 			"Length: 13 Alignment: 1", struct);
 		//@formatter:on
 
-		dt.getDataTypeManager().remove(dt, new TaskMonitorAdapter());
+		dt.getDataTypeManager().remove(dt);
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 

@@ -107,6 +107,9 @@ def isNativeBinaryMakeTask(Task task, String platform) {
  *
  ******************************************************************************************/
 def shouldSkipNative(task) {
+	if (rootProject.hasProperty("skipAllNatives")) {
+		return true;
+	}
 	return task.ext.has("skipNative") && task.ext.get("skipNative")
 }
 

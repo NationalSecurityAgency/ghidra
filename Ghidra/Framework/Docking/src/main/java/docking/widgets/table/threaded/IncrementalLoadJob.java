@@ -35,10 +35,9 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 
 	/**
 	 * Used to signal that the updateManager has finished loading the final contents gathered
-	 * by this job.  By default, the value is 0, which means there is nothing to wait for.  If we
-	 * flush, this will be set to 1.
+	 * by this job.  This is also updated if this job is cancelled.
 	 */
-	private volatile CountDownLatch completedCallbackLatch = new CountDownLatch(0);
+	private volatile CountDownLatch completedCallbackLatch = new CountDownLatch(1);
 	private volatile boolean isCancelled = false;
 	private volatile IncrementalUpdatingAccumulator incrementalAccumulator;
 
@@ -140,14 +139,19 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			// -We release the lock
 			// -A block on jobDone() can now complete as we release the lock
 			// -jobDone() will notify listeners in an invokeLater(), which puts it behind ours
-			//
-			completedCallbackLatch = new CountDownLatch(1);
+			//			
 			Swing.runLater(() -> updateManager.addThreadedTableListener(IncrementalLoadJob.this));
 		}
 
 		waitForThreadedTableUpdateManagerToFinish();
 	}
 
+	/**
+	 * Waits for the final flushed data to be added to the table.  We will get called when the data
+	 * is finished loading or cancelled.  The latch will also be released if the cancel method of
+	 * this job is called.  This can happen if the work queue is told to cancel all jobs, which can
+	 * happen if a new reload job is requested.
+	 */
 	private void waitForThreadedTableUpdateManagerToFinish() {
 		try {
 			completedCallbackLatch.await();
@@ -179,6 +183,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		super.cancel();
 		isCancelled = true;
 		incrementalAccumulator.cancel();
+		completedCallbackLatch.countDown();
 
 		// Note: cannot do this here, since the cancel() call may happen asynchronously and after
 		// a call to reload() on the table model.  Assume that the model itself has already

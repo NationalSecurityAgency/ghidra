@@ -34,7 +34,7 @@ public class StorageVerificationDWARFFunctionFixup implements DWARFFunctionFixup
 		DWARFRegisterMappings regMappings = dfunc.getProgram().getRegisterMappings();
 		boolean ignoreStorage = dfunc.getProgram().getImportOptions().isIgnoreParamStorage() ||
 			(regMappings != null && regMappings.isUseFormalParameterStorage());
-		boolean isEmptySignature = dfunc.params.isEmpty() && dfunc.retval.isVoidType();
+		boolean isEmptySignature = dfunc.params.isEmpty() && dfunc.retval.isMissingStorage();
 		if (regMappings == null || ignoreStorage || isEmptySignature) {
 			dfunc.signatureCommitMode = CommitMode.FORMAL;
 			return;

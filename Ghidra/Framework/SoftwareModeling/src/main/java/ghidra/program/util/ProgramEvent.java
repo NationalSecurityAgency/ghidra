@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,9 +36,6 @@ public enum ProgramEvent implements EventType {
 	CODE_ADDED,							// instructions or data set at an address
 	CODE_REMOVED,						// instructions or data cleared at an address
 	CODE_REPLACED,						// the instruction or data type at an address was changed
-
-	COMPOSITE_ADDED,					// a non-primitive data type was added
-	COMPOSITE_REMOVED,					// a non-primitive data type was removed
 
 	CODE_UNIT_PROPERTY_CHANGED,			// a property map value changed
 	CODE_UNIT_PROPERTY_ALL_REMOVED,		// a property map was removed

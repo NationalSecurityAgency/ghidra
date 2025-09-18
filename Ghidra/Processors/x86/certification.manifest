@@ -92,5 +92,6 @@ data/patterns/x86-64gcc_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64win_patterns.xml||GHIDRA||||END|
 data/patterns/x86delphi_patterns.xml||GHIDRA||||END|
 data/patterns/x86gcc_patterns.xml||GHIDRA||||END|
+data/patterns/x86gcc_prepatterns.xml||GHIDRA||||END|
 data/patterns/x86win_patterns.xml||GHIDRA||||END|
 data/patterns/x86win_prepatterns.xml||GHIDRA||||END|

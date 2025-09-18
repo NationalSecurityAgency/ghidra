@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import org.objectweb.asm.MethodVisitor;
@@ -36,29 +35,40 @@ import ghidra.pcode.emu.jit.op.JitIntDivOp;
  * {@link Integer#divideUnsigned(int, int)} or {@link Long#divideUnsigned(long, long)} depending on
  * the type.
  */
-public enum IntDivOpGen implements BinOpGen<JitIntDivOp> {
+public enum IntDivOpGen implements IntBinOpGen<JitIntDivOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	private void generateMpIntDiv(JitCodeGenerator gen, MpIntJitType type, MethodVisitor mv) {
+		BinOpGen.generateMpDelegationToStaticMethod(gen, type, "mpIntDivide", mv, 1, TakeOut.OUT);
+	}
+
+	@Override
 	public JitType afterLeft(JitCodeGenerator gen, JitIntDivOp op, JitType lType, JitType rType,
 			MethodVisitor rv) {
-		return TypeConversions.forceUniformZExt(lType, rType, rv);
+		return TypeConversions.forceUniform(gen, lType, rType, ext(), rv);
 	}
 
 	@Override
 	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntDivOp op, JitBlock block,
 			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, rExt(), rv);
 		switch (rType) {
 			case IntJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "divideUnsigned",
 				MDESC_$INT_BINOP, false);
 			case LongJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_LONG, "divideUnsigned",
 				MDESC_$LONG_BINOP, false);
-			case MpIntJitType t -> TODO("MpInt");
+			case MpIntJitType t when t.size() == lType.size() -> generateMpIntDiv(gen, t, rv);
+			// FIXME: forceUniform shouldn't have to enforce the same size....
+			case MpIntJitType t -> throw new AssertionError("forceUniform didn't work?");
 			default -> throw new AssertionError();
 		}
-		// TODO: For MpInt case, we should use the outvar's size to cull operations.
-		return lType;
+		// FIXME: For MpInt case, we should use the operands' (relevant) sizes to cull operations.
+		return rType;
 	}
 }

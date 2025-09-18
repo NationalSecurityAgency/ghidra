@@ -87,6 +87,7 @@ public class SarifProgramResultHandler extends SarifResultHandler {
 			programMgr.addManagers();
 		}
 
+		@Override
 		protected void doRun(TaskMonitor monitor) {
 			int[] selected = provider.filterTable.getTable().getSelectedRows();
 			Map<String, List<Map<String, Object>>> results = new HashMap<>();

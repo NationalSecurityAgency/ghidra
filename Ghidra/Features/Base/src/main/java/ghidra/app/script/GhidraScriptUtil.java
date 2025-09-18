@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.app.util.headless.HeadlessAnalyzer;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.*;
 import utilities.util.FileUtilities;
 
 /**
@@ -276,18 +276,18 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns a list of all supported Ghidra script providers
+	 * Returns a list of all supported Ghidra script providers.
+	 * <p>
+	 * NOTE: The list is {@link ExtensionPointProperties#priority() priority-sorted}
 	 * 
 	 * @return a list of all supported Ghidra script providers
+	 * @apiNote this method is synchronized so that two threads do not try to create the list when 
+	 *   null
 	 */
-	// Note: this method is synchronized so that two threads do not try to create the list when null
 	public static synchronized List<GhidraScriptProvider> getProviders() {
 		if (providers == null) {
-			providers = ClassSearcher.getInstances(GhidraScriptProvider.class)
-					.stream()
-					.filter(p -> !(p instanceof UnsupportedScriptProvider))
-					.sorted()
-					.toList();
+			providers = ClassSearcher.getInstances(GhidraScriptProvider.class,
+				new ClassExclusionFilter(UnsupportedScriptProvider.class));
 		}
 		return providers;
 	}

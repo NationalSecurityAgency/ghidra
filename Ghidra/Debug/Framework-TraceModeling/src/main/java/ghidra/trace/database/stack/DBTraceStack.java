@@ -15,256 +15,235 @@
  */
 package ghidra.trace.database.stack;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import db.BinaryField;
-import db.DBRecord;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
-import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
-import ghidra.util.database.annot.*;
 
-@DBAnnotatedObjectInfo(version = 0)
-public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
-	public static final String TABLE_NAME = "Stacks";
+public class DBTraceStack implements TraceStack, DBTraceObjectInterface {
 
-	static final String THREAD_SNAP_COLUMN_NAME = "ThreadSnap";
-	static final String FRAMES_COLUMN_NAME = "Frames";
-
-	@DBAnnotatedColumn(THREAD_SNAP_COLUMN_NAME)
-	static DBObjectColumn THREAD_SNAP_COLUMN;
-	@DBAnnotatedColumn(FRAMES_COLUMN_NAME)
-	static DBObjectColumn FRAMES_COLUMN;
-
-	public static class ThreadSnap {
-		long threadKey;
-		long snap;
-
-		public ThreadSnap() {
-		}
-
-		public ThreadSnap(long threadKey, long snap) {
-			this.threadKey = threadKey;
-			this.snap = snap;
-		}
-	}
-
-	public static class ThreadSnapDBFieldCodec
-			extends AbstractDBFieldCodec<ThreadSnap, DBAnnotatedObject, BinaryField> {
-
-		public ThreadSnapDBFieldCodec(Class<DBAnnotatedObject> objectType, Field field,
-				int column) {
-			super(ThreadSnap.class, objectType, BinaryField.class, field, column);
-		}
-
-		protected byte[] encode(ThreadSnap value) {
-			ByteBuffer buf = ByteBuffer.allocate(Long.BYTES * 2);
-			buf.putLong(value.threadKey);
-			buf.putLong(value.snap);
-			return buf.array();
-		}
-
-		protected ThreadSnap decode(byte[] data) {
-			ByteBuffer buf = ByteBuffer.wrap(data);
-			ThreadSnap value = new ThreadSnap();
-			value.threadKey = buf.getLong();
-			value.snap = buf.getLong();
-			return value;
+	protected class StackChangeTranslator extends Translator<TraceStack> {
+		protected StackChangeTranslator(DBTraceObject object, TraceStack iface) {
+			super(null, object, iface);
 		}
 
 		@Override
-		public void store(ThreadSnap value, BinaryField f) {
-			f.setBinaryData(encode(value));
+		protected TraceEvent<TraceStack, Void> getAddedType() {
+			return TraceEvents.STACK_ADDED;
 		}
 
 		@Override
-		protected void doStore(DBAnnotatedObject obj, DBRecord record)
-				throws IllegalArgumentException, IllegalAccessException {
-			record.setBinaryData(column, encode(getValue(obj)));
+		protected TraceEvent<TraceStack, Lifespan> getLifespanChangedType() {
+			return null;
 		}
 
 		@Override
-		protected void doLoad(DBAnnotatedObject obj, DBRecord record)
-				throws IllegalArgumentException, IllegalAccessException {
-			setValue(obj, decode(record.getBinaryData(column)));
+		protected TraceEvent<TraceStack, ?> getChangedType() {
+			return TraceEvents.STACK_CHANGED;
+		}
+
+		@Override
+		protected boolean appliesToKey(String key) {
+			return false;
+		}
+
+		@Override
+		protected TraceEvent<TraceStack, Void> getDeletedType() {
+			return TraceEvents.STACK_DELETED;
 		}
 	}
 
-	@DBAnnotatedField(
-		column = THREAD_SNAP_COLUMN_NAME,
-		indexed = true,
-		codec = ThreadSnapDBFieldCodec.class)
-	private ThreadSnap threadSnap;
-	@DBAnnotatedField(column = FRAMES_COLUMN_NAME)
-	private long[] frameKeys;
+	private final DBTraceObject object;
+	private final StackChangeTranslator translator;
 
-	private final DBTraceStackManager manager;
+	public DBTraceStack(DBTraceObject object) {
+		this.object = object;
 
-	private TraceThread thread;
-	private final List<DBTraceStackFrame> frames = new ArrayList<>();
-
-	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store,
-			DBRecord record) {
-		super(store, record);
-		this.manager = manager;
-	}
-
-	@Override
-	protected void fresh(boolean created) throws IOException {
-		if (created) {
-			threadSnap = new ThreadSnap();
-		}
-		else {
-			thread = manager.threadManager.getThread(threadSnap.threadKey);
-			frames.clear();
-			if (frameKeys == null) {
-				return;
-			}
-			for (long k : frameKeys) {
-				frames.add(manager.getFrameByKey(k));
-			}
-		}
-	}
-
-	void set(TraceThread thread, long snap) {
-		this.thread = thread;
-		threadSnap.threadKey = thread.getKey();
-		threadSnap.snap = snap;
-		update(THREAD_SNAP_COLUMN);
+		translator = new StackChangeTranslator(object, this);
 	}
 
 	@Override
 	public TraceThread getThread() {
-		return thread;
-	}
-
-	long getSnap() {
-		return threadSnap.snap;
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.queryCanonicalAncestorsInterface(TraceThread.class)
+					.findAny()
+					.orElseThrow();
+		}
 	}
 
 	@Override
 	public int getDepth(long snap) {
-		if (frameKeys == null) {
-			return 0;
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object
+					.querySuccessorsInterface(Lifespan.at(snap), TraceStackFrame.class, true)
+					.map(f -> f.getLevel())
+					.reduce(Integer::max)
+					.map(m -> m + 1)
+					.orElse(0);
 		}
-		return frameKeys.length;
 	}
 
-	protected void doUpdateFrameKeys() {
-		int depth = frames.size();
-		frameKeys = new long[depth];
-		for (int i = 0; i < depth; i++) {
-			frameKeys[i] = frames.get(i).getKey();
+	protected TraceStackFrame doAddStackFrame(long snap, int level) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			PathFilter filter =
+				object.getSchema().searchFor(TraceStackFrame.class, true);
+			KeyPath relPath = filter.applyKeys(KeyPath.makeIndex(level)).getSingletonPath();
+			if (relPath == null) {
+				throw new IllegalStateException("Could not determine where to create new frame");
+			}
+			KeyPath path = object.getCanonicalPath().extend(relPath);
+			return object.getManager().addStackFrame(path, snap);
 		}
-		update(FRAMES_COLUMN);
 	}
 
-	protected void doUpdateFrameLevels(int start, int end) {
+	protected void copyFrameAttributes(long snap, TraceStackFrame from, TraceStackFrame to) {
+		// Program Counter is the only attribute?
+		to.setProgramCounter(Lifespan.nowOn(snap), from.getProgramCounter(snap));
+	}
+
+	protected void shiftFrameAttributes(long snap, int from, int to, int count,
+			List<TraceStackFrame> frames) {
+		if (from == to) {
+			return;
+		}
+		if (from < to) {
+			for (int i = count - 1; i >= 0; i--) {
+				copyFrameAttributes(snap, frames.get(from + i), frames.get(to + i));
+			}
+		}
+		else {
+			for (int i = 0; i < count; i++) {
+				copyFrameAttributes(snap, frames.get(from + i), frames.get(to + i));
+			}
+		}
+	}
+
+	protected void clearFrameAttributes(long snap, int start, int end,
+			List<TraceStackFrame> frames) {
 		for (int i = start; i < end; i++) {
-			frames.get(i).setLevel(i);
+			TraceStackFrame frame = frames.get(i);
+			frame.setProgramCounter(Lifespan.nowOn(snap), null);
 		}
 	}
 
 	@Override
 	public void setDepth(long snap, int depth, boolean atInner) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			//System.err.println("setDepth(threadKey=" + thread.getKey() + "snap=" + getSnap() +
-			//	",depth=" + depth + ",inner=" + atInner + ");");
-			int curDepth = frameKeys == null ? 0 : frameKeys.length;
-			if (depth == curDepth) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			List<TraceStackFrame> frames = doGetFrames(snap)
+					// Want mutable list
+					.collect(Collectors.toCollection(ArrayList::new));
+			int curDepth = frames.size();
+			if (curDepth == depth) {
 				return;
 			}
 			if (depth < curDepth) {
-				List<DBTraceStackFrame> toRemove =
-					atInner ? frames.subList(0, curDepth - depth)
-							: frames.subList(depth, curDepth);
-				for (DBTraceStackFrame frame : toRemove) {
-					manager.deleteFrame(frame);
-				}
-				toRemove.clear();
 				if (atInner) {
-					doUpdateFrameLevels(0, frames.size());
+					int diff = curDepth - depth;
+					shiftFrameAttributes(snap, diff, 0, depth, frames);
+				}
+				for (int i = depth; i < curDepth; i++) {
+					frames.get(i).getObject().removeTree(Lifespan.nowOn(snap));
 				}
 			}
 			else {
-				List<DBTraceStackFrame> toAdd =
-					Arrays.asList(new DBTraceStackFrame[depth - curDepth]);
-				for (int i = 0; i < toAdd.size(); i++) {
-					toAdd.set(i, manager.createFrame(this));
+				for (int i = curDepth; i < depth; i++) {
+					frames.add(doAddStackFrame(snap, i));
 				}
 				if (atInner) {
-					frames.addAll(0, toAdd);
-					doUpdateFrameLevels(0, frames.size());
-				}
-				else {
-					frames.addAll(toAdd);
-					doUpdateFrameLevels(frames.size() - toAdd.size(), frames.size());
+					int diff = depth - curDepth;
+					shiftFrameAttributes(snap, 0, diff, curDepth, frames);
+					clearFrameAttributes(snap, 0, diff, frames);
 				}
 			}
-			doUpdateFrameKeys();
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, this, 0L, snap));
+	}
+
+	protected TraceStackFrame doGetFrame(long snap, int level) {
+		TraceObjectSchema schema = object.getSchema();
+		PathFilter filter = schema.searchFor(TraceStackFrame.class, true);
+		PathFilter decFilter = filter.applyKeys(KeyPath.makeIndex(level));
+		PathFilter hexFilter = filter.applyKeys("0x" + Integer.toHexString(level));
+		Lifespan lifespan = Lifespan.at(snap);
+		return object.getSuccessors(lifespan, decFilter)
+				.findAny()
+				.map(p -> p.getDestination(object).queryInterface(TraceStackFrame.class))
+				.or(() -> object.getSuccessors(lifespan, hexFilter)
+						.findAny()
+						.map(p -> p.getDestination(object).queryInterface(TraceStackFrame.class)))
+				.orElse(null);
 	}
 
 	@Override
-	public DBTraceStackFrame getFrame(long snap, int level, boolean ensureDepth) {
+	// This assumes the frame indices are contiguous and include 0
+	public TraceStackFrame getFrame(long snap, int level, boolean ensureDepth) {
 		if (ensureDepth) {
-			try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-				if (level >= frames.size()) {
+			try (LockHold hold = object.getTrace().lockWrite()) {
+				if (level >= getDepth(snap)) {
 					setDepth(snap, level + 1, false);
 				}
-				return frames.get(level);
+				return doGetFrame(snap, level);
 			}
 		}
-		else {
-			try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-				if (level >= frames.size()) {
-					return null;
-				}
-				return frames.get(level);
-			}
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return doGetFrame(snap, level);
 		}
+	}
+
+	protected Stream<TraceStackFrame> doGetFrames(long snap) {
+		return object.querySuccessorsInterface(Lifespan.at(snap), TraceStackFrame.class, true)
+				.sorted(Comparator.comparing(f -> f.getLevel()));
 	}
 
 	@Override
 	public List<TraceStackFrame> getFrames(long snap) {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return List.copyOf(frames);
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return doGetFrames(snap).collect(Collectors.toList());
 		}
 	}
 
 	@Override
 	public void delete() {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			for (DBTraceStackFrame frame : frames) {
-				manager.deleteFrame(frame);
-			}
-			manager.deleteStack(this);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.ALL);
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.STACK_DELETED, null, this));
 	}
 
 	@Override
 	public void remove(long snap) {
-		throw new UnsupportedOperationException();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
+		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		return this == manager.getLatestStack(thread, snap);
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public TraceObject getObject() {
+		return object;
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		return translator.translate(rec);
 	}
 
 	@Override
 	public boolean hasFixedFrames() {
-		return true;
+		return false;
 	}
 }

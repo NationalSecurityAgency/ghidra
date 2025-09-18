@@ -16,24 +16,20 @@
 package ghidra.pcode.exec;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.util.Msg;
 
 /**
  * An abstract p-code executor state piece for storing and retrieving bytes as arrays
  *
  * @param <S> the type of an executor state space, internally associated with an address space
  */
-public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeExecutorStateSpace<?>>
+public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeExecutorStateSpace>
 		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], byte[], S> {
 
 	/**
@@ -41,19 +37,18 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	 */
 	protected class StateMemBuffer implements MemBufferMixin {
 		protected final Address address;
-		protected final BytesPcodeExecutorStateSpace<?> source;
+		protected BytesPcodeExecutorStateSpace source;
 		protected final Reason reason;
 
 		/**
 		 * Construct a buffer bound to the given space, at the given address
 		 * 
 		 * @param address the address
-		 * @param source the space
+		 * @param source the space (null will cause readUninit and re-fetch on read attempts)
 		 * @param reason the reason this buffer reads from the state, as in
 		 *            {@link PcodeExecutorStatePiece#getVar(Varnode, Reason)}
 		 */
-		public StateMemBuffer(Address address, BytesPcodeExecutorStateSpace<?> source,
-				Reason reason) {
+		public StateMemBuffer(Address address, BytesPcodeExecutorStateSpace source, Reason reason) {
 			this.address = address;
 			this.source = source;
 			this.reason = reason;
@@ -76,82 +71,68 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 
 		@Override
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
+			if (source == null) {
+				Address min = address.add(addressOffset);
+				AddressSet set = new AddressSet(min, min.add(buffer.remaining() - 1));
+				if (set.equals(
+					cb.readUninitialized(AbstractBytesPcodeExecutorStatePiece.this, set))) {
+					return 0;
+				}
+				source = getForSpace(address.getAddressSpace(), false);
+				if (source == null) { // still
+					return 0;
+				}
+			}
 			byte[] data =
-				source.read(address.getOffset() + addressOffset, buffer.remaining(), reason);
+				source.read(address.getOffset() + addressOffset, buffer.remaining(), reason, cb);
 			buffer.put(data);
 			return data.length;
 		}
 	}
 
-	protected final AbstractSpaceMap<S> spaceMap;
-
-	/**
-	 * Construct a state for the given language
-	 * 
-	 * @param language the language, used for its memory model and arithmetic
-	 */
-	public AbstractBytesPcodeExecutorStatePiece(Language language) {
-		this(language, BytesPcodeArithmetic.forLanguage(language));
-	}
-
-	protected AbstractBytesPcodeExecutorStatePiece(Language language,
-			AbstractSpaceMap<S> spaceMap) {
-		this(language, BytesPcodeArithmetic.forLanguage(language), spaceMap);
-	}
+	protected final Map<AddressSpace, S> spaceMap = new HashMap<>();
 
 	/**
 	 * Construct a state for the given language
 	 * 
 	 * @param language the language, used for its memory model
 	 * @param arithmetic the arithmetic
+	 * @param cb callbacks to receive emulation events
 	 */
 	public AbstractBytesPcodeExecutorStatePiece(Language language,
-			PcodeArithmetic<byte[]> arithmetic) {
-		super(language, arithmetic, arithmetic);
-		spaceMap = newSpaceMap();
-	}
-
-	protected AbstractBytesPcodeExecutorStatePiece(Language language,
-			PcodeArithmetic<byte[]> arithmetic, AbstractSpaceMap<S> spaceMap) {
-		super(language, arithmetic, arithmetic);
-		this.spaceMap = spaceMap;
+			PcodeArithmetic<byte[]> arithmetic, PcodeStateCallbacks cb) {
+		super(language, arithmetic, arithmetic, cb);
 	}
 
 	/**
-	 * A factory method for this state's space map.
+	 * Construct a state for the given language
 	 * 
-	 * <p>
-	 * Because most of the special logic for extensions is placed in the "state space," i.e., an
-	 * object assigned to a particular address space in the state's language, this factory method
-	 * must provide the map to create and maintain those spaces. That map will in turn be the
-	 * factory of the spaces themselves, allowing extensions to provide additional read/write logic.
-	 * 
-	 * @return the new space map
+	 * @param language the language, used for its memory model and arithmetic
+	 * @param cb callbacks to receive emulation events
 	 */
-	protected abstract AbstractSpaceMap<S> newSpaceMap();
+	public AbstractBytesPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb) {
+		this(language, BytesPcodeArithmetic.forLanguage(language), cb);
+	}
+
+	protected abstract S newSpace(AddressSpace space);
 
 	@Override
 	protected S getForSpace(AddressSpace space, boolean toWrite) {
-		return spaceMap.getForSpace(space, toWrite);
+		if (toWrite) {
+			return spaceMap.computeIfAbsent(space, this::newSpace);
+		}
+		return spaceMap.get(space);
 	}
 
 	@Override
-	protected void setInSpace(S space, long offset, int size, byte[] val) {
-		if (val.length > size) {
-			throw new IllegalArgumentException(
-				"Value is larger than variable: " + val.length + " > " + size);
-		}
-		if (val.length < size) {
-			Msg.warn(this, "Value is smaller than variable: " + val.length + " < " + size +
-				". Zero extending");
-			val = arithmetic.unaryOp(PcodeOp.INT_ZEXT, size, val.length, val);
-		}
-		space.write(offset, val, 0, size);
+	protected void setInSpace(S space, long offset, int size, byte[] val, PcodeStateCallbacks cb) {
+		space.write(offset, val, 0, size, cb);
 	}
 
 	@Override
-	protected byte[] getFromSpace(S space, long offset, int size, Reason reason) {
-		byte[] read = space.read(offset, size, reason);
+	protected byte[] getFromSpace(S space, long offset, int size, Reason reason,
+			PcodeStateCallbacks cb) {
+		byte[] read = space.read(offset, size, reason, cb);
 		if (read.length != size) {
 			throw new AccessPcodeExecutionException("Incomplete read (" + read.length +
 				" of " + size + " bytes)");

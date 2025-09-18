@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,6 @@ import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotYetImplementedException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to represent the <b><code>IMAGE_NT_HEADERS32</code></b> and
@@ -54,7 +52,6 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	private OptionalHeader optionalHeader;
 	private BinaryReader reader;
 	private int index;
-	private boolean advancedProcess = true;
 	private boolean parseCliHeaders = false;
 
 	private SectionLayout layout = SectionLayout.FILE;
@@ -64,18 +61,16 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * @param reader the binary reader
 	 * @param index the index into the reader to the start of the NT header
 	 * @param layout The {@link SectionLayout}
-	 * @param advancedProcess if true, information outside of the base header will be processed
 	 * @param parseCliHeaders if true, CLI headers are parsed (if present)
 	 * @throws InvalidNTHeaderException if the bytes the specified index
 	 * @throws IOException if an IO-related exception occurred
 	 * do not constitute an accurate NT header.
 	 */
-	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean advancedProcess,
-			boolean parseCliHeaders) throws InvalidNTHeaderException, IOException {
+	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean parseCliHeaders)
+			throws InvalidNTHeaderException, IOException {
 		this.reader = reader;
 		this.index = index;
 		this.layout = layout;
-		this.advancedProcess = advancedProcess;
 		this.parseCliHeaders = parseCliHeaders;
 
 		parse();
@@ -264,14 +259,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		}
 		tmpIndex += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
 
-		// Process Optional Header.  Abort load on failure.
-		try {
-			optionalHeader = new OptionalHeaderImpl(this, reader, tmpIndex);
-		}
-		catch (NotYetImplementedException e) {//TODO
-			Msg.error(this, "Unexpected Exception: " + e.getMessage());
-			return;
-		}
+		optionalHeader = new OptionalHeader(this, reader, tmpIndex);
 
 		// Process symbols.  Allow parsing to continue on failure.
 		boolean symbolsProcessed = false;
@@ -286,12 +274,6 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		// Process sections.  Resolving some sections names (i.e., "/21") requires symbols to have
 		// been successfully processed.  Resolving is optional though.
 		fileHeader.processSections(optionalHeader, symbolsProcessed);
-
-		// Perform advanced processing.  If advanced processing is disabled, these things may be
-		// independently parsed later in the load if they are needed.
-		if (advancedProcess) {
-			optionalHeader.processDataDirectories(TaskMonitor.DUMMY);
-		}
 	}
 
 	void writeHeader(RandomAccessFile raf, DataConverter dc) throws IOException {

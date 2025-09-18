@@ -190,7 +190,10 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public String getComment(int commentType) {
+	public String getComment(CommentType commentType) {
+		if (commentType == null) {
+			return null;
+		}
 		lock.acquire();
 		try {
 			checkIsValid();
@@ -200,7 +203,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 			if (commentRec == null) {
 				return null;
 			}
-			return commentRec.getString(commentType);
+			return commentRec.getString(commentType.ordinal());
 		}
 		finally {
 			lock.release();
@@ -208,7 +211,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public String[] getCommentAsArray(int commentType) {
+	public String[] getCommentAsArray(CommentType commentType) {
 		String comment = getComment(commentType);
 		return StringUtilities.toLines(comment);
 	}
@@ -247,11 +250,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		SymbolTable st = codeMgr.getSymbolTable();
 		Symbol symbol = st.getPrimarySymbol(address);
 		if (symbol != null) {
-			try {
-				return symbol.getName();
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			return symbol.getName();
 		}
 		return null;
 	}
@@ -293,12 +292,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		ObjectPropertyMap<?> pm = upm.getObjectPropertyMap(name);
 		if (pm != null) {
-			try {
-				validate(lock);
-				return pm.get(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.get(address);
 		}
 		return null;
 	}
@@ -344,12 +339,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		StringPropertyMap pm = upm.getStringPropertyMap(name);
 		if (pm != null) {
-			try {
-				validate(lock);
-				return pm.getString(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.getString(address);
 		}
 		return null;
 	}
@@ -366,12 +357,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		VoidPropertyMap pm = upm.getVoidPropertyMap(name);
 		if (pm != null) {
-			try {
-				validate(lock);
-				return pm.hasProperty(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.hasProperty(address);
 		}
 		return false;
 	}
@@ -381,12 +368,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
 		PropertyMap<?> pm = upm.getPropertyMap(name);
 		if (pm != null) {
-			try {
-				validate(lock);
-				return pm.hasProperty(address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
+			validate(lock);
+			return pm.hasProperty(address);
 		}
 		return false;
 	}
@@ -433,12 +416,13 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 				pm.remove(address);
 			}
 			catch (ConcurrentModificationException e) {
+				// ignore
 			}
 		}
 	}
 
 	@Override
-	public void setComment(int commentType, String comment) {
+	public void setComment(CommentType commentType, String comment) {
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -451,8 +435,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 					return;
 				}
 				try {
-					commentRec =
-						codeMgr.getCommentAdapter().createRecord(addr, commentType, comment);
+					commentRec = codeMgr.getCommentAdapter()
+							.createRecord(addr, commentType.ordinal(), comment);
 				}
 				catch (IOException e) {
 					codeMgr.dbError(e);
@@ -461,8 +445,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 				return;
 			}
 
-			String oldValue = commentRec.getString(commentType);
-			commentRec.setString(commentType, comment);
+			String oldValue = commentRec.getString(commentType.ordinal());
+			commentRec.setString(commentType.ordinal(), comment);
 			codeMgr.sendNotification(address, commentType, oldValue, comment);
 
 			for (int i = 0; i < CommentsDBAdapter.COMMENT_COL_COUNT; i++) {
@@ -485,7 +469,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	}
 
 	@Override
-	public void setCommentAsArray(int commentType, String[] comment) {
+	public void setCommentAsArray(CommentType commentType, String[] comment) {
 		setComment(commentType, StringUtils.join(comment, '\n'));
 	}
 

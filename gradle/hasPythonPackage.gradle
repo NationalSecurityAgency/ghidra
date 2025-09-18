@@ -65,6 +65,9 @@ task buildPyPackage {
 		if (exec.result.get().exitValue != 0) {
 			throw new GradleException(exec.standardError.asText.get().strip())
 		}
+		if (exec.standardOutput.asText.get().contains("Successfully built UNKNOWN")) {
+			throw new GradleException("UNKNOWN wheel built...upgrade pip")
+		}
 	}
 }
 

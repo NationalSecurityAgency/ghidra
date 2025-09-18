@@ -28,7 +28,10 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.features.base.codecompare.model.AnyToAnyFunctionComparisonModel;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
+import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
+import ghidra.features.base.codecompare.panel.FunctionComparisonState;
 import ghidra.framework.model.*;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -66,8 +69,12 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	private Set<FunctionComparisonProvider> providers = new HashSet<>();
 	private FunctionComparisonProvider lastActiveProvider;
 
+	// There is one state shared between all providers and CodeComparison views
+	private FunctionComparisonState comparisonState;
+
 	public FunctionComparisonPlugin(PluginTool tool) {
 		super(tool);
+		comparisonState = new FunctionComparisonState(tool);
 		createActions();
 	}
 
@@ -87,14 +94,16 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		foreEachProvider(p -> p.programClosed(program));
 	}
 
-	/**
-	 * Overridden to listen for two event types:
-	 * <li>Object Restored: In the event of a redo/undo that affects a function
-	 * being shown in the comparison provider, this will allow tell the provider
-	 * to reload</li>
-	 * <li>Object Removed: If a function is deleted, this will tell the provider
-	 * to purge it from the view</li>
-	 */
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		comparisonState.writeConfigState(saveState);
+	}
+
+	@Override
+	public void readConfigState(SaveState saveState) {
+		comparisonState.readConfigState(saveState);
+	}
+
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		for (int i = 0; i < ev.numRecords(); ++i) {
@@ -210,7 +219,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	private FunctionComparisonProvider createProvider(FunctionComparisonModel model,
 			Callback closeListener) {
 		FunctionComparisonProvider provider =
-			new FunctionComparisonProvider(this, model, closeListener);
+			new FunctionComparisonProvider(this, model, closeListener, comparisonState);
 
 		providers.add(provider);
 		return provider;
@@ -218,7 +227,8 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 //==================================================================================================
 // Service Methods
-//==================================================================================================	
+//==================================================================================================
+
 	@Override
 	public void createComparison(Collection<Function> functions) {
 		if (functions.isEmpty()) {
@@ -254,4 +264,8 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		Swing.runLater(() -> createProvider(model, closeListener));
 	}
 
+	@Override
+	public FunctionComparisonPanel createComparisonViewer() {
+		return new FunctionComparisonPanel(tool, name, comparisonState);
+	}
 }

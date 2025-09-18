@@ -1764,7 +1764,8 @@ define pcodeop altv300_71;
 {
 	local offs:2 = (12 - zext(A[0,4])) * 8;
 	local out:16 = (vrB >> offs) & 0xffffffff;
-	D = out:4;
+	# No need for zext, as mask is already applied
+	D = out:$(REGISTER_SIZE);
 }
 
 :vextuwrx D,A,vrB			is OP=4 & D & A & vrB & XOP_0_10=1933 {

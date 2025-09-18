@@ -15,6 +15,7 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,12 +36,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Symbol class for functions.
- * 
- * Symbol Data Usage:
- *   EXTERNAL:
- *   	String stringData - external memory address/label
  */
-public class FunctionSymbol extends SymbolDB {
+public class FunctionSymbol extends MemorySymbol {
 
 	private FunctionManagerDB functionMgr;
 
@@ -60,11 +57,6 @@ public class FunctionSymbol extends SymbolDB {
 	@Override
 	public SymbolType getSymbolType() {
 		return SymbolType.FUNCTION;
-	}
-
-	@Override
-	public boolean isExternal() {
-		return address.isExternalAddress();
 	}
 
 	boolean isThunk() {
@@ -93,9 +85,13 @@ public class FunctionSymbol extends SymbolDB {
 		try {
 			boolean restoreLabel = isExternal() || (getSource() != SourceType.DEFAULT);
 			String symName = getName();
-			String extData = null;
+			Symbol parentSymbol = getParentSymbol();
+			String extOrigImportName = null;
+			Address extProgramAddr = null;
 			if (isExternal()) {
-				extData = getSymbolStringData(); // preserve external data
+				// preserve external data
+				extOrigImportName = getExternalOriginalImportedName();
+				extProgramAddr = getExternalProgramAddress();
 			}
 			Namespace namespace = getParentNamespace();
 			SourceType source = getSource();
@@ -109,16 +105,39 @@ public class FunctionSymbol extends SymbolDB {
 			}
 
 			if (super.delete()) {
+				if ((parentSymbol instanceof SymbolDB) && ((SymbolDB) parentSymbol).isDeleting()) {
+					// do not replace function with label if parent namespace is getting removed
+					return false;
+				}
 				if (restoreLabel) {
-					boolean restored = createLabelForDeletedFunctionName(address, symName, extData,
-						namespace, source, pinned);
-					if (!restored && isExternal()) {
-						// remove all associated external references if label not restored
+					// Recreate a symbol with the function symbol's name because deleting the function 
+					// does not mean that we want to lose the function name (that is our policy).
+					Symbol newSymbol;
+					if (isExternal()) {
+						newSymbol = symbolMgr.createExternalCodeSymbol(address, symName, namespace,
+							source, extOrigImportName, extProgramAddr);
+					}
+					else {
+						newSymbol = symbolMgr.createLabel(address, symName, namespace, source);
+						newSymbol.setPrimary();
+						if (pinned) {
+							newSymbol.setPinned(true);
+						}
+					}
+					if (newSymbol == null && isExternal()) {
+						// remove all associated external references if external symbol not restored
 						symbolMgr.getReferenceManager().removeAllReferencesTo(getAddress());
 					}
 				}
 				return true;
 			}
+		}
+		catch (InvalidInputException e) {
+			// This shouldn't happen.
+			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+		}
+		catch (IOException e) {
+			symbolMgr.dbError(e);
 		}
 		finally {
 			lock.release();
@@ -126,37 +145,8 @@ public class FunctionSymbol extends SymbolDB {
 		return false;
 	}
 
-	/**
-	 * Recreate a symbol with the function symbol's name because deleting the function 
-	 * does not mean that we want to lose the function name (that is our policy).
-	 */
-	private boolean createLabelForDeletedFunctionName(Address entryPoint, String symName,
-			String stringData, Namespace namespace, SourceType source, boolean pinned) {
-
-		Symbol parentSymbol = namespace.getSymbol();
-		if ((parentSymbol instanceof SymbolDB) && ((SymbolDB) parentSymbol).isDeleting()) {
-			// do not replace function with label if parent namespace is getting removed
-			return false;
-		}
-
-		try {
-			Symbol newSym =
-				symbolMgr.createCodeSymbol(entryPoint, symName, namespace, source, stringData);
-			newSym.setPrimary();
-			if (pinned) {
-				newSym.setPinned(true);
-			}
-			return true;
-		}
-		catch (InvalidInputException e) {
-			// This shouldn't happen.
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-		}
-		return false;
-	}
-
 	@Override
-	public Object getObject() {
+	public Function getObject() {
 		return functionMgr.getFunction(key);
 	}
 
@@ -166,28 +156,13 @@ public class FunctionSymbol extends SymbolDB {
 	}
 
 	@Override
-	public boolean isPinned() {
-		if (!isExternal()) {
-			return doIsPinned();
-		}
-		return false;
-	}
-
-	@Override
-	public void setPinned(boolean pinned) {
-		if (!isExternal()) {
-			doSetPinned(pinned);
-		}
-	}
-
-	@Override
 	public ProgramLocation getProgramLocation() {
 		lock.acquire();
 		try {
 			if (!checkIsValid()) {
 				return null;
 			}
-			Function f = (Function) getObject();
+			Function f = getObject();
 			String signature = f.getPrototypeString(false, false);
 			return new FunctionReturnTypeFieldLocation(getProgram(), address, 0, signature,
 				f.getReturnType().getName());
@@ -334,27 +309,6 @@ public class FunctionSymbol extends SymbolDB {
 				count += thunkIds.size();
 			}
 			return count;
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	@Override
-	public boolean hasMultipleReferences() {
-		lock.acquire();
-		try {
-			checkIsValid();
-
-			if (super.hasMultipleReferences()) {
-				return true;
-			}
-
-			List<Long> thunkIds = functionMgr.getThunkFunctionIds(key);
-			if (thunkIds != null) {
-				return thunkIds.size() > 1;
-			}
-			return false;
 		}
 		finally {
 			lock.release();

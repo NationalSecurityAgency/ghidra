@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,31 +129,37 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 			serviceProvider.getService(ProjectDataService.class);
 		ProjectData projectData = projectDataService.getProjectData();
 
-		// default folder is the root folder
-		DomainFolder folder = projectData.getRootFolder();
-
 		// Get program name and folder from program comment annotation
 		// handles forward and back slashes and with and without first slash
 		String programText = getProgramText(annotationParts);
 		String programName = FilenameUtils.getName(programText);
 		String path = FilenameUtils.getFullPathNoEndSeparator(programText);
+
+		DomainFolder folder;
 		if (path.length() > 0) {
 			path = StringUtils.prependIfMissing(FilenameUtils.separatorsToUnix(path), "/");
 			folder = projectData.getFolder(path);
+			if (folder == null) {
+				Msg.showInfo(getClass(), null, "Folder Not Found: " + path,
+					"Unable to locate folder by the name \"" + path);
+				return true;
+			}
+		}
+		else {
+			folder = projectData.getRootFolder();
 		}
 
-		if (folder == null) {
-			Msg.showInfo(getClass(), null, "No Folder: " + path,
-				"Unable to locate folder by the name \"" + path);
+		DomainFile programFile = folder.getFile(programName);
+		if (programFile == null ||
+			!Program.class.isAssignableFrom(programFile.getDomainObjectClass())) {
+			Msg.showInfo(getClass(), null, "Program Not Found: " + programName,
+				"Unable to locate program at path \"" + programText +
+					"\".\nNOTE: File names are case-sensitive.");
 			return true;
 		}
-
-		DomainFile programFile = findProgramByName(programName, folder);
-
-		if (programFile == null) {
-			Msg.showInfo(getClass(), null, "No Program: " + programName,
-				"Unable to locate a program by the name \"" + programName +
-					"\".\nNOTE: Program name is case-sensitive. ");
+		if (!Program.class.isAssignableFrom(programFile.getDomainObjectClass())) {
+			Msg.showInfo(getClass(), null, "Program Not Found: " + programName,
+				"File exists with incorrect content type. ");
 			return true;
 		}
 
@@ -199,7 +205,7 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 			return;
 		}
 
-		Msg.showInfo(getClass(), null, "No Symbol: " + symbolName,
+		Msg.showInfo(getClass(), null, "Symbol Not Found: " + symbolName,
 			"Unable to navigate to '" + symbolName + "' in the program '" + programFile.getName() +
 				"'.\nMake sure that the given symbol/address exists.");
 		if (!programManager.isVisible(program)) {
@@ -247,27 +253,6 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 		return address;
 	}
 
-	// recursive program to find a program by the given name within the given folder
-	private DomainFile findProgramByName(String programText, DomainFolder folder) {
-		DomainFile[] files = folder.getFiles();
-		for (DomainFile file : files) {
-			if (file.getName().equals(programText)) {
-				return file;
-			}
-		}
-
-		// not at the current level, then check sub-folders
-		DomainFolder[] folders = folder.getFolders();
-		for (DomainFolder subFolder : folders) {
-			DomainFile domainFile = findProgramByName(programText, subFolder);
-			if (domainFile != null) {
-				return domainFile;
-			}
-		}
-
-		return null;
-	}
-
 	@Override
 	public String getDisplayString() {
 		return "Program";
@@ -275,7 +260,7 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 
 	@Override
 	public String getPrototypeString() {
-		return "{@program program_name.exe@symbol_name}";
+		return "{@program program_path@symbol_name}";
 	}
 
 	@Override

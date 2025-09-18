@@ -34,7 +34,7 @@ import ghidra.pcode.emu.jit.op.JitFloatCeilOp;
  * This uses the unary operator generator and emits an invocation of {@link Math#ceil(double)},
  * possibly surrounding it with conversions from and to float.
  */
-public enum FloatCeilOpGen implements UnOpGen<JitFloatCeilOp> {
+public enum FloatCeilOpGen implements FloatUnOpGen<JitFloatCeilOp> {
 	/** The generator singleton */
 	GEN;
 

@@ -46,7 +46,6 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
@@ -139,8 +138,7 @@ public enum VariableValueUtils {
 		}
 
 		@Override
-		protected Boolean evaluateLoad(Program program, PcodeOp op,
-				Map<Varnode, Boolean> already) {
+		protected Boolean evaluateLoad(Program program, PcodeOp op, Map<Varnode, Boolean> already) {
 			return evaluateVarnode(program, op.getInput(1), already);
 		}
 
@@ -181,8 +179,13 @@ public enum VariableValueUtils {
 		}
 
 		@Override
+		public boolean isImmutableSettings() {
+			return true;
+		}
+
+		@Override
 		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-			return delegate.isChangeAllowed(settingsDefinition);
+			return false;
 		}
 
 		@Override
@@ -473,9 +476,8 @@ public enum VariableValueUtils {
 	 */
 	public static boolean hasFreshUnwind(PluginTool tool, DebuggerCoordinates coordinates) {
 		ListingUnwoundFrame innermost = locateInnermost(tool, coordinates);
-		if (innermost == null || !Objects.equals(innermost.getProgramCounter(),
-			getProgramCounter(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getViewSnap()))) {
+		if (innermost == null || !Objects.equals(innermost.getProgramCounter(), getProgramCounter(
+			coordinates.getPlatform(), coordinates.getThread(), coordinates.getViewSnap()))) {
 			return false;
 		}
 		return true;
@@ -669,10 +671,9 @@ public enum VariableValueUtils {
 				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
-			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-				TraceThread thread = space.getThread();
+			private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
 				// TODO: Consider the lifespan, too? Would have to use viewport....
-				if (thread == null || thread == coordinates.getThread()) {
+				if (space.isMemorySpace() || coordinates.isRegisterSpace(space)) {
 					invalidateCache();
 				}
 			}
@@ -866,13 +867,12 @@ public enum VariableValueUtils {
 				address.isRegisterAddress()) {
 				settings = new DefaultSpaceSettings(settings, language.getDefaultSpace());
 			}
-			ByteMemBufferImpl buf =
-				new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
-					@Override
-					public Memory getMemory() {
-						return coordinates.getView().getMemory();
-					}
-				};
+			ByteMemBufferImpl buf = new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
+				@Override
+				public Memory getMemory() {
+					return coordinates.getView().getMemory();
+				}
+			};
 			return type.getRepresentation(buf, settings, bytes.length);
 		}
 

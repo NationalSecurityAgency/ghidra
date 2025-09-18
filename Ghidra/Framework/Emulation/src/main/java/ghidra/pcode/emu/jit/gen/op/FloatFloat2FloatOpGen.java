@@ -31,7 +31,7 @@ import ghidra.pcode.emu.jit.op.JitFloatFloat2FloatOp;
  * <p>
  * This uses the unary operator generator and emits {@link #F2D} or {@link #D2F}.
  */
-public enum FloatFloat2FloatOpGen implements UnOpGen<JitFloatFloat2FloatOp> {
+public enum FloatFloat2FloatOpGen implements FloatUnOpGen<JitFloatFloat2FloatOp> {
 	/** The generator singleton */
 	GEN;
 

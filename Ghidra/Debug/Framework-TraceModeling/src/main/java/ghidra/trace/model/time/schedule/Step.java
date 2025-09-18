@@ -106,17 +106,21 @@ public interface Step extends Comparable<Step> {
 		return getThreadKey() == -1;
 	}
 
-	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
-		TraceThread thread = isEventThread() ? eventThread : tm.getThread(getThreadKey());
+	static TraceThread requireThread(TraceThread thread, long key) {
 		if (thread == null) {
-			if (isEventThread()) {
+			if (key == -1) {
 				throw new IllegalArgumentException("Thread must be given, e.g., 0:t1-3, " +
 					"since the last thread or snapshot event thread is not given.");
 			}
 			throw new IllegalArgumentException(
-				"Thread with key " + getThreadKey() + " does not exist in given trace");
+				"Thread with key %d does not exist in given trace".formatted(key));
 		}
 		return thread;
+	}
+
+	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
+		long key = getThreadKey();
+		return requireThread(isEventThread() ? eventThread : tm.getThread(key), key);
 	}
 
 	long getTickCount();

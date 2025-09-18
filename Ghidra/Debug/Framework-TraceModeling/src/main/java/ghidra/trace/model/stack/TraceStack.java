@@ -20,19 +20,31 @@ import java.util.List;
 import ghidra.lifecycle.Transitional;
 import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.memory.TraceMemoryManager;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A trace of the connected debugger's stack unwind
  * 
+ * <p>
  * Most of the information stored here is ancillary, since with sufficient analysis of associated
  * images, it could be recovered, in the same fashion as the connected debugger did. Nevertheless,
  * during a debug session, this information should be recorded if offered, as it makes it
  * immediately accessible, before sufficient analysis has been performed, and provides some check
  * for that analysis. If this information wasn't recorded during a session, this can store the
  * result of that analysis.
+ * 
+ * <p>
+ * Conventionally, if the debugger can also unwind register values, then each frame should present a
+ * register bank. Otherwise, the same object presenting this stack should present the register bank.
  */
-public interface TraceStack extends TraceUniqueObject {
+@TraceObjectInfo(
+	schemaName = "Stack",
+	shortName = "stack",
+	attributes = {},
+	fixedKeys = {})
+public interface TraceStack extends TraceUniqueObject, TraceObjectInterface {
 
 	/**
 	 * Get the thread whose stack this is

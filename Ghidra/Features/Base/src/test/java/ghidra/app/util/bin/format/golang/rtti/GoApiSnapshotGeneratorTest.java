@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
-import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.bin.format.golang.GoVer;

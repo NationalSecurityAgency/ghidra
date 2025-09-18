@@ -1,3 +1,6 @@
+:: ###
+:: IP: Apache License 2.0
+:: ##
 @rem
 @rem Copyright 2015 the original author or authors.
 @rem

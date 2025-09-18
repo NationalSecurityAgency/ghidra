@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.gotoquery;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.util.Stack;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +30,7 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.plugintool.PluginTool;
@@ -106,8 +104,10 @@ public class GoToHelper {
 			ExternalLocation externalLoc =
 				program.getExternalManager().getExternalLocation(externalSym);
 
-			// TODO - this seems like a mistake to always pass 'false' here; please doc why we
-			//        wish to ignore the user options for when to navigate to external programs
+			// TODO - This seems like a mistake to always pass 'false' here; please doc why we
+			//        wish to ignore the user options for when to navigate to external programs.
+			//        It appears this was done since this method is invoked on simple external
+			//        location node selection within symbol tree where you would not want a popup.
 			return goToExternalLinkage(navigatable, externalLoc, false);
 		}
 
@@ -187,10 +187,11 @@ public class GoToHelper {
 	 * 
 	 * @param nav Navigatable
 	 * @param externalLoc external location
-	 * @param popupAllowed if true a table may be displayed when multiple linkage locations exist,
-	 *            otherwise navigation to the first linkage location will be performed
+	 * @param popupAllowed if true a table may be displayed when multiple linkage locations exist
+	 *         or navigation to an external program, otherwise navigation to the first linkage 
+	 *         location will be performed
 	 * @return true if navigation was successful or a list of possible linkage locations was
-	 *         displayed.
+	 *         displayed, false if no navigation was performed.
 	 */
 	protected boolean goToExternalLinkage(Navigatable nav, ExternalLocation externalLoc,
 			boolean popupAllowed) {
@@ -205,8 +206,14 @@ public class GoToHelper {
 			NavigationUtils.getExternalLinkageAddresses(program, externalSym.getAddress());
 		if (externalLinkageAddresses.length == 0) {
 			if (externalLoc.isFunction()) {
-				tool.setStatusInfo("Failed to identify external linkage address for " +
-					externalSym.getName(true) + ". Unable to perform navigation.", true);
+				// This assume external functions always require linkage location
+				tool.setStatusInfo("Failed to identify external linkage address for function " +
+					externalSym.getName(true), true);
+			}
+			else if (popupAllowed) {
+				// If there are no linkage location try to navigate to external program if a popup
+				// is tolerated.
+				return goToExternalLocation(nav, externalLoc, false);
 			}
 			return false;
 		}
@@ -306,7 +313,7 @@ public class GoToHelper {
 		}
 
 		ProjectData pd = tool.getProject().getProjectData();
-		DomainFile domainFile = pd.getFile(pathName);
+		DomainFile domainFile = pd.getFile(pathName, ProgramFileChooser.PROGRAM_FILE_FILTER);
 		ProgramManager service = tool.getService(ProgramManager.class);
 		if (domainFile == null || service == null) {
 			tool.setStatusInfo("Unable to navigate to external location. " +
@@ -441,8 +448,8 @@ public class GoToHelper {
 			return;
 		}
 
-		DataTreeDialog dialog = new DataTreeDialog(null,
-			"Choose External Program (" + extProgName + ")", OPEN);
+		ProgramFileChooser dialog =
+			new ProgramFileChooser(null, "Choose External Program (" + extProgName + ")");
 		dialog.setSearchText(extProgName);
 		dialog.setHelpLocation(new HelpLocation("ReferencesPlugin", "ChooseExternalProgram"));
 		tool.showDialog(dialog);

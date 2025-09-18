@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,7 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.services.*;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
@@ -191,7 +190,7 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 					return;
 				}
 
-				Command command = null;
+				Command<DomainObject> command = null;
 				ProgramSelection selection = listingContext.getSelection();
 				if (selection != null && !selection.isEmpty()) {
 					command = new SetColorCommand(color, service, selection);

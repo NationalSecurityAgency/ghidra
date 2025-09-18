@@ -23,7 +23,8 @@ package ghidra.program.model.address;
 public interface AddressSetCollection {
 
 	/**
-	 * Determine if any AddressSet in this collection intersects with the specified address set.
+	 * {@return true if any AddressSet in this collection intersects with the specified address set;
+	 * otherwise, false}
 	 *
 	 * @param addrSet address set to check intersection with.
 	 */
@@ -57,7 +58,8 @@ public interface AddressSetCollection {
 	public boolean hasFewerRangesThan(int rangeThreshold);
 
 	/**
-	 * Returns a single AddressSet containing the union of all the addressSetViews in the collection.  
+	 * {@return a single AddressSet containing the union of all the addressSetViews in the 
+	 * collection}  
 	 */
 	public AddressSet getCombinedAddressSet();
 

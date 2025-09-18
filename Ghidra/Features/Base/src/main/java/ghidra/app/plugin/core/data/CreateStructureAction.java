@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,6 @@ class CreateStructureAction extends ListingContextAction {
 		new String[] { "Data", "Create Structure..." };
 
 	private DataPlugin plugin;
-	private CreateStructureDialog createStructureDialog;
 
 	public CreateStructureAction(DataPlugin plugin) {
 		super("Create Structure", plugin.getName());
@@ -49,25 +48,12 @@ class CreateStructureAction extends ListingContextAction {
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_OPEN_BRACKET, InputEvent.SHIFT_DOWN_MASK));
 
 		this.plugin = plugin;
-		setEnabled(true);
-		createStructureDialog = new CreateStructureDialog(plugin.getTool());
 	}
 
-	@Override
-	public void dispose() {
-		super.dispose();
-
-		createStructureDialog.dispose();
-	}
-
-	/**
-	 * Method called when the action is invoked.
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext programActionContext) {
 		Program program = programActionContext.getProgram();
 		ProgramSelection sel = programActionContext.getSelection();
-
 		if (sel != null && !sel.isEmpty()) {
 			InteriorSelection interiorSel = sel.getInteriorSelection();
 			if (interiorSel != null) {
@@ -113,8 +99,8 @@ class CreateStructureAction extends ListingContextAction {
 			return;
 		}
 
-		Structure userChoice =
-			createStructureDialog.showCreateStructureDialog(program, tempStructure);
+		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool(), program);
+		Structure userChoice = dialog.showCreateStructureDialog(program, tempStructure);
 
 		if (userChoice != null) {
 			CreateStructureInStructureCmd cmd = new CreateStructureInStructureCmd(userChoice,
@@ -162,8 +148,9 @@ class CreateStructureAction extends ListingContextAction {
 			return;
 		}
 
+		CreateStructureDialog dialog = new CreateStructureDialog(plugin.getTool(), program);
 		Structure userChoice =
-			createStructureDialog.showCreateStructureDialog(program, tempStructure);
+			dialog.showCreateStructureDialog(program, tempStructure);
 
 		// exit if the user cancels the operation
 		if (userChoice != null) {

@@ -935,6 +935,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA1());
 	}
 
+	private static String getExpectedSourceHierarchyA1() {
+		String expected = "struct A1NS::A1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryA1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[A1NS::A1]");
@@ -1003,6 +1008,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructA2() {
 		return convertCommentsToSpeculative(getExpectedStructA2());
+	}
+
+	private static String getExpectedSourceHierarchyA2() {
+		String expected = "struct A2NS::A2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryA2() {
@@ -1150,6 +1160,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructA());
 	}
 
+	private static String getExpectedSourceHierarchyA() {
+		String expected = "struct ANS::A : virtual A1NS::A1, virtual A2NS::A2";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryA() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ANS::A]");
@@ -1271,6 +1286,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructB1());
 	}
 
+	private static String getExpectedSourceHierarchyB1() {
+		String expected = "struct B1NS::B1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryB1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[B1NS::B1]");
@@ -1339,6 +1359,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructB2() {
 		return convertCommentsToSpeculative(getExpectedStructB2());
+	}
+
+	private static String getExpectedSourceHierarchyB2() {
+		String expected = "struct B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryB2() {
@@ -1484,6 +1509,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructB() {
 		return convertCommentsToSpeculative(getExpectedStructB());
+	}
+
+	private static String getExpectedSourceHierarchyB() {
+		String expected = "struct BNS::B : virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryB() {
@@ -1724,6 +1754,12 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructC() {
 		return convertCommentsToSpeculative(getExpectedStructC());
+	}
+
+	private static String getExpectedSourceHierarchyC() {
+		String expected =
+			"struct CNS::C : virtual A1NS::A1, virtual A2NS::A2, virtual B1NS::B1, virtual B2NS::B2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryC() {
@@ -2083,6 +2119,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructD() {
 		return convertCommentsToSpeculative(getExpectedStructD());
+	}
+
+	private static String getExpectedSourceHierarchyD() {
+		String expected = "struct DNS::D : CNS::C, ANS::A, BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryD() {
@@ -2469,6 +2510,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructE());
 	}
 
+	private static String getExpectedSourceHierarchyE() {
+		String expected = "struct ENS::E : ANS::A, virtual BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryE() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[ENS::E, ANS::A]");
@@ -2706,6 +2752,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructF());
 	}
 
+	private static String getExpectedSourceHierarchyF() {
+		String expected = "struct FNS::F : virtual A1NS::A1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryF() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[FNS::F]");
@@ -2854,6 +2905,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructG());
 	}
 
+	private static String getExpectedSourceHierarchyG() {
+		String expected = "struct GNS::G : FNS::F";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryG() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[GNS::G, FNS::F]");
@@ -3000,6 +3056,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructH() {
 		return convertCommentsToSpeculative(getExpectedStructH());
+	}
+
+	private static String getExpectedSourceHierarchyH() {
+		String expected = "struct HNS::H : FNS::F";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryH() {
@@ -3197,6 +3258,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructI());
 	}
 
+	private static String getExpectedSourceHierarchyI() {
+		String expected = "struct INS::I : GNS::G, HNS::H";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryI() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt [GNS::G]	[INS::I, GNS::G, FNS::F]");
@@ -3341,6 +3407,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructJ() {
 		return convertCommentsToSpeculative(getExpectedStructJ());
+	}
+
+	private static String getExpectedSourceHierarchyJ() {
+		String expected = "struct JNS::J : virtual A1NS::A1";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryJ() {
@@ -3489,6 +3560,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructK() {
 		return convertCommentsToSpeculative(getExpectedStructK());
+	}
+
+	private static String getExpectedSourceHierarchyK() {
+		String expected = "struct KNS::K : JNS::J";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryK() {
@@ -3657,6 +3733,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructL());
 	}
 
+	private static String getExpectedSourceHierarchyL() {
+		String expected = "struct LNS::L : KNS::K";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryL() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vbt []	[LNS::L, KNS::K, JNS::J]");
@@ -3741,6 +3822,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructN1());
 	}
 
+	private static String getExpectedSourceHierarchyN1() {
+		String expected = "struct N1NS::N1";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryN1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft []	[N1NS::N1]");
@@ -3806,6 +3892,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructN2() {
 		return convertCommentsToSpeculative(getExpectedStructN2());
+	}
+
+	private static String getExpectedSourceHierarchyN2() {
+		String expected = "struct N2NS::N2";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryN2() {
@@ -4500,6 +4591,18 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 			}
 			Length: 16 Alignment: 8""";
 		//@formatter:on
+		return expected;
+	}
+
+	private static String getExpectedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : virtual N1NS::N1, ENS::E, DNS::D, INS::I, LNS::L, virtual N2NS::N2";
+		return expected;
+	}
+
+	private static String getSpeculatedSourceHierarchyM() {
+		String expected =
+			"struct MNS::M : ENS::E, DNS::D, INS::I, LNS::L, virtual N1NS::N1, virtual N2NS::N2";
 		return expected;
 	}
 
@@ -5229,6 +5332,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO1());
 	}
 
+	private static String getExpectedSourceHierarchyO1() {
+		String expected = "struct O1NS::O1 : ANS::A, BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO1() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O1NS::O1, ANS::A]");
@@ -5581,6 +5689,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructO2() {
 		return convertCommentsToSpeculative(getExpectedStructO2());
+	}
+
+	private static String getExpectedSourceHierarchyO2() {
+		String expected = "struct O2NS::O2 : ANS::A, virtual BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryO2() {
@@ -5945,6 +6058,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO3());
 	}
 
+	private static String getExpectedSourceHierarchyO3() {
+		String expected = "struct O3NS::O3 : ANS::A, BNS::B";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO3() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000", "     0 vft [ANS::A]	[O3NS::O3, ANS::A]");
@@ -6297,6 +6415,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	private static String getSpeculatedStructO4() {
 		return convertCommentsToSpeculative(getExpectedStructO4());
+	}
+
+	private static String getExpectedSourceHierarchyO4() {
+		String expected = "struct O4NS::O4 : ANS::A, virtual BNS::B";
+		return expected;
 	}
 
 	private static Map<String, String> getExpectedVxtPtrSummaryO4() {
@@ -6809,6 +6932,11 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return convertCommentsToSpeculative(getExpectedStructO());
 	}
 
+	private static String getExpectedSourceHierarchyO() {
+		String expected = "struct ONS::O : O1NS::O1, O2NS::O2, virtual O3NS::O3, virtual O4NS::O4";
+		return expected;
+	}
+
 	private static Map<String, String> getExpectedVxtPtrSummaryO() {
 		Map<String, String> results = new TreeMap<>();
 		results.put("VTABLE_00000000",
@@ -7249,6 +7377,42 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		speculatedStructs.put(O, getSpeculatedStructO());
 	}
 
+	private static final Map<ClassID, String> expectedSourceHierarchy = new LinkedHashMap<>();
+	static {
+		expectedSourceHierarchy.put(A1, getExpectedSourceHierarchyA1());
+		expectedSourceHierarchy.put(A2, getExpectedSourceHierarchyA2());
+		expectedSourceHierarchy.put(A, getExpectedSourceHierarchyA());
+		expectedSourceHierarchy.put(B1, getExpectedSourceHierarchyB1());
+		expectedSourceHierarchy.put(B2, getExpectedSourceHierarchyB2());
+		expectedSourceHierarchy.put(B, getExpectedSourceHierarchyB());
+		expectedSourceHierarchy.put(C, getExpectedSourceHierarchyC());
+		expectedSourceHierarchy.put(D, getExpectedSourceHierarchyD());
+		expectedSourceHierarchy.put(E, getExpectedSourceHierarchyE());
+		expectedSourceHierarchy.put(F, getExpectedSourceHierarchyF());
+		expectedSourceHierarchy.put(G, getExpectedSourceHierarchyG());
+		expectedSourceHierarchy.put(H, getExpectedSourceHierarchyH());
+		expectedSourceHierarchy.put(I, getExpectedSourceHierarchyI());
+		expectedSourceHierarchy.put(J, getExpectedSourceHierarchyJ());
+		expectedSourceHierarchy.put(K, getExpectedSourceHierarchyK());
+		expectedSourceHierarchy.put(L, getExpectedSourceHierarchyL());
+		expectedSourceHierarchy.put(N1, getExpectedSourceHierarchyN1());
+		expectedSourceHierarchy.put(N2, getExpectedSourceHierarchyN2());
+		expectedSourceHierarchy.put(M, getExpectedSourceHierarchyM());
+		expectedSourceHierarchy.put(O1, getExpectedSourceHierarchyO1());
+		expectedSourceHierarchy.put(O2, getExpectedSourceHierarchyO2());
+		expectedSourceHierarchy.put(O3, getExpectedSourceHierarchyO3());
+		expectedSourceHierarchy.put(O4, getExpectedSourceHierarchyO4());
+		expectedSourceHierarchy.put(O, getExpectedSourceHierarchyO());
+	}
+
+	private static final Map<ClassID, String> speculatedSourceHierarchy =
+		new LinkedHashMap<>();
+	static {
+		speculatedSourceHierarchy.putAll(expectedSourceHierarchy);
+		// The following will replace entries as needed
+		speculatedSourceHierarchy.put(M, getSpeculatedSourceHierarchyM());
+	}
+
 	private static final Map<ClassID, Map<String, String>> expectedVxtPtrSummaries =
 		new LinkedHashMap<>();
 	static {
@@ -7323,6 +7487,132 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		speculatedVxtStructs.put(M, getSpeculatedVxtStructsM());
 	}
 
+	private static final Map<String, String> expectedVxtAddressTypes = new LinkedHashMap<>();
+	static {
+		expectedVxtAddressTypes.put("14006f518", "/ANS/A/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006f5b8", "/BNS/B/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006f658", "/CNS/C/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006f720", "/DNS/D/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006f734", "/DNS/D/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006f740", "/DNS/D/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006f7f0", "/ENS/E/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006f808", "/ENS/E/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("14006f838", "/FNS/F/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f860", "/GNS/G/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f888", "/HNS/H/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f8b0", "/INS/I/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f8b8", "/INS/I/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f8e0", "/JNS/J/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f908", "/KNS/K/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f930", "/LNS/L/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006fa68", "/MNS/M/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006fa88", "/MNS/M/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("14006fa9c", "/MNS/M/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("14006faa8", "/MNS/M/!internal/VTABLE_00000058");
+		expectedVxtAddressTypes.put("14006fab4", "/MNS/M/!internal/VTABLE_00000070");
+		expectedVxtAddressTypes.put("14006fabc", "/MNS/M/!internal/VTABLE_00000088");
+		expectedVxtAddressTypes.put("14006fac4", "/MNS/M/!internal/VTABLE_000000a8");
+		expectedVxtAddressTypes.put("14006facc", "/MNS/M/!internal/VTABLE_00000128");
+		expectedVxtAddressTypes.put("14006fb80", "/O1NS/O1/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006fb94", "/O1NS/O1/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006fc48", "/O2NS/O2/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006fc60", "/O2NS/O2/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("14006fd18", "/O3NS/O3/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006fd2c", "/O3NS/O3/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006fde0", "/O4NS/O4/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006fdf8", "/O4NS/O4/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("14006ff20", "/ONS/O/!internal/VTABLE_00000008");
+		expectedVxtAddressTypes.put("14006ff40", "/ONS/O/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006ff4c", "/ONS/O/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("14006ff64", "/ONS/O/!internal/VTABLE_000000a8");
+		expectedVxtAddressTypes.put("14006ff70", "/ONS/O/!internal/VTABLE_000000c0");
+		expectedVxtAddressTypes.put("14006ff84", "/ONS/O/!internal/VTABLE_000000d8");
+		expectedVxtAddressTypes.put("14006ff90", "/ONS/O/!internal/VTABLE_000000f8");
+		expectedVxtAddressTypes.put("14006f490", "/A1NS/A1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f4b0", "/A2NS/A2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f4d0", "/ANS/A/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f4e0", "/ANS/A/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f500", "/ANS/A/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("14006f530", "/B1NS/B1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f550", "/B2NS/B2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f570", "/BNS/B/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f580", "/BNS/B/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f5a0", "/BNS/B/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("14006f5d0", "/CNS/C/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f5e0", "/CNS/C/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f600", "/CNS/C/!internal/VTABLE_00000028");
+		expectedVxtAddressTypes.put("14006f620", "/CNS/C/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006f640", "/CNS/C/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("14006f678", "/DNS/D/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f688", "/DNS/D/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f698", "/DNS/D/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("14006f6a8", "/DNS/D/!internal/VTABLE_00000050");
+		expectedVxtAddressTypes.put("14006f6c8", "/DNS/D/!internal/VTABLE_00000060");
+		expectedVxtAddressTypes.put("14006f6e8", "/DNS/D/!internal/VTABLE_00000070");
+		expectedVxtAddressTypes.put("14006f708", "/DNS/D/!internal/VTABLE_00000080");
+		expectedVxtAddressTypes.put("14006f758", "/ENS/E/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f768", "/ENS/E/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006f788", "/ENS/E/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("14006f7a8", "/ENS/E/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("14006f7c8", "/ENS/E/!internal/VTABLE_00000050");
+		expectedVxtAddressTypes.put("14006f7e8", "/ENS/E/!internal/VTABLE_00000060");
+		expectedVxtAddressTypes.put("14006f820", "/FNS/F/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("14006f848", "/GNS/G/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f870", "/HNS/H/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f898", "/INS/I/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006f8c8", "/JNS/J/!internal/VTABLE_00000010");
+		expectedVxtAddressTypes.put("14006f8f0", "/KNS/K/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006f918", "/LNS/L/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006f940", "/N1NS/N1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f958", "/N2NS/N2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f970", "/MNS/M/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006f980", "/MNS/M/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006f990", "/MNS/M/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006f9a0", "/MNS/M/!internal/VTABLE_00000050");
+		expectedVxtAddressTypes.put("14006f9b0", "/MNS/M/!internal/VTABLE_000000d0");
+		expectedVxtAddressTypes.put("14006f9c8", "/MNS/M/!internal/VTABLE_000000e0");
+		expectedVxtAddressTypes.put("14006f9e8", "/MNS/M/!internal/VTABLE_000000f0");
+		expectedVxtAddressTypes.put("14006fa08", "/MNS/M/!internal/VTABLE_00000100");
+		expectedVxtAddressTypes.put("14006fa28", "/MNS/M/!internal/VTABLE_00000110");
+		expectedVxtAddressTypes.put("14006fa48", "/MNS/M/!internal/VTABLE_00000120");
+		expectedVxtAddressTypes.put("14006fa58", "/MNS/M/!internal/VTABLE_00000138");
+		expectedVxtAddressTypes.put("14006fae0", "/O1NS/O1/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006faf8", "/O1NS/O1/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006fb08", "/O1NS/O1/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006fb28", "/O1NS/O1/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("14006fb48", "/O1NS/O1/!internal/VTABLE_00000058");
+		expectedVxtAddressTypes.put("14006fb68", "/O1NS/O1/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("14006fba8", "/O2NS/O2/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006fbc0", "/O2NS/O2/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006fbe0", "/O2NS/O2/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("14006fc00", "/O2NS/O2/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("14006fc20", "/O2NS/O2/!internal/VTABLE_00000050");
+		expectedVxtAddressTypes.put("14006fc40", "/O2NS/O2/!internal/VTABLE_00000060");
+		expectedVxtAddressTypes.put("14006fc78", "/O3NS/O3/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006fc90", "/O3NS/O3/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006fca0", "/O3NS/O3/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006fcc0", "/O3NS/O3/!internal/VTABLE_00000048");
+		expectedVxtAddressTypes.put("14006fce0", "/O3NS/O3/!internal/VTABLE_00000058");
+		expectedVxtAddressTypes.put("14006fd00", "/O3NS/O3/!internal/VTABLE_00000068");
+		expectedVxtAddressTypes.put("14006fd40", "/O4NS/O4/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006fd58", "/O4NS/O4/!internal/VTABLE_00000020");
+		expectedVxtAddressTypes.put("14006fd78", "/O4NS/O4/!internal/VTABLE_00000030");
+		expectedVxtAddressTypes.put("14006fd98", "/O4NS/O4/!internal/VTABLE_00000040");
+		expectedVxtAddressTypes.put("14006fdb8", "/O4NS/O4/!internal/VTABLE_00000050");
+		expectedVxtAddressTypes.put("14006fdd8", "/O4NS/O4/!internal/VTABLE_00000060");
+		expectedVxtAddressTypes.put("14006fe10", "/ONS/O/!internal/VTABLE_00000000");
+		expectedVxtAddressTypes.put("14006fe30", "/ONS/O/!internal/VTABLE_00000018");
+		expectedVxtAddressTypes.put("14006fe40", "/ONS/O/!internal/VTABLE_00000038");
+		expectedVxtAddressTypes.put("14006fe58", "/ONS/O/!internal/VTABLE_00000060");
+		expectedVxtAddressTypes.put("14006fe78", "/ONS/O/!internal/VTABLE_00000070");
+		expectedVxtAddressTypes.put("14006fe98", "/ONS/O/!internal/VTABLE_00000080");
+		expectedVxtAddressTypes.put("14006feb8", "/ONS/O/!internal/VTABLE_00000090");
+		expectedVxtAddressTypes.put("14006fed8", "/ONS/O/!internal/VTABLE_000000a0");
+		expectedVxtAddressTypes.put("14006fee8", "/ONS/O/!internal/VTABLE_000000b8");
+		expectedVxtAddressTypes.put("14006ff00", "/ONS/O/!internal/VTABLE_000000d0");
+		expectedVxtAddressTypes.put("14006ff10", "/ONS/O/!internal/VTABLE_000000f0");
+	}
+
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
@@ -7348,6 +7638,14 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 		return speculatedStructs;
 	}
 
+	public Map<ClassID, String> getExpectedSourceHierarchy() {
+		return expectedSourceHierarchy;
+	}
+
+	public Map<ClassID, String> getSpeculatedSourceHierarchy() {
+		return speculatedSourceHierarchy;
+	}
+
 	public Map<ClassID, Map<String, String>> getExpectedVxtPtrSummaries() {
 		return expectedVxtPtrSummaries;
 	}
@@ -7362,6 +7660,10 @@ public class Cfb464ProgramCreator extends ProgramCreator {
 
 	public Map<ClassID, Map<String, String>> getSpeculatedVxtStructs() {
 		return speculatedVxtStructs;
+	}
+
+	public Map<String, String> getExpectedVxtAddressTypes() {
+		return expectedVxtAddressTypes;
 	}
 
 	@Override

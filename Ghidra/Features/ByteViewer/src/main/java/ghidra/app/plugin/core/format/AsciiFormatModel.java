@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +34,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get the name of this formatter.
 	 */
+	@Override
 	public String getName() {
 		return "Ascii";
 	}
@@ -43,6 +43,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * Get the number of bytes to make a unit; in this case it
 	 * takes 1 byte to make an Ascii value.
 	 */
+	@Override
 	public int getUnitByteSize() {
 		return 1;
 	}
@@ -52,6 +53,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * it returns a number from 0 to unit byte size - 1 indicating which
 	 * byte the character position was obtained from.
 	 */
+	@Override
 	public int getByteOffset(ByteBlock block, int position) {
 		return 0;
 	}
@@ -59,6 +61,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Given the byte offset into a unit, get the column position.
 	 */
+	@Override
 	public int getColumnPosition(ByteBlock block, int byteOffset) {
 		return 0;
 	}
@@ -67,6 +70,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * Gets the number of characters required to display a
 	 * unit.
 	 */
+	@Override
 	public int getDataUnitSymbolSize() {
 		return symbolSize;
 	}
@@ -79,6 +83,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
 
@@ -99,6 +104,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Returns true if the formatter allows values to be changed.
 	 */
+	@Override
 	public boolean isEditable() {
 		return true;
 	}
@@ -117,6 +123,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c)
 			throws ByteBlockAccessException {
 
@@ -141,6 +148,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * support groups.
 	 * @throws UnsupportedOperationException 
 	 */
+	@Override
 	public int getGroupSize() {
 		return 0;
 	}
@@ -150,6 +158,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * support groups.
 	 * @throws UnsupportedOperationException 
 	 */
+	@Override
 	public void setGroupSize(int groupSize) {
 		throw new UnsupportedOperationException("groups are not supported");
 	}
@@ -157,6 +166,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get the number of characters separating units.
 	 */
+	@Override
 	public int getUnitDelimiterSize() {
 		return 0;
 	}
@@ -164,6 +174,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
 	 */
+	@Override
 	public boolean validateBytesPerLine(int bytesPerLine) {
 		return true;
 	}
@@ -171,10 +182,12 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
 	 */
+	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Ascii");
 	}
 
+	@Override
 	public void dispose() {
 	}
 

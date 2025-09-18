@@ -14,6 +14,8 @@ src/main/docs/VisualGraphHierarchy.png||GHIDRA||||END|
 src/main/docs/VisualGraphHierarchy.xml||GHIDRA||||END|
 src/main/docs/VisualGraphViewer.png||GHIDRA||||END|
 src/main/docs/VisualGraphViewer.xml||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/VisualGraph/Visual_Graph.html||GHIDRA||||END|
 src/main/resources/images/Lasso.png||GHIDRA||||END|
 src/main/resources/images/color_swatch.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/network-wireless-16.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

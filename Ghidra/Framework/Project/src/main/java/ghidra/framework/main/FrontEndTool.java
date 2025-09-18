@@ -184,7 +184,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
 			return false;
 		}
-		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, plugin)));
+		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, true, plugin)));
 		return true;
 	}
 
@@ -355,8 +355,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
-		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help, "This controls whether" +
-			" text cursors blink when focused");
+		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help,
+			"This controls whether" + " text cursors blink when focused");
 
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
@@ -370,7 +370,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		AnimationUtils.setAnimationEnabled(animationEnabled);
 
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
-		DockingUtils.setTipWindowEnabled(showToolTips);
+		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
 		boolean compressDataBuffers =
 			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
@@ -397,7 +397,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
 		}
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
-			DockingUtils.setTipWindowEnabled((Boolean) newValue);
+			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
 		}
 		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,8 +154,6 @@ public class MergeTwoProgramsScript extends GhidraScript {
 
 	private void mergeComments(Program currProgram, Program otherProgram) throws Exception {
 		monitor.setMessage("Merging comments...");
-		int[] commentTypes = { CodeUnit.EOL_COMMENT, CodeUnit.PRE_COMMENT, CodeUnit.POST_COMMENT,
-			CodeUnit.PLATE_COMMENT, CodeUnit.REPEATABLE_COMMENT, };
 		Listing currentListing = currProgram.getListing();
 		Listing otherListing = otherProgram.getListing();
 		CodeUnitIterator otherCodeUnits = otherListing.getCodeUnits(true);
@@ -164,7 +162,7 @@ public class MergeTwoProgramsScript extends GhidraScript {
 				break;
 			}
 			CodeUnit otherCodeUnit = otherCodeUnits.next();
-			for (int commentType : commentTypes) {
+			for (CommentType commentType : CommentType.values()) {
 				if (monitor.isCancelled()) {
 					break;
 				}

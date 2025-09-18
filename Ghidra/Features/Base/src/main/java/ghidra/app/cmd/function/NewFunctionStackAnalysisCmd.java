@@ -270,7 +270,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 		// Add stack variables with undefined types to map to simplify merging
 		addFunctionStackVariablesToSortedList(func, sortedVariables);
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropogator symEval = new SymbolicPropogator(program, false);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);

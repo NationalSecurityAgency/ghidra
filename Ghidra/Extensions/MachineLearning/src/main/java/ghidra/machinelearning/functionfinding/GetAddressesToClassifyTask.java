@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.machinelearning.functionfinding;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -27,8 +28,25 @@ import ghidra.util.task.TaskMonitor;
 
 public class GetAddressesToClassifyTask extends Task {
 	private Program prog;
-	private AddressSet execNonFunc;
+	private AddressSetView execNonFunc;
 	private long minUndefinedRangeSize;
+	private ProgramSelection userSelection;
+
+	/**
+	 * Creates a {@link Task} that creates a set of addresses to check for function starts.  The
+	 * {code minUndefinedRangeSize} parameter determines how large a run of undefined bytes must be
+	 * to be checked for function starts
+	 * @param prog source program
+	 * @param minUndefinedRangeSize minimum size of undefined range
+	 * @param selection program selection used to filter addresses
+	 */
+	public GetAddressesToClassifyTask(Program prog, long minUndefinedRangeSize,
+			ProgramSelection selection) {
+		super("Gathering Addresses to Classify", true, true, false, false);
+		this.prog = prog;
+		this.minUndefinedRangeSize = minUndefinedRangeSize;
+		this.userSelection = selection;
+	}
 
 	/**
 	 * Creates a {@link Task} that creates a set of addresses to check for function starts.  The
@@ -38,25 +56,29 @@ public class GetAddressesToClassifyTask extends Task {
 	 * @param minUndefinedRangeSize minimum size of undefined range
 	 */
 	public GetAddressesToClassifyTask(Program prog, long minUndefinedRangeSize) {
-		super("Gathering Addresses to Classify", true, true, false, false);
-		this.prog = prog;
-		this.minUndefinedRangeSize = minUndefinedRangeSize;
+		this(prog, minUndefinedRangeSize, null);
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		execNonFunc = new AddressSet();
-		AddressSetView executable = prog.getMemory().getExecuteSet();
-		AddressSetView initialized = prog.getMemory().getLoadedAndInitializedAddressSet();
-		execNonFunc = executable.intersect(initialized);
-		monitor.initialize(prog.getFunctionManager().getFunctionCount());
-		FunctionIterator fIter = prog.getFunctionManager().getFunctions(true);
-		while (fIter.hasNext()) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			Function func = fIter.next();
-			execNonFunc = execNonFunc.subtract(func.getBody());
+		if (userSelection != null) {
+			execNonFunc = userSelection;
 		}
+		else {
+			AddressSetView executable = prog.getMemory().getExecuteSet();
+			AddressSetView initialized = prog.getMemory().getLoadedAndInitializedAddressSet();
+			execNonFunc = executable.intersect(initialized);
+			monitor.initialize(prog.getFunctionManager().getFunctionCount());
+			FunctionIterator fIter = prog.getFunctionManager().getFunctions(true);
+			while (fIter.hasNext()) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				Function func = fIter.next();
+				execNonFunc = execNonFunc.subtract(func.getBody());
+			}
+		}
+
 		//remove small undefined ranges to avoid (for example) searching for
 		//function starts in an address range of length 3 between two known
 		//functions.  "small" is controlled by a plugin option.
@@ -77,7 +99,7 @@ public class GetAddressesToClassifyTask extends Task {
 	 * Returns the set of addresses to classify
 	 * @return addresses
 	 */
-	public AddressSet getAddressesToClassify() {
+	public AddressSetView getAddressesToClassify() {
 		return execNonFunc;
 	}
 
@@ -87,7 +109,7 @@ public class GetAddressesToClassifyTask extends Task {
 	 * @param modulus alignment modulus
 	 * @return aligned addresses
 	 */
-	public AddressSet getAddressesToClassify(long modulus) {
+	public AddressSetView getAddressesToClassify(long modulus) {
 		AddressSet aligned = new AddressSet();
 		for (Address a : execNonFunc.getAddresses(true)) {
 			if (a.getOffset() % modulus == 0) {

@@ -363,7 +363,7 @@ tasks.register('indexHelp', JavaExec) {
 //      - validates help
 //      - the files generated will be placed in a diretory usable during development mode and will
 //        eventually be placed in the <Module>.jar file 
-tasks.register('buildHelp', JavaExec) {
+tasks.register('buildModuleHelp', JavaExec) {
 	group = "Ghidra Private"
 
 	dependsOn 'indexHelp'
@@ -406,7 +406,7 @@ tasks.register('buildHelp', JavaExec) {
 	
 		//
 		// The classpath needs to include:
-		// 1) the jar of each dependent Module that has already been built
+		// 1) the jar of each depended upon Module that has already been built
 		// 2) 'src/main/resources'
 		// 
 	
@@ -434,6 +434,12 @@ tasks.register('buildHelp', JavaExec) {
 	}
 }
 
+// a simple task to alias the old 'buildHelp' task to 'buildModuleHelp' so users that uses of the
+// old command will still work for end users 
+tasks.register('buildHelp', JavaExec) {
+	group = "Ghidra Private"
+	dependsOn 'buildModuleHelp'	
+}
 
 
 // include the help into the module's jar
@@ -445,7 +451,7 @@ jar {
 }
 
 // build the help whenever this module's jar file is built
-jar.dependsOn 'buildHelp'			
+jar.dependsOn 'buildModuleHelp'			
 
 
 /*********************************************************************************

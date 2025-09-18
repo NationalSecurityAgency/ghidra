@@ -76,11 +76,9 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 			@Override
 			public void run(TaskMonitor monitor) {
 				TaintState state = plugin.getTaintState();
-				state.setCancellation(false);
-				monitor.initialize(program.getFunctionManager().getFunctionCount());
+				state.setMonitor(monitor);
 				state.queryIndex(program, tool, queryType);
-				state.setCancellation(monitor.isCancelled());
-				monitor.clearCancelled();
+				state.setMonitor(null);
 			}
 		};
 
@@ -91,11 +89,15 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 		tool.execute(defaultQueryTask);
 
 		TaintState state = plugin.getTaintState();
-		if (!state.wasCancelled()) {
+		if (!defaultQueryTask.isCancelled()) {
 			TaintFormat format = state.getOptions().getTaintOutputForm();
 			if (!format.equals(TaintFormat.NONE)) {
 				SarifService sarifService = plugin.getSarifService();
 				sarifService.getController().setDefaultGraphHander(SarifTaintGraphRunHandler.class);
+				String queryName = state.getQueryName();
+				if (queryName != null) {
+					desc = queryName;
+				}
 				sarifService.showSarif(desc, state.getData());
 			}
 
@@ -104,11 +106,9 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 			provider.setTaint();
 
 			plugin.consoleMessage("query complete");
-			state.setCancellation(false);
 		}
 		else {
 			plugin.consoleMessage("Source-Sink query was cancelled.");
-
 		}
 	}
 }

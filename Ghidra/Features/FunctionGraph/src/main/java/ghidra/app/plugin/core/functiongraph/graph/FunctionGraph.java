@@ -173,7 +173,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 
 	@Override
 	public void vertexLocationChanged(FGVertex v, Point point, ChangeType changeType) {
-		if (changeType == ChangeType.USER) {
+		if (!changeType.isTransitional()) {
 			settings.putVertexLocation(v, point);
 		}
 	}

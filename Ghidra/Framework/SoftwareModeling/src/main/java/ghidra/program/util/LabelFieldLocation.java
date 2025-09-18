@@ -168,15 +168,19 @@ public class LabelFieldLocation extends CodeUnitLocation {
 	}
 
 	@Override
-	public void saveState(SaveState obj) {
-		super.saveState(obj);
-		obj.putStrings("_SYMBOL_PATH", symbolPath.asArray());
+	public void saveState(SaveState ss) {
+		super.saveState(ss);
+		ss.putStrings("_SYMBOL_PATH", symbolPath.asArray());
 	}
 
 	@Override
-	public void restoreState(Program p, SaveState obj) {
-		super.restoreState(p, obj);
-		String[] symbolPathArray = obj.getStrings("_SYMBOL_PATH", null);
-		symbolPath = symbolPathArray == null ? new SymbolPath("") : new SymbolPath(symbolPathArray);
+	public void restoreState(Program p, SaveState ss) {
+		super.restoreState(p, ss);
+		String[] symbolPathArray = ss.getStrings("_SYMBOL_PATH", null);
+		if (symbolPathArray == null) {
+			throw new IllegalArgumentException("SaveState does not contain a SymbolPath");
+		}
+
+		symbolPath = new SymbolPath(symbolPathArray);
 	}
 }

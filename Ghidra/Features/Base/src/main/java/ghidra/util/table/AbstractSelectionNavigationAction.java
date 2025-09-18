@@ -43,7 +43,7 @@ import resources.Icons;
  */
 public abstract class AbstractSelectionNavigationAction extends ToggleDockingAction {
 
-	private static final Icon ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
 	private static final String SELECTED_STATE = "SELECTION_NAVIGATION_SELECTED_STATE";
 
 	private SelectionListener selectionListener;
@@ -60,7 +60,6 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 		setDescription(HTMLUtilities.toHTML("Toggle <b>on</b> means to navigate to the location\n" +
 			"in the program that corresponds to the selected row,\n as the selection changes."));
 		setHelpLocation(new HelpLocation("Search", "Selection_Navigation"));
-		setEnabled(true);
 		setSelected(true); // toggle button; enabled by default
 
 		initialize();

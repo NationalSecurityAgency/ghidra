@@ -112,7 +112,7 @@ public class DeleteTableRowAction extends DockingAction {
 
 	protected void removeSelectedItems() {
 		TableModel model = table.getModel();
-		if (!(model instanceof RowObjectTableModel)) {
+		if (!(model instanceof ThreadedTableModel)) {
 			throw new AssertException("This action cannot delete rows for the given table model." +
 				"You can override this method to peform the delete action yourself.");
 		}
@@ -153,7 +153,7 @@ public class DeleteTableRowAction extends DockingAction {
 		}
 	}
 
-	public boolean checkForBusy(TableModel model) {
+	protected boolean checkForBusy(TableModel model) {
 
 		if (!(model instanceof ThreadedTableModel)) {
 			return false;

@@ -25,7 +25,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 
 /**
- * A structure that represents a golang string instance.
+ * A structure that represents a Go string instance.
  */
 @StructureMapping(structureName = "string")
 public class GoString implements StructureMarkup<GoString> {
@@ -67,9 +67,7 @@ public class GoString implements StructureMarkup<GoString> {
 	}
 
 	/**
-	 * Returns an AddressRange that encompasses the string char data.
-	 * 
-	 * @return AddressRange that encompasses the string char data
+	 * {@return an AddressRange that encompasses the string char data}
 	 */
 	public AddressRange getStringDataRange() {
 		if (len <= 0) {
@@ -81,18 +79,14 @@ public class GoString implements StructureMarkup<GoString> {
 	}
 
 	/**
-	 * Returns the length of the string data
-	 * 
-	 * @return length of the string data
+	 * {@return the length of the string data}
 	 */
 	public long getLength() {
 		return len;
 	}
 
 	/**
-	 * Returns the string value.
-	 * 
-	 * @return string value
+	 * {@return the string value}
 	 * @throws IOException if error reading char data
 	 */
 	public String getStringValue() throws IOException {
@@ -108,11 +102,11 @@ public class GoString implements StructureMarkup<GoString> {
 	}
 
 	/**
-	 * Returns true if this string instance is valid and probably contains a go string.
+	 * {@return true if this string instance is valid and probably contains a Go string, false if
+	 * not valid string}
 	 * 
 	 * @param charValidRange addresses that are valid locations for a string's char[] data 
 	 * @param stringContentValidator a callback that will test a recovered string for validity
-	 * @return boolean true if valid string, false if not valid string
 	 * @throws IOException if error reading data
 	 */
 	public boolean isValid(AddressSetView charValidRange, Predicate<String> stringContentValidator)
@@ -176,11 +170,10 @@ public class GoString implements StructureMarkup<GoString> {
 	}
 
 	/**
-	 * Returns true if this string instance points to valid char[] data.
+	 * {@return true if this string instance points to valid char[] data, false if not valid}
 	 * 
 	 * @param charValidRange addresses that are valid locations for a string's char[] data 
 	 * @param stringContentValidator a callback that will test a recovered string for validity
-	 * @return boolean true if valid string, false if not valid string
 	 * @throws IOException if error reading data
 	 */
 	public boolean isValidInlineString(AddressSetView charValidRange,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import java.util.function.*;
  * A common use case is for a method to suppress any recursive calls, i.e., it is self suppressing,
  * e.g.:
  * 
- * <pre>
+ * <pre>{@code
  * private final SuppressableCallback<Void> cbDoSomething = new SuppressableCallback<>();
  * 
  * public boolean doSomething() {
@@ -51,7 +51,7 @@ import java.util.function.*;
  * 	// do the other thing
  * 	return doSomething();
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * This example is very trivial, but this sort of thing can easily happen in event driven
@@ -62,6 +62,8 @@ import java.util.function.*;
  * resulting in unending oscillation between the requested states. A more robust solution demands we
  * know the cause(s) of events. For now, the solution is to suppress event firing whenever a state
  * change is due to receiving an event.
+ * 
+ * @param <T> the type of return value, often {@link Void}
  */
 public class SuppressableCallback<T> {
 	/**
@@ -193,7 +195,7 @@ public class SuppressableCallback<T> {
 	 * The callback is always invoked, allowing it to decide what actions to take (or not take)
 	 * based on the values present in the stack.
 	 * 
-	 * @param callback
+	 * @param callback a method to receive the stack
 	 */
 	public void invokeWithStack(Consumer<List<T>> callback) {
 		callback.accept(stack.get().view);

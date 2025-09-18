@@ -104,13 +104,35 @@ public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 		//  often had a member that also lambda that was marked with the exact same namespace/name
 		//  as the containing structure.  We found that the mangled names had more accurate and
 		//  distinguished lambda numbers.
+
+		// Future: probably want to change both mangled and non-mangled symbols for best, as both
+		// could be truncated, but it is likely that partial results from a mangled symbol would
+		// have more detail than the partial results of a truncated non-mangled symbol.  Thus,
+		// we should make getSymbolPathFromMangleTypeName() should do more work, even if the
+		// mangled symbol is truncated... perhaps we pass in a flag indicating to continue
+		// processing with the assumption that it is truncated?
+
+		boolean truncated = name.length() == 4096; // works unless real length was 4096
 		if (mangledName != null) {
-			symbolPath = getSymbolPathFromMangledTypeName(mangledName, name);
+			symbolPath = getSymbolPathFromMangledTypeName(mangledName, truncated ? null : name);
 		}
 		if (symbolPath == null) {
 			symbolPath =
 				MDMangUtils.standarizeSymbolPathUnderscores(
 					new SymbolPath(SymbolPathParser.parse(name)));
+			// If name was truncated at 4096 characters, then we likely do not have a complete
+			// symbol.  In a rare case, we had a blank "name" because the truncation happened
+			// right after a namespace delimiter.  Whether blank or not, we are appending
+			// a truncation message to the "name."  Note, however, that we could have a rare case
+			// where there were exactly 4096 characters without truncation where we will still
+			// append the truncation message.  We could try harder to ensure proper namespace
+			// parsing was done, and only then decide whether we need to add the message.  That
+			// proper parsing is a separate research effort.  For now, just append when we have
+			// 4096.
+			if (truncated) {
+				symbolPath =
+					new SymbolPath(symbolPath.getParent(), symbolPath.getName() + "_truncated");
+			}
 		}
 		return symbolPath;
 	}

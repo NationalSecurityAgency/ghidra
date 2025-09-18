@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,10 @@ public:
   
   /// \brief Emulate the binary op-code on input values
   virtual uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const;
-  
+
+  /// \brief Emulate the ternary op-code on input values
+  virtual uintb evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const;
+
   /// \brief Reverse the binary op-code operation, recovering an input value
   virtual uintb recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const;
   
@@ -503,6 +506,20 @@ public:
 class OpBehaviorSubpiece : public OpBehavior {
 public:
   OpBehaviorSubpiece(void) : OpBehavior(CPUI_SUBPIECE,false) {}	///< Constructor
+  virtual uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const;
+};
+
+/// CPUI_PTRADD behavior
+class OpBehaviorPtradd : public OpBehavior {
+public:
+  OpBehaviorPtradd(void) : OpBehavior(CPUI_PTRADD,false) {}	///< Constructor
+  virtual uintb evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const;
+};
+
+/// CPUI_PTRSUB behavior
+class OpBehaviorPtrsub : public OpBehavior {
+public:
+  OpBehaviorPtrsub(void) : OpBehavior(CPUI_PTRSUB,false) {}	///< Constructor
   virtual uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const;
 };
 

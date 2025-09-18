@@ -66,7 +66,7 @@
   
   <default_proto>
     <prototype name="__swiftcall" extrapop="0" stackshift="0">
-      <!-- https://github.com/apple/swift/blob/main/docs/ABI/CallConvSummary.rst#arm64 -->
+      <!-- https://github.com/swiftlang/swift/blob/main/docs/ABI/CallingConventionSummary.rst#arm64 -->
       <input>
         <pentry minsize="8" maxsize="8" storage="hiddenret">
           <register name="x8"/>
@@ -228,7 +228,7 @@
     </prototype>
   </default_proto>
   <prototype name="__thiscall" extrapop="0" stackshift="0">
-    <!-- https://github.com/apple/swift/blob/main/docs/ABI/CallConvSummary.rst#arm64 -->
+    <!-- https://github.com/swiftlang/swift/blob/main/docs/ABI/CallingConventionSummary.rst#arm64 -->
     <input>
       <pentry minsize="8" maxsize="8" storage="hiddenret">
         <register name="x8"/>

@@ -68,13 +68,18 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 		if (!isEnabled) {
-			return Collections.emptyList();
+			return List.of();
+		}
+
+		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
+		if (root == null) {
+			// this can happen if the tree is reloaded while we are searching in a background task
+			return List.of();
 		}
 
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
 		monitor.checkCancelled();
-		SymbolTreeRootNode root = (SymbolTreeRootNode) getRoot();
 		int groupThreshold = root.getNodeGroupThreshold();
 		return OrganizationNode.organize(list, groupThreshold, monitor);
 	}
@@ -321,6 +326,9 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
+		}
+		if (o == null) {
+			return false;
 		}
 		if (getClass() != o.getClass()) {
 			return false;

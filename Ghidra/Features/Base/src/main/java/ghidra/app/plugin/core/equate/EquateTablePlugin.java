@@ -206,7 +206,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 		}
 
 		if (isValid(oldEquate, newEquateName)) {
-			Command cmd = new RenameEquatesCmd(oldEquateName, newEquateName);
+			Command<Program> cmd = new RenameEquatesCmd(oldEquateName, newEquateName);
 			tool.execute(cmd, currentProgram);
 		}
 	}

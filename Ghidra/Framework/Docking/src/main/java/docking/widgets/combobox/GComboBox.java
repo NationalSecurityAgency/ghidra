@@ -15,6 +15,7 @@
  */
 package docking.widgets.combobox;
 
+import java.util.Collection;
 import java.util.Vector;
 
 import javax.swing.*;
@@ -71,8 +72,8 @@ public class GComboBox<E> extends JComboBox<E> implements GComponent {
 	 * 
 	 * @param items a vector containing objects of generic type {@code E} to insert into the combo box
 	 */
-	public GComboBox(Vector<E> items) {
-		super(items);
+	public GComboBox(Collection<E> items) {
+		super(new Vector<>(items));
 		init();
 	}
 

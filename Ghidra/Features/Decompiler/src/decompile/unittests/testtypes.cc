@@ -138,7 +138,7 @@ TEST(cast_pointer) {
   TypeTestEnvironment::build();
   ASSERT(castPrinted(CPUI_COPY,parse("uint4 *"),parse("int4 *")));
   ASSERT(!castPrinted(CPUI_COPY,parse("void *"),parse("float4 *")));
-  ASSERT(castPrinted(CPUI_COPY,parse("int2 *"),parse("void *")));
+  ASSERT(!castPrinted(CPUI_COPY,parse("int2 *"),parse("void *")));
   Datatype *typedefInt = types->getBase(4,TYPE_INT,"myint4");
   Datatype *typedefPtr = types->getTypePointer(8,typedefInt,1);
   ASSERT(!castPrinted(CPUI_COPY,typedefPtr,parse("int4 *")));

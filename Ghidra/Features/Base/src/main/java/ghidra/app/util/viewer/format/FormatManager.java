@@ -28,8 +28,11 @@ import ghidra.app.util.viewer.field.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -235,8 +238,8 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Returns the format model to use for the internals of open structures.
 	 * 
-	 * @param data
-	 *            the data code unit to get the format model for.
+	 * @param data the data code unit to get the format model for.
+	 * @return the format model to use for the internals of open structures.
 	 */
 	public FieldFormatModel getOpenDataFormat(Data data) {
 
@@ -250,6 +253,25 @@ public class FormatManager implements OptionsChangeListener {
 		return models[FieldFormatModel.OPEN_DATA];
 	}
 
+	/**
+	 * Toggle the enablement for the field with the given name.
+	 * @param name the of the field to toggle
+	 */
+	public void toggleField(String name) {
+		for (FieldFormatModel model : models) {
+			for (int i = 0; i < model.getNumRows(); i++) {
+				FieldFactory[] rowFactories = model.getFactorys(i);
+				for (FieldFactory fieldFactory : rowFactories) {
+					if (fieldFactory.getFieldName().equals(name)) {
+						fieldFactory.setEnabled(!fieldFactory.isEnabled());
+						return;
+					}
+				}
+			}
+		}
+		Msg.showError(this, null, "Toggle Field Failed!", "No field named \"" + name + "\"");
+	}
+
 	private boolean isPrimitiveArrayElement(Data data) {
 		Data parent = data.getParent();
 		if (parent == null) {
@@ -259,8 +281,7 @@ public class FormatManager implements OptionsChangeListener {
 			return false;
 		}
 		DataType type = data.getBaseDataType();
-		return type.getLength() > 0 && type instanceof AbstractIntegerDataType ||
-			type instanceof DefaultDataType;
+		return type.getLength() > 0 && type.getValueClass(null) == Scalar.class;
 	}
 
 	/**
@@ -312,6 +333,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the width of the widest model in this manager.
+	 * @return the width of the widest model in this manager.
 	 */
 	public int getMaxWidth() {
 		int maxWidth = 0;
@@ -327,6 +349,13 @@ public class FormatManager implements OptionsChangeListener {
 			maxRowCount = Math.max(maxRowCount, element.getNumRows());
 		}
 		return maxRowCount;
+	}
+
+	/**
+	 * {@return a list of field names that should have quick toggle actions.}
+	 */
+	public List<String> getQuickToggleFieldNames() {
+		return List.of("PCode");
 	}
 
 	private Element getDefaultModel(int modelID) {
@@ -487,7 +516,13 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-		colElem.setAttribute("WIDTH", "90");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "70");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
 
@@ -811,6 +846,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Returns the maximum number of possible rows in a layout. This would only
 	 * occur if some address had every possible type of information to be displayed.
+	 * @return the maximum number of possible rows in a layout.
 	 */
 	public int getMaxNumRows() {
 		return maxNumRows;
@@ -875,8 +911,9 @@ public class FormatManager implements OptionsChangeListener {
 	}
 
 	/**
-	 * Returns the {@link ListingHighlightProvider} that should be used when creating {@link FieldFactory}
-	 * objects.
+	 * Returns the {@link ListingHighlightProvider} that should be used when creating 
+	 * {@link FieldFactory} objects.
+	 * @return the provider
 	 */
 	public ListingHighlightProvider getFormatHighlightProvider() {
 		return highlightProvider;
@@ -941,8 +978,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	private class MultipleHighlighterProvider implements ListingHighlightProvider {
 
-		private List<ListingHighlightProvider> highlightProviders =
-			new CopyOnWriteArrayList<>();
+		private List<ListingHighlightProvider> highlightProviders = new CopyOnWriteArrayList<>();
 
 		@Override
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
@@ -958,8 +994,7 @@ public class FormatManager implements OptionsChangeListener {
 			int size = highlightProviders.size();
 			for (int i = size - 1; i >= 0; i--) {
 				ListingHighlightProvider provider = highlightProviders.get(i);
-				Highlight[] highlights =
-					provider.createHighlights(text, field, cursorTextOffset);
+				Highlight[] highlights = provider.createHighlights(text, field, cursorTextOffset);
 				for (Highlight highlight : highlights) {
 					list.add(highlight);
 				}

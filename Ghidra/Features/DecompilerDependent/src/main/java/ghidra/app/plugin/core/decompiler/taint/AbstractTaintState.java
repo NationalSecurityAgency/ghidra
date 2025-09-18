@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.pcode.PcodeException;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 import sarif.SarifService;
 
 /**
@@ -59,20 +60,21 @@ public abstract class AbstractTaintState implements TaintState {
 	protected TaintOptions taintOptions;
 	protected TaintPlugin plugin;
 	protected boolean usesIndex = true;
-	private boolean cancellation;
+	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
 	private TaskType taskType = TaskType.SET_TAINT;
+
 
 	public AbstractTaintState(TaintPlugin plugin) {
 		this.plugin = plugin;
 	}
 
-	public abstract void buildQuery(List<String> param_list, Path engine, File indexDBFile,
-			String index_directory);
+	public abstract void buildQuery(List<String> paramList, String enginePath, File indexDBFile,
+			String indexDirectory);
 
 	@Override
-	public abstract void buildIndex(List<String> param_list, String engine_path, String facts_path,
-			String index_path);
+	public abstract void buildIndex(List<String> paramList, String enginePath, String factsPath,
+			String indexDirectory);
 
 	protected abstract void writeHeader(PrintWriter writer);
 
@@ -83,13 +85,22 @@ public abstract class AbstractTaintState implements TaintState {
 	protected abstract void writeFooter(PrintWriter writer);
 
 	@Override
-	public boolean wasCancelled() {
-		return this.cancellation;
+	public void setMonitor(TaskMonitor monitor) {
+		if (monitor != null) {
+			monitor.setIndeterminate(true);
+			monitor.setShowProgressValue(false);
+		}
+		this.monitor = monitor;
 	}
 
 	@Override
-	public void setCancellation(boolean status) {
-		this.cancellation = status;
+	public boolean isCancelled() {
+		return monitor != null && monitor.isCancelled();
+	}
+
+	@Override
+	public void cancel() {
+		monitor.cancel();
 	}
 
 	@Override
@@ -296,7 +307,7 @@ public abstract class AbstractTaintState implements TaintState {
 					plugin.consoleMessage("Unknown query type.");
 			}
 
-			buildQuery(paramList, engine, indexDBFile, indexDirectory.toString());
+			buildQuery(paramList, engineFile.toString(), indexDBFile, indexDirectory.toString());
 
 			if (queryType.equals(QueryType.SRCSINK) || queryType.equals(QueryType.CUSTOM)) {
 				// The datalog that specifies the query.
@@ -319,6 +330,10 @@ public abstract class AbstractTaintState implements TaintState {
 				pb.directory(new File(taintOptions.getTaintOutputDirectory()));
 				pb.redirectError(Redirect.INHERIT);
 				Process p = pb.start();
+
+				monitor.addCancelledListener(() -> {
+					p.destroyForcibly();
+				});
 
 				readQueryResultsIntoDataFrame(program, p.getInputStream());
 
@@ -553,6 +568,11 @@ public abstract class AbstractTaintState implements TaintState {
 	@Override
 	public String getName() {
 		return ENGINE_NAME;
+	}
+
+	@Override
+	public String getQueryName() {
+		return null;
 	}
 
 }

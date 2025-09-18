@@ -459,10 +459,10 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008a99", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
@@ -528,10 +528,10 @@ public class DiffTest extends DiffTestAdapter {
 		programBuilderDiffTest1.createMemory("d4", "0x400", 0x100);
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
-		programBuilderDiffTest2.createComment("0x01008000", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01008607", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x01009943", "My comment", CodeUnit.EOL_COMMENT);
-		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CodeUnit.EOL_COMMENT);
+		programBuilderDiffTest2.createComment("0x01008000", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01008607", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x01009943", "My comment", CommentType.EOL);
+		programBuilderDiffTest2.createComment("0x0100a001", "My comment", CommentType.EOL);
 
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();

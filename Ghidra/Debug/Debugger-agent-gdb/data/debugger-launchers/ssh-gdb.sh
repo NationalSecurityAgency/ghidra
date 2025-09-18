@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@timeout 60000
 #@title gdb via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -27,6 +26,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#ssh
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
@@ -57,14 +57,14 @@ version=$(get-ghidra-version)
 
 function do-installation() {
 	local -a pipargs
-	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb==$version'"
+	compute-gdb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidragdb>=$version'"
 	local -a sshargs
 	compute-ssh-args false "${pipargs[@]}"
 
 	"${sshargs[@]}"
 }
 
-launch-gdb-ssh
+launch-gdb-ssh "$@"
 if check-result-and-prompt-mitigation $? "
 It appears ghidragdb is missing from the remote system. This can happen if you
 forgot to install the required package. This can also happen if you installed
@@ -90,10 +90,10 @@ are copied and installed.
 
 NOTE: Automatic resolution will cause this session to terminate. When it has
 finished, try launching again.
-" "Would you like to install 'ghidragdb==$version'?"; then
+" "Would you like to install 'ghidragdb>=$version'?"; then
 
 	echo "Copying Wheels to $OPT_HOST"
-	mitigate-scp-pymodules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
+	mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"
 
 	echo "Installing Wheels into GDB's embedded Python"
 	do-installation

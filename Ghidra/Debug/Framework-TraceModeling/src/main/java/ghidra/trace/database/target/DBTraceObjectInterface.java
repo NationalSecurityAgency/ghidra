@@ -15,9 +15,7 @@
  */
 package ghidra.trace.database.target;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.space.DBTraceSpaceKey.DefaultDBTraceSpaceKey;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
 import ghidra.trace.model.Lifespan.LifeSet;
@@ -78,7 +76,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 			// Extension point
 		}
 
-		protected TraceAddressSpace getSpace(LifeSet life) {
+		protected AddressSpace getSpace(LifeSet life) {
 			if (life.isEmpty()) {
 				return null;
 			}
@@ -183,21 +181,12 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 	 */
 	TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec);
 
-	static TraceAddressSpace spaceForValue(TraceObject object, long snap, String key) {
+	static AddressSpace spaceForValue(TraceObject object, long snap, String key) {
 		TraceObjectValue val = object.getAttribute(snap, key);
-		if (val == null) {
-			return null;
-		}
-		if (val.getValue() instanceof Address address) {
-			return new DefaultDBTraceSpaceKey(null, address.getAddressSpace(), 0);
-		}
-		if (val.getValue() instanceof AddressRange range) {
-			return new DefaultDBTraceSpaceKey(null, range.getAddressSpace(), 0);
-		}
-		return null;
+		return val == null ? null : DBTraceObject.spaceForValue(val.getValue());
 	}
 
-	default TraceAddressSpace spaceForValue(long snap, String key) {
+	default AddressSpace spaceForValue(long snap, String key) {
 		return spaceForValue(getObject(), snap, key);
 	}
 

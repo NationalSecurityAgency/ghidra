@@ -1296,7 +1296,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		// delete the typedef data type
 		localTransactionID = program.startTransaction("test");
 		try {
-			program.getDataTypeManager().remove(td, TaskMonitor.DUMMY);
+			program.getDataTypeManager().remove(td);
 		}
 		finally {
 			program.endTransaction(localTransactionID, true);

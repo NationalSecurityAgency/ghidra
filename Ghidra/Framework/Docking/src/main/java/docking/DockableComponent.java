@@ -21,9 +21,10 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import docking.action.DockingActionIf;
-import ghidra.util.CascadedDropTarget;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 import help.HelpService;
 
 /**
@@ -146,7 +147,12 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	private void showContextMenu(MouseEvent e) {
+
 		if (e.isConsumed()) {
+			return;
+		}
+
+		if (!e.isPopupTrigger()) {
 			return;
 		}
 
@@ -162,12 +168,31 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		}
 
 		Point point = e.getPoint();
-		boolean withinBounds = bounds.contains(point);
-		if (e.isPopupTrigger() && withinBounds) {
+		if (!bounds.contains(point)) {
+			return;
+		}
+
+		//
+		// Consume the event so that Java UI listeners do not process it.  This fixes issues with
+		// UI classes (e.g., listeners change table selection).   We want to run this code later to
+		// allow trailing application mouse listeners to have a chance to update the context.  If
+		// the delayed nature causes any timing issues, then we will need a more robust way of 
+		// registering mouse listeners to work around this issue.
+		//
+		e.consume();
+		Swing.runLater(() -> {
+
+			MenuSelectionManager msm = MenuSelectionManager.defaultManager();
+			MenuElement[] selectedPath = msm.getSelectedPath();
+			if (!ArrayUtils.isEmpty(selectedPath)) {
+				// This means that a menu is open.  This can happen if a mouse listener further down
+				// the listener list has shown a popup.  In that case, do not show the context menu.
+				return;
+			}
+
 			PopupMenuContext popupContext = new PopupMenuContext(e);
 			actionMgr.showPopupMenu(placeholder, popupContext);
-			e.consume();
-		}
+		});
 	}
 
 	@Override

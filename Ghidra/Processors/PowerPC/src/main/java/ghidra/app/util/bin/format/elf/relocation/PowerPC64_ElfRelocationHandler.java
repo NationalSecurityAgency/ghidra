@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.*;
 
 public class PowerPC64_ElfRelocationHandler
 		extends AbstractElfRelocationHandler<PowerPC64_ElfRelocationType, ElfRelocationContext<?>> {
@@ -46,7 +45,7 @@ public class PowerPC64_ElfRelocationHandler
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
-		return elf.e_machine() == ElfConstants.EM_PPC64 && elf.is64Bit();
+		return elf.e_machine() == ElfConstants.EM_PPC64;
 	}
 
 	@Override
@@ -62,7 +61,7 @@ public class PowerPC64_ElfRelocationHandler
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
-		
+
 		// NOTE: Based upon glibc source it appears that PowerPC only uses RELA relocations
 		long addend = relocation.getAddend();
 		long offset = relocationAddress.getOffset();
@@ -98,7 +97,7 @@ public class PowerPC64_ElfRelocationHandler
 				break;
 			default:
 		}
-		
+
 		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
 
@@ -106,32 +105,32 @@ public class PowerPC64_ElfRelocationHandler
 				long value64 = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setLong(relocationAddress, value64);
 				return new RelocationResult(Status.APPLIED, 8);
-				
+
 			case R_PPC64_TOC:
 				memory.setLong(relocationAddress, toc);
 				return new RelocationResult(Status.APPLIED, 8);
-				
+
 			case R_PPC64_COPY:
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-			
+
 			default:
 				break;
 		}
-		
+
 		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
 		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
 			return RelocationResult.FAILURE;
-		}	
+		}
 
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
-		
+
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (type) {
-			
+
 			case R_PPC64_ADDR32:
 				newValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newValue);
@@ -194,10 +193,6 @@ public class PowerPC64_ElfRelocationHandler
 				memory.setInt(relocationAddress, newValue);
 				break;
 			case R_PPC64_REL24:
-
-				// attempt to handle Object module case where referenced symbol resides within .opd
-				symbolValue = fixupOPDSymbolValue(elfRelocationContext, sym);
-
 				newValue = (int) ((symbolValue + addend - offset) >> 2);
 				newValue = ((newValue << 2) & PPC64_LOW24);
 				newValue = (oldValue & ~PPC64_LOW24) | newValue;
@@ -215,26 +210,33 @@ public class PowerPC64_ElfRelocationHandler
 				memory.setInt(relocationAddress, newValue);
 				break;
 			case R_PPC64_JMP_SLOT:
-				// TODO: do we need option to allow function descriptor
-				// use - or not?  The EF_PPC64_ABI in e_flags is not reliable.
-				Address functionDescriptorAddr = relocationAddress.getNewAddress(symbolValue);
-				MemoryBlock block = memory.getBlock(functionDescriptorAddr);
+				MemoryBlock block = memory.getBlock(symbolAddr);
 				if (block == null) {
 					throw new MemoryAccessException(
-						"Function descriptor not found at: " + functionDescriptorAddr);
+						"Relocation symbol not found in memory: " + symbolAddr);
 				}
+
 				if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 					// If symbol is in EXTERNAL block, we don't have descriptor entry;
 					// just fill-in first slot with EXTERNAL address
 					memory.setLong(relocationAddress, symbolValue);
 					byteLength = 8;
+					break;
 				}
-				else {
+
+				if (PowerPC64_ElfExtension
+						.getPpc64ElfABIVersion(elfRelocationContext.getElfHeader()) == 1) {
+					// ABI ELFv1 (used by big-endian PPC64) expected to copy full function descriptor
+					// into .got.plt section where symbolAddr refers to function descriptor
 					// Copy function descriptor data
-					byte[] bytes = new byte[24]; // TODO: can descriptor size vary ?
-					memory.getBytes(functionDescriptorAddr, bytes);
+					byte[] bytes = new byte[24];
+					memory.getBytes(symbolAddr, bytes);
 					memory.setBytes(relocationAddress, bytes);
 					byteLength = bytes.length;
+				}
+				else {
+					memory.setLong(relocationAddress, symbolValue);
+					byteLength = 8;
 				}
 				break;
 			case R_PPC64_UADDR32:
@@ -264,40 +266,6 @@ public class PowerPC64_ElfRelocationHandler
 				return RelocationResult.UNSUPPORTED;
 		}
 		return new RelocationResult(Status.APPLIED, byteLength);
-	}
-
-	/**
-	 * This method generates a symbol value with possible substitution for those
-	 * symbols residing within the .opd to refer to the real function instead.
-	 * Care must be taken not to invoke this method for relocations which may be
-	 * applied to call stubs. It is also important that relocations have already
-	 * been applied to the .opd section since we will be using its data for
-	 * locating the real function.
-	 * @param elfRelocationContext ELF relocation context
-	 * @param sym ELF relocation symbol
-	 * @return symbol value
-	 * @throws MemoryAccessException if memory access error occurs
-	 */
-	private long fixupOPDSymbolValue(ElfRelocationContext<?> elfRelocationContext, ElfSymbol sym)
-			throws MemoryAccessException {
-		Address addr = elfRelocationContext.getSymbolAddress(sym);
-		if (addr == null) {
-			return 0;
-		}
-		Program program = elfRelocationContext.getProgram();
-		MemoryBlock block = program.getMemory().getBlock(addr);
-		if (block == null || !".opd".equals(block.getName())) {
-			return addr.getOffset();
-		}
-		// .opd symbols will get moved to the real function by the extension (see processFunctionDescriptors)
-		// Call stubs should always use the .opd symbol value and not the function address so we can - this
-		// distinction can only be made using the relocation type.
-		byte[] bytes = new byte[8];
-		block.getBytes(addr, bytes);
-		boolean bigEndian = elfRelocationContext.getElfHeader().isBigEndian();
-		DataConverter dataConverter =
-			bigEndian ? BigEndianDataConverter.INSTANCE : LittleEndianDataConverter.INSTANCE;
-		return dataConverter.getLong(bytes);
 	}
 
 }

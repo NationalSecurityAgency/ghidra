@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.set.AbstractSetDecorator;
 
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-
 /**
  * A set of possible assembly resolutions for a single SLEIGH constructor
  * 
@@ -34,7 +32,6 @@ import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
  * encodings, including error records describing the pruned intermediate results.
  */
 public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyResolution> {
-	protected static final DbgTimer DBG = AbstractAssemblyTreeResolver.DBG;
 
 	public interface Applicator {
 		Iterable<? extends AssemblyResolution> getPatterns(AssemblyResolvedPatterns cur);
@@ -142,11 +139,8 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 				continue;
 			}
 			AssemblyResolvedPatterns rp = (AssemblyResolvedPatterns) res;
-			DBG.println("Current: " + rp.lineToString());
 			for (AssemblyResolution ar : applicator.getPatterns(rp)) {
-				DBG.println("Pattern: " + ar.lineToString());
 				AssemblyResolvedPatterns combined = applicator.combine(rp, ar);
-				DBG.println("Combined: " + (combined == null ? "(null)" : combined.lineToString()));
 				if (combined == null) {
 					results.add(factory.error(applicator.describeError(rp, ar), ar));
 					continue;

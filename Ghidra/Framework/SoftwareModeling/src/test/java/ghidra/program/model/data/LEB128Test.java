@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.List;
+import static org.junit.Assert.*;
 
 import java.io.*;
+import java.util.List;
+import java.util.stream.LongStream;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,38 +57,24 @@ public class LEB128Test extends AbstractGTest {
 		te(0xf_ffff_ffffL, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01),	// more than 32 bits to test shifting > 32bits
 
 		// 1 byte
-		te(1L, 0x01),
-		te(63L, 0x3f),
-		te(64L, 0x40),
+		te(1L, 0x01), te(63L, 0x3f), te(64L, 0x40),
 
 		// 1 byte to 2 byte transition
-		te(125L, 0x7d),
-		te(126L, 0x7e),
-		te(127L, 0x7f),
-		te(128L, 0x80, 0x01),
-		te(129L, 0x81, 0x01),
-		te(130L, 0x82, 0x01),
-		te(131L, 0x83, 0x01),
+		te(125L, 0x7d), te(126L, 0x7e), te(127L, 0x7f), te(128L, 0x80, 0x01), te(129L, 0x81, 0x01),
+		te(130L, 0x82, 0x01), te(131L, 0x83, 0x01),
 
-		te(254L, 0xfe, 0x01),
-		te(255L, 0xff, 0x01),
-		te(256L, 0x80, 0x02),
-		te(257L, 0x81, 0x02),
+		te(254L, 0xfe, 0x01), te(255L, 0xff, 0x01), te(256L, 0x80, 0x02), te(257L, 0x81, 0x02),
 
 		// 2 byte to 3 byte transition
-		te(16382L, 0xfe, 0x7f),
-		te(16383L, 0xff, 0x7f),
-		te(16384L, 0x80, 0x80, 0x01),
+		te(16382L, 0xfe, 0x7f), te(16383L, 0xff, 0x7f), te(16384L, 0x80, 0x80, 0x01),
 		te(16385L, 0x81, 0x80, 0x01),
 
 		// 3 byte to 4 byte transition
-		te(2097151L, 0xff, 0xff, 0x7f),
-		te(2097152L, 0x80, 0x80, 0x80, 0x01),
+		te(2097151L, 0xff, 0xff, 0x7f), te(2097152L, 0x80, 0x80, 0x80, 0x01),
 		te(2097153L, 0x81, 0x80, 0x80, 0x01),
 
 		// 4 byte to 5 byte transition
-		te(268435455L, 0xff, 0xff, 0xff, 0x7f),
-		te(268435456L, 0x80, 0x80, 0x80, 0x80, 0x01),
+		te(268435455L, 0xff, 0xff, 0xff, 0x7f), te(268435456L, 0x80, 0x80, 0x80, 0x80, 0x01),
 		te(268435457L, 0x81, 0x80, 0x80, 0x80, 0x01),
 
 		// 5 byte to 6 byte transition
@@ -103,51 +89,29 @@ public class LEB128Test extends AbstractGTest {
 		te(-2130303778817L, 0xff, 0xff, 0xff, 0xff, 0xff, 0x41),
 
 		// 1 byte positive stuff
-		te(0L, 0x00),
-		te(1L, 0x01),
+		te(0L, 0x00), te(1L, 0x01),
 
 		// 1 byte to 2 byte transition (positive)
-		te(63L, 0x3f),
-		te(64L, 0xc0, 0x00),
-		te(65L, 0xc1, 0x00),
-		te(66L, 0xc2, 0x00),
+		te(63L, 0x3f), te(64L, 0xc0, 0x00), te(65L, 0xc1, 0x00), te(66L, 0xc2, 0x00),
 
-		te(126L, 0xfe, 0x00),
-		te(127L, 0xff, 0x00),
-		te(128L, 0x80, 0x01),
-		te(129L, 0x81, 0x01),
+		te(126L, 0xfe, 0x00), te(127L, 0xff, 0x00), te(128L, 0x80, 0x01), te(129L, 0x81, 0x01),
 
-		te(254L, 0xfe, 0x01),
-		te(255L, 0xff, 0x01),
-		te(256L, 0x80, 0x02),
-		te(257L, 0x81, 0x02),
+		te(254L, 0xfe, 0x01), te(255L, 0xff, 0x01), te(256L, 0x80, 0x02), te(257L, 0x81, 0x02),
 
 		// 2 byte to 3 byte transition
-		te(8190L, 0xfe, 0x3f),
-		te(8191L, 0xff, 0x3f),
-		te(8192L, 0x80, 0xc0, 0x00),
+		te(8190L, 0xfe, 0x3f), te(8191L, 0xff, 0x3f), te(8192L, 0x80, 0xc0, 0x00),
 		te(8193L, 0x81, 0xc0, 0x00),
 
 		// 1 byte negative stuff
-		te(-1L, 0x7f),
-		te(-2L, 0x7e),
-		te(-3L, 0x7d),
-		te(-4L, 0x7c),
-		te(-5L, 0x7b),
-		te(-6L, 0x7a),
+		te(-1L, 0x7f), te(-2L, 0x7e), te(-3L, 0x7d), te(-4L, 0x7c), te(-5L, 0x7b), te(-6L, 0x7a),
 
 		// 1 byte to 2 byte transition (negative)
-		te(-64L, 0x40),
-		te(-65L, 0xbf, 0x7f),
+		te(-64L, 0x40), te(-65L, 0xbf, 0x7f),
 
-		te(-127, 0x81, 0x7f),
-		te(-128, 0x80, 0x7f),
-		te(-129, 0xff, 0x7e),
+		te(-127, 0x81, 0x7f), te(-128, 0x80, 0x7f), te(-129, 0xff, 0x7e),
 
 		// 2 byte to 3 byte transition (negative)
-		te(-8191L, 0x81, 0x40),
-		te(-8192L, 0x80, 0x40),
-		te(-8193L, 0xff, 0xbf, 0x7f),
+		te(-8191L, 0x81, 0x40), te(-8192L, 0x80, 0x40), te(-8193L, 0xff, 0xbf, 0x7f),
 		te(-8194L, 0xfe, 0xbf, 0x7f)
 
 	);
@@ -169,13 +133,13 @@ public class LEB128Test extends AbstractGTest {
 			InputStream is = is(te.bytes);
 			long actualValue = LEB128.read(is, signed);
 			int remainder = is.available();
-			assertEquals(String.format(
-				"%s[%d] failed: leb128(%s) != %d. Expected=%d / %x, actual=%d / %x",
-				name, i, NumericUtilities.convertBytesToString(te.bytes), te.expectedValue,
-				te.expectedValue, te.expectedValue, actualValue, actualValue), te.expectedValue,
-				actualValue);
-			assertEquals(String.format("%s[%d] failed: left-over bytes: %d", name, i, remainder),
-				0, is.available());
+			assertEquals(
+				String.format("%s[%d] failed: leb128(%s) != %d. Expected=%d / %x, actual=%d / %x",
+					name, i, NumericUtilities.convertBytesToString(te.bytes), te.expectedValue,
+					te.expectedValue, te.expectedValue, actualValue, actualValue),
+				te.expectedValue, actualValue);
+			assertEquals(String.format("%s[%d] failed: left-over bytes: %d", name, i, remainder), 0,
+				is.available());
 		}
 	}
 
@@ -210,6 +174,53 @@ public class LEB128Test extends AbstractGTest {
 		}
 
 		Assert.assertEquals(bytes.length - 10, is.available());
+	}
+
+	@Test
+	public void testEncode() {
+		// positive unsigned
+		LongStream.range(0, 65536 + 10).forEach(this::assertRoundTripUnsigned);
+		LongStream.range(Integer.MAX_VALUE - 1000, Integer.MAX_VALUE + 1000L)
+				.forEach(this::assertRoundTripUnsigned);
+		LongStream.range(Long.MAX_VALUE - 1000, Long.MAX_VALUE)
+				.forEach(this::assertRoundTripUnsigned);
+
+		// positive signed
+		LongStream.range(0, 65536 + 10).forEach(this::assertRoundTripSigned);
+		LongStream.range(Integer.MAX_VALUE - 1000L, Integer.MAX_VALUE + 1000L)
+				.forEach(this::assertRoundTripSigned);
+		LongStream.range(Long.MAX_VALUE - 1000L, Long.MAX_VALUE)
+				.forEach(this::assertRoundTripSigned);
+
+		// negative signed
+		LongStream.range(-65536 - 10, 10).forEach(this::assertRoundTripSigned);
+		LongStream.range(Integer.MIN_VALUE - 1000L, Integer.MIN_VALUE + 1000L)
+				.forEach(this::assertRoundTripSigned);
+		LongStream.range(Long.MIN_VALUE, Long.MIN_VALUE + 1000L)
+				.forEach(this::assertRoundTripSigned);
+
+	}
+
+	private void assertRoundTripUnsigned(long l) {
+		assertRoundTrip(l, false);
+	}
+
+	private void assertRoundTripSigned(long l) {
+		assertRoundTrip(l, true);
+	}
+
+	private void assertRoundTrip(long l, boolean isSigned) {
+		try {
+			byte[] bytes = LEB128.encode(l, isSigned);
+			long decodeResult = LEB128.decode(bytes, 0, isSigned);
+			assertEquals(
+				"%d (0x%x) encoded to %s returned %d (0x%x)".formatted(l, l,
+					NumericUtilities.convertBytesToString(bytes), decodeResult, decodeResult),
+				l, decodeResult);
+		}
+		catch (IOException e) {
+			fail(e.getMessage());
+		}
 	}
 
 }

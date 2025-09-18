@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,13 @@ import ghidra.program.model.pcode.Encoder;
 public class ConstTpl {
 	@Override
 	public String toString() {
-		return "{type=" + type + " value_real=" + String.format("0x%x", value_real) + " spaceid=" +
-			spaceid + "}";
+		return switch (type) {
+			case real -> "ConstTpl[real=0x%x]".formatted(value_real);
+			case handle -> "ConstTpl[handle=%d,sel=%s]".formatted(handle_index, select);
+			case spaceid -> "ConstTpl[space=%s]".formatted(spaceid);
+			default -> "ConstTpl[type=%s,real=0x%x,space=%s,handle=%d,sel=%s]".formatted(type,
+				value_real, spaceid, handle_index, select);
+		};
 	}
 
 	public enum const_type {

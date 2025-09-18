@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,8 +84,13 @@ public class DIECreator {
 		for (int i = 0; i < bytes.length; i++) {
 			bytes[i] = (byte) intBytes[i];
 		}
+		addBlockBytes(attribute, bytes);
+		return this;
+	}
+
+	public DIECreator addBlockBytes(DWARFAttribute attribute, byte[] blockBytes) {
 		AttrDef attrSpec = new AttrDef(attribute, attribute.getId(), DW_FORM_block1, 0);
-		add(attrSpec, new DWARFBlobAttribute(bytes, attrSpec));
+		add(attrSpec, new DWARFBlobAttribute(blockBytes, attrSpec));
 		return this;
 	}
 

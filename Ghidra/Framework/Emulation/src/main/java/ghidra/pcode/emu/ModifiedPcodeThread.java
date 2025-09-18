@@ -146,6 +146,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 			}
 
 			@Override
+			public Class<?> getOutputType() {
+				return void.class;
+			}
+
+			@Override
 			public Method getJavaMethod() {
 				return null;
 			}

@@ -58,12 +58,12 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * The usage pattern is typically:
  * 
- * <pre>
+ * <pre>{@code
  * StackUnwinder unwinder = new StackUnwinder(tool, coordinates.getPlatform());
  * for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(coordinates.frame(0), monitor)) {
  * 	// check and/or cache the frame
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * Typically, a frame is sought either by its level or by its function. Once found, several

@@ -35,10 +35,22 @@ import ghidra.pcode.emu.jit.op.JitIntZExtOp;
  * Note that this implementation is equivalent to {@link CopyOpGen}, except that differences in
  * operand sizes are expected.
  */
-public enum IntZExtOpGen implements UnOpGen<JitIntZExtOp> {
+public enum IntZExtOpGen implements IntUnOpGen<JitIntZExtOp> {
 	/** The generator singleton */
 	GEN;
 
+	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @implNote No need for explicit zero-extended type conversion (vice {@link IntSExtOpGen}),
+	 *           because conversion will happen as a manner of writing the output. Thus, this is
+	 *           identical in operation to {@link CopyOpGen}.
+	 */
 	@Override
 	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitIntZExtOp op, JitBlock block,
 			JitType uType, MethodVisitor rv) {

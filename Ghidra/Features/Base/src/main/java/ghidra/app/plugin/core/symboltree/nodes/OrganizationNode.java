@@ -141,6 +141,9 @@ public class OrganizationNode extends SymbolTreeNode {
 		if (this == o) {
 			return true;
 		}
+		if (o == null) {
+			return false;
+		}
 		if (getClass() != o.getClass()) {
 			return false;
 		}

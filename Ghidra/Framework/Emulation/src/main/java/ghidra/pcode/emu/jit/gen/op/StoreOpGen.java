@@ -26,6 +26,7 @@ import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.*;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitStoreOp;
 import ghidra.program.model.lang.Endian;
 
@@ -184,11 +185,11 @@ public enum StoreOpGen implements OpGen<JitStoreOp> {
 		// [...]
 		gen.requestFieldForSpaceIndirect(op.space()).generateLoadCode(gen, rv);
 		// [...,space]
-		JitType offsetType = gen.generateValReadCode(op.offset(), op.offsetType());
+		JitType offsetType = gen.generateValReadCode(op.offset(), op.offsetType(), Ext.ZERO);
 		// [...,space,offset:?]
-		TypeConversions.generateToLong(offsetType, LongJitType.I8, rv);
+		TypeConversions.generateToLong(offsetType, LongJitType.I8, Ext.ZERO, rv);
 		// [...,space,offset:LONG]
-		JitType valueType = gen.generateValReadCode(op.value(), op.valueType());
+		JitType valueType = gen.generateValReadCode(op.value(), op.valueType(), Ext.ZERO);
 		// [...,space,offset,value]
 		rv.visitLdcInsn(op.value().size());
 		// [...,space,offset,value,size]

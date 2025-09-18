@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -194,7 +194,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 		if (instruction == null) {
 			return;
 		}
-		if (instruction.getComment(CodeUnit.EOL_COMMENT) != null) {
+		if (instruction.getComment(CommentType.EOL) != null) {
 			return;
 		}
 
@@ -217,7 +217,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 			builder.append(split[i]);
 		}
 		builder.delete(builder.length() - 2, builder.length() - 1);
-		instruction.setComment(CodeUnit.EOL_COMMENT, builder.toString());
+		instruction.setComment(CommentType.EOL, builder.toString());
 	}
 
 	private boolean isObjcCall(Program program, Varnode input, TaskMonitor monitor) {

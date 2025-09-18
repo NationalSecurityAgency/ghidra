@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,10 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
@@ -43,9 +45,10 @@ public enum TraceSleighUtils {
 	 * Build a p-code executor that operates directly on bytes of the given trace
 	 * 
 	 * <p>
-	 * This execute is most suitable for evaluating Sleigh expression on a given trace snapshot, and
-	 * for manipulating or initializing variables using Sleigh code. It is generally not suitable
-	 * for use in an emulator. For that, consider {@link BytesTracePcodeEmulator}.
+	 * This executor is most suitable for evaluating Sleigh expression on a given trace snapshot,
+	 * and for manipulating or initializing variables using Sleigh code. It is generally not
+	 * suitable for use in an emulator. For that, use {@link PcodeEmulator} with
+	 * {@link TraceEmulationIntegration}.
 	 * 
 	 * @param platform the platform
 	 * @param snap the snap
@@ -55,14 +58,15 @@ public enum TraceSleighUtils {
 	 */
 	public static PcodeExecutor<byte[]> buildByteExecutor(TracePlatform platform, long snap,
 			TraceThread thread, int frame) {
-		DirectBytesTracePcodeExecutorState state =
-			new DirectBytesTracePcodeExecutorState(platform, snap, thread, frame);
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
 			throw new IllegalArgumentException("TracePlatform must use a Sleigh language");
 		}
-		return new PcodeExecutor<>((SleighLanguage) language,
-			BytesPcodeArithmetic.forLanguage(language), state, Reason.INSPECT);
+		DefaultPcodeTraceAccess access = new DefaultPcodeTraceAccess(platform, snap);
+		PcodeStateCallbacks cb =
+			TraceEmulationIntegration.bytesImmediateWrite(access, thread, frame);
+		BytesPcodeExecutorState state = new BytesPcodeExecutorState(language, cb);
+		return new PcodeExecutor<>(language, BytesPcodeArithmetic.forLanguage(language), state,
+			Reason.INSPECT);
 	}
 
 	/**
@@ -94,14 +98,17 @@ public enum TraceSleighUtils {
 	 */
 	public static PcodeExecutor<Pair<byte[], TraceMemoryState>> buildByteWithStateExecutor(
 			TracePlatform platform, long snap, TraceThread thread, int frame) {
-		DirectBytesTracePcodeExecutorState state =
-			new DirectBytesTracePcodeExecutorState(platform, snap, thread, frame);
-		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired = state.withMemoryState();
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
 			throw new IllegalArgumentException("TracePlatform must use a Sleigh language");
 		}
-		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
+		DefaultPcodeTraceAccess access = new DefaultPcodeTraceAccess(platform, snap);
+		PcodeStateCallbacks cb =
+			TraceEmulationIntegration.bytesImmediateWrite(access, thread, frame);
+		BytesPcodeExecutorState state = new BytesPcodeExecutorState(language, cb);
+		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired =
+			state.paired(new TraceMemoryStatePcodeExecutorStatePiece(
+				access.getDataForThreadState(thread, frame)));
+		return new PcodeExecutor<>(language, new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),
 			paired, Reason.INSPECT);
 	}

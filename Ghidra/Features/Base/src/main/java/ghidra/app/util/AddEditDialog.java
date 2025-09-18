@@ -563,7 +563,6 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 		labelNameChoices.setColumns(20);
 		labelNameChoices.setName("label.name.choices");
 		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
-		comboBox.setEnterKeyForwarding(true);
 		namespaceChoices = comboBox;
 
 		primaryCheckBox = new GCheckBox("Primary");

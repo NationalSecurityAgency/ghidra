@@ -649,6 +649,20 @@
         <P>To move the cursor to the next instruction click on the Navigate by Instruction icon,
         <IMG src="images/I.gif" alt="I" border="0">. This icon is disabled when no more
         instructions exist in the current search direction.</P>
+		<P>
+		If already on an instruction, <B>on the address field</B>, then this action will find the 
+		next data or undefined data before finding the next instruction. This allows users to jump 
+		between ranges of instructions.
+		</P>
+		
+		<BLOCKQUOTE>
+	        <P><IMG src="help/shared/note.yellow.png" alt="Note" border="0">When performing this 
+				action while not on the address field, then the action will first go to the address
+				field for the current address if an instruction exists.  Subsequent invocations will
+				then work as described above.  This is convenient for jumping from a function 
+				signature to the function entry point.  
+		    </P>
+	    </BLOCKQUOTE>
 
         <P>When inverted, this task, if on an instruction, will attempt to navigate to the next
         data or undefined data. If not on an instruction, then this task will find the next

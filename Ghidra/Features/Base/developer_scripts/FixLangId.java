@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.app.script.ImproperUseException;
 import ghidra.framework.data.GhidraFile;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.*;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.program.model.lang.LanguageDescription;
@@ -115,8 +115,8 @@ public class FixLangId extends GhidraScript {
 			if (langId != null) {
 				Msg.warn(this, "Changing language ID from '" + record.getString(0) + "' to '" +
 					langId + "' for program: " + df.getName());
-				desc = DefaultLanguageService.getLanguageService().getLanguageDescription(
-					new LanguageID(langId));
+				desc = DefaultLanguageService.getLanguageService()
+						.getLanguageDescription(new LanguageID(langId));
 				long txId = dbh.startTransaction();
 				try {
 					record.setString(0, langId);
@@ -139,7 +139,10 @@ public class FixLangId extends GhidraScript {
 
 	public DomainFile askProgramFile(String title) {
 		final DomainFile[] domainFile = new DomainFile[] { null };
-		final DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
+		// The file filter employed restricts selection to a program file within the active
+		// project where we have the ability to update file data.
+		final DataTreeDialog dtd =
+			new DataTreeDialog(null, title, OPEN, new DefaultDomainFileFilter(Program.class, true));
 		dtd.addOkActionListener(e -> {
 			dtd.close();
 			domainFile[0] = dtd.getDomainFile();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.debug.api.emulation.PcodeDebuggerMemoryAccess;
 import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.generic.util.datastruct.SemisparseByteArray;
+import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceMemoryAccess;
 import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.*;
@@ -94,16 +94,18 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 	}
 
 	@Override
-	public boolean readFromStaticImages(SemisparseByteArray bytes, AddressSetView guestView) {
-		// TODO: Expand to block? DON'T OVERWRITE KNOWN!
+	public AddressSetView readFromStaticImages(PcodeExecutorStatePiece<byte[], byte[]> piece,
+			AddressSetView guestView) {
+		// NOTE: If we expand to block, DON'T OVERWRITE KNOWN!
 		DebuggerStaticMappingService mappingService =
 			provider.getService(DebuggerStaticMappingService.class);
 		if (mappingService == null) {
-			return false;
+			return guestView;
 		}
 
+		AddressSet remains = new AddressSet(guestView);
 		try {
-			return new AbstractMappedMemoryBytesVisitor(mappingService, new byte[4096]) {
+			boolean result = new AbstractMappedMemoryBytesVisitor(mappingService, new byte[4096]) {
 				@Override
 				protected int read(Memory memory, Address addr, byte[] dest, int size)
 						throws MemoryAccessException {
@@ -128,9 +130,12 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 				@Override
 				protected void visitData(Address hostAddr, byte[] data, int size) {
 					Address guestAddr = platform.mapHostToGuest(hostAddr);
-					bytes.putData(guestAddr.getOffset(), data, 0, size);
+					piece.setVarInternal(guestAddr.getAddressSpace(), guestAddr.getOffset(), size,
+						data);
+					remains.delete(guestAddr, guestAddr.add(size));
 				}
 			}.visit(platform.getTrace(), snap, platform.mapGuestToHost(guestView));
+			return result ? remains : guestView;
 		}
 		catch (MemoryAccessException e) {
 			throw new AssertionError(e);

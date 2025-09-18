@@ -32,7 +32,7 @@ import ghidra.pcode.emu.jit.op.JitFloatMultOp;
  * This uses the binary operator generator and simply emits {@link #FMUL} or {@link #DMUL} depending
  * on the type.
  */
-public enum FloatMultOpGen implements BinOpGen<JitFloatMultOp> {
+public enum FloatMultOpGen implements FloatBinOpGen<JitFloatMultOp> {
 	/** The generator singleton */
 	GEN;
 

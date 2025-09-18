@@ -44,11 +44,11 @@ import ghidra.app.util.pcode.AbstractAppender;
 import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.async.SwingExecutorService;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.AddressSpace;
@@ -853,7 +853,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
 		}
-		DebuggerPcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
+		PcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
 		if (emu != null) {
 			clear();
 			doLoadPcodeFrameFromEmulator(emu);
@@ -868,7 +868,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}, SwingExecutorService.LATER);
 	}
 
-	protected <T> void doLoadPcodeFrameFromEmulator(DebuggerPcodeMachine<T> emu) {
+	protected <T> void doLoadPcodeFrameFromEmulator(PcodeMachine<T> emu) {
 		PcodeThread<T> thread = emu.getThread(current.getThread().getPath(), false);
 		if (thread == null) {
 			/**

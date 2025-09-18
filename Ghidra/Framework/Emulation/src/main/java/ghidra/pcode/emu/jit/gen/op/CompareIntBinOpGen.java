@@ -20,7 +20,7 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
-import ghidra.lifecycle.Unfinished;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
@@ -34,11 +34,10 @@ import ghidra.pcode.emu.jit.op.JitIntTestOp;
  * 
  * @param <T> the class of p-code op node in the use-def graph
  */
-public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> {
+public interface CompareIntBinOpGen<T extends JitIntTestOp> extends IntBinOpGen<T> {
 
 	/**
-	 * Whether the comparison of p-code integers is signed
-	 * 
+	 * {@inheritDoc}
 	 * <p>
 	 * If the comparison is unsigned, we will emit invocations of
 	 * {@link Integer#compareUnsigned(int, int)} or {@link Long#compareUnsigned(long, long)},
@@ -49,6 +48,7 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 	 * 
 	 * @return true if signed, false if not
 	 */
+	@Override
 	boolean isSigned();
 
 	/**
@@ -57,6 +57,11 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 	 * @return the opcode
 	 */
 	int icmpOpcode();
+
+	default void generateIntCmp(String methodName, MethodVisitor rv) {
+		rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, methodName, MDESC_INTEGER__COMPARE,
+			false);
+	}
 
 	/**
 	 * Emits bytecode for the JVM int case
@@ -69,8 +74,7 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 			rv.visitJumpInsn(icmpOpcode(), lblTrue);
 		}
 		else {
-			rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "compareUnsigned",
-				MDESC_INTEGER__COMPARE_UNSIGNED, false);
+			generateIntCmp("compareUnsigned", rv);
 			rv.visitJumpInsn(ifOpcode(), lblTrue);
 		}
 	}
@@ -94,7 +98,7 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 
 	/**
 	 * The JVM opcode to perform the conditional jump for unsigned or long integers.
-	 * 
+	 * <p>
 	 * This is emitted <em>after</em> the application of {@link #LCMP} or the comparator method.
 	 * 
 	 * @return the opcode
@@ -104,7 +108,34 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 	@Override
 	default JitType afterLeft(JitCodeGenerator gen, T op, JitType lType, JitType rType,
 			MethodVisitor rv) {
-		return TypeConversions.forceUniformZExt(lType, rType, rv);
+		return TypeConversions.forceUniform(gen, lType, rType, ext(), rv);
+	}
+
+	default JitType generateMpIntCmp(JitCodeGenerator gen, MpIntJitType type, Label lblTrue,
+			MethodVisitor mv) {
+		int legCount = type.legsAlloc();
+		Label lblDone = new Label();
+		// Need two temps, because comparison is from *most* to least-significant
+		try (
+				JvmTempAlloc tmpL = gen.getAllocationModel().allocateTemp(mv, "tmpL", legCount);
+				JvmTempAlloc tmpR = gen.getAllocationModel().allocateTemp(mv, "tmpR", legCount)) {
+			OpGen.generateMpLegsIntoTemp(tmpR, legCount, mv);
+			OpGen.generateMpLegsIntoTemp(tmpL, legCount, mv);
+			for (int i = 0; i < legCount; i++) {
+				mv.visitVarInsn(ILOAD, tmpL.idx(legCount - i - 1));
+				mv.visitVarInsn(ILOAD, tmpR.idx(legCount - i - 1));
+				//OpGen.generateSyserrInts(gen, 2, mv);
+				generateIntCmp(i == 0 ? "compare" : "compareUnsigned", mv);
+				if (i != legCount - 1) {
+					mv.visitInsn(DUP);
+					mv.visitJumpInsn(IFNE, lblDone);
+					mv.visitInsn(POP);
+				}
+			}
+		}
+		mv.visitLabel(lblDone);
+		mv.visitJumpInsn(ifOpcode(), lblTrue);
+		return IntJitType.I4;
 	}
 
 	/**
@@ -123,11 +154,11 @@ public interface CompareIntBinOpGen<T extends JitIntTestOp> extends BinOpGen<T> 
 		Label lblTrue = new Label();
 		Label lblDone = new Label();
 
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, ext(), rv);
 		switch (rType) {
 			case IntJitType t -> generateIntJump(lblTrue, rv);
 			case LongJitType t -> generateLongJump(lblTrue, rv);
-			case MpIntJitType t -> Unfinished.TODO("MpInt");
+			case MpIntJitType t -> generateMpIntCmp(gen, t, lblTrue, rv);
 			default -> throw new AssertionError();
 		}
 		JitType outType = op.type().resolve(gen.getTypeModel().typeOf(op.out()));

@@ -37,6 +37,7 @@ import generic.jar.ResourceFile;
 import generic.theme.GColor;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.Application;
+import ghidra.framework.OperatingSystem;
 import ghidra.framework.main.ConsoleTextPane;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
@@ -91,7 +92,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindHighlights() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		verfyHighlightColor(matches);
 
 		close(findDialog);
@@ -102,7 +103,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindHighlights_ChangeSearchText() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		verfyHighlightColor(matches);
 
 		// Change the search text after the first search and make sure the new text is found and 
@@ -111,7 +112,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> findDialog.setSearchText(newSearchText));
 		pressButtonByText(findDialog, "Next");
 		matches = getMatches();
-		assertEquals(3, matches.size());
+		assertEquals(2, matches.size());
 		verfyHighlightColor(matches);
 
 		close(findDialog);
@@ -122,7 +123,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindHighlights_ChangeDocumentText() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		verfyHighlightColor(matches);
 
 		runSwing(() -> textPane.setText("This is some\nnew text."));
@@ -135,22 +136,18 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMovingCursorUpdatesActiveHighlight() {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
-		TestTextMatch third = matches.get(2);
-		TestTextMatch last = matches.get(3);
+		TestTextMatch last = matches.get(2);
 
-		placeCursonInMatch(second);
+		placeCursorInMatch(second);
 		assertActiveHighlight(second);
 
-		placeCursonInMatch(third);
-		assertActiveHighlight(third);
-
-		placeCursonInMatch(first);
+		placeCursorInMatch(first);
 		assertActiveHighlight(first);
 
-		placeCursonInMatch(last);
+		placeCursorInMatch(last);
 		assertActiveHighlight(last);
 	}
 
@@ -158,7 +155,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindNext_ChangeDocumentText() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
 
@@ -181,7 +178,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		next();
 
 		matches = getMatches();
-		assertEquals(6, matches.size()); // 4 old matches plus 2 new matches
+		assertEquals(5, matches.size()); // 3 old matches plus 2 new matches
 		second = matches.get(1);
 		assertCursorInMatch(second);
 		assertActiveHighlight(second);
@@ -189,8 +186,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		next(); // third
 		next(); // fourth
 		next(); // fifth
-		next(); // sixth
-		TestTextMatch last = matches.get(5); // search wrapped
+		TestTextMatch last = matches.get(4); // search wrapped
 		assertCursorInMatch(last);
 		assertActiveHighlight(last);
 
@@ -201,22 +197,16 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindNext() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
-		TestTextMatch third = matches.get(2);
-		TestTextMatch last = matches.get(3);
+		TestTextMatch last = matches.get(2);
 
 		assertCursorInMatch(first);
 		assertActiveHighlight(first);
 
-		placeCursonInMatch(second);
+		placeCursorInMatch(second);
 		assertActiveHighlight(second);
-
-		next();
-
-		assertCursorInMatch(third);
-		assertActiveHighlight(third);
 
 		next();
 
@@ -235,16 +225,16 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindNext_MoveCaret() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
-		TestTextMatch third = matches.get(2);
-		TestTextMatch last = matches.get(3);
+		TestTextMatch second = matches.get(1);
+		TestTextMatch last = matches.get(2);
 
 		assertCursorInMatch(first);
 		assertActiveHighlight(first);
 
-		placeCursonInMatch(third);
-		assertActiveHighlight(third);
+		placeCursorInMatch(second);
+		assertActiveHighlight(second);
 
 		next();
 
@@ -258,11 +248,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindPrevious() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
-		TestTextMatch third = matches.get(2);
-		TestTextMatch last = matches.get(3);
+		TestTextMatch last = matches.get(2);
 
 		assertCursorInMatch(first);
 		assertActiveHighlight(first);
@@ -271,11 +260,6 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertCursorInMatch(last);
 		assertActiveHighlight(last);
-
-		previous();
-
-		assertCursorInMatch(third);
-		assertActiveHighlight(third);
 
 		previous();
 
@@ -294,7 +278,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testFindPrevious_MoveCaret() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
 		TestTextMatch third = matches.get(2);
@@ -302,7 +286,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertCursorInMatch(first);
 		assertActiveHighlight(first);
 
-		placeCursonInMatch(third);
+		placeCursorInMatch(third);
 		assertActiveHighlight(third);
 
 		previous();
@@ -317,7 +301,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testClear() throws Exception {
 
 		List<TestTextMatch> matches = getMatches();
-		assertEquals(4, matches.size());
+		assertEquals(3, matches.size());
 		verfyHighlightColor(matches);
 
 		clear();
@@ -406,7 +390,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	private void placeCursonInMatch(TestTextMatch match) {
+	private void placeCursorInMatch(TestTextMatch match) {
 		int pos = match.start;
 		runSwing(() -> textPane.setCaretPosition(pos));
 		waitForSwing();
@@ -447,6 +431,13 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		String searchText = findDialog.getSearchText();
 		List<TestTextMatch> results = new ArrayList<>();
 		String text = runSwing(() -> textPane.getText());
+
+		// Cursor positions in tests are based on single character newlines, so adjust them if we
+		// are on Windows
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+			text = text.replaceAll("\r\n", "\r");
+		}
+
 		int index = text.indexOf(searchText);
 		while (index != -1) {
 			results.add(new TestTextMatch(index, index + searchText.length()));

@@ -98,6 +98,7 @@ class EnumValueDBAdapterV1 extends EnumValueDBAdapter {
 		return table.iterator();
 	}
 
+	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(table.getName());
 	}

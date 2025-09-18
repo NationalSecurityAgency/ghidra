@@ -27,6 +27,7 @@ import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.BranchOpGen.ExtBranchGen;
 import ghidra.pcode.emu.jit.gen.op.BranchOpGen.IntBranchGen;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitCBranchOp;
@@ -146,7 +147,7 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 			return;
 		}
 
-		JitType cType = gen.generateValReadCode(op.cond(), op.condType());
+		JitType cType = gen.generateValReadCode(op.cond(), op.condType(), Ext.ZERO);
 		TypeConversions.generateIntToBool(cType, rv);
 		switch (op.branch()) {
 			case RIntBranch ib -> IntCBranchGen.C_INT.generateCode(gen, op, ib, block, rv);

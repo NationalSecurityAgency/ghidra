@@ -113,7 +113,7 @@ public class ClearPlugin extends Plugin {
 		}
 
 		CodeUnit cu = program.getListing().getCodeUnitContaining(location.getAddress());
-		Command cmd = new ClearCmd(cu, options);
+		Command<Program> cmd = new ClearCmd(cu, options);
 		tool.execute(cmd, program);
 	}
 

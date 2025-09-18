@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,7 +160,8 @@ public class GThemeDefaults {
 			public static final GColor YELLOW = getColor("yellow");
 
 			/**
-			 * Returns a new {@link GColor} for the given palette name.
+			 * Returns a new {@link GColor} for the given palette name.  The name should not include
+			 * the prefix {@code color.palette}.
 			 * <p>
 			 * For a list of supported palette IDs, see {@code gui.palette.theme.properties}.
 			 * <p>

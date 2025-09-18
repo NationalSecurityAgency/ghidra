@@ -27,7 +27,7 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 
 /**
- * A {@link GoType} structure that defines a golang interface. 
+ * A {@link GoType} structure that defines a Go interface. 
  */
 @StructureMapping(structureName = {"runtime.interfacetype", "internal/abi.InterfaceType"})
 public class GoInterfaceType extends GoType {
@@ -55,17 +55,14 @@ public class GoInterfaceType extends GoType {
 	}
 
 	/**
-	 * Returns a slice containing the methods of this interface.
-	 * 
-	 * @return slice containing the methods of this interface
+	 * {@return a slice containing the methods of this interface}
 	 */
 	public GoSlice getMethodsSlice() {
 		return mhdr;
 	}
 
 	/**
-	 * Returns the methods defined by this interface
-	 * @return methods defined by this interface
+	 * {@return the methods defined by this interface}
 	 * @throws IOException if error reading data
 	 */
 	public List<GoIMethod> getMethods() throws IOException {
@@ -81,7 +78,8 @@ public class GoInterfaceType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		Structure genericIfaceDT = programContext.getStructureDataType(GoIface.class);
 
 		CategoryPath ifaceCP = goTypes.getCP(this);

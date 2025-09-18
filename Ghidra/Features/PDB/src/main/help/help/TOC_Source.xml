@@ -50,7 +50,10 @@
 
 <tocroot>
     <tocref id="Program Annotation">
-        <tocdef id="PDB" sortgroup="s" text="PDB" target="help/topics/Pdb/PDB.htm" >
+    
+        <!-- The sort group places this entry at the bottom of all other entries in the Program
+    	     Annotation section.  'z' puts it at the end.  The rest makes it unique. -->
+        <tocdef id="PDB" sortgroup="z_PDB" text="PDB" target="help/topics/Pdb/PDB.htm" >
 			<tocdef id="LoadPDB" sortgroup="a" text="Load PDB File"     target="help/topics/Pdb/LoadPDB.html" />
         	<tocdef id="README_PDB" sortgroup="b" text="PDB Parser (README_PDB)" target="external:docs/README_PDB.html" />
         </tocdef>

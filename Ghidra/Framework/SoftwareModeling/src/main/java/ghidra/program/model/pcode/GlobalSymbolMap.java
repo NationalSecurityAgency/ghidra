@@ -22,7 +22,6 @@ import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;

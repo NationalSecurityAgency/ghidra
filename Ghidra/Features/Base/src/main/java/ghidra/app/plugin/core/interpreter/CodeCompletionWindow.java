@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.app.plugin.core.console.CodeCompletion;
  */
 public class CodeCompletionWindow extends JDialog {
 
-	private static final String FONT_ID = "font.plugin.terminal.completion.list";
+	static final String FONT_ID = "font.plugin.terminal.completion.list";
 
 	protected final InterpreterPanel console;
 	protected final JTextPane outputTextField;
@@ -394,6 +394,10 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
  */
 class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 
+	CodeCompletionListCellRenderer() {
+		setBaseFontId(CodeCompletionWindow.FONT_ID);
+	}
+
 	@Override
 	protected String getItemText(CodeCompletion value) {
 		return value.getDescription();
@@ -421,7 +425,6 @@ class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 		}
 
 		component.setEnabled(list.isEnabled());
-		component.setFont(list.getFont());
 		component.setComponentOrientation(list.getComponentOrientation());
 		Border border = null;
 		if (cellHasFocus) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -95,7 +96,7 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.applyFixedLengthDataType("0x100", struct1DT, struct1DT.getLength());
 
 		List<Data> list =
-			CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.definedStrings(program));
+			CollectionUtils.asList((Iterable<Data>) DefinedStringIterator.forProgram(program));
 
 		assertTrue(list.get(0).getAddress().getOffset() == 0x10);
 		assertTrue(list.get(1).getAddress().getOffset() == 0x100 + 10);
@@ -114,8 +115,7 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		int lastEle = numElements - 1;
 		int elementSize = structArray.getElementLength();
 
-		List<Data> list =
-			CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.definedStrings(program));
+		List<Data> list = IteratorUtils.toList(DefinedStringIterator.forProgram(program));
 
 		assertEquals(list.get(0).getAddress().getOffset(), 0x10);
 		assertEquals(list.get(1 + 0).getAddress().getOffset(), 0x100 + 10);

@@ -17,7 +17,10 @@ package ghidra.app.util.datatype;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 
 import docking.widgets.DropDownSelectionTextField;
@@ -70,6 +73,11 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 	}
 
 	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH, SearchMode.CONTAINS, SearchMode.WILDCARD);
+	}
+
+	@Override
 	public ListCellRenderer<DataType> getListRenderer() {
 		return new DataTypeDropDownRenderer();
 	}
@@ -86,13 +94,47 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<DataType> getMatchingData(String searchText) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
+
+	@Override
+	public List<DataType> getMatchingData(String searchText, SearchMode mode) {
 		if (searchText == null || searchText.length() == 0) {
+			// full list results not supported since the data may be too large for user interaction
 			return Collections.emptyList();
 		}
 
-		List<DataType> dataTypeList =
+		if (!getSupportedSearchModes().contains(mode)) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+		}
+
+		if (mode == SearchMode.STARTS_WITH) {
+			return getMatchDataStartsWith(searchText);
+		}
+
+		Pattern p = mode.createPattern(searchText);
+		return getMatchingDataRegex(p);
+	}
+
+	private List<DataType> getMatchDataStartsWith(String searchText) {
+		List<DataType> results =
 			DataTypeUtils.getStartsWithMatchingDataTypes(searchText, dataTypeService);
-		return filterDataTypeList(dataTypeList);
+		return filterDataTypeList(results);
+	}
+
+	private List<DataType> getMatchingDataRegex(Pattern p) {
+
+		List<DataType> results = new ArrayList<>();
+		List<DataType> allTypes = dataTypeService.getSortedDataTypeList();
+		for (DataType dt : allTypes) {
+			String name = dt.getName().toLowerCase();
+			Matcher m = p.matcher(name);
+			if (m.matches()) {
+				results.add(dt);
+			}
+		}
+		return filterDataTypeList(results);
 	}
 
 	/**

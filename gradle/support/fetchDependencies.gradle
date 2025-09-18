@@ -60,6 +60,16 @@ file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
 	ext.RELEASE_VERSION = ghidraProps.getProperty('application.version')
 }
 
+// Z3 download versions (https://github.com/Z3Prover/z3/releases)
+// NOTE: Changing these versions also requires appropriate changes to the sha256 values for each of 
+// the Z3 files specified in the dependency list below.  These versions are also be specified
+// elsewhere within the build.gradle code.
+ext.Z3_VER = "4.13.0"
+ext.Z3_ARM64_OSX_VER = "11.0"
+ext.Z3_X64_OSX_VER = "11.7.10"
+ext.Z3_X64_GLIBC_VER = "2.31"
+// No Z3_WIN_VER
+
 ext.deps = [
 	[
 		name: "java-sarif-2.1-modified.jar",
@@ -86,9 +96,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: "postgresql-15.10.tar.gz",
-		url: "https://ftp.postgresql.org/pub/source/v15.10/postgresql-15.10.tar.gz",
-		sha256: "173366605259a83dc189c4327ff4c37254afed65b4f866cbd8a5ef2ea449e8f3",
+		name: "postgresql-15.13.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.13/postgresql-15.13.tar.gz",
+		sha256: "afdc22b0a6e5bec7b65723756b90d44ea911e61b2f7b01c4dc5524ab813b4d89",
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
@@ -164,9 +174,47 @@ ext.deps = [
 		destination: FID_DIR
 	],
 	[
-		name: "protobuf-3.20.3-py2.py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/8d/14/619e24a4c70df2901e1f4dbc50a6291eb63a759172558df326347dce1f0d/protobuf-3.20.3-py2.py3-none-any.whl",
-		sha256: "a7ca6d488aa8ff7f329d4c545b2dbad8ac31464f1d8b1c87ad1346717731e4db",
+		name: "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip", // Linux on 64-bit Intel (use this one for the Java jar)
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}.zip",
+		sha256: "bc31ad12446d7db1bd9d0ac82dec9d7b5129b8b8dd6e44b571a83ac6010d2f9b",
+		destination: {
+			def name = "z3-${Z3_VER}-x64-glibc-${Z3_X64_GLIBC_VER}"
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "${name}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "${name}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/linux_x86_64"), new WildcardFileFilter("libz3*.so"))
+			copyDirectory(new File(DOWNLOADS_DIR, "${name}/bin/"), FLAT_REPO_DIR, new WildcardFileFilter("*.jar"))
+		}
+	],
+	[
+		name: "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip", // macOS on Apple silicon
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip",
+		sha256: "e7cd325cb2210d3b241d0d5517a293677030f58c1771e196c4574ef99dc45168",
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-arm64-osx-${Z3_ARM64_OSX_VER}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/mac_arm_64"), new WildcardFileFilter("libz3*.dylib"))
+		}
+	],
+	[
+		name: "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip", // macOS on 64-bit Intel
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip",
+		sha256: "0c33d8574f7dcd041f1f4e7fe301840db6a527f866cb74b0b47518bf8053502d",
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-osx-${Z3_X64_OSX_VER}/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/mac_x86_64"), new WildcardFileFilter("libz3*.dylib"))
+		}
+	],
+	[
+		name: "z3-${Z3_VER}-x64-win.zip", // Windows on 64-bit Intel
+		url: "https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VER}/z3-${Z3_VER}-x64-win.zip",
+		sha256: "2bcd14b6849fddead3d0b3cb671cc9d134a8ef0b1d3eff3efd7d75a5bbf00dd3",
+		destination: {
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "z3-${Z3_VER}-x64-win.zip")
+			copyDirectory(new File(DOWNLOADS_DIR, "z3-${Z3_VER}-x64-win/bin/"), file("${DEPS_DIR}/SymbolicSummaryZ3/os/win_x86_64"), new WildcardFileFilter("libz3*.dll"))
+		}
+	],
+	[
+		name: "protobuf-6.31.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/ee/01/1ed1d482960a5718fd99c82f6d79120181947cfd4667ec3944d448ed44a3/protobuf-6.31.0-py3-none-any.whl",
+		sha256: "6ac2e82556e822c17a8d23aa1190bbc1d06efb9c261981da95c71c9da09e9e23",
 		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
 	],
 	[

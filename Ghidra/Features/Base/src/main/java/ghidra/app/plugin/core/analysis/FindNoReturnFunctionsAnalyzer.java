@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
-import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
-import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -79,6 +78,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	private Address lastGetNextFuncAddress = null;  // last addr used for getNextFunction()
 	private Address nextFunction = null;            // last return nextFunction
+	
+	private final static String X86_NAME = "x86";
+	boolean isX86;
 
 	public FindNoReturnFunctionsAnalyzer() {
 		this(NAME, DESCRIPTION, AnalyzerType.INSTRUCTION_ANALYZER);
@@ -105,6 +107,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			this.monitor = monitor;
 			this.reasonList = new ArrayList<>();
 			lastGetNextFuncAddress = null;
+			
+			isX86 = checkForX86(program);
 
 			monitor.setMessage("NoReturn - Finding non-returning functions");
 
@@ -148,6 +152,11 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			this.reasonList = null;
 		}
 		return true;
+	}
+	
+	private boolean checkForX86(Program cp) {
+		return cp.getLanguage().getProcessor().equals(
+			Processor.findOrPossiblyCreateProcessor(X86_NAME));
 	}
 
 	/**
@@ -358,7 +367,10 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 
 			// detected a calling issue, check other instructions calling the same place
-			Address[] flows = inst.getFlows();
+			Address[] flows = getAllFlows(inst);
+			if (flows == null) {
+				continue;
+			}
 			for (Address target : flows) {
 
 				int count = 1;
@@ -558,6 +570,17 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
+			// on x86 INT3 after a call indicates a non-returning call from alignment padding
+			if (isX86) {
+				Instruction fallInstr = listing.getInstructionContaining(fallThru);
+				if (fallInstr != null &&  fallInstr.getMnemonicString().equals("INT3")) {
+					NoReturnLocations location =
+							new NoReturnLocations(target, fallThru, "INT3 interrupt after call");
+					reasonList.add(location);
+					return true;
+				}
+			}
+			
 			// get the next instruction in fallthru chain
 			fallThru = null;
 			if (instr.getFlowType().isFallthrough()) {
@@ -566,7 +589,39 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		}
 		return false;
 	}
-
+	
+	/**
+	 * Get all flows that have already been added to instruction.
+	 * If there are none and this is an indirect, get the function at
+	 * the end of the read.
+	 * @param callInst
+	 * @return all flows
+	 */
+	private Address[] getAllFlows(Instruction callInst) {
+		Address[] flows = callInst.getFlows();
+		if (flows != null && flows.length > 0) {
+			return flows;
+		}
+		FlowType flowType = callInst.getFlowType();
+		if (!flowType.isCall() || !flowType.isIndirect()) {
+			return flows;
+		}
+		// if haven't found any flows yet, check for a read of a location that refers
+		// to a function.
+		Reference[] referencesFrom = callInst.getReferencesFrom();
+		for (Reference reference : referencesFrom) {
+			if (reference.getReferenceType().isRead()) {
+				Function functionAt = program.getFunctionManager().getFunctionAt(reference.getToAddress());
+				if (functionAt != null) {
+					flows = new Address[1];
+					flows[0] = reference.getToAddress();
+					return flows;
+				}
+			}
+		}
+		return flows;
+	}
+	
 	/**
 	 * Return true if fallThru address has inconsistent (data/call) references to it.
 	 * Adds the reason for non-returning reason to no return locations list.
@@ -585,8 +640,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				Reference reference = refIterTo.next();
 				RefType refType = reference.getReferenceType();
 				if (refType.isRead() || refType.isWrite()) {
-					// look at function the reference is coming from
-					// is the function the same as the call is in
+					// Check function the reference is coming from
+					// is the same function as the call is in
 					//    This is a better indicator of non-returning
 					// Random references from another function could be bad disassembly
 					// or references.  This is especially true if there is only one
@@ -595,9 +650,13 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 					// TODO: if this is done before functions are created from calls
 					//       then this check will do nothing
 					if (callingFunc != null) {
+						Address fromAddress = reference.getFromAddress();
 						Function function =
-							funcManager.getFunctionContaining(reference.getFromAddress());
-						if (callingFunc.equals(function)) {
+							funcManager.getFunctionContaining(fromAddress);
+						// The reference must come from an address within this function
+						// before this the function call (reference fromAddress)
+						// this should get rid of considering spurious/bad data references from other functions
+						if ((fromAddress.compareTo(addr) < 0) && callingFunc.equals(function)) {
 							NoReturnLocations location =
 								new NoReturnLocations(calledAddr, reference.getToAddress(),
 									"Data Reference from same function after call");

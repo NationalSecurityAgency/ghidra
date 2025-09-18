@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,11 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import db.*;
 import ghidra.program.database.map.*;
-import ghidra.program.database.util.RecordFilter;
+import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolType;
@@ -43,20 +42,20 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 //			"SymbolData3", "Flags" });
 
 	private static final int SYMBOL_VERSION = 2;
+
+	private static final int V2_SYMBOL_NAME_COL = 0;
+	private static final int V2_SYMBOL_ADDR_COL = 1;
+	private static final int V2_SYMBOL_PARENT_ID_COL = 2;
+	private static final int V2_SYMBOL_TYPE_COL = 3;
+	private static final int V2_SYMBOL_DATA1_COL = 4; // Long data (variable dataTypeId)
+	private static final int V2_SYMBOL_DATA2_COL = 5; // Int data (primary flag, variable-offset)
+	private static final int V2_SYMBOL_DATA3_COL = 6; // String data (external address)
+	private static final int V2_SYMBOL_FLAGS_COL = 7;
+
 	private Table symbolTable;
 	private AddressMap addrMap;
 
-	static final int V2_SYMBOL_NAME_COL = 0;
-	static final int V2_SYMBOL_ADDR_COL = 1;
-	static final int V2_SYMBOL_PARENT_COL = 2;
-	static final int V2_SYMBOL_TYPE_COL = 3;
-	static final int V2_SYMBOL_DATA1_COL = 4;
-	static final int V2_SYMBOL_DATA2_COL = 5;
-	static final int V2_SYMBOL_DATA3_COL = 6;
-	static final int V2_SYMBOL_FLAGS_COL = 7;
-
-	SymbolDatabaseAdapterV2(DBHandle handle, AddressMap addrMap)
-			throws VersionException {
+	SymbolDatabaseAdapterV2(DBHandle handle, AddressMap addrMap) throws VersionException {
 
 		this.addrMap = addrMap;
 		symbolTable = handle.getTable(SYMBOL_TABLE_NAME);
@@ -73,9 +72,8 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	DBRecord createSymbol(String name, Address address, long namespaceID, SymbolType symbolType,
-			String stringData, Long dataTypeId, Integer varOffset, SourceType source,
-			boolean isPrimary) throws IOException {
+	DBRecord createSymbolRecord(String name, long namespaceID, Address address,
+			SymbolType symbolType, boolean isPrimary, SourceType source) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -154,8 +152,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward)
-			throws IOException {
+	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward) throws IOException {
 		KeyToRecordIterator it =
 			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
 				SYMBOL_ADDR_COL, addrMap, set, forward));
@@ -174,51 +171,58 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 
 	@Override
 	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		LongField oldKey = new LongField(addrMap.getKey(oldAddr, false));
-		long newKey = addrMap.getKey(newAddr, true);
-		Field[] keys = symbolTable.findRecords(oldKey, SYMBOL_ADDR_COL);
-		for (Field key : keys) {
-			DBRecord rec = symbolTable.getRecord(key);
-			rec.setLongValue(SYMBOL_ADDR_COL, newKey);
-			symbolTable.putRecord(rec);
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	Set<Address> deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException, IOException {
-
-		AnchoredSymbolRecordFilter filter = new AnchoredSymbolRecordFilter();
-		AddressRecordDeleter.deleteRecords(symbolTable, SYMBOL_ADDR_COL, addrMap, startAddr,
-			endAddr, filter);
-
-		return filter.getAddressesForSkippedRecords();
+		throw new UnsupportedOperationException();
 	}
 
-	class AnchoredSymbolRecordFilter implements RecordFilter {
-		private Set<Address> set = new HashSet<Address>();
+	private String getExternalStringData(DBRecord rec) {
+		long addrKey = rec.getLongValue(V2_SYMBOL_ADDR_COL);
+		Address addr = addrMap.decodeAddress(addrKey);
+		if (addr == null || !addr.isExternalAddress()) {
+			return null;
+		}
+		byte symbolTypeId = rec.getByteValue(V2_SYMBOL_TYPE_COL);
+		if (symbolTypeId != SYMBOL_TYPE_FUNCTION && symbolTypeId != SYMBOL_TYPE_LABEL) {
+			// NOTE: I don't think external functions were supported with this version
+			return null;
+		}
 
-		@Override
-		public boolean matches(DBRecord record) {
-			// only move symbols whose anchor flag is not on
-			Address addr = addrMap.decodeAddress(record.getLongValue(SYMBOL_ADDR_COL));
-			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-			if (((flags & SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG) == 0)) {
-				return true;
+		return rec.getString(V2_SYMBOL_DATA3_COL);
+	}
+
+	@Override
+	RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr) throws IOException {
+		if (extProgAddr == null) {
+			return EmptyRecordIterator.INSTANCE;
+		}
+		String matchAddrStr = extProgAddr.toString();
+		return new ConstrainedForwardRecordIterator(symbolTable.iterator(), rec -> {
+			String str = getExternalStringData(rec);
+			if (str != null) {
+				int indexOf = str.indexOf(","); // [address][,importName]
+				String addressString = indexOf >= 0 ? str.substring(0, indexOf) : str;
+				if (matchAddrStr.equals(addressString)) {
+					return convertV2Record(rec);
+				}
 			}
-			set.add(addr);
-			return false;
-		}
+			return null;
+		});
+	}
 
-		Set<Address> getAddressesForSkippedRecords() {
-			return set;
-		}
+	@Override
+	RecordIterator getExternalSymbolsByOriginalImportName(String extLabel) throws IOException {
+		return EmptyRecordIterator.INSTANCE;
 	}
 
 	@Override
 	RecordIterator getSymbolsByNamespace(long id) throws IOException {
 		LongField field = new LongField(id);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_PARENT_COL, field, field, true);
+		RecordIterator it = symbolTable.indexIterator(SYMBOL_PARENT_ID_COL, field, field, true);
 		return new V2ConvertedRecordIterator(it);
 	}
 
@@ -234,6 +238,24 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		StringField field = new StringField(startName);
 		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, field, null, true);
 		return new V2ConvertedRecordIterator(it);
+	}
+
+	@Override
+	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
+		RecordIterator it = scanSymbolsByName(name);
+		RecordIterator filtered = getNameAndNamespaceFilterIterator(name, id, it);
+		return new V2ConvertedRecordIterator(filtered);
+	}
+
+	@Override
+	DBRecord getSymbolRecord(Address address, String name, long id) throws IOException {
+		RecordIterator it = scanSymbolsByName(name);
+		long addressKey = addrMap.getKey(address, false);
+		RecordIterator filtered = getNameNamespaceAddressFilterIterator(name, id, addressKey, it);
+		if (filtered.hasNext()) {
+			return filtered.next();
+		}
+		return null;
 	}
 
 	@Override
@@ -265,27 +287,6 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		return symbolTable;
 	}
 
-	@Override
-	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
-		StringField value = new StringField(name);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, value, value, true);
-		RecordIterator filtered = getNameAndNamespaceFilterIterator(name, id, it);
-		return new V2ConvertedRecordIterator(filtered);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(Address address, String name, long id) throws IOException {
-		StringField value = new StringField(name);
-		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, value, value, true);
-		long addressKey = addrMap.getKey(address, false);
-		RecordIterator filtered =
-			getNameNamespaceAddressFilterIterator(name, id, addressKey, it);
-		if (filtered.hasNext()) {
-			return filtered.next();
-		}
-		return null;
-	}
-
 	/**
 	 * Returns a record matching the current database schema from the version 2 record.
 	 * @param record the record matching the version 2 schema.
@@ -303,20 +304,24 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 		long symbolAddrKey = record.getLongValue(V2_SYMBOL_ADDR_COL);
 		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL, symbolAddrKey);
 
-		long namespaceId = record.getLongValue(V2_SYMBOL_PARENT_COL);
-		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL, namespaceId);
+		long namespaceId = record.getLongValue(V2_SYMBOL_PARENT_ID_COL);
+		rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL, namespaceId);
 
 		byte symbolTypeId = record.getByteValue(V2_SYMBOL_TYPE_COL);
 		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, symbolTypeId);
 
-		rec.setString(SymbolDatabaseAdapter.SYMBOL_STRING_DATA_COL,
+		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,
+			record.getByteValue(V2_SYMBOL_FLAGS_COL));
+
+		//
+		// Convert sparse columns
+		//
+
+		SymbolDatabaseAdapterV3.convertSymbolStringData(symbolTypeId, rec,
 			record.getString(V2_SYMBOL_DATA3_COL));
 
 		Field hash = computeLocatorHash(symbolName, namespaceId, symbolAddrKey);
 		rec.setField(SymbolDatabaseAdapter.SYMBOL_HASH_COL, hash);
-
-		rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL,
-			record.getByteValue(V2_SYMBOL_FLAGS_COL));
 
 		long dataTypeId = record.getLongValue(V2_SYMBOL_DATA1_COL);
 		if (dataTypeId != -1) {
@@ -325,7 +330,7 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 
 		SymbolType type = SymbolType.getSymbolType(symbolTypeId);
 		int data2 = record.getIntValue(V2_SYMBOL_DATA2_COL);
-		// The data1 field was used in two ways for label symbols, it stored a 1 for primary and 0
+		// The data2 field was used in two ways for label symbols, it stored a 1 for primary and 0
 		// for non-primary.  If the type was a parameter or variable, it stored the ordinal or
 		// first use offset respectively
 		if (SymbolType.LABEL.equals(type)) {

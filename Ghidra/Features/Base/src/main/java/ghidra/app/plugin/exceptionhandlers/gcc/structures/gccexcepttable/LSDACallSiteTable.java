@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.*;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
@@ -78,7 +78,7 @@ public class LSDACallSiteTable extends GccAnalysisClass {
 		monitor.setMessage("Creating GCC LSDA Call Site Table ");
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(baseAddr, CodeUnit.PLATE_COMMENT, "(LSDA) Call Site Table");
+			new SetCommentCmd(baseAddr, CommentType.PLATE, "(LSDA) Call Site Table");
 		commentCmd.applyTo(program);
 
 		Address limit = baseAddr.add(header.getCallSiteTableLength() - 1);

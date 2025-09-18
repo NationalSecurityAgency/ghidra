@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -338,6 +338,22 @@ public class ParamEntry {
 	 * @return          slotnum plus the number of slots used
 	 */
 	public int getAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res) {
+		return getAddrBySlot(slotnum, sz, typeAlign, res, !isLeftJustified());
+	}
+
+	/**
+	 * Assign the storage address when allocating something of size -sz- assuming -slotnum- slots
+	 * have already been assigned.  Set the address to null if the -sz- is too small or if
+	 * there are not enough slots left
+	 * @param slotnum	number of slots already assigned
+	 * @param sz        number of bytes to being assigned
+	 * @param typeAlign required byte alignment for the parameter
+	 * @param res       will hold the final storage address
+	 * @param justifyRight true if initial bytes are padding for odd data-type sizes
+	 * @return          slotnum plus the number of slots used
+	 */
+	public int getAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res,
+			boolean justifyRight) {
 		int spaceused;
 		long offset;
 		res.address = null;		// Start with an invalid result
@@ -387,7 +403,7 @@ public class ParamEntry {
 			offset = addressbase + index * alignment;
 			slotnum += slotsused;		// Inform caller of number of slots used
 		}
-		if (!isLeftJustified()) {
+		if (justifyRight) {
 			offset += (spaceused - sz);
 		}
 		res.address = spaceid.getAddress(offset);

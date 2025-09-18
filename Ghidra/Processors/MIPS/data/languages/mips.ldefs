@@ -4,7 +4,7 @@
             endian="big"
             size="32"
             variant="default"
-            version="1.8"
+            version="1.9"
             slafile="mips32be.sla"
             processorspec="mips32.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -12,7 +12,7 @@
     <description>MIPS32 32-bit addresses, big endian, with mips16e</description>
     <compiler name="default" spec="mips32be.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32be.cspec" id="windows"/>
-    <compiler name="eabi" spec="mips32be_eabi.cspec" id="eabi"/>
+    <compiler name="eabi" spec="mips32_eabi.cspec" id="eabi"/>
     <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
@@ -24,7 +24,7 @@
             endian="little"
             size="32"
             variant="default"
-            version="1.8"
+            version="1.9"
             slafile="mips32le.sla"
             processorspec="mips32.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -32,7 +32,7 @@
     <description>MIPS32 32-bit addresses, little endian, with mips16e</description>
     <compiler name="default" spec="mips32le.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
-    <compiler name="eabi" spec="mips32le_eabi.cspec" id="eabi"/>
+    <compiler name="eabi" spec="mips32_eabi.cspec" id="eabi"/>
     <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
@@ -44,7 +44,7 @@
             endian="big"
             size="32"
             variant="R6"
-            version="1.8"
+            version="1.9"
             slafile="mips32R6be.sla"
             processorspec="mips32R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -60,7 +60,7 @@
             endian="little"
             size="32"
             variant="R6"
-            version="1.8"
+            version="1.9"
             slafile="mips32R6le.sla"
             processorspec="mips32R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -76,13 +76,13 @@
             endian="big"
             size="64"
             variant="default"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:BE:64:default">
     <description>MIPS64 64-bit addresses, big endian, with mips16e</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
+    <compiler name="default" spec="mips64be.cspec" id="default"/>
     <external_name tool="gnu" name="mips:5000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
@@ -94,14 +94,14 @@
             endian="little"
             size="64"
             variant="default"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
             id="MIPS:LE:64:default">
     <description>MIPS64 64-bit addreses, little endian, with mips16e</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips64.cspec" id="windows"/>
+    <compiler name="default" spec="mips64le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips64le.cspec" id="windows"/>
     <external_name tool="gnu" name="mips:5000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
@@ -113,13 +113,13 @@
             endian="big"
             size="64"
             variant="micro"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:BE:64:micro">
     <description>MIPS64 64-bit addresses, big endian, with microMIPS</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
+    <compiler name="default" spec="mips64be.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -128,14 +128,14 @@
             endian="little"
             size="64"
             variant="micro"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:LE:64:micro">
     <description>MIPS64 64-bit addresses, little endian, with microMIPS</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips64.cspec" id="windows"/>
+    <compiler name="default" spec="mips64le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips64le.cspec" id="windows"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -144,13 +144,13 @@
             endian="big"
             size="64"
             variant="R6"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:BE:64:R6">
     <description>MIPS64 Release-6 64-bit addresses, big endian, with microMIPS</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
+    <compiler name="default" spec="mips64be.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -161,14 +161,14 @@
             endian="little"
             size="64"
             variant="R6"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
             id="MIPS:LE:64:R6">
     <description>MIPS64 Release-6 64-bit addresses, little endian, with microMIPS</description>
-    <compiler name="default" spec="mips64.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="mips64.cspec" id="windows"/>
+    <compiler name="default" spec="mips64le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="mips64le.cspec" id="windows"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -179,7 +179,7 @@
             endian="big"
             size="32"
             variant="64-32addr"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -201,7 +201,7 @@
             endian="little"
             size="32"
             variant="64-32addr"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -224,7 +224,7 @@
             endian="little"
             size="32"
             variant="64-32addr-micro"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -244,7 +244,7 @@
             endian="big"
             size="32"
             variant="64-32addr-micro"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -263,7 +263,7 @@
             endian="big"
             size="32"
             variant="64-32addr-R6"
-            version="1.8"
+            version="1.9"
             slafile="mips64be.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -284,7 +284,7 @@
             endian="little"
             size="32"
             variant="64-32addr-R6"
-            version="1.8"
+            version="1.9"
             slafile="mips64le.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -306,7 +306,7 @@
             endian="big"
             size="32"
             variant="micro"
-            version="1.8"
+            version="1.9"
             slafile="mips32be.sla"
             processorspec="mips32micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -321,7 +321,7 @@
             endian="little"
             size="32"
             variant="micro"
-            version="1.8"
+            version="1.9"
             slafile="mips32le.sla"
             processorspec="mips32micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"

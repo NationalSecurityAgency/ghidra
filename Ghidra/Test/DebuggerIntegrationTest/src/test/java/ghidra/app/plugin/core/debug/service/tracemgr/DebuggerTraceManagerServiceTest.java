@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -34,16 +35,11 @@ import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.trace.database.target.DBTraceObjectManager;
-import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
@@ -136,7 +132,8 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.getOrAddThread("Thread 1", 0);
+			tb.createRootObject("Target");
+			thread = tb.getOrAddThread("Threads[1]", 0);
 		}
 		waitForDomainObject(tb.trace);
 
@@ -236,18 +233,16 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(null, traceManager.getCurrentObject());
 
-		SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 		TraceObject objThread0;
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceObjectManager objectManager = tb.trace.getObjectManager();
-			objectManager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
-			objThread0 =
-				objectManager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
+			tb.createRootObject();
+			objThread0 = objectManager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 		}
 		// Manager listens for the root-created event to activate it. Wait for it to clear.
 		waitForDomainObject(tb.trace);
 		TraceThread thread =
-			Objects.requireNonNull(objThread0.queryInterface(TraceObjectThread.class));
+			Objects.requireNonNull(objThread0.queryInterface(TraceThread.class));
 
 		traceManager.activateObject(objThread0);
 		waitForSwing();
@@ -359,7 +354,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	public void testFollowPresent() throws Throwable {
 		createRmiConnection();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -407,7 +402,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -456,7 +451,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -502,7 +497,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateWithTimeMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -530,7 +525,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -558,13 +553,13 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertNull(target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_ONLY.name());
 		}
 		assertEquals(ScheduleForm.SNAP_ONLY, target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_ANY_STEPS_OPS.name());
 		}
 		// Constrained by method parameter
@@ -588,25 +583,25 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertNull(target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_ONLY.name());
 		}
 		assertEquals(ScheduleForm.SNAP_ONLY, target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_EVT_STEPS.name());
 		}
 		assertEquals(ScheduleForm.SNAP_EVT_STEPS, target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_ANY_STEPS.name());
 		}
 		assertEquals(ScheduleForm.SNAP_ANY_STEPS, target.getSupportedTimeForm(thread, 0));
 
 		try (Transaction tx = tb.startTransaction()) {
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_ANY_STEPS_OPS.name());
 		}
 		assertEquals(ScheduleForm.SNAP_ANY_STEPS_OPS, target.getSupportedTimeForm(thread, 0));
@@ -617,7 +612,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			thread = tb.createObjectsProcessAndThreads();
@@ -652,12 +647,12 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		createRmiConnection();
 		addActivateWithTimeMethods();
 		createAndOpenTrace();
-		TraceObjectThread thread;
+		TraceThread thread;
 		TraceObject root;
 		try (Transaction tx = tb.startTransaction()) {
 			root = tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION).getChild();
 			thread = tb.createObjectsProcessAndThreads();
-			root.setAttribute(Lifespan.nowOn(0), TraceObjectEventScope.KEY_TIME_SUPPORT,
+			root.setAttribute(Lifespan.nowOn(0), TraceEventScope.KEY_TIME_SUPPORT,
 				ScheduleForm.SNAP_EVT_STEPS.name());
 			tb.trace.getTimeManager()
 					.getSnapshot(0, true)

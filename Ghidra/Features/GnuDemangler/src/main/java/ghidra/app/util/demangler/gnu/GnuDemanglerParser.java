@@ -59,6 +59,7 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_NAME_FOR = "typeinfo name for ";
 	private static final String TYPEINFO_FN_FOR = "typeinfo fn for ";
 	private static final String TYPEINFO_FOR = "typeinfo for ";
+	private static final String TLS_INIT_FOR = "TLS init function for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
 	private static final Set<String> ADDRESS_TABLE_PREFIXES =
@@ -500,6 +501,10 @@ public class GnuDemanglerParser {
 
 			if (prefix.startsWith(TYPEINFO_NAME_FOR)) {
 				return new TypeInfoNameHandler(demangled, TYPEINFO_NAME_FOR);
+			}
+
+			if (prefix.startsWith(TLS_INIT_FOR)) {
+				return new TlsInitHandler(demangled, TLS_INIT_FOR, type);
 			}
 
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
@@ -1656,6 +1661,12 @@ public class GnuDemanglerParser {
 			super(demangled);
 		}
 
+		SpecialPrefixHandler(String demangled, String prefix, String type) {
+			super(demangled);
+			this.prefix = prefix;
+			this.type = type;
+		}
+
 		@Override
 		DemangledObject build() {
 
@@ -1677,17 +1688,41 @@ public class GnuDemanglerParser {
 		}
 	}
 
+	/**
+	 * Thread Local Storage init function
+	 */
+	private class TlsInitHandler extends SpecialPrefixHandler {
+
+		TlsInitHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
+		}
+
+		@Override
+		DemangledObject doBuild(Demangled namespace) {
+
+			/*	
+			 	Create a function named '__tls_init' in the given namespace:
+			 		Foo::__tls_init			 	
+			 */
+			String functionName = "__tls_init";
+
+			DemangledObject demangledFunction =
+				new DemangledFunction(mangledSource, demangledSource, functionName);
+			demangledFunction.setOriginalDemangled(demangled);
+			demangledFunction.setNamespace(namespace);
+			return demangledFunction;
+		}
+
+	}
+
 	private class ItemInNamespaceHandler extends SpecialPrefixHandler {
 
 		ItemInNamespaceHandler(String demangled) {
-			super(demangled);
-			this.type = demangled;
+			this(demangled, null, demangled);
 		}
 
-		ItemInNamespaceHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.prefix = prefix;
-			this.type = item;
+		ItemInNamespaceHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1699,10 +1734,8 @@ public class GnuDemanglerParser {
 
 	private class GlobalCtorDtorHandler extends SpecialPrefixHandler {
 
-		GlobalCtorDtorHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.prefix = prefix;
-			this.type = item;
+		GlobalCtorDtorHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1735,11 +1768,8 @@ public class GnuDemanglerParser {
 
 		private String arrayType;
 
-		ArrayHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = item;
+		ArrayHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 
 			//
 			// Handle array data definitions here for now.  If we see this in non-specialized prefix
@@ -1748,8 +1778,8 @@ public class GnuDemanglerParser {
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
 			if (arrayMatcher.matches()) {
 				// keep only the type information, dropping the array definition
-				type = arrayMatcher.group(1);
-				arrayType = arrayMatcher.group(2).trim();
+				this.type = arrayMatcher.group(1);
+				this.arrayType = arrayMatcher.group(2).trim();
 			}
 
 		}
@@ -1778,11 +1808,8 @@ public class GnuDemanglerParser {
 
 	private class ThunkHandler extends SpecialPrefixHandler {
 
-		ThunkHandler(String demangled, String prefix, String item) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = item;
+		ThunkHandler(String demangled, String prefix, String type) {
+			super(demangled, prefix, type);
 		}
 
 		@Override
@@ -1805,7 +1832,6 @@ public class GnuDemanglerParser {
 
 		TypeInfoNameHandler(String demangled, String prefix) {
 			super(demangled);
-			this.demangled = demangled;
 			this.prefix = prefix;
 
 			String classname = demangled.substring(prefix.length()).trim();
@@ -1826,10 +1852,7 @@ public class GnuDemanglerParser {
 	private class AddressTableHandler extends SpecialPrefixHandler {
 
 		AddressTableHandler(String demangled, String prefix, String type) {
-			super(demangled);
-			this.demangled = demangled;
-			this.prefix = prefix;
-			this.type = type;
+			super(demangled, prefix, type);
 
 			/*
 			 Samples:

@@ -17,11 +17,11 @@ package ghidra.trace.database.memory;
 
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
-import ghidra.trace.model.memory.TraceObjectMemory;
+import ghidra.trace.model.memory.TraceMemory;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectMemory implements TraceObjectMemory, DBTraceObjectInterface {
+public class DBTraceObjectMemory implements TraceMemory, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectMemory(DBTraceObject object) {

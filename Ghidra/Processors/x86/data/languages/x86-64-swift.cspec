@@ -32,7 +32,7 @@
   </returnaddress>
   <default_proto>
     <prototype name="__swiftcall" extrapop="8" stackshift="8">
-      <!-- https://github.com/apple/swift/blob/main/docs/ABI/CallConvSummary.rst#x86-64 -->
+      <!-- https://github.com/swiftlang/swift/blob/main/docs/ABI/CallingConventionSummary.rst#x86-64 -->
       <input>
         <pentry minsize="8" maxsize="8" storage="hiddenret">
           <register name="RAX"/>
@@ -146,7 +146,7 @@
     </prototype>
   </default_proto>
   <prototype name="__thiscall" extrapop="8" stackshift="8">
-    <!-- https://github.com/apple/swift/blob/main/docs/ABI/CallConvSummary.rst#x86-64 -->
+    <!-- https://github.com/swiftlang/swift/blob/main/docs/ABI/CallingConventionSummary.rst#x86-64 -->
     <input>
       <pentry minsize="8" maxsize="8" storage="hiddenret">
         <register name="RAX"/>

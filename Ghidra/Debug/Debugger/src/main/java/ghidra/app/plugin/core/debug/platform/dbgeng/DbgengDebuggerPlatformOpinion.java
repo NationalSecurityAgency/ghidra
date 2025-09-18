@@ -22,13 +22,15 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.action.PCLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.services.DebuggerTargetService;
+import ghidra.app.services.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemBufferByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -42,7 +44,6 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.Msg;
-import ghidra.util.task.TaskMonitor;
 
 public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion {
 	protected static final LanguageID LANG_ID_X86_64 = new LanguageID("x86:LE:64:default");
@@ -55,34 +56,54 @@ public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpini
 		X64, X86, UNK;
 
 		static Mode computeFor(PluginTool tool, Trace trace, Address address, long snap) {
+			DebuggerListingService listing = tool.getService(DebuggerListingService.class);
+			AutoReadMemorySpec readSpec = listing.getAutoReadMemorySpec();
+
 			DebuggerTargetService targetService = tool.getService(DebuggerTargetService.class);
 			Target target = targetService == null ? null : targetService.getTarget(trace);
+			DebuggerCoordinates coords = DebuggerCoordinates.NOWHERE
+					// force host platform, or else we'll recurse and blow the stack
+					.platform(trace.getPlatformManager().getHostPlatform())
+					.snap(snap)
+					.target(target);
+
 			Collection<? extends TraceModule> modules =
 				trace.getModuleManager().getModulesAt(snap, address);
-			Msg.debug(Mode.class, "Disassembling in modules: " +
+			Msg.debug(Mode.class, "Computing mode from modules: " +
 				modules.stream().map(m -> m.getName(snap)).collect(Collectors.joining(",")));
 			Set<Mode> modes = modules.stream()
-					.map(m -> modeForModule(target, trace, snap, m))
+					.map(m -> modeForModule(tool, readSpec, coords, m))
 					.filter(m -> m != UNK)
 					.collect(Collectors.toSet());
-			Msg.debug(Mode.class, "Disassembling in mode(s): " + modes);
+			Msg.debug(Mode.class, "  Got mode(s): " + modes);
 			if (modes.size() != 1) {
 				return UNK;
 			}
 			return modes.iterator().next();
 		}
 
-		static Mode modeForModule(Target target, Trace trace, long snap, TraceModule module) {
-			if (target != null && target.getSnap() == snap) {
-				AddressSet set = new AddressSet();
-				set.add(module.getBase(snap), module.getBase(snap)); // Recorder should read page
-				try {
-					target.readMemoryAsync(set, TaskMonitor.DUMMY).get(1, TimeUnit.SECONDS);
-					trace.flushEvents();
+		static Mode modeForModule(PluginTool tool, AutoReadMemorySpec readSpec,
+				DebuggerCoordinates coords, TraceModule module) {
+			AddressSet set = new AddressSet();
+			Trace trace = coords.getTrace();
+			long snap = coords.getSnap();
+			Address base = module.getBase(snap);
+			set.add(base, base); // Recorder should read page
+			try {
+				readSpec.readMemory(tool, coords, set).get(1, TimeUnit.SECONDS);
+				trace.flushEvents();
+			}
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
+				DebuggerConsoleService console = tool.getService(DebuggerConsoleService.class);
+				String message = "Could not read PE header of %s to determine x86 vs x64 mode"
+						.formatted(module.getName(snap));
+				if (console != null) {
+					console.log(DebuggerResources.ICON_LOG_ERROR, message, e);
 				}
-				catch (InterruptedException | ExecutionException | TimeoutException e) {
-					throw new AssertionError(e);
+				else {
+					Msg.error(Mode.class, message, e);
 				}
+				// Let it fall through in case stale memory is still accurate
 			}
 			MemBuffer bufferAt = trace.getMemoryManager().getBufferAt(snap, module.getBase(snap));
 			try (ByteProvider bp = new MemBufferByteProvider(bufferAt)) {
@@ -111,7 +132,7 @@ public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpini
 				CompilerSpec cSpec) {
 			super(tool, trace, cSpec);
 		}
-		// TODO: Map registers: efl,rfl,rflags->eflags
+		// LATER: Map registers: efl,rfl,rflags->eflags
 
 		@Override
 		protected TracePlatform getDisassemblyPlatform(TraceObject object, Address start,
@@ -165,7 +186,7 @@ public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpini
 	}
 
 	enum Offer implements DebuggerPlatformOffer {
-		// TODO: X86?
+		// LATER: X86, as in a 32-bit host? Not likely.
 		X64 {
 			@Override
 			public String getDescription() {

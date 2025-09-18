@@ -15,11 +15,12 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import org.objectweb.asm.MethodVisitor;
 
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
@@ -37,20 +38,39 @@ import ghidra.pcode.emu.jit.op.JitIntSCarryOp;
  * {@link JitCompiledPassage#sCarryLongRaw(long, long)} depending on the type. We must then emit a
  * shift and mask to extract the correct bit.
  */
-public enum IntSCarryOpGen implements BinOpGen<JitIntSCarryOp> {
+public enum IntSCarryOpGen implements IntBinOpGen<JitIntSCarryOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntSCarryOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return TypeConversions.forceUniformSExt(lType, rType, rv);
+	public boolean isSigned() {
+		return true;
+	}
+
+	static IntJitType generateMpIntSCarry(JitCodeGenerator gen, MpIntJitType type,
+			String methodName, MethodVisitor mv) {
+		JitAllocationModel am = gen.getAllocationModel();
+		int legCount = type.legsAlloc();
+		try (
+				JvmTempAlloc tmpL = am.allocateTemp(mv, "tmpL", legCount);
+				JvmTempAlloc tmpR = am.allocateTemp(mv, "tmpR", legCount)) {
+			OpGen.generateMpLegsIntoTemp(tmpR, legCount, mv);
+			OpGen.generateMpLegsIntoTemp(tmpL, legCount, mv);
+
+			OpGen.generateMpLegsIntoArray(tmpL, legCount, legCount, mv);
+			OpGen.generateMpLegsIntoArray(tmpR, legCount, legCount, mv);
+			mv.visitLdcInsn((type.size() % Integer.BYTES) * Byte.SIZE - 1);
+
+			mv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, methodName,
+				MDESC_JIT_COMPILED_PASSAGE__S_CARRY_MP_INT, true);
+		}
+		return IntJitType.I4;
 	}
 
 	@Override
 	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSCarryOp op, JitBlock block,
 			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformSExt(rType, lType, rv);
+		rType = TypeConversions.forceUniform(gen, rType, lType, ext(), rv);
 		switch (rType) {
 			case IntJitType(int size) -> {
 				rv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "sCarryIntRaw",
@@ -74,7 +94,7 @@ public enum IntSCarryOpGen implements BinOpGen<JitIntSCarryOp> {
 				return IntJitType.I1;
 			}
 			case MpIntJitType t -> {
-				return TODO("MpInt");
+				return generateMpIntSCarry(gen, t, "sCarryMpInt", rv);
 			}
 			default -> throw new AssertionError();
 		}

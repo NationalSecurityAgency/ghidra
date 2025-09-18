@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 	 */
 	private static Integer getLevel(TraceData data) {
 		// TODO: Should this go into a property instead?
-		String comment = data.getComment(CodeUnit.PRE_COMMENT);
+		String comment = data.getComment(CommentType.PRE);
 		if (comment == null) {
 			return null;
 		}
@@ -213,7 +213,7 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 
 	@Override
 	public String getDescription() {
-		return frame.getComment(CodeUnit.PRE_COMMENT);
+		return frame.getComment(CommentType.PRE);
 	}
 
 	@Override

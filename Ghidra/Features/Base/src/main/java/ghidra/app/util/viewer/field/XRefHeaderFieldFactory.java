@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,8 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.XRefHeaderFieldLocation;
@@ -132,8 +133,9 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 		if (cu == null) {
 			return null;
 		}
-		Program prog = cu.getProgram();
-		int xrefCount = prog.getReferenceManager().getReferenceCountTo(cu.getMinAddress());
+
+		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs);
+		int xrefCount = xrefs.size();
 		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs);
 		int offcutCount = offcuts.size();
 

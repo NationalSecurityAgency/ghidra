@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -277,45 +277,46 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 
 	@Override
 	public ToolServices getToolServices() {
-		return new ToolServicesAdapter() {
-
-			@Override
-			public void closeTool(PluginTool t) {
-				System.exit(0);
-			}
-
-			@Override
-			public void saveTool(PluginTool saveTool) {
-				Element toolElement = saveTool.saveToXml(true);
-				Element dataStateElement = saveTool.saveDataStateToXml(false);
-				Element rootElement = new Element("Root");
-				rootElement.addContent(toolElement);
-				rootElement.addContent(dataStateElement);
-				File savedToolFile =
-					new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
-				OutputStream os = null;
-				try {
-					os = new FileOutputStream(savedToolFile);
-					Document doc = new Document(rootElement);
-					XMLOutputter xmlout = new GenericXMLOutputter();
-					xmlout.output(doc, os);
-					os.close();
-				}
-				catch (Exception e) {
-					Msg.error(this, "Error saving tool", e);
-					try {
-						if (os != null) {
-							os.close();
-						}
-						savedToolFile.delete();
-					}
-					catch (Exception exc) {
-						// cleanup, don't care
-					}
-				}
-
-			}
-		};
+		return new StandAloneToolServices();
 	}
 
+	protected static class StandAloneToolServices extends ToolServicesAdapter {
+
+		@Override
+		public void closeTool(PluginTool t) {
+			System.exit(0);
+		}
+
+		@Override
+		public void saveTool(PluginTool saveTool) {
+			Element toolElement = saveTool.saveToXml(true);
+			Element dataStateElement = saveTool.saveDataStateToXml(false);
+			Element rootElement = new Element("Root");
+			rootElement.addContent(toolElement);
+			rootElement.addContent(dataStateElement);
+			File savedToolFile =
+				new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
+			OutputStream os = null;
+			try {
+				os = new FileOutputStream(savedToolFile);
+				Document doc = new Document(rootElement);
+				XMLOutputter xmlout = new GenericXMLOutputter();
+				xmlout.output(doc, os);
+				os.close();
+			}
+			catch (Exception e) {
+				Msg.error(this, "Error saving tool", e);
+				try {
+					if (os != null) {
+						os.close();
+					}
+					savedToolFile.delete();
+				}
+				catch (Exception exc) {
+					// cleanup, don't care
+				}
+			}
+
+		}
+	}
 }

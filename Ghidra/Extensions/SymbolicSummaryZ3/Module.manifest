@@ -1,0 +1,9 @@
+MODULE FILE LICENSE: lib/com.microsoft.z3.jar MIT
+MODULE FILE LICENSE: os/linux_x86_64/libz3.so MIT
+MODULE FILE LICENSE: os/linux_x86_64/libz3java.so MIT
+MODULE FILE LICENSE: os/mac_arm_64/libz3.dylib MIT
+MODULE FILE LICENSE: os/mac_arm_64/libz3java.dylib MIT
+MODULE FILE LICENSE: os/mac_x86_64/libz3.dylib MIT
+MODULE FILE LICENSE: os/mac_x86_64/libz3java.dylib MIT
+MODULE FILE LICENSE: os/win_x86_64/libz3.dll MIT
+MODULE FILE LICENSE: os/win_x86_64/libz3java.dll MIT

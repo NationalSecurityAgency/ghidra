@@ -246,7 +246,7 @@ public class MemorySearcher {
 		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
 			Address address = searchBytes.getAddress(byteMatch.start());
 			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, matcher);
+			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
 			if (filter.test(match)) {
 				return match;
 			}
@@ -269,7 +269,7 @@ public class MemorySearcher {
 		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
 			Address address = searchBytes.getAddress(byteMatch.start());
 			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, matcher);
+			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
 			if (filter.test(match)) {
 				last = match;
 			}
@@ -316,7 +316,7 @@ public class MemorySearcher {
 		for (ByteMatch byteMatch : matcher.match(searchSequence)) {
 			Address address = searchBytes.getAddress(byteMatch.start());
 			byte[] bytes = searchSequence.getBytes(byteMatch.start(), byteMatch.length());
-			MemoryMatch match = new MemoryMatch(address, bytes, matcher);
+			MemoryMatch match = new MemoryMatch(address, bytes, byteMatch.matcher());
 			if (filter.test(match)) {
 				if (accumulator.size() >= searchLimit) {
 					return false;

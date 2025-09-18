@@ -15,12 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
 import ghidra.pcode.emu.jit.op.JitIntSRightOp;
 
 /**
@@ -35,14 +30,12 @@ public enum IntSRightOpGen implements ShiftIntBinOpGen<JitIntSRightOp> {
 	GEN;
 
 	@Override
-	public String methodName() {
-		return "intSRight";
+	public boolean isSigned() {
+		return true;
 	}
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntSRightOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		TypeConversions.generateSExt(lType, rv);
-		return lType;
+	public String methodName() {
+		return "intSRight";
 	}
 }

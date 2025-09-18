@@ -57,7 +57,7 @@ public class TaintDecompilerMarginProvider extends JPanel
 
 	private Icon sourceIcon = new GIcon("icon.plugin.scriptmanager.run");
 	private Icon sinkIcon = new GIcon("icon.stop");
-	private Icon gateIcon = new GIcon("icon.debugger.breakpoint.set");
+	private Icon gateIcon = new GIcon("icon.plugin.decompiler.taint.gate.set");
 
 	public TaintDecompilerMarginProvider(TaintPlugin plugin) {
 		this.plugin = plugin;

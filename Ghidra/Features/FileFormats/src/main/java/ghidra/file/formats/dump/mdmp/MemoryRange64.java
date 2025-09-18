@@ -56,6 +56,7 @@ public class MemoryRange64 implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 

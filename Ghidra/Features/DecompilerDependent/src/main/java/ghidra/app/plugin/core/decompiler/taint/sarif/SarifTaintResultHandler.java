@@ -120,10 +120,6 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 				map.put("entry", faddr);
 				map.put("Address", faddr);
 			}
-//			Address addr = SarifUtils.getLocAddress(program, fqname);
-//			if (addr != null) {
-//				map.put("Address", addr);
-//			}
 			map.put("location", fqname);
 			map.put("kind", ll.getKind());
 			map.put("function", SarifUtils.extractFQNameFunction(fqname));
@@ -220,6 +216,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		protected void doRun(TaskMonitor monitor) {
 			int[] selected = tableProvider.filterTable.getTable().getSelectedRows();
 			Map<Address, Set<TaintQueryResult>> map = new HashMap<>();
+			AddressSet set = new AddressSet();
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
@@ -229,12 +226,17 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 				if (kind.equals("variable")) {
 					getTaintedVariable(map, r);
 				}
+				Address addr = (Address) r.get("Address");
+				if (addr != null) {
+					set.add(addr);
+				}
 			}
 
 			PluginTool tool = tableProvider.getController().getPlugin().getTool();
 			TaintService service = tool.getService(TaintService.class);
 			if (service != null) {
 				service.setVarnodeMap(map, true, taskType);
+				service.setAddressSet(set, false);
 			}
 		}
 

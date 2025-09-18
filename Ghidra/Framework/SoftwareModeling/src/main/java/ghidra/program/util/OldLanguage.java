@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -478,7 +478,16 @@ class OldLanguage implements Language {
 			}
 
 			if ("segmented_space".equals(elementName)) {
-				space = new SegmentedAddressSpace(name, unique);
+				String segmentType = childElement.getAttributeValue("type");
+				if (segmentType == null) {
+					throw new SAXException("Missing required segmented_space 'type' attribute");
+				}
+				if (segmentType.equals("protected")) {
+					space = new ProtectedAddressSpace(name, unique);
+				}
+				else {
+					space = new SegmentedAddressSpace(name, unique);
+				}
 			}
 			else {
 				String typeStr = childElement.getAttributeValue("type");

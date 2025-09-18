@@ -19,12 +19,14 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
+import java.util.Map.Entry;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Encoder;
 import ghidra.util.exception.InvalidInputException;
+import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
 /**
@@ -119,13 +121,22 @@ public class ConsumeExtra extends AssignAction {
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_CONSUME_EXTRA);
 		encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
+		encoder.writeBool(ATTRIB_MATCHSIZE, matchSize);
 		encoder.closeElement(ELEM_CONSUME_EXTRA);
 	}
 
 	@Override
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
 		XmlElement elem = parser.start(ELEM_CONSUME_EXTRA.name());
-		resourceType = StorageClass.getClass(elem.getAttribute(ATTRIB_STORAGE.name()));
+		for (Entry<String, String> attrib : elem.getAttributes().entrySet()) {
+			String name = attrib.getKey();
+			if (name.equals(ATTRIB_STORAGE.name())) {
+				resourceType = StorageClass.getClass(attrib.getValue());
+			}
+			else if (name.equals(ATTRIB_MATCHSIZE.name())) {
+				matchSize = SpecXmlUtils.decodeBoolean(attrib.getValue());
+			}
+		}
 		parser.end(elem);
 		try {
 			initializeEntries();

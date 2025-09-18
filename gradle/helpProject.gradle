@@ -197,14 +197,14 @@ def getModuleResourcesDirs(Collection<File> fullClasspath) {
 				  .findAll(dir -> dir.exists())
 }
 
-// Locatates 'buildHelp' tasks in projects that this project depends on.  The output of the tasks
-// is the module's help jar, which is only used to build help and not in the final release.  The
-// jar file names follow this format: <Module>-help.jar.
+// Locates 'buildModuleHelp' tasks in projects that this project depends on.  The output of the
+// tasks is the module's help jar, which is only used to build help and not in the final release.  
+// The jar file names follow this format: <Module>-help.jar.
 def getDependentProjectHelpTasks(Collection<File> fullClasspath) {
 
 	def myModules = getMyModules(fullClasspath)
 	def myProjects = filterProjectsBy(myModules)
-	return myProjects.collect(p -> p.tasks.findByPath('buildHelp'))
+	return myProjects.collect(p -> p.tasks.findByPath('buildModuleHelp'))
 					 .findAll(t -> t != null)
 }
 
@@ -313,6 +313,8 @@ tasks.register('buildGlobalMarkdown') {
 	}
 }
 
+
+
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 //      - validates help
@@ -376,7 +378,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 		//
 		// The classpath needs to include items used by internal Java code to validate help 
 		// resources:
-		// 1) The jar path of each dependent Module.  The jar file will be on the 'main' runtime 
+		// 1) The jar path of each depended upon Module.  The jar file will be on the 'main' runtime 
 		//    classpath, but may not yet exist.  Regardless, the Java code will use the path to 
 		//    locate the module for that path.
 		// 2) Each module's 'src/main/resources' dir (this is needed when the jar files from 1
@@ -395,7 +397,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 
 		// To build help, the validator needs any other help content that this module may reference.
 		// Add each of these dependencies as an argument to the validator.		
-		// The dependency file is the <Module>-help.jar file from the 'buildHelp' tasks upon which
+		// The dependency file is <Module>-help.jar from the 'buildModuleHelp' tasks upon which
 		// we depend.
 		def buildHelpTasks = getDependentProjectHelpTasks(sourceSets.main.runtimeClasspath.files)		
 		buildHelpTasks.each {
@@ -423,7 +425,7 @@ tasks.register('buildHelpFiles', JavaExec) {
  * this jar is <Module>-help.jar.  This is in contrast to each module's jar which itself contains
  * all help needed in production.  The module's jar filename is <Module>.jar.
  */
-tasks.register('buildHelp', Jar) {
+tasks.register('buildModuleHelp', Jar) {
 
 	group = rootProject.GHIDRA_GROUP
 	description = "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
@@ -473,11 +475,11 @@ jar {
 }
 
 // build the help whenever this module's jar file is built
-processResources.dependsOn buildHelp
-jar.dependsOn buildHelp
+processResources.dependsOn buildModuleHelp
+jar.dependsOn buildModuleHelp
 
 
 // make sure generated help directories exist during prepdev so that the directories are created and 
 // eclipse doesn't complain about missing src directories.
-rootProject.prepDev.dependsOn buildHelp
+rootProject.prepDev.dependsOn buildModuleHelp
 

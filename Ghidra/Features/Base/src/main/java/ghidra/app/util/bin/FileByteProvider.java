@@ -55,7 +55,15 @@ public class FileByteProvider implements MutableByteProvider {
 		this.fsrl = fsrl;
 		this.accessMode = accessMode;
 		this.raf = new RandomAccessFile(file, accessModeToString(accessMode));
-		this.currentLength = raf.length();
+		try {
+			this.currentLength = getFilesize();
+		}
+		catch (IOException e) {
+			// we have to close raf here since the caller won't have a FileByteProvider to close
+			this.raf.close();
+			this.raf = null;
+			throw e;
+		}
 	}
 
 	/**
@@ -266,6 +274,26 @@ public class FileByteProvider implements MutableByteProvider {
 		if (index + length > currentLength) {
 			throw new IOException("Unable to read past EOF: " + index + ", " + length);
 		}
+	}
+
+	private long getFilesize() throws IOException {
+		// Note: we need to do these checks because some file systems (eg. /proc, /sys) will
+		// report inaccurate values for sizes of programmatically generated files.
+		long len = raf.length();
+		if (len > 0) {
+			raf.seek(len - 1);
+			try {
+				if (raf.read() >= 0) {
+					return len;
+				}
+			}
+			catch (IOException e) {
+				// fall thru
+			}
+			throw new IOException(
+				"Unable to determine file size: %s, reported as %d".formatted(file, len));
+		}
+		return len;
 	}
 
 	private long getBufferPos(long index) {

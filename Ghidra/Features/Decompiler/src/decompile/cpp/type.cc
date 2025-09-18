@@ -1726,6 +1726,9 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
       int8 suboff;
       Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
+	int8 subdiff = diff + remain - suboff;
+	if (subdiff > 128)
+	  break;
 	*newoff = -diff;
 	return subtype;
       }
@@ -3728,8 +3731,9 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
   top.submeta = sub;			// Search on the incorrect submeta
   iter = tree.lower_bound(&top);
   while(iter != tree.end()) {
-    TypePointer *ptr = (TypePointer *)*iter;
-    if (ptr->getMetatype() != TYPE_PTR) break;
+    Datatype *dt = *iter;
+    if (dt->getMetatype() != TYPE_PTR) break;
+    TypePointer *ptr = (TypePointer *)dt;
     if (ptr->ptrto != base) break;
     ++iter;
     if (ptr->submeta == sub) {

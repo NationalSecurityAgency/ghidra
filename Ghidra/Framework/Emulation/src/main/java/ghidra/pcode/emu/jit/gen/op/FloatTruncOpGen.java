@@ -32,7 +32,7 @@ import ghidra.pcode.emu.jit.op.JitFloatTruncOp;
  * This uses the unary operator generator and emits {@link #F2I}, {@link #F2L}, {@link #D2I}, or
  * {@link #D2L}.
  */
-public enum FloatTruncOpGen implements UnOpGen<JitFloatTruncOp> {
+public enum FloatTruncOpGen implements FloatUnOpGen<JitFloatTruncOp> {
 	/** The generator singleton */
 	GEN;
 

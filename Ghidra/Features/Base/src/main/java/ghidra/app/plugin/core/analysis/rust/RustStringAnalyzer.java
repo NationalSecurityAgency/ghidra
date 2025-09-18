@@ -19,10 +19,11 @@ import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.DefinedDataIterator;
+import ghidra.program.util.DefinedStringIterator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -51,9 +52,7 @@ public class RustStringAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		DefinedDataIterator dataIterator = DefinedDataIterator.definedStrings(program);
-
-		for (Data data : dataIterator) {
+		for (Data data : DefinedStringIterator.forProgram(program)) {
 			Address start = data.getAddress();
 			int length = data.getLength();
 

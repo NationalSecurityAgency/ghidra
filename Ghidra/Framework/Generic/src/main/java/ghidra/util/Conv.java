@@ -48,16 +48,16 @@ public class Conv {
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static final long INT_MASK = 0x00000000ffffffffL;
 
-    /**
+	/**
 	 * @param b the byte
 	 * @return the short equivalent of the byte
 	 * @deprecated Use other built-ins like {@link Byte#toUnsignedInt(byte)}
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static short byteToShort(byte b) {
-        return (short)(b & BYTE_MASK);
-    }
-    
+		return (short) (b & 0xff);
+	}
+
 	/**
 	 * Converts a byte to an integer.
 	 * 
@@ -67,9 +67,9 @@ public class Conv {
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static int byteToInt(byte b) {
-        return (b & BYTE_MASK);
-    }
-    
+		return Byte.toUnsignedInt(b);
+	}
+
 	/**
 	 * Converts a byte to a long.
 	 * @param b the byte
@@ -78,8 +78,8 @@ public class Conv {
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static long byteToLong(byte b) {
-        return intToLong(b & BYTE_MASK);
-    }
+		return Byte.toUnsignedLong(b);
+	}
     
 	/**
 	 * Converts a short to an integer.
@@ -89,18 +89,18 @@ public class Conv {
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static int shortToInt(short s) {
-        return (s & SHORT_MASK);
-    }
+		return Short.toUnsignedInt(s);
+	}
     
 	/**
 	 * Converts a short to a long.
 	 * @param s the short
-	 * @return the long eqivalent of the short
+	 * @return the long equivalent of the short
 	 * @deprecated Use {@link Short#toUnsignedLong(short)} instead
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static long shortToLong(short s) {
-        return intToLong(s & SHORT_MASK);
+		return Short.toUnsignedLong(s);
     }
     
 	/**
@@ -111,26 +111,25 @@ public class Conv {
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static long intToLong(int i) {
-        return (i & INT_MASK);
+		return Integer.toUnsignedLong(i);
     }
 
 	/**
-	 * <p>
 	 * Old and <b>incorrect</b> way to convert bytes to a String by casting their
 	 * values to chars.  Do not use.  Does not seem to be used in current codebase.
 	 * 
-	 * @param array
-	 * @return
+	 * @param array The bytes to convert
+	 * @return The converted bytes
 	 * @deprecated Use {@link String#String(byte[], java.nio.charset.Charset) new String(bytes, StandardCharSets.US_ASCII)}
 	 * instead
 	 */
 	@Deprecated(forRemoval = true, since = "10.2")
 	public static String toString(byte [] array) {
-		StringBuilder buffer = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
     	for (byte b : array) {
-			buffer.append((char)b);
+			builder.append((char) b);
 		}
-    	return buffer.toString();
+		return builder.toString();
     }
 
     /**
@@ -142,7 +141,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(byte b) {
-        return zeropad(Integer.toHexString(byteToInt(b)), 2);
+		return zeropad(Integer.toHexString(Byte.toUnsignedInt(b)), 2);
     }
 
     /**
@@ -154,7 +153,7 @@ public class Conv {
 	 * @return the padded hex string
 	 */
 	public static String toHexString(short s) {
-        return zeropad(Integer.toHexString(shortToInt(s)), 4);
+		return zeropad(Integer.toHexString(Short.toUnsignedInt(s)), 4);
     }
     
 	/**
@@ -190,12 +189,12 @@ public class Conv {
 	 */
 	public static String zeropad(String s, int len) {
         if (s == null) s = "";
-        StringBuffer buffer = new StringBuffer(s);
+		StringBuilder builder = new StringBuilder(s);
         int zerosNeeded = len - s.length();
         for (int i = 0 ; i < zerosNeeded ; ++i) {
-            buffer.insert(0, '0');
+			builder.insert(0, '0');
         }
-        return buffer.toString();
+		return builder.toString();
     }
 
 }

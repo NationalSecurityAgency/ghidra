@@ -53,7 +53,7 @@ import ghidra.util.Swing;
  * This also provides UI actions for searching the terminal's contents.
  */
 public class TerminalProvider extends ComponentProviderAdapter {
-	// TODO: A separate color?
+	// Should I use a separate color id?
 	private static final Color COLOR_TERMINATED = new GColor("color.border.provider.disconnected");
 
 	protected class FindDialog extends DialogComponentProvider {
@@ -433,10 +433,13 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	 * <p>
 	 * The title and sub title are adjusted and all terminal listeners are removed. If/when the
 	 * window is closed, it is removed from the tool.
+	 * 
+	 * @param exitcode the exit code of the session leader, or -1 if not applicable
 	 */
-	public void terminated() {
+	public void terminated(int exitcode) {
 		Swing.runIfSwingOrRunLater(() -> {
 			terminated = true;
+			panel.terminalListeners.invoke().terminated(exitcode);
 			removeLocalAction(actionTerminate);
 			panel.terminalListeners.clear();
 			panel.setOutputCallback(buf -> {

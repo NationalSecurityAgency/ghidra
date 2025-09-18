@@ -58,7 +58,7 @@ import ghidra.util.exception.AssertException;
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = FunctionGraphPlugin.FUNCTION_GRAPH_NAME,
 	description = "Plugin for show a graphical representation of the code blocks of a function",
-	servicesRequired = { GoToService.class, BlockModelService.class, CodeViewerService.class, ProgramManager.class },
+	servicesRequired = { GoToService.class, CodeViewerService.class, ProgramManager.class },
 	servicesProvided = { FunctionGraphMarginService.class }
 )
 //@formatter:on
@@ -126,7 +126,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 
 		ColorizingService colorizingService = tool.getService(ColorizingService.class);
 		if (colorizingService != null) {
-			colorProvider = new ToolBasedColorProvider(this, colorizingService);
+			colorProvider =
+				new ToolBasedColorProvider(() -> getCurrentProgram(), colorizingService);
 		}
 	}
 
@@ -139,7 +140,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 			}
 		}
 		else if (interfaceClass == ColorizingService.class) {
-			colorProvider = new ToolBasedColorProvider(this, (ColorizingService) service);
+			colorProvider =
+				new ToolBasedColorProvider(() -> getCurrentProgram(), (ColorizingService) service);
 			connectedProvider.refreshAndKeepPerspective();
 		}
 		else if (interfaceClass == MarkerService.class) {
@@ -171,6 +173,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 	}
 
 	private List<FGLayoutProvider> loadLayoutProviders() {
+
+		// Shared Code Note: This code is mirrored in the FgDisplay for the Code Comparison API
 
 		FGLayoutFinder layoutFinder = new DiscoverableFGLayoutFinder();
 		List<FGLayoutProvider> instances = layoutFinder.findLayouts();
@@ -213,6 +217,8 @@ public class FunctionGraphPlugin extends ProgramPlugin
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
+
+		// Shared Code Note: This code is mirrored in the FgDisplay for the Code Comparison API
 
 		// Graph -> Function Graph
 		Options fgOptions = options.getOptions(FUNCTION_GRAPH_NAME);

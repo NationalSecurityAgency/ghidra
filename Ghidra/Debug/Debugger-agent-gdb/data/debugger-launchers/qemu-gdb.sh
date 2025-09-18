@@ -27,6 +27,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#qemu
+#@depends Debugger-rmi-trace
 #@enum Endian:str auto big little
 #@arg :file! "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
@@ -42,8 +43,8 @@
 
 . ../support/gdbsetuputils.sh
 
-pypathTrace=$(ghidra-module-pypath "Debug/Debugger-rmi-trace")
-pypathGdb=$(ghidra-module-pypath "Debug/Debugger-agent-gdb")
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
 export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
 
 target_image="$1"

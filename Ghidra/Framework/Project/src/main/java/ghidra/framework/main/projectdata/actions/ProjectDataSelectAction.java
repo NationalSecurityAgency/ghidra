@@ -15,6 +15,7 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +24,11 @@ import javax.swing.tree.TreePath;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.tasks.GTreeExpandAllTask;
+import ghidra.framework.data.LinkHandler;
 import ghidra.framework.main.datatable.ProjectTreeAction;
-import ghidra.framework.main.datatree.DataTree;
-import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
+import ghidra.framework.main.datatree.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.store.FileSystem;
 
 public class ProjectDataSelectAction extends ProjectTreeAction {
 
@@ -40,12 +43,42 @@ public class ProjectDataSelectAction extends ProjectTreeAction {
 		DataTree tree = context.getTree();
 		TreePath[] paths = context.getSelectionPaths();
 		GTreeNode node = (GTreeNode) paths[0].getLastPathComponent();
+
 		selectAllChildren(tree, node);
 	}
 
 	@Override
 	public boolean isAddToPopup(FrontEndProjectTreeContext context) {
-		return context.getFolderCount() == 1 && context.getFileCount() == 0;
+		if (!context.hasExactlyOneFileOrFolder()) {
+			return false;
+		}
+		if (context.getFolderCount() == 1) {
+			return true;
+		}
+		DomainFile folderLinkFile = context.getSelectedFiles().get(0);
+		return canTraverseFolderLinkFile(folderLinkFile);
+	}
+
+	private static boolean canTraverseFolderLinkFile(DomainFile file) {
+		if (file.isLink() && file.getLinkInfo().isFolderLink()) {
+			// Prevent selection of folder-link which is contained within referenced link-path.
+			// Cycle prevention in tree should prevent this from being an issue
+			String filePath = file.getPathname() + FileSystem.SEPARATOR;
+			String linkPath;
+			try {
+				linkPath = LinkHandler.getAbsoluteLinkPath(file);
+				if (!linkPath.endsWith(FileSystem.SEPARATOR)) {
+					linkPath += FileSystem.SEPARATOR;
+				}
+				if (!filePath.startsWith(linkPath)) {
+					return true;
+				}
+			}
+			catch (IOException e) {
+				// ignore
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -70,9 +103,30 @@ public class ProjectDataSelectAction extends ProjectTreeAction {
 	 * Select all descendants starting at node.
 	 */
 	private void getAllTreePaths(GTreeNode node, List<TreePath> paths) {
-		paths.add(node.getTreePath());
+
+		// Origin node is intentionally not included in selection since the origin node
+		// is not a child of itself.  Including the root node can present problems as well.
+
 		List<GTreeNode> children = node.getChildren();
 		for (GTreeNode child : children) {
+			// Limit recursion through folder-links which may be self-referencing
+			if (child instanceof DomainFileNode fileNode) {
+
+				if (fileNode.isLeaf()) {
+					// add individual child
+					paths.add(child.getTreePath());
+					continue;
+				}
+
+				// We should only get here is file is a internal folder link
+				// which needs to be checked for possible circular ancestry issue
+				if (!canTraverseFolderLinkFile(fileNode.getDomainFile())) {
+					continue;
+				}
+			}
+
+			// recurse and add child with its children
+			paths.add(child.getTreePath());
 			getAllTreePaths(child, paths);
 		}
 	}

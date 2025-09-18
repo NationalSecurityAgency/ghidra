@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	@Override
-	public synchronized void registerOption(String optionName, OptionType type, Object defaultValue,
+	public void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description, Supplier<PropertyEditor> editorSupplier) {
 
 		if (type == OptionType.NO_TYPE) {
@@ -192,16 +192,18 @@ public abstract class AbstractOptions implements Options {
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		Option currentOption = getExistingComptibleOption(optionName, type);
-		if (currentOption != null) {
-			currentOption.updateRegistration(description, help, defaultValue, editor);
-			return;
+		synchronized (this) {
+
+			Option currentOption = getExistingComptibleOption(optionName, type);
+			if (currentOption != null) {
+				currentOption.updateRegistration(description, help, defaultValue, editor);
+				return;
+			}
+
+			Option option =
+				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
+			valueMap.put(optionName, option);
 		}
-
-		Option option =
-			createRegisteredOption(optionName, type, description, help, defaultValue, editor);
-
-		valueMap.put(optionName, option);
 	}
 
 	private void warnShouldUseTheme(String optionType) {

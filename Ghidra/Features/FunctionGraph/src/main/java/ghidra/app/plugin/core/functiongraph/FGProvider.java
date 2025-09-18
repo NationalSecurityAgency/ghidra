@@ -15,19 +15,22 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.framework.model.DomainObjectEvent.RESTORED;
+import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.function.Supplier;
 
 import javax.swing.*;
 
 import docking.*;
+import docking.action.*;
+import docking.options.OptionsService;
 import docking.widgets.fieldpanel.FieldPanel;
 import edu.uci.ics.jung.graph.Graph;
 import generic.stl.Pair;
+import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.functiongraph.action.*;
@@ -103,7 +106,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 		this.tool = plugin.getTool();
 		this.plugin = plugin;
-		controller = new FGController(this, plugin);
+		DefaultFgEnv env = new DefaultFgEnv(this, plugin);
+		DefaultFGControllerListener listener = new DefaultFGControllerListener(this);
+		this.controller = new FGController(env, listener);
 
 		setConnected(isConnected);
 		setIcon(FunctionGraphPlugin.ICON);
@@ -124,7 +129,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		addToTool();
 		addSatelliteFeature(); // must be after addToTool();
 
-		actionManager = new FGActionManager(plugin, controller, this);
+		createActions();
 
 		rebuildGraphUpdateManager =
 			new SwingUpdateManager(1000, 10000, () -> refreshAndKeepPerspective());
@@ -132,9 +137,62 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		updateLocationUpdateManager =
 			new SwingUpdateManager(250, 750, () -> setPendingLocationFromUpdateManager());
 
-		clipboardProvider = new FGClipboardProvider(tool, controller);
+		clipboardProvider = new FGClipboardProvider(tool, controller, this);
 		setDefaultFocusComponent(controller.getViewComponent());
 
+	}
+
+	private void createActions() {
+
+		actionManager = new FGActionManager(controller, plugin.getName());
+
+		// Note: these values are coordinated with the FGActionManager
+		String toolbarEndGroup = "zzzend";
+		String popupVeryLastGroup = "zzzzzz";
+
+		String owner = plugin.getName();
+		DockingAction cloneAction = new DockingAction("Function Graph Clone", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				cloneWindow();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return controller.getGraphedFunction() != null;
+			}
+		};
+		Icon image = new GIcon("icon.plugin.functiongraph.action.viewer.clone");
+		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
+		cloneAction.setDescription(
+			"Create a snapshot (disconnected) copy of this Function Graph window");
+		cloneAction.setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
+		cloneAction.setHelpLocation(
+			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));
+		cloneAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
+			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+
+		DockingAction optionsAction =
+			new DockingAction("Function Graph Options", owner) {
+
+				@Override
+				public void actionPerformed(ActionContext context) {
+					OptionsService service = tool.getService(OptionsService.class);
+					service.showOptionsDialog(FunctionGraphPlugin.OPTIONS_NAME_PATH,
+						"Function Graph");
+				}
+
+				@Override
+				public boolean isEnabledForContext(ActionContext context) {
+					return true;
+				}
+			};
+		optionsAction.setPopupMenuData(
+			new MenuData(new String[] { "Properties" }, null, popupVeryLastGroup));
+		optionsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Options"));
+
+		addLocalAction(cloneAction);
+		addLocalAction(optionsAction);
 	}
 
 	@Override
@@ -148,6 +206,17 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		if (clipboardService != null) {
 			clipboardService.registerClipboardContentProvider(clipboardProvider);
 		}
+	}
+
+	/**
+	 * Gives to the clipboard of this provider the given string.
+	 * <p>
+	 * This will prime the clipboard such that a copy action will copy the given string.
+	 *
+	 * @param string the string to set
+	 */
+	public void setClipboardStringContent(String string) {
+		clipboardProvider.setStringContent(string);
 	}
 
 	FGController getController() {
@@ -235,22 +304,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private boolean arePopupsVisible() {
-		return controller.arePopupsEnabled();
+		return controller.arePopupsVisible();
 	}
 
 	public void setPopupsVisible(boolean visible) {
 		actionManager.popupVisibilityChanged(visible);
-	}
-
-	/**
-	 * Gives to the clipboard of this provider the given string.
-	 * <p>
-	 * This will prime the clipboard such that a copy action will copy the given string.
-	 *
-	 * @param string the string to set
-	 */
-	public void setClipboardStringContent(String string) {
-		clipboardProvider.setStringContent(string);
 	}
 
 	public void saveLocationToHistory() {
@@ -523,6 +581,16 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return;
 		}
 
+		// TODO - snapshots are not correctly enabling the back button when the user double-clicks
+		// inside of a node to graph a new function.
+		/*
+		 	if (isSnapshot()) {
+		 		if (!isInCurrentFunction(newLocation)) {
+		 			saveLocationToHistory();
+		 		}
+		 	}
+		 */
+
 		storeLocation(newLocation);
 		displayLocation(newLocation);
 		notifyContextChanged();
@@ -536,40 +604,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Tells this provider to refresh, which means to rebuild the graph and relayout the vertices.
-	 */
-	private void refresh(boolean keepPerspective) {
-		FGData functionGraphData = controller.getFunctionGraphData();
-		if (functionGraphData.hasResults()) {
-			//
-			// We use the graph's data over the 'currentXXX' data, as there is a chance that the
-			// latter values have been set to new values, while the graph has differing data.  In
-			// that case we have made the decision to prefer the graph's data.
-			//
-			Function function = functionGraphData.getFunction();
-			Address address = function.getEntryPoint();
-			Address currentAddress = currentLocation.getAddress();
-			if (function.getBody().contains(currentAddress)) {
-				// prefer the current address if it is within the current function (i.e., the
-				// location hasn't changed out from under the graph due to threading issues)
-				address = currentAddress;
-			}
-
-			Program program = function.getProgram();
-			ProgramLocation programLocation = new ProgramLocation(program, address);
-			controller.rebuildDisplay(program, programLocation, keepPerspective);
-			return;
-		}
-
-		controller.rebuildDisplay(currentProgram, currentLocation, keepPerspective);
-	}
-
-	/**
-	 * Rebuilds the graph and restores the zoom and location of the graph to the values prior to
-	 * rebuilding.
+	 * Rebuilds the graph and restores the zoom and location of the graph to the values prior
+	 * to rebuilding.
 	 */
 	public void refreshAndKeepPerspective() {
-		refresh(true);
+		controller.refresh(true);
 	}
 
 	/**
@@ -577,7 +616,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	 * centered.
 	 */
 	public void refreshAndResetPerspective() {
-		refresh(false);
+		controller.refresh(false);
 	}
 
 	/**
@@ -585,10 +624,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	 * performing a full rebuild
 	 */
 	public void refreshDisplayWithoutRebuilding() {
-		FGData functionGraphData = controller.getFunctionGraphData();
-		if (functionGraphData.hasResults()) {
-			controller.refreshDisplayWithoutRebuilding();
-		}
+		controller.refreshDisplayWithoutRebuilding();
 	}
 
 	public void optionsChanged() {
@@ -674,9 +710,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 		AddressSet addresses = new AddressSet();
 
-		Iterator<DomainObjectChangeRecord> iterator = ev.iterator();
-		while (iterator.hasNext()) {
-			DomainObjectChangeRecord record = iterator.next();
+		for (DomainObjectChangeRecord record : ev) {
 			if (record instanceof ProgramChangeRecord) {
 				ProgramChangeRecord programRecord = (ProgramChangeRecord) record;
 				Address start = programRecord.getStart();
@@ -1133,9 +1167,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	public void clearViewSettings() {
-		GraphPerspectiveInfo<FGVertex, FGEdge> info =
-			GraphPerspectiveInfo.createInvalidGraphPerspectiveInfo();
-		controller.setGraphPerspective(info);
+		controller.clearViewSettings();
 	}
 
 	void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
@@ -1146,6 +1178,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
 		controller.removeMarkerProviderSupplier(supplier);
 		refreshAndKeepPerspective();
+	}
+
+	public FunctionGraphPlugin getPlugin() {
+		return plugin;
 	}
 
 //==================================================================================================
@@ -1267,9 +1303,9 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		tool.setStatusInfo(message);
 	}
 
-	public void internalGoTo(ProgramLocation location, Program program) {
+	public void internalGoTo(ProgramLocation location) {
 		GoToService goToService = tool.getService(GoToService.class);
-		goToService.goTo(this, location, program);
+		goToService.goTo(this, location, location.getProgram());
 	}
 
 	@Override

@@ -23,7 +23,7 @@ import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
 /**
- * Represents the fundamental golang rtti type information.
+ * Represents the fundamental Go rtti type information.
  * <p>
  * The in-memory instance will typically be part of a specialized type structure, depending
  * on the 'kind' of this type.
@@ -66,54 +66,43 @@ public class GoBaseType implements StructureVerifier {
 	private long ptrToThis;	// an offset relative to containing moduledata's type base addr
 
 	/**
-	 * Returns the size of the type being defined by this structure.
-	 * 
-	 * @return size of the type being defined
+	 * {@return the size of the type being defined by this structure}
 	 */
 	public long getSize() {
 		return size;
 	}
 
 	/**
-	 * Returns the {@link GoKind} enum assigned to this type definition.
-	 * 
-	 * @return {@link GoKind} enum assigned to this type definition
+	 * {@return the {@link GoKind} enum assigned to this type definition}
 	 */
 	public GoKind getKind() {
 		return GoKind.parseByte(kind);
 	}
 
 	/**
-	 * Returns the {@link GoTypeFlag}s assigned to this type definition.
-	 * @return {@link GoTypeFlag}s assigned to this type definition
+	 * {@return the {@link GoTypeFlag}s assigned to this type definition}
 	 */
 	public Set<GoTypeFlag> getFlags() {
 		return GoTypeFlag.parseFlags(tflag);
 	}
 
 	/**
-	 * Returns the raw flag value.
-	 * 
-	 * @return raw flag value
+	 * {@return the raw flag value}
 	 */
 	public int getTflag() {
 		return tflag;
 	}
 
 	/**
-	 * Returns true if this type definition's flags indicate there is a following GoUncommon
-	 * structure.
-	 * 
-	 * @return true if this type definition's flags indicate there is a following GoUncommon struct
+	 * {@return true if this type definition's flags indicate there is a following GoUncommon
+	 * structure}
 	 */
 	public boolean hasUncommonType() {
 		return GoTypeFlag.Uncommon.isSet(tflag);
 	}
 
 	/**
-	 * Returns the name of this type.
-	 * 
-	 * @return name of this type, as a {@link GoName}
+	 * {@return name of this type, as a {@link GoName}}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -122,9 +111,7 @@ public class GoBaseType implements StructureVerifier {
 	}
 
 	/**
-	 * Returns the name of this type.
-	 * 
-	 * @return String name of this type
+	 * {@return the name of this type}
 	 */
 	public String getName() {
 		String s = programContext.getSafeName(this::getGoName, this, "").getName();
@@ -132,9 +119,7 @@ public class GoBaseType implements StructureVerifier {
 	}
 
 	/**
-	 * Returns a reference to the {@link GoType} that represents a pointer to this type.
-	 * 
-	 * @return reference to the {@link GoType} that represents a pointer to this type
+	 * {@return reference to the {@link GoType} that represents a pointer to this type}
 	 * @throws IOException if error reading
 	 */
 	@Markup
@@ -145,6 +130,6 @@ public class GoBaseType implements StructureVerifier {
 	@Override
 	public boolean isValid() {
 		return 0 <= ptrdata && ptrdata <= size && getKind() != GoKind.invalid &&
-			GoTypeFlag.isValid(tflag);
+			GoTypeFlag.isValid(tflag, programContext.getGoVer());
 	}
 }

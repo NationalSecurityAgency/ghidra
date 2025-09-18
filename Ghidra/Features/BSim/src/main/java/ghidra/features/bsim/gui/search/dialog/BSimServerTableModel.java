@@ -21,15 +21,13 @@ import java.util.*;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
-import org.apache.commons.lang3.StringUtils;
-
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.features.bsim.gui.BSimServerManager;
-import ghidra.features.bsim.query.*;
+import ghidra.features.bsim.query.BSimPostgresDBConnectionManager;
 import ghidra.features.bsim.query.BSimPostgresDBConnectionManager.BSimPostgresDataSource;
+import ghidra.features.bsim.query.BSimServerInfo;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.framework.client.ClientUtil;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.util.table.column.AbstractGColumnRenderer;

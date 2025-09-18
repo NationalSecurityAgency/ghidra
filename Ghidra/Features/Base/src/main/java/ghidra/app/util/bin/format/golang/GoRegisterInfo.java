@@ -165,7 +165,7 @@ public class GoRegisterInfo {
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {
 			return Math.min(maxAlign, dt.getLength());
 		}
-		if (dt instanceof Complex8DataType /* golang complex64 */ ) {
+		if (dt instanceof Complex8DataType /* Go complex64 */ ) {
 			return 4;
 		}
 		if (dt instanceof AbstractFloatDataType) {

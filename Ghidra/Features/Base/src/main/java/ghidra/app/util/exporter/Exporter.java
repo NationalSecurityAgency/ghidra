@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,7 @@ package ghidra.app.util.exporter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.Validate;
+import java.util.*;
 
 import ghidra.app.util.*;
 import ghidra.app.util.importer.MessageLog;
@@ -53,8 +50,8 @@ abstract public class Exporter implements ExtensionPoint {
 	 * @param help       the help location for this exporter
 	 */
 	protected Exporter(String name, String extension, HelpLocation help) {
-		this.name = Validate.notNull(name);
-		this.extension = Validate.notNull(extension);
+		this.name = Objects.requireNonNull(name);
+		this.extension = Objects.requireNonNull(extension);
 		this.help = help;
 	}
 

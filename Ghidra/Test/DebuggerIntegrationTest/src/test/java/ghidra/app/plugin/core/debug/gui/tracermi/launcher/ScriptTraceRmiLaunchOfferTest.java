@@ -187,7 +187,7 @@ public class ScriptTraceRmiLaunchOfferTest extends AbstractGhidraHeadedDebuggerT
 		}
 
 		@Override
-		public void terminated() {
+		public void terminated(int exitcode) {
 		}
 
 		@Override

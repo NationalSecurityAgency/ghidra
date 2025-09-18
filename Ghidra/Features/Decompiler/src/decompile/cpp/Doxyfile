@@ -457,7 +457,7 @@ RECURSIVE              = NO
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = unify.hh unify.cc rulecompile.hh rulecompile.cc slghparse.cc slghparse.hh slghscan.cc slghpattern.hh slghpattern.cc slghpatexpress.hh slghpatexpress.cc slghsymbol.hh slghsymbol.cc codedata.hh codedata.cc semantics.hh semantics.cc grammar.hh grammar.cc callgraph.hh callgraph.cc filemanage.hh filemanage.cc graph.hh graph.cc loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc pcodecompile.hh pcodeparse.hh pcodeparse.cc inject_sleigh.hh inject_sleigh.cc context.hh context.cc consolemain.cc sleighexample.cc xml.cc double.hh double.cc paramid.hh paramid.cc prefersplit.hh prefersplit.cc
+EXCLUDE                = unify.hh unify.cc rulecompile.hh rulecompile.cc slghparse.cc slghparse.hh slghscan.cc slghpattern.hh slghpattern.cc slghpatexpress.hh slghpatexpress.cc slghsymbol.hh slghsymbol.cc codedata.hh codedata.cc semantics.hh semantics.cc grammar.hh grammar.cc callgraph.hh callgraph.cc filemanage.hh filemanage.cc graph.hh graph.cc loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc pcodecompile.hh pcodeparse.hh pcodeparse.cc context.hh context.cc consolemain.cc sleighexample.cc xml.cc double.hh double.cc paramid.hh paramid.cc prefersplit.hh prefersplit.cc
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
@@ -588,12 +588,6 @@ VERBATIM_HEADERS       = NO
 # contains a lot of classes, structs, unions or interfaces.
 
 ALPHABETICAL_INDEX     = NO
-
-# If the alphabetical index is enabled (see ALPHABETICAL_INDEX) then 
-# the COLS_IN_ALPHA_INDEX tag can be used to specify the number of columns 
-# in which this list will be split (can be a number in the range [1..20])
-
-COLS_IN_ALPHA_INDEX    = 5
 
 # In case all classes in a project start with a common prefix, all 
 # classes will be put under the same header in the alphabetical index. 
@@ -744,7 +738,7 @@ COMPACT_LATEX          = NO
 # by the printer. Possible values are: a4, a4wide, letter, legal and 
 # executive. If left blank a4wide will be used.
 
-PAPER_TYPE             = a4wide
+PAPER_TYPE             = a4
 
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX 
 # packages that should be included in the LaTeX output.

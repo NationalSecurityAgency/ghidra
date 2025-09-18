@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package ghidra.app.util.bin.format.pe.rich;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.DuplicateNameException;
 
 class MSRichProductIDDataType extends DataTypeImpl {
 
@@ -45,22 +43,6 @@ class MSRichProductIDDataType extends DataTypeImpl {
 	@Override
 	public DataType copy(DataTypeManager dtm) {
 		return clone(dtm);
-	}
-
-	@Override
-	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
-		// ignored
-	}
-
-	@Override
-	public void setName(String name) throws InvalidNameException {
-		// ignored
-	}
-
-	@Override
-	public void setNameAndCategory(CategoryPath path, String name)
-			throws InvalidNameException, DuplicateNameException {
-		// ignored
 	}
 
 	@Override
@@ -101,28 +83,4 @@ class MSRichProductIDDataType extends DataTypeImpl {
 		return getClass() == dt.getClass();
 	}
 
-	@Override
-	public void dataTypeSizeChanged(DataType dt) {
-		// ignored
-	}
-
-	@Override
-	public void dataTypeDeleted(DataType dt) {
-		// ignored			
-	}
-
-	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		// ignored
-	}
-
-	@Override
-	public void dataTypeNameChanged(DataType dt, String oldName) {
-		// ignored
-	}
-
-	@Override
-	public boolean dependsOn(DataType dt) {
-		return false;
-	}
 }

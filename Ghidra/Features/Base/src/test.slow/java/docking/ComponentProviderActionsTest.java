@@ -538,7 +538,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		DockingWindowManager.setMouseOverAction(windowMenuAction);
 
 		performLaunchKeyStrokeDialogAction();
-		DialogComponentProvider warningDialog = waitForDialogComponent("Unable to Set Keybinding");
+		DialogComponentProvider warningDialog = waitForDialogComponent("Unable to Set Key Binding");
 		close(warningDialog);
 	}
 

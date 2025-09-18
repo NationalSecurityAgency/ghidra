@@ -1099,7 +1099,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		}
 
 		OffsetPairs offsetSelection = getRelOffsetSelection();
-		viewDTM.remove(dataType, TaskMonitor.DUMMY);
+		viewDTM.remove(dataType);
 		fireTableDataChanged();
 		componentDataChanged();
 		setRelOffsetSelection(offsetSelection);

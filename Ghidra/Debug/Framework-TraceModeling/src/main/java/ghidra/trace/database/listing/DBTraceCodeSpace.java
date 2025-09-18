@@ -58,8 +58,6 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	protected final DBTraceCodeManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -85,17 +83,14 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	 * @param dbh the database handle
 	 * @param space the address space
 	 * @param ent an entry describing this space
-	 * @param thread a thread, if applicable, for a per-thread/frame space
 	 * @throws VersionException if there is already a table of a different version
 	 * @throws IOException if there is trouble accessing the database
 	 */
 	public DBTraceCodeSpace(DBTraceCodeManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -105,14 +100,11 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		long threadKey = ent.getThreadKey();
-		int frameLevel = ent.getFrameLevel();
-
 		instructionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceInstruction.tableName(space, threadKey), factory, lock, space, null, 0,
+			DBTraceInstruction.tableName(space), trace, factory, lock, space,
 			DBTraceInstruction.class, (t, s, r) -> new DBTraceInstruction(this, t, s, r));
 		dataMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceData.tableName(space, threadKey, frameLevel), factory, lock, space, null, 0,
+			DBTraceData.tableName(space), trace, factory, lock, space,
 			DBTraceData.class, (t, s, r) -> new DBTraceData(this, t, s, r));
 
 		instructions = createInstructionsView();
@@ -212,18 +204,13 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	}
 
 	@Override
+	public DBTrace getTrace() {
+		return trace;
+	}
+
+	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
-	}
-
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
 	}
 
 	@Override

@@ -36,7 +36,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		// Create overlapping trasnaction to handle all changes
+		// Create overlapping transaction to handle all changes
 		persistentTxId = program.startTransaction("Modify Program");
 	}
 
@@ -88,20 +88,18 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals("complexStructure *", dataType10.getDisplayName());
 		assertEquals(4, getLength(10));
 
-		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
+		programDTM.remove(complexStructure);
 		programDTM.getCategory(pgmRootCat.getCategoryPath())
 				.removeCategory("Temp", TaskMonitor.DUMMY);
 
 		DialogComponentProvider dlg = waitForDialogComponent("Close Structure Editor?");
 		pressButton(dlg.getComponent(), "No");
-
 		waitForSwing();
 
 		// complexStructure* gets removed and becomes BadDataType in this editor.
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		assertTrue(BadDataType.dataType.isEquivalent(getDataType(10)));
-		assertEquals("Type 'complexStructure *' was deleted", getComment(10));
+		assertEquals("The original Structure has been deleted", model.getStatus());
 		assertEquals(4, getLength(10));
 	}
 
@@ -421,6 +419,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) origCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(origCopy.isEquivalent(model.viewComposite));
@@ -446,6 +445,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		pressButtonByText(dialog, "No");
 		dialog.dispose();
 		dialog = null;
+		waitForSwing();
 
 		assertEquals(((Structure) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
@@ -505,7 +505,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(0x145, model.getLength());
 
 		runSwing(
-			() -> complexStructure.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			() -> complexStructure.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
 		assertEquals(23, model.getNumComponents());
 		assertTrue(dt3.isEquivalent(getDataType(3)));
@@ -536,7 +536,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
 		runSwing(
-			() -> simpleStructure.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
+			() -> simpleStructure.getDataTypeManager().remove(simpleStructure));
 		waitForSwing();
 
 		assertEquals(1, model.getNumComponents());// component becomes BadDataType

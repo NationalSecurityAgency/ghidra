@@ -118,7 +118,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -158,7 +159,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -199,7 +201,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction ||
+					action instanceof FindReferencesToStructureFieldAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {

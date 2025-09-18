@@ -35,7 +35,9 @@ import ghidra.app.util.viewer.field.AnnotatedStringHandler;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.AssertException;
 
 /**
  * Dialog for setting the comments for a CodeUnit.
@@ -89,15 +91,15 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 	 * @param cu code unit
 	 * @param type comment type
 	 */
-	void showDialog(CodeUnit cu, int type) {
+	void showDialog(CodeUnit cu, CommentType type) {
 		setTitle("Set Comment(s) at Address " + cu.getMinAddress());
 		codeUnit = cu;
 
-		preComment = cu.getComment(CodeUnit.PRE_COMMENT);
-		postComment = cu.getComment(CodeUnit.POST_COMMENT);
-		eolComment = cu.getComment(CodeUnit.EOL_COMMENT);
-		plateComment = cu.getComment(CodeUnit.PLATE_COMMENT);
-		repeatableComment = cu.getComment(CodeUnit.REPEATABLE_COMMENT);
+		preComment = cu.getComment(CommentType.PRE);
+		postComment = cu.getComment(CommentType.POST);
+		eolComment = cu.getComment(CommentType.EOL);
+		plateComment = cu.getComment(CommentType.PLATE);
+		repeatableComment = cu.getComment(CommentType.REPEATABLE);
 
 		preComment = (preComment == null) ? "" : preComment;
 		postComment = (postComment == null) ? "" : postComment;
@@ -133,23 +135,28 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		tool.showDialog(this);
 	}
 
-	void setCommentType(int type) {
+	void setCommentType(CommentType type) {
+		if (type == null) {
+			return; // Leave tab unchanged from last use
+		}
 		switch (type) {
-			case CodeUnit.EOL_COMMENT:
+			case CommentType.EOL:
 				tab.setSelectedIndex(0);
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case CommentType.PRE:
 				tab.setSelectedIndex(1);
 				break;
-			case CodeUnit.POST_COMMENT:
+			case CommentType.POST:
 				tab.setSelectedIndex(2);
 				break;
-			case CodeUnit.PLATE_COMMENT:
+			case CommentType.PLATE:
 				tab.setSelectedIndex(3);
 				break;
-			case CodeUnit.REPEATABLE_COMMENT:
+			case CommentType.REPEATABLE:
 				tab.setSelectedIndex(4);
 				break;
+			default:
+				throw new AssertException("Unsupported comment type: " + type.name());
 		}
 	}
 

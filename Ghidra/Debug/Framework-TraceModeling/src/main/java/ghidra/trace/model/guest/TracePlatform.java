@@ -22,7 +22,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.trace.model.memory.TraceObjectRegister;
+import ghidra.trace.model.memory.TraceRegister;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
@@ -239,11 +239,11 @@ public interface TracePlatform {
 	PathFilter getConventionalRegisterPath(AddressSpace overlay, Register register);
 
 	/**
-	 * Add a label the conventionally maps the value of a {@link TraceObjectRegister} in the object
+	 * Add a label the conventionally maps the value of a {@link TraceRegister} in the object
 	 * manager to a register from this platform
 	 * 
 	 * @param register the language register
-	 * @param objectName the name of the {@link TraceObjectRegister} in the object tree
+	 * @param objectName the name of the {@link TraceRegister} in the object tree
 	 * @return the label
 	 */
 	TraceLabelSymbol addRegisterMapOverride(Register register, String objectName);

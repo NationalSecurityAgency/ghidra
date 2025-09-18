@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import ghidra.util.Msg;
  * comparison window
  */
 public abstract class AbstractFunctionComparisonApplyAction extends DockingAction {
-	protected static final String MENU_PARENT = "Apply From Other";
-	protected static final String MENU_GROUP = "A0_Apply";
+	protected static final String MENU_PARENT = "Apply From Other Function";
+	protected static final String MENU_GROUP = "A0_ApplyFunction";
 	protected static final String HELP_TOPIC = "FunctionComparison";
 
 	/**

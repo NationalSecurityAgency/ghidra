@@ -80,6 +80,17 @@
     <compiler name="default" spec="toy64.cspec" id="default"/>
   </language>
   <language processor="Toy"
+            endian="big"
+            size="64"
+            variant="harvard_rev"
+            version="1.0"
+            slafile="toy64_be_harvard_rev.sla"
+            processorspec="toy_harvard.pspec"
+            id="Toy:BE:64:harvard_rev">
+    <description>Toy (test) processor 64-bit big-endian Harvard</description>
+    <compiler name="default" spec="toy64.cspec" id="default"/>
+  </language>
+  <language processor="Toy"
             endian="little"
             size="64"
             variant="default"

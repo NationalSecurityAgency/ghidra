@@ -21,7 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	/**
@@ -60,13 +60,13 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * @return true if it can be aggregated.
 	 * @throws TrackedTooSoonException if the containing trace is still being added to the manager
 	 */
-	boolean canMerge(TraceBreakpoint breakpoint, long snap) throws TrackedTooSoonException;
+	boolean canMerge(TraceBreakpointLocation breakpoint, long snap) throws TrackedTooSoonException;
 
 	boolean trackBreakpoint(Bookmark bookmark);
 
-	boolean trackBreakpoint(TraceBreakpoint breakpoint);
+	boolean trackBreakpoint(TraceBreakpointLocation breakpoint);
 
-	boolean untrackBreakpoint(TraceBreakpoint breakpoint);
+	boolean untrackBreakpoint(TraceBreakpointLocation breakpoint);
 
 	boolean untrackBreakpoint(Program program, Bookmark bookmark);
 

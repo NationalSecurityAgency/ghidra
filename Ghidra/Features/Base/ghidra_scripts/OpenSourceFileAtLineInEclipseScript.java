@@ -25,7 +25,7 @@
 // Edit -> Tool Options -> Eclipse Integration
 //
 // from the Ghidra Project Manager.
-//@category SourceMapping
+//@category Source Mapping
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

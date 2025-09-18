@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf.sectionprovider;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
 public class DSymSectionProvider implements DWARFSectionProvider {
 	private MachHeader machHeader;
 	private Map<String, Section> machSectionsByName = new HashMap<>();
-	private RandomAccessByteProvider provider;
+	private FileByteProvider provider;
 
 	public static File getDSYMForProgram(Program program) {
 
@@ -63,7 +63,7 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	}
 
 	public DSymSectionProvider(File dsymFile) throws IOException, MachException {
-		this.provider = new RandomAccessByteProvider(dsymFile);
+		this.provider = new FileByteProvider(dsymFile, null, AccessMode.READ);
 
 		machHeader = new MachHeader(provider);
 		machHeader.parse();
@@ -78,9 +78,18 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
 			throws IOException {
 
-		Section s = machSectionsByName.get(sectionName);
+		Section s = findSectionByName(sectionName);
 		return (s != null) ? new ByteProviderWrapper(provider,
 			machHeader.getStartIndex() + s.getOffset(), s.getSize()) : null;
+	}
+
+	private Section findSectionByName(String name) {
+		Section section = machSectionsByName.get(name);
+		if (section == null &&
+			name.length() > 14 /* max macho section name length - 2 for leading "__" */) {
+			section = machSectionsByName.get(name.substring(0, 14));
+		}
+		return section;
 	}
 
 	@Override
@@ -91,7 +100,7 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	@Override
 	public boolean hasSection(String... sectionNames) {
 		for (String sectionName : sectionNames) {
-			if (machSectionsByName.get(sectionName) == null) {
+			if (findSectionByName(sectionName) == null) {
 				return false;
 			}
 		}

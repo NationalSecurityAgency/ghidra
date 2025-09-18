@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -37,7 +38,7 @@ public class FieldNameFieldLocation extends CodeUnitLocation {
 	 * @param program the program of the location
 	 * @param addr the address of the code unit
 	 * @param componentPath if not null, it is the array of indexes that point to a specific data
-	 * type inside of another data type
+	 *            type inside of another data type
 	 * @param fieldName the field name
 	 * @param charOffset the character position within the field name for this location.
 	 */
@@ -57,6 +58,7 @@ public class FieldNameFieldLocation extends CodeUnitLocation {
 
 	/**
 	 * Returns the field name of this location.
+	 * 
 	 * @return the name.
 	 */
 	public String getFieldName() {
@@ -104,5 +106,18 @@ public class FieldNameFieldLocation extends CodeUnitLocation {
 	@Override
 	public String toString() {
 		return super.toString() + ", Field Name = " + fieldName;
+	}
+
+	/**
+	 * Get the data component representing the named field
+	 * 
+	 * @return the data unit
+	 */
+	public Data getDataComponent() {
+		Data data = program.getListing().getDataContaining(addr);
+		if (data == null) {
+			return null;
+		}
+		return data.getComponent(getComponentPath());
 	}
 }

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
@@ -62,6 +63,8 @@ public interface PcodeArithmetic<T> {
 		LOAD(Reason.EXECUTE_READ),
 		/** The value will be used as the address of a value to store */
 		STORE(Reason.EXECUTE_READ),
+		/** The p-code specification defines the operand as a constant */
+		BY_DEF(Reason.EXECUTE_READ),
 		/** Some other reason, perhaps for userop library use */
 		OTHER(Reason.EXECUTE_READ),
 		/** The user or a tool is inspecting the value */
@@ -77,6 +80,13 @@ public interface PcodeArithmetic<T> {
 			return reason;
 		}
 	}
+
+	/**
+	 * Get the type of values over which this arithmetic operates.
+	 * 
+	 * @return the domain
+	 */
+	Class<T> getDomain();
 
 	/**
 	 * Get the endianness of this arithmetic
@@ -453,6 +463,20 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
+	 * Convert the given concrete address to type {@code T}.
+	 * 
+	 * <p>
+	 * The value will have the pointer size of the address' space. Other than deriving that size,
+	 * the returned value has nothing to do with the address space.
+	 * 
+	 * @param address the address
+	 * @return the value
+	 */
+	default T fromConst(Address address) {
+		return fromConst(address.getOffset(), address.getAddressSpace().getPointerSize());
+	}
+
+	/**
 	 * Convert, if possible, the given abstract value to a concrete byte array
 	 * 
 	 * @param value the abstract value
@@ -562,23 +586,15 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert, if possible, the given abstract value to a concrete boolean
-	 * 
-	 * <p>
-	 * Any non-zero value is considered true
+	 * Convert, if possible, the given abstract value to a concrete address in the given space
 	 * 
 	 * @param value the abstract value
+	 * @param space the destination address space
 	 * @param purpose the reason why the emulator needs a concrete value
-	 * @return the concrete value
-	 * @throws ConcretionError if the value cannot be made concrete
+	 * @return the address
 	 */
-	default boolean toBoolean(T value, Purpose purpose) {
-		for (byte b : toConcrete(value, purpose)) {
-			if (b != 0) {
-				return true;
-			}
-		}
-		return false;
+	default Address toAddress(T value, AddressSpace space, Purpose purpose) {
+		return space.getAddress(toLong(value, purpose));
 	}
 
 	/**
@@ -596,7 +612,7 @@ public interface PcodeArithmetic<T> {
 	 * Get the size in bytes, if possible, of the given abstract value, as an abstract value
 	 * 
 	 * <p>
-	 * The returned size should itself has a size of {@link #SIZEOF_SIZEOF}.
+	 * The returned size should have a size of {@link #SIZEOF_SIZEOF}.
 	 * 
 	 * @param value the abstract value
 	 * @return the size in bytes, as an abstract value

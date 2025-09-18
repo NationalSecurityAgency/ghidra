@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.assembler.sleigh.util.TableEntry;
 
 /**
@@ -66,12 +64,6 @@ public class AssemblyParser {
 	protected AssemblyParseActionGotoTable actions;
 
 	/**
-	 * Change this to {@link DbgTimer#ACTIVE} for verbose diagnostics
-	 */
-	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
-	protected static final boolean DBG_DETAIL = false;
-
-	/**
 	 * Construct a LALR(1) parser from the given grammar
 	 * 
 	 * @param grammar the grammar
@@ -90,41 +82,11 @@ public class AssemblyParser {
 		grammar.addProduction(start, new AssemblySentential<>(grammar.getStart(), AssemblyEOI.EOI));
 		grammar.setStart(start);
 
-		try (DbgCtx dc = DBG.start("Computing First/Follow for General Grammar")) {
-			this.ff = new AssemblyFirstFollow(grammar);
-			if (DBG_DETAIL) {
-				printGeneralFF(DBG);
-			}
-		}
-
-		try (DbgCtx dc = DBG.start("Computing LR0 States and Transition Table")) {
-			buildLR0Machine();
-			if (DBG_DETAIL) {
-				printLR0States(DBG);
-				printLR0TransitionTable(DBG);
-			}
-		}
-
-		try (DbgCtx dc = DBG.start("Computing Extended Grammar")) {
-			buildExtendedGrammar();
-			if (DBG_DETAIL) {
-				printExtendedGrammar(DBG);
-			}
-		}
-
-		try (DbgCtx dc = DBG.start("Computing First/Follow for Extended Grammar")) {
-			this.extff = new AssemblyFirstFollow(extendedGrammar);
-			if (DBG_DETAIL) {
-				printExtendedFF(DBG);
-			}
-		}
-
-		try (DbgCtx dc = DBG.start("Computing Parse Table")) {
-			buildActionGotoTable();
-			if (DBG_DETAIL) {
-				printParseTable(DBG);
-			}
-		}
+		this.ff = new AssemblyFirstFollow(grammar);
+		buildLR0Machine();
+		buildExtendedGrammar();
+		this.extff = new AssemblyFirstFollow(extendedGrammar);
+		buildActionGotoTable();
 	}
 
 	protected void buildLR0Machine() {

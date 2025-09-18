@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-. ../../../Debugger-rmi-trace/data/support/setuputils.sh
+. $MODULE_Debugger_rmi_trace_HOME/data/support/setuputils.sh
 
 add-gdb-init-args() {
 	args+=(-q)
@@ -28,13 +28,15 @@ add-gdb-init-args() {
 
 add-gdb-image-and-args() {
 	target_image=$1
-	target_args=$2
+	shift
 
 	if [ -n "$target_image" ]; then
 		args+=(-ex "file '$target_image'")
 	fi
-	if [ -n "$target_args" ]; then
-		args+=(-ex "set args $target_args")
+	if [ "$#" -ne 0 ]; then
+		local qargs
+		printf -v qargs '%q ' "$@"
+		args+=(-ex "set args $qargs")
 	fi
 }
 
@@ -62,7 +64,7 @@ add-gdb-start-if-image() {
 
 add-gdb-tail-args() {
 	args+=(-ex "set confirm on")
-	args+=(-ex "set pagination on")
+#	args+=(-ex "set pagination on")
 }
 
 compute-gdb-usermode-args() {
@@ -104,7 +106,7 @@ compute-gdb-remote-args() {
 
 	args+=("$OPT_GDB_PATH")
 	add-gdb-init-args
-	add-gdb-image-and-args "$target_image" ""
+	add-gdb-image-and-args "$target_image"
 	args+=(-ex "echo Connecting to $target_cx\n")
 	args+=(-ex "target $target_cx")
 	add-gdb-connect-and-sync "$rmi_address"

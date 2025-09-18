@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 /**
  * A class for storing new-executable resource string tables.
@@ -33,9 +32,10 @@ public class ResourceStringTable extends Resource {
     private LengthStringSet [] strings;
 
 	/**
-	 * Constucts a new resource string table.
+	 * Constructs a new resource string table.
 	 * @param reader the binary reade
 	 * @param rt the resource table where this resource string table is defined
+	 * @throws IOException if there was an IO-related error
 	 */
 	ResourceStringTable(BinaryReader reader, ResourceTable rt) throws IOException {
         super(reader, rt);
@@ -49,7 +49,7 @@ public class ResourceStringTable extends Resource {
                 LengthStringSet lss = new LengthStringSet(reader);
                 if (lss.getLength() == 0) break;
                 list.add(lss);
-                i += (Conv.byteToInt(lss.getLength())+1);
+				i += (Byte.toUnsignedInt(lss.getLength()) + 1);
                 reader.setPointerIndex(oldIndex);
             }
             else {

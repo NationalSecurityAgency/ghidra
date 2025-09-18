@@ -134,6 +134,7 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 		return "CodeCompletion: '" + getDescription() + "' (" + getInsertion() + ")";
 	}
 
+	@Override
 	public int compareTo(CodeCompletion that) {
 		return this.description.compareToIgnoreCase(that.description);
 	}

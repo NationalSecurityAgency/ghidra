@@ -22,6 +22,7 @@ import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitConstVal;
 
 /**
@@ -41,7 +42,7 @@ public enum ConstValGen implements ValGen<JitConstVal> {
 
 	@Override
 	public JitType generateValReadCode(JitCodeGenerator gen, JitConstVal v, JitTypeBehavior typeReq,
-			MethodVisitor rv) {
+			Ext ext, MethodVisitor rv) {
 		JitType type = typeReq.resolve(gen.getTypeModel().typeOf(v));
 		switch (type) {
 			case IntJitType t -> rv.visitLdcInsn(v.value().intValue());

@@ -40,12 +40,13 @@ import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 
 public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
@@ -79,6 +80,13 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		api.getState().setCurrentProgram(program);
 	}
 
+	protected SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	protected TraceThread createTraceWithThreadAndStack(boolean open) throws Throwable {
 		if (open) {
 			createAndOpenTrace();
@@ -88,9 +96,9 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		}
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
-			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
-			stack.setDepth(0, 3, true);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 3);
 		}
 		waitForSwing();
 		return thread;
@@ -100,6 +108,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		createAndOpenTrace();
 
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x0040ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -128,6 +137,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 
 		CompletableFuture<Void> changesSettled;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x00400fff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));

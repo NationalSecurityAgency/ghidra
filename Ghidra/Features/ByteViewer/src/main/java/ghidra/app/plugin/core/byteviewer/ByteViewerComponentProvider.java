@@ -86,6 +86,9 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR_OPTION_NAME;
 	private static final String OPTION_HIGHLIGHT_CURSOR_LINE =
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_OPTION_NAME;
+	private static final String OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME = "Middle Mouse Color";
+	private static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR =
+		new GColor("color.bg.byteviewer.highlight.middle.mouse");
 
 	protected ByteViewerPanel panel;
 
@@ -182,7 +185,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 				CURSOR_MOUSE_BUTTON_NAMES mouseButton = (CURSOR_MOUSE_BUTTON_NAMES) newValue;
 				panel.setHighlightButton(mouseButton.getMouseEventID());
 			}
-			else if (optionName.equals(HIGHLIGHT_COLOR_NAME)) {
+			else if (optionName.equals(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME)) {
 				panel.setMouseButtonHighlightColor((Color) newValue);
 			}
 		}
@@ -219,14 +222,21 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 		opt.registerThemeColorBinding(CURRENT_LINE_COLOR_OPTION_NAME,
 			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR.getId(), help,
-			"Color of the line containing the cursor");
+			"Color of the line containing the cursor.");
+
+		opt.registerThemeColorBinding(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME,
+			HIGHLIGHT_MIDDLE_MOUSE_COLOR.getId(), help, "The middle-mouse highlight color.");
 
 		opt.registerThemeFontBinding(OPTION_FONT, DEFAULT_FONT_ID, help, "Font used in the views.");
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
-			"Toggles highlighting background color of line containing the cursor");
+			"Toggles highlighting background color of line containing the cursor.");
 
 		Color separatorColor = opt.getColor(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR);
 		panel.setSeparatorColor(separatorColor);
+
+		Color middleMouseColor =
+			opt.getColor(OPTION_HIGHLIGHT_MIDDLE_MOUSE_NAME, HIGHLIGHT_MIDDLE_MOUSE_COLOR);
+		panel.setMouseButtonHighlightColor(middleMouseColor);
 
 		panel.setCurrentCursorColor(CURSOR_ACTIVE_COLOR);
 		panel.setNonFocusCursorColor(CURSOR_NOT_FOCUSED_COLOR);
@@ -245,9 +255,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES mouseButton = opt.getEnum(
 			CURSOR_HIGHLIGHT_BUTTON_NAME, GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 		panel.setHighlightButton(mouseButton.getMouseEventID());
-
-		panel.setMouseButtonHighlightColor(
-			opt.getColor(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR));
 
 		opt.addOptionsChangeListener(this);
 	}

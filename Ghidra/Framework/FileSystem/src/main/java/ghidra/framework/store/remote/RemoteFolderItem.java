@@ -16,11 +16,11 @@
 package ghidra.framework.store.remote;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.remote.RepositoryItem;
 import ghidra.framework.store.*;
-import ghidra.framework.store.local.UnknownFolderItem;
 
 /**
  * <code>RemoteFolderItem</code> provides an abstract FolderItem implementation
@@ -35,6 +35,8 @@ public abstract class RemoteFolderItem implements FolderItem {
 
 	protected int version;
 	protected long versionTime;
+
+	protected String textData; // applies to TextDataItem only
 
 	protected RepositoryAdapter repository;
 
@@ -56,15 +58,9 @@ public abstract class RemoteFolderItem implements FolderItem {
 
 		version = item.getVersion();
 		versionTime = item.getVersionTime();
-	}
 
-	/**
-	 * Returns the item type as defined by RepositoryItem which corresponds to specific 
-	 * implementation of this class.
-	 * @return item type (Only {@link RepositoryItem#DATABASE} is supported).
-	 * @see ghidra.framework.remote.RepositoryItem
-	 */
-	abstract int getItemType();
+		textData = item.getTextData();
+	}
 
 	@Override
 	public String getName() {
@@ -74,11 +70,13 @@ public abstract class RemoteFolderItem implements FolderItem {
 	@Override
 	public RemoteFolderItem refresh() throws IOException {
 		RepositoryItem item = repository.getItem(parentPath, itemName);
-		if (item == null) {
+		if (item == null || !Objects.equals(fileID, item.getFileID()) ||
+			!contentType.equals(item.getContentType())) {
 			return null;
 		}
 		version = item.getVersion();
 		versionTime = item.getVersionTime();
+		textData = item.getTextData();
 		return this;
 	}
 

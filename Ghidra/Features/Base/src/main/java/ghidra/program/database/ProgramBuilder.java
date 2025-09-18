@@ -397,6 +397,50 @@ public class ProgramBuilder {
 		}
 	}
 
+	public void setString(String address, String string) throws Exception {
+		byte[] bytes = string.getBytes();
+		setBytes(address, bytes);
+	}
+
+	public void setShort(String address, short value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setInt(String address, int value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setLong(String address, long value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void putAddress(String address, String pointerAddress) throws Exception {
+		Address pointer = addr(pointerAddress);
+		long offset = pointer.getOffset();
+		int pointerSize = pointer.getAddressSpace().getPointerSize();
+		switch (pointerSize) {
+			case 2:
+				setShort(address, (short) offset);
+				break;
+			case 4:
+				setInt(address, (int) offset);
+				break;
+			default:
+				setLong(address, offset);
+		}
+	}
+
+	private DataConverter getDataConverter() {
+		boolean bigEndian = program.getMemory().isBigEndian();
+		return bigEndian ? BigEndianDataConverter.INSTANCE : LittleEndianDataConverter.INSTANCE;
+	}
+
 	public void setRead(MemoryBlock block, boolean r) {
 		tx(() -> block.setRead(r));
 	}
@@ -933,7 +977,12 @@ public class ProgramBuilder {
 		});
 	}
 
+	@Deprecated(forRemoval = true, since = "11.4")
 	public void createComment(String address, String comment, int commentType) {
+		createComment(address, comment, CommentType.valueOf(commentType));
+	}
+
+	public void createComment(String address, String comment, CommentType commentType) {
 		tx(() -> {
 			Listing listing = program.getListing();
 			listing.setComment(addr(address), commentType, comment);
@@ -1104,10 +1153,9 @@ public class ProgramBuilder {
 		}
 
 		return tx(() -> {
-			FileBytes fileBytes =
-				program.getMemory()
-						.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
-							TaskMonitor.DUMMY);
+			FileBytes fileBytes = program.getMemory()
+					.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+						TaskMonitor.DUMMY);
 
 			return fileBytes;
 		});

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,14 @@
 #include "filemanage.hh"
 #include <iostream>
 #include <sstream>
+#include <string>
 
 namespace ghidra {
 
 using std::cout;
 using std::cerr;
 using std::out_of_range;
+using std::string;
 
 /// \brief A helper class to associate a \e named Constructor section with its symbol scope
 ///
@@ -137,26 +139,51 @@ class SleighCompile;
 /// This class searches for unnecessary truncations and extensions, temporary varnodes that are either dead,
 /// read before written, or that exceed the standard allocation size.
 class ConsistencyChecker {
-
+public:
   /// \brief Description of how a temporary register is being used within a Constructor
   ///
   /// This counts reads and writes of the register.  If the register is read only once, the
   /// particular p-code op and input slot reading it is recorded.  If the register is written
   /// only once, the particular p-code op writing it is recorded.
   struct OptimizeRecord {
-    int4 writeop;		///< Index of the (last) p-code op writing to register (or -1)
-    int4 readop;		///< Index of the (last) p-code op reading the register (or -1)
-    int4 inslot;		///< Input slot of p-code op reading the register (or -1)
-    int4 writecount;		///< Number of times the register is written
-    int4 readcount;		///< Number of times the register is read
-    int4 writesection;		///< Section containing (last) p-code op writing to the register (or -2)
-    int4 readsection;		///< Section containing (last) p-code op reading the register (or -2)
-    mutable int4 opttype;	///< 0 = register read by a COPY, 1 = register written by a COPY (-1 otherwise)
+    uintb offset;         ///< Offset of the varnode address
+    int4 size;            ///< Size in bytes of the varnode or piece (immutable)
+    int4 writeop;         ///< Index of the (last) p-code op writing to register (or -1)
+    int4 readop;          ///< Index of the (last) p-code op reading the register (or -1)
+    int4 inslot;          ///< Input slot of p-code op reading the register (or -1)
+    int4 writecount;      ///< Number of times the register is written
+    int4 readcount;		  ///< Number of times the register is read
+    int4 writesection;    ///< Section containing (last) p-code op writing to the register (or -2)
+    int4 readsection;     ///< Section containing (last) p-code op reading the register (or -2)
+    mutable int4 opttype; ///< 0 = register read by a COPY, 1 = register written by a COPY (-1 otherwise)
 
     /// \brief Construct a record, initializing counts
-    OptimizeRecord(void) {
-      writeop = -1; readop = -1; inslot=-1; writecount=0; readcount=0; writesection=-2; readsection=-2; opttype=-1; }
+    OptimizeRecord(uintb offset, int4 size) {
+      this->offset = offset;
+      this->size = size;
+      writeop = -1; readop = -1; inslot=-1; writecount=0; readcount=0; writesection=-2; readsection=-2; opttype=-1;
+    }
+    void copyFromExcludingSize(OptimizeRecord &that);
+    void update(int4 opIdx, int4 slotIdx, int4 secNum);
+    void updateRead(int4 i, int4 inslot, int4 secNum);
+    void updateWrite(int4 i, int4 secNum);
+    void updateExport();
+    void updateCombine(OptimizeRecord &that);
   };
+private:
+  class UniqueState {
+    map<uintb,OptimizeRecord> recs;
+    static uintb endOf(map<uintb,OptimizeRecord>::iterator &iter) { return iter->first + iter->second.size; }
+    OptimizeRecord coalesce(vector<OptimizeRecord*> &records);
+    map<uintb,OptimizeRecord>::iterator lesserIter(uintb offset);
+  public:
+    void clear(void) { recs.clear(); }
+    void set(uintb offset, int4 size, OptimizeRecord &rec);
+    void getDefinitions(vector<OptimizeRecord*> &result, uintb offset, int4 size);
+    map<uintb,OptimizeRecord>::const_iterator begin(void) const { return recs.begin(); }
+    map<uintb,OptimizeRecord>::const_iterator end(void) const { return recs.end(); }
+  };
+
   SleighCompile *compiler;	///< Parsed form of the SLEIGH file being examined
   int4 unnecessarypcode;	///< Count of unnecessary extension/truncation operations
   int4 readnowrite;		///< Count of temporary registers that are read but not written
@@ -185,14 +212,14 @@ class ConsistencyChecker {
   void setPostOrder(SubtableSymbol *root);
 
   // Optimization routines
-  static void examineVn(map<uintb,OptimizeRecord> &recs,const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum);
+  static void examineVn(UniqueState &state,const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum);
   static bool possibleIntersection(const VarnodeTpl *vn1,const VarnodeTpl *vn2);
   bool readWriteInterference(const VarnodeTpl *vn,const OpTpl *op,bool checkread) const;
-  void optimizeGather1(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const;
-  void optimizeGather2(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const;
-  const OptimizeRecord *findValidRule(Constructor *ct,const map<uintb,OptimizeRecord> &recs) const;
+  void optimizeGather1(Constructor *ct,UniqueState &state,int4 secnum) const;
+  void optimizeGather2(Constructor *ct,UniqueState &state,int4 secnum) const;
+  const OptimizeRecord *findValidRule(Constructor *ct,const UniqueState &state) const;
   void applyOptimization(Constructor *ct,const OptimizeRecord &rec);
-  void checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs);
+  void checkUnusedTemps(Constructor *ct,const UniqueState &state);
   void checkLargeTemporaries(Constructor *ct,ConstructTpl *ctpl);
   void optimize(Constructor *ct);
 public:
@@ -457,6 +484,8 @@ public:
 		     bool largeTemporaryWarning, bool caseSensitiveRegisterNames,bool debugOutput);
   int4 run_compilation(const string &filein,const string &fileout);
 };
+
+ostream& operator<<(ostream &os, const ConsistencyChecker::OptimizeRecord &rec);
 
 extern SleighCompile *slgh;		///< A global reference to the SLEIGH compiler accessible to the parse functions
 extern int yydebug;			///< Debug state for the SLEIGH parse functions

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import docking.action.DockingAction;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.util.image.Callout;
-import docking.util.image.CalloutComponentInfo;
+import docking.util.image.CalloutInfo;
 import docking.widgets.dialogs.MultiLineInputDialog;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationServer;
@@ -61,13 +61,17 @@ import ghidra.util.exception.AssertException;
 
 public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
+	static {
+
+		// Note: this is usually done by AbstractScreenShotGenerator.  The following user name 
+		// setting needs to happen before the application is initialized.  Since we don't extend
+		// AbstractScreenShotGenerator, we have to do it ourselves.
+		System.setProperty("user.name", AbstractScreenShotGenerator.SCREENSHOT_USER_NAME);
+	}
+
 	private MyScreen screen;
 	private int width = 400;
 	private int height = 400;
-
-	public FunctionGraphPluginScreenShots() {
-		super();
-	}
 
 	@Override
 	@Before
@@ -85,7 +89,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 		screen.program = program;
 
-		setLayout();
+		setNestedLayout();
 	}
 
 	@Override
@@ -441,13 +445,12 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 	}
 
 	private GenericHeader getHeader() {
-		FGController controller = getFunctionGraphController();
-		ComponentProvider provider = controller.getProvider();
+		ComponentProvider provider = getProvider();
 		DockableComponent dc = getDockableComponent(provider.getComponent());
 		return dc.getHeader();
 	}
 
-	private void createCallout(JComponent parentComponent, CalloutComponentInfo calloutInfo) {
+	private void createCallout(JComponent parentComponent, CalloutInfo calloutInfo) {
 		// create image of parent with extra space for callout feature
 		Image parentImage = screen.captureComponent(parentComponent);
 
@@ -459,7 +462,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 	private void createGroupButtonCallout(FGVertex v) {
 
-		JButton component = getToolbarButton(v, "Group Vertices");
+		JButton button = getToolbarButton(v, "Group Vertices");
 		FGProvider provider = screen.getProvider(FGProvider.class);
 		JComponent parent = provider.getComponent();
 
@@ -467,22 +470,23 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		FGView view = controller.getView();
 		VisualizationViewer<FGVertex, FGEdge> viewer = view.getPrimaryGraphViewer();
 
-		Rectangle bounds = component.getBounds();
-		Dimension size = bounds.getSize();
-		Point location = bounds.getLocation();
+		Rectangle buttonBounds = button.getBounds();
+		Point location = buttonBounds.getLocation();
 
 		JComponent vertexComponent = v.getComponent();
-		Point newLocation =
-			SwingUtilities.convertPoint(component.getParent(), location, vertexComponent);
+		Point vertexRelativeLocation =
+			SwingUtilities.convertPoint(button.getParent(), location, vertexComponent);
 
-		Point relativePoint = GraphViewerUtils.translatePointFromVertexRelativeSpaceToViewSpace(
-			viewer, v, newLocation);
+		Point buttonViewPoint = GraphViewerUtils.translatePointFromVertexRelativeSpaceToViewSpace(
+			viewer, v, vertexRelativeLocation);
+		Rectangle buttonArea = new Rectangle(buttonViewPoint, buttonBounds.getSize());
 
-		Point screenLocation = new Point(relativePoint);
-		SwingUtilities.convertPointToScreen(screenLocation, parent);
-
-		CalloutComponentInfo calloutInfo = new FGCalloutComponentInfo(parent, component,
-			screenLocation, relativePoint, size, viewer, v);
+		// Use 'parent' for both source and destination.  This has the effect of not moving any 
+		// locations, since the source and destination of the moves will be the same.  For this use
+		// case, the locations should all be where they need to be before creating the callout info.
+		// It is done this way because the graph's vertices are painted as needed and are not 
+		// connected to a real display hierarchy.
+		CalloutInfo calloutInfo = new CalloutInfo(parent, parent, buttonArea);
 
 		createCallout(parent, calloutInfo);
 	}
@@ -780,28 +784,6 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		return reference.get();
 	}
 
-	private void setNestedLayout() {
-
-		Object actionManager = getInstanceField("actionManager", graphProvider);
-		@SuppressWarnings("unchecked")
-		final MultiStateDockingAction<Class<? extends FGLayoutProvider>> action =
-			(MultiStateDockingAction<Class<? extends FGLayoutProvider>>) getInstanceField(
-				"layoutAction", actionManager);
-		runSwing(() -> {
-			List<ActionState<Class<? extends FGLayoutProvider>>> states =
-				action.getAllActionStates();
-			for (ActionState<Class<? extends FGLayoutProvider>> state : states) {
-				Class<? extends FGLayoutProvider> layoutClass = state.getUserData();
-				if (layoutClass.getSimpleName().equals("DecompilerNestedLayoutProvider")) {
-					action.setCurrentActionState(state);
-					return;
-				}
-			}
-
-			throw new RuntimeException("Could not find layout!!");
-		});
-	}
-
 	private void createGroupButtonCallout_PlayArea(final FGVertex v, final String imageName) {
 
 		FGProvider provider = screen.getProvider(FGProvider.class);
@@ -833,32 +815,33 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		dialog.setVisible(true);
 	}
 
-	@SuppressWarnings("rawtypes")
-	private void setLayout() {
+	private void setNestedLayout() {
+
 		long start = System.currentTimeMillis();
+
 		Object actionManager = getInstanceField("actionManager", graphProvider);
-		final MultiStateDockingAction<?> action =
-			(MultiStateDockingAction<?>) getInstanceField("layoutAction", actionManager);
+		@SuppressWarnings("unchecked")
+		final MultiStateDockingAction<Class<? extends FGLayoutProvider>> action =
+			(MultiStateDockingAction<Class<? extends FGLayoutProvider>>) getInstanceField(
+				"layoutAction", actionManager);
+		runSwing(() -> {
+			List<ActionState<Class<? extends FGLayoutProvider>>> states =
+				action.getAllActionStates();
 
-		Object minCrossState = null;
-		List<?> states = action.getAllActionStates();
-		for (Object state : states) {
-			if (((ActionState) state).getName().indexOf("Nested Code Layout") != -1) {
-				minCrossState = state;
-				break;
+			ActionState<Class<? extends FGLayoutProvider>> nestedCodeState = null;
+			for (ActionState<Class<? extends FGLayoutProvider>> state : states) {
+				if (state.getName().indexOf("Nested Code Layout") != -1) {
+					nestedCodeState = state;
+					break;
+				}
 			}
-		}
 
-		assertNotNull("Could not find min cross layout!", minCrossState);
+			assertNotNull("Could not find Nested Code Layout layout!", nestedCodeState);
 
-		//@formatter:off
-		invokeInstanceMethod( "setCurrentActionState", 
-							  action, 
-							  new Class<?>[] { ActionState.class },
-							  new Object[] { minCrossState });
-		//@formatter:on
+			action.setCurrentActionState(nestedCodeState);
 
-		runSwing(() -> action.actionPerformed(new DefaultActionContext()));
+			// action.actionPerformed(new DefaultActionContext())
+		});
 
 		// wait for the threaded graph layout code
 		FGController controller = getFunctionGraphController();
@@ -869,6 +852,13 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 		long end = System.currentTimeMillis();
 		Msg.debug(this, "relayout time: " + ((end - start) / 1000.0) + "s");
+
+	}
+
+	@Override
+	protected void installTestGraphLayout(FGProvider provider) {
+		// Do nothing.  The normal tests will install a test layout in this method.  We don't need
+		// that behavior.
 	}
 
 //==================================================================================================
@@ -896,30 +886,6 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 			assertNotNull("Unable to find help topic for test file: " + clazz.getName(),
 				helpTopicDir);
 			return helpTopicDir;
-		}
-	}
-
-	private class FGCalloutComponentInfo extends CalloutComponentInfo {
-
-		private VisualizationViewer<FGVertex, FGEdge> viewer;
-		private FGVertex vertex;
-
-		FGCalloutComponentInfo(Component destinationComponent, Component component,
-				Point locationOnScreen, Point relativeLocation, Dimension size,
-				VisualizationViewer<FGVertex, FGEdge> viewer, FGVertex vertex) {
-
-			super(destinationComponent, component, locationOnScreen, relativeLocation, size);
-			this.viewer = viewer;
-			this.vertex = vertex;
-		}
-
-		@Override
-		public Point convertPointToParent(Point location) {
-			// TODO: this won't work for now if the graph is scaled.   This is because there is
-			//       point information that is calculated by the client of this class that does 
-			//       not take into account the scaling of the graph.  This is a known issue--
-			//       don't use this class when the graph is scaled.
-			return location;
 		}
 	}
 }

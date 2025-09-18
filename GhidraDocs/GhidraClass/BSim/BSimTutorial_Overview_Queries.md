@@ -14,7 +14,7 @@ You should see the following result:
 1. Sort the table by the "Hit Count" column in ascending order.  Typically, the functions with the largest hit counts will have low self-significance.
 Verify that that is the case for this table.
 1. Q: Examine the functions with the highest hit count. Why are there so many matches for these functions?
-   <details><summary>Answer:</summary> These are all instances of PostgreSQL statistics-reporting functions.  Their bodies are quite similar and they have identical BSim signatures.</details>
+   <details><summary>Answer:</summary> These are all instances of PostgreSQL error-reporting functions.  Their bodies are quite similar and they have identical BSim signatures.</details>
 
 ## Exercise: Selections and Queries
 
@@ -22,7 +22,7 @@ Using the hit count column, it is possible to exclude functions with large numbe
 
 1. In the Overview Table, select all functions whose hit count is 2 or less.
 1. Right-click on the selection and perform the **Search Selected Functions** action.
-   Sort the query results by descending **Function Count** and verify that ``demangler_gnu_v2_41`` is far down the list.
+   Sort the query results by descending **Confidence** and verify that ``demangler_gnu_v2_41`` is far down the list.
 
 ## Exercise: Vector Hashes
 
@@ -36,7 +36,7 @@ An optional column, **Vector Hash**, can be used to distinguish between these tw
 1. Enable the **Vector Hash** Column in the Overview Table.
 1. Find two functions with the same vector hash.
 1. Select the two corresponding rows in the table and then transfer the selection to the Listing using the ![make selection icon](images/text_align_justify.png) icon in the BSim Overview toolbar.
-1. In the Listing, press ``Shift-C`` or right-click and perform the **Compare Selected Functions** action.
+1. In the Listing, right-click and perform **Function -> Compare Function(s)**
 1. In the resulting Function Comparison window, convince yourself that these two functions should have the same BSim signature.
 
 Next Section: [Queries and Filters](BSimTutorial_Filters.md)

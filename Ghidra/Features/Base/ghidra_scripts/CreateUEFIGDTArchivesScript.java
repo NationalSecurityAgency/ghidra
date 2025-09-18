@@ -33,11 +33,9 @@ import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
-import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.util.Msg;
 
 public class CreateUEFIGDTArchivesScript extends GhidraScript {
 

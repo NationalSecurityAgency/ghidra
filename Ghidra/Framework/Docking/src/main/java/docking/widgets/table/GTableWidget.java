@@ -213,6 +213,10 @@ public class GTableWidget<T> extends JPanel {
 		return gFilterTable.getRowObject(row);
 	}
 
+	public int getRow(T rowObject) {
+		return gFilterTable.getRow(rowObject);
+	}
+
 	public void selectRow(int row) {
 		table.selectRow(row);
 	}

@@ -28,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Represents a Golang symbol name.
+ * Represents a Go symbol name.
  * <p>
  * Handles formats such as:
  * <p>
@@ -40,7 +40,7 @@ import ghidra.util.exception.InvalidInputException;
  * or
  * "type:.eq.[39]package/domain.name/packagename.Functionname"
  * 
- * @param symbolName full name of the golang symbol
+ * @param symbolName full name of the Go symbol
  * @param packagePath portion the symbol name that is the packagePath (path+packagename), or null
  * @param packageName portion of the symbol name that is the package name, or null
  * @param receiverString portion of the symbol name that is the receiver string (only found when
@@ -56,7 +56,7 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 		GoSymbolNameType symtype) {
 
 	/**
-	 * Fixes the specified string if it contains any of the golang special symbolname characters:
+	 * Fixes the specified string if it contains any of the Go special symbolname characters:
 	 * middle-dot and the weird slash.
 	 * 
 	 * @param s string to fix
@@ -76,6 +76,10 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	
 	private static final Pattern TYPE_PREFIX_SUB_PATTERN =
 		Pattern.compile("^type[:.]\\.([a-z]+)\\.$");
+
+	public static GoSymbolName parseTypeName(String s) {
+		return parseTypeName(s, null);
+	}
 
 	public static GoSymbolName parseTypeName(String s, String packagePath) {
 		int endOfPrefix = indexOfAny(s, "*[]0123456789.", 0, false);
@@ -235,16 +239,14 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	}
 
 	/**
-	 * Returns the portion the symbol name that is the packagePath (path+packagename), or null
-	 * @return the portion the symbol name that is the packagePath (path+packagename), or null
+	 * {@return the portion the symbol name that is the packagePath (path+packagename), or null}
 	 */
 	public String getPackagePath() {
 		return packagePath;
 	}
 
 	/**
-	 * Returns portion of the symbol name that is the package name, or null
-	 * @return portion of the symbol name that is the package name, or null
+	 * {@return portion of the symbol name that is the package name, or null}
 	 */
 	public String getPackageName() {
 		return packageName;
@@ -255,8 +257,7 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	}
 
 	/**
-	 * Returns portion of the symbol name that is the receiver string, or null
-	 * @return portion of the symbol name that is the receiver string, or null
+	 * {@return portion of the symbol name that is the receiver string, or null}
 	 */
 	public String getReceiverString() {
 		return receiverString == null || genericInfo == null || genericInfo.isEmpty()
@@ -341,8 +342,7 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	}
 
 	/**
-	 * Returns the full name of the golang symbol
-	 * @return full name of the golang symbol
+	 * {@return the full name of the Go symbol}
 	 */
 	public String asString() {
 		return symbolName;
@@ -392,10 +392,10 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	}
 
 	/**
-	 * Returns a Ghidra {@link Namespace} based on the golang package path.
+	 * Returns a Ghidra {@link Namespace} based on the Go package path.
 	 * 
 	 * @param program {@link Program} that will contain the namespace
-	 * @return {@link Namespace} cooresponding to the golang package path, or the program's root
+	 * @return {@link Namespace} corresponding to the Go package path, or the program's root
 	 * namespace if no package path information is present
 	 */
 	public Namespace getSymbolNamespace(Program program) {
@@ -413,10 +413,9 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	}
 
 	/**
-	 * Returns the matching Ghidra function (based on namespace and symbol name).
+	 * {@return the matching Ghidra {@link Function} (based on namespace and symbol name)}
 	 * 
 	 * @param program {@link Program} containing the function
-	 * @return Ghidra {@link Function}
 	 */
 	public Function getFunction(Program program) {
 		Namespace ns = getSymbolNamespace(program);

@@ -34,7 +34,7 @@ import ghidra.pcode.emu.jit.op.JitFloatSqrtOp;
  * This uses the unary operator generator and emits an invocation of {@link Math#sqrt(double)},
  * possibly surrounding it with conversions from and to float.
  */
-public enum FloatSqrtOpGen implements UnOpGen<JitFloatSqrtOp> {
+public enum FloatSqrtOpGen implements FloatUnOpGen<JitFloatSqrtOp> {
 	/** The generator singleton */
 	GEN;
 

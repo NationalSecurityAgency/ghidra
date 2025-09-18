@@ -18,7 +18,7 @@ package docking;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
-import resources.Icons;
+import generic.theme.GIcon;
 
 /**
  * A panel that holds a {@link KeyEntryTextField} and a button for clearing the current key binding.
@@ -41,7 +41,7 @@ public class KeyEntryPanel extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
 		keyEntryField = new KeyEntryTextField(columns, listener);
-		clearButton = new EmptyBorderButton(Icons.DELETE_ICON);
+		clearButton = new EmptyBorderButton(new GIcon("icon.text.field.clear"));
 		clearButton.setName("Clear Key Binding");
 		clearButton.addActionListener(e -> keyEntryField.clearKeyStroke());
 

@@ -158,7 +158,7 @@ public class ListingCommentsSearchAndReplaceTest extends AbstractSearchAndReplac
 		assertEquals("Not Applied", item.getStatusMessage());
 		assertEquals("Update", item.getActionName());
 		assertEquals("Code Comment", item.getItemType());
-		assertEquals(new CommentFieldLocation(program, addr(10), null, null, PRE.ordinal(), 0, 0),
+		assertEquals(new CommentFieldLocation(program, addr(10), null, null, PRE, 0, 0),
 			item.getProgramLocation());
 		assertEquals("PRE xxx abcxxxdef", item.getCurrent());
 

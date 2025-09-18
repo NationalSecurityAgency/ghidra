@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Class for parsing function signatures. This class attempts to be much more
@@ -352,10 +353,20 @@ public class FunctionSignatureParser {
 		}
 
 		@Override
+		public List<CategoryPath> getSortedCategoryPathList() {
+			return service.getSortedCategoryPathList();
+		}
+
+		@Override
 		public DataType getDataType(String filterText) {
+			return promptForDataType(filterText);
+		}
+
+		@Override
+		public DataType promptForDataType(String filterText) {
 			DataType dt = dtCache.get(filterText);
 			if (dt == null) {
-				dt = service.getDataType(filterText);
+				dt = service.promptForDataType(filterText);
 				if (dt != null) {
 					dtCache.put(filterText, dt);
 				}
@@ -363,5 +374,19 @@ public class FunctionSignatureParser {
 			return dt;
 		}
 
+		@Override
+		public List<DataType> getDataTypesByPath(DataTypePath path) {
+			return service.getDataTypesByPath(path);
+		}
+
+		@Override
+		public DataType getProgramDataTypeByPath(DataTypePath path) {
+			return service.getProgramDataTypeByPath(path);
+		}
+
+		@Override
+		public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
+			return service.findDataTypes(name, monitor);
+		}
 	}
 }

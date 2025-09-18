@@ -39,9 +39,8 @@ public class DialogProjectTreeContext extends DialogActionContext implements Pro
 	private List<DomainFolder> selectedFolders;
 	private List<DomainFile> selectedFiles;
 
-	public DialogProjectTreeContext(ProjectData projectData,
-			TreePath[] selectionPaths, List<DomainFolder> folderList, List<DomainFile> fileList,
-			DataTree tree) {
+	public DialogProjectTreeContext(ProjectData projectData, TreePath[] selectionPaths,
+			List<DomainFolder> folderList, List<DomainFile> fileList, DataTree tree) {
 		super(getContextObject(selectionPaths), tree);
 		this.selectionPaths = selectionPaths;
 		this.selectedFolders = folderList;
@@ -96,6 +95,16 @@ public class DialogProjectTreeContext extends DialogActionContext implements Pro
 			return 0;
 		}
 		return selectedFiles.size();
+	}
+
+	@Override
+	public boolean hasExactlyOneFileOrFolder() {
+		return (getFolderCount() + getFileCount()) == 1;
+	}
+
+	@Override
+	public boolean hasOneOrMoreFilesAndFolders() {
+		return getFolderCount() + getFileCount() > 0;
 	}
 
 	@Override

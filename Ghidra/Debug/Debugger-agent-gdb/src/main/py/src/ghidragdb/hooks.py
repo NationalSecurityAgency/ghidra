@@ -386,9 +386,10 @@ def on_new_objfile(event: gdb.NewObjFileEvent) -> None:
     modules_changed()
 
 
-@log_errors
-def on_free_objfile(event: gdb.FreeObjFileEvent) -> None:
-    modules_changed()
+if hasattr(gdb, 'FreeObjFileEvent'):
+    @log_errors
+    def on_free_objfile(event: gdb.FreeObjFileEvent) -> None:
+        modules_changed()
 
 
 @log_errors

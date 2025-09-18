@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Select and remove a source map entry at the current address.
-//@category SourceMapping
+//@category Source Mapping
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

@@ -32,8 +32,25 @@ public class DefaultSchemaContext implements SchemaContext {
 		}
 	}
 
+	public DefaultSchemaContext(SchemaContext ctx) {
+		this();
+		for (TraceObjectSchema schema : ctx.getAllSchemas()) {
+			if (!(schema instanceof PrimitiveTraceObjectSchema)) {
+				this.builder(schema).buildAndAdd();
+			}
+		}
+	}
+
+	public SchemaBuilder builder(TraceObjectSchema schema) {
+		return new SchemaBuilder(this, schema);
+	}
+
 	public SchemaBuilder builder(SchemaName name) {
 		return new SchemaBuilder(this, name);
+	}
+
+	public SchemaBuilder modify(SchemaName name) {
+		return new SchemaBuilder(this, getSchema(name));
 	}
 
 	public synchronized void putSchema(TraceObjectSchema schema) {

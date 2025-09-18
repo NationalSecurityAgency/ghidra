@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import java.util.*;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.label.AddUniqueLabelCmd;
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pef.*;
 import ghidra.app.util.importer.MessageLog;
@@ -68,15 +67,17 @@ public class PefLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	public void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
 
 		ImportStateCache importState = null;
 		try {
-			ContainerHeader header = new ContainerHeader(provider);
+			ContainerHeader header = new ContainerHeader(settings.provider());
 			monitor.setMessage("Completing PEF header parsing...");
 			monitor.setCancelEnabled(false);
 			header.parse();

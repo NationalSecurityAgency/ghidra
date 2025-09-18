@@ -101,6 +101,7 @@ data/typeinfo/golang/go1.21.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.22.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.23.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.24.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.25.0.json||GHIDRA||||END|
 data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
@@ -216,11 +217,23 @@ data/typeinfo/golang/patchverdiffs/go1.22.7.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.22.8.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.22.9.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.12.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.2.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.3.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.4.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.5.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.6.json.diff||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
@@ -317,6 +330,7 @@ src/main/help/help/topics/DataTypeEditors/images/BytesNumberInputDialog.png||GHI
 src/main/help/help/topics/DataTypeEditors/images/Dialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Create_Pointer.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Multiple_Match.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeEditors/images/Dialog_SearchMode.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Select_Tree.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/Dialog_Single_Match.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/images/EnumEditor.png||GHIDRA||||END|
@@ -398,6 +412,10 @@ src/main/help/help/topics/FrontEndPlugin/Project_Info.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Saving_a_Ghidra_Project.htm||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteBrokenFolderLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFileLinkIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/AbsoluteFolderLinkIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveFileExists.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ChangeAccessList.png||GHIDRA||||END|
@@ -439,6 +457,7 @@ src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA|||
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/hijack_file.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/start-here_16.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddToComparisonIcon.png||GHIDRA||||END|
@@ -1067,4 +1086,5 @@ src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
+src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|

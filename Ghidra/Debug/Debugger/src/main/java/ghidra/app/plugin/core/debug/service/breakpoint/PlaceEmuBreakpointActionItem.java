@@ -26,7 +26,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
@@ -49,42 +48,37 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		this.emuSleigh = emuSleigh;
 	}
 
-	private TraceObjectMemoryRegion findRegion() {
+	private TraceMemoryRegion findRegion() {
 		TraceMemoryRegion region = trace.getMemoryManager().getRegionContaining(snap, address);
 		if (region != null) {
-			return (TraceObjectMemoryRegion) region;
+			return region;
 		}
 		AddressSpace space = address.getAddressSpace();
 		Collection<? extends TraceMemoryRegion> regionsInSpace = trace.getMemoryManager()
 				.getRegionsIntersecting(Lifespan.at(snap),
 					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()));
 		if (!regionsInSpace.isEmpty()) {
-			return (TraceObjectMemoryRegion) regionsInSpace.iterator().next();
+			return regionsInSpace.iterator().next();
 		}
 		return null;
 	}
 
 	private TraceObject findBreakpointContainer() {
-		TraceObjectMemoryRegion region = findRegion();
+		TraceMemoryRegion region = findRegion();
 		if (region == null) {
 			throw new IllegalArgumentException("Address does not belong to a memory in the trace");
 		}
-		return region.getObject()
-				.findSuitableContainerInterface(TraceObjectBreakpointSpec.class);
+		return region.getObject().findSuitableContainerInterface(TraceBreakpointSpec.class);
 	}
 
 	private String computePath() {
 		String name = createName(address);
-		if (Trace.isLegacy(trace)) {
-			return "Breakpoints[" + name + "]";
-		}
 		TraceObject container = findBreakpointContainer();
 		if (container == null) {
 			throw new IllegalArgumentException(
 				"Address is not associated with a breakpoint container");
 		}
-		PathFilter specFilter =
-			container.getSchema().searchFor(TraceObjectBreakpointSpec.class, true);
+		PathFilter specFilter = container.getSchema().searchFor(TraceBreakpointSpec.class, true);
 		if (specFilter == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint specifications");
 		}
@@ -94,7 +88,7 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		}
 		PathFilter locFilter = container.getSchema()
 				.getSuccessorSchema(specRelPath)
-				.searchFor(TraceObjectBreakpointLocation.class, true);
+				.searchFor(TraceBreakpointLocation.class, true);
 		if (locFilter == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint locations");
 		}
@@ -109,11 +103,11 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 	public CompletableFuture<Void> execute() {
 		try (Transaction tx = trace.openTransaction("Place Emulated Breakpoint")) {
 			// Defaults with emuEnable=true
-			TraceBreakpoint bpt = trace.getBreakpointManager()
+			TraceBreakpointLocation loc = trace.getBreakpointManager()
 					.addBreakpoint(computePath(), Lifespan.at(snap),
 						BreakpointActionItem.range(address, length), Set.of(), kinds, false, null);
-			bpt.setName(snap, createName(address));
-			bpt.setEmuSleigh(snap, emuSleigh);
+			loc.setName(snap, createName(address));
+			loc.setEmuSleigh(snap, emuSleigh);
 			return AsyncUtils.nil();
 		}
 		catch (DuplicateNameException e) {

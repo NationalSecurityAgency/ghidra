@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,11 @@ public interface FolderItem {
 	 * Underlying file is serialized data file
 	 */
 	public static final int DATAFILE_FILE_TYPE = 1;
+
+	/**
+	 * Item type is associated with metadata only (e.g., URL)
+	 */
+	public static final int LINK_FILE_TYPE = 2;
 
 	/**
 	 * Default checkout ID used when a checkout is not applicable.

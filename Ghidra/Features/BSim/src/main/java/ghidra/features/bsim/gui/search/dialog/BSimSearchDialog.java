@@ -93,6 +93,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		}
 	}
 
+	@Override
 	protected JPanel buildServerPanel() {
 		JPanel panel = super.buildServerPanel();
 		panel.add(new JLabel("Function(s): "));
@@ -100,6 +101,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		return panel;
 	}
 
+	@Override
 	protected JPanel buildCenterPanel() {
 		filterPanel = new BSimFilterPanel(this::filterPanelChanged);
 		return createTitledPanel("Filters:", filterPanel, true);

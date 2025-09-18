@@ -222,6 +222,7 @@ public class JitTypeModel {
 		 * @param c the number of votes cast
 		 */
 		private void vote(JitTypeBehavior candidate, int c) {
+			Objects.requireNonNull(candidate);
 			if (candidate == JitTypeBehavior.ANY || candidate == JitTypeBehavior.COPY) {
 				return;
 			}

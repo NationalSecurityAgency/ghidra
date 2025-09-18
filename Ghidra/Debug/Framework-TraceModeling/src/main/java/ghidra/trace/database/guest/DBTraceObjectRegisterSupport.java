@@ -51,7 +51,7 @@ public enum DBTraceObjectRegisterSupport {
 
 	protected AddressSpace findRegisterOverlay(TraceObject object) {
 		TraceObject container = object
-				.findCanonicalAncestorsInterface(TraceObjectRegisterContainer.class)
+				.findCanonicalAncestorsInterface(TraceRegisterContainer.class)
 				.findFirst()
 				.orElse(null);
 		if (container == null) {
@@ -124,7 +124,7 @@ public enum DBTraceObjectRegisterSupport {
 			return;
 		}
 		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Lifespan.ALL,
-			TraceObjectRegister.KEY_VALUE, true))) {
+			TraceRegister.KEY_VALUE, true))) {
 			transferValueToPlatformRegister(registerValue, platform, mem, register);
 		}
 	}
@@ -132,7 +132,7 @@ public enum DBTraceObjectRegisterSupport {
 	protected void onSpaceAddedCheckTransferToPlatformRegisters(TracePlatform platform,
 			TraceObject regContainer, TraceMemorySpace mem) {
 		for (TraceObjectValPath path : it(
-			regContainer.findSuccessorsInterface(Lifespan.ALL, TraceObjectRegister.class,
+			regContainer.findSuccessorsInterface(Lifespan.ALL, TraceRegister.class,
 				true))) {
 			TraceObject registerObject =
 				path.getDestination(platform.getTrace().getObjectManager().getRootObject());
@@ -174,7 +174,7 @@ public enum DBTraceObjectRegisterSupport {
 		TraceMemorySpace mem = getMemorySpace(registerObject, label);
 		Address address = mem.getAddressSpace().getOverlayAddress(label.getAddress());
 		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(
-			label.getLifespan(), TraceObjectRegister.KEY_VALUE, true))) {
+			label.getLifespan(), TraceRegister.KEY_VALUE, true))) {
 			RegisterValueConverter rvc = new RegisterValueConverter(registerValue);
 			try {
 				long minSnap = registerValue.getMinSnap();
@@ -225,8 +225,8 @@ public enum DBTraceObjectRegisterSupport {
 	protected boolean isRegisterValue(TraceObjectValue objectValue) {
 		TraceObject parent = objectValue.getParent();
 		return parent != null &&
-			parent.getSchema().getInterfaces().contains(TraceObjectRegister.class) &&
-			TraceObjectRegister.KEY_VALUE.equals(objectValue.getEntryKey());
+			parent.getSchema().getInterfaces().contains(TraceRegister.class) &&
+			TraceRegister.KEY_VALUE.equals(objectValue.getEntryKey());
 	}
 
 	public void onValueCreatedCheckTransfer(TraceObjectValue objectValue) {
@@ -246,7 +246,7 @@ public enum DBTraceObjectRegisterSupport {
 		if (schema == null) {
 			return;
 		}
-		PathFilter filter = schema.searchFor(TraceObjectRegister.class, true);
+		PathFilter filter = schema.searchFor(TraceRegister.class, true);
 		PathFilter applied = filter.applyKeys(Align.RIGHT, List.of(label.getName()));
 		for (TraceObjectValPath path : it(
 			objectManager.getValuePaths(label.getLifespan(), applied))) {
@@ -292,7 +292,7 @@ public enum DBTraceObjectRegisterSupport {
 					KeyPath.parse(mem.getAddressSpace().getName()));
 		if (regContainer == null || !regContainer.getSchema()
 				.getInterfaces()
-				.contains(TraceObjectRegisterContainer.class)) {
+				.contains(TraceRegisterContainer.class)) {
 			return;
 		}
 		TracePlatformManager platformManager = trace.getPlatformManager();
@@ -320,7 +320,7 @@ public enum DBTraceObjectRegisterSupport {
 				.getMemoryManager()
 				.getMemorySpace(hostAddr.getAddressSpace(), true);
 		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Lifespan.ALL,
-			TraceObjectRegister.KEY_VALUE, true))) {
+			TraceRegister.KEY_VALUE, true))) {
 			transferValueToPlatformRegister(registerValue, guest, mem, register);
 		}
 	}
@@ -328,7 +328,7 @@ public enum DBTraceObjectRegisterSupport {
 	public void onMappingAddedCheckTransferMemoryMapped(TraceObject root,
 			TraceGuestPlatformMappedRange mapped) {
 		for (TraceObjectValPath path : it(
-			root.findSuccessorsInterface(Lifespan.ALL, TraceObjectRegister.class, true))) {
+			root.findSuccessorsInterface(Lifespan.ALL, TraceRegister.class, true))) {
 			TraceObject registerObject = path.getDestination(root);
 			onMappingAddedCheckTransferRegisterObjectMemoryMapped(registerObject, mapped);
 		}

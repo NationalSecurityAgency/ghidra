@@ -19,6 +19,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitInputVar;
 
 /**
@@ -32,7 +33,7 @@ public enum InputVarGen implements LocalVarGen<JitInputVar> {
 	GEN;
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitInputVar v, JitType type,
+	public void generateVarWriteCode(JitCodeGenerator gen, JitInputVar v, JitType type, Ext ext,
 			MethodVisitor rv) {
 		throw new AssertionError();
 	}

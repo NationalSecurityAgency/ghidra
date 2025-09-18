@@ -16,7 +16,6 @@
 package ghidra.trace.database.listing;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -150,8 +149,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * Check the preceding unit and see if it can be extended to "create" the desired one
 		 * 
 		 * <p>
-		 * For overwrite, the caller should first use
-		 * {@link #doAdjustExisting(Address, InstructionPrototype, Instruction)}.
+		 * For overwrite, the caller should first use *
+		 * {@link #doAdjustExisting(Address, Instruction)}.
 		 * 
 		 * @param address the starting address of the instruction
 		 * @param protoInstr the prototype instruction
@@ -229,7 +228,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * If it encounters a delay-slotted instruction, it will recurse on the group, iterating in
 		 * reverse order.
 		 * 
-		 * @param instructions the instructions to add
+		 * @param it the iterator of instructions to add
 		 * @param areDelaySlots true if the instructions are already reversed from being
 		 *            delay-slotted
 		 * @return the last instruction added
@@ -326,14 +325,14 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		RegisterValue newValue = context.getRegisterValue(contextReg);
 		DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
 		if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, tasr.getX1()), newValue)) {
-			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
+			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space.space, false);
 			if (ctxSpace == null) {
 				return;
 			}
 			ctxSpace.removeValue(language, contextReg, tasr.getLifespan(), tasr.getRange());
 			return;
 		}
-		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
+		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space.space, true);
 		// TODO: Do not save non-flowing context beyond???
 		ctxSpace.setValue(language, newValue, tasr.getLifespan(), tasr.getRange());
 	}
@@ -407,7 +406,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			DBTraceInstruction created =
 				doCreate(lifespan, address, dbPlatform, prototype, context, forcedLengthOverride);
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space, created, created));
+				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space.space, created, created));
 			return created;
 		}
 		catch (AddressOverflowException e) {
@@ -604,9 +603,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				if (lastInstruction != null) {
 					Address maxAddress = DBTraceCodeManager.instructionMax(lastInstruction, true);
 					result.addRange(block.getStartAddress(), maxAddress);
-					space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space,
-						new ImmutableTraceAddressSnapRange(block.getStartAddress(), maxAddress,
-							lifespan)));
+					space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_ADDED,
+						space.space, new ImmutableTraceAddressSnapRange(block.getStartAddress(),
+							maxAddress, lifespan)));
 				}
 			}
 			return result;

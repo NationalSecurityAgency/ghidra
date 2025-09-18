@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -177,39 +177,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Ignore(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.EXCLUDE);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Ignore() throws Exception {
 
-		doTestApplyCommentMatch_Ignore(CodeUnit.REPEATABLE_COMMENT,
-			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.EXCLUDE);
+		doTestApplyCommentMatch_Ignore(CommentType.REPEATABLE, VTOptionDefines.REPEATABLE_COMMENT,
+			CommentChoices.EXCLUDE);
 	}
 
-	private void doTestApplyCommentMatch_Ignore(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Ignore(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
@@ -249,39 +249,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Append(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.APPEND_TO_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Append() throws Exception {
 
-		doTestApplyCommentMatch_Append(CodeUnit.REPEATABLE_COMMENT,
-			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.APPEND_TO_EXISTING);
+		doTestApplyCommentMatch_Append(CommentType.REPEATABLE, VTOptionDefines.REPEATABLE_COMMENT,
+			CommentChoices.APPEND_TO_EXISTING);
 	}
 
-	private void doTestApplyCommentMatch_Append(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Append(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
@@ -326,39 +326,39 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testApplyMatchEOLComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.EOL_COMMENT, VTOptionDefines.END_OF_LINE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.EOL, VTOptionDefines.END_OF_LINE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPreComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.PRE_COMMENT, VTOptionDefines.PRE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.PRE, VTOptionDefines.PRE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPostComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.POST_COMMENT, VTOptionDefines.POST_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.POST, VTOptionDefines.POST_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchPlateComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.PLATE_COMMENT, VTOptionDefines.PLATE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.PLATE, VTOptionDefines.PLATE_COMMENT,
 			CommentChoices.OVERWRITE_EXISTING);
 	}
 
 	@Test
 	public void testApplyMatchRepeatableComments_Overwrite() throws Exception {
 
-		doTestApplyCommentMatch_Overwrite(CodeUnit.REPEATABLE_COMMENT,
+		doTestApplyCommentMatch_Overwrite(CommentType.REPEATABLE,
 			VTOptionDefines.REPEATABLE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
 	}
 
-	private void doTestApplyCommentMatch_Overwrite(int codeUnitCommentType,
+	private void doTestApplyCommentMatch_Overwrite(CommentType codeUnitCommentType,
 			String vtCommentOptionDefine, CommentChoices commentChoice) throws Exception {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
@@ -1062,8 +1062,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		String sourceComment = "Hi mom replace";
 		String destinationComment = "Hi dad replace";
 		Address commentAddress = addr("0x01002d06", sourceProgram);
-		setComment(sourceProgram, commentAddress, CodeUnit.EOL_COMMENT, sourceComment);
-		setComment(destinationProgram, commentAddress, CodeUnit.EOL_COMMENT, destinationComment);
+		setComment(sourceProgram, commentAddress, CommentType.EOL, sourceComment);
+		setComment(destinationProgram, commentAddress, CommentType.EOL, destinationComment);
 
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
@@ -1087,7 +1087,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String expectedComment = destinationComment + "\n" + sourceComment;
 		Listing destinationListing = destinationProgram.getListing();
-		String comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		String comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not applied", expectedComment, comment);
 
 		//
@@ -1108,7 +1108,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		expectedComment = destinationComment + "\n" + sourceComment;
 		destinationListing = destinationProgram.getListing();
-		comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not applied", expectedComment, comment);
 
 		//
@@ -1121,7 +1121,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("New symbol does not match the source symbol",
 			SystemUtilities.isArrayEqual(expectedSymbols, newSymbols));
 
-		comment = destinationListing.getComment(CodeUnit.EOL_COMMENT, commentAddress);
+		comment = destinationListing.getComment(CommentType.EOL, commentAddress);
 		assertEquals("Comment was not unpplied", destinationComment, comment);
 	}
 
@@ -2069,7 +2069,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private void setComment(Program program, Address address, int codeUnitCommentType,
+	private void setComment(Program program, Address address, CommentType codeUnitCommentType,
 			String comment) {
 		Listing listing = program.getListing();
 

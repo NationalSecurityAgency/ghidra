@@ -38,6 +38,7 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.database.sourcemap.UserDataPathTransformer;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -174,14 +175,16 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 		}
 		// if there's only one entry associated with the address, just view it
 		if (entries.size() == 1) {
-			openInViewer(entries.get(0));
+			SourceMapEntry entry = entries.get(0);
+			openInViewer(entry.getSourceFile(), entry.getLineNumber());
 			return;
 		}
 		// if there are multiple entries, we need to decide which one to view
 		// if the user right-clicked in the SourceMapField in the Listing, open
 		// the associated entry
 		if (context.getLocation() instanceof SourceMapFieldLocation sourceLoc) {
-			openInViewer(sourceLoc.getSourceMapEntry());
+			SourceMapEntry entry = sourceLoc.getSourceMapEntry();
+			openInViewer(entry.getSourceFile(), entry.getLineNumber());
 			return;
 		}
 		// otherwise pop up a window and ask the user to select an entry
@@ -207,21 +210,21 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 			return;
 		}
 		SourceMapEntry entryToShow = stringsToEntries.get(selected);
-		openInViewer(entryToShow);
+		openInViewer(entryToShow.getSourceFile(), entryToShow.getLineNumber());
 	}
 
-	private void openInViewer(SourceMapEntry entry) {
-		if (entry == null) {
+	void openInViewer(SourceFile sourceFile, int lineNum) {
+		if (sourceFile == null) {
 			return;
 		}
 		SourcePathTransformer transformer =
 			UserDataPathTransformer.getPathTransformer(currentProgram);
 		String transformedPath =
-			transformer.getTransformedPath(entry.getSourceFile(), useExistingAsDefault);
+			transformer.getTransformedPath(sourceFile, useExistingAsDefault);
 
 		if (transformedPath == null) {
 			Msg.showWarn(this, null, "No Path Transform",
-				"No path transformation applies to " + entry.getSourceFile().toString());
+				"No path transformation applies to " + sourceFile.toString());
 			return;
 		}
 
@@ -234,10 +237,10 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 
 		switch (selectedViewer) {
 			case ECLIPSE:
-				openFileInEclipse(localSourceFile.getAbsolutePath(), entry.getLineNumber());
+				openFileInEclipse(localSourceFile.getAbsolutePath(), lineNum);
 				break;
 			case VS_CODE:
-				openFileInVsCode(localSourceFile.getAbsolutePath(), entry.getLineNumber());
+				openFileInVsCode(localSourceFile.getAbsolutePath(), lineNum);
 				break;
 			default:
 				throw new AssertionError("Unsupported Viewer: " + selectedViewer);

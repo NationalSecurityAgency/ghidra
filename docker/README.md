@@ -2,13 +2,13 @@
 
 ## Build
 
-From the root directory of your Ghidra release, run the following command with the correct version for your release.
+From the root directory of your Ghidra release, run the following command.
 
 ```
-docker build -f docker/Dockerfile -t ghidra/ghidra[:<version>] .
+./docker/build-docker-image.sh
 ```
 
-The image tag is optional, but highly recommended.
+This will build the ghidra docker image with a tag corresponding to the release version of Ghidra.
 
 
 ## The MODE environment variable
@@ -33,7 +33,7 @@ Configuration steps vary a lot based on what MODE the container is started with.
 
 The base directory for Ghidra within the container is located at `/ghidra`. 
 All of ghidra's default locations for files, configs, etc., are the same within that.
-Ghidra is run as the user `ghidra` within the container. 
+Ghidra is run as the user `ghidra` within the container, with uid `1001` and guid `1001`. 
 
 The `ghidra` user only has permissions to the following directories inside the container:
 - `/ghidra`
@@ -61,19 +61,23 @@ docker run \
     --volume /path/to/myproject:/home/ghidra/myproject \
     --volume /path/to/mybinary:/home/ghidra/mybinary \
     ghidra/ghidra:<version> \
-    /myproject programFolder -import /mybinary
+    /home/ghidra/myproject programFolder -import /home/ghidra/mybinary
 ```
 
 Breaking this down line by line:
 - `docker run` is going to start a docker container using the image `ghidra/ghidra<:<version>`
 - `--env MODE=headless` configures the environment variable `MODE` within the container to be the value `headless`
 - `--rm` removes the container after the command is complete
-- `--volume /path/to/myproject:/myproject` mounts the local volume `/path/to/myproject` on the host to `/myproject` within the container
-- `--volume /path/to/mybinary:/mybinary` mounts the local volume `/path/to/mybinary` on the host to `/mybinary` within the container
+- `--volume /path/to/myproject:/home/ghidra/myproject` mounts the local volume 
+	`/path/to/myproject` on the host to `/home/ghidra/myproject` within the container
+- `--volume /path/to/mybinary:/home/ghidra/mybinary` mounts the local volume 
+	`/path/to/mybinary` on the host to `/home/ghidra/mybinary` within the container
 - `ghidra/ghidra:<version>` is the full reference for the docker image, where `ghidra/ghidra` is the group and name of the image, and `<version>` is the tag.
-- `/myproject programFolder -import /mybinary` are arguments being passed to Ghidra's headless analyzer's command line interface
+- `/home/ghidra/myproject programFolder -import /home/ghidra/mybinary` are arguments being passed to Ghidra's headless analyzer's command line interface
 
-Passing no arguments will result in the usage of the headless analyzer being displayed.
+Passing no arguments will result in the usage of the headless analyzer being displayed. 
+
+`/path/to/myproject` on the host must be accessible to guid `1001` with `rwx` permissions.
 
 ### Example of Gui Mode
 
@@ -87,7 +91,7 @@ docker run \
     --rm \
     --net host \
     --env DISPLAY \
-    --volume="$HOME/.Xauthority:/home/ghidra/.Xauthority" \
+    --volume "$HOME/.Xauthority:/home/ghidra/.Xauthority" \
     ghidra/ghidra:<version>
 ```
 
@@ -124,7 +128,6 @@ To stop the container, execute the command `docker stop <container-id>`.
 ## Example of BSIM Server Mode
 
 ```
-export DATADIR_PATH=/home/ghidrausr/datadir
 docker run \
     --env MODE=bsim-server \
     --rm \
@@ -151,7 +154,7 @@ docker run \
 		--env MODE=bsim \
 		--rm \
 		 -it \
-		 ghidra/ghidra:RELEASE \
+		 ghidra/ghidra:<version> \
 		 generatesigs ghidra://ghidrasvr/demo /home/ghidra \
 			 --bsim postgresql://bsimsvr/demo \
 			 --commit --overwrite \
@@ -200,4 +203,7 @@ docker run \
 Passing no arguments to the pyghidra headless analyzer will result in the help menu being displayed, just like the headless analyzer.
 
 This use case is very similar to the headless mode's example with the added benefit of being able to utilize python3 for Ghidra Scripts.
+
+Again, in this example, appropriate permissions and group assignment for `/path/to/myproject` and `/path/to/mybinary` are necessary 
+in order to not run into permissions issues.
 

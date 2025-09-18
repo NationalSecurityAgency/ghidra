@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitUnOp;
 
 /**
@@ -28,6 +29,26 @@ import ghidra.pcode.emu.jit.op.JitUnOp;
  * @param <T> the class of p-code op node in the use-def graph
  */
 public interface UnOpGen<T extends JitUnOp> extends OpGen<T> {
+
+	/**
+	 * Whether this operator is signed
+	 * <p>
+	 * In many cases, the operator itself is not affected by the signedness of the operands;
+	 * however, if size adjustments to the operands are needed, this can determine how those
+	 * operands are extended.
+	 * 
+	 * @return true for signed, false if not
+	 */
+	boolean isSigned();
+
+	/**
+	 * When loading and storing variables, the kind of extension to apply
+	 * 
+	 * @return the extension kind
+	 */
+	default Ext ext() {
+		return Ext.forSigned(isSigned());
+	}
 
 	/**
 	 * Emit code for the unary operator
@@ -56,8 +77,8 @@ public interface UnOpGen<T extends JitUnOp> extends OpGen<T> {
 	 */
 	@Override
 	default void generateRunCode(JitCodeGenerator gen, T op, JitBlock block, MethodVisitor rv) {
-		JitType uType = gen.generateValReadCode(op.u(), op.uType());
+		JitType uType = gen.generateValReadCode(op.u(), op.uType(), ext());
 		JitType outType = generateUnOpRunCode(gen, op, block, uType, rv);
-		gen.generateVarWriteCode(op.out(), outType);
+		gen.generateVarWriteCode(op.out(), outType, ext());
 	}
 }

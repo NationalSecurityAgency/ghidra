@@ -45,6 +45,16 @@ public interface Navigatable {
 	public boolean goTo(Program program, ProgramLocation location);
 
 	/**
+	 * Commands this navigatable to goto (display) the given location, using the program 
+	 * in the location.
+	 * @param location the location in that program to display
+	 * @return true if the goto was successful
+	 */
+	public default boolean goTo(ProgramLocation location) {
+		return goTo(location.getProgram(), location);
+	}
+
+	/**
 	 * Returns the current location of this Navigatable
 	 *
 	 * @return the current location of this Navigatable

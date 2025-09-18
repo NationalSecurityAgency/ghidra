@@ -116,18 +116,8 @@ public class GlobalSymbol implements Symbol {
 	}
 
 	@Override
-	public boolean hasMultipleReferences() {
-		return false;
-	}
-
-	@Override
 	public boolean hasReferences() {
 		return false;
-	}
-
-	@Override
-	public Reference[] getReferences() {
-		return new Reference[0];
 	}
 
 	@Override

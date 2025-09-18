@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC2_ProtocolList implements StructConverter {
@@ -41,7 +40,7 @@ public class ObjectiveC2_ProtocolList implements StructConverter {
 		this._state = state;
 		this._index = reader.getPointerIndex();
 
-		long count = state.is32bit ? reader.readNextInt() & Conv.INT_MASK : reader.readNextLong();
+		long count = state.is32bit ? reader.readNextUnsignedInt() : reader.readNextLong();
 
 		for (long i = 0 ; i < count ; ++i) {
 			long protocolIndex = ObjectiveC1_Utilities.readNextIndex(reader, state.is32bit);
@@ -77,6 +76,7 @@ public class ObjectiveC2_ProtocolList implements StructConverter {
 		return struct;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME+'_'+protocols.size()+'_', 0);
 

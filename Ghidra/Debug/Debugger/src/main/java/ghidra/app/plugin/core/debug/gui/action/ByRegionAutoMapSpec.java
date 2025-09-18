@@ -29,7 +29,7 @@ import ghidra.debug.api.modules.RegionMapProposal;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
@@ -61,7 +61,7 @@ public class ByRegionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean objectHasType(TraceObjectValue value) {
-		return value.getParent().queryInterface(TraceObjectMemoryRegion.class) != null;
+		return value.getParent().queryInterface(TraceMemoryRegion.class) != null;
 	}
 
 	static String getInfoForRegions(Trace trace, long snap) {

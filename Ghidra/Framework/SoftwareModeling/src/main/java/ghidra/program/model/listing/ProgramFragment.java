@@ -39,7 +39,8 @@ public interface ProgramFragment extends Group, AddressSetView {
 	 * 
 	 * @return true if the code unit is in the fragment, false otherwise.
 	 */
-    public boolean contains(CodeUnit codeUnit);
+    @Override
+	public boolean contains(CodeUnit codeUnit);
 
 	/**
 	 * Returns a forward iterator over the code units making up this fragment. 

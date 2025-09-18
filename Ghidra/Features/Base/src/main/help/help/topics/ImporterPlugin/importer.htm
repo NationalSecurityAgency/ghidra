@@ -279,6 +279,12 @@
           removed (e.g., .xml, .gzf).  Path information at the beginning of this field
           will be used to create a destination folder in the current project under the root folder
           specified by the <B>Destination Folder</B> field.</LI><BR>
+          
+          <LI><B>Mirror Filesystem</B> - If checked, the filesystem path layout of any imported 
+          binaries will be mirrored in the destination folder. Any filesystem directory and file 
+          soft links will be mirrored as 
+          <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Create_File_Links">Ghidra
+          project folder and file links.</A>.</LI><BR>
 
           <LI><B>Options...</B> - This button will pop up format specific options for the
           import.</LI><BR>
@@ -335,7 +341,9 @@
 
         <BLOCKQUOTE>
           <P>The project folder that will get searched for existing library programs.  If left
-          empty, the folder that the main program is being imported to will be searched.</P>
+          empty, the folder that the main program is being imported to will be searched.
+          <B><I>This option is hidden and set to the program destination folder if filesystem 
+          mirroring is enabled in the Importer Dialog</I></B>.</P>
         </BLOCKQUOTE>
         
         <H4>Load Libraries From Disk</H4>
@@ -360,7 +368,20 @@
 
         <BLOCKQUOTE>
           <P>The project folder where newly loaded library programs will get created.  If left 
-          empty, they will get created in the same folder as the main program being imported.</P>
+          empty, they will get created in the same folder as the main program being imported.
+          <B><I>This option is hidden and set to the program destination folder if filesystem 
+          mirroring is enabled in the Importer Dialog</I></B>.</P>
+        </BLOCKQUOTE>
+        
+        <H4>Mirror Library Disk Layout</H4>
+
+        <BLOCKQUOTE>
+           <P>If selected, the filesystem path layout of all imported libraries are
+           mirrored in the library destination folder. Any filesystem directory and file 
+           soft links will be mirrored as 
+           <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Create_File_Links">Ghidra
+           project folder and file links</A>. <B><I>This option is hidden and enabled if filesystem 
+           mirroring is enabled in the Importer Dialog</I></B>.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -718,6 +739,9 @@
         added via the
         <A href="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html#FSB_Add_Library_Search_Path">File System Browser context menu</A>.
         </P>
+        <P>If importing with filesystem mirroring activated, these paths also are used to lookup
+        already-imported libraries that are rooted in the project at the specified destination folder.
+        </P>
       </BLOCKQUOTE>
 
       <P align="center"><IMG alt="" src="images/SearchPathsDialog.png"></P>
@@ -935,6 +959,16 @@
             <P>If selected, the newly imported files will not use the interior archive path when storing
             the result in the project. Otherwise, the file will be in a corresponding relative path
             to the path the file was in its archive.</P>
+          </BLOCKQUOTE>
+          
+          <H4>Mirror Filesystem</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the filesystem path layout of any imported 
+            binaries will be mirrored in the destination folder. Any filesystem directory and file 
+            soft links will be mirrored as 
+            <A href="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Create_File_Links">Ghidra
+            project folder and file links.</A></P>
           </BLOCKQUOTE>
 
         	  <H4>Project Destination</H4>

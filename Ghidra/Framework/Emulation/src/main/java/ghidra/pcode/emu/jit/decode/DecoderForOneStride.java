@@ -77,7 +77,7 @@ public class DecoderForOneStride {
 	private final AddrCtx start;
 
 	final List<Instruction> instructions = new ArrayList<>();
-	final List<PcodeOp> opsForStride = new ArrayList<>();;
+	final List<PcodeOp> opsForStride = new ArrayList<>();
 
 	/**
 	 * Construct a stride decoder

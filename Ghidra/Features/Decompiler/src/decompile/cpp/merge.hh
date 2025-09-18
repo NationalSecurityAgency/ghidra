@@ -20,6 +20,7 @@
 /// \brief Utilities for merging low-level Varnodes into high-level variables
 
 #include "op.hh"
+#include "expression.hh"
 
 namespace ghidra {
 

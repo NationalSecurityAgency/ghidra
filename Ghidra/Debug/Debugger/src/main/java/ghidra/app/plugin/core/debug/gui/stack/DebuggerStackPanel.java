@@ -34,15 +34,15 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 
-public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObjectStackFrame>
+public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceStackFrame>
 		implements ListSelectionListener {
 
 	private static class FrameLevelColumn extends TraceValueKeyColumn {
@@ -59,7 +59,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 
 	private static class FramePcColumn extends TraceValueObjectAttributeColumn<Address> {
 		public FramePcColumn() {
-			super(TraceObjectStackFrame.KEY_PC, Address.class);
+			super(TraceStackFrame.KEY_PC, Address.class);
 		}
 
 		@Override
@@ -72,7 +72,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 		if (!(row.getValue().getValue() instanceof TraceObject object)) {
 			return null;
 		}
-		TraceObjectValue attrPc = object.getAttribute(snap, TraceObjectStackFrame.KEY_PC);
+		TraceObjectValue attrPc = object.getAttribute(snap, TraceStackFrame.KEY_PC);
 		if (attrPc == null || !(attrPc.getValue() instanceof Address pc)) {
 			return null;
 		}
@@ -177,7 +177,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 	protected DebuggerTraceManagerService traceManager;
 
 	public DebuggerStackPanel(DebuggerStackProvider provider) {
-		super(provider.plugin, provider, TraceObjectStackFrame.class);
+		super(provider.plugin, provider, TraceStackFrame.class);
 		this.provider = provider;
 	}
 
@@ -190,12 +190,12 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 	protected ModelQuery computeQuery(TraceObject object) {
 		TraceObjectSchema rootSchema = object.getRoot().getSchema();
 		KeyPath stackPath =
-			rootSchema.searchForSuitable(TraceObjectStack.class, object.getCanonicalPath());
+			rootSchema.searchForSuitable(TraceStack.class, object.getCanonicalPath());
 		if (stackPath == null) {
 			return ModelQuery.EMPTY;
 		}
 		TraceObjectSchema stackSchema = rootSchema.getSuccessorSchema(stackPath);
-		PathFilter filter = stackSchema.searchFor(TraceObjectStackFrame.class, stackPath, true);
+		PathFilter filter = stackSchema.searchFor(TraceStackFrame.class, stackPath, true);
 		return new ModelQuery(filter);
 	}
 

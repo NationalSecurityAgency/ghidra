@@ -25,6 +25,7 @@
 #@menu-group drgn
 #@icon icon.debugger
 #@help drgn#linux_kernel
+#@depends Debugger-rmi-trace
 
 export OPT_TARGET_KIND="kernel" 
 sudo -E drgn ../support/local-drgn.py

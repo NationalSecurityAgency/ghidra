@@ -46,6 +46,7 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	/**
 	 * Get a copy of all the known specifications
 	 * 
+	 * @param tool the plugin tool or context
 	 * @return the specifications by configuration name
 	 */
 	static Map<String, LocationTrackingSpec> allSuggested(PluginTool tool) {

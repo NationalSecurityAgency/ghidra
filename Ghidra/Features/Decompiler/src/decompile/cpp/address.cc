@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -666,6 +666,8 @@ uintb uintb_negate(uintb in,int4 size)
 uintb sign_extend(uintb in,int4 sizein,int4 sizeout)
 
 {
+  sizein = (sizein < sizeof(uintb)) ? sizein : sizeof(uintb);
+  sizeout = (sizeout < sizeof(uintb)) ? sizeout : sizeof(uintb);
   intb sval = in;
   sval <<= (sizeof(intb) - sizein) * 8;
   uintb res = (uintb)(sval >> (sizeout - sizein) * 8);

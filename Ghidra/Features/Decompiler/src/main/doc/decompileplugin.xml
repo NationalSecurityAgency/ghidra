@@ -3348,6 +3348,14 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="MiddleMouseColor">
+      <term><emphasis role="bold">Color for Highlighting Middle-mouse Matches</emphasis></term>
+      <listitem>
+	<para>
+	  Assign the background color used to highlight characters when highlighting using the middle-mouse button.
+	</para>
+      </listitem>
+    </varlistentry>    
     <varlistentry id="DisplayCommentIndent">
       <term><emphasis role="bold">Comment line indent level</emphasis></term>
       <listitem>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -176,12 +176,12 @@ public abstract class VariableDB implements Variable {
 
 	@Override
 	public String getComment() {
-		return symbol.getSymbolStringData();
+		return symbol.getSymbolComment();
 	}
 
 	@Override
 	public void setComment(String comment) {
-		symbol.setSymbolStringData(comment);
+		symbol.setSymbolComment(comment);
 		functionMgr.functionChanged(function, null);
 	}
 
@@ -409,8 +409,11 @@ public abstract class VariableDB implements Variable {
 	 * Update variable storage and data-type associated with the underlying variable symbol.
 	 * If function does not use custom storage, the specified storage will be ignored and set
 	 * to UNASSIGNED.
-	 * @param newStorage
-	 * @param dt
+	 * <P>
+	 * NOTE: Method will trigger a symbol changed event.
+	 * 
+	 * @param newStorage variable storage
+	 * @param dt variable datatype
 	 */
 	void setStorageAndDataType(VariableStorage newStorage, DataType dt) {
 		if (this instanceof Parameter && !function.hasCustomVariableStorage()) {

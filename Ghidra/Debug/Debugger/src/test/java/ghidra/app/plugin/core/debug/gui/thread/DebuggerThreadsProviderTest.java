@@ -34,13 +34,13 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.trace.model.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
-import ghidra.trace.model.target.iface.TraceObjectExecutionStateful;
+import ghidra.trace.model.target.iface.TraceExecutionStateful;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.path.PathPattern;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.table.GhidraTable;
 
@@ -71,8 +71,8 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	DebuggerThreadsProvider provider;
 
-	protected TraceObjectThread thread1;
-	protected TraceObjectThread thread2;
+	protected TraceThread thread1;
+	protected TraceThread thread2;
 
 	protected SchemaContext ctx;
 
@@ -95,18 +95,18 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		}
 	}
 
-	protected TraceObjectThread addThread(int index, Lifespan lifespan, String comment) {
+	protected TraceThread addThread(int index, Lifespan lifespan, String comment) {
 		TraceObjectManager om = tb.trace.getObjectManager();
 		PathPattern threadPattern = PathFilter.parse("Processes[1].Threads[]");
-		TraceObjectThread thread = Objects.requireNonNull(om.createObject(
+		TraceThread thread = Objects.requireNonNull(om.createObject(
 			threadPattern.applyIntKeys(index).getSingletonPath())
 				.insert(lifespan, ConflictResolution.TRUNCATE)
 				.getDestination(null)
-				.queryInterface(TraceObjectThread.class));
+				.queryInterface(TraceThread.class));
 		thread.getObject()
-				.setAttribute(lifespan, TraceObjectExecutionStateful.KEY_STATE,
+				.setAttribute(lifespan, TraceExecutionStateful.KEY_STATE,
 					TraceExecutionState.STOPPED.name());
-		thread.getObject().setAttribute(lifespan, TraceObjectThread.KEY_COMMENT, comment);
+		thread.getObject().setAttribute(lifespan, TraceThread.KEY_COMMENT, comment);
 		return thread;
 	}
 
@@ -160,7 +160,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		assertNull(provider.panel.getSelectedItem());
 	}
 
-	protected void assertThreadSelected(TraceObjectThread thread) {
+	protected void assertThreadSelected(TraceThread thread) {
 		ValueRow row = provider.panel.getSelectedItem();
 		assertNotNull(row);
 		assertEquals(thread.getObject(), row.getValue().getChild());
@@ -329,7 +329,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		waitForPass(() -> assertEquals("A different comment",
-			thread1.getObject().getAttribute(0, TraceObjectThread.KEY_COMMENT).getValue()));
+			thread1.getObject().getAttribute(0, TraceThread.KEY_COMMENT).getValue()));
 	}
 
 	// @Test // Not gonna with write-behind cache

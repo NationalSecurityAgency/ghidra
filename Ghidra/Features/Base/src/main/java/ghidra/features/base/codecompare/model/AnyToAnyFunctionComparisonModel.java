@@ -44,6 +44,13 @@ public class AnyToAnyFunctionComparisonModel extends AbstractFunctionComparisonM
 		}
 	}
 
+	public AnyToAnyFunctionComparisonModel(Function left, Function right) {
+		this.functions.add(left);
+		this.functions.add(right);
+		setActiveFunction(LEFT, left);
+		setActiveFunction(RIGHT, right);
+	}
+
 	public AnyToAnyFunctionComparisonModel(Function... functions) {
 		this(Arrays.asList(functions));
 	}

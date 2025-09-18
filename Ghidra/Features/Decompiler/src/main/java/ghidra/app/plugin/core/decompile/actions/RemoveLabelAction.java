@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
@@ -64,7 +65,8 @@ public class RemoveLabelAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Symbol s = getSymbol(context);
-		Command cmd = new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
+		Command<Program> cmd =
+			new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
 		PluginTool tool = context.getTool();
 		if (!tool.execute(cmd, context.getProgram())) {
 			tool.setStatusInfo(cmd.getStatusMsg());

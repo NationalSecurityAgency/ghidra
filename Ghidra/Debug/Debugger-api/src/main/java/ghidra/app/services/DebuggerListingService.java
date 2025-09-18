@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.framework.plugintool.ServiceInfo;
@@ -50,11 +51,18 @@ public interface DebuggerListingService extends CodeViewerService {
 	void setTrackingSpec(LocationTrackingSpec spec);
 
 	/**
-	 * Get the tracking specification of the listing.
+	 * Get the tracking specification of the main listing.
 	 * 
 	 * @return the current specification
 	 */
 	LocationTrackingSpec getTrackingSpec();
+
+	/**
+	 * Get the auto-read memory specification of the main listing.
+	 * 
+	 * @return the current specification
+	 */
+	AutoReadMemorySpec getAutoReadMemorySpec();
 
 	/**
 	 * Add a listener for changes to the tracking specification.

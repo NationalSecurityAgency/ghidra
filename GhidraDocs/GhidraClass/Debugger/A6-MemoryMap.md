@@ -144,7 +144,7 @@ For demonstration, we will walk through this second case, pretending we cannot l
 1. It is probably best to include everything, though **Bytes** is the bare minimum.
 1. The table displays the *copy plan*.
    For a new program, this will copy with an identical mapping of addresses, which is probably the best plan, since the target system has already applied fixups.
-   Do not change any addresses, lest your corrupt references in the copy.
+   Do not change any addresses, lest you corrupt references in the copy.
 1. Click **Copy**.
 1. When prompted, name the program `libncurses`.
 1. You may need to click the `termmines` tab in the Static Listing to get the UI to completely update.
@@ -157,7 +157,7 @@ Undoubtedly, we would like to map that new program into our dynamic session.
 1. In the top pane of the Modules window, right-click `libncurses` and choose **Map to libncurses**.
 1. Check the proposed mapping and click **OK**.
 
-## Exercise: Export and Map `ncurses`
+## Exercise: Export and Map `system-supplied DSO`
 
 Repeat this technique for the "system-supplied DSO" module.
 In practice, there is no real reason to do this, but this particular module prevents you from using **Import From File System**.

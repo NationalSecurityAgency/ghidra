@@ -29,7 +29,7 @@
       "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>.</P>
 
       <P>The display consists of the <A href="#Primary_View">Primary View</A> and the <A href=
-      "#Satellite_View">Satellite View</A>. There is also a group of <A href=
+      "help/topics/VisualGraph/Visual_Graph.html#Satellite_View">Satellite View</A>. There is also a group of <A href=
       "#Function_Graph_Actions">actions</A> that apply to the entire graph.</P>
     </BLOCKQUOTE>
     
@@ -92,60 +92,6 @@
       you can click on the tool's menu bar <B>Edit-&gt;Tool Options...</B> to launch
       the options.   From there you can find the option at <B>Function Graph-&gt;
       Automatic Graph Relayout</B></P>
-    </BLOCKQUOTE>
-
-    <H2><A name="Satellite_View"></A>Satellite View</H2>
-
-    <BLOCKQUOTE>
-      <P>The Satellite View provides an overview of the graph. From this view you may also perform
-      basic adjustment of the overall graph location. In addition to the complete graph, the
-      satellite view contains a <B>lens</B> (the white rectangle) that indicates how much of the
-      current graph fits into the primary view.</P>
-
-      <P>When you single left mouse click in the satellite view the graph is centered around the
-      corresponding point in the primary view. Alternatively, you may drag the lens of the
-      satellite view to the desired location by performing a mouse drag operation on the lens.</P>
-
-      <P>You may hide the satellite view by right-clicking anywhere in the Primary View and
-      deselecting the <B>Display Satellite View</B> toggle button from the popup menu.</P>
-
-      <BLOCKQUOTE>
-        <P><IMG src="help/shared/tip.png" alt="" border="0"> If the Primary View is painting
-        sluggishly, then hiding the Satellite View cause the Primary View to be more
-        responsive.</P>
-      </BLOCKQUOTE>
-
-      <H3><A name="Satellite_View_Dock"></A>Detached Satellite</H3>
-
-      <BLOCKQUOTE>
-        <P>The Satellite View is attached, or <B>docked</B>, to the Primary View by default.
-        However, you can detach, or undock, the Satellite View, which will put the view into a
-        Component Provider, which itself can be moved, resized and docked anywhere in the Tool you
-        wish.</P>
-
-        <P>To undock the Satellite View, right-click in the graph and deselect the <B>Dock
-        Satellite View</B> menu item.</P>
-
-        <P>To re-dock the Satellite View, right-click in the graph and select the <B>Dock Satellite
-        View</B> menu item.</P>
-      </BLOCKQUOTE>
-
-      <BLOCKQUOTE>
-        <P><IMG src="help/shared/tip.png" alt="" border="0"> To reshow the Satellite View if it is
-        hidden, whether docked or undocked, you can press the <IMG src=
-        "images/network-wireless.png" alt="" border="1"> button. This button is in the lower-right
-        hand corner of the graph and is only visible if the Satellite View is hidden or
-        undocked.</P>
-      </BLOCKQUOTE>
-      
-      	    
-     <H3><A name="Satellite_Location"></A>Docked Satellite Location</H3>
-	 <BLOCKQUOTE>
-	   <P>When the Satellite View is attached, or <B>docked</B>, to the Primary View, you 
-	        can choose which corner to show the satellite view. To change the
-	        corner, right-click in the graph, select <B>Docked Satellite Position</B> and then
-	        select the appropriate sub-menu for the desired corner.<P>
-	 </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H2><A name="Vertices"></A>Vertices (Blocks)</H2>
@@ -896,54 +842,16 @@
       <BR>
     </BLOCKQUOTE>
 
-    <H2><A name="Pan"></A>Panning</H2>
-
-    <BLOCKQUOTE>
-      <P>There are various ways to move the graph. To move the graph in any direction you can drag
-      from the whitespace of the graph.</P>
-
-      <P>By default, to move the graph vertically you can use the mouse wheel. In previous releases
-      the scroll wheel was used to zoom. Now there is an option to restore that behavior, the
-      <B>Scroll Wheel Pans</B> option. When this option is on, you can zoom by holding the
-      <TT><B>Control</B></TT> key (<TT><B>Command</B></TT> key on the Mac) while using the scroll
-      wheel. Alternatively, you can move the graph left to right using the mouse while
-      holding <TT><B>Control-Alt</B></TT>.</P>
-
-      <P>The satellite viewer may also be used to move the primary graphs view by dragging and
-      clicking inside of the satellite viewer.</P>
-    </BLOCKQUOTE>
-
     <H2><A name="Zoom"></A>Zooming</H2>
 
     <BLOCKQUOTE>
       <P>At <B>full zoom</B>, or <B>block level zoom</B>, each block is rendered at its natural
       size, which is the same scale as Ghidra's primary <A href=
       "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Listing</A>. From that point, which is a 1:1
-      zoom level, you can zoom out in order to fit more of the graph into the display.</P>
-
-      <BLOCKQUOTE>
-        <P>To change the zoom you may use the mouse scroll wheel while holding the
-        <TT><B>Control</B></TT> key (<TT><B>Command</B></TT> key on the Mac). This works whether
-        the mouse is over the primary viewer or the satellite viewer. Also, you may use the context
-        popup menu from the primary viewer in order to quickly zoom to the block level (1:1) or to
-        the window level (zoomed out far enough to fit the entire graph in the window). These
-        actions are <B>Zoom to Vertex</B> and <B>Zoom to Window</B>, respectively.</P>
-
-        <P><IMG src="help/shared/note.png" alt="Note" border="0"> To have the scroll wheel zoom
-        without holding the <TT><B>Control</B></TT> key, you can disable the <B>Scroll Wheel
-        Pans</B> option.</P>
-
-        <P><IMG src="help/shared/note.png" alt="Note" border="0"> To zoom the graph incrementally
-        using the keyboard you can use the <B>Zoom In</B> and <B>Zoom Out</B> actions. These
-        actions have default keybindings of <TT><B>Control-Minus</B></TT> and
-        <TT><B>Control-Equals</B></TT>.</P>
-      </BLOCKQUOTE>
-
-      <P>The <A href="#Satellite_View">satellite viewer</A> is always zoomed out far enough to fit
-      the entire graph into its window.</P>
-      </BLOCKQUOTE>
-
-      
+      zoom level, you can zoom out in order to fit more of the graph into the display. See
+      <A href="help/topics/VisualGraph/Visual_Graph.html#Zoom">Visual Graph Zooming</A> for
+      more information on graph zooming.</P>
+	 
         <H3>Vertex Quick Zoom</H3>
 
         <P>If you double-click a block header, then the <A href="#Zoom">Zoom Level</A> of the
@@ -954,48 +862,6 @@
       </BLOCKQUOTE>
 
       <H3><A name="Interaction_Threshold"></A>Interaction Threshold</H3>
-
-		<BLOCKQUOTE>
-      <P>While zooming out (away from the blocks) you will eventually reach a point where you can
-      no longer interact with the listing inside of the block. The blocks provide a subtle visual
-      indication when they are zoomed past this level, in the form of a drop-shadow. The image
-      below shows this drop-shadow. The block on the left is not past the interaction threshold,
-      but the block on the right is, and thus has a drop-shadow. This example is for illustrative
-      purposes only and during normal usage all blocks will share the save zoom level. So, if one
-      block is zoomed past the interaction threshold, all other blocks will be as well.</P>
-
-      <TABLE x-use-null-cells="" width="100%">
-        <TBODY>
-          <TR>
-            <TD align="center" width="100%"><IMG border="1" src=
-            "images/FunctionGraph_Vertex_Drop_Shadow.png"></TD>
-          </TR>
-        </TBODY>
-      </TABLE>
-      
-      <p>
-      Interaction with blocks that are past the interaction threshold is simplified; for
-      example, when scaled past the interaction threshold, dragging in the listing area of a block
-      will drag the block, instead of making a selection in the listing, as would happen when not
-      scaled past the interaction threshold. 
-      </p>
-      </BLOCKQUOTE>
-      <BR>
-      <BR>
-       
-
-      <H3>Painting Threshold</H3>
-		<BLOCKQUOTE>
-      <P>While zooming out (away from the blocks) you will eventually reach a point where contents
-      each block will not be painted. Instead, each block will be painted by a rectangle that is
-      painted with the current background color of the block.</P>
-
-      <BLOCKQUOTE>
-        <P><IMG src="help/shared/tip.png" alt="Note" border="0"> Zooming past the painting
-        threshold will improve the rendering speed of the Primary View.</P>
-      </BLOCKQUOTE>
-      </BLOCKQUOTE>
-    </BLOCKQUOTE>
     
     <H2><A name="Saving"></A>Saving View Information</H2>
     
@@ -1015,6 +881,19 @@
     
     </BLOCKQUOTE>
     
+  	<H2>Standard Graph Features and Actions</H2>
+	<BLOCKQUOTE>
+	<P>The function graph is a type of Ghidra Visual Graph and has some standard concepts, features
+	and actions. 
+	<BLOCKQUOTE>
+		<UL>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Satellite_View">Satellite View</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Pan">Panning</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Zoom">Zooming</A></LI>
+			<LI><A href="help/topics/VisualGraph/Visual_Graph.html#Interaction_Threshold">Interaction Threshold</A></LI>
+		</UL>
+	</BLOCKQUOTE>
+	</BLOCKQUOTE>
     
 
     <P class="providedbyplugin">Provided by: <I>Function Graph Plugin</I></P>

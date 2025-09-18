@@ -22,6 +22,7 @@ import ghidra.pcode.emu.jit.analysis.JitAllocationModel.VarHandler;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitVarnodeVar;
 
 /**
@@ -41,11 +42,11 @@ public interface LocalVarGen<V extends JitVarnodeVar> extends VarGen<V> {
 	}
 
 	@Override
-	default JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq,
+	default JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq, Ext ext,
 			MethodVisitor rv) {
 		VarHandler handler = gen.getAllocationModel().getHandler(v);
 		JitType type = typeReq.resolve(gen.getTypeModel().typeOf(v));
-		handler.generateLoadCode(gen, type, rv);
+		handler.generateLoadCode(gen, type, ext, rv);
 		return type;
 	}
 }

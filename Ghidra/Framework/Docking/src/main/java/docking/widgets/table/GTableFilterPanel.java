@@ -670,6 +670,16 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	}
 
 	/**
+	 * Returns the view row for the given object.
+	
+	 * @param t the row object 
+	 * @return the view row
+	 */
+	public int getViewRow(ROW_OBJECT t) {
+		return rowObjectFilterModel.getViewIndex(t);
+	}
+
+	/**
 	 * Select the given row object.  No selection will be made if the object is filtered out of
 	 * view.   Passing {@code null} will clear the selection.
 	 *

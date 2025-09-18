@@ -32,7 +32,6 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging data types.
@@ -1010,7 +1009,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 			}
 
 			@Override
@@ -1105,11 +1104,11 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				// remove Bar from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
+				dtm.remove(bar);
 				DataType word = dtm.getDataType(new CategoryPath("/"), "word");
 				// remove Bar and word from the data type manager
-				dtm.remove(bar, TaskMonitor.DUMMY);
-				dtm.remove(word, TaskMonitor.DUMMY);
+				dtm.remove(bar);
+				dtm.remove(word);
 			}
 
 			@Override
@@ -1220,7 +1219,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				fd.setReturnType(bar);
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 			}
 
 			@Override
@@ -1273,7 +1272,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				fd.setVarArgs(true);
 				fd.setNoReturn(true);
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 			}
 
 			@Override
@@ -1328,7 +1327,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				fd.setVarArgs(true);
 				fd.setNoReturn(true);
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				dtm.remove(foo, TaskMonitor.DUMMY);
+				dtm.remove(foo);
 			}
 
 			@Override

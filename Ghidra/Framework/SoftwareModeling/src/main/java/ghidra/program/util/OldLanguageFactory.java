@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -323,6 +323,12 @@ public class OldLanguageFactory {
 			Element element;
 			if (space instanceof SegmentedAddressSpace) {
 				element = new Element("segmented_space");
+				if (space instanceof ProtectedAddressSpace) {
+					element.setAttribute("type", "protected");
+				}
+				else {
+					element.setAttribute("type", "real");
+				}
 				element.setAttribute("name", space.getName());
 			}
 			else {

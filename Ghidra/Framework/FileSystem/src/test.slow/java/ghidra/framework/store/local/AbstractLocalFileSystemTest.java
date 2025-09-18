@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,8 +232,9 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		// Get storage name based upon data dir name ~<storage-name>.db
 		String storageName = dataDir.getName();
-		storageName = storageName.substring(0,
-			storageName.length() - LocalFolderItem.DATA_DIR_EXTENSION.length()).substring(1);
+		storageName = storageName
+				.substring(0, storageName.length() - LocalFolderItem.DATA_DIR_EXTENSION.length())
+				.substring(1);
 		File propertyFile =
 			new File(dataDir.getParentFile(), storageName + PropertyFile.PROPERTY_EXT);
 		assertTrue(propertyFile.isFile());
@@ -396,6 +397,12 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		byte[] dataBytes = data.getBytes();
 
 		fs.createFolder("/", "aaa");
+
+		// item's name and folder name may replicate each other
+		DataFileItem file = createItem(dataBytes, "/", "aaa");
+		assertNotNull(file);
+		assertTrue(fs.folderExists("/aaa"));
+		assertTrue(fs.fileExists("/", "aaa"));
 
 		createItem(dataBytes, "/aaa", "~)(%$#@!JGJ");
 
@@ -584,8 +591,9 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		// Get storage name based upon data dir name ~<storage-name>.db
 		String storageName = dataDir.getName();
-		storageName = storageName.substring(0,
-			storageName.length() - LocalFolderItem.DATA_DIR_EXTENSION.length()).substring(1);
+		storageName = storageName
+				.substring(0, storageName.length() - LocalFolderItem.DATA_DIR_EXTENSION.length())
+				.substring(1);
 		File propertyFile =
 			new File(dataDir.getParentFile(), storageName + PropertyFile.PROPERTY_EXT);
 		assertTrue(propertyFile.isFile());
@@ -615,8 +623,8 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		assertEquals("fred", items[1]);
 		assertEquals("greg", items[2]);
 
-		assertEquals(LocalDataFile.class, fs.getItem("/abc", items[0]).getClass());
-		assertEquals(LocalDataFile.class, fs.getItem("/abc", items[1]).getClass());
+		assertEquals(LocalDataFileItem.class, fs.getItem("/abc", items[0]).getClass());
+		assertEquals(LocalDataFileItem.class, fs.getItem("/abc", items[1]).getClass());
 		assertEquals(LocalDatabaseItem.class, fs.getItem("/abc", items[2]).getClass());
 
 		df = (DataFileItem) fs.getItem("/abc", items[0]);
@@ -649,7 +657,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		fs.moveItem("/abc", "fred", "/xyz", "bob");
 
 		assertNull(fs.getItem("/abc", "fred"));
-		LocalDataFile df = (LocalDataFile) fs.getItem("/xyz", "bob");
+		LocalDataFileItem df = (LocalDataFileItem) fs.getItem("/xyz", "bob");
 		assertNotNull(df);
 
 		try (InputStream in = df.getInputStream()) {

@@ -19,7 +19,7 @@ from pathlib import Path
 import re
 
 
-MINIMUM_GHIDRA_VERSION = "11.2"
+MINIMUM_GHIDRA_VERSION = "12.0"
 _APPLICATION_PATTERN = re.compile(r"^application\.(\S+?)=(.*)$")
 
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.exception.AssertException;
 
 class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryModelIf {
+	private static final int DEFAULT_CELL_WIDTH = 200;
 	private static final int DEFAULT_ICON_SIZE = 16;
 	private static final int MIN_HEIGHT_PADDING = 5;
 
@@ -86,7 +87,20 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		FontMetrics metrics = cellRenderer.getFontMetrics(font);
 		setFixedCellHeight(Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE) +
 			Math.max(metrics.getHeight() / 3, MIN_HEIGHT_PADDING));
-		setFixedCellWidth(-1);
+	}
+
+	@Override
+	public int getFixedCellWidth() {
+		//
+		// This code is called from within the Java List UI to calculate the preferred dimension.
+		// We can prevent the UI from looping over all files by setting a non-negative value for 
+		// our cell width and height.  Here we return a non-negative width value when we have a  
+		// large number of files.  The height is always set to a non-negative value.
+		//
+		if (chooser.hasBigData()) {
+			return DEFAULT_CELL_WIDTH;
+		}
+		return -1;
 	}
 
 	private void build() {

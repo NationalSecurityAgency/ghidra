@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -538,6 +538,18 @@ void VarnodeTpl::decode(Decoder &decoder)
   offset.decode(decoder);
   size.decode(decoder);
   decoder.closeElement(el);
+}
+
+bool VarnodeTpl::operator==(const VarnodeTpl &op2) const
+
+{
+  return space==op2.space && offset==op2.offset && size==op2.size;
+}
+
+bool VarnodeTpl::operator!=(const VarnodeTpl &op2) const
+
+{
+  return !(*this == op2);
 }
 
 bool VarnodeTpl::operator<(const VarnodeTpl &op2) const

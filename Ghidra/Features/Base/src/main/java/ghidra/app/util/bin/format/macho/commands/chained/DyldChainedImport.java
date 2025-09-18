@@ -47,14 +47,16 @@ public class DyldChainedImport implements StructConverter {
 		switch (imports_format) {
 			case DYLD_CHAINED_IMPORT: {
 				int ival = reader.readNextInt();
-				lib_ordinal = ival & 0xff;
+				int ordinal = ival & 0xff;
+				lib_ordinal = ordinal > 0xf0 ? (byte) ordinal : ordinal;
 				weak_import = ((ival >> 8) & 1) == 1;
 				name_offset = (ival >> 9 & 0x7fffff);
 				break;
 			}
 			case DYLD_CHAINED_IMPORT_ADDEND: {
 				int ival = reader.readNextInt();
-				lib_ordinal = ival & 0xff;
+				int ordinal = ival & 0xff;
+				lib_ordinal = ordinal > 0xf0 ? (byte) ordinal : ordinal;
 				weak_import = ((ival >> 8) & 1) == 1;
 				name_offset = (ival >> 9 & 0x7fffff);
 				addend = reader.readNextInt();
@@ -62,7 +64,8 @@ public class DyldChainedImport implements StructConverter {
 			}
 			case DYLD_CHAINED_IMPORT_ADDEND64: {
 				long ival = reader.readNextLong();
-				lib_ordinal = (int) (ival & 0xffff);
+				int ordinal = (int) (ival & 0xffff);
+				lib_ordinal = ordinal > 0xfff0 ? (short) ordinal : ordinal;
 				weak_import = ((ival >> 16) & 1) == 1;
 				name_offset = ((ival >> 32) & 0xffffffffL);
 				addend = reader.readNextLong();

@@ -39,6 +39,7 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.ExitSlot;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.ValGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
@@ -215,9 +216,6 @@ public class JitCodeGenerator {
 	private final MethodVisitor clinitMv;
 	private final MethodVisitor initMv;
 	private final MethodVisitor runMv;
-
-	private final Label startLocals = new Label();
-	private final Label endLocals = new Label();
 
 	/**
 	 * Construct a code generator for the given passage's target classfile
@@ -594,10 +592,11 @@ public class JitCodeGenerator {
 	 * 
 	 * @param v the value to read
 	 * @param typeReq the required type of the value
+	 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
 	 * @return the actual type of the value on the stack
 	 */
-	public JitType generateValReadCode(JitVal v, JitTypeBehavior typeReq) {
-		return ValGen.lookup(v).generateValReadCode(this, v, typeReq, runMv);
+	public JitType generateValReadCode(JitVal v, JitTypeBehavior typeReq, Ext ext) {
+		return ValGen.lookup(v).generateValReadCode(this, v, typeReq, ext, runMv);
 	}
 
 	/**
@@ -611,9 +610,10 @@ public class JitCodeGenerator {
 	 * 
 	 * @param v the variable to write
 	 * @param type the actual type of the value on the stack
+	 * @param ext the kind of extension to apply when adjusting from varnode size to JVM size
 	 */
-	public void generateVarWriteCode(JitVar v, JitType type) {
-		VarGen.lookup(v).generateVarWriteCode(this, v, type, runMv);
+	public void generateVarWriteCode(JitVar v, JitType type, Ext ext) {
+		VarGen.lookup(v).generateVarWriteCode(this, v, type, ext, runMv);
 	}
 
 	/**
@@ -858,20 +858,9 @@ public class JitCodeGenerator {
 	 */
 	protected void generateRunCode() {
 		runMv.visitCode();
+		final Label startLocals = new Label();
 		runMv.visitLabel(startLocals);
 
-		for (FixedLocal fixed : RunFixedLocal.ALL) {
-			fixed.generateDeclCode(runMv, nameThis, startLocals, endLocals);
-		}
-
-		for (JvmLocal local : am.allLocals()) {
-			local.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
-		// TODO: This for loop doesn't actually do anything....
-		for (JitVal v : dfm.allValuesSorted()) {
-			VarHandler handler = am.getHandler(v);
-			handler.generateDeclCode(this, startLocals, endLocals, runMv);
-		}
 		/**
 		 * NB. opIdx starts at 1, because JVM will ignore "Line number 0"
 		 */
@@ -884,6 +873,10 @@ public class JitCodeGenerator {
 				Label lblEntry = new Label();
 				entries.add(lblEntry);
 			}
+		}
+
+		for (FixedLocal fixed : RunFixedLocal.ALL) {
+			fixed.generateInitCode(runMv, nameThis);
 		}
 
 		// []
@@ -929,6 +922,22 @@ public class JitCodeGenerator {
 		for (ExceptionHandler handler : excHandlers.values()) {
 			handler.generateRunCode(this, runMv);
 		}
+
+		final Label endLocals = new Label();
+		runMv.visitLabel(endLocals);
+
+		for (FixedLocal fixed : RunFixedLocal.ALL) {
+			fixed.generateDeclCode(runMv, nameThis, startLocals, endLocals);
+		}
+
+		for (JvmLocal local : am.allLocals()) {
+			local.generateDeclCode(this, startLocals, endLocals, runMv);
+		}
+		// TODO: This for loop doesn't actually do anything....
+		for (JitVal v : dfm.allValuesSorted()) {
+			VarHandler handler = am.getHandler(v);
+			handler.generateDeclCode(this, startLocals, endLocals, runMv);
+		}
 	}
 
 	/**
@@ -953,8 +962,9 @@ public class JitCodeGenerator {
 		dest.getParentFile().mkdirs();
 		try (OutputStream os = new FileOutputStream(dest)) {
 			os.write(bytes);
+			new ProcessBuilder("javap", "-c", "-l", dest.getPath()).inheritIO().start().waitFor();
 		}
-		catch (IOException e) {
+		catch (IOException | InterruptedException e) {
 			Msg.warn(this, "Could not dump class file: " + nameThis + " (" + e + ")");
 		}
 		return bytes;
@@ -989,7 +999,6 @@ public class JitCodeGenerator {
 		initMv.visitMaxs(20, 20);
 		initMv.visitEnd();
 
-		runMv.visitLabel(endLocals);
 		try {
 			runMv.visitMaxs(20, 20);
 		}

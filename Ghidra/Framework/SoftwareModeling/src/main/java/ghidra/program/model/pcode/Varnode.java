@@ -164,7 +164,7 @@ public class Varnode {
 		if (spaceID != varnode.spaceID) {
 			return false;
 		}
-		if (isConstant() || isUnique() || isHash()) {
+		if (isConstant() || isHash()) {
 			// this is not really a valid use case
 			return offset == varnode.getOffset();
 		}

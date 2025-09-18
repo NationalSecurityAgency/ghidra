@@ -117,7 +117,7 @@ public interface RemoteMethod {
 	 * Check the type of an argument.
 	 * 
 	 * <p>
-	 * This is a hack, because {@link TraceObjectSchema} expects {@link TargetObject}, or a
+	 * This is a hack, because {@link TraceObjectSchema} expects {@link TraceObject}, or a
 	 * primitive. We instead need {@link TraceObject}. I'd add the method to the schema, except that
 	 * trace stuff is not in its dependencies.
 	 * 

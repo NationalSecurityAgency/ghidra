@@ -149,25 +149,25 @@ public class GhidraGo implements GhidraLaunchable {
 	 * @throws IOException in the event that the execution failed
 	 */
 	private Process startGhidra(GhidraApplicationLayout layout) throws IOException {
-		ResourceFile file = layout.getApplicationInstallationDir();
+		ResourceFile file = layout.getApplicationRootDirs().stream().findFirst().get();
 		Path ghidraRunPath;
 
 		if (SystemUtilities.isInDevelopmentMode()) {
 			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
 				ghidraRunPath = Path.of(file.getAbsolutePath(),
-					"/ghidra/Ghidra/RuntimeScripts/Windows/ghidraRun.bat");
+					"/RuntimeScripts/Windows/ghidraRun.bat");
 			}
 			else {
 				ghidraRunPath = Path.of(file.getAbsolutePath(),
-					"/ghidra/Ghidra/RuntimeScripts/Linux/ghidraRun");
+					"/RuntimeScripts/Linux/ghidraRun");
 			}
 		}
 		else {
 			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
-				ghidraRunPath = Path.of(file.getAbsolutePath(), "/ghidraRun.bat");
+				ghidraRunPath = Path.of(file.getAbsolutePath(), "/../ghidraRun.bat");
 			}
 			else {
-				ghidraRunPath = Path.of(file.getAbsolutePath(), "/ghidraRun");
+				ghidraRunPath = Path.of(file.getAbsolutePath(), "/../ghidraRun");
 			}
 		}
 

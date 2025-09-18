@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -980,6 +980,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	// extended, so truncate to the smaller of s_size and d_size
 
 	private class SIMD_INT_ZEXT extends SIMD_UOP1E {
+		@Override
 		protected long op1e(long x, int s_size, int d_size) { return x & getmask(s_size) & getmask(d_size); }
 	}
 
@@ -988,6 +989,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	// be truncated to the output size
 
 	private class SIMD_INT_SEXT extends SIMD_SOP1E {
+		@Override
 		protected long op1e(long x, int s_size, int d_size) { return x & getmask(d_size); }
 	}
 
@@ -1015,11 +1017,13 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_INT_ABS extends SIMD_SOP1 {
+		@Override
 		protected long op1(long x, int esize) { return (x < 0) ? -x : x; }
 	}
 
 	@SuppressWarnings("unused")
 	private class SIMD_INT_ADD extends SIMD_SOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x + y; }
 	}
 
@@ -1030,10 +1034,12 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_INT_SUB extends SIMD_SOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x - y; }
 	}
 
 	private class SIMD_INT_2COMP extends SIMD_SOP1 {
+		@Override
 		protected long op1(long x, int esize) { return -x; }
 	}
 
@@ -1080,6 +1086,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_INT_NEGATE extends SIMD_UOP1 {
+		@Override
 		protected long op1(long x, int esize) { return ~x; }
 	}
 
@@ -1115,22 +1122,27 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_INT_XOR extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x ^ y; }
 	}
 
 	private class SIMD_INT_AND extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x & y; }
 	}
 
 	private class SIMD_INT_OR extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x | y; }
 	}
 
 	private class SIMD_INT_LEFT extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x << y; }
 	}
 
 	private class SIMD_INT_RIGHT extends SIMD_SOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x >>> y; }
 	}
 
@@ -1169,10 +1181,12 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_INT_SRIGHT extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x >> y; }
 	}
 
 	private class SIMD_INT_MULT extends SIMD_SOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) { return x * y; }
 	}
 
@@ -1237,6 +1251,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_ADD extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1307,6 +1322,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_DIV extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1329,6 +1345,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_MULT extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1351,6 +1368,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_SUB extends SIMD_UOP2 {
+		@Override
 		protected long op2(long x, long y, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1373,6 +1391,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_NEG extends SIMD_UOP1 {
+		@Override
 		protected long op1(long x, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1392,6 +1411,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT_ABS extends SIMD_UOP1 {
+		@Override
 		protected long op1(long x, int esize) {
 			if (esize == 2) {
 				float fx = shortBitsToFloat(x);
@@ -1411,6 +1431,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_FLOAT2FLOAT extends SIMD_UOP1E {
+		@Override
 		protected long op1e(long x, int s_size, int d_size) {
 			if (s_size == d_size) return x;
 			if (s_size == 2) {
@@ -1431,6 +1452,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 	}
 
 	private class SIMD_TRUNC extends SIMD_UOP1E {
+		@Override
 		protected long op1e(long x, int s_size, int d_size) {
 			if (s_size == d_size) return x;
 			if (s_size == 2) {
@@ -1452,6 +1474,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 	@SuppressWarnings("unused")
 	private class SIMD_FLOAT_ROUND extends SIMD_UOP1E {
+		@Override
 		protected long op1e(long x, int s_size, int d_size) {
 			if (s_size == 2) {
 				float fx = shortBitsToFloat(x);

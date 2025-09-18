@@ -123,7 +123,7 @@ task buildJavacc {
 	description = "  Compiles the JavaCC files\n"
 }
 
-// Note: this must happen before the standard buildHelp for Base
+// Note: this must happen before the standard buildModuleHelp for Base
 tasks.register('generateExtraHelpFiles') {
 	
 	group = 'private'
@@ -193,7 +193,7 @@ def createTipsHelpFile(input, output) {
 compileJava.dependsOn buildJavacc
 rootProject.prepDev.dependsOn buildJavacc
 
-// 'indexHelp' is defined in the buildHelp.gradle 'script plugin'
+// 'indexHelp' is defined in the helpProject.gradle 'script plugin'
 indexHelp.dependsOn generateExtraHelpFiles
 
 zipSourceSubproject.dependsOn buildCPPParser

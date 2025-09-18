@@ -4,12 +4,6 @@
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/debugger-launchers/android-lldb.ps1||GHIDRA||||END|
-data/debugger-launchers/kernel-lldb.ps1||GHIDRA||||END|
-data/debugger-launchers/local-lldb.ps1||GHIDRA||||END|
-data/debugger-launchers/remote-lldb.ps1||GHIDRA||||END|
-data/debugger-launchers/ssh-lldb.ps1||GHIDRA||||END|
-data/support/lldbsetuputils.ps1||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/lldb/lldb.html||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|

@@ -25,6 +25,7 @@ import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.BranchOpGen.BranchGen;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitBranchIndOp;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
@@ -55,9 +56,9 @@ public enum BranchIndOpGen implements OpGen<JitBranchIndOp> {
 			JitBlock block, MethodVisitor rv) {
 		gen.generatePassageExit(block, () -> {
 			// [...]
-			JitType targetType = gen.generateValReadCode(op.target(), op.targetType());
+			JitType targetType = gen.generateValReadCode(op.target(), op.targetType(), Ext.ZERO);
 			// [...,target:?]
-			TypeConversions.generateToLong(targetType, LongJitType.I8, rv);
+			TypeConversions.generateToLong(targetType, LongJitType.I8, Ext.ZERO, rv);
 			// [...,target:LONG]
 		}, ctx, rv);
 

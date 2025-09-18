@@ -185,54 +185,57 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
-				.menuGroup(MENU_GRAPH, "A")
+		new ActionBuilder("Graph Block Flow", getName())
+				.menuPath(MENU_GRAPH, "&Block Flow")
+				.menuGroup("Code Graph", "A")
 				.onAction(c -> graphBlockFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
-				.menuGroup(MENU_GRAPH, "B")
+		new ActionBuilder("Graph Code Flow", getName())
+				.menuPath(MENU_GRAPH, "C&ode Flow")
+				.menuGroup("Code Graph", "B")
 				.onAction(c -> graphCodeFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Calls Using Default Model", getName())
 				.menuPath(MENU_GRAPH, "&Calls")
-				.menuGroup(MENU_GRAPH, "C")
+				.menuGroup("Code Graph", "C")
 				.onAction(c -> createDefaultCallGraph())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data" }, "Graph", "Data");
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data References" }, "Graph", "Data");
 		HelpLocation helpLoc = new HelpLocation(getName(), "Data_Reference_Graph");
 
 		new ActionBuilder("Graph To/From Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "To/From &References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "To/From &References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph To Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "&To References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "&To References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphToDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph From Data References", getName())
-				.menuPath(MENU_GRAPH, "Data", "&From References")
-				.menuGroup(MENU_GRAPH, "Data")
+				.menuPath(MENU_GRAPH, "Data References", "&From References")
+				.menuGroup("Graph", "Data")
 				.helpLocation(helpLoc)
 				.onAction(c -> graphFromDataReferences())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
 		reuseGraphAction =
-			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
+			new ToggleActionBuilder("Reuse Graph", getName())
+					.menuPath(MENU_GRAPH, "Reuse Graph")
 					.menuGroup("Graph Options")
 					.selected(reuseGraph)
 					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
@@ -240,7 +243,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 					.buildAndInstall(tool);
 
 		appendGraphAction =
-			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
+			new ToggleActionBuilder("Append Graph", getName())
+					.menuPath(MENU_GRAPH, "Append Graph")
 					.menuGroup("Graph Options")
 					.selected(false)
 					.onAction(c -> updateAppendAndReuseGraph())
@@ -297,13 +301,12 @@ public class ProgramGraphPlugin extends ProgramPlugin
 			subUsingGraphActions.add(action);
 		}
 
-		tool.setMenuGroup(new String[] { MENU_GRAPH, "Calls Using Model" }, "Graph", "C");
+		tool.setMenuGroup(new String[] { MENU_GRAPH, "Calls Using Model" }, "Code Graph", "D");
 	}
 
 	private DockingAction buildGraphActionWithModel(String blockModelName, HelpLocation helpLoc) {
 		return new ActionBuilder("Graph Calls using " + blockModelName, getName())
 				.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
-				.menuGroup(MENU_GRAPH, "C")
 				.helpLocation(helpLoc)
 				.onAction(c -> createCallGraphUsing(blockModelName))
 				.enabledWhen(this::canGraph)

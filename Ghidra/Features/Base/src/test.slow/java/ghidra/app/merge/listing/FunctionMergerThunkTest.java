@@ -17,7 +17,7 @@ package ghidra.app.merge.listing;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.JDialog;
 
@@ -944,27 +944,10 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
 
-		List<ExternalLocation> externalLocations =
+		Set<ExternalLocation> externalLocations =
 			resultProgram.getExternalManager().getExternalLocations("user32.dll", "printf");
 		assertEquals(2, externalLocations.size());
-		Address address1 = externalLocations.get(0).getAddress();
-		Address address2 = externalLocations.get(1).getAddress();
-		assertTrue("Expected one location to be ", areOneOfEach(address1, address2,
-			addr(resultProgram, "77db1020"), addr(resultProgram, "77db1130")));
-
-	}
-
-	private <T> boolean areOneOfEach(T t1, T t2, T v1, T v2) {
-
-		if (t1.equals(v1) && t2.equals(v2)) {
-			return true;
-		}
-
-		if (t1.equals(v2) && t2.equals(v1)) {
-			return true;
-		}
-
-		return false;
+		assertHasExtAddresses(externalLocations, "77db1020", "77db1130");
 	}
 
 	@Test

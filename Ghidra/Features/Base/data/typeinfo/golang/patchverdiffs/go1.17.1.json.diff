@@ -1,82 +1,255 @@
-@ ["all","Types","func(error)","Params",0,"Name"]
-- ""
-+ "err"
-@ ["all","Types","func(string, []interface {})","Params",0,"Name"]
-- "format"
-+ ""
-@ ["all","Types","func(string, []interface {})","Params",1,"Name"]
-- "args"
-+ ""
-@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
-@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
+@ ["all","Funcs","net/http.http2ConfigureTransport","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6765:6"
++ "$GOROOT/net/http/h2_bundle.go:6774:6"
+@ ["all","Funcs","net/http.http2ConfigureTransports","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6773:6"
++ "$GOROOT/net/http/h2_bundle.go:6782:6"
+@ ["all","Funcs","net/http.http2NewPriorityWriteScheduler","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10016:6"
++ "$GOROOT/net/http/h2_bundle.go:10025:6"
+@ ["all","Funcs","net/http.http2NewRandomWriteScheduler","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10418:6"
++ "$GOROOT/net/http/h2_bundle.go:10427:6"
+@ ["all","Funcs","net/http.http2actualContentLength","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7614:6"
++ "$GOROOT/net/http/h2_bundle.go:7623:6"
+@ ["all","Funcs","net/http.http2authorityAddr","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7051:6"
++ "$GOROOT/net/http/h2_bundle.go:7060:6"
+@ ["all","Funcs","net/http.http2awaitRequestCancel","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6919:6"
++ "$GOROOT/net/http/h2_bundle.go:6928:6"
+@ ["all","Funcs","net/http.http2canRetryError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7164:6"
++ "$GOROOT/net/http/h2_bundle.go:7173:6"
+@ ["all","Funcs","net/http.http2checkConnHeaders","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7598:6"
++ "$GOROOT/net/http/h2_bundle.go:7607:6"
+@ ["all","Funcs","net/http.http2checkPriority","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5587:6"
++ "$GOROOT/net/http/h2_bundle.go:5596:6"
+@ ["all","Funcs","net/http.http2checkValidHTTP2RequestHeaders","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6612:6"
++ "$GOROOT/net/http/h2_bundle.go:6621:6"
+@ ["all","Funcs","net/http.http2checkWriteHeaderCode","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6281:6"
++ "$GOROOT/net/http/h2_bundle.go:6290:6"
+@ ["all","Funcs","net/http.http2cloneHeader","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6317:6"
++ "$GOROOT/net/http/h2_bundle.go:6326:6"
+@ ["all","Funcs","net/http.http2commaSeparatedTrailers","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7567:6"
++ "$GOROOT/net/http/h2_bundle.go:7576:6"
+@ ["all","Funcs","net/http.http2configureTransports","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6777:6"
++ "$GOROOT/net/http/h2_bundle.go:6786:6"
+@ ["all","Funcs","net/http.http2encKV","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9547:6"
++ "$GOROOT/net/http/h2_bundle.go:9556:6"
+@ ["all","Funcs","net/http.http2encodeHeaders","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9689:6"
++ "$GOROOT/net/http/h2_bundle.go:9698:6"
+@ ["all","Funcs","net/http.http2foreachHeaderElement","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6584:6"
++ "$GOROOT/net/http/h2_bundle.go:6593:6"
+@ ["all","Funcs","net/http.http2h1ServerKeepAlivesDisabled","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6634:6"
++ "$GOROOT/net/http/h2_bundle.go:6643:6"
+@ ["all","Funcs","net/http.http2handleHeaderListTooLong","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5827:6"
++ "$GOROOT/net/http/h2_bundle.go:5836:6"
+@ ["all","Funcs","net/http.http2isConnectionCloseRequest","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9280:6"
++ "$GOROOT/net/http/h2_bundle.go:9289:6"
+@ ["all","Funcs","net/http.http2isEOFOrNetReadError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8371:6"
++ "$GOROOT/net/http/h2_bundle.go:8380:6"
+@ ["all","Funcs","net/http.http2isNoCachedConnError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7029:6"
++ "$GOROOT/net/http/h2_bundle.go:7038:6"
+@ ["all","Funcs","net/http.http2new400Handler","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6625:6"
++ "$GOROOT/net/http/h2_bundle.go:6634:6"
+@ ["all","Funcs","net/http.http2registerHTTPSProtocol","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9286:6"
++ "$GOROOT/net/http/h2_bundle.go:9295:6"
+@ ["all","Funcs","net/http.http2shouldRetryRequest","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7129:6"
++ "$GOROOT/net/http/h2_bundle.go:7138:6"
+@ ["all","Funcs","net/http.http2shouldSendReqContentLength","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8237:6"
++ "$GOROOT/net/http/h2_bundle.go:8246:6"
+@ ["all","Funcs","net/http.http2splitHeaderBlock","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9509:6"
++ "$GOROOT/net/http/h2_bundle.go:9518:6"
+@ ["all","Funcs","net/http.http2strSliceContains","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9151:6"
++ "$GOROOT/net/http/h2_bundle.go:9160:6"
+@ ["all","Funcs","net/http.http2traceFirstResponseByte","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9366:6"
++ "$GOROOT/net/http/h2_bundle.go:9375:6"
+@ ["all","Funcs","net/http.http2traceGetConn","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9317:6"
++ "$GOROOT/net/http/h2_bundle.go:9326:6"
+@ ["all","Funcs","net/http.http2traceGot100Continue","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9348:6"
++ "$GOROOT/net/http/h2_bundle.go:9357:6"
+@ ["all","Funcs","net/http.http2traceGotConn","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9325:6"
++ "$GOROOT/net/http/h2_bundle.go:9334:6"
+@ ["all","Funcs","net/http.http2traceWait100Continue","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9354:6"
++ "$GOROOT/net/http/h2_bundle.go:9363:6"
+@ ["all","Funcs","net/http.http2traceWroteHeaders","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9342:6"
++ "$GOROOT/net/http/h2_bundle.go:9351:6"
+@ ["all","Funcs","net/http.http2traceWroteRequest","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9360:6"
++ "$GOROOT/net/http/h2_bundle.go:9369:6"
+@ ["all","Funcs","net/http.http2writeEndsStream","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9404:6"
++ "$GOROOT/net/http/h2_bundle.go:9413:6"
+@ ["all","Types","net/http.http2ClientConn","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6835:6"
++ "$GOROOT/net/http/h2_bundle.go:6844:6"
+@ ["all","Types","net/http.http2FrameWriteRequest","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9766:6"
++ "$GOROOT/net/http/h2_bundle.go:9775:6"
+@ ["all","Types","net/http.http2GoAwayError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8360:6"
++ "$GOROOT/net/http/h2_bundle.go:8369:6"
+@ ["all","Types","net/http.http2OpenStreamOptions","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9759:6"
++ "$GOROOT/net/http/h2_bundle.go:9768:6"
+@ ["all","Types","net/http.http2PriorityWriteSchedulerConfig","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9975:6"
++ "$GOROOT/net/http/h2_bundle.go:9984:6"
+@ ["all","Types","net/http.http2RoundTripOpt","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7037:6"
++ "$GOROOT/net/http/h2_bundle.go:7046:6"
+@ ["all","Types","net/http.http2Transport","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6666:6"
++ "$GOROOT/net/http/h2_bundle.go:6675:6"
+@ ["all","Types","net/http.http2bodyReadMsg","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5880:6"
++ "$GOROOT/net/http/h2_bundle.go:5889:6"
+@ ["all","Types","net/http.http2bodyWriterState","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9200:6"
++ "$GOROOT/net/http/h2_bundle.go:9209:6"
+@ ["all","Types","net/http.http2chunkWriter","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6035:6"
++ "$GOROOT/net/http/h2_bundle.go:6044:6"
+@ ["all","Types","net/http.http2clientConnIdleState","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7355:6"
++ "$GOROOT/net/http/h2_bundle.go:7364:6"
+@ ["all","Types","net/http.http2clientConnReadLoop","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8340:6"
++ "$GOROOT/net/http/h2_bundle.go:8349:6"
+@ ["all","Types","net/http.http2clientStream","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6883:6"
++ "$GOROOT/net/http/h2_bundle.go:6892:6"
+@ ["all","Types","net/http.http2erringRoundTripper","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9160:6"
++ "$GOROOT/net/http/h2_bundle.go:9169:6"
+@ ["all","Types","net/http.http2errorReader","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9193:6"
++ "$GOROOT/net/http/h2_bundle.go:9202:6"
+@ ["all","Types","net/http.http2flushFrameWriter","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9419:6"
++ "$GOROOT/net/http/h2_bundle.go:9428:6"
+@ ["all","Types","net/http.http2gzipReader","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9168:6"
++ "$GOROOT/net/http/h2_bundle.go:9177:6"
+@ ["all","Types","net/http.http2handlerPanicRST","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9472:6"
++ "$GOROOT/net/http/h2_bundle.go:9481:6"
+@ ["all","Types","net/http.http2noCachedConnError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7020:6"
++ "$GOROOT/net/http/h2_bundle.go:7029:6"
+@ ["all","Types","net/http.http2noDialH2RoundTripper","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9300:6"
++ "$GOROOT/net/http/h2_bundle.go:9309:6"
+@ ["all","Types","net/http.http2priorityNode","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10053:6"
++ "$GOROOT/net/http/h2_bundle.go:10062:6"
+@ ["all","Types","net/http.http2priorityNodeState","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10042:6"
++ "$GOROOT/net/http/h2_bundle.go:10051:6"
+@ ["all","Types","net/http.http2priorityWriteScheduler","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10188:6"
++ "$GOROOT/net/http/h2_bundle.go:10197:6"
+@ ["all","Types","net/http.http2randomWriteScheduler","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10422:6"
++ "$GOROOT/net/http/h2_bundle.go:10431:6"
+@ ["all","Types","net/http.http2requestBody","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5954:6"
++ "$GOROOT/net/http/h2_bundle.go:5963:6"
+@ ["all","Types","net/http.http2requestParam","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5710:6"
++ "$GOROOT/net/http/h2_bundle.go:5719:6"
+@ ["all","Types","net/http.http2resAndError","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8292:6"
++ "$GOROOT/net/http/h2_bundle.go:8301:6"
+@ ["all","Types","net/http.http2responseWriter","Position"]
+- "$GOROOT/net/http/h2_bundle.go:5997:6"
++ "$GOROOT/net/http/h2_bundle.go:6006:6"
+@ ["all","Types","net/http.http2responseWriterState","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6008:6"
++ "$GOROOT/net/http/h2_bundle.go:6017:6"
+@ ["all","Types","net/http.http2serverMessage","Position"]
+- "$GOROOT/net/http/h2_bundle.go:4586:6"
++ "$GOROOT/net/http/h2_bundle.go:4595:6"
+@ ["all","Types","net/http.http2sortPriorityNodeSiblings","Position"]
+- "$GOROOT/net/http/h2_bundle.go:10168:6"
++ "$GOROOT/net/http/h2_bundle.go:10177:6"
+@ ["all","Types","net/http.http2startPushRequest","Position"]
+- "$GOROOT/net/http/h2_bundle.go:6494:6"
++ "$GOROOT/net/http/h2_bundle.go:6503:6"
+@ ["all","Types","net/http.http2stickyErrWriter","Position"]
+- "$GOROOT/net/http/h2_bundle.go:7000:6"
++ "$GOROOT/net/http/h2_bundle.go:7009:6"
+@ ["all","Types","net/http.http2transportResponseBody","Position"]
+- "$GOROOT/net/http/h2_bundle.go:8706:6"
++ "$GOROOT/net/http/h2_bundle.go:8715:6"
+@ ["all","Types","net/http.http2write100ContinueHeadersFrame","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9655:6"
++ "$GOROOT/net/http/h2_bundle.go:9664:6"
+@ ["all","Types","net/http.http2writeData","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9452:6"
++ "$GOROOT/net/http/h2_bundle.go:9461:6"
+@ ["all","Types","net/http.http2writeGoAway","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9439:6"
++ "$GOROOT/net/http/h2_bundle.go:9448:6"
+@ ["all","Types","net/http.http2writePingAck","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9488:6"
++ "$GOROOT/net/http/h2_bundle.go:9497:6"
+@ ["all","Types","net/http.http2writePushPromise","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9607:6"
++ "$GOROOT/net/http/h2_bundle.go:9616:6"
+@ ["all","Types","net/http.http2writeQueue","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9903:6"
++ "$GOROOT/net/http/h2_bundle.go:9912:6"
+@ ["all","Types","net/http.http2writeQueuePool","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9945:6"
++ "$GOROOT/net/http/h2_bundle.go:9954:6"
+@ ["all","Types","net/http.http2writeResHeaders","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9535:6"
++ "$GOROOT/net/http/h2_bundle.go:9544:6"
+@ ["all","Types","net/http.http2writeSettings","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9427:6"
++ "$GOROOT/net/http/h2_bundle.go:9436:6"
+@ ["all","Types","net/http.http2writeSettingsAck","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9498:6"
++ "$GOROOT/net/http/h2_bundle.go:9507:6"
+@ ["all","Types","net/http.http2writeWindowUpdate","Position"]
+- "$GOROOT/net/http/h2_bundle.go:9676:6"
++ "$GOROOT/net/http/h2_bundle.go:9685:6"
+@ ["darwin","Funcs","internal/syscall/unix.GetEntropy","Position"]
+- "$GOROOT/internal/syscall/unix/getentropy_darwin.go:18:6"
++ "$GOROOT/internal/syscall/unix/getentropy_darwin.go:21:6"
+@ ["darwin","Funcs","internal/syscall/unix.libc_getentropy_trampoline","Position"]
+- "$GOROOT/internal/syscall/unix/getentropy_darwin.go:15:6"
++ "$GOROOT/internal/syscall/unix/getentropy_darwin.go:18:6"
+@ ["darwin","Funcs","internal/syscall/unix.syscall_syscall","Position"]
+- "$GOROOT/internal/syscall/unix/getentropy_darwin.go:30:6"
++ "$GOROOT/internal/syscall/unix/getentropy_darwin.go:33:6"

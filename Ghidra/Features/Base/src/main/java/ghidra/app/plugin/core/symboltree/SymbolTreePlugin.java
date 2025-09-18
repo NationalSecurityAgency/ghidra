@@ -214,6 +214,10 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 
 	}
 
+	void setNodeGroupThreshold(int threshold) {
+		nodeGroupThreshold = threshold;
+	}
+
 	int getNodeGroupThreshold() {
 		return nodeGroupThreshold;
 	}

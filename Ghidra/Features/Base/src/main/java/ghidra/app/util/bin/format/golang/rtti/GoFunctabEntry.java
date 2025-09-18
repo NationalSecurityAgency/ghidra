@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 
 /**
- * A structure that golang generates that maps between a function's entry point and the
+ * A structure that Go generates that maps between a function's entry point and the
  * location of the function's GoFuncData structure.
  */
 @StructureMapping(structureName = "runtime.functab")
@@ -73,18 +73,14 @@ public class GoFunctabEntry {
 	}
 
 	/**
-	 * Returns the address of the function's entry point
-	 * 
-	 * @return address of the function's entry point
+	 * {@return the address of the function's entry point}
 	 */
 	public Address getFuncAddress() {
 		return funcAddress;
 	}
 
 	/**
-	 * Return the GoFuncData structure that contains metadata about the function.
-	 * 
-	 * @return {@link GoFuncData} structure that contains metadata about the function.
+	 * {@return the {@link GoFuncData} structure that contains metadata about the function}
 	 * @throws IOException if error
 	 */
 	@Markup
@@ -96,9 +92,7 @@ public class GoFunctabEntry {
 	}
 
 	/**
-	 * Returns the offset of the GoFuncData structure.
-	 * 
-	 * @return offset of the GoFuncData structure.
+	 * {@return the offset of the GoFuncData structure}
 	 */
 	public long getFuncoff() {
 		return funcoff;

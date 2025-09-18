@@ -21,8 +21,6 @@ import java.util.List;
 
 import javax.swing.Icon;
 
-import utility.function.Callback;
-
 /**
  * Interface for the GhidraFileChooser data model.
  * This allows the GhidraFileChooser to operate
@@ -30,12 +28,6 @@ import utility.function.Callback;
  * just the local file system.
  */
 public interface GhidraFileChooserModel {
-	/**
-	 * Set the model update callback.
-	 * 
-	 * @param callback the new model update callback handler
-	 */
-	public void setModelUpdateCallback(Callback callback);
 
 	/**
 	 * Returns the home directory.

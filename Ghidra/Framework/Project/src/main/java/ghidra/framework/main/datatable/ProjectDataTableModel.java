@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.util.task.TaskMonitor;
 public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, ProjectData> {
 
 	private ProjectData projectData;
+	private volatile int modCount;
 	private boolean editingOn;
 
 	private boolean loadWasCancelled;
@@ -50,6 +51,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	protected void doLoad(Accumulator<DomainFileInfo> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		loadWasCancelled = false;
+		++modCount;
 		if (projectData != null) {
 			loadWasCancelled = true;
 			DomainFolder rootFolder = projectData.getRootFolder();
@@ -63,7 +65,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 		DomainFile[] files = folder.getFiles();
 		for (DomainFile domainFile : files) {
 			monitor.checkCancelled();
-			accumulator.add(new DomainFileInfo(domainFile));
+			accumulator.add(new DomainFileInfo(domainFile, this));
 		}
 		DomainFolder[] folders = folder.getFolders();
 		for (DomainFolder domainFolder : folders) {
@@ -113,11 +115,14 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 
 	@Override
 	public void refresh() {
-		List<DomainFileInfo> modelData = getModelData();
-		for (DomainFileInfo domainFileInfo : modelData) {
-			domainFileInfo.refresh();
-		}
+		// The modCount allows DomainFileInfo to determine if its cached data is stale relative
+		// to this model
+		++modCount;
 		super.refresh();
+	}
+
+	int getModCount() {
+		return modCount;
 	}
 
 	public void setProjectData(ProjectData projectData) {
@@ -162,7 +167,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 //==================================================================================================
 
 	private class DomainFileTypeColumn
-	extends AbstractDynamicTableColumn<DomainFileInfo, DomainFileType, ProjectData> {
+			extends AbstractDynamicTableColumn<DomainFileInfo, DomainFileType, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -182,7 +187,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class DomainFileNameColumn
-	extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
+			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -203,7 +208,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class ModificationDateColumn
-	extends AbstractDynamicTableColumn<DomainFileInfo, Date, ProjectData> {
+			extends AbstractDynamicTableColumn<DomainFileInfo, Date, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -224,7 +229,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class DomainFilePathColumn
-	extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
+			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
 		@Override
 		public String getColumnName() {

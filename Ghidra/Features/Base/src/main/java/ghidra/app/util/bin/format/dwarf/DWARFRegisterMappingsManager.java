@@ -132,15 +132,31 @@ public class DWARFRegisterMappingsManager {
 
 		Map<Integer, Register> regmap = new HashMap<>();
 		int spi;
-		long cfa;
+		Integer cfa = null; // null == not set
+		Register stackFrameRegister = null;
+		int stackFrameRegisterOffset = 0;
 		boolean useFPS;
 		try {
 			spi = readMappingsElem(regMappingsElem, lang, regmap);
 			Element callFrameElem = rootElem.getChild("call_frame_cfa");
-			cfa = (callFrameElem != null)
-					? XmlUtilities.parseOptionalBoundedLongAttr(callFrameElem, "value", 0, 0,
-						Long.MAX_VALUE)
-					: 0;
+			if (callFrameElem != null) {
+				cfa = XmlUtilities.parseOptionalBoundedIntAttr(callFrameElem, "value", 0, 0,
+					Integer.MAX_VALUE);
+			}
+
+			Element stackFrameElem = rootElem.getChild("stack_frame");
+			if (stackFrameElem != null) {
+				String stackFrameRegisterName =
+					stackFrameElem.getAttributeValue("register");
+				stackFrameRegister =
+					stackFrameRegisterName != null && !stackFrameRegisterName.isEmpty()
+							? lang.getRegister(stackFrameRegisterName)
+							: null;
+				if (stackFrameRegister != null) {
+					stackFrameRegisterOffset = XmlUtilities.parseBoundedIntAttr(stackFrameElem,
+						"offset", Integer.MIN_VALUE, Integer.MAX_VALUE);
+				}
+			}
 
 			Element useFormalParameterStorageElem =
 				rootElem.getChild("use_formal_parameter_storage");
@@ -151,7 +167,8 @@ public class DWARFRegisterMappingsManager {
 				nfe);
 		}
 
-		return new DWARFRegisterMappings(regmap, cfa, spi, useFPS);
+		return new DWARFRegisterMappings(regmap, cfa, spi, stackFrameRegister,
+			stackFrameRegisterOffset, useFPS);
 	}
 
 	/*

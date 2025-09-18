@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  */
 package help.screenshot;
 
-import java.awt.Component;
-import java.awt.Window;
-import java.util.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -25,6 +26,8 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.util.image.Callout;
+import docking.util.image.CalloutInfo;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.tree.GTree;
@@ -33,12 +36,11 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.editor.EnumEditorProvider;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.datatype.DataTypeSelectionDialog;
+import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.*;
 
 public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
-
-	public DataTypeEditorsScreenShots() {
-	}
 
 	@Test
 	public void testDialog() {
@@ -46,6 +48,18 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		positionListingTop(0x40D3B8);
 		performAction("Choose Data Type", "DataPlugin", false);
 		captureDialog();
+	}
+
+	@Test
+	public void testDialog_SearchMode() {
+
+		positionListingTop(0x40D3B8);
+		performAction("Choose Data Type", "DataPlugin", false);
+		captureDialog();
+
+		createSearchModeCallout();
+
+		cropExcessSpace();
 	}
 
 	@Test
@@ -142,6 +156,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
 
 		// get structure table and select a row
+		@SuppressWarnings("rawtypes")
 		CompositeEditorPanel editorPanel =
 			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
 		JTable table = editorPanel.getTable();
@@ -178,6 +193,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
 
 		// get structure table and select a row
+		@SuppressWarnings("rawtypes")
 		CompositeEditorPanel editorPanel =
 			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
 		JTable table = editorPanel.getTable();
@@ -203,6 +219,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
 
 		// get structure table and select a row
+		@SuppressWarnings("rawtypes")
 		CompositeEditorPanel editorPanel =
 			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
 		JTable table = editorPanel.getTable();
@@ -262,6 +279,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		ComponentProvider structureEditor = getProvider(StructureEditorProvider.class);
 
 		// get structure table and select a row
+		@SuppressWarnings("rawtypes")
 		CompositeEditorPanel editorPanel =
 			(CompositeEditorPanel) getInstanceField("editorPanel", structureEditor);
 		JTable table = editorPanel.getTable();
@@ -404,4 +422,33 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		tool.execute(createDataCmd, program);
 		waitForBusyTool(tool);
 	}
+
+	private void cropExcessSpace() {
+
+		// keep the hover area and callout in the image (trial and error)
+		Rectangle area = new Rectangle();
+		area.x = 200;
+		area.y = 10;
+		area.width = 450;
+		area.height = 250;
+		crop(area);
+	}
+
+	private void createSearchModeCallout() {
+
+		DataTypeSelectionDialog dialog = waitForDialogComponent(DataTypeSelectionDialog.class);
+		DataTypeSelectionEditor editor = dialog.getEditor();
+		DropDownSelectionTextField<DataType> textField = editor.getDropDownTextField();
+		DropDownSelectionTextField<DataType>.SearchModeBounds searchModeBounds =
+			textField.getSearchModeBounds();
+
+		Rectangle hoverBounds = searchModeBounds.getHoverAreaBounds();
+		Window destinationComponent = SwingUtilities.windowForComponent(dialog.getComponent());
+		CalloutInfo calloutInfo =
+			new CalloutInfo(destinationComponent, textField, hoverBounds);
+		calloutInfo.setMagnification(2.75D); // make it a bit bigger than default
+		Callout callout = new Callout();
+		image = callout.createCalloutOnImage(image, calloutInfo);
+	}
+
 }

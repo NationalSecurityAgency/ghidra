@@ -35,7 +35,6 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.program.util.SymbolicPropogator.Value;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**

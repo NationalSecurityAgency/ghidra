@@ -34,7 +34,7 @@ import ghidra.pcode.emu.jit.op.JitFloatFloorOp;
  * This uses the unary operator generator and emits an invocation of {@link Math#floor(double)},
  * possibly surrounding it with conversions from and to float.
  */
-public enum FloatFloorOpGen implements UnOpGen<JitFloatFloorOp> {
+public enum FloatFloorOpGen implements FloatUnOpGen<JitFloatFloorOp> {
 	/** The generator singleton */
 	GEN;
 

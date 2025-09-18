@@ -72,10 +72,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIWindowsClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVFunctions, boolean isPDBLoaded, TaskMonitor monitor) throws Exception {
+			boolean nameVFunctions, boolean makeVfunctionsThisCalls, boolean isPDBLoaded,
+			TaskMonitor monitor) throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVFunctions,
-			isPDBLoaded, monitor);
+			makeVfunctionsThisCalls, isPDBLoaded, monitor);
 
 		this.isPDBLoaded = isPDBLoaded;
 	}

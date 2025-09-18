@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,6 +71,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 		readOnlyViews = new HashMap<>(TYPICAL_NUM_VIEWS);
 
 		projectTab = new JTabbedPane(SwingConstants.BOTTOM);
+		projectTab.setName("PROJECT_TABBED_PANE");
 		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 		projectTab.addChangeListener(e -> frontEndPlugin.getTool().contextChanged(null));
 
@@ -172,6 +173,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 
 	private void clearReadOnlyViews() {
 		readOnlyTab.removeAll();
+		readOnlyViews.values().forEach(ProjectDataTreePanel::dispose);
 		readOnlyViews.clear();
 		setViewsVisible(false);
 	}
@@ -214,6 +216,10 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 			if (projectData == null) {
 				return null; // repository connection may have been cancelled
 			}
+
+			// Force refresh to purge any stale data
+			projectData.refresh(true);
+
 			projectManager.rememberViewedProject(projectView);
 			String viewName = projectData.getProjectLocator().getName();
 			final ProjectDataTreePanel newPanel =

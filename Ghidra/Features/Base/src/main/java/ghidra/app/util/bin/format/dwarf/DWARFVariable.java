@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
 
 import java.io.IOException;
@@ -73,8 +72,8 @@ public class DWARFVariable {
 	 * @param diea {@link DIEAggregate} DW_TAG_variable
 	 * @param dfunc {@link DWARFFunction} that this local var belongs to
 	 * @param offsetFromFuncStart offset from start of containing function
-	 * @return new DWARFVariable that represents a local var, or <strong>null</strong> if 
-	 * error reading storage info
+	 * @return new DWARFVariable that represents a local var, never null.  Check
+	 * {@link #isMissingStorage()} to determine if there was an error getting storage info
 	 */
 	public static DWARFVariable readLocalVariable(DIEAggregate diea, DWARFFunction dfunc,
 			long offsetFromFuncStart) {
@@ -82,7 +81,9 @@ public class DWARFVariable {
 		DWARFVariable dvar = new DWARFVariable(dfunc, diea);
 		dvar.lexicalOffset = offsetFromFuncStart;
 
-		return dvar.readLocalVariableStorage(diea) ? dvar : null;
+		dvar.readLocalVariableStorage(diea);
+
+		return dvar;
 	}
 
 	/**
@@ -111,7 +112,7 @@ public class DWARFVariable {
 	public DWARFSourceInfo sourceInfo;
 	private List<Varnode> storage = new ArrayList<>();
 	private Varnode stackStorage; // any stack storage is forced to be last in the storage list
-	private String comment;
+	public String comment;
 
 	private DWARFVariable(DWARFProgram program, DWARFFunction dfunc, DataType type) {
 		this.program = program;
@@ -126,6 +127,19 @@ public class DWARFVariable {
 		this.type = program.getDwarfDTM().getDataTypeForVariable(diea.getTypeRef());
 		this.isExternal = diea.getBool(DW_AT_external, false);
 		this.sourceInfo = DWARFSourceInfo.create(diea);
+	}
+
+	public void setStorage(Varnode varnode) {
+		clearStorage();
+		if (varnode.getSize() == 0) {
+			// TODO: size probably needs to drive register adjustments
+			varnode = new Varnode(varnode.getAddress(), type.getLength());
+		}
+		if ( DWARFUtil.isStackVarnode(varnode)) {
+			stackStorage = varnode;
+		} else {
+			storage.add(varnode);
+		}
 	}
 
 	/**
@@ -255,7 +269,7 @@ public class DWARFVariable {
 			if (paramLoc == null) {
 				return false;
 			}
-			return readStorage(diea, paramLoc);
+			return readStorage(diea, paramLoc, false);
 		}
 		catch (IOException e) {
 			diea.getProgram().getImportSummary().exprReadError++;
@@ -277,7 +291,7 @@ public class DWARFVariable {
 				lexicalOffset = location.getOffset(dfunc.getEntryPc());
 			}
 
-			return readStorage(diea, location);
+			return readStorage(diea, location, true);
 		}
 		catch (IOException e) {
 			diea.getProgram().getImportSummary().exprReadError++;
@@ -298,17 +312,15 @@ public class DWARFVariable {
 			DWARFExpressionEvaluator exprEvaluator =
 				new DWARFExpressionEvaluator(diea.getCompilationUnit());
 
-			DWARFExpression expr = exprEvaluator.readExpr(location.getExpr());
+			exprEvaluator.evaluate(location.getExpr());
+			Varnode res = exprEvaluator.popVarnode();
 
-			exprEvaluator.evaluate(expr);
-			if (exprEvaluator.getRawLastRegister() != -1) {
+			if (!res.isAddress()) {
 				Msg.warn(this, "DWARF: bad location for global variable %s: %s"
-						.formatted(getDeclInfoString(), expr.toString()));
+						.formatted(getDeclInfoString(), exprEvaluator.getExpr().toString()));
 				return false;
 			}
-
-			long res = exprEvaluator.pop();
-			if (res == 0) {
+			if (res.getAddress().getOffset() == 0) {
 				if (diea.hasAttribute(DWARFAttribute.DW_AT_const_value)) {
 					// skip without complaining global vars with a const value and bad location expression 
 					return false;
@@ -322,17 +334,21 @@ public class DWARFVariable {
 				return false;
 			}
 
-			setRamStorage(res);
+			setStorage(res);
 			return true;
 		}
-		catch (DWARFExpressionException | UnsupportedOperationException
-				| IndexOutOfBoundsException | IOException ex) {
+		catch (DWARFExpressionException e) {
+			prog.getImportSummary().addProblematicDWARFExpression(e.getExpression());
+			return false;
+		}
+		catch (IOException e) {
 			prog.getImportSummary().exprReadError++;
 			return false;
 		}
 	}
 
-	private boolean readStorage(DIEAggregate diea, DWARFLocation location) {
+	private boolean readStorage(DIEAggregate diea, DWARFLocation location,
+			boolean allowDerefFixup) {
 
 		if (location == null) {
 			return false;
@@ -342,95 +358,53 @@ public class DWARFVariable {
 
 		DWARFProgram prog = diea.getProgram();
 		DWARFImportSummary importSummary = prog.getImportSummary();
+		DWARFCompilationUnit cu = diea.getCompilationUnit();
 
+		DWARFExpressionEvaluator exprEvaluator = new DWARFExpressionEvaluator(cu);
+		if (dfunc.funcEntryFrameBaseLoc != null &&
+			dfunc.funcEntryFrameBaseLoc.getResolvedValue() != null &&
+			dfunc.funcEntryFrameBaseLoc.contains(dfunc.getEntryPc() + lexicalOffset)) {
+			exprEvaluator.setFrameBaseVal(dfunc.funcEntryFrameBaseLoc.getResolvedValue());
+		}
+
+		DWARFExpression expr = null;
 		try {
-			DWARFExpressionEvaluator exprEvaluator =
-				new DWARFExpressionEvaluator(diea.getCompilationUnit());
-			exprEvaluator.setFrameBase(dfunc.frameBase);
+			expr = DWARFExpression.read(location.getExpr(), cu);
+			if (expr.isEmpty()) {
+				return false;
+			}
 
-			DWARFExpression expr = exprEvaluator.readExpr(location.getExpr());
+			if (prog.getImportOptions().isUseStaticStackFrameRegisterValue()) {
+				exprEvaluator.setValReader(exprEvaluator.withStaticStackRegisterValues(null,
+					prog.getRegisterMappings().getStackFrameRegisterOffset()));
+			}
 
+			if (prog.getImportOptions().isShowVariableStorageInfo()) {
+				comment = expr.toString(cu);
+			}
+			
 			exprEvaluator.evaluate(expr);
-			long res = exprEvaluator.pop();
+			
+			Varnode storageLoc = exprEvaluator.popVarnode();
 
-			// check expression eval result.  Use early return for errors, leaving storage unset.
-			// Success return is at bottom of if/else chain of checks.
-
-			if (exprEvaluator.isDwarfStackValue()) {
-				// result is a value (not a location) left on the expr stack, which is not supported 
-				importSummary.varDWARFExpressionValue++;
-				return false;
-			}
-
-			if (exprEvaluator.useUnknownRegister()) {
-				// This is a deref of a register (excluding the stack pointer)
-				// If the offset of the deref was 0, we can cheese it into a ghidra register location
-				// by changing the datatype to a pointer-to-original-datatype, otherwise
-				// its not usable in ghidra
-
-				if (!exprEvaluator.isRegisterLocation()) {
-					importSummary.varDynamicRegisterError++;
-					return false;
-				}
-
-				if (exprEvaluator.getLastRegister() != null) {
-					type = prog.getDwarfDTM().getPtrTo(type);
-					setRegisterStorage(List.of(exprEvaluator.getLastRegister()));
-				}
-			}
-			else if (exprEvaluator.isStackRelative()) {
-				if (exprEvaluator.isDeref()) {
-					type = prog.getDwarfDTM().getPtrTo(type);
-				}
-				setStackStorage(res);
-			}
-			else if (exprEvaluator.isRegisterLocation()) {
-				// The DWARF expression evaluated to a simple register.  If we have a mapping
-				// for it in the "processor.dwarf" register mapping file, try to create
-				// a variable, otherwise log the unknown register for later logging.
-				Register reg = exprEvaluator.getLastRegister();
-				if (reg == null) {
-					// The DWARF register did not have a mapping to a Ghidra register, so
-					// log it to be displayed in an error summary at end of import phase.
-					importSummary.unknownRegistersEncountered
-							.add(exprEvaluator.getRawLastRegister());
-					return false;
-				}
-				if ((type.getLength() > reg.getMinimumByteSize())) {
-					importSummary.varFitError++;
-					program.logWarningAt(dfunc.address, dfunc.name.getName(),
-						"%s %s [%s, size=%d] can not fit into specified register %s, size=%d"
-								.formatted(getVarTypeName(diea), name.getName(), type.getName(),
-									type.getLength(), reg.getName(), reg.getMinimumByteSize()));
-					return false;
-				}
-				setRegisterStorage(List.of(reg));
-			}
-			else if (exprEvaluator.getRawLastRegister() == -1 && res != 0) {
-				// static global variable location
-				setRamStorage(res);
-			}
-			else {
-				Msg.error(this,
-					"%s location error for function %s@%s, %s: %s, DWARF DIE: %s, unsupported location information."
-							.formatted(getVarTypeName(diea), dfunc.name.getName(), dfunc.address,
-								name.getName(),
-								DWARFExpression.exprToString(location.getExpr(), diea),
-								diea.getHexOffset()));
-				return false;
-			}
+			setStorage(storageLoc);
 
 			return true;
 		}
-		catch (DWARFExpressionException | UnsupportedOperationException
-				| IndexOutOfBoundsException ex) {
-			importSummary.exprReadError++;
+		catch (DWARFExpressionException e) {
+			if (allowDerefFixup && e instanceof DWARFExpressionTerminalDerefException derefExcept) {
+				type = type.getDataTypeManager().getPointer(type);
+				setStorage(derefExcept.getVarnode());
+				return true;
+			}
+
+			if (e instanceof DWARFExpressionValueException && expr != null) {
+				comment = expr.toString(cu);
+			}
+
+			importSummary.addProblematicDWARFExpression(e.getExpression());
 			return false;
 		}
-	}
-
-	private String getVarTypeName(DIEAggregate diea) {
-		return diea.getTag() == DW_TAG_formal_parameter ? "Parameter" : "Variable";
 	}
 
 	public int getStorageSize() {

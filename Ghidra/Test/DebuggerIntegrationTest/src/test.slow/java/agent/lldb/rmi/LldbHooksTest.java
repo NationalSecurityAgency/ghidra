@@ -15,14 +15,15 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -50,6 +51,10 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 		public String executeCapture(String cmd) {
 			return conn.executeCapture(cmd);
+		}
+
+		public void success() {
+			conn.success();
 		}
 
 		@Override
@@ -103,6 +108,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> assertEquals(2,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -165,6 +171,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				String threadIndex = threadIndex(traceManager.getCurrentObject());
 				assertTrue(ti0.contains(threadIndex));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -222,13 +229,12 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("kill");
+			conn.success();
 		}
 	}
 
-	@Test
-	@Ignore
+	//@Test // Need a specimen
 	public void testOnSyscallMemory() throws Exception {
-		// TODO: Need a specimen
 		// FWIW, I've already seen this getting exercised in other tests.
 	}
 
@@ -248,6 +254,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				tb.trace.getMemoryManager().getBytes(lastSnap(conn), tb.addr(address), buf);
 				assertEquals(0x7f, buf.get(0));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -270,6 +277,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				regs.getValue(lastSnap(conn), tb.reg(PLAT.intReg()))
 						.getUnsignedValue()
 						.toString(16)));
+			conn.success();
 		}
 	}
 
@@ -287,6 +295,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("process interrupt");
+			conn.success();
 		}
 	}
 
@@ -299,6 +308,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> {
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -321,6 +331,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertThat(val, instanceOf(Number.class));
 				assertEquals(72, ((Number) val).longValue());
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -338,6 +349,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
+			conn.success();
 		}
 	}
 
@@ -367,6 +379,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			waitForPass(
 				() -> assertEquals("x>3", tb.objValue(brk, lastSnap(conn), "Condition")));
+			conn.success();
 		}
 	}
 
@@ -392,6 +405,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(
 				() -> assertEquals(0,
 					tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+			conn.success();
 		}
 	}
 
@@ -407,5 +421,4 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		conn.execute("ghidra trace put-" + obj);
 		conn.execute("ghidra trace tx-commit");
 	}
-
 }

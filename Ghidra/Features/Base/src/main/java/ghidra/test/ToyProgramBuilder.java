@@ -15,8 +15,7 @@
  */
 package ghidra.test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
@@ -626,6 +625,23 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	public void createJmpWithDelaySlot(String address, String destAddress) throws Exception {
 		addBytesBranchWithDelaySlot(address, destAddress);
 		disassemble(address, 1);
+	}
+
+	/**
+	 * Create simple Toy program with a single initialized memory block at 0x1001000-0x1002fff
+	 * @param programName program name
+	 * @param consumer object consumer responsible for releasing the returned program
+	 * @return new in-memory program instance
+	 * @throws Exception if an error occurs
+	 */
+	public static Program buildSimpleProgram(String programName, Object consumer) throws Exception {
+		Objects.requireNonNull(consumer);
+		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
+		builder.createMemory("test1", Long.toHexString(0x1001000), 0x2000);
+		Program p = builder.getProgram();
+		p.addConsumer(consumer);
+		p.release(builder);
+		return p;
 	}
 
 }

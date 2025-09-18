@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,19 @@ import ghidra.program.model.lang.Language;
  * {@link PcodeExecutorState} were designed with composition in mind. Referring to examples, it is
  * straightforward to extend the emulator via composition. Consider using {@link AuxPcodeEmulator}
  * or one of its derivatives to create a concrete-plus-auxiliary style emulator.
+ * 
+ * <p>
+ * Note that extending the emulator and integrating with emulation use two different patterns.
+ * Extending the emulator generally means advancing its core behavior in some way, e.g., replacing
+ * its execution engine or adapting it to a new domain. For such cases, extend this class or
+ * {@link AbstractPcodeMachine} or similar. Integrating with an emulator means reacting to events,
+ * tweaking initialization, serializing state, etc. For such cases, implement
+ * {@link PcodeEmulationCallbacks} and pass it into the emulator's constructor. In general, favor
+ * the callbacks mechanism, as this is more easily composed with other integrations. By their
+ * nature, and due to restrictions on inheritance in Java, different extensions cannot be easily
+ * composed. Though encouraged, it is possible an extended emulator does not accept/issue callbacks.
+ * Read its documentation to learn which, if any, of the callbacks are actually supported. The base
+ * {@link PcodeEmulator} supports all the callbacks in {@link PcodeEmulationCallbacks}.
  * 
  * <pre>
  * emulator      : {@link PcodeMachine}{@code <T>}
@@ -86,9 +99,9 @@ import ghidra.program.model.lang.Language;
  * <p>
  * This concrete emulator chooses a {@link BytesPcodeArithmetic} based on the endianness of the
  * target language. Its threads are {@link BytesPcodeThread}. The shared and thread-local states are
- * all {@link BytesPcodeExecutorState}. That pieces of that state can be extended to read through to
- * some other backing object. For example, the memory state could read through to an imported
- * program image, which allows the emulator's memory to be loaded lazily.
+ * all {@link BytesPcodeExecutorState}. Callbacks may be provided to read through to some other
+ * backing object. For example, the memory state could read through to an imported program image,
+ * which allows the emulator's memory to be loaded lazily.
  * 
  * <p>
  * The default userop library is empty. For many use cases, it will be necessary to override
@@ -104,7 +117,7 @@ import ghidra.program.model.lang.Language;
  * by injecting p-code at the import address. See {@link PcodeMachine#inject(Address, String)}. The
  * inject will need to replicate the semantics of that call to the desired fidelity.
  * <b>IMPORTANT:</b> The inject must also return control to the calling function, usually by
- * replicating the conventions of the target platform.
+ * replicating the conventions of the target platform. See the Debugger course for more information.
  */
 public class PcodeEmulator extends AbstractPcodeMachine<byte[]> {
 	/**
@@ -114,9 +127,22 @@ public class PcodeEmulator extends AbstractPcodeMachine<byte[]> {
 	 * Yes, it is customary to invoke this constructor directly.
 	 * 
 	 * @param language the language of the target processor
+	 * @param cb callbacks to receive emulation events
+	 */
+	public PcodeEmulator(Language language, PcodeEmulationCallbacks<byte[]> cb) {
+		super(language, cb);
+	}
+
+	/**
+	 * Construct a new concrete emulator
+	 * 
+	 * <p>
+	 * Yes, it is customary to invoke this constructor directly.
+	 * 
+	 * @param language the language of the target processor
 	 */
 	public PcodeEmulator(Language language) {
-		super(language);
+		this(language, PcodeEmulationCallbacks.none());
 	}
 
 	@Override
@@ -131,12 +157,14 @@ public class PcodeEmulator extends AbstractPcodeMachine<byte[]> {
 
 	@Override
 	protected PcodeExecutorState<byte[]> createSharedState() {
-		return new BytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(null);
+		return new BytesPcodeExecutorState(language, scb);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-		return new BytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(thread);
+		return new BytesPcodeExecutorState(language, scb);
 	}
 
 	@Override

@@ -462,7 +462,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
-		SymbolicPropogator prop = new SymbolicPropogator(program);
+		SymbolicPropogator prop = new SymbolicPropogator(program,false);
 
 		// try to compute the thunk by flowing constants from the start of the block
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,

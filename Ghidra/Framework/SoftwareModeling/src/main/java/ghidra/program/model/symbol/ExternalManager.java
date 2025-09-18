@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.symbol;
 
-import java.util.List;
+import java.util.Set;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -74,15 +74,15 @@ public interface ExternalManager {
 	 * @param oldName the old name of the external library name.
 	 * @param newName the new name of the external library name.
 	 * @param source the source of this external library
-	 * @throws DuplicateNameException if another namespace has the same name
-	 * @throws InvalidInputException on invalid input
+	 * @throws DuplicateNameException if name conflicts with another symbol.
+	 * @throws InvalidInputException if an invalid or null name specified (see 
+	 * {@link SymbolUtilities#validateName}).
 	 */
 	public void updateExternalLibraryName(String oldName, String newName, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 
 	/**
-	 * Get an iterator over all external locations associated with the specified
-	 * externalName.
+	 * Get an iterator over all external locations associated with the specified Library.
 	 * @param libraryName the name of the library to get locations for
 	 * @return external location iterator
 	 */
@@ -97,54 +97,46 @@ public interface ExternalManager {
 	public ExternalLocationIterator getExternalLocations(Address memoryAddress);
 
 	/**
-	 * Get an external location.
-	 * @param libraryName the name of the library for which to get an external location
-	 * @param label the name of the external location.
-	 * @return first matching external location
-	 * @deprecated Use  {@link #getExternalLocations(String, String)} or 
-	 * {@link #getUniqueExternalLocation(String, String)} since duplicate names may exist
-	 */
-	@Deprecated
-	public ExternalLocation getExternalLocation(String libraryName, String label);
-
-	/**
-	 * Get an external location.
-	 * @param namespace the namespace containing the external label.
-	 * @param label the name of the external location.
-	 * @return first matching external location
-	 * @deprecated Use {@link #getExternalLocations(Namespace, String)} or 
-	 * {@link #getUniqueExternalLocation(Namespace, String)} since duplicate names may exist
-	 */
-	@Deprecated
-	public ExternalLocation getExternalLocation(Namespace namespace, String label);
-
-	/**
-	 * Returns a list of External Locations matching the given label name in the given Library.
+	 * Returns a set of External Locations matching the given label name in the specified Library.
+	 * If searching for an original import name which should not be constrained to a specific 
+	 * library (e.g., mangled name), null may be specified for the libraryName.
+	 * 
 	 * @param libraryName the name of the library
 	 * @param label the name of the label
 	 * @return a list of External Locations matching the given label name in the given Library.
 	 */
-	public List<ExternalLocation> getExternalLocations(String libraryName, String label);
+	public Set<ExternalLocation> getExternalLocations(String libraryName, String label);
 
 	/**
-	 * Returns a list of External Locations matching the given label name in the given Namespace.
-	 * @param namespace the Namespace to search
+	 * Returns a set of External Locations matching the given label name in the given Namespace.
+	 * If searching for an original import name which should not be constrained to a specific 
+	 * library (e.g., mangled name), null may be specified for the namespace.  If a library 
+	 * sub-namespace is specified the original import name will not be searched.
+	 * 
+	 * @param namespace the external Namespace to search or null
 	 * @param label the name of the labels to search for.
 	 * @return a list of External Locations matching the given label name in the given Namespace.
 	 */
-	public List<ExternalLocation> getExternalLocations(Namespace namespace, String label);
+	public Set<ExternalLocation> getExternalLocations(Namespace namespace, String label);
 
 	/**
-	 * Returns the unique external location associated with the given library name and label
-	 * @param libraryName the library name
+	 * Returns the unique external location associated with the given library name and label.
+	 * If searching for an original import name which should not be constrained to a specific 
+	 * library (e.g., mangled name), null may be specified for the libraryName.
+	 * 
+	 * @param libraryName the library name or null
 	 * @param label the label of the external location
 	 * @return the unique external location or null
 	 */
 	public ExternalLocation getUniqueExternalLocation(String libraryName, String label);
 
 	/**
-	 * Returns the unique external location associated with the given namespace and label
-	 * @param namespace the namespace
+	 * Returns the unique external location associated with the given namespace and label.
+	 * If searching for an original import name which should not be constrained to a specific 
+	 * library (e.g., mangled name), null may be specified for the namespace.  If a library 
+	 * sub-namespace is specified the original import name will not be searched.
+	 * 
+	 * @param namespace the namespace or null
 	 * @param label the label of the external location
 	 * @return the unique external location or null
 	 */
@@ -229,8 +221,7 @@ public interface ExternalManager {
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
 	public ExternalLocation addExtLocation(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException;
+			SourceType sourceType, boolean reuseExisting) throws InvalidInputException;
 
 	/**
 	 * Create an external {@link Function} in the external {@link Library} namespace 
@@ -285,7 +276,6 @@ public interface ExternalManager {
 	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
 	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException;
+			SourceType sourceType, boolean reuseExisting) throws InvalidInputException;
 
 }

@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.nio.file.Paths;
 import java.util.*;
@@ -31,8 +30,7 @@ import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.TraceRmiLauncherService;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.LoadResults;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
@@ -80,9 +78,13 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 	@Test
 	public void testGetClassName() throws Exception {
 		ResourceFile rf = Application.getModuleDataFile("TestResources", "HelloWorld.class");
-		LoadResults<Program> results = AutoImporter.importByUsingBestGuess(rf.getFile(false),
-			env.getProject(), "/", this, new MessageLog(), monitor);
-		program = results.getPrimaryDomainObject();
+		try (LoadResults<Program> results = ProgramLoader.builder()
+				.source(rf.getFile(false))
+				.project(env.getProject())
+				.monitor(monitor)
+				.load()) {
+			program = results.getPrimaryDomainObject(this);
+		}
 		AutoAnalysisManager analyzer = AutoAnalysisManager.getAnalysisManager(program);
 		analyzer.reAnalyzeAll(null);
 		Command<Program> cmd = new AnalysisBackgroundCommand(analyzer, false);

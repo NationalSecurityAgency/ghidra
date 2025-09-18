@@ -50,7 +50,7 @@ public class InvalidByteMatcher extends ByteMatcher {
 	 * a negative number.
 	 */
 	public InvalidByteMatcher(String errorMessage, boolean isValidInput) {
-		super(null, null);
+		super("Invalid", null, null);
 		this.errorMessage = errorMessage;
 		this.isValidInput = isValidInput;
 	}

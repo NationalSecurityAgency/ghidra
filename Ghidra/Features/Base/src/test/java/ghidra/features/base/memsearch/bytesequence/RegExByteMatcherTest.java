@@ -45,10 +45,10 @@ public class RegExByteMatcherTest {
 		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
 
 		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(4, 3), it.next());
+		assertEquals(new ByteMatch(4, 3, byteMatcher), it.next());
 
 		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(14, 3), it.next());
+		assertEquals(new ByteMatch(14, 3, byteMatcher), it.next());
 
 		assertFalse(it.hasNext());
 
@@ -61,8 +61,8 @@ public class RegExByteMatcherTest {
 
 		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
 
-		assertEquals(new ByteMatch(4, 3), it.next());
-		assertEquals(new ByteMatch(14, 3), it.next());
+		assertEquals(new ByteMatch(4, 3, byteMatcher), it.next());
+		assertEquals(new ByteMatch(14, 3, byteMatcher), it.next());
 		assertNull(it.next());
 	}
 

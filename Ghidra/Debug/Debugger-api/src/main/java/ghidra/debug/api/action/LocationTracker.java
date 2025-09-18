@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,11 @@ package ghidra.debug.api.action;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStack;
-import ghidra.trace.util.TraceAddressSpace;
 
 /**
  * The actual tracking logic for a location tracking spec
@@ -73,8 +73,8 @@ public interface LocationTracker {
 	 * @param coordinates the provider's current coordinates
 	 * @return true if re-computation and "goto" is warranted
 	 */
-	boolean affectedByBytesChange(TraceAddressSpace space,
-			TraceAddressSnapRange range, DebuggerCoordinates coordinates);
+	boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
+			DebuggerCoordinates coordinates);
 
 	/**
 	 * Check if the address should be recomputed given the indicated stack change

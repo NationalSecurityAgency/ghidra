@@ -17,7 +17,6 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import org.objectweb.asm.MethodVisitor;
 
-import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
@@ -37,6 +36,11 @@ public enum BoolNegateOpGen implements UnOpGen<JitBoolNegateOp> {
 	GEN;
 
 	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	@Override
 	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitBoolNegateOp op, JitBlock block,
 			JitType uType, MethodVisitor rv) {
 		switch (uType) {
@@ -48,7 +52,11 @@ public enum BoolNegateOpGen implements UnOpGen<JitBoolNegateOp> {
 				rv.visitLdcInsn(1L);
 				rv.visitInsn(LXOR);
 			}
-			case MpIntJitType t -> Unfinished.TODO("MpInt");
+			case MpIntJitType t -> {
+				// Least-sig leg is on top, and it's an int.
+				rv.visitLdcInsn(1);
+				rv.visitInsn(IXOR);
+			}
 			default -> throw new AssertionError();
 		}
 		return uType;

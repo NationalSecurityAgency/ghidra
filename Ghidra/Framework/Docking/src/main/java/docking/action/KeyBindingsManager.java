@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package docking.action;
 
-import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -103,9 +102,6 @@ public class KeyBindingsManager implements PropertyChangeListener {
 
 		// map standard keystroke to action
 		doAddKeyBinding(provider, action, keyStroke);
-
-		// map workaround keystroke to action
-		fixupAltGraphKeyStrokeMapping(provider, action, keyStroke);
 	}
 
 	public String validateActionKeyBinding(DockingActionIf dockingAction, KeyStroke ks) {
@@ -143,24 +139,6 @@ public class KeyBindingsManager implements PropertyChangeListener {
 		}
 
 		return null;
-	}
-
-	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
-			KeyStroke keyStroke) {
-
-		// special case
-		int modifiers = keyStroke.getModifiers();
-		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
-			//
-			// Also register the 'Alt' binding with the 'Alt Graph' mask.  This fixes the but
-			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873)
-			// that have different key codes for the left and right Alt keys.
-			//
-			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
-			KeyStroke updateKeyStroke =
-				KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers, false);
-			doAddKeyBinding(provider, action, updateKeyStroke, keyStroke);
-		}
 	}
 
 	private void doAddKeyBinding(ComponentProvider provider, DockingActionIf action,

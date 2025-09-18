@@ -306,8 +306,6 @@ public class BitFieldEditorPanel extends JPanel {
 			}
 		});
 
-		dtChoiceEditor.getBrowseButton().setFocusable(false);
-
 		JComponent editorComponent = dtChoiceEditor.getEditorComponent();
 		Dimension preferredSize = editorComponent.getPreferredSize();
 		editorComponent.setPreferredSize(new Dimension(200, preferredSize.height));

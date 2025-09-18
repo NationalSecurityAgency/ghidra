@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import org.objectweb.asm.MethodVisitor;
@@ -33,9 +32,29 @@ import ghidra.pcode.emu.jit.op.JitPopCountOp;
  * This uses the unary operator generator and emits an invocation of {@link Integer#bitCount(int)}
  * or {@link Long#bitCount(long)}, depending on the type.
  */
-public enum PopCountOpGen implements UnOpGen<JitPopCountOp> {
+public enum PopCountOpGen implements IntUnOpGen<JitPopCountOp> {
 	/** The generator singleton */
 	GEN;
+
+	@Override
+	public boolean isSigned() {
+		return false;
+	}
+
+	private void generateMpIntPopCount(JitCodeGenerator gen, MpIntJitType type, MethodVisitor mv) {
+		// [leg1:INT,...,legN:INT]
+		mv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "bitCount", MDESC_INTEGER__BIT_COUNT, false);
+		// [pop1:INT,leg2:INT...,legN:INT]
+		for (int i = 1; i < type.legsAlloc(); i++) {
+			mv.visitInsn(SWAP);
+			// [leg2:INT,pop1:INT,...,legN:INT]
+			mv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "bitCount", MDESC_INTEGER__BIT_COUNT,
+				false);
+			// [pop2:INT,pop1:INT,...,legN:INT]
+			mv.visitInsn(IADD);
+			// [popT:INT,...,legN:INT]
+		}
+	}
 
 	@Override
 	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitPopCountOp op, JitBlock block,
@@ -45,7 +64,7 @@ public enum PopCountOpGen implements UnOpGen<JitPopCountOp> {
 				MDESC_INTEGER__BIT_COUNT, false);
 			case LongJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_LONG, "bitCount",
 				MDESC_LONG__BIT_COUNT, false);
-			case MpIntJitType t -> TODO("MpInt");
+			case MpIntJitType t -> generateMpIntPopCount(gen, t, rv);
 			default -> throw new AssertionError();
 		}
 		return IntJitType.I4;

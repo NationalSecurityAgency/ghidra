@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ import ghidra.util.task.TaskMonitor;
  * <pre>
  * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
- *         // do work here...
+ *         // do work here and create a RESULT item for later processing...
  *     }
  * };
  *
@@ -85,7 +85,7 @@ import ghidra.util.task.TaskMonitor;
  * <pre>{@literal
  * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
- *         // do work here...
+ *         // do work here and create a RESULT item for later processing...
  *     }
  * };}
  *
@@ -652,6 +652,7 @@ public class ConcurrentQ<I, R> {
 		}
 	}
 
+	// Called by the FutureTaskMonitor that we gave to the thread pool
 	private class CallbackCallable implements Callable<R> {
 
 		private I item;
@@ -663,6 +664,7 @@ public class ConcurrentQ<I, R> {
 
 		@Override
 		public R call() throws Exception {
+			// callback is the client callback given to this queue at construction
 			return callback.process(item, future);
 		}
 

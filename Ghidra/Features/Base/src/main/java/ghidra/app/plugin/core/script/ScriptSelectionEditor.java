@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.script;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -28,7 +26,6 @@ import docking.widgets.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.ScriptInfo;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.UserSearchUtils;
 
 /**
  * A widget that allows the user to choose an existing script by typing its name or picking it
@@ -222,24 +219,10 @@ public class ScriptSelectionEditor {
 		}
 
 		@Override
-		public List<ScriptInfo> getMatchingData(String searchText) {
-
-			// This pattern will: 1) allow users to match the typed text anywhere in the
-			// script names and 2) allow the use of globbing characters
-			Pattern pattern = UserSearchUtils.createContainsPattern(searchText, true,
-				Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-
-			List<ScriptInfo> results = new ArrayList<>();
-			for (ScriptInfo info : data) {
-				String name = info.getName();
-				Matcher m = pattern.matcher(name);
-				if (m.matches()) {
-					results.add(info);
-				}
-			}
-
-			return results;
+		public List<SearchMode> getSupportedSearchModes() {
+			return List.of(SearchMode.WILDCARD, SearchMode.CONTAINS, SearchMode.STARTS_WITH);
 		}
+
 	}
 
 	private class ScriptSelectionTextField extends DropDownSelectionTextField<ScriptInfo> {

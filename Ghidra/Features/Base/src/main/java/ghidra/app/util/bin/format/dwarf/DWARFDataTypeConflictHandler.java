@@ -115,14 +115,14 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 		}
 
 		Map<String, DataTypeComponent> fullComponentsByName = new HashMap<>();
-		for (DataTypeComponent dtc : full.getComponents()) {
+		for (DataTypeComponent dtc : full.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();
 			}
 			fullComponentsByName.put(name, dtc);
 		}
-		for (DataTypeComponent dtc : part.getComponents()) {
+		for (DataTypeComponent dtc : part.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();

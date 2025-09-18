@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,9 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URL;
 
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.data.NullFolderDomainObject;
+import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -42,6 +43,8 @@ import ghidra.util.task.*;
 public abstract class GhidraURLQueryTask extends Task implements GhidraURLResultHandler {
 
 	private final URL ghidraUrl;
+	private final Class<? extends DomainObject> contentClass;
+	private final LinkFileControl linkFileControl;
 
 	private boolean done = false;
 
@@ -49,16 +52,22 @@ public abstract class GhidraURLQueryTask extends Task implements GhidraURLResult
 	 * Construct a Ghidra URL read-only query task.
 	 * @param title task dialog title
 	 * @param ghidraUrl Ghidra URL (local or remote)
+	 * @param contentClass expected content class or null.  If a folder is expected 
+	 * {@link NullFolderDomainObject} class should be specified.
+	 * @param linkFileControl controls how or if link files will be followed 
 	 * @throws IllegalArgumentException if specified URL is not a Ghidra URL
 	 * (see {@link GhidraURL}).
 	 */
-	protected GhidraURLQueryTask(String title, URL ghidraUrl) {
+	protected GhidraURLQueryTask(String title, URL ghidraUrl,
+			Class<? extends DomainObject> contentClass, LinkFileControl linkFileControl) {
 		super(title, true, false, true);
 		if (!GhidraURL.isLocalProjectURL(ghidraUrl) &&
 			!GhidraURL.isServerRepositoryURL(ghidraUrl)) {
 			throw new IllegalArgumentException("Unsupported URL: " + ghidraUrl);
 		}
 		this.ghidraUrl = ghidraUrl;
+		this.contentClass = contentClass;
+		this.linkFileControl = linkFileControl;
 	}
 
 	/**
@@ -77,7 +86,7 @@ public abstract class GhidraURLQueryTask extends Task implements GhidraURLResult
 		monitor.addCancelledListener(cancelledListener);
 
 		try {
-			GhidraURLQuery.queryUrl(ghidraUrl, this, monitor);
+			GhidraURLQuery.queryUrl(ghidraUrl, contentClass, this, linkFileControl, monitor);
 		}
 		catch (InterruptedIOException e) {
 			// ignore - assume cancelled

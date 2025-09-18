@@ -379,7 +379,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(-1);
@@ -409,7 +409,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				CategoryPath path = new CategoryPath("/Category1/Category2/Category3");
 				Structure s = new StructureDataType(path, "my_struct", 5);
 				DataType dt = dtm.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(-1);
@@ -442,7 +442,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -475,7 +475,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"),
 					"FloatStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_LATEST);
@@ -496,7 +496,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -526,7 +526,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -578,7 +578,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override
@@ -588,7 +588,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(-1);
@@ -772,7 +772,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -792,7 +792,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt);
 			}
 
 			@Override

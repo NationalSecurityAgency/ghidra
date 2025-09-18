@@ -222,7 +222,11 @@ public class FunctionGraphFactory {
 		for (FGVertex v : vertices) {
 			monitor.increment();
 			try {
-				Swing.runNow(v::getComponent);
+				Swing.runNow(() -> {
+					if (!monitor.isCancelled()) {
+						v.getComponent();
+					}
+				});
 			}
 			catch (Exception e) {
 				return false;

@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Handles marking up and program info for Golang binaries.
+ * Handles marking up and program info for Go binaries.
  * <ul>
  *   <li>NoteGoBuildId</li>
  * 	 <li>GoBuildInfo</li>

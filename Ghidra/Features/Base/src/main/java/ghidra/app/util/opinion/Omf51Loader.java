@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.omf.*;
@@ -74,12 +73,13 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
-
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-		AbstractOmfRecordFactory factory = new Omf51RecordFactory(provider);
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
+		AbstractOmfRecordFactory factory = new Omf51RecordFactory(settings.provider());
 		try {
 			List<OmfRecord> records = OmfUtils.readRecords(factory);
 			Map<Integer, Address> segmentToAddr =

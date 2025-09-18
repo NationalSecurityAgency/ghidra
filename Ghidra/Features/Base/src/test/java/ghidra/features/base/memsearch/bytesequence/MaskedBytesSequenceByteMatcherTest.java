@@ -49,10 +49,10 @@ public class MaskedBytesSequenceByteMatcherTest {
 		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
 
 		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(2, 3), it.next());
+		assertEquals(new ByteMatch(2, 3, byteMatcher), it.next());
 
 		assertTrue(it.hasNext());
-		assertEquals(new ByteMatch(9, 3), it.next());
+		assertEquals(new ByteMatch(9, 3, byteMatcher), it.next());
 
 		assertFalse(it.hasNext());
 
@@ -66,8 +66,8 @@ public class MaskedBytesSequenceByteMatcherTest {
 
 		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
 
-		assertEquals(new ByteMatch(2, 3), it.next());
-		assertEquals(new ByteMatch(9, 3), it.next());
+		assertEquals(new ByteMatch(2, 3, byteMatcher), it.next());
+		assertEquals(new ByteMatch(9, 3, byteMatcher), it.next());
 		assertNull(it.next());
 	}
 
@@ -81,9 +81,9 @@ public class MaskedBytesSequenceByteMatcherTest {
 
 		Iterator<ByteMatch> it = byteMatcher.match(byteSequence).iterator();
 
-		assertEquals(new ByteMatch(1, 3), it.next());
-		assertEquals(new ByteMatch(6, 3), it.next());
-		assertEquals(new ByteMatch(8, 3), it.next());
+		assertEquals(new ByteMatch(1, 3, byteMatcher), it.next());
+		assertEquals(new ByteMatch(6, 3, byteMatcher), it.next());
+		assertEquals(new ByteMatch(8, 3, byteMatcher), it.next());
 		assertNull(it.next());
 	}
 

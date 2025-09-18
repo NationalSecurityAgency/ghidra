@@ -53,10 +53,11 @@ import mdemangler.typeinfo.*;
  * {@link #createVirtualTable(CategoryPath, String, Address, TaskMonitor)} methods demangle
  * the strings and created tables within a owner/parentage tree based on the demangled information.
  * <p><p>
- * The {@link #findVbt(ClassID, List, Integer)} and {@link #findVft(ClassID, List, Integer)} methods
- * attempt to find the VF/VB tables by finding the appropriate node in the tree based upon owner
- * and at-times-mismatched parentage information from the user.  This mismatch is not necessarily
- * the fault of the user, but more due to what parentage is incorporated into the mangled name.
+ * The {@link #findCreateVbt(ClassID, List, Integer)} and
+ * {@link #findCreateVft(ClassID, List, Integer)} methods attempt to find the VF/VB tables by
+ * finding the appropriate node in the tree based upon owner and at-times-mismatched parentage
+ * information from the user.  This mismatch is not necessarily the fault of the user, but more
+ * due to what parentage is incorporated into the mangled name.
  * <p><p>
  * <B> DESIGN of find mechanism</B>
  * <p>
@@ -338,7 +339,7 @@ public class MsVxtManager extends VxtManager {
 	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualBaseTable findVbt(ClassID owner, List<ClassID> parentage, Integer ordinal) {
+	public VirtualBaseTable findCreateVbt(ClassID owner, List<ClassID> parentage, Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualBaseTable vbt = vbtsByOwnerParentage.get(op);
 		if (vbt != null) {
@@ -424,7 +425,8 @@ public class MsVxtManager extends VxtManager {
 	 * @param ordinal ordinal of table for owner as sorted by address
 	 * @return the table
 	 */
-	public VirtualFunctionTable findVft(ClassID owner, List<ClassID> parentage, Integer ordinal) {
+	public VirtualFunctionTable findCreateVft(ClassID owner, List<ClassID> parentage,
+			Integer ordinal) {
 		OwnerParentage op = new OwnerParentage(owner, parentage);
 		VirtualFunctionTable vft = vftsByOwnerParentage.get(op);
 		if (vft != null) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.SegmentedAddress;
 import ghidra.program.model.address.SegmentedAddressSpace;
-import ghidra.util.Conv;
 
 /**
  * A class to represent the new-executable segment table.
@@ -32,12 +31,12 @@ public class SegmentTable {
 	SegmentTable(BinaryReader reader, SegmentedAddress baseAddr, short index, short segmentCount,
 			short shiftAlignCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Conv.shortToInt(index));
+        reader.setPointerIndex(Short.toUnsignedInt(index));
 
         //create a value of the shift count...
         shiftAlignCount = (short)(0x01 << shiftAlignCount);
 
-        int segmentCountInt = Conv.shortToInt(segmentCount);
+        int segmentCountInt = Short.toUnsignedInt(segmentCount);
 
         segments = new Segment[segmentCountInt];
 

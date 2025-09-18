@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +62,8 @@ public class ByteArray implements Array, Serializable {
      * @param index the index to set to 0.
      * @throws IndexOutOfBoundsException if the index is negative
      */
-    public void remove(int index) {
+    @Override
+	public void remove(int index) {
 		if (index >= bytes.length) {
 			return;
 		}
@@ -122,7 +122,8 @@ public class ByteArray implements Array, Serializable {
 	 * 
 	 * @see ghidra.util.datastruct.Array#getLastNonEmptyIndex()
 	 */
-    public int getLastNonEmptyIndex() {
+    @Override
+	public int getLastNonEmptyIndex() {
         return lastNonZeroIndex;
     }
 
@@ -130,7 +131,8 @@ public class ByteArray implements Array, Serializable {
 	 * 
 	 * @see ghidra.util.datastruct.Array#copyDataTo(int, DataTable, int, int)
 	 */
-    public void copyDataTo(int index, DataTable table, int toIndex, int toCol) {
+    @Override
+	public void copyDataTo(int index, DataTable table, int toIndex, int toCol) {
     	table.putByte(toIndex, toCol, get(index));
     }
 

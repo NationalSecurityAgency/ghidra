@@ -86,38 +86,27 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
 	}
 
-	/**
-	 * Return the size that this component would like to be.
-	 */
 	@Override
 	public Dimension getPreferredSize() {
 
-		Dimension dim = getSize();
-		// calculate dimension
-		int width = 0;
-		int height = 20 * fontHeight + statusPanel.getHeight();
-		if (dim != null) {
-			height += dim.height;
+		int rowCount = 20;
+		int rowsHeight = rowCount * fontHeight;
+		int defaultHeight = rowsHeight + statusPanel.getHeight();
+
+		if (viewList.isEmpty()) {
+			// add 20 for border layout vertical gap
+			int width = statusPanel.getPreferredSize().width + 20;
+			return new Dimension(width, defaultHeight);
 		}
-		boolean addHeight = true;
+
+		int width = indexPanel.getPreferredSize().width;
+		int height = defaultHeight;
 		for (ByteViewerComponent c : viewList) {
-
 			Dimension d = c.getPreferredSize();
-			width += d.width;
-			width += 2; // for separator
-			if (addHeight) {
-				height += d.height;
-				addHeight = false;
-			}
+			width += d.width + 2; // +2 for separator
+			height = Math.max(d.height, defaultHeight);
 		}
 
-		if (width == 0) {
-			width = statusPanel.getPreferredSize().width + 20; // add 20 for
-			// border layout vertical gap
-		}
-		else {
-			width += indexPanel.getPreferredSize().width;
-		}
 		return new Dimension(width, height);
 	}
 
@@ -126,9 +115,6 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		super.paintComponent(g);
 	}
 
-	//////////////////////////////////////////////////////////////////////////
-	// ** package-level methods **
-	//////////////////////////////////////////////////////////////////////////
 	void setCurrentCursorColor(Color c) {
 		currentCursorColor = c;
 		for (ByteViewerComponent comp : viewList) {

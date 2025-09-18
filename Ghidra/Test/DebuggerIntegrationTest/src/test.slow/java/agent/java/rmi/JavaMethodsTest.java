@@ -655,7 +655,6 @@ public class JavaMethodsTest extends AbstractJavaTraceRmiTest {
 				txPut(conn, "Frames");
 				waitForValuesPass("VMs[].Threads[main].Stack[0]._display",
 					pcs -> assertContainsString("checkAccess", pcs.get(0).getValue().toString()));
-				;
 			}
 		}
 	}

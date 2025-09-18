@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.graph.featurette.VgSatelliteFeaturette;
 import ghidra.graph.featurette.VisualGraphFeaturette;
 import ghidra.graph.viewer.*;
+import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.actions.*;
 import ghidra.graph.viewer.event.mouse.VertexMouseInfo;
 
@@ -137,11 +138,16 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 	 * Adds the satellite viewer functionality to this provider
 	 */
 	protected void addSatelliteFeature() {
+		addSatelliteFeature(true, SatellitePosition.LOWER_RIGHT);
+	}
+
+	protected void addSatelliteFeature(boolean satelliteVisible, SatellitePosition position) {
 		VgSatelliteFeaturette<V, E, G> satelliteFeature = new VgSatelliteFeaturette<>();
 		satelliteFeature.init(this);
 		subFeatures.add(satelliteFeature);
+		satelliteFeature.setSatellitePosition(position);
+		satelliteFeature.setSatelliteVisible(satelliteVisible);
 	}
-
 	/*
 	 
 	 Features to provide

@@ -265,7 +265,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	}
 
 	@Override
-	public boolean remove(DataType existingViewDt, TaskMonitor monitor) {
+	public boolean remove(DataType existingViewDt) {
 
 		if (existingViewDt.getDataTypeManager() != this) {
 			throw new IllegalArgumentException("datatype is not from this manager");
@@ -275,7 +275,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			dataTypeIDMap.remove(getID(existingViewDt));
 		}
 
-		return super.remove(existingViewDt, monitor);
+		return super.remove(existingViewDt);
 	}
 
 	/**
@@ -311,7 +311,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 					DataType originalDt = originalDTM.getDataType(originalId);
 					if (originalDt == null) {
 						changed = true;
-						remove(dt, TaskMonitor.DUMMY);
+						remove(dt);
 						continue;
 					}
 
@@ -406,7 +406,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 					orphanIds.addAll(getChildIds(id));
 
 					// Remove orphan DB datatype
-					remove(dt, TaskMonitor.DUMMY);
+					remove(dt);
 
 					if (cleanupIdMaps) {
 						dataTypeIDMap.remove(id);

@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -133,7 +134,7 @@ public class LocationReferencesPlugin extends Plugin
 			return; // not sure if this can happen
 		}
 
-		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		Supplier<Collection<Reference>> refs = () -> XReferenceUtils.getAllXrefs(location);
 		XReferenceUtils.showXrefs(lac.getNavigatable(), tool, service, location, refs);
 	}
 

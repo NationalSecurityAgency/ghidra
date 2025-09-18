@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.references;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.*;
@@ -30,7 +28,7 @@ import javax.swing.event.DocumentListener;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -113,8 +111,8 @@ class EditExternalReferencePanel extends EditReferencePanel {
 			}
 		});
 
-		editButton = new JButton("Edit");
-		editButton.setToolTipText("Edit Link to External Program");
+		editButton = new JButton("Select...");
+		editButton.setToolTipText("Select External Program");
 		editButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -187,10 +185,8 @@ class EditExternalReferencePanel extends EditReferencePanel {
 	 * Pop up the data tree dialog so the user can choose the external program.
 	 */
 	private void popupProgramChooser() {
-		DataTreeDialog d =
-			new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
-		final DataTreeDialog dialog = d;
-		d.addOkActionListener(new ActionListener() {
+		ProgramFileChooser dialog = new ProgramFileChooser(this.getParent(), "Choose External Program");
+		dialog.addOkActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				DomainFile df = dialog.getDomainFile();
@@ -206,7 +202,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 				extLibPath.setText(df.getPathname());
 			}
 		});
-		plugin.getTool().showDialog(d);
+		plugin.getTool().showDialog(dialog);
 	}
 
 	@Override

@@ -150,7 +150,13 @@ public class ControlFlowGuard {
 		}
 
 		for (Address target : getFunctionAddressesFromTable(program, tableData)) {
-			AbstractProgramLoader.markAsFunction(program, null, target);
+			if (program.getListing().getDefinedDataAt(target) == null) {
+				AbstractProgramLoader.markAsFunction(program, null, target);
+			}
+			else {
+				log.appendMsg("Unable to mark Control Flow Guard function at " + target + 
+					". Data is already defined there.");
+			}
 		}
 	}
 

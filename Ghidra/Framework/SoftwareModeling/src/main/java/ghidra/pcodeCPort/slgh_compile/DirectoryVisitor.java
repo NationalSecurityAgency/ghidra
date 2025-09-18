@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,8 @@ public class DirectoryVisitor implements Iterable<File> {
         this.compareCase = compareCase;
     }
 
-    public Iterator<File> iterator() {
+    @Override
+	public Iterator<File> iterator() {
         return new BreadthFirstDirectoryVisitor(startingDirectories, directoryFilter, filter, compareCase);
     }
 
@@ -82,19 +83,22 @@ public class DirectoryVisitor implements Iterable<File> {
         private final Comparator<File> comparator;
 
         private static final Comparator<File> CASE_SENSITIVE = new Comparator<File>() {
-            public int compare(File o1, File o2) {
+            @Override
+			public int compare(File o1, File o2) {
                 return o1.getName().compareTo(o2.getName());
             }
         };
 
         private static final Comparator<File> CASE_INSENSITIVE = new Comparator<File>() {
-            public int compare(File o1, File o2) {
+            @Override
+			public int compare(File o1, File o2) {
                 return o1.getName().compareToIgnoreCase(o2.getName());
             }
         };
 
         private static final FileFilter DIRECTORIES = new FileFilter() {
-            public boolean accept(File pathname) {
+            @Override
+			public boolean accept(File pathname) {
                 return pathname.isDirectory();
             }
         };
@@ -104,7 +108,8 @@ public class DirectoryVisitor implements Iterable<File> {
                 boolean compareCase) {
             this.directoryFilter = directoryFilter == null ? DIRECTORIES
                     : new FileFilter() {
-                        public boolean accept(File pathname) {
+                        @Override
+						public boolean accept(File pathname) {
                             return pathname.isDirectory()
                                     && directoryFilter.accept(pathname);
                         }
@@ -147,17 +152,20 @@ public class DirectoryVisitor implements Iterable<File> {
             }
         }
 
-        public boolean hasNext() {
+        @Override
+		public boolean hasNext() {
             ensureNextFileIsPresentInQueue();
             return !fileQueue.isEmpty();
         }
 
-        public File next() {
+        @Override
+		public File next() {
             ensureNextFileIsPresentInQueue();
             return fileQueue.removeFirst();
         }
 
-        public void remove() {
+        @Override
+		public void remove() {
             throw new UnsupportedOperationException();
         }
     }

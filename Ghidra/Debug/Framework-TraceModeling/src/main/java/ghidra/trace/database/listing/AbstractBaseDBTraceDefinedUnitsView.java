@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 			ensureInCachedRange(key.snap, key.addr);
 			return getFirstInRangeCacheContaining(key);
 		}
-	};
+	}
 
 	/**
 	 * Cache for optimizing {@link AbstractBaseDBTraceDefinedUnitsView#getFloor(long, Address)} and
@@ -294,7 +294,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 */
 	protected void clearContext(Lifespan span, AddressRange range) {
 		DBTraceRegisterContextSpace ctxSpace =
-			space.trace.getRegisterContextManager().get(space, false);
+			space.trace.getRegisterContextManager().get(space.space, false);
 		if (ctxSpace == null) {
 			return;
 		}
@@ -339,8 +339,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		cacheForContaining.notifyEntryRemoved(unit.getLifespan(), unit.getRange(), unit);
 		cacheForSequence.notifyEntryRemoved(unit.getLifespan(), unit.getRange(), unit);
 		space.undefinedData.invalidateCache();
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.CODE_REMOVED, space, unit.getBounds(), unit, null));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_REMOVED, space.space,
+			unit.getBounds(), unit, null));
 	}
 
 	/**
@@ -353,8 +353,8 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		cacheForContaining.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		cacheForSequence.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		space.undefinedData.invalidateCache();
-		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_LIFESPAN_CHANGED, space,
-			unit, oldSpan, unit.getLifespan()));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_LIFESPAN_CHANGED,
+			space.space, unit, oldSpan, unit.getLifespan()));
 	}
 
 	/**

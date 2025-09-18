@@ -19,10 +19,11 @@ import sys
 
 
 def append_paths():
-    sys.path.append("../../../Debugger-rmi-trace/data/support")
+    sys.path.append(
+        f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
     from gmodutils import ghidra_module_pypath
-    sys.path.append(ghidra_module_pypath("Debug/Debugger-rmi-trace"))
-    sys.path.append(ghidra_module_pypath("Debug/Debugger-agent-dbgeng"))
+    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+    sys.path.append(ghidra_module_pypath())
 
 
 def main():

@@ -235,7 +235,13 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		settingsTable.editingStopped(null);
+
+		// prevent users from closing the dialog when pressing Enter to confirm an edit
+		if (settingsTable.isEditing()) {
+			settingsTable.editingStopped(null);
+			return;
+		}
+
 		apply();
 		close();
 		dispose();
@@ -694,8 +700,6 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		private SettingsRowObject rowobject;
 
 		SettingsEditor() {
-			comboBox.setEnterKeyForwarding(false);
-			comboBox.addActionListener(e -> fireEditingStopped());
 			intTextField.addChangeListener(e -> updateHexMode());
 		}
 

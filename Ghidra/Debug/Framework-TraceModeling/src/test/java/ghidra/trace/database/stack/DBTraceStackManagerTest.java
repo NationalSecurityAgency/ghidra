@@ -30,9 +30,43 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 
 public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <attribute name='Stack' schema='Stack' />
+			    </schema>
+			    <schema name='Stack' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='StackFrame' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			</context>
+			""";
 
 	ToyDBTraceBuilder b;
 	DBTraceStackManager stackManager;
@@ -40,6 +74,12 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	@Before
 	public void setUpStackManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
+
+		try (Transaction tx = b.startTransaction()) {
+			XmlSchemaContext ctx = XmlSchemaContext.deserialize(XML_CTX);
+			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+
 		stackManager = b.trace.getStackManager();
 	}
 

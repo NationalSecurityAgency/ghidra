@@ -381,6 +381,17 @@
     </pcode>
   </callfixup>
   
+  <callfixup name="get_pc_thunk_di">
+    <target name="__i686.get_pc_thunk.di"/>
+    <target name="__x86.get_pc_thunk.di"/>
+    <pcode>
+      <body><![CDATA[
+      EDI = * ESP;
+      ESP = ESP + 4;
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
   <callfixup name="get_pc_thunk_si">
     <target name="__i686.get_pc_thunk.si"/>
     <target name="__x86.get_pc_thunk.si"/>

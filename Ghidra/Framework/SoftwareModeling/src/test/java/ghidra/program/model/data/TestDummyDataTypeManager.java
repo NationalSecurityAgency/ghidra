@@ -190,9 +190,14 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public boolean remove(DataType dataType, TaskMonitor monitor) {
+	public boolean remove(DataType dataType) {
 		// stub
 		return false;
+	}
+
+	@Override
+	public void remove(List<DataType> dataTypes, TaskMonitor monitor) throws CancelledException {
+		// stub
 	}
 
 	@Override

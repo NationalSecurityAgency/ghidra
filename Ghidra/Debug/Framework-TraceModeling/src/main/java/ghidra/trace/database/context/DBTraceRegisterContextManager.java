@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,14 +101,7 @@ public class DBTraceRegisterContextManager
 	@Override
 	protected DBTraceRegisterContextSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent, null);
-	}
-
-	@Override
-	protected DBTraceRegisterContextSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		// TODO: Should I just forbid this? It doesn't seem sane. Then again, what do I know?
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent, thread);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent);
 	}
 
 	@Override
@@ -205,7 +198,7 @@ public class DBTraceRegisterContextManager
 	@Override
 	public AddressSetView getRegisterValueAddressRanges(Language language, Register register,
 			long snap) {
-		return delegateAddressSet(getActiveMemorySpaces(),
+		return delegateAddressSet(getActiveSpaces(),
 			m -> m.getRegisterValueAddressRanges(language, register, snap));
 	}
 
@@ -218,8 +211,7 @@ public class DBTraceRegisterContextManager
 
 	@Override
 	public boolean hasRegisterValue(Language language, Register register, long snap) {
-		return delegateAny(getActiveMemorySpaces(),
-			m -> m.hasRegisterValue(language, register, snap));
+		return delegateAny(getActiveSpaces(), m -> m.hasRegisterValue(language, register, snap));
 	}
 
 	@Override

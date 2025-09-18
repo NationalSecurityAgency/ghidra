@@ -37,6 +37,7 @@ import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -333,6 +334,11 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
+	public AutoReadMemorySpec getAutoReadMemorySpec() {
+		return connectedProvider.getAutoReadMemorySpec();
+	}
+
+	@Override
 	public void setCurrentSelection(ProgramSelection selection) {
 		connectedProvider.setSelection(selection);
 	}
@@ -446,6 +452,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
 		SaveState connectedProviderState = new SaveState();
 		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
@@ -466,6 +473,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);

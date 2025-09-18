@@ -44,6 +44,8 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
@@ -152,15 +154,14 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 	protected abstract void terminateTarget(T t);
 
-	protected abstract TraceBreakpoint findLoc(long snap, Set<TraceBreakpoint> locs, int index);
+	protected abstract TraceBreakpointLocation findLoc(long snap, Set<TraceBreakpointLocation> locs,
+			int index);
 
 	protected abstract void handleToggleBreakpointInvocation(T target,
-			TraceBreakpoint expectedBreakpoint,
-			boolean expectedEnabled) throws Throwable;
+			TraceBreakpointLocation expectedBreakpoint, boolean expectedEnabled) throws Throwable;
 
 	protected abstract void handleDeleteBreakpointInvocation(T target,
-			TraceBreakpoint expectedBreakpoint)
-			throws Throwable;
+			TraceBreakpointLocation expectedBreakpoint) throws Throwable;
 
 	@Before
 	public void setUpBreakpointServiceTest() throws Throwable {
@@ -293,7 +294,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertNull(enLb.getProgramLocation());
 		assertEquals(Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE), enLb.getKinds());
 
-		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
+		TraceBreakpointLocation bpt =
+			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
 		assertEquals(addr(trace, 0x56550123), enLb.getTraceAddress(trace));
 		assertEquals(Set.of(bpt), enLb.getTraceBreakpoints(trace));
@@ -314,7 +316,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertNull(enLb.getProgramLocation());
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
-		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
+		TraceBreakpointLocation bpt =
+			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
 		assertEquals(addr(trace, offset), enLb.getTraceAddress(trace));
 		assertEquals(Set.of(bpt), enLb.getTraceBreakpoints(trace));
@@ -331,7 +334,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(State.ENABLED, enLb.computeStateForProgram(program));
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
-		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
+		TraceBreakpointLocation bpt =
+			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
 		assertEquals(addr(trace, 0x55550123), enLb.getTraceAddress(trace));
 		assertEquals(Set.of(bpt), enLb.getTraceBreakpoints(trace));
@@ -402,8 +406,10 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(addr(trace1, 0x55550123), enLb.getTraceAddress(trace1));
 		assertEquals(addr(trace2, 0x55551123), enLb.getTraceAddress(trace2));
 
-		TraceBreakpoint bpt1 = Unique.assertOne(trace1.getBreakpointManager().getAllBreakpoints());
-		TraceBreakpoint bpt2 = Unique.assertOne(trace2.getBreakpointManager().getAllBreakpoints());
+		TraceBreakpointLocation bpt1 =
+			Unique.assertOne(trace1.getBreakpointManager().getAllBreakpointLocations());
+		TraceBreakpointLocation bpt2 =
+			Unique.assertOne(trace2.getBreakpointManager().getAllBreakpointLocations());
 		assertEquals(Set.of(bpt1), enLb.getTraceBreakpoints(trace1));
 		assertEquals(Set.of(bpt2), enLb.getTraceBreakpoints(trace2));
 		assertNotEquals(Set.of(bpt2), enLb.getTraceBreakpoints(trace1)); // Sanity check
@@ -441,7 +447,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertEquals(Set.of(trace), enLb.getMappedTraces());
 		assertEquals(addr(trace, 0x55550123), enLb.getTraceAddress(trace));
 
-		TraceBreakpoint bpt = Unique.assertOne(trace.getBreakpointManager().getAllBreakpoints());
+		TraceBreakpointLocation bpt =
+			Unique.assertOne(trace.getBreakpointManager().getAllBreakpointLocations());
 		assertEquals(Set.of(bpt), enLb.getTraceBreakpoints(trace));
 		assertEquals(Set.of(bpt), enLb.getTraceBreakpoints());
 
@@ -1339,12 +1346,11 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
-		int id = Integer.parseInt(
-			((TraceObjectBreakpointLocation) Unique.assertOne(lb.getTraceBreakpoints(trace)))
-					.getSpecification()
-					.getObject()
-					.getCanonicalPath()
-					.index());
+		int id = Integer.parseInt(Unique.assertOne(lb.getTraceBreakpoints(trace))
+				.getSpecification()
+				.getObject()
+				.getCanonicalPath()
+				.index());
 
 		// Simulate a step, which should also cause snap advance in target
 		simulateTargetStep(target1);
@@ -1414,11 +1420,11 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		assertEquals(2, lb.getTraceBreakpoints().size());
 
-		Set<TraceBreakpoint> locs = lb.getTraceBreakpoints();
+		Set<TraceBreakpointLocation> locs = lb.getTraceBreakpoints();
 
 		long snap = getSnap(target1);
-		TraceBreakpoint bpt0 = findLoc(snap, locs, 0);
-		TraceBreakpoint bpt1 = findLoc(snap, locs, 1);
+		TraceBreakpointLocation bpt0 = findLoc(snap, locs, 0);
+		TraceBreakpointLocation bpt1 = findLoc(snap, locs, 1);
 		CompletableFuture<Void> disable = breakpointService.disableLocs(Set.of(bpt0));
 		handleToggleBreakpointInvocation(target1, bpt0, false);
 		waitOn(disable);
@@ -1517,6 +1523,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		intoProject(program);
 		programManager.openProgram(program);
 
+		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			tb.trace.getObjectManager()
+					.createObject(KeyPath.parse("Processes[1].Breakpoints"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+		}
 		addTextMappingDead(0, program, tb);
 
 		addEnabledProgramBreakpointWithSleigh(program);
@@ -1531,7 +1543,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		waitForDomainObject(program);
 		waitOn(breakpointService.changesSettled());
 
-		TraceBreakpoint bpt = Unique.assertOne(
+		TraceBreakpointLocation bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
 		assertEquals("r0=0xbeef;", bpt.getEmuSleigh(0));
 	}
@@ -1552,6 +1564,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
+		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(SCHEMA_CTX);
+			tb.trace.getObjectManager()
+					.createObject(KeyPath.parse("Processes[1].Breakpoints"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+		}
 		addTextMappingDead(0, program, tb);
 		waitOn(mappingService.changesSettled());
 		waitOn(breakpointService.changesSettled());
@@ -1563,7 +1581,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		waitForDomainObject(program);
 		waitOn(breakpointService.changesSettled());
 
-		TraceBreakpoint bpt = Unique.assertOne(
+		TraceBreakpointLocation bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
 		assertEquals("r0=0xbeef;", bpt.getEmuSleigh(0));
 	}
@@ -1585,8 +1603,9 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		try (Transaction tid = tb.startTransaction()) {
-			TraceBreakpoint bpt = tb.trace.getBreakpointManager()
-					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
+			tb.createRootObject(SCHEMA_CTX);
+			TraceBreakpointLocation bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
 						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
 						false /* emuEnabled defaults to true */, "");
 			bpt.setEmuSleigh(0, "r0=0xbeef;");
@@ -1639,7 +1658,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		try (Transaction tid = tb.startTransaction()) {
-			TraceBreakpoint bpt = tb.trace.getBreakpointManager()
+			TraceBreakpointLocation bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
 						tb.addr(0x55550123),
 						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),

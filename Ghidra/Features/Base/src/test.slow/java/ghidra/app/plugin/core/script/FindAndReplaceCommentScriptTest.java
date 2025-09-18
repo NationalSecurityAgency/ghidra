@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,7 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 
 	private static final String FIND_DIALOG_TITLE = "Enter Search String";
 	private static final String REPLACE_DIALOG_TITLE = "Enter Replace String";
-	private static final int[] COMMENT_TYPES = { CodeUnit.EOL_COMMENT, CodeUnit.PRE_COMMENT,
-		CodeUnit.POST_COMMENT, CodeUnit.PLATE_COMMENT, CodeUnit.REPEATABLE_COMMENT };
+
 	private static final int SCRIPT_TIMEOUT = 100000;
 
 	private TestEnv env;
@@ -65,19 +64,18 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		builder = new ToyProgramBuilder("ReplaceCommentTest", true, this);
 		builder.createMemory(".text", "0x1001000", 0x4000);
 
-		builder.createComment("0x01001000", "EOL Comment", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01001100", "Pre Comment", CodeUnit.PRE_COMMENT);
-		builder.createComment("0x01001200", "Post Comment", CodeUnit.POST_COMMENT);
-		builder.createComment("0x01001300", "Plate Comment", CodeUnit.PLATE_COMMENT);
-		builder.createComment("0x01001400", "Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
-		builder.createComment("0x01001500", "EOL Comment Repeated", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01001600", "EOL Comment Repeated", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01001700", "Generic Comment Repeated", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01001800", "Generic Comment Repeated", CodeUnit.PRE_COMMENT);
-		builder.createComment("0x01001900", "Generic Comment Repeated", CodeUnit.POST_COMMENT);
-		builder.createComment("0x01002000", "Generic Comment Repeated", CodeUnit.PLATE_COMMENT);
-		builder.createComment("0x01002100", "Generic Comment Repeated",
-			CodeUnit.REPEATABLE_COMMENT);
+		builder.createComment("0x01001000", "EOL Comment", CommentType.EOL);
+		builder.createComment("0x01001100", "Pre Comment", CommentType.PRE);
+		builder.createComment("0x01001200", "Post Comment", CommentType.POST);
+		builder.createComment("0x01001300", "Plate Comment", CommentType.PLATE);
+		builder.createComment("0x01001400", "Repeatable Comment", CommentType.REPEATABLE);
+		builder.createComment("0x01001500", "EOL Comment Repeated", CommentType.EOL);
+		builder.createComment("0x01001600", "EOL Comment Repeated", CommentType.EOL);
+		builder.createComment("0x01001700", "Generic Comment Repeated", CommentType.EOL);
+		builder.createComment("0x01001800", "Generic Comment Repeated", CommentType.PRE);
+		builder.createComment("0x01001900", "Generic Comment Repeated", CommentType.POST);
+		builder.createComment("0x01002000", "Generic Comment Repeated", CommentType.PLATE);
+		builder.createComment("0x01002100", "Generic Comment Repeated", CommentType.REPEATABLE);
 
 		return builder.getProgram();
 	}
@@ -92,13 +90,13 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001000, "EOL Comment", CodeUnit.EOL_COMMENT);
+		assertCommentEquals(0x01001000, "EOL Comment", CommentType.EOL);
 
 		respondToDialog("EOL Comment", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001000, "New Value", CodeUnit.EOL_COMMENT);
+		assertCommentEquals(0x01001000, "New Value", CommentType.EOL);
 	}
 
 	@Test
@@ -106,13 +104,13 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001100, "Pre Comment", CodeUnit.PRE_COMMENT);
+		assertCommentEquals(0x01001100, "Pre Comment", CommentType.PRE);
 
 		respondToDialog("Pre Comment", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001100, "New Value", CodeUnit.PRE_COMMENT);
+		assertCommentEquals(0x01001100, "New Value", CommentType.PRE);
 	}
 
 	@Test
@@ -120,13 +118,13 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001200, "Post Comment", CodeUnit.POST_COMMENT);
+		assertCommentEquals(0x01001200, "Post Comment", CommentType.POST);
 
 		respondToDialog("Post Comment", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001200, "New Value", CodeUnit.POST_COMMENT);
+		assertCommentEquals(0x01001200, "New Value", CommentType.POST);
 	}
 
 	@Test
@@ -134,13 +132,13 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001300, "Plate Comment", CodeUnit.PLATE_COMMENT);
+		assertCommentEquals(0x01001300, "Plate Comment", CommentType.PLATE);
 
 		respondToDialog("Plate Comment", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001300, "New Value", CodeUnit.PLATE_COMMENT);
+		assertCommentEquals(0x01001300, "New Value", CommentType.PLATE);
 	}
 
 	@Test
@@ -148,13 +146,13 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001400, "Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001400, "Repeatable Comment", CommentType.REPEATABLE);
 
 		respondToDialog("Repeatable Comment", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001400, "New Value", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001400, "New Value", CommentType.REPEATABLE);
 	}
 
 	@Test
@@ -162,15 +160,15 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001500, "EOL Comment Repeated", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001600, "EOL Comment Repeated", CodeUnit.EOL_COMMENT);
+		assertCommentEquals(0x01001500, "EOL Comment Repeated", CommentType.EOL);
+		assertCommentEquals(0x01001600, "EOL Comment Repeated", CommentType.EOL);
 
 		respondToDialog("EOL Comment Repeated", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001500, "New Value", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001600, "New Value", CodeUnit.EOL_COMMENT);
+		assertCommentEquals(0x01001500, "New Value", CommentType.EOL);
+		assertCommentEquals(0x01001600, "New Value", CommentType.EOL);
 	}
 
 	@Test
@@ -178,21 +176,21 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001700, "Generic Comment Repeated", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001800, "Generic Comment Repeated", CodeUnit.PRE_COMMENT);
-		assertCommentEquals(0x01001900, "Generic Comment Repeated", CodeUnit.POST_COMMENT);
-		assertCommentEquals(0x01002000, "Generic Comment Repeated", CodeUnit.PLATE_COMMENT);
-		assertCommentEquals(0x01002100, "Generic Comment Repeated", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001700, "Generic Comment Repeated", CommentType.EOL);
+		assertCommentEquals(0x01001800, "Generic Comment Repeated", CommentType.PRE);
+		assertCommentEquals(0x01001900, "Generic Comment Repeated", CommentType.POST);
+		assertCommentEquals(0x01002000, "Generic Comment Repeated", CommentType.PLATE);
+		assertCommentEquals(0x01002100, "Generic Comment Repeated", CommentType.REPEATABLE);
 
 		respondToDialog("Generic Comment Repeated", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001700, "New Value", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001800, "New Value", CodeUnit.PRE_COMMENT);
-		assertCommentEquals(0x01001900, "New Value", CodeUnit.POST_COMMENT);
-		assertCommentEquals(0x01002000, "New Value", CodeUnit.PLATE_COMMENT);
-		assertCommentEquals(0x01002100, "New Value", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001700, "New Value", CommentType.EOL);
+		assertCommentEquals(0x01001800, "New Value", CommentType.PRE);
+		assertCommentEquals(0x01001900, "New Value", CommentType.POST);
+		assertCommentEquals(0x01002000, "New Value", CommentType.PLATE);
+		assertCommentEquals(0x01002100, "New Value", CommentType.REPEATABLE);
 	}
 
 	@Test
@@ -203,7 +201,7 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		respondToDialog("This Value Does Not Exist", FIND_DIALOG_TITLE);
 		respondToDialog("New Value", REPLACE_DIALOG_TITLE);
 
-		assertCommentDoesNotExists("New Value");
+		assertCommentDoesNotExist("New Value");
 	}
 
 	@Test
@@ -211,21 +209,21 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		ScriptTaskListener scriptID = env.runScript(script);
 		assertNotNull(scriptID);
 
-		assertCommentEquals(0x01001000, "EOL Comment", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001100, "Pre Comment", CodeUnit.PRE_COMMENT);
-		assertCommentEquals(0x01001200, "Post Comment", CodeUnit.POST_COMMENT);
-		assertCommentEquals(0x01001300, "Plate Comment", CodeUnit.PLATE_COMMENT);
-		assertCommentEquals(0x01001400, "Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001000, "EOL Comment", CommentType.EOL);
+		assertCommentEquals(0x01001100, "Pre Comment", CommentType.PRE);
+		assertCommentEquals(0x01001200, "Post Comment", CommentType.POST);
+		assertCommentEquals(0x01001300, "Plate Comment", CommentType.PLATE);
+		assertCommentEquals(0x01001400, "Repeatable Comment", CommentType.REPEATABLE);
 
 		respondToDialog("Comment", FIND_DIALOG_TITLE);
 		respondToDialog("Test", REPLACE_DIALOG_TITLE);
 
 		waitForScriptCompletion(scriptID, SCRIPT_TIMEOUT);
-		assertCommentEquals(0x01001000, "EOL Test", CodeUnit.EOL_COMMENT);
-		assertCommentEquals(0x01001100, "Pre Test", CodeUnit.PRE_COMMENT);
-		assertCommentEquals(0x01001200, "Post Test", CodeUnit.POST_COMMENT);
-		assertCommentEquals(0x01001300, "Plate Test", CodeUnit.PLATE_COMMENT);
-		assertCommentEquals(0x01001400, "Repeatable Test", CodeUnit.REPEATABLE_COMMENT);
+		assertCommentEquals(0x01001000, "EOL Test", CommentType.EOL);
+		assertCommentEquals(0x01001100, "Pre Test", CommentType.PRE);
+		assertCommentEquals(0x01001200, "Post Test", CommentType.POST);
+		assertCommentEquals(0x01001300, "Plate Test", CommentType.PLATE);
+		assertCommentEquals(0x01001400, "Repeatable Test", CommentType.REPEATABLE);
 	}
 
 	private void respondToDialog(String response, String titleValue) {
@@ -235,21 +233,22 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 		pressButtonByText(askStringDialog, "OK");
 	}
 
-	private void assertCommentEquals(int commentAddress, String commentValue, int commentType) {
+	private void assertCommentEquals(int commentAddress, String commentValue,
+			CommentType commentType) {
 		Address address = program.getMinAddress().getNewAddress(commentAddress);
 		String existingComment = listing.getComment(commentType, address);
 		assertEquals(commentValue, existingComment);
 	}
 
-	private void assertCommentDoesNotExists(String comment) {
+	private void assertCommentDoesNotExist(String comment) {
 		Memory memory = program.getMemory();
 		Iterator<Address> addressIterator = listing.getCommentAddressIterator(memory, true);
 		boolean commentExists = false;
 
 		while (addressIterator.hasNext()) {
 			Address address = addressIterator.next();
-			for (int i : COMMENT_TYPES) {
-				String foundComment = listing.getComment(i, address);
+			for (CommentType type : CommentType.values()) {
+				String foundComment = listing.getComment(type, address);
 				if (foundComment != null && foundComment.equals(comment)) {
 					commentExists = true;
 				}

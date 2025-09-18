@@ -126,7 +126,7 @@ public class GTable extends JTable {
 	private Integer visibleRowCount;
 
 	private int userDefinedRowHeight;
-	private TableModelListener rowHeightListener = e -> adjustRowHeight();
+	private TableModelListener rowHeightListener;
 
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
@@ -521,6 +521,14 @@ public class GTable extends JTable {
 	}
 
 	private void initializeRowHeight() {
+
+		// Note: this method gets called indirectly from the parent constructor, so we cannot 
+		// initialize this field at declaration time or in our constructor, as this call will have
+		// happened at that point.
+		if (rowHeightListener == null) {
+			rowHeightListener = e -> adjustRowHeight();
+		}
+
 		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
 		if (configurableModel != null) {
 			configurableModel.removeTableModelListener(rowHeightListener);
@@ -1091,16 +1099,17 @@ public class GTable extends JTable {
 				return;
 			}
 
-			SettingsDefinition[] settings =
+			SettingsDefinition[] settingDefs =
 				configurableModel.getColumnSettingsDefinitions(lastPopupColumnIndex);
-			if (settings.length == 0) {
+			if (settingDefs.length == 0) {
 				return;
 			}
 
 			SettingsDialog dialog = new SettingsDialog(null);
-			dialog.show(GTable.this,
-				configurableModel.getColumnName(lastPopupColumnIndex) + " Settings", settings,
-				configurableModel.getColumnSettings(lastPopupColumnIndex));
+			String title = configurableModel.getColumnName(lastPopupColumnIndex) + " Settings";
+			Settings settings = configurableModel.getColumnSettings(lastPopupColumnIndex);
+			dialog.show(GTable.this, title, settingDefs, settings);
+
 			((GTableColumnModel) getColumnModel()).saveState();
 		});
 		DockingWindowManager.getHelpService().registerHelp(item, helpLocation);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.dwarf;
 
 import java.util.*;
 
+import ghidra.app.util.bin.format.dwarf.expression.DWARFExpression;
 import ghidra.util.Msg;
 
 /**
@@ -26,6 +27,7 @@ public class DWARFImportSummary {
 	// member variables are package access
 	long dataTypeElapsedMS;
 	long funcsElapsedMS;
+	long macroElapsedMS;
 	long totalElapsedMS;
 
 	int dataTypesAdded;
@@ -33,14 +35,13 @@ public class DWARFImportSummary {
 	int funcsUpdated;
 	int funcSignaturesAdded;
 	int globalVarsAdded;
-	Set<Integer> unknownRegistersEncountered = new HashSet<>();
 	Set<String> relocationErrorVarDefs = new HashSet<>();
-	int varFitError;
-	int varDynamicRegisterError;
-	int varDWARFExpressionValue;
 	int exprReadError;
 	Set<String> typeRemappings = new HashSet<>();
 	int paramZeroLenDataType;
+	public int badSourceFileCount;
+	public int numEnumsCreated;
+
 	Set<Integer> dwarfVers = new HashSet<>();
 	int compUnitCount;
 	int dieCount;
@@ -48,6 +49,7 @@ public class DWARFImportSummary {
 	List<String> compNames = new ArrayList<>();
 	Set<String> producers = new HashSet<>();
 	Set<String> sourceLangs = new HashSet<>();
+	Map<DWARFExpression, Integer> failedExpressions = new HashMap<>();
 
 	/**
 	 * Writes summary information to the {@link Msg} log.
@@ -75,6 +77,13 @@ public class DWARFImportSummary {
 		if (funcSignaturesAdded > 0) {
 			Msg.info(this,
 				String.format("DWARF function signatures added: %d", funcSignaturesAdded));
+		}
+		if (numEnumsCreated > 0) {
+			Msg.info(this,
+				"DWARF enums created from macro info entries: %d".formatted(numEnumsCreated));
+		}
+		if (macroElapsedMS > 0) {
+			Msg.info(this, "DWARF enums from macros - elapsed: %dms".formatted(macroElapsedMS));
 		}
 		if (!compDirs.isEmpty()) {
 			Msg.info(this, "DWARF compile dirs: " + getSortedSet(compDirs).toString());
@@ -112,22 +121,11 @@ public class DWARFImportSummary {
 			}
 		}
 
-		if (varFitError > 0) {
-			Msg.error(this,
-				"DWARF variable definitions that failed because the data type was too large for the defined register location: " +
-					varFitError);
-		}
-
-		if (varDynamicRegisterError > 0) {
-			Msg.error(this,
-				"DWARF variable definitions that failed because they depended on the dynamic value of a register: " +
-					varDynamicRegisterError);
-		}
-
-		if (varDWARFExpressionValue > 0) {
-			Msg.error(this,
-				"DWARF variable definitions that failed because they are computed pseudo variables: " +
-					varDWARFExpressionValue);
+		if (!failedExpressions.isEmpty()) {
+			Msg.error(this, "DWARF un-recoverable expressions:");
+			for (Map.Entry<DWARFExpression, Integer> entry : failedExpressions.entrySet()) {
+				Msg.error(this, "  %s -> %d".formatted(entry.getKey(), entry.getValue()));
+			}
 		}
 
 		if (paramZeroLenDataType > 0) {
@@ -135,6 +133,9 @@ public class DWARFImportSummary {
 		}
 		if (exprReadError > 0) {
 			Msg.error(this, "DWARF expression failed to read: " + exprReadError);
+		}
+		if (badSourceFileCount > 0) {
+			Msg.error(this, "DWARF source file info errors: %d".formatted(badSourceFileCount));
 		}
 	}
 
@@ -163,6 +164,12 @@ public class DWARFImportSummary {
 				sourceLangs.add(DWARFUtil.toString(DWARFSourceLanguage.class, lang));
 			}
 		}
+	}
 
+	void addProblematicDWARFExpression(DWARFExpression expr) {
+		if (expr != null) {
+			expr = expr.toGenericForm();
+			failedExpressions.compute(expr, (prevexpr, count) -> count != null ? count + 1 : 1);
+		}
 	}
 }

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +15,22 @@
  */
 package ghidra.app.util.xml;
 
-import ghidra.app.util.CommentTypes;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.util.XmlProgramUtilities;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlAttributes;
 import ghidra.util.xml.XmlWriter;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import java.io.IOException;
 
 /**
  * XML manager for all types of comments.
@@ -39,31 +41,31 @@ class CommentsXmlMgr {
 	private AddressFactory factory;
 	private Listing listing;
 
-	private static int[] COMMENT_TYPES;
-	private static String[] COMMENT_TAGS;
+	private static Map<CommentType, String> COMMENT_TAGS;
 
 	static {
-		COMMENT_TYPES = CommentTypes.getTypes();
 
-		COMMENT_TAGS = new String[COMMENT_TYPES.length];
-		for (int i = 0; i < COMMENT_TAGS.length; i++) {
+		COMMENT_TAGS = new HashMap<>();
+		for (CommentType type : CommentType.values()) {
 
-			switch (COMMENT_TYPES[i]) {
-				case CodeUnit.PRE_COMMENT:
-					COMMENT_TAGS[i] = "pre";
+			switch (type) {
+				case CommentType.PRE:
+					COMMENT_TAGS.put(type, "pre");
 					break;
-				case CodeUnit.POST_COMMENT:
-					COMMENT_TAGS[i] = "post";
+				case CommentType.POST:
+					COMMENT_TAGS.put(type, "post");
 					break;
-				case CodeUnit.EOL_COMMENT:
-					COMMENT_TAGS[i] = "end-of-line";
+				case CommentType.EOL:
+					COMMENT_TAGS.put(type, "end-of-line");
 					break;
-				case CodeUnit.PLATE_COMMENT:
-					COMMENT_TAGS[i] = "plate";
+				case CommentType.PLATE:
+					COMMENT_TAGS.put(type, "plate");
 					break;
-				case CodeUnit.REPEATABLE_COMMENT:
-					COMMENT_TAGS[i] = "repeatable";
+				case CommentType.REPEATABLE:
+					COMMENT_TAGS.put(type, "repeatable");
 					break;
+				default:
+					throw new AssertException("Unsupported comment type: " + type.name());
 			}
 		}
 	}
@@ -79,9 +81,11 @@ class CommentsXmlMgr {
 	 * Process the entry point section of the XML file.
 	 * @param parser xml reader
 	 * @param monitor monitor that can be canceled
+	 * @throws AddressFormatException 
+	 * @throws CancelledException 
 	 */
-	void read(XmlPullParser parser, TaskMonitor monitor) throws AddressFormatException,
-			CancelledException {
+	void read(XmlPullParser parser, TaskMonitor monitor)
+			throws AddressFormatException, CancelledException {
 		XmlElement element = parser.next();
 		while (true) {
 			if (monitor.isCancelled()) {
@@ -103,9 +107,10 @@ class CommentsXmlMgr {
 	 * @param set address set that is either the entire program or a selection
 	 * @param monitor monitor that can be canceled
 	 * should be written
-	 * @throws IOException
+	 * @throws CancelledException if task is cancelled
 	 */
-	void write(XmlWriter writer, AddressSetView set, TaskMonitor monitor) throws CancelledException {
+	void write(XmlWriter writer, AddressSetView set, TaskMonitor monitor)
+			throws CancelledException {
 		monitor.setMessage("Writing COMMENTS ...");
 
 		if (set == null) {
@@ -117,17 +122,15 @@ class CommentsXmlMgr {
 		CodeUnitIterator iter = listing.getCodeUnitIterator(CodeUnit.COMMENT_PROPERTY, set, true);
 
 		while (iter.hasNext()) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			CodeUnit cu = iter.next();
-			for (int i = 0; i < COMMENT_TYPES.length; i++) {
+			for (CommentType type : CommentType.values()) {
 				if (monitor.isCancelled()) {
 					return;
 				}
-				String comments = cu.getComment(COMMENT_TYPES[i]);
+				String comments = cu.getComment(type);
 				if (comments != null) {
-					writeComment(writer, cu.getMinAddress(), COMMENT_TAGS[i], comments);
+					writeComment(writer, cu.getMinAddress(), COMMENT_TAGS.get(type), comments);
 				}
 			}
 		}
@@ -143,8 +146,8 @@ class CommentsXmlMgr {
 		}
 		try {
 			String typeStr = element.getAttribute("TYPE");
-			int commentType = getCommentType(typeStr);
-			if (commentType < 0) {
+			CommentType commentType = getCommentType(typeStr);
+			if (commentType == null) {
 				log.appendMsg("Unknown comment type: " + typeStr);
 				parser.discardSubTree(element);
 				return;
@@ -180,12 +183,15 @@ class CommentsXmlMgr {
 		writer.writeElement("COMMENT", attrs, comments);
 	}
 
-	private int getCommentType(String typeStr) {
-		for (int i = 0; i < COMMENT_TAGS.length; i++) {
-			if (COMMENT_TAGS[i].equals(typeStr)) {
-				return COMMENT_TYPES[i];
+	private CommentType getCommentType(String typeStr) {
+		if (StringUtils.isBlank(typeStr)) {
+			return null;
+		}
+		for (CommentType type : CommentType.values()) {
+			if (typeStr.equals(COMMENT_TAGS.get(type))) {
+				return type;
 			}
 		}
-		return -1; // unknown comment 
+		return null; // unknown comment 
 	}
 }

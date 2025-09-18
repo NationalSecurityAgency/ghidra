@@ -15,11 +15,16 @@
  */
 package sarif;
 
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
+import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.ProgramBasedDataTypeManager;
 import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.CommentType;
+import ghidra.program.model.listing.Data;
 import ghidra.program.util.ProgramDiff;
 
 public class DefinedDataSarifTest extends AbstractSarifTest {
@@ -34,7 +39,15 @@ public class DefinedDataSarifTest extends AbstractSarifTest {
 		Structure sdt = DataTypesSarifTest.createComplexStructureDataType(dtm);
 		Structure struct = (Structure) dtm.resolve(sdt, null);
 
-		program.getListing().createData(addr(0x100), struct);
+		Data d = program.getListing().createData(addr(0x100), struct);
+		Data component = d.getComponent(new int[] { 1, 2 });
+		assertNotNull(component);
+
+		// Set EOL comment on nested component
+		component.setComment(CommentType.EOL, "My EOL comment");
+
+		// Set instance settings on nested component
+		FormatSettingsDefinition.DEF.setChoice(component, FormatSettingsDefinition.DECIMAL);
 
 		ProgramDiff programDiff = readWriteCompare();
 

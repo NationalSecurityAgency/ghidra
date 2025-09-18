@@ -293,7 +293,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualBaseTable pvbt =
-			(ProgramVirtualBaseTable) egray832VxtManager.findVbt(owner, parentage, null);
+			(ProgramVirtualBaseTable) egray832VxtManager.findCreateVbt(owner, parentage, null);
 		assertEquals(egray832AddressesByMangled.get(pvbt.getMangledName()), pvbt.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -303,7 +303,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualBaseTable mvbt =
-			(ProgramVirtualBaseTable) egray832VxtManager.findVbt(owner, symParentage, null);
+			(ProgramVirtualBaseTable) egray832VxtManager.findCreateVbt(owner, symParentage, null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvbt == pvbt);
 	}
@@ -329,7 +329,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualFunctionTable pvft =
-			(ProgramVirtualFunctionTable) egray832VxtManager.findVft(owner, parentage, null);
+			(ProgramVirtualFunctionTable) egray832VxtManager.findCreateVft(owner, parentage, null);
 		assertEquals(egray832AddressesByMangled.get(pvft.getMangledName()), pvft.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -339,7 +339,8 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualFunctionTable mvft =
-			(ProgramVirtualFunctionTable) egray832VxtManager.findVft(owner, symParentage, null);
+			(ProgramVirtualFunctionTable) egray832VxtManager.findCreateVft(owner, symParentage,
+				null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvft == pvft);
 	}
@@ -365,7 +366,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualBaseTable pvbt =
-			(ProgramVirtualBaseTable) cfb432VxtManager.findVbt(owner, parentage, null);
+			(ProgramVirtualBaseTable) cfb432VxtManager.findCreateVbt(owner, parentage, null);
 		assertEquals(cfb432AddressesByMangled.get(pvbt.getMangledName()), pvbt.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -375,7 +376,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualBaseTable mvbt =
-			(ProgramVirtualBaseTable) cfb432VxtManager.findVbt(owner, symParentage, null);
+			(ProgramVirtualBaseTable) cfb432VxtManager.findCreateVbt(owner, symParentage, null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvbt == pvbt);
 	}
@@ -401,7 +402,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualFunctionTable pvft =
-			(ProgramVirtualFunctionTable) cfb432VxtManager.findVft(owner, parentage, null);
+			(ProgramVirtualFunctionTable) cfb432VxtManager.findCreateVft(owner, parentage, null);
 		assertEquals(cfb432AddressesByMangled.get(pvft.getMangledName()), pvft.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -411,7 +412,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualFunctionTable mvft =
-			(ProgramVirtualFunctionTable) cfb432VxtManager.findVft(owner, symParentage, null);
+			(ProgramVirtualFunctionTable) cfb432VxtManager.findCreateVft(owner, symParentage, null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvft == pvft);
 	}
@@ -437,7 +438,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualBaseTable pvbt =
-			(ProgramVirtualBaseTable) vftm32VxtManager.findVbt(owner, parentage, null);
+			(ProgramVirtualBaseTable) vftm32VxtManager.findCreateVbt(owner, parentage, null);
 		assertEquals(vftm32AddressesByMangled.get(pvbt.getMangledName()), pvbt.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -447,7 +448,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualBaseTable mvbt =
-			(ProgramVirtualBaseTable) vftm32VxtManager.findVbt(owner, symParentage, null);
+			(ProgramVirtualBaseTable) vftm32VxtManager.findCreateVbt(owner, symParentage, null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvbt == pvbt);
 	}
@@ -473,7 +474,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 			throws Exception {
 		// vbt obtained by querying on parentage
 		ProgramVirtualFunctionTable pvft =
-			(ProgramVirtualFunctionTable) vftm32VxtManager.findVft(owner, parentage, null);
+			(ProgramVirtualFunctionTable) vftm32VxtManager.findCreateVft(owner, parentage, null);
 		assertEquals(vftm32AddressesByMangled.get(pvft.getMangledName()), pvft.getAddress());
 		if (symParentage == null) {
 			Msg.warn(this,
@@ -483,7 +484,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 		}
 		// vbt obtained by querying on msft symbol info
 		ProgramVirtualFunctionTable mvft =
-			(ProgramVirtualFunctionTable) vftm32VxtManager.findVft(owner, symParentage, null);
+			(ProgramVirtualFunctionTable) vftm32VxtManager.findCreateVft(owner, symParentage, null);
 		// Check if exact same table; not just equivalence
 		assertTrue(mvft == pvft);
 	}
@@ -912,7 +913,7 @@ public class MsVxtManagerTest extends AbstractGenericTest {
 
 		// Spot-check a function from the table
 		ProgramVirtualFunctionTable vft =
-			(ProgramVirtualFunctionTable) cfb432VxtManager.findVft(A, List.of(), null);
+			(ProgramVirtualFunctionTable) cfb432VxtManager.findCreateVft(A, List.of(), null);
 		assertEquals(cfb432AddressesByMangled.get(vft.getMangledName()), vft.getAddress());
 		Address address = vft.getAddress(0);
 		Symbol s = cfb432Program.getSymbolTable().getPrimarySymbol(address);

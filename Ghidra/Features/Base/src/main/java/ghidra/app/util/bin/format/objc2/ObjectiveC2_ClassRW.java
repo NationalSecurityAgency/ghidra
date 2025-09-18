@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +15,15 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.objectiveC.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_ClassRW implements StructConverter {
 	public final static String NAME = "class_rw_t";
@@ -52,15 +50,15 @@ public class ObjectiveC2_ClassRW implements StructConverter {
 		this._index = reader.getPointerIndex();
 
 		if (state.is32bit) {
-			flags         = reader.readNextInt() & Conv.INT_MASK;
-			instanceStart = reader.readNextInt() & Conv.INT_MASK;
-			instanceSize  = reader.readNextInt() & Conv.INT_MASK;
-			reserved      = reader.readNextInt() & Conv.INT_MASK;
+			flags = reader.readNextUnsignedInt();
+			instanceStart = reader.readNextUnsignedInt();
+			instanceSize = reader.readNextUnsignedInt();
+			reserved = reader.readNextUnsignedInt();
 		}
 		else {
-			flags         = reader.readNextLong();
+			flags = reader.readNextLong();
 			instanceStart = reader.readNextLong();
-			instanceSize  = reader.readNextLong();
+			instanceSize = reader.readNextLong();
 		}
 
 		readName(reader);
@@ -161,6 +159,7 @@ public class ObjectiveC2_ClassRW implements StructConverter {
 		}
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME, 0);
 

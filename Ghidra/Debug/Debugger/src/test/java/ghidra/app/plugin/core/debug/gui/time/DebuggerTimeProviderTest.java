@@ -92,7 +92,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		// Timestamp is left unchecked, since default is current time
 	}
 
-	@Test // TODO: Technically, this is a plugin action.... Different test case?
+	@Test // Technically, this is a plugin action.... Different test case?
 	public void testActionRenameSnapshot() throws Exception {
 		// More often than not, this action will be used from the dynamic listing
 		addPlugin(tool, DebuggerListingPlugin.class);
@@ -125,7 +125,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		DBTraceSnapshot snapshot = tb.trace.getTimeManager().getSnapshot(10, false);
 		assertEquals("My Snapshot", snapshot.getDescription());
 
-		// TODO: Test cancelled has no effect
+		// LATER?: Test cancelled has no effect
 	}
 
 	@Test
@@ -153,7 +153,8 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		createSnaplessTrace();
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
-			thread = tb.trace.getThreadManager().createThread("Thread 1", 0);
+			tb.createRootObject("Target");
+			thread = tb.trace.getThreadManager().createThread("Threads[1]", 0);
 		}
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);

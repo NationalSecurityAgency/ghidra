@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,9 +83,15 @@ public class ProgramLocationTranslator {
 			}
 		}
 
-		// Adjust symbol path for labels if it is part of the location.
-		adjustSymbolPath(saveState, otherSideAddress, address, byteAddress, desiredByteAddress,
-			otherSideLocation.getProgram(), program);
+		String[] symbolPathArray = saveState.getStrings("_SYMBOL_PATH", new String[0]);
+		if (symbolPathArray.length != 0) {
+			// Adjust symbol path for labels if it is part of the location.
+			boolean hasSymbol = adjustSymbolPath(saveState, otherSideAddress, address, byteAddress,
+				desiredByteAddress, otherSideLocation.getProgram(), program);
+			if (!hasSymbol) {
+				return new ProgramLocation(program, desiredByteAddress);
+			}
+		}
 
 		// ref address can't be used with indicated side so remove it.
 		saveState.remove("_REF_ADDRESS");
@@ -186,32 +192,28 @@ public class ProgramLocationTranslator {
 		return ProgramLocation.getLocation(correlator.getProgram(side), saveState);
 	}
 
-	private void adjustSymbolPath(SaveState saveState, Address address, Address desiredAddress,
+	private boolean adjustSymbolPath(SaveState saveState, Address address, Address desiredAddress,
 			Address byteAddress, Address desiredByteAddress, Program program,
 			Program desiredProgram) {
 
-		String[] symbolPathArray = saveState.getStrings("_SYMBOL_PATH", new String[0]);
 		saveState.remove("_SYMBOL_PATH");
-		if (symbolPathArray.length == 0) {
-			return; // save state has no labels for program location.
-		}
+
 		Address symbolAddress = (byteAddress != null) ? byteAddress : address;
 		Address desiredSymbolAddress =
 			(desiredByteAddress != null) ? desiredByteAddress : desiredAddress;
 		if (symbolAddress == null || desiredSymbolAddress == null) {
-			return; // no address match.
+			return false; // no address match.
 		}
 		Symbol[] symbols = program.getSymbolTable().getSymbols(symbolAddress);
 		if (symbols.length == 0) {
-			return; // no symbols in program for matching.
+			return false; // no symbols in program for matching.
 		}
 		Symbol[] desiredSymbols = desiredProgram.getSymbolTable().getSymbols(desiredSymbolAddress);
 		if (desiredSymbols.length == 0) {
-			return; // no symbols in desiredProgram for matching.
+			return false; // no symbols in desiredProgram for matching.
 		}
 
 		int desiredRow = adjustSymbolRow(saveState, symbols, desiredSymbols);
-
 		int desiredIndex = getDesiredSymbolIndex(desiredSymbols, desiredRow);
 
 		// Now get the desired symbol.
@@ -219,6 +221,7 @@ public class ProgramLocationTranslator {
 		SymbolPath symbolPath = getSymbolPath(desiredSymbol);
 		// Set symbol path for desiredProgram in the save state.
 		saveState.putStrings("_SYMBOL_PATH", symbolPath.asArray());
+		return true;
 	}
 
 	private int adjustSymbolRow(SaveState saveState, Symbol[] symbols, Symbol[] desiredSymbols) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.SourceType;
@@ -46,8 +46,8 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		super();
 	}
 
-@Test
-    public void testAddLatestInstr() throws Exception {
+	@Test
+	public void testAddLatestInstr() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -64,12 +64,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e1")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e1")));
 	}
 
-@Test
-    public void testAddMyInstr() throws Exception {
+	@Test
+	public void testAddMyInstr() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -86,12 +86,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e1")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e1")));
 	}
 
-@Test
-    public void testAddLatestData() throws Exception {
+	@Test
+	public void testAddLatestData() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -108,12 +108,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013da")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013da")));
 	}
 
-@Test
-    public void testAddMyData() throws Exception {
+	@Test
+	public void testAddMyData() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -130,12 +130,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testAddLatestInstrMyDataPickLatest() throws Exception {
+	@Test
+	public void testAddLatestInstrMyDataPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -153,12 +153,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013dc", KEEP_LATEST);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testAddLatestInstrMyDataPickMy() throws Exception {
+	@Test
+	public void testAddLatestInstrMyDataPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -176,12 +176,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e4", KEEP_MY);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e4")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e4")));
 	}
 
-@Test
-    public void testAddLatestInstrMyDataPickOrig() throws Exception {
+	@Test
+	public void testAddLatestInstrMyDataPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -199,12 +199,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e4", KEEP_ORIGINAL);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e4")));
+		assertSameCodeUnits(resultProgram, originalProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e4")));
 	}
 
-@Test
-    public void testAddLatestDataMyInstrPickLatest() throws Exception {
+	@Test
+	public void testAddLatestDataMyInstrPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -222,14 +222,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e4", KEEP_LATEST);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e4")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e4")));
 	}
 
-@Test
-    public void testAddLatestDataMyInstrPickMy() throws Exception {
+	@Test
+	public void testAddLatestDataMyInstrPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new DWordDataType());
@@ -245,14 +245,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013dc", KEEP_MY);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testAddLatestDataMyInstrPickOrig() throws Exception {
+	@Test
+	public void testAddLatestDataMyInstrPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new TerminatedStringDataType());
@@ -268,14 +268,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e4", KEEP_ORIGINAL);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e4")));
+		assertSameCodeUnits(resultProgram, originalProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e4")));
 	}
 
-@Test
-    public void testAddLatestInstrMyInstrPickLatest() throws Exception {
+	@Test
+	public void testAddLatestInstrMyInstrPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				disassemble(program, "0x10013d9", "0x10013e1");
@@ -291,12 +291,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e2", KEEP_LATEST);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e2")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e2")));
 	}
 
-@Test
-    public void testAddLatestInstrMyInstrPickMy() throws Exception {
+	@Test
+	public void testAddLatestInstrMyInstrPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -314,12 +314,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e2", KEEP_MY);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e2")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e2")));
 	}
 
-@Test
-    public void testAddLatestInstrMyInstrPickOrig() throws Exception {
+	@Test
+	public void testAddLatestInstrMyInstrPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -337,14 +337,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013e2", KEEP_ORIGINAL);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e2")));
+		assertSameCodeUnits(resultProgram, originalProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e2")));
 	}
 
-@Test
-    public void testAddLatestDataMyDataPickLatest() throws Exception {
+	@Test
+	public void testAddLatestDataMyDataPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new WordDataType());
@@ -360,14 +360,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013dc", KEEP_LATEST);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testAddLatestDataMyDataPickMy() throws Exception {
+	@Test
+	public void testAddLatestDataMyDataPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new WordDataType());
@@ -383,14 +383,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013dc", KEEP_MY);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, myProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testAddLatestDataMyDataPickOrig() throws Exception {
+	@Test
+	public void testAddLatestDataMyDataPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new WordDataType());
@@ -406,12 +406,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		chooseCodeUnit("0x10013d9", "0x10013dc", KEEP_ORIGINAL);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, originalProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testSameInstrLatestMy() throws Exception {
+	@Test
+	public void testSameInstrLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -427,14 +427,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013e1")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013e1")));
 	}
 
-@Test
-    public void testSameDataLatestMy() throws Exception {
+	@Test
+	public void testSameDataLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				createData(program, "0x10013d9", new DWordDataType());
@@ -449,34 +449,38 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x10013d9"),
-			addr("0x10013dc")));
+		assertSameCodeUnits(resultProgram, latestProgram,
+			new AddressSet(addr("0x10013d9"), addr("0x10013dc")));
 	}
 
-@Test
-    public void testMergeCodeUnitsOriginal() throws Exception {
+	@Test
+	public void testMergeCodeUnitsOriginal() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
 					// Clear Code Units from 1002312 to 1002320
-					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
-						addr(program, "0x1002320"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002312"), addr(program, "0x1002320"),
+								false);
 
 					// Clear Code Units from 1002390 to 1002394
-					program.getListing().clearCodeUnits(addr(program, "0x1002390"),
-						addr(program, "0x1002394"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002390"), addr(program, "0x1002394"),
+								false);
 
 					// Put a label @ from 10023be-10023c2 to create a conflict with the code unit.
-					program.getSymbolTable().createLabel(addr(program, "0x10023be"), "LabelABC",
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10023be"), "LabelABC",
+								SourceType.USER_DEFINED);
 
 					// Put an Ascii at 10080d0
 					program.getListing().createData(addr(program, "0x10080d0"), new CharDataType());
 
 					// Put a Float at 10080db
-					program.getListing().createData(addr(program, "0x10080db"), new FloatDataType());
+					program.getListing()
+							.createData(addr(program, "0x10080db"), new FloatDataType());
 
 					Memory mem = program.getMemory();
 					MemoryBlock block = mem.getBlock(addr(program, "0x1001000"));
@@ -503,17 +507,21 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					// Clear Code Units from 100231d to 1002328
-					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
-						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100231d"), addr(program, "0x1002328"),
+								false);
+					assertTrue(!(program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
-					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
-						CodeUnit.EOL_COMMENT, "EOL comment");
+					program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002390"))
+							.setComment(CommentType.EOL, "EOL comment");
 
 					// Clear Code Units from 10023be to 10023c2
-					program.getListing().clearCodeUnits(addr(program, "0x10023be"),
-						addr(program, "0x10023c2"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x10023be"), addr(program, "0x10023c2"),
+								false);
 
 					// Put a structure at 10080d0 to 10080d3
 					StructureDataType struct = new StructureDataType("Item", 4);
@@ -524,8 +532,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					program.getListing().createData(addr(program, "0x10080e2"), new WordDataType());
 
 					// Clear Code Units from 100652a to 100652a
-					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
-						addr(program, "0x100652a"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100652a"), addr(program, "0x100652a"),
+								false);
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
@@ -556,30 +565,34 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertSameCodeUnits(resultProgram, latestProgram, latestAddrs);
 	}
 
-@Test
-    public void testMergeCodeUnitsLatest() throws Exception {
+	@Test
+	public void testMergeCodeUnitsLatest() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
 					// Clear Code Units from 1002312 to 1002320
-					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
-						addr(program, "0x1002320"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002312"), addr(program, "0x1002320"),
+								false);
 
 					// Clear Code Units from 1002390 to 1002394
-					program.getListing().clearCodeUnits(addr(program, "0x1002390"),
-						addr(program, "0x1002394"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002390"), addr(program, "0x1002394"),
+								false);
 
 					// Put a label @ from 10023be-10023c2 to create a conflict with the code unit.
-					program.getSymbolTable().createLabel(addr(program, "0x10023be"), "LabelABC",
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10023be"), "LabelABC",
+								SourceType.USER_DEFINED);
 
 					// Put an Ascii at 10080d0
 					program.getListing().createData(addr(program, "0x10080d0"), new CharDataType());
 
 					// Put a Float at 10080db
-					program.getListing().createData(addr(program, "0x10080db"), new FloatDataType());
+					program.getListing()
+							.createData(addr(program, "0x10080db"), new FloatDataType());
 
 					Memory mem = program.getMemory();
 					MemoryBlock block = mem.getBlock(addr(program, "0x1001000"));
@@ -606,17 +619,21 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					// Clear Code Units from 100231d to 1002328
-					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
-						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100231d"), addr(program, "0x1002328"),
+								false);
+					assertTrue(!(program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
-					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
-						CodeUnit.EOL_COMMENT, "EOL comment");
+					program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002390"))
+							.setComment(CommentType.EOL, "EOL comment");
 
 					// Clear Code Units from 10023be to 10023c2
-					program.getListing().clearCodeUnits(addr(program, "0x10023be"),
-						addr(program, "0x10023c2"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x10023be"), addr(program, "0x10023c2"),
+								false);
 
 					// Put a structure at 10080d0 to 10080d3
 					StructureDataType struct = new StructureDataType("Item", 4);
@@ -627,8 +644,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					program.getListing().createData(addr(program, "0x10080e2"), new WordDataType());
 
 					// Clear Code Units from 100652a to 100652a
-					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
-						addr(program, "0x100652a"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100652a"), addr(program, "0x100652a"),
+								false);
 
 				}
 				catch (CodeUnitInsertionException e) {
@@ -654,30 +672,34 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 
 	}
 
-@Test
-    public void testMergeCodeUnitsMine() throws Exception {
+	@Test
+	public void testMergeCodeUnitsMine() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
 					// Clear Code Units from 1002312 to 1002320
-					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
-						addr(program, "0x1002320"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002312"), addr(program, "0x1002320"),
+								false);
 
 					// Clear Code Units from 1002390 to 1002394
-					program.getListing().clearCodeUnits(addr(program, "0x1002390"),
-						addr(program, "0x1002394"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002390"), addr(program, "0x1002394"),
+								false);
 
 					// Put a label @ from 10023be-10023c2 to create a conflict with the code unit.
-					program.getSymbolTable().createLabel(addr(program, "0x10023be"), "LabelABC",
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10023be"), "LabelABC",
+								SourceType.USER_DEFINED);
 
 					// Put an Ascii at 10080d0
 					program.getListing().createData(addr(program, "0x10080d0"), new CharDataType());
 
 					// Put a Float at 10080db
-					program.getListing().createData(addr(program, "0x10080db"), new FloatDataType());
+					program.getListing()
+							.createData(addr(program, "0x10080db"), new FloatDataType());
 
 					Memory mem = program.getMemory();
 					MemoryBlock block = mem.getBlock(addr(program, "0x1001000"));
@@ -704,17 +726,21 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					// Clear Code Units from 100231d to 1002328
-					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
-						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100231d"), addr(program, "0x1002328"),
+								false);
+					assertTrue(!(program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
-					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
-						CodeUnit.EOL_COMMENT, "EOL comment");
+					program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002390"))
+							.setComment(CommentType.EOL, "EOL comment");
 
 					// Clear Code Units from 10023be to 10023c2
-					program.getListing().clearCodeUnits(addr(program, "0x10023be"),
-						addr(program, "0x10023c2"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x10023be"), addr(program, "0x10023c2"),
+								false);
 
 					// Put a structure at 10080d0 to 10080d3
 					StructureDataType struct = new StructureDataType("Item", 4);
@@ -725,8 +751,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					program.getListing().createData(addr(program, "0x10080e2"), new WordDataType());
 
 					// Clear Code Units from 100652a to 100652a
-					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
-						addr(program, "0x100652a"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100652a"), addr(program, "0x100652a"),
+								false);
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
@@ -755,8 +782,8 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertSameCodeUnits(resultProgram, latestProgram, latestAddrs);
 	}
 
-@Test
-    public void testMergeCodeUnitsUseForAllPickLatest() throws Exception {
+	@Test
+	public void testMergeCodeUnitsUseForAllPickLatest() throws Exception {
 		setupUseForAll();
 
 		executeMerge(ASK_USER); // auto set is [0100231d, 01002328] [010023be, 010023c2] [010080e2, 010080e3]
@@ -778,27 +805,31 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 
 	private void setupUseForAll() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
 					// Clear Code Units from 1002312 to 1002320
-					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
-						addr(program, "0x1002320"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002312"), addr(program, "0x1002320"),
+								false);
 
 					// Clear Code Units from 1002390 to 1002394
-					program.getListing().clearCodeUnits(addr(program, "0x1002390"),
-						addr(program, "0x1002394"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x1002390"), addr(program, "0x1002394"),
+								false);
 
 					// Put a label @ from 10023be-10023c2 to create a conflict with the code unit.
-					program.getSymbolTable().createLabel(addr(program, "0x10023be"), "LabelABC",
-						SourceType.USER_DEFINED);
+					program.getSymbolTable()
+							.createLabel(addr(program, "0x10023be"), "LabelABC",
+								SourceType.USER_DEFINED);
 
 					// Put an Ascii at 10080d0
 					program.getListing().createData(addr(program, "0x10080d0"), new CharDataType());
 
 					// Put a Float at 10080db
-					program.getListing().createData(addr(program, "0x10080db"), new FloatDataType());
+					program.getListing()
+							.createData(addr(program, "0x10080db"), new FloatDataType());
 
 					Memory mem = program.getMemory();
 					MemoryBlock block = mem.getBlock(addr(program, "0x1001000"));
@@ -825,17 +856,21 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					// Clear Code Units from 100231d to 1002328
-					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
-						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100231d"), addr(program, "0x1002328"),
+								false);
+					assertTrue(!(program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
-					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
-						CodeUnit.EOL_COMMENT, "EOL comment");
+					program.getListing()
+							.getCodeUnitAt(addr(program, "0x1002390"))
+							.setComment(CommentType.EOL, "EOL comment");
 
 					// Clear Code Units from 10023be to 10023c2
-					program.getListing().clearCodeUnits(addr(program, "0x10023be"),
-						addr(program, "0x10023c2"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x10023be"), addr(program, "0x10023c2"),
+								false);
 
 					// Put a structure at 10080d0 to 10080d3
 					StructureDataType struct = new StructureDataType("Item", 4);
@@ -846,8 +881,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					program.getListing().createData(addr(program, "0x10080e2"), new WordDataType());
 
 					// Clear Code Units from 100652a to 100652a
-					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
-						addr(program, "0x100652a"), false);
+					program.getListing()
+							.clearCodeUnits(addr(program, "0x100652a"), addr(program, "0x100652a"),
+								false);
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
@@ -856,8 +892,8 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 		});
 	}
 
-@Test
-    public void testMergeCodeUnitsUseForAllPickMine() throws Exception {
+	@Test
+	public void testMergeCodeUnitsUseForAllPickMine() throws Exception {
 		setupUseForAll();
 
 		executeMerge(ASK_USER);

@@ -15,7 +15,7 @@
  */
 package ghidraclass.debugger.screenshot;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -74,8 +74,7 @@ import ghidra.app.plugin.core.terminal.TerminalProvider;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.util.importer.AutoImporter;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.LoadResults;
 import ghidra.async.AsyncTestUtils;
 import ghidra.debug.api.modules.ModuleMapProposal;
@@ -100,9 +99,10 @@ import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramSelection;
 import ghidra.pty.*;
 import ghidra.test.TestEnv;
-import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.util.InvalidNameException;
@@ -322,16 +322,12 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	}
 
 	protected void waitBreakSpecExists(String expression) {
+		long snap = flatDbg.getCurrentSnap();
 		waitForCondition(() -> flatDbg.getAllBreakpoints()
 				.stream()
 				.flatMap(lb -> lb.getTraceBreakpoints().stream())
-				.<TraceObjectBreakpointSpec> mapMulti((loc, down) -> {
-					if (loc instanceof TraceObjectBreakpointLocation oloc) {
-						down.accept(oloc.getSpecification());
-					}
-				})
 				.distinct()
-				.filter(l -> expression.equals(l.getExpression(flatDbg.getCurrentSnap())))
+				.filter(l -> expression.equals(l.getSpecification().getExpression(snap)))
 				.count() == 1);
 	}
 
@@ -361,14 +357,9 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	protected Address navigateToBreakpoint(String expression) {
 		long snap = flatDbg.getCurrentSnap();
-		TraceBreakpoint bp = flatDbg.getAllBreakpoints()
+		TraceBreakpointLocation bp = flatDbg.getAllBreakpoints()
 				.stream()
 				.flatMap(l -> l.getTraceBreakpoints().stream())
-				.<TraceObjectBreakpointLocation> mapMulti((loc, down) -> {
-					if (loc instanceof TraceObjectBreakpointLocation oloc) {
-						down.accept(oloc);
-					}
-				})
 				.filter(l -> expression.equals(l.getSpecification().getExpression(snap)))
 				.findAny()
 				.get();
@@ -389,13 +380,15 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	protected Program importModule(TraceModule module) throws Throwable {
 		Program prog = null;
-		try {
-			long snap = flatDbg.getCurrentSnap();
-			MessageLog log = new MessageLog();
-			LoadResults<Program> result = AutoImporter.importByUsingBestGuess(
-				new File(module.getName(snap)), env.getProject(), "/", this, log, monitor);
-			result.save(env.getProject(), this, log, monitor);
-			prog = result.getPrimaryDomainObject();
+		long snap = flatDbg.getCurrentSnap();
+		try (LoadResults<Program> result = ProgramLoader.builder()
+					.source(new File(module.getName(snap)))
+					.project(env.getProject())
+					.monitor(monitor)
+				.load()) {
+
+			result.save(monitor);
+			prog = result.getPrimaryDomainObject(this);
 			GhidraProgramUtilities.markProgramNotToAskToAnalyze(prog);
 			programManager.openProgram(prog);
 		}
@@ -642,10 +635,9 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 					.getSnapshot(snapA, false)
 					.setDescription("Initial snapshot");
 		}
-		TraceObjectModule modTermmines =
-			(TraceObjectModule) Unique.assertOne(flatDbg.getCurrentTrace()
-					.getModuleManager()
-					.getModulesAt(snapA, pc));
+		TraceModule modTermmines = Unique.assertOne(flatDbg.getCurrentTrace()
+				.getModuleManager()
+				.getModulesAt(snapA, pc));
 
 		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
 		refreshSections.invoke(Map.of("node", modTermmines.getObject()));
@@ -679,10 +671,9 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 					.getSnapshot(snapA, false)
 					.setDescription("Initial snapshot");
 		}
-		TraceObjectModule modTermmines =
-			(TraceObjectModule) Unique.assertOne(flatDbg.getCurrentTrace()
-					.getModuleManager()
-					.getModulesAt(snapA, pc));
+		TraceModule modTermmines = Unique.assertOne(flatDbg.getCurrentTrace()
+				.getModuleManager()
+				.getModulesAt(snapA, pc));
 
 		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
 		refreshSections.invoke(Map.of("node", modTermmines.getObject()));

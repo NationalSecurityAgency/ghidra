@@ -1065,7 +1065,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Stores whether the structure referenced by the record number has been filled in such that
 	 * it can be used as a base class
 	 * @param recordNumber record number of type record
-	 * @param dataType the data type to store
 	 */
 	void markFilledInForBase(RecordNumber recordNumber) {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
@@ -2366,7 +2365,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (StringUtils.isBlank(comment)) {
 			return false;
 		}
-		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		String plate = program.getListing().getComment(CommentType.PLATE, address);
 		if (plate == null) {
 			plate = "";
 		}
@@ -2377,7 +2376,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			comment += '\n';
 		}
 		plate = comment + plate; // putting new comment at top of existing plate
-		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
+		SetCommentCmd.createComment(program, address, plate, CommentType.PLATE);
 		return true;
 	}
 
@@ -2425,13 +2424,20 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 		}
 
+		boolean existingIsMangled = isMangled(existingSymbol.getName());
+		if (existingIsMangled && !isNewFunctionSignature) {
+			// we don't have a new signature, but the existing symbol is mangled, and thus can
+			// possibly provide it... so do not make new symbol primary
+			return doCreateSymbol(address, symbolPath, false, plateAddition);
+		}
+
 		if (symbolPath.getParent() != null) {
 			// new symbol has non-global namespace
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		// Both existing and new symbols are in global namespace at this point
-		if (isMangled(symbolPath.getName()) && !isMangled(existingSymbol.getName())) {
+		if (isMangled(symbolPath.getName()) && !existingIsMangled) {
 			// new symbol is mangled, but don't override existing one if it is mangled
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}

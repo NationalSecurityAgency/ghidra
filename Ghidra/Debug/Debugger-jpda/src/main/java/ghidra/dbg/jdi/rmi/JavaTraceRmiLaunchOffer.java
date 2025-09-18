@@ -86,8 +86,9 @@ public class JavaTraceRmiLaunchOffer extends AbstractScriptTraceRmiLaunchOffer {
 	}
 
 	@Override
-	protected void launchBackEnd(TaskMonitor monitor, Map<String, TerminalSession> sessions,
-			Map<String, ValStr<?>> args, SocketAddress address) throws Exception {
+	protected TraceRmiBackEnd launchBackEnd(TaskMonitor monitor,
+			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
+			SocketAddress address) throws Exception {
 		List<String> commandLine = new ArrayList<>();
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
@@ -101,18 +102,28 @@ public class JavaTraceRmiLaunchOffer extends AbstractScriptTraceRmiLaunchOffer {
 			sessions.put(ns.name(), ns);
 		}
 
+		TraceRmiBackEnd result = new TraceRmiBackEnd();
 		if (hasKeyReally(env, "OPT_JSHELL_PATH")) {
 			String classPath = computeClassPath(env);
 			commandLine.add(0, "--startup");
 			commandLine.add(0, "--class-path=" + classPath);
 			commandLine.add(0, env.get("OPT_JSHELL_PATH"));
-			sessions.put("Shell",
-				runInTerminal(commandLine, env, script.getParentFile(), sessions.values()));
+			PtyTerminalSession session =
+				runInTerminal(commandLine, env, script.getParentFile(), sessions.values());
+			sessions.put("Shell", session);
+			session.terminal().addTerminalListener(result);
 		}
 		else {
-			JdiClientThread thread = new JdiClientThread(env);
+			JdiClientThread thread = new JdiClientThread(env) {
+				@Override
+				public void run() {
+					super.run();
+					result.terminated(0);
+				}
+			};
 			thread.start();
 		}
+		return result;
 	}
 
 	private String computeClassPath(Map<String, String> env) {

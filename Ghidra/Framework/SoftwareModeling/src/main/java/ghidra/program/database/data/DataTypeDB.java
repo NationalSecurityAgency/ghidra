@@ -16,7 +16,6 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
@@ -206,11 +205,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public URL getDocs() {
-		return null;
 	}
 
 	/**

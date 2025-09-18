@@ -18,13 +18,34 @@ package ghidra.trace.model.memory;
 import java.util.*;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 
 /**
  * A region of mapped target memory in a trace
  */
-public interface TraceMemoryRegion extends TraceUniqueObject {
+
+@TraceObjectInfo(
+	schemaName = "MemoryRegion",
+	shortName = "region",
+	attributes = {
+		TraceMemoryRegion.KEY_RANGE,
+		TraceMemoryRegion.KEY_READABLE,
+		TraceMemoryRegion.KEY_WRITABLE,
+		TraceMemoryRegion.KEY_EXECUTABLE,
+		TraceMemoryRegion.KEY_VOLATILE,
+	},
+	fixedKeys = {
+		TraceObjectInterface.KEY_DISPLAY,
+		TraceMemoryRegion.KEY_RANGE,
+	})
+public interface TraceMemoryRegion extends TraceUniqueObject, TraceObjectInterface {
+	String KEY_RANGE = "_range";
+	String KEY_READABLE = "_readable";
+	String KEY_WRITABLE = "_writable";
+	String KEY_EXECUTABLE = "_executable";
+	String KEY_VOLATILE = "_volatile";
 
 	/**
 	 * Get the trace containing this region
@@ -50,6 +71,17 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * <p>
 	 * The given name should be suitable for display on the screen.
 	 * 
+	 * @param lifespan the span of time
+	 * @param name the name
+	 */
+	void setName(Lifespan lifespan, String name);
+
+	/**
+	 * Set the "short name" of this region
+	 * 
+	 * <p>
+	 * The given name should be suitable for display on the screen.
+	 * 
 	 * @param snap the snap
 	 * @param name the name
 	 */
@@ -65,6 +97,19 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * @return the name
 	 */
 	String getName(long snap);
+
+	/**
+	 * Set the virtual memory address range of this region
+	 * 
+	 * <p>
+	 * The addresses in the range should be those the target's CPU would use to access the region,
+	 * i.e., the virtual memory address if an MMU is involved, or the physical address if no MMU is
+	 * involved.
+	 * 
+	 * @param lifespan the span of time
+	 * @param range the address range
+	 */
+	void setRange(Lifespan lifespan, AddressRange range);
 
 	/**
 	 * Set the virtual memory address range of this region
@@ -167,6 +212,14 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Set the flags, e.g., permissions, of this region
 	 * 
+	 * @param lifespan the span of time
+	 * @param flags the flags
+	 */
+	void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
+
+	/**
+	 * Set the flags, e.g., permissions, of this region
+	 * 
 	 * @param snap the snap
 	 * @param flags the flags
 	 */
@@ -185,6 +238,14 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Add the given flags, e.g., permissions, to this region
 	 * 
+	 * @param lifespan the span of time
+	 * @param flags the flags
+	 */
+	void addFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
+
+	/**
+	 * Add the given flags, e.g., permissions, to this region
+	 * 
 	 * @param snap the snap
 	 * @param flags the flags
 	 */
@@ -199,6 +260,14 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	default void addFlags(long snap, TraceMemoryFlag... flags) {
 		addFlags(snap, Arrays.asList(flags));
 	}
+
+	/**
+	 * Remove the given flags, e.g., permissions, from this region
+	 * 
+	 * @param lifespan the span of time
+	 * @param flags the flags
+	 */
+	void clearFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 
 	/**
 	 * Remove the given flags, e.g., permissions, from this region

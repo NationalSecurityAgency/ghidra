@@ -20,6 +20,8 @@ import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
@@ -49,7 +51,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private ProgramDB program;
 	private Address entryPoint;
-	private Symbol functionSymbol;
+	private FunctionSymbol functionSymbol;
 	private DBRecord rec;
 
 	private FunctionStackFrame frame;
@@ -108,7 +110,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	private void init() {
 		thunkedFunction = manager.getThunkedFunction(this);
-		functionSymbol = program.getSymbolTable().getSymbol(key);
+		functionSymbol = (FunctionSymbol) program.getSymbolTable().getSymbol(key);
 		entryPoint = functionSymbol.getAddress();
 	}
 
@@ -140,6 +142,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public void setThunkedFunction(Function referencedFunction) {
+		if (isExternal()) {
+			throw new UnsupportedOperationException("External functions may not be a thunk");
+		}
 		if ((referencedFunction != null) && !(referencedFunction instanceof FunctionDB)) {
 			throw new IllegalArgumentException("FunctionDB expected for referenced function");
 		}
@@ -262,7 +267,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager().getComment(CodeUnit.PLATE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.PLATE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -280,7 +285,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		try {
 			startUpdate();
 			checkDeleted();
-			manager.getCodeManager().setComment(getEntryPoint(), CodeUnit.PLATE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.PLATE, comment);
 		}
 		finally {
 			endUpdate();
@@ -293,8 +298,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			return manager.getCodeManager()
-					.getComment(CodeUnit.REPEATABLE_COMMENT, getEntryPoint());
+			return manager.getCodeManager().getComment(CommentType.REPEATABLE, getEntryPoint());
 		}
 		finally {
 			manager.lock.release();
@@ -311,8 +315,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		manager.lock.acquire();
 		try {
 			checkDeleted();
-			manager.getCodeManager()
-					.setComment(getEntryPoint(), CodeUnit.REPEATABLE_COMMENT, comment);
+			manager.getCodeManager().setComment(getEntryPoint(), CommentType.REPEATABLE, comment);
 		}
 		finally {
 			manager.lock.release();
@@ -976,7 +979,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					symbolMap.put(v.symbol, v);
 				}
 				if (var.getComment() != null) {
-					v.symbol.setSymbolStringData(var.getComment());
+					v.symbol.setSymbolComment(var.getComment());
 				}
 				manager.functionChanged(this, null);
 				return v;
@@ -1669,7 +1672,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					manager.functionChanged(this, PARAMETERS_CHANGED);
 				}
 				if (var.getComment() != null) {
-					p.symbol.setSymbolStringData(var.getComment());
+					p.symbol.setSymbolComment(var.getComment());
 				}
 				updateSignatureSourceAfterVariableChange(source, p.getDataType());
 				return p;

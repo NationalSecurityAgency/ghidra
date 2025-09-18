@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,18 +22,69 @@ import java.net.URL;
 import javax.swing.Icon;
 
 import generic.theme.GIcon;
+import ghidra.framework.data.LinkHandler;
 import ghidra.framework.store.FolderNotEmptyException;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>DomainFolder</code> provides a storage interface for project folders.  A 
- * <code>DomainFolder</code> is an immutable reference to a folder contained within a project.  The 
- * state of a <code>DomainFolder</code> object does not track name/parent changes made to the 
- * referenced project folder.
+ * {@link DomainFolder} provides a storage interface for a project folder.  A 
+ * domain folder is an immutable reference to a folder contained within a project.  Provided the
+ * corresponding path exists within the project it may continue to be used to create and access
+ * its files and sub-folders.  The state of a folder object does not track name/parent changes made 
+ * to the referenced project file.  An up-to-date instance may be obtained from 
+ * {@link ProjectData#getFolder(String)} or may be returned by any method used to move or rename it.  
+ * The project data object for the active {@link Project}  may be obtained via 
+ * {@link Project#getProjectData()}.
+ * <P>
+ * <B><U>Link Files</U></B>
+ * <P>
+ * Link files may exist or be created within a folder.  See {@link DomainFile} for more information.
+ * <P>
+ * Obtaining the folder which corresponds to a linked-folder is done indirectly via a link file.
+ * There are different ways to arrive on a linked-folder:
+ * <ol>
+ * <li>Obtained directly via a folder request by path, or</li>
+ * <li>discovered by the presence of a link file which corresponds to a linked-folder.</li>
+ * </ol>
+ * <P>
+ * Example #1, where folder path is known (external links will be followed):
+ * <pre>
+ *    DomainFolder folder = projectData.getFolder("/A/B/linkedFolder");
+ *    if (folder != null) {
+ *       if (folder.isLinked())
+ *          LinkedDomainFolder linkedFolder = (LinkedDomainFolder) folder;
+ *          // linkedFolder behaves the same as a normal folder
+ *       }
+ *       DomainFile[] files = folder.getFiles();
+ *    }
+ * </pre>
+ * <P>
+ * Example #2, where we locate via a link file:
+ * <pre>{@code
+ *    DomainFile file = ...
+ *    LinkFileInfo linkInfo = file.getLinkInfo();
+ *    if (linkInfo != null && linkInfo.isFolderLink()) {
+ *       LinkStatus status = linkInfo.getLinkStatus(null);
+ *       if (status != LinkStatus.INTERNAL) {
+ *          return; // Only consider internally linked-folder, skip broken or external link
+ *       }
+ *       LinkedDomainFolder linkedFolder = linkInfo.getLinkedFolder();
+ *       if (linkedFolder != null) {    
+ *          DomainFile[] files = linkedFolder.getFiles();
+ *       }
+ *    }
+ * }</pre>
+ * <P>
+ * The utility method {@link ProjectDataUtils#descendantFiles(DomainFolder, DomainFileFilter)}
+ * may also come in handy to iterate over folder contents while restricting treatment of
+ * linked content.
  */
 public interface DomainFolder extends Comparable<DomainFolder> {
+
+	// TODO: Need more robust folder icon support to allow repository connection state
+	// for root node to be reflected in icon (GP-5333)
 
 	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.datatree.node.domain.folder.open");
 
@@ -89,6 +140,31 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public String getPathname();
 
 	/**
+	 * Returns true if the given folder is the same as this folder based on path
+	 * and underlying project/repository.  Unlike the {@link Object#equals(Object)} check, this 
+	 * method handles cases where the folder provided may correspond to another project instance 
+	 * which is considered the same as the project that this folder is contained within.
+	 * 
+	 * @param folder the potential same or descendant folder to check
+	 * @return true if the given folder is the same or a child of this folder or 
+	 * one of its descendants.
+	 */
+	public boolean isSame(DomainFolder folder);
+
+	/**
+	 * Returns true if the given folder is the same or a child of this folder or 
+	 * one of its descendants based on path and underlying project/repository.  Unlike the 
+	 * {@link Object#equals(Object)} check, this method
+	 * handles cases where the folder provided may correspond to another project instance 
+	 * which is considered the same as the project that this folder is contained within.
+	 * 
+	 * @param folder the potential same or descendant folder to check
+	 * @return true if the given folder is the same or a child of this folder or 
+	 * one of its descendants.
+	 */
+	public boolean isSameOrAncestor(DomainFolder folder);
+
+	/**
 	 * Get a remote Ghidra URL for this domain folder if available within an associated shared
 	 * project repository.  URL path will end with "/".  A null value will be returned if shared 
 	 * folder does not exist and may also be returned if shared repository is not connected or a 
@@ -125,6 +201,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 
 	/**
 	 * Return the folder for the given name.
+	 * Folder link-files are ignored.
 	 * @param name of folder to retrieve
 	 * @return folder or null if there is no folder by the given name.
 	 */
@@ -183,6 +260,47 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 			throws InvalidNameException, IOException, CancelledException;
 
 	/**
+	 * Create a link-file within this folder which references the specified file or folder 
+	 * {@code pathname} within the project specified by {@code sourceProjectData}.  The link-file 
+	 * may correspond to various types of content (e.g., Program, Trace, Folder, etc.) based upon 
+	 * the specified {@link LinkHandler} instance.
+	 * 
+	 * @param sourceProjectData referenced content project data within which specified path exists.
+	 * If this differ's from this folder's project a Ghidra URL will be used, otherwise and internal
+	 * link path reference will be used.
+	 * @param pathname an absolute path of project folder or file within the specified source 
+	 * project data (a Ghidra URL is not permitted)
+	 * @param makeRelative if true, and this file is contained within the same active 
+	 * {@link ProjectData} instance as {@code newParent}, an internal-project relative path 
+	 * link-file will be created.
+	 * @param linkFilename name of link-file to be created within this folder.  NOTE: This name may 
+	 * be modified to ensure uniqueness within this folder.
+	 * @param lh link-file handler used to create specific link-file (see derived implementations
+	 * of {@link LinkHandler} and their public static INSTANCE.
+	 * @return newly created link-file 
+	 * @throws IOException if IO error occurs during link creation
+	 */
+	public DomainFile createLinkFile(ProjectData sourceProjectData, String pathname,
+			boolean makeRelative, String linkFilename, LinkHandler<?> lh) throws IOException;
+
+	/**
+	 * Create an external link-file within this folder which references the specified 
+	 * {@code ghidraUrl} and whose content is defined by the specified {@link LinkHandler lh} 
+	 * instance.
+	 * 
+	 * @param ghidraUrl a Ghidra URL which corresponds to a file or a folder based on the designated
+	 * {@link LinkHandler lh} instance.  Only rudimentary URL checks are performed.
+	 * @param linkFilename name of link-file to be created within this folder.  NOTE: This name may 
+	 * be modified to ensure uniqueness within this folder.
+	 * @param lh link-file handler used to create specific link-file (see derived implementations
+	 * of {@link LinkHandler} and their public static INSTANCE.
+	 * @return newly created link-file 
+	 * @throws IOException if IO error occurs during link creation
+	 */
+	public DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
+			throws IOException;
+
+	/**
 	 * Create a subfolder within this folder.
 	 * @param folderName sub-folder name
 	 * @return the new folder
@@ -229,20 +347,21 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Create a new link-file in the specified newParent which will reference this folder 
-	 * (i.e., linked-folder). Restrictions:
-	 * <ul>
-	 * <li>Specified newParent must reside within a different project since internal linking is
-	 * not currently supported.</li>
-	 * </ul>
-	 * If this folder is associated with a temporary transient project (i.e., not a locally 
-	 * managed project) the generated link will refer to the remote folder with a remote
-	 * Ghidra URL, otherwise a local project storage path will be used.
+	 * Copy this folder into the newParent folder as a folder-link.  A folder-link references another
+	 * folder without actually copying all of its children.  If this folder is associated with a 
+	 * temporary transient project (i.e., not a locally managed project) the generated link will 
+	 * refer to the this folder with a Ghidra URL.  If this folder is contained within the 
+	 * same active {@link ProjectData} instance as {@code newParent} an internal link reference 
+	 * will be made.
+	 * 
 	 * @param newParent new parent folder where link-file is to be created
-	 * @return newly created domain file (i.e., link-file) or null if link use not supported.
+	 * @param relative if true, and this folder is contained within the same active 
+	 * {@link ProjectData} instance as {@code newParent}, an internal-project relative path 
+	 * folder-link will be created.
+	 * @return newly created domain file which is a folder-link (i.e., link-file).
 	 * @throws IOException if an IO or access error occurs.
 	 */
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException;
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException;
 
 	/**
 	 * Allows the framework to react to a request to make this folder the "active" one.
@@ -250,7 +369,11 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public void setActive();
 
 	/**
-	 * Determine if this folder corresponds to a linked-folder.
+	 * Determine if this folder corresponds to a linked-folder which directly corresponds to a
+	 * folder-link file.  While this method is useful for identify a linked-folder root, in some
+	 * cases it may be preferrable to simply check for instanceof {@link LinkedDomainFolder} which 
+	 * applies to the linked-folder root as well as its child sub-folders.
+	 *   
 	 * @return true if folder corresponds to a linked-folder, else false.
 	 */
 	public default boolean isLinked() {

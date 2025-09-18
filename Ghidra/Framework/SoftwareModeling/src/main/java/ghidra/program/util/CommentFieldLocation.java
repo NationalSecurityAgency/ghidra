@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -31,7 +31,7 @@ import ghidra.program.model.listing.Program;
 public class CommentFieldLocation extends CodeUnitLocation {
 
 	protected String[] comment;
-	protected int type;
+	protected CommentType type;
 
 	/**
 	 * Construct a new CommentFieldLocation.
@@ -41,16 +41,14 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	 * @param componentPath if not null, it is the array of indexes that point
 	 * to a specific data type inside of another data type
 	 * @param comment   The array of strings that make up the comment
-	 * @param type      The type of this comment.
-	 *                  Can be either CodeUnit.PRE_COMMENT, CodeUnit.POST_COMMENT, 
-	 *                  CodeUnit.PLATE_COMMENT, CodeUnit.EOL_COMMENT, or CodeUnit.REPEATABLE_COMMENT.
+	 * @param type      The type of this comment (null for no-comment type)
 	 * @param row       The index of the string that contains the exact location.
 	 * @param charOffset       The position within the string that specifies the exact location.
 	 * @exception IllegalArgumentException
 	 *                      Thrown if type is not one of the comment values given in <CODE>CodeUnit</CODE>
 	 */
 	public CommentFieldLocation(Program program, Address addr, int[] componentPath,
-			String[] comment, int type, int row, int charOffset) {
+			String[] comment, CommentType type, int row, int charOffset) {
 
 		super(program, addr, componentPath, row, 0, charOffset);
 		this.comment = comment;
@@ -69,19 +67,6 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	}
 
 	/**
-	 * Checks that the type is a valid comment type.
-	 * @throws IllegalArgumentException if this doesn't have a valid comment type.
-	 */
-	protected void validateType() {
-		if (type != CodeUnit.PRE_COMMENT && type != CodeUnit.POST_COMMENT &&
-			type != CodeUnit.EOL_COMMENT && type != CodeUnit.REPEATABLE_COMMENT &&
-			type != CodeUnit.PLATE_COMMENT && type != CodeUnit.NO_COMMENT) {
-			throw new IllegalArgumentException(
-				"The comment type was " + type + ", but it must be from 0 to 4");
-		}
-	}
-
-	/**
 	 * Returns the array of strings that make up the comment.
 	 * @return the comment
 	 */
@@ -90,11 +75,9 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	}
 
 	/**
-	 * Returns the comment type.  The type is either CodeUnit.EOL_COMMENT, CodeUnit.POST_COMMENT, 
-	 * CodeUnit.PLATE_COMMENT, CodeUnit.PRE_COMMENT, or CodeUnit.REPEATABLE_COMMENT.
-	 * @return the comment type
+	 * {@return the comment type or null if no-comment.}
 	 */
-	public int getCommentType() {
+	public CommentType getCommentType() {
 		return type;
 	}
 
@@ -103,7 +86,8 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	 */
 	@Override
 	public String toString() {
-		return super.toString() + ", Comment Type = " + type;
+		String str = type != null ? type.name() : "NO-COMMENT";
+		return super.toString() + ", Comment Type = " + str;
 	}
 
 	@Override
@@ -111,7 +95,9 @@ public class CommentFieldLocation extends CodeUnitLocation {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(comment);
-		result = prime * result + type;
+		if (type != null) {
+			result = prime * result + type.hashCode();
+		}
 		return result;
 	}
 
@@ -140,14 +126,14 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	public void saveState(SaveState obj) {
 		super.saveState(obj);
 		obj.putStrings("_COMMENT", comment);
-		obj.putInt("_TYPE", type);
+		obj.putInt("_TYPE", type != null ? type.ordinal() : -1);
 	}
 
 	@Override
 	public void restoreState(Program p, SaveState obj) {
 		super.restoreState(p, obj);
-
 		comment = obj.getStrings("_COMMENT", new String[0]);
-		type = obj.getInt("_TYPE", 0);
+		int commentType = obj.getInt("_TYPE", CommentType.EOL.ordinal());
+		type = commentType < 0 ? null : CommentType.valueOf(commentType);
 	}
 }

@@ -980,8 +980,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(panel, actionName, actionOwner);
 
-		setToggleButtonSelected(panel, "Enter Mouse Binding", true);
-
 		JPanel actionBindingPanel = (JPanel) getInstanceField("actionBindingPanel", panel);
 		JTextField textField = (JTextField) getInstanceField("mouseEntryField", actionBindingPanel);
 
@@ -1008,8 +1006,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(panel, actionName, actionOwner);
 
-		setToggleButtonSelected(panel, "Enter Mouse Binding", false);
-
 		JPanel actionBindingPanel = (JPanel) getInstanceField("actionBindingPanel", panel);
 		KeyEntryPanel keyEntryPanel =
 			(KeyEntryPanel) getInstanceField("keyEntryPanel", actionBindingPanel);
@@ -1030,8 +1026,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		KeyBindingsPanel panel = (KeyBindingsPanel) getInstanceField("panel", editor);
 
 		selectRowForAction(panel, actionName, actionOwner);
-
-		setToggleButtonSelected(panel, "Enter Mouse Binding", false);
 
 		pressButtonByName(panel, "Clear Key Binding");
 		waitForSwing();

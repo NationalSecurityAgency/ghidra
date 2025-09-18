@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,6 @@ import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
-import ghidra.framework.data.DomainObjectAdapter;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -79,10 +77,9 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			srcFile != null ? srcFile.getAbsolutePath() : (script.getClass().getName() + ".class");
 
 		try {
-			PrintWriter writer = new PrintWriter(System.out);
 			Msg.info(this, "SCRIPT: " + scriptName);
-			script.execute(scriptState, TaskMonitor.DUMMY, writer);
-			writer.flush();
+			ScriptControls controls = new ScriptControls(System.out, System.err, TaskMonitor.DUMMY);
+			script.execute(scriptState, controls);
 		}
 		catch (Exception exc) {
 			Program prog = scriptState.getCurrentProgram();
@@ -109,8 +106,8 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 				"ensure you have installed the necessary plugin.");
 		}
 
-		PrintWriter writer = new PrintWriter(System.out);
-		GhidraScript foundScript = provider.getScriptInstance(scriptSourceFile, writer);
+		PrintWriter errWriter = new PrintWriter(System.err);
+		GhidraScript foundScript = provider.getScriptInstance(scriptSourceFile, errWriter);
 
 		if (propertiesFilePath != null) {
 			// Get basename, assume that it ends in .java, since we've already covered the

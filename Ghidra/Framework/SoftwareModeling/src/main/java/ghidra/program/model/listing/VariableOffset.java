@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package ghidra.program.model.listing;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.LabelString.LabelType;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.SystemUtilities;
@@ -43,7 +43,7 @@ public class VariableOffset {
 
 	/**
 	 * Constructor for an implied variable reference.
-	 * @param variable function variable
+	 * @param var function variable
 	 * @param offset offset into variable
 	 * @param indirect if true and variable data-type is a pointer, the offset 
 	 * is relative to underlying data-type of the pointer-type.  This should generally be
@@ -51,8 +51,8 @@ public class VariableOffset {
 	 * whereas it would be false for stack-references.
 	 * @param dataAccess true if content of variable is being read and/or written
 	 */
-	public VariableOffset(Variable variable, long offset, boolean indirect, boolean dataAccess) {
-		this.variable = variable;
+	public VariableOffset(Variable var, long offset, boolean indirect, boolean dataAccess) {
+		this.variable = Objects.requireNonNull(var, "Variable reference not bound to a variable");
 		this.offset = offset;
 		this.indirect = indirect;
 		this.dataAccess = dataAccess;
@@ -65,20 +65,14 @@ public class VariableOffset {
 	 */
 	public VariableOffset(Reference ref, Variable var) {
 
-		indirect = false;
-		variable = var;
-		if (variable == null) {
-			throw new IllegalArgumentException("Variable reference not bound to a variable");
-		}
-
+		this.indirect = false;
+		this.variable = Objects.requireNonNull(var, "Variable reference not bound to a variable");
 		RefType rt = ref.getReferenceType();
-		dataAccess = rt.isRead() || rt.isWrite();
+		this.dataAccess = rt.isRead() || rt.isWrite();
 
 		if (ref instanceof StackReference && variable.isStackVariable()) {
-			offset = variable.getStackOffset();
-			offset = ((StackReference) ref).getStackOffset() - variable.getStackOffset();
+			this.offset = ((StackReference) ref).getStackOffset() - variable.getStackOffset();
 		}
-
 	}
 
 	/**
@@ -94,6 +88,7 @@ public class VariableOffset {
 
 	/**
 	 * Sets the original replaced sub-operand Register.
+	 * @param reg the register
 	 */
 	public void setReplacedElement(Register reg) {
 		replacedElement = reg;
@@ -107,9 +102,6 @@ public class VariableOffset {
 		return replacedElement;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		StringBuffer buf = new StringBuffer();
@@ -204,7 +196,7 @@ public class VariableOffset {
 		}
 
 		List<Object> list = new ArrayList<>();
-		list.add(new LabelString(name.toString(), LabelString.VARIABLE));
+		list.add(new LabelString(name.toString(), LabelType.VARIABLE));
 
 		if (absOffset != 0 || scalarAdjustment != 0) {
 			long adjustedOffset = (offset < 0 ? -absOffset : absOffset) + scalarAdjustment;

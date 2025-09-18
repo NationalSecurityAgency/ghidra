@@ -123,17 +123,8 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	@Override
 	protected DBTracePropertyMapSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTracePropertyMapSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, null, 0, dataType, dataFactory);
-	}
-
-	@Override
-	protected DBTracePropertyMapSpace createRegisterSpace(AddressSpace space, TraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTracePropertyMapSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
+		return new DBTracePropertyMapSpace(tableName(space), trace, trace.getStoreFactory(), lock,
+			space, dataType, dataFactory);
 	}
 
 	@Override
@@ -156,12 +147,12 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public class DBTracePropertyMapSpace extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
 			implements TracePropertyMapSpace<T> {
 
-		public DBTracePropertyMapSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
-				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+		public DBTracePropertyMapSpace(String tableName, DBTrace trace,
+				DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
 				Class<DR> dataType,
 				DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
 				throws VersionException, IOException {
-			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
+			super(tableName, trace, storeFactory, lock, space, dataType, dataFactory);
 		}
 
 		@Override

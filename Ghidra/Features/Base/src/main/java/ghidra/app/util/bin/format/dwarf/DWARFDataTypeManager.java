@@ -328,6 +328,23 @@ public class DWARFDataTypeManager {
 		return baseDataTypeVoid;
 	}
 
+	public DataType getUnspecifiedArrayType() {
+		DataTypePath dtp = new DataTypePath(DWARFProgram.DWARF_ROOT_CATPATH, ".unknown_array");
+
+		DataType dt = dataTypeManager.getDataType(dtp);
+		if (dt == null) {
+			StructureDataType unspecifiedElementArray = new StructureDataType(dtp.getCategoryPath(),
+				dtp.getDataTypeName(), 0, dataTypeManager);
+			unspecifiedElementArray.setToDefaultPacking();
+			unspecifiedElementArray.setDescription(
+				"Zero length data type for arrays that do not have element info");
+
+			dt = dataTypeManager.resolve(unspecifiedElementArray,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
+		}
+		return dt;
+	}
+
 	/**
 	 * Returns a DWARF base data type based on its name, or null if it does not exist.
 	 *

@@ -198,6 +198,19 @@ PcodeOp *FlowInfo::branchTarget(PcodeOp *op) const
   return target(addr);	// Otherwise a normal address target
 }
 
+/// Replace any reference to the op being inlined with the first op of the inlined sequence.
+/// \param oldOp is the p-code op being inlined
+/// \param newOp is the first p-code op in the inlined sequence
+void FlowInfo::updateTarget(PcodeOp *oldOp,PcodeOp *newOp)
+
+{
+  map<Address,VisitStat>::iterator viter = visited.find(oldOp->getAddr());
+  if (viter != visited.end()) {				// Check if -oldOp- is a possible branch target
+    if ((*viter).second.seqnum == oldOp->getSeqNum())	// (if injection op is the first op for its address)
+      (*viter).second.seqnum = newOp->getSeqNum();	//    change the seqnum to the newOp
+  }
+}
+
 /// Check to see if the new target has been seen before. Otherwise
 /// add it to the list of addresses that need to be processed.
 /// Also check range bounds and update basic block information.
@@ -1189,11 +1202,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
     obank.markIncidentalCopy(firstop, lastop);
   obank.moveSequenceDead(firstop,lastop,op); // Move the injection to right after the call
 
-  map<Address,VisitStat>::iterator viter = visited.find(op->getAddr());
-  if (viter != visited.end()) {				// Check if -op- is a possible branch target
-    if ((*viter).second.seqnum == op->getSeqNum())	// (if injection op is the first op for its address)
-      (*viter).second.seqnum = firstop->getSeqNum();	//    change the seqnum to the first injected op
-  }
+  updateTarget(op,firstop);		// Replace -op- with -firstop- in the target map
   // Get rid of the original call
   data.opDestroyRaw(op);
 }

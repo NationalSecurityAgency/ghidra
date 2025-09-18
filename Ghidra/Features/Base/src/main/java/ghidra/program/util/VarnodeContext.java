@@ -24,7 +24,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -35,7 +36,8 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.DuplicateNameException;
 
 
 public class VarnodeContext implements ProcessorContext {
@@ -124,15 +126,15 @@ public class VarnodeContext implements ProcessorContext {
 
 	boolean isBE = false;
 	
-	boolean trackStartEndState = false;
+	boolean recordStartEndState = false;
 
 	public boolean debug = false;
 
 	public VarnodeContext(Program program, ProgramContext programContext,
-			ProgramContext spaceProgramContext, boolean trackStartEndState) {
+			ProgramContext spaceProgramContext, boolean recordStartEndState) {
 		this.program = program;
 		this.isBE = program.getLanguage().isBigEndian();
-		this.trackStartEndState = trackStartEndState;
+		this.recordStartEndState = recordStartEndState;
 
 		// make a copy, because we could be making new spaces.
 		this.addrFactory = new OffsetAddressFactory(program);
@@ -235,7 +237,7 @@ public class VarnodeContext implements ProcessorContext {
 	public void flowStart(Address toAddr) {
 		currentAddress = toAddr;
 		
-		if (trackStartEndState) {
+		if (recordStartEndState) {
 			addrStartState.put(toAddr,new TraceDepthState(regVals.size(),regVals));
 			regVals.push(new HashMap<Address, Varnode>());
 		}
@@ -245,7 +247,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * End flow and save any necessary end flow state for the current instruction at address
 	 */
 	public void flowEnd(Address address) {
-		if (trackStartEndState) {
+		if (recordStartEndState) {
 			addrEndState.put(address,new TraceDepthState(regVals.size(),regVals));
 		}
 		currentAddress = null;
@@ -519,8 +521,7 @@ public class VarnodeContext implements ProcessorContext {
 			Reference[] refsFrom = program.getReferenceManager().getReferencesFrom(addr);
 			if (refsFrom.length > 0 && refsFrom[0].isExternalReference()) {
 				Address external = refsFrom[0].getToAddress();
-				return createVarnode(external.getOffset(), external.getAddressSpace().getSpaceID(),
-					0);
+				return createVarnode(external.getOffset(), external.getAddressSpace().getSpaceID(), 0);
 			}
 
 			// If the memory is Writeable, then maybe don't trust it
@@ -632,7 +633,6 @@ public class VarnodeContext implements ProcessorContext {
 				stateLayer = null;
 				layer--;
 			}
-			;
 
 			if (stateLayer == null) {
 				return null;
@@ -767,7 +767,7 @@ public class VarnodeContext implements ProcessorContext {
 			return;
 		}
 
-		Varnode split[] = splitToBytes(value);
+		Varnode split[] = splitToBytes(value, out.getSize());
 		// copy in partial values after
 		for (int nodeOff = 0; nodeOff < len; nodeOff++) {
 			if (split == null) {
@@ -855,22 +855,21 @@ public class VarnodeContext implements ProcessorContext {
 		return new Varnode(addr, size);
 	}
 
-	public Varnode[] splitToBytes(Varnode v) {
+	public Varnode[] splitToBytes(Varnode v, int len) {
 		if (!isConstant(v)) {
 			return null;
 		}
-
-		int size = v.getSize();
-		Varnode split[] = new Varnode[size];
+		
+		Varnode split[] = new Varnode[len];
 		long value = v.getOffset();
 		if (isBE) {
-			for (int i = 0; i < v.getSize(); i++) {
+			for (int i = 0; i < len; i++) {
 				long subv = value >> (i * 8);
-				split[size - i - 1] = createConstantVarnode(subv, 1);
+				split[len - i - 1] = createConstantVarnode(subv, 1);
 			}
 		}
 		else {
-			for (int i = 0; i < v.getSize(); i++) {
+			for (int i = 0; i < len; i++) {
 				long subv = value >> (i * 8);
 				split[i] = createConstantVarnode(subv, 1);
 			}
@@ -1273,7 +1272,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * Get the value (value, space, size) of a register at the end of the last execution
 	 * flow taken for the instruction at toAddr.
 	 *
-	 * Note: This can only be called if trackStartEndState flag is true.
+	 * Note: This can only be called if recordStartEndState flag is true.
 	 * 
 	 * @param reg register to retrieve the end value
 	 * @param fromAddr flow from address (not used currently, future use to retrieve multiple flows)
@@ -1282,13 +1281,13 @@ public class VarnodeContext implements ProcessorContext {
 	 * 
 	 * @return instruction end state value for register, or null if no known state
 	 * 
-	 * @throws UnsupportedOperationException trackStartEndState == false at construction
+	 * @throws UnsupportedOperationException recordStartEndState == false at construction
 	 */
 	public Varnode getEndRegisterVarnodeValue(Register reg, Address fromAddr, Address toAddr,
 			boolean signed) {
 		
-		if (!trackStartEndState) {
-			throw new UnsupportedOperationException("Must construct class with trackStartEndState == true");
+		if (!recordStartEndState) {
+			throw new UnsupportedOperationException("Must construct class with recordStartEndState == true");
 		}
 		
 		if (reg == null) {
@@ -1330,7 +1329,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Get the current value of the register at the address.
-	 * Note: If trackStartEndState flag is false, then this will return the current value.
+	 * Note: If recordStartEndState flag is false, then this will return the current value.
 	 * 
 	 * @param reg value of register to get
 	 * @param toAddr value of register at a location
@@ -1344,7 +1343,7 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Get the value of a register that was set coming from an address to an
 	 * another address.
-	 * Note: If trackStartEndState flag is false, then this will return the current value.
+	 * Note: If recordStartEndState flag is false, then this will return the current value.
 	 * 
 	 * @param reg value of register to get
 	 * @param fromAddr location the value came from
@@ -1404,6 +1403,7 @@ public class VarnodeContext implements ProcessorContext {
 		if (!in.isRegister() || !out.isRegister()) {
 			// normal case easy get value, put value
 			putValue(out, val1, mustClearAll);
+			return;
 		}
 		if (mustClearAll) {
 			clearVals.add(out);
@@ -1664,7 +1664,9 @@ public class VarnodeContext implements ProcessorContext {
 			if (isBadAddress(val1)) {
 				return val1;
 			}
-			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), val1.getSize());
+			int size = val1.getSize();
+			size = size > 0 ? size : 1; // turning into constant, make sure has a size
+			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), size);
 		}
 		int spaceID = val1.getSpace();
 		long valbase = 0;
@@ -1766,7 +1768,7 @@ public class VarnodeContext implements ProcessorContext {
 	public RegisterValue getRegisterValue(Register register) {
 		Varnode regVnode = trans.getVarnode(register);
 		Varnode value = this.getValue(regVnode, false, null);
-		if (isConstant(value)) {
+		if (value != null && isConstant(value)) {
 			return new RegisterValue(register, BigInteger.valueOf(value.getOffset()));
 		}
 		return null;
@@ -1834,6 +1836,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if  the varnode is a symbolic location
 	 */
 	public boolean isSymbol(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return isSymbolicSpace(varnode.getAddress().getAddressSpace());
 	}
 
@@ -1844,6 +1849,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if the varnode is associated with a register
 	 */
 	public boolean isRegister(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		return varnode.isRegister() || trans.getRegister(varnode) != null;
 	}
 
@@ -1854,6 +1862,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		if (varnode.isConstant()) {
 			return true;
 		}
@@ -1863,10 +1874,13 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Check if this is a bad address, or offset from a bad address
 	 * 
-	 * @param varnode to check
+	 * @param v to check
 	 * @return true if should be treated as a constant for most purposes
 	 */
 	public boolean isBadAddress(Varnode v) {
+		if (v == null) {
+			return false;
+		}
 		return v.getAddress().equals(BAD_ADDRESS) || v.getSpace() == BAD_OFFSET_SPACEID;
 	}
 
@@ -1876,11 +1890,14 @@ public class VarnodeContext implements ProcessorContext {
 	 * Suspect constants act like constants, but are in a Suspicious
 	 * address space instead of the constant space.
 	 * 
-	 * @param val1 varnode to check
+	 * @param varnode varnode to check
 	 * @return true if varnode is a suspect constant
 	 */
-	public boolean isSuspectConstant(Varnode val1) {
-		return val1.getSpace() == SUSPECT_OFFSET_SPACEID;
+	public boolean isSuspectConstant(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
+		return varnode.getSpace() == SUSPECT_OFFSET_SPACEID;
 	}
 
 	/**
@@ -1891,6 +1908,9 @@ public class VarnodeContext implements ProcessorContext {
 	 * @return true if this varnode is stored in the symbolic stack space
 	 */
 	public boolean isStackSymbolicSpace(Varnode varnode) {
+		if (varnode == null) {
+			return false;
+		}
 		// symbolic spaces are off of a register, find the space
 		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 

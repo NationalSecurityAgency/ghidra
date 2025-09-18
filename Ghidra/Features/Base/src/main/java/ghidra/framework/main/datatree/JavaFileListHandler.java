@@ -46,7 +46,7 @@ public final class JavaFileListHandler extends AbstractFileListFlavorHandler {
 		if (fileList.isEmpty()) {
 			return false;
 		}
-		doImport(getDomainFolder(destinationNode), fileList, tool, dataTree);
+		doImport(DataTree.getRealInternalFolderForNode(destinationNode), fileList, tool, dataTree);
 		return true;
 	}
 }

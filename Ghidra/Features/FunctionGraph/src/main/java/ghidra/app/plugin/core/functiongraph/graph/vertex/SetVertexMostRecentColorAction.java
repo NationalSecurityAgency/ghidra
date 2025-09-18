@@ -160,7 +160,6 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		actionList.add(createSeparator());
 		actionList.add(chooseColorAction);
 		actionList.add(clearColorAction);
-
 		return actionList;
 	}
 

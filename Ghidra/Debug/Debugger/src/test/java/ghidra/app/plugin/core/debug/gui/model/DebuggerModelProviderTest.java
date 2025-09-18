@@ -43,13 +43,12 @@ import ghidra.trace.database.ToyDBTraceBuilder.EventSuspension;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest {
@@ -164,7 +163,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 			prevThread.setAttribute(Lifespan.nowOn(i), "_next", thread);
 		}
 		objects.getRootObject()
-				.setAttribute(Lifespan.nowOn(i), TraceObjectEventScope.KEY_EVENT_THREAD,
+				.setAttribute(Lifespan.nowOn(i), TraceEventScope.KEY_EVENT_THREAD,
 					thread);
 		return thread;
 	}
@@ -700,6 +699,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	 * sufficient events to overload the queue, the event support with clear them and just issue an
 	 * OBJ_RESTORED event instead. This test ensures we update attributes in the tree when that
 	 * happens.
+	 * 
+	 * @throws Throwable because
 	 */
 	@Test
 	public void testTreeTracksChangeAttributeWithEventsSuspended() throws Throwable {
@@ -998,7 +999,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject threadObj0 =
 			objects.getObjectByCanonicalPath(KeyPath.parse("Processes[0].Threads[0]"));
-		TraceThread thread0 = threadObj0.queryInterface(TraceObjectThread.class);
+		TraceThread thread0 = threadObj0.queryInterface(TraceThread.class);
 		createStack(threadObj0);
 		return thread0;
 	}

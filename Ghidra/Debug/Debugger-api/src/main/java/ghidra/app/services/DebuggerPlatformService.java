@@ -38,8 +38,8 @@ public interface DebuggerPlatformService {
 	 * <p>
 	 * If the trace's current mapper is applicable to the object, it will be returned. Otherwise,
 	 * the service will query the opinions for a new mapper, as in
-	 * {@link #getNewMapper(TraceObject)} and set it as the current mapper before returning. If a
-	 * new mapper is set, the trace is also initialized for that mapper.
+	 * {@link #getNewMapper(Trace, TraceObject, long)} and set it as the current mapper before
+	 * returning. If a new mapper is set, the trace is also initialized for that mapper.
 	 * 
 	 * @param trace the trace
 	 * @param object the object for which a mapper is desired

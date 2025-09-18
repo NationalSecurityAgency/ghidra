@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,17 @@ package ghidra.app.plugin.core.navigation;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import generic.theme.GIcon;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.util.AddressFieldLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,11 +57,18 @@ public class NextPreviousInstructionAction extends AbstractNextPreviousAction {
 	}
 
 	@Override
-	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
+	protected Address getNextAddress(TaskMonitor monitor, NavigatableActionContext context)
 			throws CancelledException {
 
+		Program program = context.getProgram();
+		Address address = context.getAddress();
 		if (isInverted) {
 			return getNextNonInstructionAddress(monitor, program, address);
+		}
+
+		// check for known special cases
+		if (useCurrentInstruction(context)) {
+			return address;
 		}
 
 		if (isInstructionAt(program, address)) {
@@ -69,10 +80,27 @@ public class NextPreviousInstructionAction extends AbstractNextPreviousAction {
 		return getAddressOfNextInstructionAfter(program, address);
 	}
 
+	private boolean useCurrentInstruction(NavigatableActionContext context) {
+		// Jumping to the next instruction below the current instruction is not useful.  When on an
+		// instruction, find the next non-instruction and then look for the next instruction after
+		// that.  We do not want to do this when there is an instruction at an address, but it is
+		// not close to the cursor, such as when on a function signature.  In that case, jump to the
+		// instruction at that same address.  In the case when the cursor is on the function
+		// signature, this will allow the user to quickly jump to the entry address field.
+		// 
+		// Each time this action is executed, it places the cursor on the address field.  Use that
+		// as a signal that we should go to the next instruction.  This allows the example outlined
+		// above to work, with only minor intrusion to the user's workflow.
+		ProgramLocation location = context.getLocation();
+		return !(location instanceof AddressFieldLocation);
+	}
+
 	@Override
-	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
+	protected Address getPreviousAddress(TaskMonitor monitor, NavigatableActionContext context)
 			throws CancelledException {
 
+		Program program = context.getProgram();
+		Address address = context.getAddress();
 		if (isInverted) {
 			return getPreviousNonInstructionAddress(monitor, program, address);
 		}
@@ -84,6 +112,20 @@ public class NextPreviousInstructionAction extends AbstractNextPreviousAction {
 
 		// we know address is not at an instruction at this point
 		return getAddressOfPreviousInstructionBefore(program, address);
+	}
+
+	@Override
+	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException {
+		// use getNextAddress(NavigatableActionContext, TaskMonitor) instead
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException {
+		// use getPreviousAddress(NavigatableActionContext, TaskMonitor) instead
+		throw new UnsupportedOperationException();
 	}
 
 	private Address getNextNonInstructionAddress(TaskMonitor monitor, Program program,

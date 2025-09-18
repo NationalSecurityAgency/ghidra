@@ -64,7 +64,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int repeatableCommentStyle;
 	private int automaticCommentStyle;
 	private int refRepeatableCommentStyle;
-	private int offcutCommentStyle;
 
 	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
 

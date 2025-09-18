@@ -461,6 +461,11 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		}
 
 		@Override
+		public boolean isImmutableSettings() {
+			return false; // NOTE: We could check to see if any editable Settings are defined
+		}
+
+		@Override
 		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
 			if (settingsDefinition instanceof TypeDefSettingsDefinition) {
 				return false;

@@ -26,21 +26,19 @@ import db.Transaction;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.data.DoubleDataType;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 
 public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersProviderTest {
 
 	protected TraceObject setUpRmiTarget() throws Throwable {
 		createRmiConnection();
 		addRegisterMethods();
-		createTrace();
 		try (Transaction tx = tb.startTransaction()) {
-			tb.trace.getObjectManager().createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 2);
 		}
 		rmiCx.publishTarget(tool, tb.trace);
@@ -71,7 +69,7 @@ public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersP
 
 		setRowText(row, "1234");
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0", 0x1234);
 	}
 
@@ -93,7 +91,7 @@ public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersP
 
 		setRowRepr(row, "1234");
 		handleWriteRegInvocation(
-			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceObjectStackFrame.class),
+			tb.obj("Processes[1].Threads[1].Stack[0]").queryInterface(TraceStackFrame.class),
 			"r0", encodeDouble(1234));
 	}
 }

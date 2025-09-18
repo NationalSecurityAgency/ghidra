@@ -309,6 +309,13 @@ public:
   /// \return the matching Varnode or NULL
   Varnode *findCoveringInput(int4 s,const Address &loc) const { return vbank.findCoveringInput(s,loc); }
 
+  /// \brief Check if an input Varnode exists that overlaps the given range
+  ///
+  /// \param s is the size of the range in bytes
+  /// \param loc is the starting address of the given range
+  /// \return \b true if there is an input Varnode that overlaps the range
+  bool hasInputIntersection(int4 s,const Address &loc) const { return vbank.hasInputIntersection(s, loc); }
+
   /// \brief Find the input Varnode with the given size and storage address
   ///
   /// \param s is the size in bytes

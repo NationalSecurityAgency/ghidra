@@ -105,5 +105,15 @@
 
     <P>Stop the server. This closes the persistent server. This does not affect pending acceptors
     or established connections.</P>
+
+    <H3><A name="forcibly_close_txes"></A>Forcibly Close Transactions</H3>
+
+    <P>Forcibly close all the back-end's transactions on the target trace. This is generally not a
+    recommended course of action, except that sometimes the back-end crashes and fails to close a
+    transaction. Un-closed transactions from the back-end can leave most, if not all, of the UI in
+    a stale state, since event processing on the trace is disabled. If there is good reason to
+    believe the back-end has forgotten to close a transaction, this action will forcibly close all
+    of them and re-enable event processing. If, however, the back-end was in fact still doing work
+    with that transaction, it may crash and/or corrupt the connection.</P>
   </BODY>
 </HTML>

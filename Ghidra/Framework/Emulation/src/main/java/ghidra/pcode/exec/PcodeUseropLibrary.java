@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.pcode.PcodeOp;
@@ -218,6 +219,17 @@ public interface PcodeUseropLibrary<T> {
 		 * @see PcodeUserop#canInline()
 		 */
 		boolean canInlinePcode();
+
+		/**
+		 * If this userop is defined as a java callback, get the type of the output
+		 * 
+		 * <p>
+		 * If the method has a {@code @}{@link OpOutput} annotation, this is the type of the output
+		 * parameter. Otherwise, this is the method's return type.
+		 * 
+		 * @return the output type
+		 */
+		Class<?> getOutputType();
 
 		/**
 		 * If this userop is defined as a java callback, get the method

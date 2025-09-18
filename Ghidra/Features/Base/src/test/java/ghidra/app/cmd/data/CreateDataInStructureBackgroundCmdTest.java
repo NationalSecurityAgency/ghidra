@@ -69,7 +69,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 
 		int structLen = (2 * defaultPtrLen) + 2;
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 }, 2,
@@ -126,7 +126,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 
 		int structLen = (2 * defaultPtrLen) + (2 * structA.getLength());
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 },
@@ -175,7 +175,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 		long startOffset = UNDEFINED_AREA;
 
 		int structLen = 4;
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureBackgroundCmd(addr(startOffset), new int[] { 0 }, 4,

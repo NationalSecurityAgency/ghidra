@@ -651,4 +651,34 @@ public class FSUtilities {
 		return FileType.UNKNOWN;
 	}
 
+	/**
+	 * Splits the given path into its individual directory and filename components. For example,
+	 * {@code "/dir/dir/dir/file"} becomes {@code ["", "dir", "dir", "dir", "file"]}.
+	 * 
+	 * @param path The path to split
+	 * @return The split path
+	 */
+	public static String[] splitPath(String path) {
+		return Objects.requireNonNullElse(path, "").replace('\\', '/').split("/");
+	}
+
+	/**
+	 * Converts the given path to a valid mirrored project path. Care must be taken to minimize
+	 * project path collisions, allowing them only when completely necessary.
+	 * 
+	 * @param path The path to convert
+	 * @return The mirrored project path
+	 */
+	public static String mirroredProjectPath(String path) {
+		path = FSUtilities.normalizeNativePath(path);
+
+		// If it looks like an absolute Windows path, drop the colon from the drive letter. The
+		// colon is not a valid project character.
+		if (path.length() >= 3 && path.charAt(0) == '/' && Character.isLetter(path.charAt(1)) &&
+			path.charAt(2) == ':') {
+			path = "/" + path.charAt(1) + path.substring(3);
+		}
+		return path;
+	}
+
 }

@@ -2074,18 +2074,10 @@ bool ConditionalJoin::match(BlockBasic *b1,BlockBasic *b2)
   exita = (BlockBasic *)block1->getOut(0);
   exitb = (BlockBasic *)block1->getOut(1);
   if (exita == exitb) return false;
-  if (block2->getOut(0) == exita) {
-    if (block2->getOut(1) != exitb) return false;
-    a_in2 = block2->getOutRevIndex(0);
-    b_in2 = block2->getOutRevIndex(1);
-  }
-  else if (block2->getOut(0) == exitb) {
-    if (block2->getOut(1) != exita) return false;
-    a_in2 = block2->getOutRevIndex(1);
-    b_in2 = block2->getOutRevIndex(0);
-  }
-  else
-    return false;
+  if (block2->getOut(0) != exita) return false;	// False exits must match
+  if (block2->getOut(1) != exitb) return false;	// True exits must match
+  a_in2 = block2->getOutRevIndex(0);
+  b_in2 = block2->getOutRevIndex(1);
   a_in1 = block1->getOutRevIndex(0);
   b_in1 = block1->getOutRevIndex(1);
 

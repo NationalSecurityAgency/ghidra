@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,16 +36,20 @@ public class ParamSpillDWARFFunctionFixup implements DWARFFunctionFixup {
 				continue;
 			}
 			long paramStackOffset = param.getStackOffset();
-			if (dfunc.isInLocalVarStorageArea(paramStackOffset) &&
-				dfunc.getLocalVarByOffset(paramStackOffset) == null) {
+			if (dfunc.isInLocalVarStorageArea(paramStackOffset)) {
+				if (dfunc.getLocalVarByOffset(paramStackOffset) == null) {
+					DWARFVariable paramSpill = DWARFVariable.fromDataType(dfunc, param.type);
+					String paramName = param.name.getName();
+					paramSpill.name =
+						param.name.replaceName(paramName + "_local", paramName + "_local");
+					paramSpill.setStackStorage(paramStackOffset);
+					paramSpill.comment = param.comment;
 
-				DWARFVariable paramSpill = DWARFVariable.fromDataType(dfunc, param.type);
-				String paramName = param.name.getName();
-				paramSpill.name =
-					param.name.replaceName(paramName + "_local", paramName + "_local");
-				paramSpill.setStackStorage(paramStackOffset);
-				dfunc.localVars.add(paramSpill);
+					dfunc.localVars.add(paramSpill);
+				}
+
 				param.clearStorage();
+				param.comment = null;
 			}
 		}
 	}

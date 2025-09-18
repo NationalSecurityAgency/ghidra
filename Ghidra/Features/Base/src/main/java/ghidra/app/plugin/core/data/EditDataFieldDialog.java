@@ -56,7 +56,6 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	private JCheckBox dateCheckBox;
 
 	private PluginTool tool;
-	private DataType newDataType;
 	private DataTypeManagerService dtmService;
 
 	private Composite composite;
@@ -108,6 +107,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	 * @return the pending new datatype to change to
 	 */
 	public DataType getNewDataType() {
+		DataType newDataType = dataTypeEditor.getCellEditorValueAsDataType();
 		return newDataType != null ? newDataType : new Undefined1DataType();
 	}
 
@@ -149,8 +149,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	 * @param dataType the new pending datatype
 	 */
 	public void setDataType(DataType dataType) {
-		newDataType = dataType;
-		updateDataTypeTextField();
+		dataTypeEditor.setCellEditorValue(dataType);
 	}
 
 	private void initializeFields() {
@@ -247,7 +246,8 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 
 	boolean hasDataTypeChange() {
 		DataType oldDt = getComponentDataType();
-		return newDataType != null && !newDataType.equals(oldDt);
+		DataType newDt = dataTypeEditor.getCellEditorValueAsDataType();
+		return newDt != null && !newDt.equals(oldDt);
 	}
 
 	boolean hasNameChange() {
@@ -321,16 +321,6 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		return panel;
 	}
 
-	private void updateDataTypeTextField() {
-		if (newDataType != null) {
-			dataTypeEditor.setCellEditorValue(newDataType);
-		}
-		else {
-			DataType dt = getComponentDataType();
-			dataTypeEditor.setCellEditorValue(dt);
-		}
-	}
-
 	private String generateTitle() {
 		String compositeName = composite.getName();
 		return "Edit " + compositeName + ", Field " + ordinal;
@@ -394,6 +384,10 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		return dataTypeEditor.getCellEditorValueAsText();
 	}
 
+	public DataTypeSelectionEditor getDataTypeEditor() {
+		return dataTypeEditor;
+	}
+
 	private class UpdateDataComponentCommand implements Command<Program> {
 		private String statusMessage = null;
 
@@ -420,17 +414,43 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 				return;
 			}
 
+			growStructureAsNeeded(struct);
+			ensureDataTypeComponentRecordExists(struct);
+		}
+
+		private void growStructureAsNeeded(Structure struct) {
+			// This should not happen when editing from the Listing, since you must click on a valid
+			// ordinal to start an edit.  It is not clear if the Decompiler has a use case where 
+			// this can happen.
 			int n = composite.getNumComponents();
 			if (ordinal >= n) {
 				int amount = ordinal - n;
 				struct.growStructure(amount);
 			}
+		}
 
+		private void ensureDataTypeComponentRecordExists(Structure struct) {
 			DataTypeComponent dtc = composite.getComponent(ordinal);
-			if (dtc.getDataType() == DataType.DEFAULT) { // remove placeholder type
-				DataType newtype = new Undefined1DataType();
+			if (dtc.getDataType() != DataType.DEFAULT) {
+				return; // the record exists 
+			}
+
+			// The default type does not have a record for the data type component.  We need to
+			// replace that default type with a type that will force a record to be get created.
+			// We need a record to exist in order to set a comment or name.
+			DataType newtype = new Undefined1DataType();
+			DataTypeComponent newDtc =
 				struct.replaceAtOffset(dtc.getOffset(), newtype, 1, "tempName",
 					"Created by Edit Data Field action");
+
+			DataType oldDt = dtc.getDataType();
+			DataType editorDt = dataTypeEditor.getCellEditorValueAsDataType();
+			if (oldDt.equals(editorDt)) {
+				// If the user has changed the type, we want to keep that change.  Otherwise, the
+				// editor should always track what is in the structure so we know if the user has
+				// made a change to the data type.  When the user changes the type, we need to apply
+				// that change.
+				dataTypeEditor.setCellEditorValue(newDtc.getDataType());
 			}
 		}
 
@@ -484,8 +504,9 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		}
 
 		private void updateStructure(Structure struct) {
+			DataType newDt = dataTypeEditor.getCellEditorValueAsDataType();
 			DataTypeComponent dtc = composite.getComponent(ordinal);
-			DataType resolvedDt = program.getDataTypeManager().resolve(newDataType, null);
+			DataType resolvedDt = program.getDataTypeManager().resolve(newDt, null);
 			if (resolvedDt == DataType.DEFAULT) {
 				struct.clearComponent(ordinal);
 				return;
@@ -501,8 +522,9 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		}
 
 		private void updateUnion(Union union) throws DuplicateNameException {
+			DataType newDt = dataTypeEditor.getCellEditorValueAsDataType();
 			DataTypeComponent dtc = composite.getComponent(ordinal);
-			DataType resolvedDt = program.getDataTypeManager().resolve(newDataType, null);
+			DataType resolvedDt = program.getDataTypeManager().resolve(newDt, null);
 			String comment = dtc.getComment();
 			String fieldName = dtc.getFieldName();
 			union.insert(ordinal, resolvedDt);

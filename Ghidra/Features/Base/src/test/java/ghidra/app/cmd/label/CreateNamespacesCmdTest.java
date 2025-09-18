@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,8 @@ public class CreateNamespacesCmdTest extends AbstractGenericTest {
 		String[] namespaces1 = new String[] { "Global", "child1", "child2" };
 		String namespaceString1 = createNamespaceStringFromArray(namespaces1);
 
-		Command command = new CreateNamespacesCmd(namespaceString1, SourceType.USER_DEFINED);
+		Command<Program> command =
+			new CreateNamespacesCmd(namespaceString1, SourceType.USER_DEFINED);
 		boolean success = execute(command);
 		assertTrue("Failed to create namespaces from string: " + namespaceString1 + "\nMessage: " +
 			command.getStatusMsg(), success);
@@ -348,7 +349,7 @@ public class CreateNamespacesCmdTest extends AbstractGenericTest {
 		}
 	}
 
-	private boolean execute(Command cmd) {
+	private boolean execute(Command<Program> cmd) {
 		int txId = program.startTransaction("Transaction");
 		boolean result = cmd.applyTo(program);
 		program.endTransaction(txId, true);

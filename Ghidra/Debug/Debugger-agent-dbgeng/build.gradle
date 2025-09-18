@@ -28,63 +28,56 @@ dependencies {
 	api project(':Debugger-rmi-trace')
 }
 
-ext.tlb = file("build/os/win_x86_64/dbgmodel.tlb")
+def tlb = file("build/os/win_x86_64/dbgmodel.tlb")
+def depsFile = file("${DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
+def binRepoFile = file("${BIN_REPO}/${getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
 
-if ("win_x86_64".equals(getCurrentPlatformName())) {
-
-	String makeName = "win_x86_64DbgmodelTlbMake"
-	task(type: Exec, makeName) {
-		ext.tmpBatch = file("build/buildTlb.bat")
-		ext.idl = file("src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl")
-		inputs.file(idl)
-		outputs.file(tlb)
-
-		doFirst {
-			file(tlb).parentFile.mkdirs()
-			def midlCmd = "midl /tlb \"${tlb}\" \"${idl}\""
-			println "Executing: " + midlCmd
-
-			tmpBatch.withWriter { out ->
-				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
-				out.println midlCmd
-			}
-		}
-		doLast {
-			assert file(tlb).exists() : "Failed to build dbgmodel.tlb"
-		}
-
-		commandLine "cmd", "/c", tmpBatch
-	}
-
-	tasks.assemblePyPackage {
-		from(tasks."$makeName") {
-			into("src/ghidradbg/dbgmodel/tlb")
-		}
-	}	
-}
-else if (file(tlb).exists()) {
-	// required for multi-platform build
-	tasks.assemblePyPackage {
-		from(tlb) {
-			println "Copying existing tlb build artifact: " + tlb
-			into("src/ghidradbg/dbgmodel/tlb")
-		}
-	}
-}
-else {
-	def depsFile = file("${DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
-	def binRepoFile = file("${BIN_REPO}/${getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
+tasks.assemblePyPackage {
 	def prebuiltTlb = depsFile.exists() ? depsFile : (binRepoFile.exists() ? binRepoFile : null)
+	assert prebuiltTlb != null : "Failed to locate prebuilt TLB file"
 
-	if (prebuiltTlb) {
-		tasks.assemblePyPackage {
-			from(prebuiltTlb) {
-				into("src/ghidradbg/dbgmodel/tlb")
-			}
+	from(prebuiltTlb) {
+		into("src/ghidradbg/dbgmodel/tlb")
+	}
+}
+
+task buildTlb(type: Exec) {
+
+	def tmpBatch = file("build/buildTlb.bat")
+	def idl = file("src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl")
+	
+	inputs.file(idl)
+	outputs.file(tlb)
+
+	doFirst {
+		assert isCurrentX86_64() && isCurrentWindows() : "Can only build TLB on Windows x86"
+		file(tlb).parentFile.mkdirs()
+		def midlCmd = "midl /tlb \"${tlb}\" \"${idl}\""
+		println "Executing: " + midlCmd
+
+		tmpBatch.withWriter { out ->
+			out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+			out.println midlCmd
 		}
 	}
-	else {
-		println "****WARNING:**** dbgmodel.tlb omitted from ghidradbg python package"
+
+	doLast {
+		assert file(tlb).exists() : "Failed to build dbgmodel.tlb"
+	}
+
+	commandLine "cmd", "/c", tmpBatch
+}
+
+task prebuildTlb(type: Copy) {
+
+	dependsOn buildTlb
+
+	from tlb
+	into binRepoFile.parentFile
+
+	doFirst {
+		assert file(BIN_REPO).exists() : "Bin repo doesn't exist"
+		file(binRepoFile).parentFile.mkdirs()
 	}
 }
 

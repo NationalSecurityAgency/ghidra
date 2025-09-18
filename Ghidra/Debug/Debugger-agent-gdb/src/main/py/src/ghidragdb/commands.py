@@ -1280,7 +1280,10 @@ def put_modules(modules: Optional[Dict[str, util.Module]] = None,
         base_base, base_addr = mapper.map(inf, m.base)
         if base_base != base_addr.space:
             trace.create_overlay_space(base_base, base_addr.space)
-        modobj.set_value('Range', base_addr.extend(m.max - m.base))
+        if m.max == m.base:
+            modobj.set_value('Base', m.base)
+        else:
+            modobj.set_value('Range', base_addr.extend(m.max - m.base))
         if sections:
             sec_keys = []
             for sk, s in m.sections.items():
@@ -1291,7 +1294,10 @@ def put_modules(modules: Optional[Dict[str, util.Module]] = None,
                 if start_base != start_addr.space:
                     trace.create_overlay_space(
                         start_base, start_addr.space)
-                secobj.set_value('Range', start_addr.extend(s.end - s.start))
+                if s.end == s.start:
+                    secobj.set_value('Address', start_addr)
+                else:
+                    secobj.set_value('Range', start_addr.extend(s.end - s.start))
                 secobj.set_value('Offset', hex(s.offset))
                 secobj.set_value('Attrs', s.attrs, schema=sch.STRING_ARR)
                 secobj.insert()

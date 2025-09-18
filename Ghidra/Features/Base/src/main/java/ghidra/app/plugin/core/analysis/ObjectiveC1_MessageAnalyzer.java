@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 	private static final String DESCRIPTION =
-			"An analyzer for extracting _objc_msgSend information.";
+		"An analyzer for extracting _objc_msgSend information.";
 
 	private static final String NAME = "Objective-C Message";
 
@@ -67,6 +67,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 				inspectFunction(program, function, state, monitor);
 			}
 			catch (Exception e) {
+				// do nothing
 			}
 		}
 
@@ -87,7 +88,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 			return;
 		}
 		InstructionIterator instructionIterator =
-				program.getListing().getInstructions(function.getBody(), true);
+			program.getListing().getInstructions(function.getBody(), true);
 		while (instructionIterator.hasNext()) {
 			if (monitor.isCancelled()) {
 				break;
@@ -96,7 +97,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 			Instruction instruction = instructionIterator.next();
 
 			if (isCallingObjcMsgSend(instruction)) {
-				String eolComment = instruction.getComment(CodeUnit.EOL_COMMENT);
+				String eolComment = instruction.getComment(CommentType.EOL);
 
 				if (eolComment != null) {//if a comment already exists, ignore...
 					continue;
@@ -126,8 +127,8 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 	private boolean isObjcNameMatch(Symbol symbol) {
 		String name = symbol.getName();
 		return name.startsWith(ObjectiveC1_Constants.OBJC_MSG_SEND) ||
-				name.equals(ObjectiveC1_Constants.READ_UNIX2003) ||
-				name.startsWith("thunk" + ObjectiveC1_Constants.OBJC_MSG_SEND);
+			name.equals(ObjectiveC1_Constants.READ_UNIX2003) ||
+			name.startsWith("thunk" + ObjectiveC1_Constants.OBJC_MSG_SEND);
 	}
 
 	private class CurrentState {
@@ -178,11 +179,9 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 				return symbolTable.createNameSpace(parentNamespace, namespaceName,
 					SourceType.ANALYSIS);
 			}
-			catch (DuplicateNameException e) {
+			catch (InvalidInputException | DuplicateNameException e) {
+				return null;
 			}
-			catch (InvalidInputException e) {
-			}
-			return null;
 		}
 	}
 
@@ -224,7 +223,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 			pullNameThrough(state, toAddress, null);
 
 			if (state.isValid()) {
-				instruction.setComment(CodeUnit.EOL_COMMENT, state.toString());
+				instruction.setComment(CommentType.EOL, state.toString());
 				setReference(fromAddress, state);
 				break;
 			}
@@ -310,7 +309,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 
 	private boolean isClassBlock(MemoryBlock block) {
 		return block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS_REFS) ||
-				block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS);
+			block.getName().equals(ObjectiveC1_Constants.OBJC_SECTION_CLASS);
 	}
 
 	private boolean isValidInstruction(Instruction instruction) {

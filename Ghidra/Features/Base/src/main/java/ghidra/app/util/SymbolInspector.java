@@ -382,10 +382,10 @@ public class SymbolInspector implements OptionsChangeListener {
 		else if (isVariableSymbol(s)) {
 			if (s.getSymbolType() == SymbolType.PARAMETER) {
 				Function function = (Function) s.getParentNamespace();
-				return function.hasCustomVariableStorage() ? OptionsGui.PARAMETER_CUSTOM
-						: OptionsGui.PARAMETER_DYNAMIC;
+				return function.hasCustomVariableStorage() ? OptionsGui.FUN_PARAM_CUSTOM
+						: OptionsGui.FUN_PARAM_DYNAMIC;
 			}
-			return OptionsGui.VARIABLE;
+			return OptionsGui.FUN_VARIABLE;
 		}
 		else if (isPrimarySymbol(s)) {
 			return OptionsGui.LABELS_PRIMARY;

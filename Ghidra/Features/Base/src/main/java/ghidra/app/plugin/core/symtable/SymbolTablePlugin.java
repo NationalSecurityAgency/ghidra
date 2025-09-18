@@ -20,11 +20,13 @@ import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -44,6 +46,7 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
@@ -70,10 +73,13 @@ import resources.Icons;
 			"to show subsets of the symbols.",
 	servicesRequired = { GoToService.class, BlockModelService.class },
 	eventsProduced = { ProgramLocationPluginEvent.class },
-	eventsConsumed = { ProgramActivatedPluginEvent.class }
+	eventsConsumed = { ProgramActivatedPluginEvent.class, ProgramLocationPluginEvent.class }
 )
 //@formatter:on
 public class SymbolTablePlugin extends Plugin {
+
+	private static final String NAVIGATE_ON_INCOMING_EVENT_KEY = "NAVIGATE_ON_INCOMING_EVENT";
+	private static final String NAVIGATE_ON_OUTGOING_EVENT_KEY = "NAVIGATE_ON_OUTGOING_EVENT";
 
 	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
@@ -85,6 +91,8 @@ public class SymbolTablePlugin extends Plugin {
 	private ToggleDockingAction referencesToAction;
 	private ToggleDockingAction instructionsFromAction;
 	private ToggleDockingAction dataFromAction;
+	private ToggleDockingAction followIncomingAction;
+	private SelectionNavigationAction selectionNavigationAction;
 
 	private SymbolProvider symProvider;
 	private ReferenceProvider refProvider;
@@ -164,11 +172,21 @@ public class SymbolTablePlugin extends Plugin {
 	@Override
 	public void readConfigState(SaveState saveState) {
 		symProvider.readConfigState(saveState);
+
+		boolean navigateIncoming = saveState.getBoolean(NAVIGATE_ON_INCOMING_EVENT_KEY, false);
+		boolean navigateOutgoing = saveState.getBoolean(NAVIGATE_ON_OUTGOING_EVENT_KEY, false);
+		followIncomingAction.setSelected(navigateIncoming);
+		selectionNavigationAction.setSelected(navigateOutgoing);
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
 		symProvider.writeConfigState(saveState);
+
+		boolean navigateIncoming = followIncomingAction.isSelected();
+		boolean navigateOutgoing = selectionNavigationAction.isSelected();
+		saveState.putBoolean(NAVIGATE_ON_INCOMING_EVENT_KEY, navigateIncoming);
+		saveState.putBoolean(NAVIGATE_ON_OUTGOING_EVENT_KEY, navigateOutgoing);
 	}
 
 	@Override
@@ -193,6 +211,10 @@ public class SymbolTablePlugin extends Plugin {
 			}
 
 			tool.contextChanged(symProvider);
+		}
+		else if (event instanceof ProgramLocationPluginEvent ple) {
+			ProgramLocation location = ple.getLocation();
+			symProvider.locationChanged(location);
 		}
 	}
 
@@ -391,8 +413,22 @@ public class SymbolTablePlugin extends Plugin {
 		setFilterAction.setDescription("Configure Symbol Filter");
 		tool.addLocalAction(symProvider, setFilterAction);
 
+		String navGroup = "2";
+		followIncomingAction =
+			new ToggleDockingAction("Navigate on Incoming Location Changes", getName(),
+				KeyBindingType.SHARED) {
+
+				@Override
+				public void actionPerformed(ActionContext context) {
+					symProvider.setFollowIncomingLocationChanges(isSelected());
+				}
+			};
+		followIncomingAction
+				.setToolBarData(new ToolBarData(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navGroup));
+		tool.addLocalAction(symProvider, followIncomingAction);
+
 		// override the SelectionNavigationAction to handle both tables that this plugin uses
-		DockingAction selectionNavigationAction =
+		selectionNavigationAction =
 			new SelectionNavigationAction(this, symProvider.getTable()) {
 
 				@Override
@@ -401,6 +437,7 @@ public class SymbolTablePlugin extends Plugin {
 					refProvider.getTable().setNavigateOnSelectionEnabled(listen);
 				}
 			};
+		selectionNavigationAction.getToolBarData().setToolBarGroup(navGroup);
 		tool.addLocalAction(symProvider, selectionNavigationAction);
 
 		String pinnedPopupGroup = "2"; // second group
@@ -416,6 +453,7 @@ public class SymbolTablePlugin extends Plugin {
 	}
 
 	private void createRefActions() {
+		String toolbarGroup = "1";
 		referencesToAction = new ToggleDockingAction("References To", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -435,7 +473,7 @@ public class SymbolTablePlugin extends Plugin {
 		referencesToAction.setDescription("References To");
 		referencesToAction.setSelected(true);
 		referencesToAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.symboltable.references.to"), null));
+			new ToolBarData(new GIcon("icon.plugin.symboltable.references.to"), toolbarGroup));
 
 		tool.addLocalAction(refProvider, referencesToAction);
 
@@ -458,7 +496,7 @@ public class SymbolTablePlugin extends Plugin {
 		instructionsFromAction.setDescription("Instructions From");
 		instructionsFromAction.setSelected(false);
 		instructionsFromAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.symboltable.instructions.from"), null));
+			new ToolBarData(new GIcon("icon.plugin.symboltable.instructions.from"), toolbarGroup));
 
 		tool.addLocalAction(refProvider, instructionsFromAction);
 
@@ -481,9 +519,36 @@ public class SymbolTablePlugin extends Plugin {
 		dataFromAction.setDescription("Data From");
 		dataFromAction.setSelected(false);
 		dataFromAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.symboltable.data.from"), null));
+			new ToolBarData(new GIcon("icon.plugin.symboltable.data.from"), toolbarGroup));
 
 		tool.addLocalAction(refProvider, dataFromAction);
+
+		//@formatter:off
+		toolbarGroup = "2";
+		String actionName = "Delete Reference";
+		new ActionBuilder(actionName, getName())
+			.sharedKeyBinding()
+			.toolBarIcon(Icons.DELETE_ICON)
+			.toolBarGroup(toolbarGroup)
+			.enabledWhen(c -> {
+				if (!(c instanceof ReferenceTableContext context)) {
+					return false;
+				}
+				
+				if (refProvider.isBusy()) {
+					return false;
+				}
+
+				List<Reference> refs = context.getSelectedReferences();
+				return !refs.isEmpty(); 
+			})
+			.onAction(c -> {
+				ReferenceTableContext context = (ReferenceTableContext) c;
+				List<Reference> refs = context.getSelectedReferences();
+				refProvider.deleteRows(refs);
+			})
+			.buildAndInstallLocal(refProvider);
+		//@formatter:on
 	}
 
 	// a HACK to make the given action the selected action

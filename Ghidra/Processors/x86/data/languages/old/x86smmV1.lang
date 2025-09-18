@@ -6,7 +6,8 @@
     </description>
     <compiler name="default" id="default"/>
     <spaces>
-        <space name="ram" type="ram" size="4" default="yes" />
+        <!-- <space name="ram" type="ram" size="4" default="yes" /> -->
+        <segmented_space type="protected" name="ram" default="yes" />
         <space name="register" type="register" size="4" />
     </spaces>
     <registers>

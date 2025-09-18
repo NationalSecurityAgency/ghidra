@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.nav.Navigatable;
-import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
@@ -54,10 +53,11 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 		Program program = programManager.getCurrentProgram();
 		Listing listing = program.getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(location.getAddress());
-		return checkMemReferences(codeUnit, serviceProvider);
+		return checkMemReferences(codeUnit, sourceNavigatable, serviceProvider);
 	}
 
-	private boolean checkMemReferences(CodeUnit codeUnit, ServiceProvider serviceProvider) {
+	private boolean checkMemReferences(CodeUnit codeUnit, Navigatable navigatable,
+			ServiceProvider serviceProvider) {
 
 		if (codeUnit == null) {
 			return false;
@@ -77,8 +77,8 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 
 			TableService service = serviceProvider.getService(TableService.class);
 			if (service != null) {
-				Navigatable nav = NavigationUtils.getActiveNavigatable();
-				service.showTable("Mnemonic References", "Mnemonic", model, "References", nav);
+				service.showTable("Mnemonic References", "Mnemonic", model, "References",
+					navigatable);
 				return true;
 			}
 		}
@@ -96,7 +96,7 @@ public class MnemonicFieldMouseHandler implements FieldMouseHandlerExtension {
 
 			GoToService goToService = serviceProvider.getService(GoToService.class);
 			if (goToService != null) {
-				return goToService.goTo(loc);
+				return goToService.goTo(navigatable, loc, navigatable.getProgram());
 			}
 		}
 

@@ -194,7 +194,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected record ExecInLldb(Pty pty, PtySession lldb, CompletableFuture<LldbResult> future,
-			Thread pumper) {}
+			Thread pumper, ByteArrayOutputStream capture) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInLldb execInLldb(String script) throws IOException {
@@ -239,7 +239,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				lldbSession.destroyForcibly();
 				pumper.interrupt();
 			}
-		}), pumper);
+		}), pumper, capture);
 	}
 
 	public static class LldbError extends RuntimeException {
@@ -262,8 +262,20 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection)
-			implements AutoCloseable {
+	protected class LldbAndConnection implements AutoCloseable {
+		private final ExecInLldb exec;
+		private final TraceRmiConnection connection;
+		private boolean success = false;
+
+		public LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection) {
+			this.exec = exec;
+			this.connection = connection;
+		}
+
+		public TraceRmiConnection connection() {
+			return connection;
+		}
+
 		protected RemoteMethod getMethod(String name) {
 			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
@@ -293,6 +305,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			return pyeval.invoke(Map.of("expr", expr));
 		}
 
+		public void success() {
+			success = true;
+		}
+
 		@Override
 		public void close() throws Exception {
 			Msg.info(this, "Cleaning up lldb");
@@ -306,6 +322,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
+				if (!success) {
+					Msg.info(this, "LLDB output:\n" + exec.capture.toString());
+				}
+
 				exec.pty.close();
 				exec.lldb.destroyForcibly();
 				exec.pumper.interrupt();
@@ -416,6 +436,12 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			buf.write(lineData);
 		}
 		return new MemDump(address, buf.toByteArray());
+	}
+
+	protected void waitDomainObjectClosed(String path) {
+		DomainFile df = env.getProject().getProjectData().getFile(path);
+		assertNotNull(df);
+		waitForPass(() -> assertFalse(df.isOpen()));
 	}
 
 	protected ManagedDomainObject openDomainObject(String path) throws Exception {

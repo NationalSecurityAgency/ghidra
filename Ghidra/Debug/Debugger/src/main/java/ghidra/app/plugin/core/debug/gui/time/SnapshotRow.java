@@ -182,7 +182,7 @@ public class SnapshotRow {
 		if (thread != null) {
 			return thread;
 		}
-		return getTime().getEventThread(trace);
+		return getTime().getLastThread(trace);
 	}
 
 	public String getEventThreadName() {

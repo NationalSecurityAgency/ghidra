@@ -15,132 +15,52 @@
  */
 package agent.lldb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.SocketTimeoutException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+import org.hamcrest.Matchers;
 import org.junit.*;
 
+import agent.AbstractRmiConnectorsTest;
 import db.Transaction;
-import generic.Unique;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
+import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.gui.action.BySectionAutoMapSpec;
-import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
-import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.NoStaticMappingException;
-import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
-import ghidra.app.services.DebuggerAutoMappingService;
-import ghidra.app.services.TraceRmiLauncherService;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.AbstractTraceRmiLaunchOffer.EarlyTerminationException;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.debug.api.ValStr;
 import ghidra.debug.api.action.AutoMapSpec;
-import ghidra.debug.api.tracermi.TerminalSession;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
+import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.pty.testutil.DummyProc;
-import ghidra.util.SystemUtilities;
 
 /**
  * NOTE: On Windows, these tests may need to be run with lldb's version of Python at the front of
- * PATH, and it's lib and DLLs dirs at the front of PYTHONPATH. It's probably easiest to just get
+ * PATH, and its lib and DLLs dirs at the front of PYTHONPATH. It's probably easiest to just get
  * lldb working in a command prompt. Ensure that it can import socket, and then re-launch Eclipse
  * from there.
  */
-public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
-	private TraceRmiLauncherService launchService;
-	private DebuggerAutoMappingService autoMappingService;
+public class LldbConnectorsTest extends AbstractRmiConnectorsTest {
+
+	@Override
+	protected List<ResourceFile> getPipLinkModules() {
+		return List.of(
+			Application.getModuleRootDir("Debugger-rmi-trace"),
+			Application.getModuleRootDir("Debugger-agent-lldb"));
+	}
 
 	@Before
-	public void checkManual() throws Exception {
-		assumeFalse(SystemUtilities.isInTestingBatchMode());
-		addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
-		addPlugin(tool, DebuggerModulesPlugin.class);
-		autoMappingService =
-			Objects.requireNonNull(tool.getService(DebuggerAutoMappingService.class));
-		launchService = addPlugin(tool, TraceRmiLauncherServicePlugin.class);
-	}
-
-	protected PathIsFile chooseImage() {
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			return new PathIsFile(Path.of("C:\\Windows\\notepad.exe"));
-		}
-		return new PathIsFile(Path.of("/bin/ls"));
-	}
-
-	protected PathIsFile findQemu(String bin) {
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			return new PathIsFile(Path.of("C:\\msys64\\ucrt64\bin\\").resolve(bin));
-		}
-		return new PathIsFile(Path.of(bin));
-	}
-
-	protected PathIsFile createArmElfImage() throws Exception {
-		assumeTrue(OperatingSystem.LINUX == OperatingSystem.CURRENT_OPERATING_SYSTEM);
-		Path tempSrc = Files.createTempFile("hw", ".c");
-		Path tempObj = Files.createTempFile("hw", ".o");
-		Path tempImg = Files.createTempFile("hw", "");
-		try (OutputStream os = new FileOutputStream(tempSrc.toFile())) {
-			os.write("""
-					int main() {
-						return 0;
-					}
-					""".getBytes());
-		}
-		new ProcessBuilder().command(
-			"arm-linux-eabi-gcc", "-c",
-			"-o", tempObj.toAbsolutePath().toString(),
-			tempSrc.toAbsolutePath().toString()).inheritIO().start().waitFor();
-		new ProcessBuilder().command(
-			"arm-linux-eabi-ld",
-			"-o", tempImg.toAbsolutePath().toString(),
-			tempObj.toAbsolutePath().toString()).inheritIO().start().waitFor();
-		return new PathIsFile(tempImg);
-	}
-
-	protected PathIsFile createDummyQemuImage() throws Exception {
-		Path temp = Files.createTempFile("qemudummy", ".bin");
-		try (OutputStream os = new FileOutputStream(temp.toFile())) {
-			os.write(new byte[4096]);
-		}
-		return new PathIsFile(temp);
-	}
-
-	protected LaunchResult doLaunch(String title, Map<String, Object> args) {
-		TraceRmiLaunchOffer offer = Unique.assertOne(
-			launchService.getOffers(program).stream().filter(o -> o.getTitle().equals(title)));
-		return offer.launchProgram(monitor, new LaunchConfigurator() {
-			@Override
-			public Map<String, ValStr<?>> configureLauncher(TraceRmiLaunchOffer offer,
-					Map<String, ValStr<?>> arguments, RelPrompt relPrompt) {
-				Map<String, ValStr<?>> newArgs = new HashMap<>(arguments);
-				for (Map.Entry<String, Object> ent : args.entrySet()) {
-					newArgs.put(ent.getKey(), ValStr.from(ent.getValue()));
-				}
-				return newArgs;
-			}
-
-			@Override
-			public PromptMode getPromptMode() {
-				return title.contains("ssh") ? PromptMode.ALWAYS : PromptMode.NEVER;
-			}
-		});
-	}
-
-	protected void checkResult(LaunchResult result) {
-		if (result.exception() != null &&
-			!(result.exception() instanceof NoStaticMappingException)) {
-			throw new AssertionError(result);
-		}
+	public void setupLldb() throws Exception {
+		// Make sure system doesn't cause path failures to pass
+		unpip("ghidralldb", "ghidratrace");
+		// Ensure a compatible version of protobuf
+		pip("protobuf==6.31.0");
 	}
 
 	/**
@@ -149,24 +69,17 @@ public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationT
 	 * package missing and exits with code 253. May just have to cut losses there. The message hits
 	 * the screen, and this circumstance <em>should</em> be rare.
 	 * 
-	 * @throws Exception
+	 * @throws Exception because
 	 */
 	@Test
 	public void testLocalLldbSetup() throws Exception {
-		new ProcessBuilder().command("python", "-m", "pip", "install", "protobuf==3.19.0")
-				.inheritIO()
-				.start()
-				.waitFor();
+		pipOob("protobuf==3.19.0");
 		try (LaunchResult result = doLaunch("lldb", Map.of("arg:1", chooseImage()))) {
-			assertTrue(result.exception() instanceof SocketTimeoutException);
-			TerminalSession term = Unique.assertOne(result.sessions().values());
-			while (!term.isTerminated()) {
-				Thread.sleep(1000);
-			}
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
 		}
-		try (LaunchResult result = doLaunch("lldb", Map.of("arg:1", chooseImage()))) {
-			checkResult(result);
-		}
+		// NOTE: lldb will not let me prompt the user, so cannot test automatic mitigation
 	}
 
 	@Test
@@ -219,7 +132,7 @@ public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationT
 	 * This has proven difficult to test on Windows, probably because the version of lldb and
 	 * gdbserver I'm using are not compatible?
 	 * 
-	 * @throws Exception
+	 * @throws Exception because
 	 */
 	@Test
 	public void testLldbRemoteGdb() throws Exception {
@@ -237,6 +150,7 @@ public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationT
 
 	@Test
 	public void testLldbViaSsh() throws Exception {
+		pip("ghidralldb==%s".formatted(Application.getApplicationVersion()));
 		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
 			Map.entry("arg:1", "/bin/ls"),
 			Map.entry("OPT_HOST", "localhost")))) {
@@ -246,19 +160,12 @@ public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationT
 
 	@Test
 	public void testLldbViaSshSetupGhidraLldb() throws Exception {
-		// This only applies if we leave localhost in the dialog
-		new ProcessBuilder().command("python", "-m", "pip", "uninstall", "ghidralldb")
-				.inheritIO()
-				.start()
-				.waitFor();
 		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
 			Map.entry("arg:1", "/bin/ls"),
 			Map.entry("OPT_HOST", "localhost")))) {
-			assertTrue(result.exception() instanceof SocketTimeoutException);
-			TerminalSession term = Unique.assertOne(result.sessions().values());
-			while (!term.isTerminated()) {
-				Thread.sleep(1000);
-			}
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
 		}
 		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
 			Map.entry("arg:1", "/bin/ls"),
@@ -269,18 +176,15 @@ public class LldbConnectorsTest extends AbstractGhidraHeadedDebuggerIntegrationT
 
 	@Test
 	public void testLldbViaSshSetupProtobuf() throws Exception {
-		new ProcessBuilder().command("python", "-m", "pip", "install", "protobuf==3.19.0")
-				.inheritIO()
-				.start()
-				.waitFor();
+		pip("ghidralldb==%s".formatted(Application.getApplicationVersion()));
+		// Overwrite with an incompatible version we don't include
+		pipOob("protobuf==3.19.0");
 		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
 			Map.entry("arg:1", "/bin/ls"),
 			Map.entry("OPT_HOST", "localhost")))) {
-			assertTrue(result.exception() instanceof SocketTimeoutException);
-			TerminalSession term = Unique.assertOne(result.sessions().values());
-			while (!term.isTerminated()) {
-				Thread.sleep(1000);
-			}
+			assertTrue(result.exception() instanceof EarlyTerminationException);
+			assertThat(result.sessions().get("Shell").content(),
+				Matchers.containsString("Would you like to install"));
 		}
 		try (LaunchResult result = doLaunch("lldb via ssh", Map.ofEntries(
 			Map.entry("arg:1", "/bin/ls"),

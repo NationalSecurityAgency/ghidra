@@ -33,6 +33,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.decompiler.component.margin.DecompilerMarginProvider;
+import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
@@ -435,6 +436,20 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 
 		clipboardProvider.setSelection(selection);
+		notifySelectionChanged(selection);
+	}
+
+	private void notifySelectionChanged(ProgramSelection selection) {
+		if (!isConnected()) {
+			return;
+		}
+
+		if (selection == null) {
+			return;
+		}
+
+		plugin.firePluginEvent(
+			new ProgramSelectionPluginEvent(plugin.getName(), selection, getProgram()));
 	}
 
 	@Override

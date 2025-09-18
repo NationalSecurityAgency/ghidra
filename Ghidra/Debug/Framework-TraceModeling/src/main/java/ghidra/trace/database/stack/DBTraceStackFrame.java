@@ -15,142 +15,171 @@
  */
 package ghidra.trace.database.stack;
 
-import java.io.IOException;
-import java.util.Objects;
+import java.util.*;
 
-import db.DBRecord;
-import ghidra.lifecycle.Internal;
+import ghidra.framework.model.EventType;
 import ghidra.program.model.address.Address;
-import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
-import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
-import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
+import ghidra.program.model.listing.CommentType;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.DefaultLifeSet;
+import ghidra.trace.model.Lifespan.LifeSet;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
-import ghidra.util.database.annot.*;
 
-/**
- * The implementation of a stack frame, directly via a database object
- * 
- * <p>
- * Version history:
- * <ul>
- * <li>1: Change {@link #pc} to 10-byte fixed encoding, make it sparse, so optional</li>
- * <li>0: Initial version and previous unversioned implementations</li>
- * </ul>
- */
-@DBAnnotatedObjectInfo(version = 1)
-public class DBTraceStackFrame extends DBAnnotatedObject
-		implements TraceStackFrame, DecodesAddresses {
-	public static final String TABLE_NAME = "StackFrames";
+public class DBTraceStackFrame implements TraceStackFrame, DBTraceObjectInterface {
+	private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
 
-	static final String STACK_COLUMN_NAME = "Stack";
-	static final String LEVEL_COLUMN_NAME = "Level";
-	static final String PC_COLUMN_NAME = "PC";
-	static final String COMMENT_COLUMN_NAME = "Comment";
+	private final DBTraceObject object;
+	private final Set<String> keys;
 
-	@DBAnnotatedColumn(STACK_COLUMN_NAME)
-	static DBObjectColumn STACK_COLUMN;
-	@DBAnnotatedColumn(LEVEL_COLUMN_NAME)
-	static DBObjectColumn LEVEL_COLUMN;
-	@DBAnnotatedColumn(PC_COLUMN_NAME)
-	static DBObjectColumn PC_COLUMN;
-	@DBAnnotatedColumn(COMMENT_COLUMN_NAME)
-	static DBObjectColumn COMMENT_COLUMN;
+	// TODO: Memorizing life is not optimal.
+	// GP-1887 means to expose multiple lifespans in, e.g., TraceThread
+	private LifeSet life = new DefaultLifeSet();
 
-	@DBAnnotatedField(column = STACK_COLUMN_NAME)
-	private long stackKey;
-	@DBAnnotatedField(column = LEVEL_COLUMN_NAME)
-	private int level;
-	@DBAnnotatedField(
-		column = PC_COLUMN_NAME,
-		indexed = true,
-		codec = AddressDBFieldCodec.class,
-		sparse = true)
-	private Address pc;
-	@DBAnnotatedField(column = COMMENT_COLUMN_NAME)
-	private String comment;
+	public DBTraceStackFrame(DBTraceObject object) {
+		this.object = object;
 
-	private final DBTraceStackManager manager;
-
-	private DBTraceStack stack;
-
-	public DBTraceStackFrame(DBTraceStackManager manager, DBCachedObjectStore<?> store,
-			DBRecord record) {
-		super(store, record);
-		this.manager = manager;
-	}
-
-	@Override
-	public DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter() {
-		return manager.overlayAdapter;
-	}
-
-	@Override
-	protected void fresh(boolean created) throws IOException {
-		if (!created) {
-			stack = manager.getStackByKey(stackKey);
+		TraceObjectSchema schema = object.getSchema();
+		synchronized (KEYS_BY_SCHEMA) {
+			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
+				s -> Set.of(schema.checkAliasedAttribute(KEY_PC)));
 		}
 	}
 
-	public void set(DBTraceStack stack) {
-		this.stack = stack;
-		this.stackKey = stack.getKey();
-		update(STACK_COLUMN);
+	@Override
+	public Trace getTrace() {
+		return object.getTrace();
 	}
 
 	@Override
-	public DBTraceStack getStack() {
-		return stack;
+	public TraceStack getStack() {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.queryCanonicalAncestorsInterface(TraceStack.class)
+					.findAny()
+					.orElseThrow();
+		}
 	}
 
 	@Override
 	public int getLevel() {
-		return level;
+		KeyPath path = object.getCanonicalPath();
+		for (int i = path.size() - 1; i >= 0; i--) {
+			String k = path.key(i);
+			if (!KeyPath.isIndex(k)) {
+				continue;
+			}
+			String index = KeyPath.parseIndex(k);
+			try {
+				return Integer.decode(index);
+				// TODO: Perhaps just have an attribute that is its level?
+			}
+			catch (NumberFormatException e) {
+				// fall to preceding key
+			}
+		}
+		throw new IllegalStateException("Frame has no index!?");
 	}
 
 	@Override
 	public Address getProgramCounter(long snap) {
-		return pc;
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_PC, Address.class, null);
 	}
 
 	@Override
 	public void setProgramCounter(Lifespan span, Address pc) {
-		//System.err.println("setPC(threadKey=" + stack.getThread().getKey() + ",snap=" +
-		//	stack.getSnap() + ",level=" + level + ",pc=" + pc + ");");
-		manager.trace.assertValidAddress(pc);
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			if (Objects.equals(this.pc, pc)) {
-				return;
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			if (pc == Address.NO_ADDRESS) {
+				pc = null;
 			}
-			this.pc = pc;
-			update(PC_COLUMN);
+			object.setValue(span, KEY_PC, pc);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, stack, 0L, span.lmin()));
 	}
 
 	@Override
 	public String getComment(long snap) {
-		return comment;
+		// TODO: One day, we'll have dynamic columns in the debugger
+		/*
+		 * I don't use an attribute for this, because there's not a nice way track the "identity" of
+		 * a stack frame. If the frame is re-used (the recommendation for connector development),
+		 * the same comment may not necessarily apply. It'd be nice if the connector re-assigned
+		 * levels so that identical objects implied identical frames, but that's quite a burden. The
+		 * closest identity heuristic is the program counter. Instead of commenting the frame, I'll
+		 * comment the memory at the program counter (often, really the return address). Not
+		 * perfect, since it may collide with other comments, but a decent approximation that will
+		 * follow the "same frame" as its level changes.
+		 */
+		try (LockHold hold = object.getTrace().lockRead()) {
+			Address pc = getProgramCounter(snap);
+			return pc == null ? null
+					: object.getTrace().getCommentAdapter().getComment(snap, pc, CommentType.EOL);
+		}
 	}
 
 	@Override
 	public void setComment(long snap, String comment) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			this.comment = comment;
-			update(COMMENT_COLUMN);
+		/* See rant in getComment */
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			TraceObjectValue pcAttr = object.getValue(snap, KEY_PC);
+			object.getTrace()
+					.getCommentAdapter()
+					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(), CommentType.EOL,
+						comment);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, stack, 0L, snap));
 	}
 
-	@Internal
-	protected void setLevel(int level) {
-		this.level = level;
-		update(LEVEL_COLUMN);
+	@Override
+	public TraceObject getObject() {
+		return object;
+	}
+
+	protected boolean changeApplies(TraceChangeRecord<?, ?> rec) {
+		TraceChangeRecord<TraceObjectValue, Void> cast = TraceEvents.VALUE_CREATED.cast(rec);
+		TraceObjectValue affected = cast.getAffectedObject();
+		assert affected.getParent() == object;
+		if (!keys.contains(affected.getEntryKey())) {
+			return false;
+		}
+		if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+			return false;
+		}
+		return true;
+	}
+
+	protected TraceChangeRecord<?, ?> createChangeRecord() {
+		return new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, getStack(), 0L,
+			life.bound().lmin());
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		EventType type = rec.getEventType();
+		if (type == TraceEvents.OBJECT_LIFE_CHANGED) {
+			LifeSet newLife = object.getLife();
+			if (!newLife.isEmpty()) {
+				life = newLife;
+			}
+			return createChangeRecord();
+		}
+		else if (type == TraceEvents.VALUE_CREATED && changeApplies(rec)) {
+			return createChangeRecord();
+		}
+		else if (type == TraceEvents.OBJECT_DELETED) {
+			if (life.isEmpty()) {
+				return null;
+			}
+			return createChangeRecord();
+		}
+		return null;
 	}
 }

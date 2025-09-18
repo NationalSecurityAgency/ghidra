@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -122,7 +122,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
 		int transactionID = program.startTransaction("test");
 		try {
-			cu.setComment(CodeUnit.EOL_COMMENT, comment);
+			cu.setComment(CommentType.EOL, comment);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -172,10 +172,10 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void setRepeatableComment(Address a, String comment) {
-		setComment(a, CodeUnit.REPEATABLE_COMMENT, comment);
+		setComment(a, CommentType.REPEATABLE, comment);
 	}
 
-	private void setComment(Address a, int commentType, String comment) {
+	private void setComment(Address a, CommentType commentType, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		tx(program, () -> {
 			cu.setComment(commentType, comment);

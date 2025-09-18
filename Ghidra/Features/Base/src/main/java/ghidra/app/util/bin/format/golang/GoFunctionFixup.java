@@ -33,7 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Utility class that fixes golang function parameter storage using each function's current
+ * Utility class that fixes Go function parameter storage using each function's current
  * parameter list (formal info only) as starting information.
  * 
  * TODO: verify GoFuncData.argsize property against what we calculate here 
@@ -151,7 +151,7 @@ public class GoFunctionFixup {
 			}
 		}
 
-		// For any parameters that were passed as registers, the golang caller pre-allocates
+		// For any parameters that were passed as registers, the Go caller pre-allocates
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.

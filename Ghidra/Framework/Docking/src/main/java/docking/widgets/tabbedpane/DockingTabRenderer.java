@@ -20,10 +20,9 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.CloseIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
-import generic.theme.GColor;
+import generic.theme.CloseIcon;
 
 /**
  * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would 
@@ -32,7 +31,7 @@ import generic.theme.GColor;
 public class DockingTabRenderer extends JPanel {
 
 	private static final int MAX_TITLE_LENGTH = 25;
-	private Icon CLOSE_ICON = new CloseIcon(true, new GColor("color.fg.button"));
+	private Icon CLOSE_ICON = new CloseIcon(true);
 
 	private JLabel titleLabel;
 	private JLabel iconLabel;

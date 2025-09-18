@@ -22,13 +22,13 @@ import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
 	INSTANCE;
@@ -124,7 +124,7 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	}
 
 	@Override
-	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
+	public boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
 		return false;
 	}

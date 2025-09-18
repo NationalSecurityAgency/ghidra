@@ -2169,6 +2169,7 @@ bool LessThreeWay::normalizeHi(void)
   }
   hiconstform = false;
   if (vnhil2->isConstant()) {
+    if (in.getSize() > sizeof(uintb)) return false;	// Must have enough precision for constant
     hiconstform = true;
     hival = vnhil2->getOffset();
     SplitVarnode::getTrueFalse(hilessbool,hiflip,hilesstrue,hilessfalse);

@@ -41,6 +41,12 @@ will be stored at `$HOME/.gradle/`.
 gradle prepdev
 ```
 
+Clean up repository build files.  In rare circumstances this may be necessary after a `git pull` to
+fix unexplainable compilation errors.
+```
+gradle clean
+```
+
 Generate nested Eclipse project files which can then be imported into Eclipse as "existing 
 projects".
 ```

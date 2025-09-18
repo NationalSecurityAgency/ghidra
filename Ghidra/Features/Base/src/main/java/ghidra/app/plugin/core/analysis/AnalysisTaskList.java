@@ -34,6 +34,7 @@ public class AnalysisTaskList {
 
 	private static Comparator<AnalysisScheduler> priorityComparator =
 		new Comparator<AnalysisScheduler>() {
+			@Override
 			public int compare(AnalysisScheduler as1, AnalysisScheduler as2) {
 				Analyzer a1 = as1.getAnalyzer();
 				Analyzer a2 = as2.getAnalyzer();

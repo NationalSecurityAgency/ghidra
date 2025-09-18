@@ -31,7 +31,7 @@ import ghidra.pcode.emu.jit.op.JitFloatTestOp;
  * 
  * @param <T> the class of p-code op node in the use-def graph
  */
-public interface CompareFloatOpGen<T extends JitFloatTestOp> extends BinOpGen<T> {
+public interface CompareFloatOpGen<T extends JitFloatTestOp> extends FloatBinOpGen<T> {
 
 	/**
 	 * The JVM opcode to perform the comparison with float operands on the stack.

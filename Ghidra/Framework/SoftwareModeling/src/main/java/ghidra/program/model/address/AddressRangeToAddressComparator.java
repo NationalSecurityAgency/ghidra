@@ -29,7 +29,8 @@ public class AddressRangeToAddressComparator implements Comparator<Object> {
 	 * @return a negative integer, zero, or a positive integer
 	 *  if the first argument is less than, equal to, or greater than the second.
 	 */
-    public int compare(Object obj1, Object obj2) {
+    @Override
+	public int compare(Object obj1, Object obj2) {
         if(obj1 instanceof AddressRange) {
             return ((AddressRange) obj1).compareTo((Address) obj2);
         }

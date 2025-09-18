@@ -688,7 +688,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				// remove the Latest that was added.
 				DataType latestDt3 = dtms[RESULT].getDataType(sourceArchive, dataTypeID);
 				long resultId3 = dtms[RESULT].getID(latestDt3);
-				if (dtms[RESULT].remove(latestDt3, currentMonitor)) {
+				if (dtms[RESULT].remove(latestDt3)) {
 					latestResolvedDts.put(resultId3, null);
 				}
 				break;
@@ -807,7 +807,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						// remove the data type if it was already added
 						DataType dt = myResolvedDts.get(id);
 						if (dt != null) {
-							dtms[RESULT].remove(dt, currentMonitor);
+							dtms[RESULT].remove(dt);
 							origResolvedDts.remove(id);
 							myResolvedDts.remove(id);
 						}
@@ -818,7 +818,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			case OPTION_MY:
 				if (myDt == null) {
 					if (latestDt != null) {
-						dtms[RESULT].remove(latestDt, currentMonitor);
+						dtms[RESULT].remove(latestDt);
 					}
 				}
 				else {
@@ -3003,7 +3003,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			// My deleted data types will be in the result unless the latest already deleted it.
 			if (myDt != null) {
 				// If it's still in the result remove it.
-				dtms[RESULT].remove(myDt, currentMonitor);
+				dtms[RESULT].remove(myDt);
 			}
 		}
 	}

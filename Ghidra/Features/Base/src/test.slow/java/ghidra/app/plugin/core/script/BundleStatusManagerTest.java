@@ -118,7 +118,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		//@formatter:off
 		final String EXPECTED_OUTPUT = 
 				TEST_SCRIPT_NAME+".java> Running...\n" + 
-				TEST_SCRIPT_NAME+".java> Hello from pack2.Klass2\n" + 
+				"Hello from pack2.Klass2\n" + 
 				TEST_SCRIPT_NAME+".java> Finished!\n";
 		//@formatter:on
 		final File dir1 = new File(getTestDirectoryPath() + "/test_scripts1");

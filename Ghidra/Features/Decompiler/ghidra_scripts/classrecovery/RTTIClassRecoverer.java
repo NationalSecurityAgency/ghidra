@@ -41,10 +41,11 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 
 	RTTIClassRecoverer(Program program, ServiceProvider serviceProvider, FlatProgramAPI api,
 			boolean createBookmarks, boolean useShortTemplates, boolean nameVfunctions,
-			boolean hasDebugSymbols, TaskMonitor monitor) throws Exception {
+			boolean makeVfunctionsThisCalls,boolean hasDebugSymbols, TaskMonitor monitor)
+			throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			monitor);
+			makeVfunctionsThisCalls,monitor);
 
 		this.hasDebugSymbols = hasDebugSymbols;
 

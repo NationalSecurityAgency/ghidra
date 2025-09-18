@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import java.net.URL;
 import java.util.*;
 
 import javax.help.UnsupportedOperationException;
@@ -1414,11 +1413,6 @@ class StackFrameDataType implements Structure {
 	}
 
 	@Override
-	public URL getDocs() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		throw new UnsupportedOperationException();
 	}
@@ -1472,7 +1466,7 @@ class StackFrameDataType implements Structure {
 
 	@Override
 	public boolean isDeleted() {
-		throw new UnsupportedOperationException();
+		return function.isDeleted();
 	}
 
 	@Override

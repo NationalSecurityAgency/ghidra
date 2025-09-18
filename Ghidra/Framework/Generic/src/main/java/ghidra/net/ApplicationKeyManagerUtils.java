@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,8 @@ public class ApplicationKeyManagerUtils {
 	/**
 	 * Sign the supplied token byte array using an installed certificate from
 	 * one of the specified authorities
-	 * @param authorities trusted certificate authorities
+	 * @param authorities trusted certificate authorities used to constrain client certificate
+	 *   (may be null or empty array if CA constraint does not matter).
 	 * @param token token byte array
 	 * @return signed token object
 	 * @throws NoSuchAlgorithmException algorithym associated within signing certificate not found
@@ -108,8 +109,8 @@ public class ApplicationKeyManagerUtils {
 					continue;
 				}
 				X509KeyManager x509KeyManager = (X509KeyManager) keyManager;
-				String alias = x509KeyManager.chooseClientAlias(new String[] { RSA_TYPE },
-					authorities, null);
+				String alias =
+					x509KeyManager.chooseClientAlias(new String[] { RSA_TYPE }, authorities, null);
 				if (alias != null) {
 					privateKey = x509KeyManager.getPrivateKey(alias);
 					certificateChain = x509KeyManager.getCertificateChain(alias);
@@ -155,9 +156,9 @@ public class ApplicationKeyManagerUtils {
 	}
 
 	/**
-	 * Verify that the specified sigBytes reflect my signature of the specified
-	 * token.
-	 * @param authorities trusted certificate authorities
+	 * Verify that the specified sigBytes reflect my signature of the specified token.
+	 * @param authorities trusted certificate authorities used to constrain client certificate
+	 *   (may be null or empty array if CA constraint does not matter).
 	 * @param token byte array token
 	 * @param signature token signature
 	 * @return true if signature is my signature
@@ -199,7 +200,7 @@ public class ApplicationKeyManagerUtils {
 			}
 			X509TrustManager x509TrustManager = (X509TrustManager) trustManager;
 			X509Certificate[] acceptedIssuers = x509TrustManager.getAcceptedIssuers();
-			if (acceptedIssuers != null) {
+			if (acceptedIssuers != null && acceptedIssuers.length != 0) {
 				openTrust = false;
 				for (X509Certificate trustedCert : acceptedIssuers) {
 					set.add(trustedCert.getSubjectX500Principal());
@@ -356,8 +357,7 @@ public class ApplicationKeyManagerUtils {
 						"Unsupported certificate type: " + caCert.getType());
 				}
 				X509Certificate caX509Cert = (X509Certificate) caCert;
-				caX500Name =
-					new X500Name(caX509Cert.getSubjectX500Principal().getName());
+				caX500Name = new X500Name(caX509Cert.getSubjectX500Principal().getName());
 				keyUsage = new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment);
 				issuerKey = caEntry.getPrivateKey();
 			}

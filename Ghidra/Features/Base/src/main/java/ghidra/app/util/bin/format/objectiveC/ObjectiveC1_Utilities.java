@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,8 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -59,7 +60,7 @@ public final class ObjectiveC1_Utilities {
 	 */
 	public static long readNextIndex(BinaryReader reader, boolean is32bit) throws IOException {
 		if (is32bit) {
-			return reader.readNextInt() & Conv.INT_MASK;
+			return reader.readNextUnsignedInt();
 		}
 		return reader.readNextLong();
 	}
@@ -121,7 +122,7 @@ public final class ObjectiveC1_Utilities {
 		if (state.thumbCodeLocations.contains(address)) {
 			Register tmodeRegister = state.program.getLanguage().getRegister("TMode");
 			if (tmodeRegister != null) {
-				Command c =
+				Command<Program> c =
 					new SetRegisterCmd(tmodeRegister, address, address, BigInteger.valueOf(1));
 				c.applyTo(state.program);
 			}
@@ -300,7 +301,7 @@ public final class ObjectiveC1_Utilities {
 
 			ObjectiveC1_Utilities.setThumbBit(state, address);
 
-			BackgroundCommand command = null;
+			BackgroundCommand<Program> command = null;
 
 			command = new DisassembleCommand(address, null, true);
 			command.applyTo(state.program, state.monitor);

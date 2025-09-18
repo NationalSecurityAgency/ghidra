@@ -15,12 +15,10 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
-
 import java.awt.*;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -36,7 +34,7 @@ import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -270,10 +268,9 @@ class EditExternalLocationPanel extends JPanel {
 	 * Pop up the data tree dialog so the user can choose the external program.
 	 */
 	private void popupProgramChooser() {
-		DataTreeDialog d =
-			new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
-		final DataTreeDialog dialog = d;
-		d.addOkActionListener(e -> {
+		ProgramFileChooser dialog =
+			new ProgramFileChooser(this.getParent(), "Choose External Program");
+		dialog.addOkActionListener(e -> {
 			DomainFile df = dialog.getDomainFile();
 			if (df == null) {
 				return;
@@ -286,7 +283,7 @@ class EditExternalLocationPanel extends JPanel {
 			dialog.close();
 			extLibPathTextField.setText(df.getPathname());
 		});
-		DockingWindowManager.showDialog(this, d);
+		DockingWindowManager.showDialog(this, dialog);
 	}
 
 	private void initialize() {
@@ -364,7 +361,8 @@ class EditExternalLocationPanel extends JPanel {
 
 			Project project = AppInfo.getActiveProject();
 			ProjectData projectData = project.getProjectData();
-			DomainFile file = projectData.getFile(extLibPath);
+			DomainFile file =
+				projectData.getFile(extLibPath, ProgramFileChooser.PROGRAM_FILE_FILTER);
 			if (file == null) {
 				showInputErr("Cannot find the program for the specified library 'Path' of " +
 					extLibPath + ".");
@@ -402,10 +400,9 @@ class EditExternalLocationPanel extends JPanel {
 		String locationName = getLocationName();
 		if (locationName != null && locationName.length() > 0) {
 			ExternalManager externalManager = program.getExternalManager();
-			List<ExternalLocation> externalLocations =
+			Set<ExternalLocation> externalLocations =
 				externalManager.getExternalLocations(extLibName, locationName);
-			externalLocations.remove(externalLocation);
-			if (!externalLocations.isEmpty()) {
+			if (externalLocations.size() == 1 && !externalLocations.contains(externalLocation)) {
 				int result = OptionDialog.showYesNoDialog(null, "Duplicate External Name",
 					"Another symbol named '" + locationName + "' already exists in the '" +
 						extLibName + "' library. Are you sure you want to create another?");

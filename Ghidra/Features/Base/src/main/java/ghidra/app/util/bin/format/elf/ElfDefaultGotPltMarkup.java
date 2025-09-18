@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,8 +167,7 @@ public class ElfDefaultGotPltMarkup {
 			// PLT head is unknown.  If the binary has not placed external symbols within the PLT
 			// processing and disassembly of the PLT may be skipped.
 
-			long pltgot = elf.adjustAddressForPrelink(
-				dynamicTable.getDynamicValue(pltGotType));
+			long pltgot = elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(pltGotType));
 			Address gotStart = defaultSpace.getAddress(pltgot + imageBaseAdj);
 
 			ElfRelocation[] relocations = relocationTable.getRelocations();
@@ -354,7 +353,7 @@ public class ElfDefaultGotPltMarkup {
 	 * Mark-up all GOT entries as pointers within the memory range gotStart to
 	 * gotEnd.
 	 * @param gotStart address for start of GOT
-	 * @param gotEnd address for end of GOT
+	 * @param gotEnd address for end of GOT (inclusive)
 	 * @param monitor task monitor
 	 * @throws CancelledException thrown if task cancelled
 	 */
@@ -402,21 +401,17 @@ public class ElfDefaultGotPltMarkup {
 
 		try {
 			int pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
+			long gotSizeRemaining = gotEnd.subtract(gotStart) + 1;
+			long entryOffset = 0;
 			Address newImageBase = null;
-			Address nextGotAddr = gotStart;
-			while (gotEnd.subtract(nextGotAddr) >= pointerSize) {
-
+			while (gotSizeRemaining >= pointerSize) {
+				Address nextGotAddr = gotStart.addNoWrap(entryOffset);
 				data = createPointer(nextGotAddr, true);
 				if (data == null) {
 					break;
 				}
-
-				try {
-					nextGotAddr = data.getMaxAddress().add(1);
-				}
-				catch (AddressOutOfBoundsException e) {
-					break; // no more room
-				}
+				gotSizeRemaining -= pointerSize;
+				entryOffset += pointerSize;
 				newImageBase = UglyImageBaseCheck(data, newImageBase);
 			}
 			if (newImageBase != null) {
@@ -573,12 +568,6 @@ public class ElfDefaultGotPltMarkup {
 		}
 		int pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
 		Pointer pointer = PointerDataType.dataType.clone(program.getDataTypeManager());
-		if (elf.is32Bit() && pointerSize != 4) {
-			pointer = Pointer32DataType.dataType;
-		}
-		else if (elf.is64Bit() && pointerSize != 8) {
-			pointer = Pointer64DataType.dataType;
-		}
 		Data data = listing.getDataAt(addr);
 		if (data == null || !pointer.isEquivalent(data.getDataType())) {
 			if (data != null) {
@@ -623,7 +612,10 @@ public class ElfDefaultGotPltMarkup {
 		Program program = pointerData.getProgram();
 		Memory memory = program.getMemory();
 		Address refAddr = (Address) pointerData.getValue();
-		if (memory.contains(refAddr)) {
+		if (refAddr == null) {
+			return false;
+		}
+		else if (memory.contains(refAddr)) {
 			return true;
 		}
 		Symbol primary = program.getSymbolTable().getPrimarySymbol(refAddr);

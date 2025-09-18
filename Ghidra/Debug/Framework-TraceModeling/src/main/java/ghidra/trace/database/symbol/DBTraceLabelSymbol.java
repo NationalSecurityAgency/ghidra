@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import ghidra.program.model.symbol.SymbolType;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.listing.*;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
@@ -47,21 +46,18 @@ import ghidra.util.exception.DuplicateNameException;
  */
 @DBAnnotatedObjectInfo(version = 1)
 public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
-		implements TraceLabelSymbol, DBTraceSpaceKey, DecodesAddresses {
+		implements TraceLabelSymbol, TraceSpaceMixin, DecodesAddresses {
 	static final String TABLE_NAME = "Labels";
 
 	private static final byte PRIMARY_MASK = 0x10;
 	private static final int PRIMARY_CLEAR = ~PRIMARY_MASK;
 
 	static final String ADDRESS_COLUMN_NAME = "Address";
-	static final String THREAD_COLUMN_NAME = "Thread";
 	static final String START_SNAP_COLUMN_NAME = "Start";
 	static final String END_SNAP_COLUMN_NAME = "End";
 
 	@DBAnnotatedColumn(ADDRESS_COLUMN_NAME)
 	static DBObjectColumn ADDRESS_COLUMN;
-	@DBAnnotatedColumn(THREAD_COLUMN_NAME)
-	static DBObjectColumn THREAD_COLUMN;
 	@DBAnnotatedColumn(START_SNAP_COLUMN_NAME)
 	static DBObjectColumn START_SNAP_COLUMN;
 	@DBAnnotatedColumn(END_SNAP_COLUMN_NAME)
@@ -70,14 +66,11 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	// NOTE: Indexed in manager's range map
 	@DBAnnotatedField(column = ADDRESS_COLUMN_NAME, codec = AddressDBFieldCodec.class)
 	protected Address address = Address.NO_ADDRESS;
-	@DBAnnotatedField(column = THREAD_COLUMN_NAME)
-	protected long threadKey;
 	@DBAnnotatedField(column = START_SNAP_COLUMN_NAME)
 	protected long startSnap;
 	@DBAnnotatedField(column = END_SNAP_COLUMN_NAME)
 	protected long endSnap;
 
-	protected TraceThread thread;
 	protected Lifespan lifespan;
 
 	public DBTraceLabelSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
@@ -92,25 +85,22 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 			return;
 		}
 
-		thread = manager.threadManager.getThread(threadKey);
 		lifespan = Lifespan.span(startSnap, endSnap);
 	}
 
-	protected void set(Lifespan lifespan, TraceThread thread, Address address, String name,
+	protected void set(Lifespan lifespan, Address address, String name,
 			DBTraceNamespaceSymbol parent, SourceType source) {
 		this.name = name;
 		this.parentID = parent.getID();
 		doSetSource(source);
 		this.address = address;
-		this.threadKey = thread == null ? -1 : thread.getKey();
 		this.startSnap = lifespan.lmin();
 		this.endSnap = lifespan.lmax();
 
 		update(NAME_COLUMN, PARENT_COLUMN, START_SNAP_COLUMN, END_SNAP_COLUMN, FLAGS_COLUMN,
-			ADDRESS_COLUMN, THREAD_COLUMN);
+			ADDRESS_COLUMN);
 
 		this.parent = parent;
-		this.thread = thread;
 		this.lifespan = lifespan;
 	}
 
@@ -138,7 +128,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 			this.lifespan = newLifespan;
 
 			manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_LIFESPAN_CHANGED,
-				getSpace(), this, oldLifespan, newLifespan));
+				getAddressSpace(), this, oldLifespan, newLifespan));
 		}
 	}
 
@@ -154,17 +144,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 
 	@Override
 	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return 0;
-	}
-
-	@Override
-	protected TraceAddressSpace getSpace() {
-		return this;
+		return TraceSpaceMixin.super.getThread();
 	}
 
 	@Override
@@ -175,7 +155,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@Override
 	protected void validateNameAndParent(String newName, DBTraceNamespaceSymbol newParent)
 			throws DuplicateNameException {
-		manager.assertNotDuplicate(this, lifespan, thread, address, newName, newParent);
+		manager.assertNotDuplicate(this, lifespan, address, newName, newParent);
 	}
 
 	@Override
@@ -186,10 +166,10 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@Override
 	public DBTraceCodeUnitAdapter getCodeUnit() {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			DBTraceCodeSpace code = manager.trace.getCodeManager().get(this, false);
+			DBTraceCodeSpace code = manager.trace.getCodeManager().get(getAddressSpace(), false);
 			if (code == null) {
 				return manager.trace.getCodeManager()
-						.doCreateUndefinedUnit(startSnap, address, thread, getFrameLevel());
+						.doCreateUndefinedUnit(startSnap, address, null, getFrameLevel());
 			}
 			DBTraceCodeUnitAdapter cu = code.codeUnits().getContaining(startSnap, address);
 			if (cu == null) {
@@ -246,18 +226,18 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 			// TODO: May be able to resolve "multiple overlapping primary" with priority instead
 			boolean firedEvent = false;
 			update(FLAGS_COLUMN);
-			for (DBTraceLabelSymbol other : manager.labels.getIntersecting(lifespan, thread, range,
-				false, true)) {
+			for (DBTraceLabelSymbol other : manager.labels.getIntersecting(lifespan, range, false,
+				true)) {
 				if (other.doSetPrimary(false)) {
 					other.update(AbstractDBTraceSymbol.FLAGS_COLUMN);
 					manager.trace.setChanged(new TraceChangeRecord<>(
-						TraceEvents.SYMBOL_PRIMARY_CHANGED, getSpace(), this, other, this));
+						TraceEvents.SYMBOL_PRIMARY_CHANGED, getAddressSpace(), this, other, this));
 					firedEvent = true;
 				}
 			}
 			if (!firedEvent) {
 				manager.trace.setChanged(new TraceChangeRecord<>(
-					TraceEvents.SYMBOL_PRIMARY_CHANGED, getSpace(), this));
+					TraceEvents.SYMBOL_PRIMARY_CHANGED, getAddressSpace(), this));
 			}
 			return true;
 		}

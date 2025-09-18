@@ -15,14 +15,19 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import java.io.PrintStream;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.objectweb.asm.*;
 
 import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
@@ -563,6 +568,148 @@ public interface OpGen<T extends JitOp> extends Opcodes {
 	}
 
 	/**
+	 * Emit bytecode to move all legs from the stack into a temporary allocation
+	 * <p>
+	 * This consumes {@code legCount} legs from the stack. Nothing else is pushed to the stack. The
+	 * legs are placed in ascending indices as popped from the stack, i.e., in little-endian order.
+	 * 
+	 * @param temp the allocation of temporary legs
+	 * @param legCount the number of legs to move
+	 * @param mv the method visitor
+	 */
+	static void generateMpLegsIntoTemp(JvmTempAlloc temp, int legCount, MethodVisitor mv) {
+		// [leg1,...,legN]
+		for (int i = 0; i < legCount; i++) {
+			mv.visitVarInsn(ISTORE, temp.idx(i));
+		}
+		// []
+	}
+
+	/**
+	 * Emit bytecode to move all legs from a temporary allocation onto the stack
+	 * <p>
+	 * This consumes nothing. It places {@code legCount} legs onto the stack, pushed in descending
+	 * order, i.e., such that they would be popped in little-endian order.
+	 * 
+	 * @param temp the allocation of temporary legs
+	 * @param legCount the number of lets to move
+	 * @param mv the method visitor
+	 */
+	static void generateMpLegsFromTemp(JvmTempAlloc temp, int legCount, MethodVisitor mv) {
+		// []
+		for (int i = 0; i < legCount; i++) {
+			mv.visitVarInsn(ILOAD, temp.idx(legCount - i - 1));
+		}
+		// [leg1,...,legN]
+	}
+
+	/**
+	 * Emit bytecode to copy all legs from a temporary allocation into an array
+	 * <p>
+	 * This does not consume anything from the stack. Upon return, the new array is pushed onto the
+	 * stack. The legs are positioned in the array in the same order as in the locals. When used
+	 * with {@link #generateMpLegsIntoTemp(JvmTempAlloc, int, MethodVisitor)}, this is little-endian
+	 * order.
+	 * 
+	 * @param temp the allocation of temporary legs
+	 * @param arrSize the size of the array, possibly over-provisioned
+	 * @param legCount the number of legs to move
+	 * @param mv the method visitor
+	 */
+	static void generateMpLegsIntoArray(JvmTempAlloc temp, int arrSize, int legCount,
+			MethodVisitor mv) {
+		assert arrSize >= legCount;
+		// []
+		mv.visitLdcInsn(arrSize);
+		// [count:INT]
+		mv.visitIntInsn(NEWARRAY, T_INT);
+		// [arr:INT[count]]
+		for (int i = 0; i < legCount; i++) {
+			mv.visitInsn(DUP);
+			// [arr,arr:INT[count]]
+			mv.visitLdcInsn(i);
+			// [idx:INT,arr,arr:INT[count]]
+			mv.visitVarInsn(ILOAD, temp.idx(i));
+			// [leg:INT,idx:INT,arr,arr:INT[count]]
+			mv.visitInsn(IASTORE);
+			// [arr:INT[count]]
+		}
+	}
+
+	/**
+	 * Emit bytecode to push all legs from an array onto the stack
+	 * <p>
+	 * This consumes the array at the top of the stack, and pushes its legs onto the stack in the
+	 * reverse order as they are positioned in the array. If the legs are in little-endian order, as
+	 * is convention, this method will push the legs to the stack with the least-significant leg on
+	 * top.
+	 * 
+	 * @param legCount the number of legs in the array
+	 * @param mv the method visitor
+	 */
+	static void generateMpLegsFromArray(int legCount, MethodVisitor mv) {
+		// [out:INT[count]]
+		for (int i = 0; i < legCount - 1; i++) {
+			// [out]
+			mv.visitInsn(DUP);
+			// [out,out]
+			mv.visitLdcInsn(legCount - 1 - i);
+			// [idx,out,out]
+			mv.visitInsn(IALOAD);
+			// [legN:INT,out]
+			mv.visitInsn(SWAP);
+			// [out,legN:INT]
+		}
+		mv.visitLdcInsn(0);
+		// [idx,out,...]
+		mv.visitInsn(IALOAD);
+		// [leg1,...]
+	}
+
+	static void generateSyserrInts(JitCodeGenerator gen, int count, MethodVisitor mv) {
+		try (JvmTempAlloc temp = gen.getAllocationModel().allocateTemp(mv, "temp", count)) {
+			// [leg1,...,legN]
+			generateMpLegsIntoTemp(temp, count, mv);
+			// []
+			mv.visitFieldInsn(GETSTATIC, Type.getInternalName(System.class), "err",
+				Type.getDescriptor(PrintStream.class));
+			// [System.err]
+			String fmt =
+				IntStream.range(0, count).mapToObj(i -> "%08x").collect(Collectors.joining(":"));
+			mv.visitLdcInsn(fmt);
+			// [fmt:String,System.err]
+
+			mv.visitLdcInsn(count);
+			// [count,fmt,System.err]
+			mv.visitTypeInsn(ANEWARRAY, Type.getInternalName(Object.class));
+			// [blegs:Object[count],fmt,System.err]
+			for (int i = 0; i < count; i++) {
+				mv.visitInsn(DUP);
+				// [blegs,blegs,fmt,System.err]
+				mv.visitLdcInsn(i);
+				// [idx:INT,blegs,blegs,fmt,System.err]
+				mv.visitVarInsn(ILOAD, temp.idx(count - i - 1));
+				// [val:INT,idx,blegs,blegs,fmt,System.err]
+				mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Integer.class), "valueOf",
+					Type.getMethodDescriptor(Type.getType(Integer.class), Type.INT_TYPE), false);
+				// [val:Integer,idx,blegs,blegs,fmt,System.err]
+				mv.visitInsn(AASTORE);
+				// [blegs,fmt,System.err]
+			}
+
+			mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(String.class), "formatted",
+				Type.getMethodDescriptor(Type.getType(String.class), Type.getType(Object[].class)),
+				false);
+			// [msg:String,System.err]
+			mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(PrintStream.class), "println",
+				Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)), false);
+			// []
+			generateMpLegsFromTemp(temp, count, mv);
+			// [leg1,...,legN]
+		}
+	}
+
+	/**
 	 * Emit bytecode into the class constructor.
 	 * 
 	 * @param gen the code generator
@@ -579,9 +726,9 @@ public interface OpGen<T extends JitOp> extends Opcodes {
 	 * This method must emit the code needed to load any input operands, convert them to the
 	 * appropriate type, perform the actual operation, and then if applicable, store the output
 	 * operand. The implementations should delegate to
-	 * {@link JitCodeGenerator#generateValReadCode(JitVal, JitTypeBehavior)},
-	 * {@link JitCodeGenerator#generateVarWriteCode(JitVar, JitType)}, and {@link TypeConversions}
-	 * appropriately.
+	 * {@link JitCodeGenerator#generateValReadCode(JitVal, JitTypeBehavior, Ext)},
+	 * {@link JitCodeGenerator#generateVarWriteCode(JitVar, JitType, Ext)}, and
+	 * {@link TypeConversions} appropriately.
 	 * 
 	 * @param gen the code generator
 	 * @param op the p-code op (use-def node) to translate

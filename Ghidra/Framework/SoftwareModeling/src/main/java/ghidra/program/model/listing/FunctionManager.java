@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,6 +113,8 @@ public interface FunctionManager extends ManagerDB {
 	 * @return new function or null if one or more functions overlap the specified body address set.
 	 * @throws OverlappingFunctionException if the address set of the body overlaps an existing
 	 *             function
+	 * @throws UnsupportedOperationException if this method is invoked on an external entryPoint
+	 *             address.
 	 */
 	public Function createThunkFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)

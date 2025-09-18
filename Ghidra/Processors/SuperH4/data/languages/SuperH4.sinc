@@ -346,9 +346,9 @@ define token instr(16)
 	N_1   = ( 9,11) # register id
 	N_2   = (10,11) # register id
 	FRN_0 = ( 8,11) # float register id
-        FRN_1 = ( 8,10) # float register id
-        FRN_2 = ( 8,10) # float register id
-        DRN_0 = ( 8,10) # double register id
+	FRN_1 = ( 9,11) # float register id
+	FRN_2 = ( 9,11) # float register id
+	DRN_0 = ( 9,11) # double register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id

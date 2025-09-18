@@ -93,19 +93,26 @@ public interface Symbol {
 	public SymbolType getSymbolType();
 
 	/**
-	 * @return the number of References to this symbol.
+	 * Get the number of References to this symbol or its address.
+	 * <P>
+	 * NOTE: this method differ from {@link #hasReferences()} behavior for memory symbols since this 
+	 * method will return {@link ReferenceManager#getReferenceCountTo(Address)} if this is the only 
+	 * symbol at its address.
+	 * 
+	 * @return the number of References to this symbol or its address.
 	 */
-	public int getReferenceCount();
-
-	/**
-	 * @return true if this symbol has more than one reference to it.
-	 */
-	public boolean hasMultipleReferences();
+	public default int getReferenceCount() {
+		return 0;
+	}
 
 	/**
 	 * @return true if this symbol has at least one reference to it.
+	 * Explicit references to other symbols at the same address are not considered 
+	 * (see {@link Reference#getSymbolID()} which indicates a specific symbol reference).
 	 */
-	public boolean hasReferences();
+	public default boolean hasReferences() {
+		return false;
+	}
 
 	/**
 	 * Returns all memory references to the address of this symbol.  If you do not have a
@@ -117,7 +124,9 @@ public interface Symbol {
 	 * @param monitor the monitor that is used to report progress and to cancel this
 	 *        potentially long-running call
 	 */
-	public Reference[] getReferences(TaskMonitor monitor);
+	public default Reference[] getReferences(TaskMonitor monitor) {
+		return new Reference[0];
+	}
 
 	/**
 	 * Returns all memory references to the address of this symbol.
@@ -125,7 +134,9 @@ public interface Symbol {
 	 * @return all memory references to the address of this symbol
 	 * @see #getReferences(TaskMonitor)
 	 */
-	public Reference[] getReferences();
+	public default Reference[] getReferences() {
+		return getReferences(TaskMonitor.DUMMY);
+	}
 
 	/**
 	 * Returns a program location for this symbol; may be null.  This allows implementations to 
@@ -145,10 +156,9 @@ public interface Symbol {
 	 * @param source the source of this symbol
 	 * <br>Some symbol types, such as function symbols, can set the source to Symbol.DEFAULT.
 	 *
-	 * @throws DuplicateNameException
-	 * 		if name already exists as the name of another symbol or alias.
-	 * @throws InvalidInputException
-	 * 		if alias contains blank characters, is zero length, or is null
+	 * @throws DuplicateNameException if name conflicts with another symbol.
+	 * @throws InvalidInputException if an invalid or null name specified (see 
+	 * {@link SymbolUtilities#validateName}).
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
 	 * that doesn't allow it.
 	 */
@@ -199,7 +209,9 @@ public interface Symbol {
 	 *
 	 * @return true if the symbol is pinned to its current address.
 	 */
-	public boolean isPinned();
+	public default boolean isPinned() {
+		return false; //most symbols can't be pinned.
+	}
 
 	/**
 	 * <p>Sets whether or not this symbol is pinned to its associated address.</p>
@@ -215,7 +227,9 @@ public interface Symbol {
 	 * @param pinned true indicates this symbol is anchored to its address.
 	 * 		false indicates this symbol is not anchored to its address.
 	 */
-	public void setPinned(boolean pinned);
+	public default void setPinned(boolean pinned) {
+		throw new UnsupportedOperationException("Only Code and Function Symbols may be pinned.");
+	}
 
 	/**
 	 * @return true if this symbol is a dynamic symbol (not actually defined in the database).
@@ -246,7 +260,9 @@ public interface Symbol {
 	 * @return true if the symbol is at an address
 	 * set as a external entry point.
 	 */
-	public boolean isExternalEntryPoint();
+	public default boolean isExternalEntryPoint() {
+		return false;
+	}
 
 	/**
 	 * @return this symbol's ID.
@@ -259,7 +275,7 @@ public interface Symbol {
 	public Object getObject();
 
 	/**
-	 * @return true if the symbol is global
+	 * @return true if the symbol is contained within the global namespace
 	 */
 	public boolean isGlobal();
 

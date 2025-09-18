@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +15,13 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC2_MessageReference implements StructConverter {
 	public static final String NAME = "message_ref";
@@ -41,7 +39,7 @@ public class ObjectiveC2_MessageReference implements StructConverter {
 		this._state = state;
 
 		if (state.is32bit) {
-			implementation = reader.readNextInt() & Conv.INT_MASK;
+			implementation = reader.readNextUnsignedInt();
 		}
 		else {
 			implementation = reader.readNextLong();
@@ -61,6 +59,7 @@ public class ObjectiveC2_MessageReference implements StructConverter {
 		return selector;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME, 0);
 		struct.add(new PointerDataType(VOID),  _state.pointerSize, "imp", null);

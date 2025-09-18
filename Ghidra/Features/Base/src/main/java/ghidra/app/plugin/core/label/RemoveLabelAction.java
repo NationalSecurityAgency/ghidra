@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,7 @@ import javax.swing.KeyStroke;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 
 /**
  * <CODE>RemoveLabelAction</CODE> allows the user to remove a label.
@@ -63,8 +60,12 @@ class RemoveLabelAction extends ListingContextAction {
 
 	boolean isOnSymbol(ListingActionContext context) {
 		Symbol s = plugin.getSymbol(context);
-		return ((s instanceof CodeSymbol) && !s.isDynamic()) ||
-			((s instanceof FunctionSymbol) && s.getSource() != SourceType.DEFAULT);
+		if (s == null) {
+			return false;
+		}
+		SymbolType type = s.getSymbolType();
+		return (type == SymbolType.LABEL && !s.isDynamic()) ||
+			(type == SymbolType.FUNCTION && s.getSource() != SourceType.DEFAULT);
 	}
 
 	/**

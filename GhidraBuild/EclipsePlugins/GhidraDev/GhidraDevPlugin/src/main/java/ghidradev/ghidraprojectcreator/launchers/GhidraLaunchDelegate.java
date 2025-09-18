@@ -21,11 +21,11 @@ import java.text.ParseException;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.eclipse.core.resources.*;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.debug.core.*;
 import org.eclipse.debug.ui.IDebugUIConstants;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
@@ -102,7 +102,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		vmArgs += " " + configuration.getAttribute(GhidraLaunchUtils.ATTR_VM_ARGUMENTS, "").trim();
 		vmArgs += " -Dghidra.external.modules=\"%s%s%s\"".formatted(
 			javaProject.getProject().getLocation(), File.pathSeparator,
-			getProjectDependencyDirs(javaProject));
+			GhidraProjectUtils.getProjectDependencyDirs(javaProject));
 		File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
 		if (pyDevSrcDir != null) {
 			vmArgs += " " + "-Declipse.pysrc.dir=\"" + pyDevSrcDir + "\"";
@@ -115,7 +115,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			ResourcesPlugin.getWorkspace().getRoot().getLocation() + "\"";
 		vmArgs += " " + "-Declipse.project.dir=\"" + javaProject.getProject().getLocation() + "\"";
 		vmArgs += " " + "-Declipse.project.dependencies=\"" +
-			getProjectDependencyDirs(javaProject) + "\"";
+			GhidraProjectUtils.getProjectDependencyDirs(javaProject) + "\"";
 		//----------------------------------------
 		
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, vmArgs);
@@ -126,34 +126,6 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		}
 
 		super.launch(wc.doSave(), mode, launch, monitor);
-	}
-
-	/**
-	 * For the given Java project, gets all of its classpath dependencies that are themselves 
-	 * projects.  The result is formatted as a string of paths separated by 
-	 * {@link File#pathSeparator}.
-	 *   
-	 * @param javaProject The Java project whose project dependencies we are getting.
-	 * @return A string of paths separated by {@link File#pathSeparator} that represents the given
-	 *   Java project's dependencies that are projects.  Could be empty if there are no 
-	 *   dependencies.
-	 * @throws CoreException if there was an Eclipse-related problem with getting the dependencies.
-	 */
-	private static String getProjectDependencyDirs(IJavaProject javaProject) throws CoreException {
-		String paths = "";
-		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
-			if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
-				if (!paths.isEmpty()) {
-					paths += File.pathSeparator;
-				}
-				IResource resource =
-					ResourcesPlugin.getWorkspace().getRoot().findMember(entry.getPath());
-				if (resource != null) {
-					paths += resource.getLocation();
-				}
-			}
-		}
-		return paths;
 	}
 
 	/**

@@ -161,6 +161,24 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 		}
 	}
 
+	interface ForceCloseTransactionsActions {
+		String NAME = "Forcibly Close Transactions";
+		String DESCRIPTION = "Forcibly commit all remote transactions on the trace";
+		String GROUP = GROUP_MAINTENANCE;
+		String HELP_ANCHOR = "forcibly_close_txes";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.popupMenuPath(NAME)
+					.menuGroup(GROUP)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	class InjectableGTree extends GTree {
 		public InjectableGTree(GTreeNode root) {
 			super(root);
@@ -200,6 +218,7 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 	DockingAction actionConnectOutbound;
 	DockingAction actionCloseConnection;
 	DockingAction actionCloseAll;
+	DockingAction actionForceCloseTransactions;
 
 	TraceRmiManagerActionContext myActionContext;
 
@@ -308,6 +327,12 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 		actionCloseAll = CloseAllAction.builder(plugin)
 				.enabledWhen(this::isActionCloseAllEnabled)
 				.onAction(this::doActionCloseAllActivated)
+				.buildAndInstallLocal(this);
+
+		actionForceCloseTransactions = ForceCloseTransactionsActions.builder(plugin)
+				.withContext(TraceRmiManagerActionContext.class)
+				.enabledWhen(this::isActionForceCloseTransactionsEnabled)
+				.onAction(this::doActionCloseTransactionsActivated)
 				.buildAndInstallLocal(this);
 	}
 
@@ -479,6 +504,21 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 			catch (Throwable e) {
 				Msg.error(this, "Could not cancel " + acceptor + ": " + e);
 			}
+		}
+	}
+
+	private boolean isActionForceCloseTransactionsEnabled(TraceRmiManagerActionContext context) {
+		TraceRmiManagerNode node = context.getSelectedNode();
+		if (node instanceof TraceRmiTargetNode) {
+			return true;
+		}
+		return false;
+	}
+
+	private void doActionCloseTransactionsActivated(TraceRmiManagerActionContext context) {
+		TraceRmiManagerNode node = context.getSelectedNode();
+		if (node instanceof TraceRmiTargetNode tNode) {
+			tNode.getTarget().forciblyCloseTransactions();
 		}
 	}
 

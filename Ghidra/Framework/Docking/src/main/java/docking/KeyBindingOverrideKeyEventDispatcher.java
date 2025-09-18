@@ -400,7 +400,23 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 
 		JComponent jComponent = (JComponent) focusOwner;
 		Action action = getJavaActionForComponent(jComponent, keyStroke);
-		return action != null && action.isEnabled();
+		if (action == null) {
+			return false;
+		}
+
+		/*
+		 	Some Java actions use the accept() method for more fine-grained enablement checking. An
+		 	example of this is the JTree 'cancel' action, bound to Escape, which will cancel any 
+		 	current edits.  The tree UI is smart enough to say the action is only enabled if there
+		 	is an active edit.   The accept() method may return false when isEnabled() will return 
+		 	true.  So, check the accept() method first, since it may be more specific.
+		 */
+		boolean isEnabled = action.accept(focusOwner);
+		if (!isEnabled) {
+			return false;
+		}
+
+		return action.isEnabled();
 	}
 
 	private Action getJavaActionForComponent(JComponent jComponent, KeyStroke keyStroke) {

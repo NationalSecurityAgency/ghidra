@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database.breakpoint;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.List;
@@ -28,24 +29,57 @@ import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Process' />
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Breakpoints' schema='BreakpointContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			    </schema>
+			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Breakpoint' />
+			    </schema>
+			    <schema name='Breakpoint' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='BreakpointSpec' />
+			        <interface name='BreakpointLocation' />
+			    </schema>
+			</context>
+			""";
+
 	ToyDBTraceBuilder b;
 	DBTraceBreakpointManager breakpointManager;
 
 	TraceThread thread;
-	TraceBreakpoint breakMain;
-	TraceBreakpoint breakVarA;
-	TraceBreakpoint breakVarB;
+	TraceBreakpointLocation breakMain;
+	TraceBreakpointLocation breakVarA;
+	TraceBreakpointLocation breakVarB;
 
 	@Before
 	public void setUpBreakpointManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
+
+		try (Transaction tx = b.startTransaction()) {
+			XmlSchemaContext ctx = XmlSchemaContext.deserialize(XML_CTX);
+			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+
 		breakpointManager = b.trace.getBreakpointManager();
 	}
 
@@ -70,7 +104,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 			// pass
 		}
 
-		assertEquals(1, breakpointManager.getBreakpointsByPath("Breakpoints[0]").size());
+		assertEquals(1, breakpointManager.getBreakpointLocationsByPath("Breakpoints[0]").size());
 	}
 
 	protected void addBreakpoints() throws Exception {
@@ -95,16 +129,16 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		addBreakpoints();
 		// breakVarA == breakVarB in object mode
 		assertEquals(Set.copyOf(List.of(breakMain, breakVarA, breakVarB)),
-			Set.copyOf(breakpointManager.getAllBreakpoints()));
+			Set.copyOf(breakpointManager.getAllBreakpointLocations()));
 	}
 
 	@Test
 	public void testBreakpointsByPath() throws Exception {
 		addBreakpoints();
 		assertEquals(Set.of(breakMain),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
+			Set.copyOf(breakpointManager.getBreakpointLocationsByPath("Breakpoints[0]")));
 		assertEquals(Set.copyOf(List.of(breakVarA, breakVarB)), // Same breakpoint in object mode
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[1]")));
+			Set.copyOf(breakpointManager.getBreakpointLocationsByPath("Breakpoints[1]")));
 	}
 
 	@Test
@@ -161,6 +195,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	}
 
 	@Test
+	@Deprecated
 	public void testGetThreads() throws Exception {
 		addBreakpoints();
 		assertEquals(Set.of(thread), Set.copyOf(breakMain.getThreads(0)));
@@ -198,7 +233,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		addBreakpoints();
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setKinds(0, Set.of(TraceBreakpointKind.HW_EXECUTE));
+			breakMain.getSpecification().setKinds(0, Set.of(TraceBreakpointKind.HW_EXECUTE));
 			assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
 		}
 		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
@@ -215,7 +250,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		assertEquals("WinMain", breakMain.getComment(0));
 	}
 
-	protected static class InvalidBreakpointMatcher extends BaseMatcher<TraceBreakpoint> {
+	protected static class InvalidBreakpointMatcher extends BaseMatcher<TraceBreakpointLocation> {
 		private final long snap;
 
 		public InvalidBreakpointMatcher(long snap) {
@@ -224,7 +259,8 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 
 		@Override
 		public boolean matches(Object actual) {
-			return actual == null || actual instanceof TraceBreakpoint bpt && !bpt.isValid(snap);
+			return actual == null ||
+				actual instanceof TraceBreakpointLocation bpt && !bpt.isValid(snap);
 		}
 
 		@Override
