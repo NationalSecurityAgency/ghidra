@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +15,83 @@
  */
 package ghidra.program.model.symbol;
 
-public enum SourceType {
-	// WARNING WARNING: do not change the order of these enums as they are stored in the
-	// database by their ordinal.
+import java.util.NoSuchElementException;
 
-	/** The object's source indicator for an auto analysis. */
-	ANALYSIS("Analysis", 2),
-	/** The object's source indicator for a user defined. */
-	USER_DEFINED("User Defined", 4),
+public enum SourceType {
+	// WARNING WARNING: the assigned storage IDs are used for persistent serialization.
+	// Any change or re-use must consider data upgrade concerns.
+
+	// The SourceType's defined below are ordered based upon their priority values.
+	// Priority values may be changed.
+
 	/** The object's source indicator for a default. */
-	DEFAULT("Default", 1),
+	DEFAULT("Default", 1, 2),
+	/** The object's source indicator for an auto analysis. */
+	ANALYSIS("Analysis", 2, 0),
+	/** The object's source indicator for something that was produced with AI assistance. */
+	AI("AI", 2, 4),
 	/** The object's source indicator for an imported. */
-	IMPORTED("Imported", 3);
+	IMPORTED("Imported", 3, 3),
+	/** The object's source indicator for a user defined. */
+	USER_DEFINED("User Defined", 4, 1);
+
+	// SourceType values indexed by storageID (use null for undefined IDs).
+	private static SourceType[] SOURCE_BY_STORAGE_ID =
+		new SourceType[] { ANALYSIS, USER_DEFINED, DEFAULT, IMPORTED, AI };
 
 	private final String displayString;
-	private final int priority; // bigger numbers are higher priorty
+	private final int storageId;
+	private final int priority; // bigger numbers are higher priority
 
-	private SourceType(String displayString, int priority) {
+	/**
+	 * {@link SourceType} constructor
+	 * @param displayString enum display name
+	 * @param priority unique priority among other defined enum values
+	 * @param storageId non-negative storage ID for persistent serialization.  Once an ID is 
+	 * assigned it may never be removed without serious consideration to DB upgrade transformation.
+	 */
+	private SourceType(String displayString, int priority, int storageId) {
 		this.displayString = displayString;
+		this.storageId = storageId;
 		this.priority = priority;
 	}
 
-	/** Returns a user-friendly string */
+	/**
+	 * Get the SourceType which corresponds to the specified storage ID.
+	 * @param storageId storage ID
+	 * @return SourceType
+	 * @throws NoSuchElementException if specified storage ID is not defined.
+	 */
+	public static SourceType getSourceType(int storageId) {
+		try {
+			SourceType source = SOURCE_BY_STORAGE_ID[storageId];
+			if (source != null) {
+				return source;
+			}
+		}
+		catch (ArrayIndexOutOfBoundsException e) {
+			// throw error below
+		}
+		throw new NoSuchElementException("SourceType storgae ID not defined: " + storageId);
+	}
+
+	/**
+	 * {@return numeric priority relative to other SourceType.  Higher numbers are higher priority.}
+	 */
+	public int getPriority() {
+		return priority;
+	}
+
+	/**
+	 * {@return the storage ID which should be used for persistent serialization}
+	 */
+	public int getStorageId() {
+		return storageId;
+	}
+
+	/** 
+	 * {@return a user-friendly string}
+	 */
 	public String getDisplayString() {
 		return displayString;
 	}

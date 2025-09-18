@@ -97,7 +97,7 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 //		if (nextID == 0) {
 //			nextID++;
 //		}
-//		return createSymbol(nextID, name, address, namespaceID, symbolType, (byte) source.ordinal(),
+//		return createSymbol(nextID, name, address, namespaceID, symbolType, (byte) source.getStorageId(),
 //			isPrimary);
 //	}
 
@@ -119,7 +119,7 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 		rec.setLongValue(SYMBOL_ADDR_COL, addressKey);
 		rec.setLongValue(SYMBOL_PARENT_ID_COL, namespaceID);
 		rec.setByteValue(SYMBOL_TYPE_COL, symbolType.getID());
-		rec.setByteValue(SYMBOL_FLAGS_COL, (byte) source.ordinal());
+		rec.setByteValue(SYMBOL_FLAGS_COL, getSourceTypeFlagsBits(source)); // assume non-pinned
 
 		// Sparse columns - these columns don't apply to all symbols.
 		// they default to null unless specifically set. Null values don't consume space.
