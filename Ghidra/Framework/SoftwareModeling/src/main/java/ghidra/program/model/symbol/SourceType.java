@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,27 +20,23 @@ public enum SourceType {
 	// database by their ordinal.
 
 	/** The object's source indicator for an auto analysis. */
-	ANALYSIS("Analysis", 3),
+	ANALYSIS("Analysis", 2),
 	/** The object's source indicator for a user defined. */
-	USER_DEFINED("User Defined", 5),
+	USER_DEFINED("User Defined", 4),
 	/** The object's source indicator for a default. */
 	DEFAULT("Default", 1),
 	/** The object's source indicator for an imported. */
-	IMPORTED("Imported", 4),
-	/** The object's source indicator for something that is somewhat of an educated guess. */
-	SPECULATIVE("Speculative", 2);
+	IMPORTED("Imported", 3);
 
 	private final String displayString;
-	private final int priority; // bigger numbers are higher priority
+	private final int priority; // bigger numbers are higher priorty
 
 	private SourceType(String displayString, int priority) {
 		this.displayString = displayString;
 		this.priority = priority;
 	}
 
-	/** 
-	 * {@return a user-friendly string}
-	 */
+	/** Returns a user-friendly string */
 	public String getDisplayString() {
 		return displayString;
 	}
