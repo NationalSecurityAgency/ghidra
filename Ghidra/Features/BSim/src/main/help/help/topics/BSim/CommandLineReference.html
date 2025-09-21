@@ -269,6 +269,7 @@
     bsim createdatabase  &lt;bsimURL&gt; &lt;config_template&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"] [--nocallgraph]
     bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]
     bsim getmetadata     &lt;bsimURL&gt;
+    bsim dropdatabase    &lt;bsimURL&gt;
     bsim addexecategory  &lt;bsimURL&gt; &lt;category_name&gt; [--date]
     bsim addfunctiontag  &lt;bsimURL&gt; &lt;tag_name&gt;
     bsim dropindex       &lt;bsimURL&gt;
@@ -352,6 +353,14 @@
 
                 <P><SPAN class="command"><STRONG>--nocallgraph</STRONG></SPAN> - disables storing call 
                 relationships between ingested functions. Default is to store call relationships.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>dropdatabase</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Deletes the specified repository. A BSim server URL is required. The database name
+                is taken from the path element of the URL.
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
