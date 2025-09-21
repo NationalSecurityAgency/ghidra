@@ -836,14 +836,18 @@ void ParamListStandard::assignMapLtoR(const PrototypePieces &proto,TypeFactory &
 
   if (hiddenpiece) {	// Check for hidden parameters defined by the output list
     Datatype *dt = hiddenpiece->type;
-    type_class store;
-    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
-      store = TYPECLASS_HIDDENRET;
-    else
-      store = metatype2typeclass(dt->getMetatype());
-    // Reserve last param for hidden return pointer
-    if (assignAddressFallback(store,dt,false,status,*hiddenpiece) == AssignAction::fail)
-      throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0) {
+      // Need to pull from registers marked as hiddenret
+      if (assignAddressFallback(TYPECLASS_HIDDENRET,dt,false,status,*hiddenpiece) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+      }
+    }
+    else {
+	  // Assign as a regular first input pointer parameter
+	  if (assignAddress(dt,proto,0,typefactory,status,*hiddenpiece) == AssignAction::fail) {
+        throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+	  }
+	}
     hiddenpiece->flags |= ParameterPieces::hiddenretparm;
   }
 }
