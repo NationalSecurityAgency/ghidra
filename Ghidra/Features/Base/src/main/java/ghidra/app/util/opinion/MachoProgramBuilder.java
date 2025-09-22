@@ -685,11 +685,11 @@ public class MachoProgramBuilder {
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
 				String name = null;
-				if (symbol != null) {
+				if (symbol != null && !symbol.getString().isBlank()) {
 					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				}
 				Function stubFunc = createOneByteFunction(program, name, startAddr);
-				if (stubFunc != null && symbol != null) {
+				if (stubFunc != null && name != null) {
 					ExternalLocation loc = program.getExternalManager()
 							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
 					stubFunc.setThunkedFunction(loc.createFunction());
