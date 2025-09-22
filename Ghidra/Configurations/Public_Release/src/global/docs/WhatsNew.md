@@ -5,7 +5,7 @@ to analyze compiled code on a variety of platforms including Windows, MacOS, and
 include disassembly, assembly, decompilation, debugging, emulation, graphing, and scripting, along
 with hundreds of other features.  Ghidra supports a wide variety of processor instruction sets and
 executable formats and can be run in both user-interactive and automated modes.  Users may also
-develop their own Ghidra plug-in components and/or scripts using the exposed API.  In addition there
+develop their own Ghidra plug-in components and/or scripts using the exposed API.  In addition, there
 are numerous ways to extend Ghidra such as new processors, loaders/exporters, automated analyzers,
 and new visualizations.
 
@@ -25,7 +25,7 @@ Ghidra 12.0 is fully backward compatible with project data from previous release
 and data type archives which are created or modified in 12.0 will not be usable by an earlier Ghidra
 version.
 
-**IMPORTANT:** Ghidra 12.0 requires at minimum JDK 21 to run.
+**IMPORTANT:** Ghidra 12.0 requires, at minimum, JDK 21 to run.
 
 **IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
 (3.9 to 3.13 supported) installed on your system.
@@ -35,7 +35,7 @@ for `CVE-2024-31083` in X.org software in April 2024 introduced a regression, wh
 in xwayland 23.2.6 and xorg-server 21.1.13.  If you experience any crashing of Ghidra, most likely
 causing a full logout, check if your xorg-server has been updated to at least the noted version.
 
-**NOTE:** Each build distribution will include native components (e.g., decompiler) for at least one
+**NOTE:** Each build distribution will include native components (e.g., Decompiler) for at least one
 platform (e.g., Windows x86-64). If you have another platform that is not included in the build
 distribution, you can build native components for your platform directly from the distribution.
 See the *Getting Started* document for additional information. Users running with older shared 
@@ -44,9 +44,9 @@ launching native executables such as the Decompiler and GNU Demangler which may 
 rebuild of native components.
 
 **NOTE:** Ghidra Server: The Ghidra 12.0 server is compatible with Ghidra 9.2 and later Ghidra
-clients although the presence of any newer link-files within a repository may not be handled properly
+clients, although the presence of any newer link-files within a repository may not be handled properly
 by client versions prior to 12.0 which lack support for the new storage format.  Ghidra 12.0 clients
-which introduce new link-files into a project will not be able to add such files into version 
+that introduce new link-files into a project will not be able to add such files into version 
 control if connected to older Ghidra Server versions.  
 
 **NOTE:** Ghidra Server: Due to potential Java version differences, it is 
@@ -100,7 +100,7 @@ can also be used in headless mode with the new `-mirror` command line option.
 ## PyGhidra
 PyGhidra 3.0.0 (compatible with Ghidra 12.0 and later) introduces many new Python-specific API 
 methods with the goal of making the most common Ghidra tasks quick and easy, such as opening a 
-project, getting a program, running a GhidraScript, etc. Legacy API fuctions such as 
+project, getting a program, and running a GhidraScript. Legacy API fuctions such as 
 `pyghidra.open_program()` and `pyghidra_run_script()` have been deprecated in favor of the new 
 methods. Below is an example program that showcases some of the new API functionality. See the 
 PyGhidra library README for more information.
@@ -148,7 +148,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
 ```
 
 ## Z3 Concolic Emulation and Symbolic Summary
-We've added an experimental Z3-based symbolic emulator, which runs as a "auxilliary" domain to the 
+We've added an experimental Z3-based symbolic emulator, which runs as an "auxilliary" domain to the 
 concrete emulator, effectively constructing what is commonly called a "concolic" emulator. The 
 symbolic emulator creates Z3 expressions and branching constraints, but it only follows the path 
 determined by concrete emulation. This is most easily accessed by installing the "SymbolicSummaryZ3"
@@ -166,7 +166,7 @@ our JIT-accelerated emulator into the GUI. Please see the **Notable API Changes*
 [Change History](ChangeHistory.md). The goal is to facilitate integration by composition; whereas, 
 it had previously required inheritance, which is now considered poor design. Essentially, we've 
 introduced a set of callbacks that integrators can use to detect when certain things have happened
-in emulation, as well as offer some control of machine-state behavior, e.g., to facilitate lazily 
+in emulation, as well as offer some control of machine-state behavior; e.g., to facilitate lazily 
 loading from a snapshot.
 
 Extensions that currently integrate via inheritance can continue to do so, but will still need to
