@@ -19,23 +19,23 @@ import ghidra.test.processors.support.ProcessorEmulatorTestAdapter;
 
 import junit.framework.Test;
 
-public class NDS32_LE_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
+public class NDS32_BE_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
-	private static final String LANGUAGE_ID = "NDS32:LE:32:default";
+	private static final String LANGUAGE_ID = "NDS32:BE:32:default";
 	private static final String COMPILER_SPEC_ID = "default";
 
 	private static final String[] REG_DUMP_SET = new String[] {};
 
-	public NDS32_LE_O0_EmulatorTest(String name) throws Exception {
+	public NDS32_BE_O3_EmulatorTest(String name) throws Exception {
 		super(name, LANGUAGE_ID, COMPILER_SPEC_ID, REG_DUMP_SET);
 	}
 
 	@Override
 	protected String getProcessorDesignator() {
-		return "NDS32LE_GCC_O0";
+		return "NDS32BE_GCC_O3";
 	}
 
 	public static Test suite() {
-		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(NDS32_LE_O0_EmulatorTest.class);
+		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(NDS32_BE_O3_EmulatorTest.class);
 	}
 }

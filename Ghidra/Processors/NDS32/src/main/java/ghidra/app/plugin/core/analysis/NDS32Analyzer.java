@@ -1,3 +1,18 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ghidra.app.plugin.core.analysis;
 
 import java.math.BigInteger;
@@ -29,16 +44,12 @@ import ghidra.util.task.TaskMonitor;
 public class NDS32Analyzer extends ConstantPropagationAnalyzer {
 	private final static String PROCESSOR_NAME = "NDS32";
 	
-	private static final String SWITCH_OPTION_NAME = "Switch Table Recovery";
-	private static final String SWITCH_OPTION_DESCRIPTION = "Turn on to recover switch tables (not implemented yet !)";
-	private static final boolean SWITCH_OPTION_DEFAULT_VALUE = false;
-	
 	private static final String RECOVER_GP_OPTION_NAME = "Recover global GP register writes";
 	private static final String RECOVER_GP_OPTION_DESCRIPTION = "Reads the global GP value from the symbol _SDA_BASE_";
 	private static final boolean RECOVER_GP_OPTION_DEFAULT_VALUE = true;
 	
 	
-	private boolean recoverSwitchTables = SWITCH_OPTION_DEFAULT_VALUE;
+	//private boolean recoverSwitchTables = SWITCH_OPTION_DEFAULT_VALUE;
 	private boolean recoverGp = RECOVER_GP_OPTION_DEFAULT_VALUE;
 
 	private Address gpAssumptionValue = null;
@@ -67,10 +78,6 @@ public class NDS32Analyzer extends ConstantPropagationAnalyzer {
 	public void optionsChanged(Options options, Program program) {
 		super.optionsChanged(options, program);
 
-		options.registerOption(SWITCH_OPTION_NAME, recoverSwitchTables, null,
-				SWITCH_OPTION_DESCRIPTION);
-		recoverSwitchTables = options.getBoolean(SWITCH_OPTION_NAME, recoverSwitchTables);
-
 		options.registerOption(RECOVER_GP_OPTION_NAME, recoverGp, null,
 				RECOVER_GP_OPTION_DESCRIPTION);
 		recoverGp = options.getBoolean(RECOVER_GP_OPTION_NAME, recoverGp);
@@ -88,7 +95,9 @@ public class NDS32Analyzer extends ConstantPropagationAnalyzer {
 
 	/**
 	 * Check for a global GP register symbol or discovered symbol
+	 * @param program
 	 * @param set
+	 * @param monitor
 	 */
 	private void checkForGlobalGP(Program program, AddressSetView set, TaskMonitor monitor) {
 		if (!recoverGp) {
@@ -139,19 +148,12 @@ public class NDS32Analyzer extends ConstantPropagationAnalyzer {
 			}
 		}
 
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 			@Override
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
 				FlowType flowtype = instruction.getFlowType();
 				if (!flowtype.isJump()) {
 					return false;
-				}
-
-				if (recoverSwitchTables) {
-					String mnemonic = instruction.getMnemonicString();
-					if (mnemonic.equals("jr")) {
-						fixJumpTable(program, instruction, monitor);
-					}
 				}
 
 				return false;
@@ -167,21 +169,4 @@ public class NDS32Analyzer extends ConstantPropagationAnalyzer {
 		return resultSet;
 	}
 	
-	/**
-	 * @param program
-	 * @param startInstr
-	 * @param monitor
-	 */
-	private void fixJumpTable(Program program, Instruction startInstr, TaskMonitor monitor) {
-		/* TODO: implement switch recovery ?
-		 * We are looking for tables like this :
-		 * 
-		 * slti45  a0,0x4						<- table size
-		 * beqzs8  LAB_005159ea					<- default jump
-		 * sethi   ta, 0x515
-		 * ori     ta, ta, 0x9a0
-		 * lw      a0, [ta + (a0 << 0x2)]		<- ref to table
-		 * jr      a0							<- table jump
-		 */
-	}
 }

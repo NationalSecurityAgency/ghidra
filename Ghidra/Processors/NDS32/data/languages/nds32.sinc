@@ -17,7 +17,14 @@ define register offset=0x100 size=8
 define register offset=0x100 size=4
 [d0.hi d0.lo d1.hi d1.lo];
 
+define register offset=0x1000 size=4
+[ itb ];
 
+define register offset=0x1000 size=8   contextreg;
+define context contextreg
+	counter		= (22,26)
+	regNum		= (27,31)	# register for load/store multiple instructions
+;
 
 define token instr32(32)
     OpSz        = (31, 31)
@@ -31,7 +38,10 @@ define token instr32(32)
     Rs          = (5, 9)
     Sub5        = (0, 4)
     Sub6        = (0, 5)
+    Sub7        = (0, 6)
     Sub8        = (0, 7)
+    Sub3        = (7, 9)
+    Imm8u       = (7,14)
     Imm5u       = (10, 14)
     Imm5s       = (10, 14) signed
     Br1t        = (14, 14)
@@ -295,7 +305,7 @@ AddrRaRbsv: [Ra + OffsetRbsv] is Ra & OffsetRbsv { addr:4 = Ra + OffsetRbsv; exp
 
 ### Load / Store Multiple Word Instruction ###
 
-# TODO : this is ugly
+
 @include "lsmw.sinc"
 
 LsmwBa_: "b" is LsmwBa=0 { }
@@ -308,14 +318,14 @@ LsmwM_: ""  is LsmwRa & LsmwM=0 { }
 LsmwM_: "m" is LsmwRa & LsmwM=1 { LsmwRa = mult_addr; }
 
 
-:lmw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00 & Lmw.regs
+:lmw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is ($(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00) ... & Lmw.regs
 {
     mult_addr = LsmwRa;
     build Lmw.regs;
     build LsmwM_;
 }
 
-:smw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00 & Smw.regs
+:smw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is ($(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00) ... & Smw.regs
 {
     mult_addr = LsmwRa;
     build Smw.regs;
@@ -551,8 +561,6 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 
 ### 32-bit Baseline V2 instructions ###
 
-@if defined(BASELINE_V2)
-
 ### ALU Instructions ###
 
 :addi.gp is $(I32) & $(SBGP) & Rt & GpSub1=0b1 & Imm19s { Rt = gp + Imm19s; }
@@ -563,25 +571,16 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 :mulr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101001 & Rtl & Rth
 {
     res:8 = zext(Ra) * zext(Rb);
-@if ENDIAN == "big"
-    Rtl = res(4);
-    Rth = res:4;
-@else
-    Rtl = res:4;
-    Rth = res(4);
-@endif
+    Rtl = res[32,32];
+    Rth = res[0,32];
+
 }
 
 :mulsr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101000 & Rtl & Rth
 {
     res:8 = sext(Ra) * sext(Rb);
-@if ENDIAN == "big"
-    Rtl = res(4);
-    Rth = res:4;
-@else
-    Rtl = res:4;
-    Rth = res(4);
-@endif
+    Rtl = res[32,32];
+    Rth = res[0,32];
 }
 
 :maddr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110011 { Rt = Rt + (Ra * Rb); }
@@ -605,16 +604,15 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 :shi.gp Rt,  GpHalfAddress is $(I32) & $(HWGP) & Rt & GpSub2=0b10  & GpHalfAddress { local tmp = Rt; *GpHalfAddress = tmp:2; }
 :swi.gp Rt,  GpWordAddress is $(I32) & $(HWGP) & Rt & GpSub3=0b111 & GpWordAddress { *GpWordAddress = Rt; }
 
-# TODO : same as lmw/smw, this is horrible
 
-:lmwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01 & Lmwa.regs
+:lmwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is ($(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01) ... & Lmwa.regs
 {
     mult_addr = LsmwRa;
     build Lmwa.regs;
     build LsmwM_;
 }
 
-:smwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01 & Smwa.regs
+:smwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is ($(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01) ... & Smwa.regs
 {
     mult_addr = LsmwRa;
     build Smwa.regs;
@@ -624,13 +622,9 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 :lbup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00100000 { local tmp:1 = *AddrRaRbsv; Rt = zext(tmp); }
 :sbup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00101000 { local tmp = Rt; *AddrRaRbsv = tmp:1; }
 
-@endif
-
 
 
 ### 32-bit Baseline V3 instructions ###
-
-@if defined(BASELINE_V3)
 
 ### ALU Instructions with Shift Operation (v3) ###
 
@@ -664,15 +658,11 @@ Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
 
 # TODO: Add CCTL L1D_WBALL, level
 
-@endif
-
-
 
 ### 32-bit ISA extension ###
 
 ### ALU Instruction (Performance) ###
 
-@if defined(PERFORMANCE_V1)
 
 :abs Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Rb=0 & $(ALU2Z) & Sub6=0b000011
 {
@@ -767,12 +757,9 @@ Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
   Rt = countTmp;
 }
 
-@endif
-
 
 ### Performance Extension V2 ###
 
-@if defined(PERFORMANCE_V2)
 
 # TODO : arithmetic functions: bs*
 :bse is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001100 unimpl
@@ -806,10 +793,105 @@ macro add_abs_diff(dst, src1, src2, shift)
     add_abs_diff(Rt, Ra, Rb, 24);
 }
 
+
+# 32-bit String Extension
+:ffb Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & Sub3=0 & Sub7=0b0001110 {
+	match:1 = Rb[0,8];
+	m1:1 = (Ra[0,8]  == match);
+	m2:1 = (Ra[8,8]  == match);
+	m3:1 = (Ra[16,8] == match);
+	m4:1 = (Ra[24,8] == match);
+	Rt = -4;
+	if (m1) goto inst_next;
+	Rt = -3;
+	if (m2) goto inst_next;
+	Rt = -2;
+	if (m3) goto inst_next;
+	Rt = -1;
+	if (m4) goto inst_next;
+	Rt = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+}
+
+:ffbi Rt, Ra, Imm8u is $(I32) & $(ALU_2) & Rt & Ra & Imm8u & Sub7=0b1001110 {
+	match:1 = Imm8u;
+	m1:1 = (Ra[0,8]  == match);
+	m2:1 = (Ra[8,8]  == match);
+	m3:1 = (Ra[16,8] == match);
+	m4:1 = (Ra[24,8] == match);
+	Rt = -4;
+	if (m1) goto inst_next;
+	Rt = -3;
+	if (m2) goto inst_next;
+	Rt = -2;
+	if (m3) goto inst_next;
+	Rt = -1;
+	if (m4) goto inst_next;
+	Rt = 0;
+}
+
+:ffmism Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & Sub3=0 & Sub7=0b0001111 {
+	match:1 = Rb[0,8];
+	m1:1 = (Ra[0,8]  != Rb[0,8]);
+	m2:1 = (Ra[8,8]  != Rb[8,8]);
+	m3:1 = (Ra[16,8] != Rb[16,8]);
+	m4:1 = (Ra[24,8] != Rb[24,8]);
+@if ENDIAN == "little"
+	Rt = -4;
+	if (m1) goto inst_next;
+	Rt = -3;
+	if (m2) goto inst_next;
+	Rt = -2;
+	if (m3) goto inst_next;
+	Rt = -1;
+	if (m4) goto inst_next;
+	Rt = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+	Rt = -4;
+	if (m4) goto inst_next;
+	Rt = -3;
+	if (m3) goto inst_next;
+	Rt = -2;
+	if (m2) goto inst_next;
+	Rt = -1;
+	if (m1) goto inst_next;
+	Rt = 0;
 @endif
+}
 
-
-
+:flmism Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & Sub3=0 & Sub7=0b1001111 {
+	match:1 = Rb[0,8];
+	m1:1 = (Ra[0,8]  != Rb[0,8]);
+	m2:1 = (Ra[8,8]  != Rb[8,8]);
+	m3:1 = (Ra[16,8] != Rb[16,8]);
+	m4:1 = (Ra[24,8] != Rb[24,8]);
+@if ENDIAN == "little"
+	Rt = -1;
+	if (m4) goto inst_next;
+	Rt = -2;
+	if (m3) goto inst_next;
+	Rt = -3;
+	if (m2) goto inst_next;
+	Rt = -4;
+	if (m1) goto inst_next;
+	Rt = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+	Rt = -1;
+	if (m1) goto inst_next;
+	Rt = -2;
+	if (m2) goto inst_next;
+	Rt = -3;
+	if (m3) goto inst_next;
+	Rt = -4;
+	if (m4) goto inst_next;
+	Rt = 0;
+@endif
+}
 
 ########### 16b ############
 
@@ -832,8 +914,13 @@ define token instr16(16)
     rt3b        = (8, 10)
     ra3         = (3, 5)
     rb3         = (0, 2)
+    bit5        = (5,5)
+    bit6        = (6,6)
+    bit7        = (7,7)
+    bit8        = (8,8)
     imm3u       = (0, 2)
     imm3ub      = (3, 5)
+    imm4u       = (5, 8)
     imm5u       = (0, 4)
     imm5s       = (0, 4) signed
     imm6u       = (0, 5)
@@ -978,13 +1065,12 @@ rel8: addr is imm8s [ addr = inst_start + (imm8s << 1); ] { export *:4 addr; }
 
 ### Misc Instruction ###
 
-:break16 swid9 is $(I16) & opc6=0b110101 & swid9 { break(swid9:4); }
-:nop16 is $(I16) & opc6=0b001001 & rt4=0b0000 & imm5u=0b00000 { }
+# V3 doesn't allow break16 with SWID greater than 31
+:break16 swid9 is $(I16) & opc6=0b110101 & imm4u=0 & swid9 { break(swid9:4); }
+:nop16 is $(I16) & opc6=0b001001 & rt4=0 & imm5u=0 { }
 
 
 ### ALU Instructions (V2) ###
-
-@if defined(BASELINE_V2)
 
 :addi10.sp imm10s is $(I16) & opc5=0b11011 & imm10s { sp = sp + imm10s; }
 
@@ -996,13 +1082,9 @@ sp_rel7w: [+ rel7w] is rel7w { addr:4 = sp + rel7w; export addr; }
 :lwi37.sp rt3b, sp_rel7w is $(I16) & rt3b & $(XWI37SP) & xwi37_ls=0 & sp_rel7w { rt3b = *sp_rel7w; }
 :swi37.sp rt3b, sp_rel7w is $(I16) & rt3b & $(XWI37SP) & xwi37_ls=1 & sp_rel7w { *sp_rel7w = rt3b; }
 
-@endif
-
 
 
 ### 16-bit Baseline V3 instructions ###
-
-@if defined(BASELINE_V3)
 
 ### ALU Instructions (V3 16-bit) ###
 
@@ -1056,11 +1138,11 @@ push25_re: re2 is re2 & re2=3 { push25_s8(); }
 	<end>
 }
 
-macro pop25_special() { Lmwbi(fp); Lmwbi(gp); Lmwbi(lp);   }
-macro pop25_s0() { Lmwbi(s0); }
-macro pop25_s2() { pop25_s0(); Lmwbi(s1); Lmwbi(s2); }
-macro pop25_s4() { pop25_s2(); Lmwbi(s3); Lmwbi(s4); }
-macro pop25_s8() { pop25_s4(); Lmwbi(s5); Lmwbi(s6); Lmwbi(s7); Lmwbi(s8); }
+macro pop25_special() { LmwOp(fp); LmwOp(gp); LmwOp(lp);   }
+macro pop25_s0() { LmwOp(s0); }
+macro pop25_s2() { pop25_s0(); LmwOp(s1); LmwOp(s2); }
+macro pop25_s4() { pop25_s2(); LmwOp(s3); LmwOp(s4); }
+macro pop25_s8() { pop25_s4(); LmwOp(s5); LmwOp(s6); LmwOp(s7); LmwOp(s8); }
 
 pop25_re: re2 is re2 & re2=0 { pop25_s0(); }
 pop25_re: re2 is re2 & re2=1 { pop25_s2(); }
@@ -1076,6 +1158,16 @@ pop25_re: re2 is re2 & re2=3 { pop25_s8(); }
 }
 
 
-@endif
+# EX9.IT
 
+imm9u_: imm9 is imm5u & imm4u [ imm9 = (imm4u << 5) | imm5u; ] { export *[const]:4 imm9; }
+define pcodeop ex9;
 
+# TODO: Depending on the value of ITB.HW the address is either set by hardware or set by ITB.Addr
+:ex9.it imm9u_ is $(I16) & opc6=0b110101 & (bit5=1 | bit6=1 | bit7=1 | bit8=1) & imm9u_ {
+	ex9(imm9u_);
+}
+
+:ex9.it imm5u is $(I16) & opc10=0b1011101010 & imm5u {
+	ex9(imm5u:4);
+}

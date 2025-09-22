@@ -1,6 +1,0 @@
-# Add sleigh compiler options to this file (one per line) which will
-# be used when compiling each language within this module.
-# All options should start with a '-' character.
-#
-# IMPORTANT: The -a option should NOT be specified
-#

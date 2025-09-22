@@ -436,7 +436,7 @@ PCodeTest({
     'name': 'NDS32BE',
     'build_all': 1,
     'toolchain': 'NDS32/nds32be-elf',
-    'ccflags': '',
+    'ccflags': '-mbig-endian',
     'cclibs': '-lgcc',
     'language_id': 'NDS32:BE:32:default',
 })
@@ -444,9 +444,20 @@ PCodeTest({
 PCodeTest({
     'name': 'NDS32LE',
     'build_all': 1,
-    'toolchain': 'NDS32/nds32le-elf',
+    'toolchain': 'NDS32/nds32le-elf',#'NDS32/nds32le-linux-glibc-v5d',
+    'ccflags': '-mlittle-endian -EL',
+    'cclibs': '-lgcc',
+    'language_id': 'NDS32:LE:32:default',
+})
+
+PCodeTest({
+    'name': 'NDS32AS',
+    'build_all': 1,
+    'toolchain': 'NDS32/nds32le-elf-mculib-v3s',
+    'exec_prefix': 'nds32le-elf-',
     'ccflags': '',
     'cclibs': '-lgcc',
+    'gcc_version': '12.2.0',
     'language_id': 'NDS32:LE:32:default',
 })
 

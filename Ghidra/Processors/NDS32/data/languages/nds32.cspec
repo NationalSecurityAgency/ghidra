@@ -50,8 +50,17 @@
                 <pentry minsize="1" maxsize="4" extension="inttype">
                     <register name="a5"/>
                 </pentry>
+                <pentry minsize="5" maxsize="8">
+                    <addr space="join" piece1="a1" piece2="a0"/>
+                </pentry>
+                <pentry minsize="5" maxsize="8">
+                    <addr space="join" piece1="a3" piece2="a2"/>
+                </pentry>
+                <pentry minsize="5" maxsize="8">
+                    <addr space="join" piece1="a5" piece2="a4"/>
+                </pentry>
                 <pentry minsize="1" maxsize="500" align="4">
-                    <addr offset="24" space="stack"/>
+                    <addr offset="0" space="stack"/>
                 </pentry>
             </input>
             <output killedbycall="true">

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,22 @@
 package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
-import ghidra.app.util.bin.format.elf.ElfConstants;
-import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.app.util.bin.format.elf.ElfLoadHelper;
-import ghidra.app.util.bin.format.elf.ElfRelocation;
-import ghidra.app.util.bin.format.elf.ElfRelocationTable;
-import ghidra.app.util.bin.format.elf.ElfSymbol;
+
+import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 
-public class NDS32_ElfRelocationHandler extends ElfRelocationHandler {
+public class NDS32_ElfRelocationHandler extends AbstractElfRelocationHandler<NDS32_ElfRelocationType, ElfRelocationContext<?>> {
+
+	public NDS32_ElfRelocationHandler() {
+		super(NDS32_ElfRelocationType.class);
+	}
+
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
@@ -38,35 +39,26 @@ public class NDS32_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public NDS32_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new NDS32_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+	public int getRelrRelocationType() {
+		return NDS32_ElfRelocationType.R_NDS32_RELATIVE.typeId;
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation, Address relocationAddress)
-			throws MemoryAccessException, NotFoundException {
-		ElfHeader elf = elfRelocationContext.getElfHeader();
-
-		if (elf.e_machine() != ElfConstants.EM_NDS32) {
-			return;
-		}
+	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
+			ElfRelocation relocation, NDS32_ElfRelocationType type, Address relocationAddress,
+			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
+			throws MemoryAccessException {
 		
-		if (!elf.is32Bit()) {
-			return;
-		}
-		
-		NDS32_ElfRelocationContext nds32RelocationContext =
-				(NDS32_ElfRelocationContext) elfRelocationContext;
+		ElfRelocationContext<?> nds32RelocationContext = elfRelocationContext;
 
-		int type = relocation.getType();
 		int symbolIndex = relocation.getSymbolIndex();		
-		doRelocate(nds32RelocationContext, type, symbolIndex, relocation, relocationAddress);
+		return doRelocate(nds32RelocationContext, type, symbolIndex, relocation, relocationAddress);
+		
 	}
 
-	private void doRelocate(NDS32_ElfRelocationContext nds32RelocationContext, int relocType,
+	private RelocationResult doRelocate(ElfRelocationContext<?> nds32RelocationContext, NDS32_ElfRelocationType type,
 			int symbolIndex, ElfRelocation relocation, Address relocationAddress)
-			throws MemoryAccessException, NotFoundException, AddressOutOfBoundsException {
+			throws MemoryAccessException {
 		Program program = nds32RelocationContext.getProgram();
 		Memory memory = program.getMemory();
 		MessageLog log = nds32RelocationContext.getLog();
@@ -84,28 +76,21 @@ public class NDS32_ElfRelocationHandler extends ElfRelocationHandler {
 		
 		int value = 0;
 		int newValue = 0;
-
-		switch(relocType) {
-		case NDS32_ElfRelocationConstants.R_NDS32_HI20_RELA:
+		int byteLength = 4;
+		
+		switch(type) {
+		case R_NDS32_HI20_RELA:
 			value = (int)(symbolValue + addend);
 			newValue = (oldValue & 0xfff00000) | (value >> 12);
 			memory.setInt(relocationAddress, newValue, true);
-			break;
-		case NDS32_ElfRelocationConstants.R_NDS32_LO12S0_RELA:
+			return new RelocationResult(Status.APPLIED, byteLength);
+		case R_NDS32_LO12S0_RELA:
 			value = (int)(symbolValue + addend);
 			newValue = (oldValue & 0xfffff000) | (value & 0xfff);
 			memory.setInt(relocationAddress, newValue, true);
-			break;
+			return new RelocationResult(Status.APPLIED, byteLength);
 		default:
-			markAsUnhandled(program, relocationAddress, relocType, symbolIndex, symbolName, log);
-		}
-	}
-	
-	private static class NDS32_ElfRelocationContext extends ElfRelocationContext {
-
-		protected NDS32_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-				ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-			super(handler, loadHelper, relocationTable, symbolMap);
+			return RelocationResult.UNSUPPORTED;
 		}
 	}
 }
