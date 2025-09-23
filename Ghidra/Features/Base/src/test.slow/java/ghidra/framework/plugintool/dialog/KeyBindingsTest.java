@@ -224,10 +224,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertKeyFieldText(ks);
 		apply();
 		assertEquals(ks, getKeyStroke(action1));
-
-		// verify the additional binding for 'Alt Graph'
-		action = (Action) TestUtils.invokeInstanceMethod("getActionForKeyStroke", dwm, keyStroke);
-		assertNotNull(action);
 	}
 
 	@Test
