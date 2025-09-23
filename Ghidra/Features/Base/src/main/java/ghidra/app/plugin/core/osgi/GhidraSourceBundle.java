@@ -45,6 +45,8 @@ import aQute.bnd.osgi.Clazz.QUERY;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationProperties;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -879,6 +881,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
+
+		String minJava =
+			Application.getApplicationProperty(ApplicationProperties.APPLICATION_JAVA_MIN_PROPERTY);
+		if (minJava != null) {
+			analyzer.setProperty("Require-Capability",
+				"osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version>=%s))\"".formatted(minJava));
+		}
 
 		try {
 			Manifest manifest;
