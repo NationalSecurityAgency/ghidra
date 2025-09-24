@@ -17,12 +17,20 @@ package ghidra.program.model.symbol;
 
 import java.util.NoSuchElementException;
 
+import ghidra.program.model.listing.Program;
+
+/**
+ * {@link SourceType} provides a prioritized indication as to the general source of a specific
+ * markup made to a {@link Program}.  The priority of each defined source type may be used to 
+ * restrict impact or protect the related markup.  Source types include: {@link #USER_DEFINED}, 
+ * which is higher priority than {@link #IMPORTED}, which is higher priority than {@link #ANALYSIS},
+ * which is higher priority than {@link #DEFAULT}.  The {@link #AI} source type is primarliy 
+ * intended to allow AI generated markup to be identified and currently has the same priority 
+ * as {@link #ANALYSIS}.
+ */
 public enum SourceType {
 	// WARNING WARNING: the assigned storage IDs are used for persistent serialization.
 	// Any change or re-use must consider data upgrade concerns.
-
-	// The SourceType's defined below are ordered based upon their priority values.
-	// Priority values may be changed.
 
 	/** The object's source indicator for a default. */
 	DEFAULT("Default", 1, 2),
@@ -99,8 +107,6 @@ public enum SourceType {
 	/**
 	 * Determine if this source type has a higher priority than the one being
 	 * passed to this method as a parameter.
-	 * USER_DEFINED objects are higher priority than IMPORTED objects which are higher
-	 * priority than ANALYSIS objects which are higher priority than DEFAULT objects.
 	 * @param source the source type whose priority is to be compared with this one's.
 	 * @return true if this source type is a higher priority.
 	 * false if this source type is the same priority or lower priority.
@@ -112,8 +118,6 @@ public enum SourceType {
 	/**
 	 * Determine if this source type has the same or higher priority than the one being
 	 * passed to this method as a parameter.
-	 * USER_DEFINED objects are higher priority than IMPORTED objects which are higher
-	 * priority than ANALYSIS objects which are higher priority than DEFAULT objects.
 	 * @param source the source type whose priority is to be compared with this one's.
 	 * @return true if this source type is a higher priority.
 	 * false if this source type is the same priority or lower priority.
@@ -125,8 +129,6 @@ public enum SourceType {
 	/**
 	 * Determine if this source type has a lower priority than the one being
 	 * passed to this method as a parameter.
-	 * DEFAULT objects are lower priority than ANALYSIS objects which are lower
-	 * priority than IMPORTED objects which are lower priority than USER_DEFINED objects.
 	 * @param source the source type whose priority is to be compared with this one's.
 	 * @return true if this source type is a lower priority.
 	 * false if this source type is the same priority or higher priority.
@@ -138,8 +140,6 @@ public enum SourceType {
 	/**
 	 * Determine if this source type has the same or lower priority than the one being
 	 * passed to this method as a parameter.
-	 * DEFAULT objects are lower priority than ANALYSIS objects which are lower
-	 * priority than IMPORTED objects which are lower priority than USER_DEFINED objects.
 	 * @param source the source type whose priority is to be compared with this one's.
 	 * @return true if this source type is a lower priority.
 	 * false if this source type is the same priority or higher priority.
