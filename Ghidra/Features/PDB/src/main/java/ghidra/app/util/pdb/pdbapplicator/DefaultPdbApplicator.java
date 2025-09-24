@@ -2342,25 +2342,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	boolean shouldForcePrimarySymbol(Address address, boolean forceIfMangled) {
-		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (primarySymbol != null) {
-
-			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
-				applicatorOptions.allowDemotePrimaryMangledSymbols()) {
-				return true;
-			}
-
-			SourceType primarySymbolSource = primarySymbol.getSource();
-
-			if (!SourceType.ANALYSIS.isHigherPriorityThan(primarySymbolSource)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	//==============================================================================================
 	boolean addToPlateUnique(Address address, String comment) {
 		if (StringUtils.isBlank(comment)) {
 			return false;
@@ -2411,8 +2392,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		Function existingFunction = program.getListing().getFunctionAt(address);
 		if (existingFunction != null) { // Maybe I should care if there is a data type there too.
-			if (existingFunction.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-				// Existing is USER or IMPORTED
+			if (existingFunction.getSignatureSource()
+					.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				return doCreateSymbol(address, symbolPath, false, plateAddition);
 			}
 		}
