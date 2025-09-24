@@ -2445,9 +2445,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	SourceType getStoredSignatureSource() {
 		byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
-		int typeOrdinal = (flags &
+		int sourceTypeId = (flags &
 			FunctionAdapter.FUNCTION_SIGNATURE_SOURCE) >>> FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT;
-		return SourceType.values()[typeOrdinal];
+		return SourceType.getSourceType(sourceTypeId);
 	}
 
 	@Override

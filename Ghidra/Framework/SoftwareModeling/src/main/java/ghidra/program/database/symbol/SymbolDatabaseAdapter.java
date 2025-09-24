@@ -56,9 +56,18 @@ abstract class SymbolDatabaseAdapter {
 
 	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV4.V4_SYMBOL_SCHEMA;
 
-	// Bits 0 & 1 are used for the source of the symbol.
-	static final byte SYMBOL_SOURCE_BITS = (byte) 0x3;
+	// Bits 0, 1 and 3 are used for the source of the symbol.
+	// NOTE: On the next V5 adapter revision the source type bits should be made contiguous
+	static final byte SYMBOL_SOURCE_LO_BITS = (byte) 0x3; // bits 0-1 of SourceType storage ID
 	static final byte SYMBOL_PINNED_FLAG = (byte) 0x4; // Bit 2 is flag for "anchored to address".
+	static final byte SYMBOL_SOURCE_HI_BIT = (byte) 0x8; // bit-3 of SourceType storage ID
+
+	static final byte SYMBOL_SOURCE_MASK = (byte) 0xB; // (01011) Storage mask for SourceType storage ID
+
+	static final int SYMBOL_SOURCE_LO_BITS_SHIFT = 0;
+	static final int SYMBOL_SOURCE_HI_BIT_SHIFT = 3;
+
+	static final int MAX_SOURCE_VALUE = 7; // value limit based upon 3-bit storage capacity
 
 	// Symbol type constants
 	static final int SYMBOL_TYPE_LABEL = SymbolType.LABEL.getID();
@@ -217,6 +226,34 @@ abstract class SymbolDatabaseAdapter {
 			newAdapter.updateSymbolRecord(iter.next());
 			monitor.incrementProgress(1);
 		}
+	}
+
+	/**
+	 * Transforms source type storage ID to V4 flag bits.
+	 * @param sourceType source type
+	 * @return storage ID flag bits
+	 */
+	static byte getSourceTypeFlagsBits(SourceType sourceType) {
+		// Encode SourceType value into split storage flags
+		int sourceTypeId = sourceType.getStorageId();
+		if (sourceTypeId > MAX_SOURCE_VALUE) {
+			throw new RuntimeException("Unsupported SourceType storage ID: " + sourceTypeId);
+		}
+		int sourceTypeLoBits = (sourceTypeId & 0x3) << SYMBOL_SOURCE_LO_BITS_SHIFT; // bits 0-1
+		int sourceTypeHiBit = (sourceTypeId >>> 2) << SYMBOL_SOURCE_HI_BIT_SHIFT; // remaining hi-bit
+		return (byte) (sourceTypeHiBit | sourceTypeLoBits);
+	}
+
+	/**
+	 * Decode V4 flags source type
+	 * @param flags symbol flags
+	 * @return source type
+	 */
+	static SourceType decodeSourceTypeFromFlags(byte flags) {
+		int sourceTypeLoBits = (flags & SYMBOL_SOURCE_LO_BITS) >>> SYMBOL_SOURCE_LO_BITS_SHIFT; // bits 0-1
+		int sourceTypeHiBit = (flags & SYMBOL_SOURCE_HI_BIT) >>> (SYMBOL_SOURCE_HI_BIT_SHIFT - 2); // remaining HI-bit
+		int sourceTypeId = sourceTypeHiBit | sourceTypeLoBits;
+		return SourceType.getSourceType(sourceTypeId);
 	}
 
 	/**

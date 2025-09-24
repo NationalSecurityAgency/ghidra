@@ -52,7 +52,7 @@ import ghidra.util.task.TaskMonitor;
 public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		implements TraceSymbol, DecodesAddresses {
 
-	private static final byte SOURCE_MASK = 0x0F;
+	private static final byte SOURCE_MASK = 0x0F; // see SourceType
 	private static final int SOURCE_SHIFT = 0;
 	private static final byte SOURCE_CLEAR = ~(SOURCE_MASK << SOURCE_SHIFT);
 
@@ -311,7 +311,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	public DBTraceReference[] getReferences() {
 		return getReferences(TaskMonitor.DUMMY);
 	}
-	
+
 	@SuppressWarnings("hiding")
 	void rawSet(String name, long parentID) {
 		this.name = name;
@@ -365,8 +365,8 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	protected void doSetSource(SourceType newSource) {
-		flags =
-			(byte) ((flags & SOURCE_CLEAR) | (newSource.ordinal() & SOURCE_MASK) << SOURCE_SHIFT);
+		flags = (byte) ((flags & SOURCE_CLEAR) |
+			(newSource.getStorageId() & SOURCE_MASK) << SOURCE_SHIFT);
 	}
 
 	/**
@@ -502,7 +502,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	@Override
 	public SourceType getSource() {
 		assertNotGlobal();
-		return SourceType.values()[(flags >> SOURCE_SHIFT) & SOURCE_MASK];
+		return SourceType.getSourceType((flags >> SOURCE_SHIFT) & SOURCE_MASK);
 	}
 
 	@Override
