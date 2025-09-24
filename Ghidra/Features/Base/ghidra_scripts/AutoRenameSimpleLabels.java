@@ -43,8 +43,7 @@ import ghidra.program.model.symbol.*;
 public class AutoRenameSimpleLabels extends GhidraScript {
 
 	boolean isDefaultName(Symbol symbol) {
-		return symbol.getSource() == SourceType.DEFAULT ||
-			symbol.getSource() == SourceType.ANALYSIS;
+		return symbol.getSource().isLowerOrEqualPriorityThan(SourceType.ANALYSIS);
 	}
 
 	@Override
@@ -61,6 +60,9 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 			//get this instruction's info
 			Symbol s = iter.next();
 			Address startAddr = s.getAddress();
+			if (!startAddr.isLoadedMemoryAddress()) {
+				continue;
+			}
 
 			// read the instruction type and operand
 			Instruction inst = getInstructionAt(startAddr);

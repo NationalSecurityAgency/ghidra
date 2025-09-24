@@ -79,8 +79,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		return applicator.getAddress(symbol);
 	}
 
-	private void processSymbol(MsSymbolIterator iter)
-			throws CancelledException, PdbException {
+	private void processSymbol(MsSymbolIterator iter) throws CancelledException, PdbException {
 
 		Address address = applicator.getAddress(symbol);
 		String name = symbol.getName();
@@ -186,8 +185,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		}
 		// Remaining are non-thunks
 
-		if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-			// return if IMPORTED or USER_DEFINED
+		if (function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 			return false;
 		}
 

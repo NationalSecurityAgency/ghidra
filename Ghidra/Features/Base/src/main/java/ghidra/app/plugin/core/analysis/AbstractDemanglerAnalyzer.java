@@ -224,7 +224,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
 			if (!function.isThunk() &&
-				function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+				function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				return true;
 			}
 		}
@@ -297,8 +297,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 				return;
 			}
 			String errorString = demangled.getErrorMessage();
-			logApplyErrorMessage(log, demangled, mangledContext.getAddress(), null,
-				errorString);
+			logApplyErrorMessage(log, demangled, mangledContext.getAddress(), null, errorString);
 		}
 		catch (Exception e) {
 			logApplyErrorMessage(log, demangled, mangledContext.getAddress(), e, null);
