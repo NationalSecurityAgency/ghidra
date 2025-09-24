@@ -11,6 +11,7 @@ data/languages/AARCH64.slaspec||GHIDRA||||END|
 data/languages/AARCH64BE.slaspec||GHIDRA||||END|
 data/languages/AARCH64_AMXext.sinc||GHIDRA||||END|
 data/languages/AARCH64_AppleSilicon.slaspec||GHIDRA||||END|
+data/languages/AARCH64_apple.cspec||GHIDRA||||END|
 data/languages/AARCH64_base_PACoptions.sinc||GHIDRA||||END|
 data/languages/AARCH64_golang.cspec||GHIDRA||||END|
 data/languages/AARCH64_golang.register.info||GHIDRA||||END|
