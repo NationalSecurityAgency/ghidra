@@ -225,6 +225,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				continue;
 			}
 
+			// NOTE: DWARF may have applied function signature with IMPORTED source type but
+			// this analyzer must apply more details
 			Function func = markupSession.createFunctionIfMissing(funcname, funcns, funcAddr);
 			if (func == null ||
 				func.getSignatureSource().isHigherPriorityThan(SourceType.IMPORTED)) {
@@ -503,8 +505,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Address mbStart = max.subtract(offset_from_eom + len - 1);
 		MemoryBlock newMB =
 			MemoryBlockUtils.createUninitializedBlock(program, false, "ARTIFICAL_GOLANG_CONTEXT",
-				mbStart, len, "Artifical memory block created to hold Go context data types",
-				null, true, true, false, null);
+				mbStart, len, "Artifical memory block created to hold Go context data types", null,
+				true, true, false, null);
 		newMB.setArtificial(true);
 		return newMB.getStart();
 	}
@@ -1033,7 +1035,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		record CallSiteInfo(Reference ref, Function callingFunc, Function calledFunc,
 				Register register, java.util.function.Function<GoType, DataType> returnTypeMapper) {
 		}
-
 
 		private GoRttiMapper goBinary;
 		private Program program;

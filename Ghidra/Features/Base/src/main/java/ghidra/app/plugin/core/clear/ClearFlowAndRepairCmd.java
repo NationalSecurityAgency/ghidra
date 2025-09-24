@@ -717,11 +717,9 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 						continue; // do not include data
 					}
 					Symbol s = symbolTable.getPrimarySymbol(blockAddr);
-					if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
-						SourceType source = s.getSource();
-						if (source == SourceType.USER_DEFINED || source == SourceType.IMPORTED) {
-							continue; // keep imported or user-defined function
-						}
+					if (s != null && s.getSymbolType() == SymbolType.FUNCTION &&
+						s.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+						continue;
 						// TODO: GP-5872 Clearing thunks explicitly created by loader or pattern
 						// generally have default SourceType and may not have references
 						// to them.  We need to prevent these thunks from getting cleared.

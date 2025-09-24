@@ -585,12 +585,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		if (Undefined.isUndefined(variableDataType)) {
 			return;
 		}
-		SourceType type = SourceType.ANALYSIS;
-		if (variableSourceType != type && variableSourceType.isHigherPriorityThan(type)) {
-			type = variableSourceType;
-		}
-		if (type.isHigherPriorityThan(getStoredSignatureSource())) {
-			setSignatureSource(type);
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
+		if (variableSourceType.isHigherPriorityThan(getStoredSignatureSource())) {
+			setSignatureSource(variableSourceType);
 		}
 	}
 
@@ -604,14 +601,14 @@ public class FunctionDB extends DatabaseObject implements Function {
 		boolean isReturnUndefined = Undefined.isUndefined(returnType);
 		SourceType type = isReturnUndefined ? SourceType.DEFAULT : SourceType.ANALYSIS;
 
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
 		Parameter[] parameters = getParameters();
 		for (Parameter parameter : parameters) {
 			if (Undefined.isUndefined(parameter.getDataType())) {
 				continue;
 			}
 			SourceType paramSourceType = parameter.getSource();
-			if (paramSourceType != SourceType.ANALYSIS &&
-				paramSourceType.isHigherPriorityThan(SourceType.ANALYSIS)) {
+			if (paramSourceType.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				type = paramSourceType;
 			}
 			else {
@@ -1458,7 +1455,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				symbolMap.put(s, paramDb);
 			}
 
-			if (source.isHigherPriorityThan(getStoredSignatureSource())) {
+			if (source != getStoredSignatureSource()) {
 				setSignatureSource(source);
 			}
 

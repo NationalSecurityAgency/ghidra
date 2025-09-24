@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public enum SourceType {
 	}
 
 	/**
-	 * Determines if this source type is a higher priority than the one being
+	 * Determine if this source type has a higher priority than the one being
 	 * passed to this method as a parameter.
 	 * USER_DEFINED objects are higher priority than IMPORTED objects which are higher
 	 * priority than ANALYSIS objects which are higher priority than DEFAULT objects.
@@ -55,7 +55,20 @@ public enum SourceType {
 	}
 
 	/**
-	 * Determines if this source type is a lower priority than the one being
+	 * Determine if this source type has the same or higher priority than the one being
+	 * passed to this method as a parameter.
+	 * USER_DEFINED objects are higher priority than IMPORTED objects which are higher
+	 * priority than ANALYSIS objects which are higher priority than DEFAULT objects.
+	 * @param source the source type whose priority is to be compared with this one's.
+	 * @return true if this source type is a higher priority.
+	 * false if this source type is the same priority or lower priority.
+	 */
+	public boolean isHigherOrEqualPriorityThan(SourceType source) {
+		return this.priority >= source.priority;
+	}
+
+	/**
+	 * Determine if this source type has a lower priority than the one being
 	 * passed to this method as a parameter.
 	 * DEFAULT objects are lower priority than ANALYSIS objects which are lower
 	 * priority than IMPORTED objects which are lower priority than USER_DEFINED objects.
@@ -65,5 +78,18 @@ public enum SourceType {
 	 */
 	public boolean isLowerPriorityThan(SourceType source) {
 		return this.priority < source.priority;
+	}
+
+	/**
+	 * Determine if this source type has the same or lower priority than the one being
+	 * passed to this method as a parameter.
+	 * DEFAULT objects are lower priority than ANALYSIS objects which are lower
+	 * priority than IMPORTED objects which are lower priority than USER_DEFINED objects.
+	 * @param source the source type whose priority is to be compared with this one's.
+	 * @return true if this source type is a lower priority.
+	 * false if this source type is the same priority or higher priority.
+	 */
+	public boolean isLowerOrEqualPriorityThan(SourceType source) {
+		return this.priority <= source.priority;
 	}
 }
