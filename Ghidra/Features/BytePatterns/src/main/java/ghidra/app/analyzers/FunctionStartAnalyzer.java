@@ -17,6 +17,7 @@ package ghidra.app.analyzers;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -209,7 +210,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		private String label = null;
 		private boolean isThunk = false;    // true if this function should be turned into a thunk
 		private boolean noreturn = false;   // true to set function non-returning
-		private String sectionName = null;  // required section name
+		private java.util.regex.Pattern sectionNamePattern = null;  // required section name as a regex pattern
 		boolean validFunction = false;      // must be defined at a function
 		private boolean contiguous = true;  // require validcode instructions be contiguous
 
@@ -227,9 +228,13 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 		protected boolean checkPreRequisites(Program program, Address addr) {
 			// check required section name
-			if (sectionName != null) {
+			if (sectionNamePattern != null) {
 				MemoryBlock block = program.getMemory().getBlock(addr);
-				if (block == null || !block.getName().matches(sectionName)) {
+				if (block == null) {
+					return false;
+				}
+		        Matcher m = sectionNamePattern.matcher(block.getName());
+			    if (!m.matches()) {
 					return false;
 				}
 			}
@@ -651,7 +656,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 						break;
 						
 					case "section":
-						sectionName = attrValue;
+						sectionNamePattern = java.util.regex.Pattern.compile(attrValue);
 						break;
 						
 					case "noreturn":

@@ -240,10 +240,11 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		dirs.add(new ResourceFile(new File(userSettingsDir, "Extensions")));
 
 		if (SystemUtilities.isInDevelopmentMode()) {
-			ResourceFile rootDir = getApplicationRootDirs().iterator().next();
-			File temp = new File(rootDir.getFile(false), "Extensions");
-			if (temp.exists()) {
-				dirs.add(new ResourceFile(temp)); // ghidra/Ghidra/Extensions
+			for (ResourceFile rootDir : getApplicationRootDirs()) {
+				File temp = new File(rootDir.getFile(false), "Extensions");
+				if (temp.exists()) {
+					dirs.add(new ResourceFile(temp)); // i.e., ghidra/Ghidra/Extensions
+				}
 			}
 		}
 		else {
