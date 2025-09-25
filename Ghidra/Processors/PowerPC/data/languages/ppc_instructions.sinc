@@ -438,7 +438,7 @@
 #bdnzf 4*cr2+eq,LAB_0000		0x40 0a 00 00
 :bd^CTR_DEC^CC_TF^REL_ABS CC_OP,addressBD 		is $(NOTVLE) & OP=16 & CC_TF & REL_ABS & CTR_DEC & CC_OP & addressBD & BO_0=0 & BO_2=0 & LK=0
 {
-	if (CTR_DEC && CC_OP) goto addressBD;
+	if (CTR_DEC && (CC_OP == CC_TF)) goto addressBD;
 }
 
 #bdzfl lt,FUN_0000				0x40 00 00 01
@@ -447,7 +447,7 @@
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
 	LR = inst_next;
-	if (!(CTR_DEC && CC_OP)) goto inst_next;
+	if (!(CTR_DEC && (CC_OP == CC_TF))) goto inst_next;
 	call addressBD;
 }
 
@@ -688,7 +688,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next;
+	if (!(CTR_DEC && (CC_OP == CC_TF))) goto inst_next;
 	goto [LR];
 }
 
@@ -697,7 +697,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next;
+	if (!(CTR_DEC && (CC_OP == CC_TF))) goto inst_next;
 	goto [LR];
 }
 
@@ -708,7 +708,7 @@
 {
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
-	if (!(CTR_DEC && CC_OP)) goto inst_next;
+	if (!(CTR_DEC && (CC_OP == CC_TF))) goto inst_next;
 	call [tmp];
 }
 
@@ -719,7 +719,7 @@
 {
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
-	if (!(CTR_DEC && CC_OP)) goto inst_next;
+	if (!(CTR_DEC && (CC_OP == CC_TF))) goto inst_next;
 	call [tmp];
 }
 
