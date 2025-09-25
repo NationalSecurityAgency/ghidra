@@ -34,7 +34,7 @@ def configureVisualStudio() {
 			println "  -> To manually specify the location of vswhere.exe, add \"-PvswherePath=<vswhere path>\" to the Gradle command line arguments"
 			return
 		}
-		def vswhereProcess = "\"${vswherePath}\" -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
+		def vswhereProcess = "\"${vswherePath}\" -products * -sort -prerelease -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
 		def vswhereOutput = vswhereProcess.text.trim()
 		def vswhereExit = vswhereProcess.exitValue()
 		if (vswhereExit != 0) {
@@ -49,11 +49,27 @@ def configureVisualStudio() {
 			return
 		}
 		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
-		if (vswhereJson.isEmpty()) {
+		def usePrerelease = project.hasProperty("vswherePrerelease")
+		def i = -1
+		println "  -> Searching for Visual Studio installations..."
+		vswhereJson.eachWithIndex { item, index ->
+			def isPrerelease = item.get("isPrerelease")
+			def name = item.get("displayName") + (isPrerelease ? " Prerelease" : "")
+			if (i == -1) {
+				if (usePrerelease || !isPrerelease) {
+					i = index
+				}
+			}
+			println "     ${index + 1}: ${name}" + 
+				(i == index ? " (selected)" : "") +
+				(isPrerelease && !usePrerelease ? " (enable with -PvswherePrerelease)" : "")
+		}
+		if (i == -1) {
 			println "  -> Visual Studio not found!"
 			return
 		}
-		def vsInstallDir = vswhereJson[0].installationPath
+		
+		def vsInstallDir = vswhereJson[i].installationPath
 		println "  -> Installation Directory: ${vsInstallDir}"
 
 		// Use vcvarsall.bat to determine the latest Visual Studio's default SDK and tool versions
