@@ -567,8 +567,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		// if there is no pcode, go to the next instruction
 		// assume fallthrough (ie. x86 instruction ENDBR64)
 		// TODO: at some point, might need to do a NOP detection
-		while (instr != null && instr.getPcode().length == 0) {
-			instr = listing.getInstructionAfter(instr.getAddress());
+		if (instr != null && instr.getPcode().length == 0) {
+			instr = listing.getInstructionAfter(entry);
 		}
 		if (instr == null) {
 			return null;
