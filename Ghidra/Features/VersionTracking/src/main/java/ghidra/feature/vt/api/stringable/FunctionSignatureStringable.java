@@ -996,10 +996,12 @@ public class FunctionSignatureStringable extends Stringable {
 		if (first == second) {
 			return replaceSamePriorityNames;
 		}
-		// NOTE: If a new SourceType is added with a priority in between IMPORTED and USER_DEFINED
-		// VT and this code will need to change.
+		// Force IMPORTED to have highest priority
 		if (first == SourceType.IMPORTED) {
-			return true; // IMPORTED is highest priority
+			return true;
+		}
+		else if (second == SourceType.IMPORTED) {
+			return false;
 		}
 		return first.isHigherPriorityThan(second);
 	}
