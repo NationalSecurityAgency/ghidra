@@ -432,14 +432,26 @@ public class CategoryPathSelectionEditor extends AbstractCellEditor {
 			}
 
 			Pattern p = mode.createPattern(searchText);
-			return getMatchingDataRegex(p);
+			boolean startsWith = mode == SearchMode.STARTS_WITH;
+
+			if (startsWith) {
+				// update the 'starts with' pattern to allow for optional leading slash, as that is
+				// sometimes intuitive for the user to type.
+				String pattern = p.pattern();
+				String newPattern = "/{0,1}" + pattern;
+				p = Pattern.compile(newPattern, Pattern.CASE_INSENSITIVE);
+			}
+
+			return getMatchingDataRegex(p, startsWith);
 		}
 
-		private List<CategoryPath> getMatchingDataRegex(Pattern p) {
+		private List<CategoryPath> getMatchingDataRegex(Pattern p, boolean startsWith) {
 			List<CategoryPath> results = new ArrayList<>();
 			for (CategoryPath path : data) {
-				String pathString = path.getPath();
-				Matcher m = p.matcher(pathString);
+				// use the name for 'startsWith' searches so users can avoid slashes or path data
+				String text =
+					startsWith ? CategoryPath.DELIMITER_CHAR + path.getName() : path.getPath();
+				Matcher m = p.matcher(text);
 				if (m.matches()) {
 					results.add(path);
 				}

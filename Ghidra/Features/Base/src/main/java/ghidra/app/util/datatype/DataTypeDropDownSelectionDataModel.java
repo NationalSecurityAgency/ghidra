@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
@@ -100,7 +102,7 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<DataType> getMatchingData(String searchText, SearchMode mode) {
-		if (searchText == null || searchText.length() == 0) {
+		if (StringUtils.isBlank(searchText)) {
 			// full list results not supported since the data may be too large for user interaction
 			return Collections.emptyList();
 		}
