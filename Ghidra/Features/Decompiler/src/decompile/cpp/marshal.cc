@@ -689,7 +689,10 @@ void PackedDecode::endIngest(int4 bufPos)
     }
     uint1 *buf = inStream.back().start;
     buf[bufPos] = ELEMENT_END;
+  } else {
+    throw DecoderError("Ended ingestion without any input");
   }
+
 }
 
 PackedDecode::~PackedDecode(void)
@@ -1006,6 +1009,9 @@ AddrSpace *PackedDecode::readSpace(void)
   AddrSpace *spc;
   if (typeCode == TYPECODE_ADDRESSSPACE) {
     res = readInteger(readLengthCode(typeByte));
+    if (res >= spcManager->numSpaces())
+      throw DecoderError("Invalid address space index");
+
     spc = spcManager->getSpace(res);
     if (spc == (AddrSpace *)0)
       throw DecoderError("Unknown address space index");
