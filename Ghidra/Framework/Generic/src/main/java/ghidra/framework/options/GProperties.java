@@ -78,7 +78,7 @@ public class GProperties {
 	private static final String STATE = "STATE";
 	protected static final String TYPE = "TYPE";
 	protected static final String NAME = "NAME";
-	private static final String VALUE = "VALUE";
+	protected static final String VALUE = "VALUE";
 	public static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	private static final String ARRAY_ELEMENT_NAME = "A";
 	protected TreeMap<String, Object> map; // use ordered map for deterministic serialization
@@ -505,35 +505,34 @@ public class GProperties {
 		return root;
 	}
 
-	protected Element createElement(String key, Object value) {
+	protected Element createElement(String propertyName, Object value) {
 		Element elem = null;
 		if (value instanceof Element) {
-			elem = createElementFromElement(key, (Element) value);
+			elem = createElementFromElement(propertyName, (Element) value);
 		}
 		else if (value instanceof Byte) {
-			elem = setAttributes(key, "byte", ((Byte) value).toString());
+			elem = setAttributes(propertyName, "byte", ((Byte) value).toString());
 		}
 		else if (value instanceof Short) {
-			elem = setAttributes(key, "short", ((Short) value).toString());
+			elem = setAttributes(propertyName, "short", ((Short) value).toString());
 		}
 		else if (value instanceof Integer) {
-			elem = setAttributes(key, "int", ((Integer) value).toString());
+			elem = setAttributes(propertyName, "int", ((Integer) value).toString());
 		}
 		else if (value instanceof Long) {
-			elem = setAttributes(key, "long", ((Long) value).toString());
+			elem = setAttributes(propertyName, "long", ((Long) value).toString());
 		}
 		else if (value instanceof Float) {
-			elem = setAttributes(key, "float", ((Float) value).toString());
+			elem = setAttributes(propertyName, "float", ((Float) value).toString());
 		}
 		else if (value instanceof Double) {
-			elem = setAttributes(key, "double", ((Double) value).toString());
+			elem = setAttributes(propertyName, "double", ((Double) value).toString());
 		}
 		else if (value instanceof Boolean) {
-			elem = setAttributes(key, "boolean", ((Boolean) value).toString());
+			elem = setAttributes(propertyName, "boolean", ((Boolean) value).toString());
 		}
 		else if (value instanceof String) {
-			elem = new Element(STATE);
-			elem.setAttribute(NAME, key);
+			elem = createElement(STATE, propertyName);
 			elem.setAttribute(TYPE, "string");
 			if (XmlUtilities.hasInvalidXMLCharacters((String) value)) {
 				elem.setAttribute("ENCODED_VALUE", NumericUtilities
@@ -544,71 +543,66 @@ public class GProperties {
 			}
 		}
 		else if (value instanceof Color) {
-			elem = setAttributes(key, "Color", Integer.toString(((Color) value).getRGB()));
+			elem = setAttributes(propertyName, "Color", Integer.toString(((Color) value).getRGB()));
 		}
 		else if (value instanceof Date) {
-			elem = setAttributes(key, "Date", DATE_FORMAT.format((Date) value));
+			elem = setAttributes(propertyName, "Date", DATE_FORMAT.format((Date) value));
 		}
 		else if (value instanceof File) {
-			elem = setAttributes(key, "File", ((File) value).getAbsolutePath());
+			elem = setAttributes(propertyName, "File", ((File) value).getAbsolutePath());
 		}
 		else if (value instanceof KeyStroke) {
-			elem = setAttributes(key, "KeyStroke", value.toString());
+			elem = setAttributes(propertyName, "KeyStroke", value.toString());
 		}
 		else if (value instanceof Font font) {
-			elem = setAttributes(key, "Font", toFontString(font));
+			elem = setAttributes(propertyName, "Font", toFontString(font));
 		}
 		else if (value instanceof byte[]) {
-			elem = new Element("BYTES");
-			elem.setAttribute(NAME, key);
+			elem = createElement("BYTES", propertyName);
 			elem.setAttribute(VALUE, NumericUtilities.convertBytesToString((byte[]) value));
 		}
 		else if (value instanceof short[]) {
-			elem = setArrayAttributes(key, "short", value);
+			elem = setArrayAttributes(propertyName, "short", value);
 		}
 		else if (value instanceof int[]) {
-			elem = setArrayAttributes(key, "int", value);
+			elem = setArrayAttributes(propertyName, "int", value);
 		}
 		else if (value instanceof long[]) {
-			elem = setArrayAttributes(key, "long", value);
+			elem = setArrayAttributes(propertyName, "long", value);
 		}
 		else if (value instanceof float[]) {
-			elem = setArrayAttributes(key, "float", value);
+			elem = setArrayAttributes(propertyName, "float", value);
 		}
 		else if (value instanceof double[]) {
-			elem = setArrayAttributes(key, "double", value);
+			elem = setArrayAttributes(propertyName, "double", value);
 		}
 		else if (value instanceof boolean[]) {
-			elem = setArrayAttributes(key, "boolean", value);
+			elem = setArrayAttributes(propertyName, "boolean", value);
 		}
 		else if (value instanceof String[]) {
-			elem = setArrayAttributes(key, "string", value);
+			elem = setArrayAttributes(propertyName, "string", value);
 		}
 		else if (value instanceof Enum) {
 			Enum<?> e = (Enum<?>) value;
-			elem = new Element("ENUM");
-			elem.setAttribute(NAME, key);
+			elem = createElement("ENUM", propertyName);
 			elem.setAttribute(TYPE, "enum");
 			elem.setAttribute("CLASS", e.getClass().getName());
 			elem.setAttribute(VALUE, e.name());
 		}
 		else if (value instanceof GProperties) {
 			Element savedElement = ((GProperties) value).saveToXml();
-			elem = new Element(GPROPERTIES_TAG);
-			elem.setAttribute(NAME, key);
+			elem = createElement(GPROPERTIES_TAG, propertyName);
 			elem.setAttribute(TYPE, G_PROPERTIES_TYPE);
 			elem.addContent(savedElement);
 		}
 		else {
-			elem = new Element("NULL");
-			elem.setAttribute(NAME, key);
+			elem = createElement("NULL", propertyName);
 		}
 		return elem;
 	}
 
-	private <T> Element setArrayAttributes(String key, String type, Object values) {
-		Element elem = new Element("ARRAY");
-		elem.setAttribute(NAME, key);
+	private <T> Element setArrayAttributes(String propertyName, String type, Object values) {
+		Element elem = createElement("ARRAY", propertyName);
 		elem.setAttribute(TYPE, type);
 		for (int i = 0; i < Array.getLength(values); i++) {
 			Object value = Array.get(values, i);
@@ -621,10 +615,19 @@ public class GProperties {
 		return elem;
 	}
 
-	private Element setAttributes(String key, String type, String value) {
-		Element elem;
-		elem = new Element(STATE);
-		elem.setAttribute(NAME, key);
+	protected Element createElement(String tag, String name) {
+		Element e = new Element(tag);
+		e.setAttribute(NAME, name);
+		initializeElement(e);
+		return e;
+	}
+
+	protected void initializeElement(Element e) {
+		// subclasses may override
+	}
+
+	private Element setAttributes(String propertyName, String type, String value) {
+		Element elem = createElement(STATE, propertyName);
 		elem.setAttribute(TYPE, type);
 		elem.setAttribute(VALUE, value);
 		return elem;
@@ -792,8 +795,7 @@ public class GProperties {
 	}
 
 	protected Element createElementFromElement(String internalKey, Element internalElement) {
-		Element newElement = new Element("XML");
-		newElement.setAttribute(NAME, internalKey);
+		Element newElement = createElement("XML", internalKey);
 
 		Element internalElementClone = (Element) internalElement.clone();
 		newElement.addContent(internalElementClone);
@@ -1420,11 +1422,11 @@ public class GProperties {
 		return true;
 	}
 
-	private String toFontString(Font font) {
+	private static String toFontString(Font font) {
 		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
 	}
 
-	private String getStyleString(Font font) {
+	private static String getStyleString(Font font) {
 		boolean bold = font.isBold();
 		boolean italic = font.isItalic();
 		if (bold && italic) {

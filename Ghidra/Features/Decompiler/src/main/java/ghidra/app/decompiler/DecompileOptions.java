@@ -538,7 +538,7 @@ public class DecompileOptions {
 
 		grabFromProgram(program);
 
-		// assuming if one is not registered, then none area
+		// assuming if one is not registered, then none are
 		if (!opt.isRegistered(PREDICATE_OPTIONSTRING)) {
 			return;
 		}

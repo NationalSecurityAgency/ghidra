@@ -17,6 +17,7 @@ package ghidra.framework.options;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.jdom.Element;
 
@@ -114,31 +115,86 @@ public class SaveState extends XmlProperties {
 		return getAsType(name, null, SaveState.class);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void processElement(Element element) {
 		String tag = element.getName();
-
-		if (tag.equals("SAVE_STATE")) {
-			Element child = (Element) element.getChildren().get(0);
-			if (child != null) {
-				String name = element.getAttributeValue(NAME);
-				map.put(name, new SaveState(child));
-				return;
-			}
+		if (!tag.equals("SAVE_STATE")) {
+			super.processElement(element);
+			return;
 		}
-		super.processElement(element);
+
+		/*
+		 	When using a SaveState inside of a SaveState, we produce xml that looks like this: 
+		 	
+		 	<SAVE_STATE NAME="Bar" TYPE="SaveState">
+		        <STATE NAME="Bar" TYPE="int" VALUE="3" />
+		    </SAVE_STATE>
+		 */
+
+		SaveState saveState = createSaveState();
+
+		List<Element> children = element.getChildren();
+		if (children.isEmpty()) {
+			return;
+		}
+
+		Element child = (Element) element.getChildren().get(0);
+		String childTag = child.getName();
+		if (childTag.equals("SAVE_STATE")) {
+			/*
+			 	Old style tag, with one level of extra nesting
+			 	
+			 	<SAVE_STATE NAME="Bar" TYPE="SaveState">
+			        <SAVE_STATE>
+			            <STATE NAME="DATED_OPTION" TYPE="int" VALUE="3" />
+			        </SAVE_STATE>
+			    </SAVE_STATE>
+			 	
+			 */
+			children = child.getChildren();
+		}
+
+		for (Element e : children) {
+			saveState.processElement(e);
+		}
+
+		String parentName = element.getAttributeValue(NAME);
+		map.put(parentName, saveState);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Element createElement(String key, Object value) {
-		if (value instanceof SaveState saveState) {
-			Element savedElement = saveState.saveToXml();
-			Element element = new Element("SAVE_STATE");
-			element.setAttribute(NAME, key);
-			element.setAttribute(TYPE, "SaveState");
-			element.addContent(savedElement);
-			return element;
+		if (!(value instanceof SaveState saveState)) {
+			return super.createElement(key, value);
 		}
-		return super.createElement(key, value);
+
+		/*
+		 	When using a SaveState inside of a SaveState, we produce xml that looks like this: 
+		 	
+		 	<SAVE_STATE NAME="Bar" TYPE="SaveState">
+		        <STATE NAME="Bar" TYPE="int" VALUE="3" />
+		    </SAVE_STATE>
+		 */
+
+		Element savedElement = saveState.saveToXml();
+		Element element = new Element("SAVE_STATE");
+		element.setAttribute(NAME, key);
+		element.setAttribute(TYPE, "SaveState");
+
+		// do not write an extra <SAVE_STATE> intermediate node
+		List<Element> children = savedElement.getChildren();
+		for (Element e : children) {
+			Element newElement = (Element) e.clone();
+			element.addContent(newElement);
+		}
+
+		return element;
+	}
+
+	// allows subclasses to override how sub-save states are created
+	protected SaveState createSaveState() {
+		return new SaveState();
 	}
 }
