@@ -7000,7 +7000,8 @@ int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
 	multiplier = ptraddmult;
     }
     else {
-      break;
+      multiplier = 0;
+      return extra;
     }
     outvn = op->getOut();
     op = outvn->loneDescend();
@@ -7116,10 +7117,13 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
   if (basevn->getTypeReadFacing(op)->isPtrsubMatching(val,extra,multiplier))
     return 0;
 
+  // Don't undo PTRSUB with zero offset and no extra - these can be valid pointer operations (e.g., casts)
+  if (val == 0 && extra == 0)
+    return 0;
   data.opSetOpcode(op,CPUI_INT_ADD);
   op->clearStopTypePropagation();
   extra = removeLocalAdds(op->getOut(),data);
-  if (extra != 0) {
+  if (extra != 0 && multiplier != 0) {
     val = val + extra;		// Lump extra into additive offset
     data.opSetInput(op,data.newConstant(cvn->getSize(), val & calc_mask(cvn->getSize())),1);
   }
