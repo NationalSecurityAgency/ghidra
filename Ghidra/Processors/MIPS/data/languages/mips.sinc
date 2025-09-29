@@ -448,6 +448,19 @@ define context contextreg
   ext_svrs_s0=(24,24) noflow
   ext_done=(25,25) noflow
   ext_delay=(26,27) noflow
+
+  # 16e2
+  ext_rb=(11,13) noflow
+  ext_imm_2426=(3, 5)
+  ext_imm_2526=(3,4) noflow
+  ext_imm_1620=(9,13) noflow
+  ext_imm_1920=(9,10) noflow
+  ext_imm_2124=(5, 8) noflow
+  ext_imm_2123=(6, 8) noflow
+  ext_imm_21=(8,8) noflow
+  ext_imm_2226=(3,7) noflow
+
+
 #below here is for micromips. Overlaps with mips16e
   ext_t4_name=(2,5) noflow
   ext_t4=(2,5) noflow
