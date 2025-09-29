@@ -114,22 +114,30 @@ public class ToolOptions extends AbstractOptions {
 	private void readNonWrappedOptions(AttributedSaveState saveState) {
 		for (String optionName : saveState.getNames()) {
 			Object object = saveState.getObject(optionName);
-
-			// Get the last registered date.  No date implies an old xml format.
-			LocalDate date = LocalDate.now();
-			Map<String, String> attrs = saveState.getAttributes(optionName);
-			String dateString = attrs.get(LAST_REGISTERED_DATE_ATTIBUTE);
-			if (dateString != null) {
-				date = LocalDate.parse(dateString, LAST_REGISTERED_DATE_FORMATTER);
-			}
-
 			OptionType type = OptionType.getOptionType(object);
 			Option option = createUnregisteredOption(optionName, type, null);
 			option.doSetCurrentValue(object);  // use doSet versus set so that it is not registered
+
+			LocalDate date = getLastRegisteredDateString(saveState, optionName);
 			option.setLastRegisteredDate(date);
 
 			valueMap.put(optionName, option);
 		}
+	}
+
+	private LocalDate getLastRegisteredDateString(AttributedSaveState saveState,
+			String optionName) {
+
+		// Get the last registered date.  No date implies an old xml format.
+		Map<String, String> attrs = saveState.getAttributes(optionName);
+		if (attrs != null) {
+			String dateString = attrs.get(LAST_REGISTERED_DATE_ATTIBUTE);
+			if (dateString != null) {
+				return LocalDate.parse(dateString, LAST_REGISTERED_DATE_FORMATTER);
+			}
+		}
+
+		return LocalDate.now();
 	}
 
 	private void readWrappedOptions(Element root) throws ReflectiveOperationException {
