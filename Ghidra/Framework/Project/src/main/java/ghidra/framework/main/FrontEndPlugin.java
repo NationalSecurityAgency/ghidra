@@ -129,6 +129,7 @@ public class FrontEndPlugin extends Plugin
 
 	private FrontEndProvider frontEndProvider;
 
+	private ProjectRepoConnectAction repoConnectAction;
 	private ProjectDataCutAction cutAction;
 	private ClearCutAction clearCutAction;
 	private ProjectDataCopyAction copyAction;
@@ -221,6 +222,7 @@ public class FrontEndPlugin extends Plugin
 		String owner = getName();
 
 		// Top of popup menu actions - no group
+		repoConnectAction = new ProjectRepoConnectAction(this, null);
 		openAction = new ProjectDataOpenDefaultToolAction(owner, null);
 		followLinkAction = new ProjectDataFollowLinkAction(this, null);
 		selectRealFileOrFolderAction = new ProjectDataSelectRealFileOrFolderAction(this, null);
@@ -251,6 +253,7 @@ public class FrontEndPlugin extends Plugin
 		groupName = "XRefresh";
 		refreshAction = new ProjectDataRefreshAction(owner, groupName);
 
+		tool.addAction(repoConnectAction);
 		tool.addAction(newFolderAction);
 		tool.addAction(cutAction);
 		tool.addAction(clearCutAction);
