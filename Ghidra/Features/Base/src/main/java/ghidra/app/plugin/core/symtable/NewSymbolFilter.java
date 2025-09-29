@@ -270,7 +270,9 @@ public class NewSymbolFilter implements SymbolFilter {
 		for (Element child : children) {
 			String childName = child.getAttributeValue(Filter.NAME_ATTRIBUTE);
 			Filter f = filterMap.get(childName);
-			f.restoreFromXml(child);
+			if (f != null) { // NOTE: filter definition may have been dropped and not found
+				f.restoreFromXml(child);
+			}
 		}
 
 		rebuildActiveFilters();
