@@ -100,7 +100,7 @@ can also be used in headless mode with the new `-mirror` command line option.
 ## PyGhidra
 PyGhidra 3.0.0 (compatible with Ghidra 12.0 and later) introduces many new Python-specific API 
 methods with the goal of making the most common Ghidra tasks quick and easy, such as opening a 
-project, getting a program, and running a GhidraScript. Legacy API fuctions such as 
+project, getting a program, and running a GhidraScript. Legacy API functions such as 
 `pyghidra.open_program()` and `pyghidra_run_script()` have been deprecated in favor of the new 
 methods. Below is an example program that showcases some of the new API functionality. See the 
 PyGhidra library README for more information.
@@ -148,11 +148,11 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
 ```
 
 ## Z3 Concolic Emulation and Symbolic Summary
-We've added an experimental Z3-based symbolic emulator, which runs as an "auxilliary" domain to the 
+We've added an experimental Z3-based symbolic emulator, which runs as an "auxiliary" domain to the 
 concrete emulator, effectively constructing what is commonly called a "concolic" emulator. The 
 symbolic emulator creates Z3 expressions and branching constraints, but it only follows the path 
 determined by concrete emulation. This is most easily accessed by installing the "SymbolicSummaryZ3"
-extension (**File** &rarr; **Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
+extension (**File** -> **Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
 Debugger or Emulator tool, which includes a GUI for viewing and sorting through the results. The Z3
 emulator requires z3-4.13.0, available from https://github.com/Z3Prover/z3. Other versions may work,
 but our current test configuration uses 4.13.0. Depending on the release and your platform, the
