@@ -18,6 +18,7 @@ package ghidra.launch;
 import java.io.*;
 import java.text.ParseException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.launch.JavaFinder.Platform;
 
@@ -160,6 +161,7 @@ public class LaunchProperties {
 					}
 					String key = line.substring(0, equalsIndex).trim();
 					String value = line.substring(equalsIndex + 1, line.length()).trim();
+					value = expandEnvVars(value);
 					List<String> valueList = map.get(key);
 					if (valueList == null) {
 						valueList = new ArrayList<>();
@@ -173,4 +175,21 @@ public class LaunchProperties {
 		}
 		return map;
 	}
+
+	/**
+	 * Expands <code>${var}</code>-style environment variables in the given string. Expansion only
+	 * happens if the environment variable is set.
+	 * 
+	 * @param text The string to expand environment variables in
+	 * @return The given string, but with set environment variables expanded
+	 */
+	private static String expandEnvVars(String text) {  
+		Map<String, String> envMap = System.getenv();
+        for (Entry<String, String> entry : envMap.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+			text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
+        }
+        return text;
+    }
 }
