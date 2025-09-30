@@ -160,7 +160,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		functionComparisonPanel = fcService.createComparisonViewer();
 
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonView.NAME);
+		functionComparisonPanel.setActiveView(ListingCodeComparisonView.NAME);
 		functionComparisonPanel.getAccessibleContext().setAccessibleName("Function Comparison");
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 		ListingCodeComparisonView dualListingProvider =
