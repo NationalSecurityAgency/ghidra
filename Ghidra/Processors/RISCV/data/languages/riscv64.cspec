@@ -18,11 +18,14 @@
 		<entry size="8" alignment="8" />
 	</size_alignment_map>
   </data_organization>
+  
   <global>
     <range space="ram"/>
+    <range space="csreg"/>
     <register name="gp"/>
     <register name="tp"/>
   </global>
+  
   <returnaddress>
     <register name="ra"/>
   </returnaddress>
