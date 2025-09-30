@@ -40,27 +40,38 @@
     <H2><A name="ConnectToServer"></A>Connect to the Server</H2>
 
     <BLOCKQUOTE>
-      <P>When you open a shared project, Ghidra attempts to connect to the server that is
-      associated with the shared project. Depending on what user authentication mode the server is
-      using, you may have to enter a password. If the server is not running, you are still able to
-      work with your checked out files while you are offline. Other versioned files not checked out
-      are not accessible. When the server comes up, Ghidra will reconnect as necessary. You can
-      also attempt to connect "manually" by selecting the connection status button <IMG alt="" src=
-      "images/disconnected.gif" border="0"> on the Ghidra Project Window or on the <I><A href=
-      "help/topics/FrontEndPlugin/Project_Info.htm">Project Info</A></I> dialog. When the
-      connection is successful, the connection status button changes to <IMG alt="" src=
-      "images/connected.gif" border="0">.&nbsp;</P>
-
-      <P>If you lose the connection to the server after having started Ghidra, shared files not
-      checked out "disappear" from the Ghidra Project Window, as they are unavailable. Private
-      files remain intact and are not affected by the server connection.</P>
+      <P>When you open or view a shared project, Ghidra attempts to connect to the corresponding server. 
+	  Depending on which user authentication mode the server is using, you may have to enter a password. 
+	  If you choose not to connect or lose the connection to the repository server after opening 
+	  or viewing a project, shared files not
+	  checked out will not be shown within the Ghidra Project Window, as they are unavailable for use. 
+	  Local project private files are not affected by the repository server connection and will always 
+	  be shown.  If you subsequently connect to the repository server, Ghidra will refresh 
+	  the project views to reflect the current state.&nbsp;</P>
+	  
+	  <BLOCKQUOTE>
+    	<P>
+    	<IMG SRC="help/shared/tip.png" />
+		The root folder node of the Project Data Tree view of a shared project will convey the 
+		current connection status with green (connected) or red (disconnected) indicator.&nbsp;</P>
+	  </BLOCKQUOTE>
+	  
+	  <P>If applicable, and
+	  not currently connected to the shared repository server, a manual connection may be re-attempted by
+	  clicking the <B>Connect Shared Repository</B> popup action on the root node of a shared project.
+	  For the active project there is also a Connect status button in the lower-right corner of the 
+	  project window.  When this button shows the disconnected state 
+	  <IMG alt="" src="images/disconnected.gif" border="0"> it may be clicked to attempt a connection.
+	  This may also be done from the <I><A href="help/topics/FrontEndPlugin/Project_Info.htm">Project 
+	  Info</A></I> dialog. When the active project repository connection is successful, the connection 
+	  status button changes to <IMG alt="" src="images/connected.gif" border="0">.&nbsp;</P>
 
 	  <BLOCKQUOTE>
     	<P>
     	<IMG SRC="help/shared/tip.png" />
-  		You are authenticated only once per
-  		Ghidra session; so if you open other project repositories managed by the same Ghidra Server,
-  		you will be prompted only once for a password, as required.&nbsp;</P>
+  		Successfully connecting to a Ghidra Server which corresponds to multiple named repositories will cause 
+		all associated viewed projects within Ghidra to become connected or automatically connect
+		when subsequently opened.&nbsp;</P>
 	  </BLOCKQUOTE>
 	  
       <H3><A name="Troubleshooting"></A>Troubleshooting a Failed Connection</H3>
