@@ -182,14 +182,23 @@ public class LaunchProperties {
 	 * 
 	 * @param text The string to expand environment variables in
 	 * @return The given string, but with set environment variables expanded
+	 * @throws ParseException if there was a problem expanding an environment variable
 	 */
-	private static String expandEnvVars(String text) {  
+	private static String expandEnvVars(String text) throws ParseException {
 		Map<String, String> envMap = System.getenv();
-        for (Entry<String, String> entry : envMap.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-			text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
-        }
-        return text;
-    }
+		for (Entry<String, String> entry : envMap.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			try {
+				text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
+			}
+			catch (IllegalArgumentException e) {
+				throw new ParseException(
+					"Error expanding environment variable in %s (env %s=%s) -- %s".formatted(text,
+						key, value, e.getMessage()),
+					0);
+			}
+		}
+		return text;
+	}
 }

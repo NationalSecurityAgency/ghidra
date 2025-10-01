@@ -97,6 +97,14 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		help.registerHelp(this, new HelpLocation(HELP_TOPIC, "Function Comparison"));
 	}
 
+	@Override
+	public Dimension getMinimumSize() {
+		// If we don't specify a minimum size, the some layouts will use the preferred size when
+		// calculating the minimum size.  When this happens while this panel is inside of a split 
+		// pane, the split pane can become un-resizable.  By specify a value here, we prevent this.   
+		return new Dimension(50, 50);
+	}
+
 	private void comparisonStateUpdated() {
 		readPanelState();
 		readViewState();
