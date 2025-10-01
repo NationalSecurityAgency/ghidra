@@ -66,7 +66,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	private static final String DUAL_SCROLLING_HELP_TOPIC = "FunctionComparison";
 
 	private JTabbedPane tabbedPane;
-	private Map<String, JComponent> tabComponentsByName;
+	private Map<String, CodeComparisonView> tabComponentsByName;
 	private List<CodeComparisonView> codeComparisonViews;
 	private ToggleScrollLockAction toggleScrollLockAction;
 	private boolean syncScrolling = false;
@@ -89,6 +89,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 		codeComparisonViews = getCodeComparisonViews(tool, owner);
 		tabComponentsByName = new HashMap<>();
+
 		createMainPanel();
 		createActions(owner);
 		setScrollingSyncState(true);
@@ -96,6 +97,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		// reload saved state; add the listener after we are fully finished build so we do not save
 		// any default state
 		readPanelState();
+
 		tabbedPane.addChangeListener(this);
 
 		HelpService help = Help.getHelpService();
@@ -243,14 +245,14 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return true if the named view was found in the view map
 	 */
 	public boolean setActiveView(String name) {
-		JComponent component = tabComponentsByName.get(name);
-		if (component != null) {
-			if (tabbedPane.getSelectedComponent() == component) {
+		CodeComparisonView view = tabComponentsByName.get(name);
+		if (view != null) {
+			if (tabbedPane.getSelectedComponent() == view) {
 				tabChanged();
 			}
-			tabbedPane.setSelectedComponent(component);
+			tabbedPane.setSelectedComponent(view);
 		}
-		return component != null;
+		return view != null;
 	}
 
 	/**
