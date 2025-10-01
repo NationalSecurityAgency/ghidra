@@ -98,7 +98,7 @@ public class DecompilerCodeComparisonView extends CodeComparisonView {
 		maybeLoadFunction(LEFT, comparisonData.get(LEFT).getFunction());
 		maybeLoadFunction(RIGHT, comparisonData.get(RIGHT).getFunction());
 		if (coordinator != null) {
-			coordinator.leftLocationChanged((ProgramLocation) null);
+			coordinator.leftLocationChanged(null);
 		}
 	}
 
