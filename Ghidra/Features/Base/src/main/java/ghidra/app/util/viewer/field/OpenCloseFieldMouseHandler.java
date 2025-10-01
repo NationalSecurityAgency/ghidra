@@ -21,9 +21,13 @@ import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 
+/**
+ * Mouse handlers for open/close widgets
+ */
 public class OpenCloseFieldMouseHandler implements FieldMouseHandlerExtension {
 	private final static Class<?>[] SUPPORTED_CLASSES =
-		new Class[] { OpenCloseField.class, VariableOpenCloseField.class };
+		new Class[] { OpenCloseField.class, VariableOpenCloseField.class,
+			FunctionOpenCloseField.class };
 
 	@Override
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,

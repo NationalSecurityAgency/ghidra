@@ -83,6 +83,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement("Flow Arrow, Selected", FlowArrowColors.SELECTED);
 	public static final ScreenElement LABELS_PRIMARY = new ScreenElement("Labels, Primary", LabelColors.PRIMARY);
 	public static final ScreenElement LABELS_NON_PRIMARY = new ScreenElement("Labels, Non-primary", LabelColors.NON_PRIMARY);
+	public static final ScreenElement COLLAPSED_CODE = new ScreenElement("Collapsed Code", ListingColors.COLLAPSED_CODE, Font.ITALIC);
 	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate", "Plate Comment", CommentColors.PLATE);
 	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post", "Post-Comment", CommentColors.POST);
 	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment", CommentColors.PRE);
@@ -99,10 +100,9 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement PCODE_ADDR_SPACE = new ScreenElement("P-code Address Space", PcodeColors.ADDRESS_SPACE);
 	public static final ScreenElement PCODE_RAW_VARNODE = new ScreenElement("P-code Raw Varnode", PcodeColors.VARNODE);
 	public static final ScreenElement PCODE_USEROP = new ScreenElement("P-code Userop", PcodeColors.USEROP);
-
 	static ScreenElement[] elements = { 
 		ADDRESS, 
-		BACKGROUND, BAD_REF_ADDR, BYTES, 
+		BACKGROUND, BAD_REF_ADDR, BYTES, COLLAPSED_CODE,
 		COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, 
 		COMMENT_REF_REPEAT, CONSTANT,
 		ENTRY_POINT, EXT_REF_RESOLVED, EXT_REF_UNRESOLVED, 
@@ -714,6 +714,26 @@ public class OptionsGui extends JPanel {
 		lb.add("mov    ", MNEMONIC);
 		lb.add("DAT0000", BAD_REF_ADDR);
 		lb.add("        ", null);
+		list.add(lb.getLayout());
+
+		lb = new LayoutBuilder(1);
+		lb.add("     /***********************************/", COMMENT_PLATE);
+		list.add(lb.getLayout());
+		lb = new LayoutBuilder(1);
+		lb.add("     /*             PLATE               */", COMMENT_PLATE);
+		list.add(lb.getLayout());
+		lb = new LayoutBuilder(1);
+		lb.add("     /***********************************/", COMMENT_PLATE);
+		list.add(lb.getLayout());
+		lb = new LayoutBuilder(4);
+		lb.add("       ", null);
+		lb.add("Word ", FUN_RET_TYPE);
+		lb.add("AnotherFunc", FUN_NAME);
+		lb.add("(", SEPARATOR);
+		lb.add(")", SEPARATOR);
+		list.add(lb.getLayout());
+		lb = new LayoutBuilder(1);
+		lb.add("<Collapsed Code: AnotherFunc>", COLLAPSED_CODE);
 		list.add(lb.getLayout());
 
 		layouts = new Layout[list.size()];
