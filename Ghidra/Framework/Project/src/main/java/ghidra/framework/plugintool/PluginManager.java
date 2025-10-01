@@ -425,7 +425,6 @@ class PluginManager {
 	private void unregisterPlugin(Plugin plugin) {
 		if (pluginList.remove(plugin)) {
 			plugin.cleanup();
-			tool.getOptionsManager().deregisterOwner(plugin);
 		}
 	}
 
