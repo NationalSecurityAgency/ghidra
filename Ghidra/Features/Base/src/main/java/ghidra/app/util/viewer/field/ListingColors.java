@@ -38,6 +38,7 @@ public class ListingColors {
 	public static final GColor EXT_REF_RESOLVED = new GColor("color.fg.listing.ext.ref.resolved");
 	public static final GColor REGISTER = new GColor("color.fg.listing.register");
 	public static final GColor PARALLEL_INSTRUCTION = new GColor("color.fg.listing.instruction.parallel");
+	public static final GColor COLLAPSED_CODE = new GColor("color.fg.listing.collapsed");
 
 	
 	public static class XrefColors {

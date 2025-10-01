@@ -131,6 +131,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private MultiListingLayoutModel multiModel;
 	private ToggleDockingAction toggleVariablesAction;
+	private ToggleDockingAction toggleFunctionsAction;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
 			boolean isConnected) {
@@ -481,29 +482,93 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
 
+		new ActionBuilder("Open All Functions", plugin.getName())
+				.popupMenuPath("Function", "Open All Functions")
+				.popupMenuGroup("Visibility", "1")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Open_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(true))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Close All Functions", plugin.getName())
+				.popupMenuPath("Function", "Close All Functions")
+				.popupMenuGroup("Visibility", "2")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Close_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(false))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Toggle Open Function", plugin.getName())
+				.popupMenuPath("Function", "Open/Close Function")
+				.popupMenuGroup("Visibility", "3")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Function"))
+				.keyBinding("SPACE")
+				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInCollapsableCodeArea)
+				.enabledWhen(this::isInCollapsableCodeArea)
+				.onAction(c -> toggleShowFunction(c))
+				.buildAndInstallLocal(this);
+
 		toggleVariablesAction =
-			new ToggleActionBuilder("Show All Function Variables", plugin.getName())
-					.popupMenuPath("Function", "Show/Hide All Variables")
-					.popupMenuGroup("Variables")
+			new ToggleActionBuilder("Show Function Variables By Default", plugin.getName())
+					.popupMenuPath("Function", "Show Variables By Default")
+					.popupMenuGroup("Visibility", "5")
 					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_All_Variables"))
 					.selected(true)
 					.withContext(ProgramLocationActionContext.class)
 					.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))
 					.buildAndInstallLocal(this);
 
-		new ActionBuilder("Toggle Show Function Variables", plugin.getName())
+		new ActionBuilder("Show/Hide Function Variables", plugin.getName())
 				.popupMenuPath("Function", "Show/Hide Variables")
-				.popupMenuGroup("Variables")
+				.popupMenuGroup("Visibility", "4")
 				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
 				.keyBinding("SPACE")
 				.withContext(ProgramLocationActionContext.class)
-				.validWhen(this::isInFunctionArea)
-				.enabledWhen(this::isInFunctionArea)
+				.validWhen(this::isInFunctionVariablesArea)
+				.enabledWhen(this::isInFunctionVariablesArea)
 				.onAction(c -> toggleShowVariables(c.getAddress()))
 				.buildAndInstallLocal(this);
 
 		buildQuickTogleFieldActions();
 
+	}
+
+	private void showAllFunctions(boolean selected) {
+		ListingModel model = listingPanel.getListingModel();
+		model.setAllFunctionsOpen(selected);
+	}
+
+	private void toggleShowFunction(ProgramLocationActionContext context) {
+		Address cuAddress = context.getAddress();
+		Function function = program.getListing().getFunctionContaining(cuAddress);
+		if (function == null) {
+			return;
+		}
+		ListingModel model = listingPanel.getListingModel();
+		Address functionAddress = function.getEntryPoint();
+		boolean open = model.isFunctionOpen(functionAddress);
+
+		model.setFunctionOpen(functionAddress, !open);
+		if (context.getLocation() instanceof FunctionSignatureFieldLocation) {
+			// no need to move cursor
+			return;
+		}
+		if (!open) {
+			setLocation(new ProgramLocation(program, cuAddress));
+		}
+		else {
+			// We have to use the CollapsedCodeLocation in this case, any other goto to 
+			// an address that is collapse will open it up, which we don't want since
+			// we just closed it. Also, we need to correct to the start of the range since
+			// that is the address that will have the CollapsedField
+			Address corrected = adjustToStartOfContainingRange(function, cuAddress);
+			setLocation(new CollapsedCodeLocation(program, corrected));
+		}
+	}
+
+	private Address adjustToStartOfContainingRange(Function function, Address cuAddress) {
+		AddressSetView body = function.getBody();
+		AddressRange range = body.getRangeContaining(cuAddress);
+		return range == null ? function.getEntryPoint() : range.getMinAddress();
 	}
 
 	private void toggleShowVariables(Address address) {
@@ -518,10 +583,26 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		model.setAllFunctionVariablesOpen(selected);
 	}
 
-	private boolean isInFunctionArea(ProgramLocationActionContext context) {
+	private boolean isInFunctionVariablesArea(ProgramLocationActionContext context) {
 		ProgramLocation location = context.getLocation();
-		return location instanceof FunctionLocation ||
+		return location instanceof VariableLocation ||
 			location instanceof VariablesOpenCloseLocation;
+	}
+
+	private boolean isInCollapsableCodeArea(ProgramLocationActionContext context) {
+		ProgramLocation location = context.getLocation();
+
+		// this allows the code collapse to be toggled on instructions in the body of a function,
+		// but we have to exclude the variable locations so as to not interfere with the 
+		// open/close variables action which also is mapped to <SPACE> 
+		if (location instanceof CodeUnitLocation && !(location instanceof VariableLocation) &&
+			!(location instanceof VariablesOpenCloseLocation)) {
+			return true;
+		}
+
+		return location instanceof FunctionSignatureFieldLocation ||
+			location instanceof FunctionOpenCloseLocation ||
+			location instanceof CollapsedCodeLocation;
 	}
 
 	private void buildQuickTogleFieldActions() {

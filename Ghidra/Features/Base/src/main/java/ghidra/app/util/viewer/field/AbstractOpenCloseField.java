@@ -19,6 +19,7 @@ import java.awt.*;
 
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
@@ -26,6 +27,7 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
  * FactoryField class for displaying the open/close field.
  */
 public abstract class AbstractOpenCloseField implements ListingField {
+	protected static final Font HIDDEN_FONT = Gui.getFont("font.listing.base.hidden.field");
 	protected static final GIcon OPEN_ICON =
 		new GIcon("icon.base.util.viewer.fieldfactory.openclose.open");
 	protected static final GIcon CLOSED_ICON =

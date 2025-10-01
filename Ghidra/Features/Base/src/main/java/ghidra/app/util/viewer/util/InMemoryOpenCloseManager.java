@@ -25,7 +25,7 @@ import ghidra.program.model.address.Address;
  * state can be set and then a set of address is kept for the locations that are the opposite
  * of the default.
  */
-public class AddressBasedOpenCloseManager {
+public class InMemoryOpenCloseManager {
 	private boolean openByDefault = true;
 	private Set<Address> addresses = new HashSet<>();
 
