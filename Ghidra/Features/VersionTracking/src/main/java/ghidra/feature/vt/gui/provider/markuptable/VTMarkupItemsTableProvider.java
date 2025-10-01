@@ -320,16 +320,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		TableColumn column = columnModel.getColumn(columnIndex);
 		column.setCellEditor(new AddressInputDialog(controller));
 
-		// override the default behavior so we see our columns in their preferred size
-		Dimension size = table.getPreferredScrollableViewportSize();
-		Dimension preferredSize = table.getPreferredSize();
-
-		// ...account for the scroll bar width
-		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
-		scrollBar.getAccessibleContext().setAccessibleName("Markup Item Table");
-		Dimension scrollBarSize = scrollBar.getMinimumSize();
-		size.width = preferredSize.width + scrollBarSize.width;
-		table.setPreferredScrollableViewportSize(size);
+		// a reasonable starting size picked by trial-and-error
+		table.setPreferredScrollableViewportSize(new Dimension(1100, 600));
 		table.getAccessibleContext().setAccessibleName("Markup Item");
 		return table;
 	}
