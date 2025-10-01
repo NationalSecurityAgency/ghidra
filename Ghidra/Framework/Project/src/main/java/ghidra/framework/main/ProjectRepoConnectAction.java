@@ -44,7 +44,7 @@ public class ProjectRepoConnectAction extends FrontendProjectTreeAction {
 		this.plugin = plugin;
 		setPopupMenuData(
 			new MenuData(new String[] { "Connect Shared Repository" }, CONNECT_ICON, group));
-		setHelpLocation(new HelpLocation("VersionControl", "Connect_Shared_Repository"));
+		setHelpLocation(new HelpLocation("VersionControl", "ConnectToServer"));
 	}
 
 	@Override

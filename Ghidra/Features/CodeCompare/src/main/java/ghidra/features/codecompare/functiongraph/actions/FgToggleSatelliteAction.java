@@ -37,7 +37,7 @@ public class FgToggleSatelliteAction extends ToggleDockingAction {
 
 		setPopupMenuData(new MenuData(new String[] { "Display Satellite" }));
 
-		setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Satellite_View"));
+		setHelpLocation(new HelpLocation("VisualGraph", "Satellite_View"));
 	}
 
 	@Override
