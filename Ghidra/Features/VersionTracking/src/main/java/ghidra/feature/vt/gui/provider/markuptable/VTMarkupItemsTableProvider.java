@@ -78,7 +78,6 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	private static final Icon SHOW_LISTINGS_ICON =
 		new GIcon("icon.version.tracking.action.show.listings");
 
-	private static final Icon FILTER_ICON = new GIcon("icon.version.tracking.filter");
 	private static final String SHOW_COMPARE_ACTION_GROUP = "A9_ShowCompare"; // "A9_" forces to right of other dual view actions in toolbar.
 
 	private final VTController controller;
@@ -412,7 +411,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		nameFilterPanel.getAccessibleContext().setAccessibleName("Name Filter");
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
-		ancillaryFilterButton = new JButton(FILTER_ICON);
+		ancillaryFilterButton = new JButton(UNFILTERED_ICON);
 		ancillaryFilterButton.getAccessibleContext().setAccessibleName("Ancillary");
 		ancillaryFilterButton
 				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));
