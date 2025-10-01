@@ -49,12 +49,11 @@ import help.HelpService;
  * A panel for displaying {@link Function functions} side-by-side for comparison purposes
  */
 public class FunctionComparisonPanel extends JPanel implements ChangeListener {
-	private static final String ORIENTATION_PROPERTY_NAME = "ORIENTATION";
 
-	private static final String DEFAULT_CODE_COMPARISON_VIEW = ListingCodeComparisonView.NAME;
-	private static final String COMPARISON_VIEW_DISPLAYED = "COMPARISON_VIEW_DISPLAYED";
-	private static final String CODE_COMPARISON_LOCK_SCROLLING_TOGETHER =
-		"CODE_COMPARISON_LOCK_SCROLLING_TOGETHER";
+	private static final String DEFAULT_VIEW = ListingCodeComparisonView.NAME;
+	private static final String KEY_ACTIVE_VIEW = "ACTIVE_VIEW";
+	private static final String KEY_SCROLL_LOCK = "SCROLL_LOCK";
+	private static final String KEY_ORIENTATION = "ORIENTATION";
 
 	private static final String HELP_TOPIC = "FunctionComparison";
 
@@ -67,7 +66,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	private static final String DUAL_SCROLLING_HELP_TOPIC = "FunctionComparison";
 
 	private JTabbedPane tabbedPane;
-	private Map<String, JComponent> tabNameToComponentMap;
+	private Map<String, JComponent> tabComponentsByName;
 	private List<CodeComparisonView> codeComparisonViews;
 	private ToggleScrollLockAction toggleScrollLockAction;
 	private boolean syncScrolling = false;
@@ -89,10 +88,16 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		state.addUpdateCallback(this::comparisonStateUpdated);
 
 		codeComparisonViews = getCodeComparisonViews(tool, owner);
-		tabNameToComponentMap = new HashMap<>();
+		tabComponentsByName = new HashMap<>();
 		createMainPanel();
 		createActions(owner);
 		setScrollingSyncState(true);
+
+		// reload saved state; add the listener after we are fully finished build so we do not save
+		// any default state
+		readPanelState();
+		tabbedPane.addChangeListener(this);
+
 		HelpService help = Help.getHelpService();
 		help.registerHelp(this, new HelpLocation(HELP_TOPIC, "Function Comparison"));
 	}
@@ -237,9 +242,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @param name name of view to set as the current tab
 	 * @return true if the named view was found in the view map
 	 */
-	public boolean setCurrentTabbedComponent(String name) {
-
-		JComponent component = tabNameToComponentMap.get(name);
+	public boolean setActiveView(String name) {
+		JComponent component = tabComponentsByName.get(name);
 		if (component != null) {
 			if (tabbedPane.getSelectedComponent() == component) {
 				tabChanged();
@@ -254,20 +258,12 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 *
 	 * @return the tab name, or null if there is nothing selected
 	 */
-	public String getCurrentComponentName() {
+	public String getActiveViewName() {
 		int selectedIndex = tabbedPane.getSelectedIndex();
 		if (selectedIndex >= 0) {
 			return tabbedPane.getTitleAt(selectedIndex);
 		}
 		return null;
-	}
-
-	/**
-	 * Get the number of views in the tabbed pane
-	 * @return the number of views in the tabbed pane
-	 */
-	int getNumberOfTabbedComponents() {
-		return tabNameToComponentMap.size();
 	}
 
 	/**
@@ -288,7 +284,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		}
 	}
 
-	public CodeComparisonView getCodeComparisonView(String name) {
+	public CodeComparisonView getView(String name) {
 		for (CodeComparisonView view : codeComparisonViews) {
 			if (name.equals(view.getName())) {
 				return view;
@@ -297,21 +293,12 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		return null;
 	}
 
-	public void selectComparisonView(String name) {
-		for (CodeComparisonView view : codeComparisonViews) {
-			if (name.equals(view.getName())) {
-				tabbedPane.setSelectedComponent(view);
-			}
-		}
-	}
-
 	/**
 	 * Create the main tabbed panel
 	 */
 	private void createMainPanel() {
 		tabbedPane = new JTabbedPane();
 
-		tabbedPane.addChangeListener(this);
 		setLayout(new BorderLayout());
 
 		add(tabbedPane, BorderLayout.CENTER);
@@ -319,7 +306,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 		for (CodeComparisonView view : codeComparisonViews) {
 			tabbedPane.add(view.getName(), view);
-			tabNameToComponentMap.put(view.getName(), view);
+			tabComponentsByName.put(view.getName(), view);
 		}
 	}
 
@@ -356,32 +343,34 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	private void readPanelState() {
 
 		SaveState panelState = state.getPanelState();
-		String currentTabView =
-			panelState.getString(COMPARISON_VIEW_DISPLAYED, DEFAULT_CODE_COMPARISON_VIEW);
-		setCurrentTabbedComponent(currentTabView);
-		setScrollingSyncState(
-			panelState.getBoolean(CODE_COMPARISON_LOCK_SCROLLING_TOGETHER, true));
+		String activeView = panelState.getString(KEY_ACTIVE_VIEW, DEFAULT_VIEW);
+		setActiveView(activeView);
+
+		boolean scrollLock = panelState.getBoolean(KEY_SCROLL_LOCK, true);
+		setScrollingSyncState(scrollLock);
 
 		for (CodeComparisonView view : codeComparisonViews) {
-			String key = view.getName() + ORIENTATION_PROPERTY_NAME;
+			String key = view.getName() + KEY_ORIENTATION;
 			view.setSideBySide(panelState.getBoolean(key, true));
 		}
 	}
 
 	private void writeTabState() {
-		String currentComponentName = getCurrentComponentName();
-		if (currentComponentName == null) {
-			return;
+
+		String viewName = getActiveViewName();
+		if (viewName == null) {
+			return; // null can happen during tabbed pane disposal
 		}
 
 		SaveState panelState = state.getPanelState();
-		panelState.putString(COMPARISON_VIEW_DISPLAYED, getCurrentComponentName());
+		panelState.putString(KEY_ACTIVE_VIEW, getActiveViewName());
+
 		state.setChanged();
 	}
 
 	private void writeScrollState() {
 		SaveState panelState = state.getPanelState();
-		panelState.putBoolean(CODE_COMPARISON_LOCK_SCROLLING_TOGETHER, isScrollingSynced());
+		panelState.putBoolean(KEY_SCROLL_LOCK, isScrollingSynced());
 		state.setChanged();
 	}
 
@@ -389,7 +378,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 		SaveState panelState = state.getPanelState();
 		for (CodeComparisonView view : codeComparisonViews) {
-			String key = view.getName() + ORIENTATION_PROPERTY_NAME;
+			String key = view.getName() + KEY_ORIENTATION;
 			boolean sideBySide = view.isSideBySide();
 			panelState.putBoolean(key, sideBySide);
 		}

@@ -354,12 +354,12 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		}
 	}
 
-	public CodeComparisonView getCodeComparisonView(String name) {
-		return functionComparisonPanel.getCodeComparisonView(name);
+	public CodeComparisonView getView(String name) {
+		return functionComparisonPanel.getView(name);
 	}
 
-	public void selectComparisonView(String name) {
-		functionComparisonPanel.selectComparisonView(name);
+	public void setActiveView(String name) {
+		functionComparisonPanel.setActiveView(name);
 	}
 
 	private void dispose() {

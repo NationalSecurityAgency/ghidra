@@ -79,7 +79,7 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		checkFunctions(provider, LEFT, fun1, fun1, fun2);
 		DecompilerCodeComparisonView comparisonProvider =
 			(DecompilerCodeComparisonView) provider
-					.getCodeComparisonView(DecompilerCodeComparisonView.NAME);
+					.getView(DecompilerCodeComparisonView.NAME);
 
 		waitForDecompiler(comparisonProvider);
 		assertHasLines(comparisonProvider.getLeftPanel(), 28);

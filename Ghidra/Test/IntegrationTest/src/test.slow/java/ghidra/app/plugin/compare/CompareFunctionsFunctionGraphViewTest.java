@@ -500,13 +500,13 @@ public class CompareFunctionsFunctionGraphViewTest extends AbstractGhidraHeadedI
 	}
 
 	private void selectFgPanel(FunctionComparisonProvider provider) {
-		runSwing(() -> provider.selectComparisonView(FunctionGraphCodeComparisonView.NAME));
+		runSwing(() -> provider.setActiveView(FunctionGraphCodeComparisonView.NAME));
 	}
 
 	private FunctionGraphCodeComparisonView getFgComparisonProvider(
 			FunctionComparisonProvider provider) {
 		return runSwing(() -> (FunctionGraphCodeComparisonView) provider
-				.getCodeComparisonView(FunctionGraphCodeComparisonView.NAME));
+				.getView(FunctionGraphCodeComparisonView.NAME));
 	}
 
 	private void waitForFunctionGraph(FunctionGraphCodeComparisonView panel) {
