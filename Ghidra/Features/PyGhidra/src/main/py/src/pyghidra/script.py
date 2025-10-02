@@ -219,6 +219,8 @@ class PyGhidraScript(dict):
         :param script_path: The path of the python script
         :param script_args: The arguments for the python script
         """
+        from java.lang import Boolean # type:ignore @UnresolvedImport
+        
         sf = self._script.getSourceFile()
         if sf is None and script_path is None:
             return
@@ -232,6 +234,7 @@ class PyGhidraScript(dict):
             self._script.setScriptArgs(script_args)
 
         orig_argv = sys.argv
+        orig_modules = sys.modules.copy()
         script_root = str(Path(script_path).parent)
 
         # honor the python safe_path flag introduced in 3.11
@@ -266,6 +269,10 @@ class PyGhidraScript(dict):
                 self._script.printerr(''.join(e.format()))
         finally:
             sys.argv = orig_argv
+
+            if Boolean.getBoolean("pyghidra.sys.modules.restore"):
+                for k in list(set(sys.modules) - set(orig_modules)):
+                    sys.modules.pop(k, None)
 
             if not safe_path:
                 sys.path.remove(script_root)
