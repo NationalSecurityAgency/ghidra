@@ -95,7 +95,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		pressContinueOnResetFormatDialog("Reset Format?");
 
 		functionFormat = formatManager.getFunctionFormat();
-		assertEquals(3, functionFormat.getNumFactorys(0));
+		assertEquals(4, functionFormat.getNumFactorys(0));
 
 	}
 
@@ -125,7 +125,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		FormatManager formatManager = header.getFormatManager();
 		FieldFormatModel functionFormat = formatManager.getFunctionFormat();
 		FieldFactory[] factorys = functionFormat.getFactorys(0);
-		assertEquals(3, factorys.length);
+		assertEquals(4, factorys.length);
 
 		selectHeaderField(factorys[0]);
 
@@ -145,9 +145,10 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		FormatManager formatManager = header.getFormatManager();
 		FieldFormatModel functionFormat = formatManager.getFunctionFormat();
 		FieldFactory[] factories = functionFormat.getFactorys(0);
-		assertTrue(factories[0] instanceof SpacerFieldFactory);
-		assertTrue(factories[1] instanceof FunctionSignatureFieldFactory);
-		assertEquals(200, factories[1].getStartX());
+		assertTrue(factories[0] instanceof FunctionOpenCloseFieldFactory);
+		assertTrue(factories[1] instanceof SpacerFieldFactory);
+		assertTrue(factories[2] instanceof FunctionSignatureFieldFactory);
+		assertEquals(220, factories[2].getStartX());
 
 		selectHeaderField(factories[0]);
 		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[0], 0, 0);
@@ -159,9 +160,10 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		functionFormat = formatManager.getFunctionFormat();
 		factories = functionFormat.getFactorys(0);
 		assertTrue(factories[0] instanceof SpacerFieldFactory);
-		assertTrue(factories[1] instanceof SpacerFieldFactory);
-		assertTrue(factories[2] instanceof FunctionSignatureFieldFactory);
-		assertEquals(300, factories[2].getStartX());
+		assertTrue(factories[1] instanceof FunctionOpenCloseFieldFactory);
+		assertTrue(factories[2] instanceof SpacerFieldFactory);
+		assertTrue(factories[3] instanceof FunctionSignatureFieldFactory);
+		assertEquals(320, factories[3].getStartX());
 	}
 
 	@Test
@@ -169,10 +171,10 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		FormatManager formatManager = header.getFormatManager();
 		FieldFormatModel functionFormat = formatManager.getFunctionFormat();
 		FieldFactory[] factories = functionFormat.getFactorys(0);
-		assertTrue(factories[0] instanceof SpacerFieldFactory);
-		selectHeaderField(factories[0]);
+		assertTrue(factories[1] instanceof SpacerFieldFactory);
+		selectHeaderField(factories[1]);
 
-		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[0], 0, 0);
+		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[1], 0, 0);
 		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("SetTextAction");
@@ -181,8 +183,8 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		functionFormat = formatManager.getFunctionFormat();
 		factories = functionFormat.getFactorys(0);
-		assertTrue(factories[0] instanceof SpacerFieldFactory);
-		assertEquals("Hello", getText((SpacerFieldFactory) factories[0]));
+		assertTrue(factories[1] instanceof SpacerFieldFactory);
+		assertEquals("Hello", getText((SpacerFieldFactory) factories[1]));
 
 	}
 
@@ -218,18 +220,18 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		FieldFormatModel functionFormat = formatManager.getFunctionFormat();
 		FieldFactory[] factories = functionFormat.getFactorys(0);
 		selectHeaderField(factories[0]);
-		assertEquals(3, factories.length);
-		assertTrue(factories[1] instanceof FunctionSignatureFieldFactory);
+		assertEquals(4, factories.length);
+		assertTrue(factories[2] instanceof FunctionSignatureFieldFactory);
 
-		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[1], 0, 1);
+		FieldHeaderLocation loc = new FieldHeaderLocation(functionFormat, factories[2], 0, 1);
 		ActionContext context = createContext(provider, loc);
 
 		DockingAction headerAction = getHeaderAction("Remove Field");
 		performAction(headerAction, context, true);
 
 		factories = functionFormat.getFactorys(0);
-		assertTrue(!(factories[1] instanceof FunctionSignatureFieldFactory));
-		assertEquals(2, factories.length);
+		assertTrue(!(factories[2] instanceof FunctionSignatureFieldFactory));
+		assertEquals(3, factories.length);
 	}
 
 	@Test

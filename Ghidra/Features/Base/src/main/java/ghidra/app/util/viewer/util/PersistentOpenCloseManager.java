@@ -16,7 +16,6 @@
 package ghidra.app.util.viewer.util;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.util.VoidPropertyMap;
 
@@ -25,7 +24,7 @@ import ghidra.program.model.util.VoidPropertyMap;
  * open/close state for that address. Currently used for persisting the open/close state
  * of functions in the listing.
  */
-public class PersistentOpenCloseManager {
+public class PersistentOpenCloseManager implements OpenCloseManager {
 	private boolean openByDefault = true;
 	private VoidPropertyMap booleanProperty;
 	private ProgramUserData programUserData;
@@ -36,9 +35,9 @@ public class PersistentOpenCloseManager {
 	private boolean cachedResult;
 	private String defaultOpenClosePropertyname;
 
-	public PersistentOpenCloseManager(Program program, String owner, String propertyName) {
+	public PersistentOpenCloseManager(ProgramUserData data, String owner, String propertyName) {
 		this.defaultOpenClosePropertyname = propertyName + "Default";
-		programUserData = program.getProgramUserData();
+		programUserData = data;
 
 		int tx = programUserData.startTransaction();
 		try {
@@ -55,11 +54,7 @@ public class PersistentOpenCloseManager {
 		openByDefault = functionState.equals("Open");
 	}
 
-	/**
-	 * Checks if the state is "open" for the given address.
-	 * @param address the address to test
-	 * @return true if the state of the given address is "open"
-	 */
+	@Override
 	public boolean isOpen(Address address) {
 		if (address.equals(cachedAddress)) {
 			return cachedResult;
@@ -70,10 +65,7 @@ public class PersistentOpenCloseManager {
 		return cachedResult;
 	}
 
-	/**
-	 * Sets the state at the given address to be "open".
-	 * @param address the address to set "open"
-	 */
+	@Override
 	public void open(Address address) {
 		cachedAddress = null;
 		if (openByDefault) {
@@ -84,10 +76,7 @@ public class PersistentOpenCloseManager {
 		}
 	}
 
-	/**
-	 * Sets the state at the given address to be "closed".
-	 * @param address the address to set "closed"
-	 */
+	@Override
 	public void close(Address address) {
 		cachedAddress = null;
 		if (openByDefault) {
@@ -98,18 +87,12 @@ public class PersistentOpenCloseManager {
 		}
 	}
 
-	/**
-	 * Checks if the default state is "open".
-	 * @return true if the default state for addresses is "open"
-	 */
+	@Override
 	public boolean isOpenByDefault() {
 		return openByDefault;
 	}
 
-	/**
-	 * Sets all address to "open" (Makes "open" the default state and clears all individual
-	 * settings.
-	 */
+	@Override
 	public void openAll() {
 		cachedAddress = null;
 		openByDefault = true;
@@ -117,10 +100,7 @@ public class PersistentOpenCloseManager {
 		programUserData.setStringProperty(defaultOpenClosePropertyname, "Open");
 	}
 
-	/**
-	 * Sets all address to "closed" (Makes "closed" the default state and clears all individual
-	 * settings.
-	 */
+	@Override
 	public void closeAll() {
 		cachedAddress = null;
 		openByDefault = false;

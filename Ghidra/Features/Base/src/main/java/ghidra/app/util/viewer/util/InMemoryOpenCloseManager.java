@@ -25,24 +25,17 @@ import ghidra.program.model.address.Address;
  * state can be set and then a set of address is kept for the locations that are the opposite
  * of the default.
  */
-public class InMemoryOpenCloseManager {
+public class InMemoryOpenCloseManager implements OpenCloseManager {
 	private boolean openByDefault = true;
 	private Set<Address> addresses = new HashSet<>();
 
-	/**
-	 * Checks if the state is "open" for the given address.
-	 * @param address the address to test
-	 * @return true if the state of the given address is "open"
-	 */
+	@Override
 	public boolean isOpen(Address address) {
 		boolean contains = addresses.contains(address);
 		return openByDefault ? !contains : contains;
 	}
 
-	/**
-	 * Sets the state at the given address to be "open".
-	 * @param address the address to set "open"
-	 */
+	@Override
 	public void open(Address address) {
 		if (openByDefault) {
 			addresses.remove(address);
@@ -52,10 +45,7 @@ public class InMemoryOpenCloseManager {
 		}
 	}
 
-	/**
-	 * Sets the state at the given address to be "closed".
-	 * @param address the address to set "closed"
-	 */
+	@Override
 	public void close(Address address) {
 		if (openByDefault) {
 			addresses.add(address);
@@ -65,27 +55,18 @@ public class InMemoryOpenCloseManager {
 		}
 	}
 
-	/**
-	 * Checks if the default state is "open".
-	 * @return true if the default state for addresses is "open"
-	 */
+	@Override
 	public boolean isOpenByDefault() {
 		return openByDefault;
 	}
 
-	/**
-	 * Sets all address to "open" (Makes "open" the default state and clears all individual
-	 * settings.
-	 */
+	@Override
 	public void openAll() {
 		openByDefault = true;
 		addresses.clear();
 	}
 
-	/**
-	 * Sets all address to "closed" (Makes "closed" the default state and clears all individual
-	 * settings.
-	 */
+	@Override
 	public void closeAll() {
 		openByDefault = false;
 		addresses.clear();

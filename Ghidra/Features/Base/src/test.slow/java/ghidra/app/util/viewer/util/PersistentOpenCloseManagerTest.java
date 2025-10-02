@@ -24,6 +24,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramUserData;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
@@ -32,7 +33,7 @@ public class PersistentOpenCloseManagerTest extends AbstractGhidraHeadedIntegrat
 	private DomainFile df;
 	private AddressSpace space;
 	private Program program;
-	private PersistentOpenCloseManager openCloseMgr;
+	private OpenCloseManager openCloseMgr;
 	private TestEnv env;
 
 	@Before
@@ -47,7 +48,8 @@ public class PersistentOpenCloseManagerTest extends AbstractGhidraHeadedIntegrat
 		df = rootFolder.createFile("test", program, TaskMonitor.DUMMY);
 
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		openCloseMgr = new PersistentOpenCloseManager(program, "test", "test");
+		ProgramUserData programUserData = program.getProgramUserData();
+		openCloseMgr = new PersistentOpenCloseManager(programUserData, "test", "test");
 	}
 
 	@After
@@ -120,7 +122,8 @@ public class PersistentOpenCloseManagerTest extends AbstractGhidraHeadedIntegrat
 		program.release(this);
 		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		openCloseMgr = new PersistentOpenCloseManager(program, "test", "test");
+		ProgramUserData programUserData = program.getProgramUserData();
+		openCloseMgr = new PersistentOpenCloseManager(programUserData, "test", "test");
 
 		assertTrue(openCloseMgr.isOpen(addr(0)));
 		assertFalse(openCloseMgr.isOpen(addr(100)));
