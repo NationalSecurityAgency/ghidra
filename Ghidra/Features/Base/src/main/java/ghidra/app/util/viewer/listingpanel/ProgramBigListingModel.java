@@ -167,7 +167,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			format = formatMgr.getDividerModel();
 			format.addLayouts(list, 0, new AddressProxy(this, addr));
 		}
-		if (cu != null && function != null) {
+		if (cu != null) {
 			format = formatMgr.getPlateFormat();
 			format.addLayouts(list, 0, new CodeUnitProxy(this, program, cu));
 		}

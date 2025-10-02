@@ -22,8 +22,7 @@ import javax.swing.event.ChangeListener;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -33,13 +32,12 @@ import ghidra.util.task.TaskMonitor;
 public class ProgramOpenCloseManager {
 	private DataOpenCloseManager dataOpenCloseManager = new DataOpenCloseManager();
 	private List<ChangeListener> listeners = new ArrayList<>();
-	private InMemoryOpenCloseManager variablesOpenCloseManager;
-	private PersistentOpenCloseManager functionsOpenCloseManager;
+	private OpenCloseManager variablesOpenCloseManager;
+	private OpenCloseManager functionsOpenCloseManager;
 
 	public ProgramOpenCloseManager(Program program) {
-		// open/close functions states are persisted and specific to a program
-		functionsOpenCloseManager = new PersistentOpenCloseManager(program,
-			getClass().getSimpleName(), "Function Open State");
+
+		functionsOpenCloseManager = createFunctionsOpenCloseManager(program);
 
 		// open/close variables states are tool based so users can
 		// choose whether to see them by default. They can be opened or closed
@@ -211,4 +209,15 @@ public class ProgramOpenCloseManager {
 		}
 	}
 
+	private OpenCloseManager createFunctionsOpenCloseManager(Program program) {
+		// We prefer to use a persistent open close manager, but that requires ProgramUserData.
+		// Currently not all implementations of Program support ProgramUserData, so if not, just
+		// use the in-memory OpenCloseManager which isn't persistent.
+		ProgramUserData programUserData = program.getProgramUserData();
+		if (programUserData != null) {
+			return new PersistentOpenCloseManager(programUserData, getClass().getSimpleName(),
+				"Function Open State");
+		}
+		return new InMemoryOpenCloseManager();
+	}
 }
