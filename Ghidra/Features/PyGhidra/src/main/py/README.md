@@ -558,8 +558,12 @@ import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
 __3.0.0:__
-* Revised the the PyGhidra API. See the [API section](#api) for more details.
+* Revised the PyGhidra API. See the [API section](#api) for more details.
 * PyGhidra 3.0.0 requires Ghidra 12.0 or later to run.
+* If PyGhidra sees that the `pyghidra.sys.modules.restore` Java system property is set (typically
+  via the `support/launch.properties` file), it will restore `sys.modules` to its prior state after
+  a PyGhidra script is run so the next time the script is run, it freshly loads all of its imported
+  modules again. This is experimental and should only be enabled if necessary.
 
 __2.2.1:__
 * PyGhidra now launches with the current working directory removed from `sys.path` to prevent
