@@ -3358,7 +3358,20 @@ void BlockWhileDo::finalTransform(Funcdata &data)
 {
   BlockGraph::finalTransform(data);
   if (!data.getArch()->analyze_for_loops) return;
-  if (hasOverflowSyntax()) return;
+  if (hasOverflowSyntax()) {
+    // Maybe we have since been optimised so the condition is no longer too complex...
+    FlowBlock *check = getFrontLeaf();
+    if (check == (FlowBlock *)0) return;
+    BlockBasic *cond = (BlockBasic *)check->subBlock(0);
+    // The condition needs to be a 'simple' basic block (i.e. not a list of multiple blocks, or an
+    // if-statement, or something else) and it needs to not be complex (i.e. representable in a
+    // single statement).
+    if (!(subBlock(0)->getType() == t_copy && !cond->isComplex())) return;
+
+    // Unmark this block as having overflow syntax
+    clearFlag(f_whiledo_overflow);
+    cond->negateCondition(true);
+  }
   FlowBlock *copyBl = getFrontLeaf();
   if (copyBl == (FlowBlock *)0) return;
   BlockBasic *head = (BlockBasic *)copyBl->subBlock(0);
