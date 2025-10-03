@@ -115,7 +115,18 @@ case "$( uname )" in                #(
   NONSTOP* )        nonstop=true ;;
 esac
 
-CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+#------------Ghidra Additions ----------------------------------------------------------------------
+
+# Set variables based on Production vs Dev environment
+if [ -f "${APP_HOME}/gradle-wrapper.jar" ]; then
+    # Production Environment
+    CLASSPATH="${APP_HOME}/gradle-wrapper.jar"
+    GHIDRA_HOME="${APP_HOME}/../.."
+else
+    # Development Environment (Eclipse classes or "gradle jar")
+    CLASSPATH="${APP_HOME}/Ghidra/RuntimeScripts/Common/support/gradle/gradle-wrapper.jar"
+    GHIDRA_HOME="${APP_HOME}"
+fi
 
 # Read application properties
 while IFS='=' read -r key value
