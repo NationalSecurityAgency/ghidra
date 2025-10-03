@@ -766,6 +766,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			"Markup items that are incomplete (for example, no destination address is specified) " +
 				"should become ignored by applying a match.");
 
+		vtOptions.registerOption(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS,
+			null, "Apply the non-Global source namespace to the destination function.");
+
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
