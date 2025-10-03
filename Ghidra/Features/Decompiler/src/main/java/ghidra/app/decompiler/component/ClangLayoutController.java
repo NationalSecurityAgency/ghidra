@@ -190,6 +190,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 				continue;
 			}
 			Color color = getTokenColor(token);
+
 			if (token instanceof ClangCommentToken) {
 				AttributedString prototype = new AttributedString("prototype", color, metrics);
 				Program program = decompilerPanel.getProgram();
@@ -228,8 +229,8 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 		// For now we have decided that any external function, linked or not, will be one color, as
 		// this makes it easy for the user to identify external function calls. Other functions will
-		// be colored according to the SymbolInspector.  If we use the SymbolInspector for all
-		// colors, then some of the color values will be very close to some of the colors used by
+		// be colored according to the SymbolInspector.  If we use the SymbolInspector for all 
+		// colors, then some of the color values will be very close to some of the colors used by 
 		// the Decompiler.  For example, non-linked external functions default to red and linked
 		// external functions default to green.
 		if (function.isExternal()) {

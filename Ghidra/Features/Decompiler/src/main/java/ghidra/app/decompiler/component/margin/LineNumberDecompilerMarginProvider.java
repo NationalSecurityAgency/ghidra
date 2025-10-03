@@ -135,7 +135,6 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		int ascent = g.getFontMetrics().getMaxAscent();
 		Map<Integer, Boolean> linesIndexes = decompilerPanel.getLinesWithOpeningBraces();
 
-
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);

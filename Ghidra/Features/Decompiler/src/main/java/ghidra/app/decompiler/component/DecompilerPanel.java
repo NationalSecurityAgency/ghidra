@@ -55,7 +55,6 @@ import ghidra.util.*;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 
-
 /**
  * Class to handle the display of a decompiled function
  */
