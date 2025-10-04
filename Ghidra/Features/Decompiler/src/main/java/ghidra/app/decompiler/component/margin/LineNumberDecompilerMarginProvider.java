@@ -139,17 +139,30 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
-		Map<Integer, Boolean> linesIndexes = decompilerPanel.getLinesWithOpeningBraces();
+		BigInteger lineNumber = startIdx;
+
+		Map<Integer, DecompilerPanel.CodeBlock> blocks = decompilerPanel.getBlocks();
+		if (blocks == null) {
+			return;
+		}
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
-			String text = i.add(BigInteger.ONE).toString();
+			String text = lineNumber.add(BigInteger.ONE).toString();
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
 
-			if (linesIndexes.containsKey(i.intValue())) {
+			BigInteger increment = BigInteger.ONE;
+
+			DecompilerPanel.CodeBlock block = blocks.getOrDefault(lineNumber.intValue(), null);
+			if (block != null) {
+				// There's a block starting at this line number - check if it's
+				// collapsed to determine the icon to draw. If it is collapsed,
+				// we also need to skip some number of lines.
+
 				Image img = null;
 
-				if (linesIndexes.get(i.intValue())) {
+				if (decompilerPanel.isBlockCollapsed(block.openToken)) {
 					// block is collapsed
+					increment = BigInteger.valueOf(block.numLines);
 					img = CLOSED_ICON.getImageIcon().getImage();
 				} else {
 					// block is not collapsed
@@ -164,6 +177,8 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 
 				g.drawImage(img, topLeftX, topLeftY, getBackground(), null);
 			}
+
+			lineNumber = lineNumber.add(increment);
 		}
 	}
 }
