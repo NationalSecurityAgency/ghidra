@@ -45,6 +45,8 @@ public class ClangToken implements ClangNode {
 	public final static int SPECIAL_COLOR = 10;
 	public final static int MAX_COLOR = 11;
 
+	public final static String ELLIPSIS_TEXT = "…";
+
 	private ClangNode parent;
 	private ClangLine lineparent;
 	private String text;

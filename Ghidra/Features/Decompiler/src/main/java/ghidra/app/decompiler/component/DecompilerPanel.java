@@ -830,18 +830,31 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			openingBrace.Parent().flatten(list);
 
 			boolean inSection = false;
+			boolean seenEllipsis = false;
+
 			for (ClangNode element : list) {
 				ClangToken token = (ClangToken) element;
-				if (inSection) {
-					if ((token instanceof ClangSyntaxToken)) {
-						inSection = (!token.equals(closingBrace));
-					}
-					if (inSection) {
-						token.setCollapsedToken(!isCollapsed);
-					}
+				if (token.equals(openingBrace)) {
+					inSection = true;
+					continue;
 				}
-				else if ((token instanceof ClangSyntaxToken)) {
-					inSection = (token.equals(openingBrace));
+
+				if (token.equals(closingBrace)) {
+					inSection = false;
+					break;
+				}
+
+				if (! inSection) {
+					continue;
+				}
+
+				boolean isEllipsis = (token instanceof ClangSyntaxToken) && (ClangToken.ELLIPSIS_TEXT.equals(token.getText()));
+
+				if (isEllipsis && !seenEllipsis) {
+					token.setCollapsedToken(isCollapsed);
+					seenEllipsis = true;
+				} else {
+					token.setCollapsedToken(!isCollapsed);
 				}
 			}
 
@@ -858,18 +871,27 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		List<ClangNode> list = new ArrayList<>();
 		openingBrace.Parent().flatten(list);
 
+		// Check if the block is collapsed by checking the first token inside the
+		// block that is not an ellipsis syntax token.
 		boolean inSection = false;
 		for (ClangNode element : list) {
 			ClangToken token = (ClangToken) element;
-			if (inSection) {
-				if (token.equals(closingBrace)) {
-					break;
-				}
-				return token.getCollapsedToken();
-			} else if (token.equals(openingBrace)) {
-				inSection = true;
+			if (!inSection) {
+				inSection = token.equals(openingBrace);
+				continue;
 			}
+
+			if (token.equals(closingBrace)) {
+				return false;
+			}
+
+			if ((token instanceof ClangSyntaxToken) && (ClangToken.ELLIPSIS_TEXT.equals(token.getText()))) {
+				continue;
+			}
+
+			return token.getCollapsedToken();
 		}
+
 		return false;
 	}
 
