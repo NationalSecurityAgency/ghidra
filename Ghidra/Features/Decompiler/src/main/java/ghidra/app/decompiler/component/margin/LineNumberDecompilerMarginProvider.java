@@ -139,11 +139,22 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
-		BigInteger lineNumber = startIdx;
 
 		Map<Integer, DecompilerPanel.CodeBlock> blocks = decompilerPanel.getBlocks();
 		if (blocks == null) {
 			return;
+		}
+
+		// Skip any lines before startIdx
+		BigInteger lineNumber = BigInteger.ZERO;
+		for (BigInteger i = BigInteger.ZERO; i.compareTo(startIdx) < 0; i = i.add(BigInteger.ONE)) {
+			DecompilerPanel.CodeBlock block = blocks.getOrDefault(lineNumber.intValue(), null);
+
+			if (block == null || !decompilerPanel.isBlockCollapsed(block.openToken)) {
+				lineNumber = lineNumber.add(BigInteger.ONE);
+			} else {
+				lineNumber = lineNumber.add(BigInteger.valueOf(block.numLines));
+			}
 		}
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
