@@ -107,6 +107,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private DecompilerHoverProvider decompilerHoverProvider;
 
+	public class CodeBlock {
+		public int startLineIdx;  //< 0-based
+		public int numLines;
+		public ClangSyntaxToken openToken;
+	}
+
+	private Map<Integer, CodeBlock> blocks; // start line idx: num lines
+	private boolean pendingOptionChange = true;
+
 	DecompilerPanel(DecompilerController controller, DecompileOptions options,
 			DecompilerClipboardProvider clipboard, JComponent taskMonitorComponent) {
 		this.controller = controller;
@@ -158,7 +167,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		setDecompileData(new EmptyDecompileData("No Function"));
 
 		if (options.isDisplayLineNumbers()) {
-			addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider());
+			addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider(this));
 		}
 	}
 
@@ -540,6 +549,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (function != null) {
 			highlightController.reapplyAllHighlights(function);
 		}
+
+		// Only update the blocks when we're moving to a new function, or if the
+		// the display options changed
+		if (pendingOptionChange || !SystemUtilities.isEqual(oldData.getFunction(), decompileData.getFunction())) {
+			setBlocks();
+			pendingOptionChange = false;
+		}
 	}
 
 	private void setLocation(DecompileData oldData, DecompileData newData) {
@@ -783,6 +799,144 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		if (buttonState == middleMouseHighlightButton && clickCount == 1) {
 			toggleMiddleMouseHighlight(location, field);
+		}
+	}
+
+	public void arrowClickAction(int y) {
+		int lineNumber = getLineNumber(y);
+		ClangToken openingBraceToken = null;
+		ClangLine line = getLines().get(lineNumber - 1);
+		for (ClangToken lineToken : line.getAllTokens()) {
+			if ("{".equals(lineToken.getText())) {
+				openingBraceToken = lineToken;
+				break;
+			}
+		}
+
+		if (openingBraceToken instanceof ClangSyntaxToken) {
+			toggleCollapseToken((ClangSyntaxToken) openingBraceToken);
+		}
+	}
+
+	private void toggleCollapseToken(ClangSyntaxToken openingBrace) {
+		if (DecompilerUtils.isBrace(openingBrace)) {
+			ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(openingBrace);
+			if (closingBrace == null) {
+				return;
+			}
+
+			boolean isCollapsed = isBlockCollapsed(openingBrace);
+			List<ClangNode> list = new ArrayList<>();
+			openingBrace.Parent().flatten(list);
+
+			boolean inSection = false;
+			boolean seenEllipsis = false;
+
+			for (ClangNode element : list) {
+				ClangToken token = (ClangToken) element;
+				if (token.equals(openingBrace)) {
+					inSection = true;
+					continue;
+				}
+
+				if (token.equals(closingBrace)) {
+					inSection = false;
+					break;
+				}
+
+				if (! inSection) {
+					continue;
+				}
+
+				boolean isEllipsis = (token instanceof ClangSyntaxToken) && (ClangToken.ELLIPSIS_TEXT.equals(token.getText()));
+
+				if (isEllipsis && !seenEllipsis) {
+					token.setCollapsedToken(isCollapsed);
+					seenEllipsis = true;
+				} else {
+					token.setCollapsedToken(!isCollapsed);
+				}
+			}
+
+			setDecompileData(decompileData);
+		}
+	}
+
+	public boolean isBlockCollapsed(ClangSyntaxToken openingBrace) {
+		ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(openingBrace);
+		if (closingBrace == null) {
+			return false;
+		}
+
+		List<ClangNode> list = new ArrayList<>();
+		openingBrace.Parent().flatten(list);
+
+		// Check if the block is collapsed by checking the first token inside the
+		// block that is not an ellipsis syntax token.
+		boolean inSection = false;
+		for (ClangNode element : list) {
+			ClangToken token = (ClangToken) element;
+			if (!inSection) {
+				inSection = token.equals(openingBrace);
+				continue;
+			}
+
+			if (token.equals(closingBrace)) {
+				return false;
+			}
+
+			if ((token instanceof ClangSyntaxToken) && (ClangToken.ELLIPSIS_TEXT.equals(token.getText()))) {
+				continue;
+			}
+
+			return token.getCollapsedToken();
+		}
+
+		return false;
+	}
+
+	public Map<Integer, CodeBlock> getBlocks() {
+		return blocks;
+	}
+
+	// Note: this assumes there is only at most one block starting at any given address
+	public void setBlocks() {
+		blocks = new HashMap<>();
+		List<ClangLine> lines = getLines();
+
+		for (int i = 0; i < lines.size(); i++) {
+			List<ClangToken> lineTokens = lines.get(i).getAllTokens();
+
+			for (ClangToken token : lineTokens) {
+				if (token.getText().contains("{") && token instanceof ClangSyntaxToken) {
+					List<ClangNode> list = new ArrayList<>();
+					token.Parent().flatten(list);
+
+					// Determine opening and closing line numbers
+					ClangSyntaxToken open = (ClangSyntaxToken) token;
+					ClangSyntaxToken close = DecompilerUtils.getMatchingBrace(open);
+					Integer openLine = i;
+
+					// It must be possible to compute this more efficiently than
+					// O(n^2)...
+					Integer blockLen = 1;
+					for (int j = openLine; j < lines.size(); j++) {
+						if (lines.get(j).indexOfToken(close) != -1) {
+							// +1 because we want to do openLine + blockLen to
+							// get the line number after the closing brace
+							blockLen = j - openLine + 1;
+							break;
+						}
+					}
+
+					CodeBlock block = new CodeBlock();
+					block.startLineIdx = openLine;
+					block.numLines = blockLen;
+					block.openToken = open;
+
+					blocks.put(openLine, block);
+				}
+			}
 		}
 	}
 
@@ -1308,7 +1462,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		if (options.isDisplayLineNumbers()) {
 			if (lineNumbersMargin == null) {
-				addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider());
+				addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider(this));
 			}
 		}
 		else {
@@ -1321,6 +1475,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		for (DecompilerMarginProvider element : marginProviders) {
 			element.setOptions(options);
 		}
+
+		pendingOptionChange = true;
 	}
 
 	public void addMarginProvider(DecompilerMarginProvider provider) {
