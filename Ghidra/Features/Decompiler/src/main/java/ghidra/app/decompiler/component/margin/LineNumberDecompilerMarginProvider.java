@@ -28,6 +28,7 @@ import docking.util.GraphicsUtils;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
+import generic.theme.GIcon;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.Program;
@@ -37,6 +38,11 @@ import ghidra.program.model.listing.Program;
  */
 public class LineNumberDecompilerMarginProvider extends JPanel
 		implements DecompilerMarginProvider, LayoutModelListener {
+
+	protected static final GIcon OPEN_ICON =
+		new GIcon("icon.base.util.viewer.fieldfactory.openclose.open");
+	protected static final GIcon CLOSED_ICON =
+		new GIcon("icon.base.util.viewer.fieldfactory.openclose.closed");
 
 	private LayoutPixelIndexMap pixmap;
 	private LayoutModel model;
@@ -127,7 +133,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		super.paint(g);
 
 		Insets insets = getInsets();
-		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth(" ");
+		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth(" ") * 2;
 		int leftEdge = insets.left;
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
@@ -140,11 +146,23 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
 
 			if (linesIndexes.containsKey(i.intValue())) {
+				Image img = null;
+
 				if (linesIndexes.get(i.intValue())) {
-					GraphicsUtils.drawString(this, g, "+", rightEdge, pixmap.getPixel(i) + ascent);
+					// block is collapsed
+					img = CLOSED_ICON.getImageIcon().getImage();
 				} else {
-					GraphicsUtils.drawString(this, g, "-", rightEdge, pixmap.getPixel(i) + ascent);
+					// block is not collapsed
+					img = OPEN_ICON.getImageIcon().getImage();
 				}
+
+				// Center the image
+				int midX = rightEdge + (2 * getFontMetrics(getFont()).stringWidth(" ")) / 2;
+				int midY = pixmap.getPixel(i) + (ascent / 2);
+				int topLeftX = midX - (img.getWidth(null) / 2);
+				int topLeftY = midY - (img.getHeight(null) / 2);
+
+				g.drawImage(img, topLeftX, topLeftY, getBackground(), null);
 			}
 		}
 	}
