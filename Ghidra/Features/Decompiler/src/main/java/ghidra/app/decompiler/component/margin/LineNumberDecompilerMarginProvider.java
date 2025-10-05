@@ -145,17 +145,9 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 			return;
 		}
 
-		// Skip any lines before startIdx
-		BigInteger lineNumber = BigInteger.ZERO;
-		for (BigInteger i = BigInteger.ZERO; i.compareTo(startIdx) < 0; i = i.add(BigInteger.ONE)) {
-			DecompilerPanel.CodeBlock block = blocks.getOrDefault(lineNumber.intValue(), null);
-
-			if (block == null || !decompilerPanel.isBlockCollapsed(block.openToken)) {
-				lineNumber = lineNumber.add(BigInteger.ONE);
-			} else {
-				lineNumber = lineNumber.add(BigInteger.valueOf(block.numLines));
-			}
-		}
+		BigInteger lineNumber = BigInteger.valueOf(
+			decompilerPanel.getLineNumber(visible.y)
+		);
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = lineNumber.add(BigInteger.ONE).toString();

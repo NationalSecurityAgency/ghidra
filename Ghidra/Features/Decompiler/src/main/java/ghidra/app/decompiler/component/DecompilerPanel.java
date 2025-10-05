@@ -803,9 +803,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public void arrowClickAction(int y) {
-		int lineNumber = getLineNumber(y);
+		int linesIdx = pixmap.getIndex(y).intValue();
 		ClangToken openingBraceToken = null;
-		ClangLine line = getLines().get(lineNumber - 1);
+		ClangLine line = getLines().get(linesIdx);
 		for (ClangToken lineToken : line.getAllTokens()) {
 			if ("{".equals(lineToken.getText())) {
 				openingBraceToken = lineToken;
@@ -848,7 +848,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 					continue;
 				}
 
-				boolean isEllipsis = (token instanceof ClangSyntaxToken) && (ClangToken.ELLIPSIS_TEXT.equals(token.getText()));
+				boolean isEllipsis = (token instanceof ClangSyntaxToken) && ClangToken.ELLIPSIS_TEXT.equals(token.getText());
 
 				if (isEllipsis && !seenEllipsis) {
 					token.setCollapsedToken(isCollapsed);
@@ -1379,7 +1379,20 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @return the line number, or 0 if not applicable
 	 */
 	public int getLineNumber(int y) {
-		return pixmap.getIndex(y).intValue() + 1;
+		int lineNumber = 0;
+		int idx = pixmap.getIndex(y).intValue();
+
+		for (int i = 0; i < idx; i++) {
+			CodeBlock block = blocks.getOrDefault(lineNumber, null);
+
+			if (block == null || !isBlockCollapsed(block.openToken)) {
+				lineNumber++;
+			} else {
+				lineNumber += block.numLines;
+			}
+		}
+
+		return lineNumber;
 	}
 
 	public DecompileOptions getOptions() {
