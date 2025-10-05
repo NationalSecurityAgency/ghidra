@@ -102,6 +102,7 @@ data/typeinfo/golang/go1.21.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.22.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.23.0.json||GHIDRA||||END|
 data/typeinfo/golang/go1.24.0.json||GHIDRA||||END|
+data/typeinfo/golang/go1.25.0.json||GHIDRA||||END|
 data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
@@ -217,11 +218,23 @@ data/typeinfo/golang/patchverdiffs/go1.22.7.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.22.8.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.22.9.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.10.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.11.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.12.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.2.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.3.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.4.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.5.json.diff||GHIDRA||||END|
 data/typeinfo/golang/patchverdiffs/go1.23.6.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.7.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.8.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.23.9.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.1.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.2.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.3.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.4.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.5.json.diff||GHIDRA||||END|
+data/typeinfo/golang/patchverdiffs/go1.24.6.json.diff||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
@@ -1074,4 +1087,5 @@ src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
+src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|

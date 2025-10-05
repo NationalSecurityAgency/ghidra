@@ -42,7 +42,8 @@ public class ToggleExpandCollapseDataAction extends ProgramLocationContextAction
 		this.provider = provider;
 
 		setPopupMenuData(
-			new MenuData(new String[] { "Toggle Expand/Collapse Data" }, null, "Structure"));
+			new MenuData(new String[] { "Data", "Toggle Expand/Collapse Data" }, null,
+				"BasicData2"));
 		setKeyBindingData(new KeyBindingData(' ', 0));
 
 		setHelpLocation(new HelpLocation("CodeBrowserPlugin", "ExpandCollapseActions"));

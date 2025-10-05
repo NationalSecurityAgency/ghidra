@@ -49,6 +49,7 @@ import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -290,7 +291,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		CompoundCmd<Program> addCmd = new CompoundCmd<>("Add Bookmarks");
 		Address a = addr("0x0100b6db");
 		for (int i = 0; i < 20; i++) {
-			addCmd.add(new BookmarkEditCmd(a, "Type1", "Cat1a", "Cmt1A_" + (i + 1)));
+			addCmd.add(new BookmarkEditCmd(a, BookmarkType.NOTE, "Cat1a", "Cmt1A_" + (i + 1)));
 			a = a.add(1);
 		}
 
@@ -324,11 +325,11 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 			cb.getCurrentAddress(), tooltip);
 
 		// should have a line for "Cursor" and comments 1 through 9 for a max of 10 lines
-		String expected = "<html><font size=\"4\">Cursor<BR>Type1 [Cat1a]: Cmt1A_1<BR>";
+		String expected = "<html><font size=\"4\">Cursor<BR>Note [Cat1a]: Cmt1A_1<BR>";
 		assertTrue("Expected text to start with:\n\t" + expected + "\nfound:\n\t" + tooltip,
 			tooltip.startsWith(expected));
 
-		expected = "Type1 [Cat1a]: Cmt1A_9<BR>...<BR>";
+		expected = "Note [Cat1a]: Cmt1A_9<BR>...<BR>";
 		assertTrue("Expected text to end with:\n\t" + expected + "\nfound:\n\t" + tooltip,
 			tooltip.endsWith(expected));
 	}
@@ -481,7 +482,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void clearSelection(Program p) {
-		ProgramSelection emptySelection = new ProgramSelection(p.getAddressFactory());
+		ProgramSelection emptySelection = new ProgramSelection();
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", emptySelection, p));
 	}
 

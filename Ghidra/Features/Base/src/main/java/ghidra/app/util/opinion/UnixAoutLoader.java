@@ -22,13 +22,11 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.unixaout.UnixAoutHeader;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A {@link Loader} for processing UNIX-style A.out executables
@@ -73,15 +71,14 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws CancelledException, IOException {
 		final boolean isLittleEndian = !program.getLanguage().isBigEndian();
-		final UnixAoutHeader header = new UnixAoutHeader(provider, isLittleEndian);
+		final UnixAoutHeader header = new UnixAoutHeader(settings.provider(), isLittleEndian);
 
 		final UnixAoutProgramLoader loader =
-			new UnixAoutProgramLoader(program, header, monitor, log);
-		loader.loadAout(getBaseAddrOffset(options));
+			new UnixAoutProgramLoader(program, header, settings.monitor(), settings.log());
+		loader.loadAout(getBaseAddrOffset(settings.options()));
 	}
 
 	@Override
@@ -112,7 +109,7 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		Address baseAddr = null;
 
 		if (domainObject instanceof Program) {
@@ -130,7 +127,8 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 		list.add(new Option(OPTION_NAME_BASE_ADDR, baseAddr, Address.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-baseAddr"));
 
-		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram));
+		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram,
+			mirrorFsLayout));
 		return list;
 	}
 

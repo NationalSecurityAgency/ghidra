@@ -94,6 +94,11 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	 */
 	public abstract ProjectData getProjectData();
 
+	/**
+	 * {@return domain folder/file pathname within project}
+	 */
+	public abstract String getPathname();
+
 	@Override
 	public abstract int compareTo(GTreeNode node);
 

@@ -373,15 +373,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		TableColumn statusColumn = columnModel.getColumn(statusColumnIndex);
 		statusColumn.setCellRenderer(new MatchStatusRenderer());
 
-		// override the default behavior so we see our columns in their preferred size
-		Dimension size = table.getPreferredScrollableViewportSize();
-		Dimension preferredSize = table.getPreferredSize();
+		// a reasonable starting size picked by trial-and-error
+		table.setPreferredScrollableViewportSize(new Dimension(1100, 600));
 
-		// ...account for the scroll bar width
-		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
-		Dimension scrollBarSize = scrollBar.getMinimumSize();
-		size.width = preferredSize.width + scrollBarSize.width;
-		table.setPreferredScrollableViewportSize(size);
 		return table;
 	}
 

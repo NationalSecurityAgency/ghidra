@@ -31,6 +31,7 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.app.util.viewer.field.AddressFieldFactory;
 import ghidra.app.util.viewer.field.FunctionSignatureFieldFactory;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
@@ -159,6 +160,9 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testSearchInstruction() throws Exception {
 
+		// Note: if we don't start on the address field, then the first call to nextInstruction() 
+		// will go to the address field.  
+		cb.goToField(addr("0x1001000"), AddressFieldFactory.FIELD_NAME, 0, 0);
 		assertAddress("0x1001000");
 		nextInstruction();
 		assertAddress("0x1002239");

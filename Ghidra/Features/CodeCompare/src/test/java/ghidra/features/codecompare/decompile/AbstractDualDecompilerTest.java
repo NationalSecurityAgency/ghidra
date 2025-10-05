@@ -75,7 +75,7 @@ public abstract class AbstractDualDecompilerTest extends AbstractGhidraHeadedInt
 	protected void setActivePanel(FunctionComparisonProvider provider,
 			CodeComparisonView comparisonProvider) {
 		runSwing(
-			() -> provider.getComponent().setCurrentTabbedComponent(comparisonProvider.getName()));
+			() -> provider.getComponent().setActiveView(comparisonProvider.getName()));
 		waitForSwing();
 	}
 

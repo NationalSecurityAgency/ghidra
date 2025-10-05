@@ -227,9 +227,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * Returns a prioritized list of directories where Ghidra extensions are installed. These
 	 * should be at the following locations:<br>
 	 * <ul>
-	 * <li><code>[user settings dir]/Extensions</code></li>
-	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
-	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * <li>{@code [user settings dir]/Extensions}</li>
+	 * <li>{@code [application root dirs]/Extensions}</li>
 	 * </ul>
 	 *
 	 * @return the install folder, or null if can't be determined
@@ -240,10 +239,11 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		dirs.add(new ResourceFile(new File(userSettingsDir, "Extensions")));
 
 		if (SystemUtilities.isInDevelopmentMode()) {
-			ResourceFile rootDir = getApplicationRootDirs().iterator().next();
-			File temp = new File(rootDir.getFile(false), "Extensions");
-			if (temp.exists()) {
-				dirs.add(new ResourceFile(temp)); // ghidra/Ghidra/Extensions
+			for (ResourceFile rootDir : getApplicationRootDirs()) {
+				File temp = new File(rootDir.getFile(false), "Extensions");
+				if (temp.exists()) {
+					dirs.add(new ResourceFile(temp)); // i.e., ghidra/Ghidra/Extensions
+				}
 			}
 		}
 		else {

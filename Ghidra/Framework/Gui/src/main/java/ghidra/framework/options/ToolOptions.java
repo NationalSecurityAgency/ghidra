@@ -20,6 +20,8 @@ import java.awt.Font;
 import java.beans.PropertyEditor;
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.swing.KeyStroke;
@@ -45,10 +47,16 @@ import ghidra.util.exception.AssertException;
  * <p>The Options Dialog shows the delimited hierarchy in tree format.
  */
 public class ToolOptions extends AbstractOptions {
+
 	private static final String CLASS_ATTRIBUTE = "CLASS";
 	private static final String NAME_ATTRIBUTE = "NAME";
 	private static final String WRAPPED_OPTION_NAME = "WRAPPED_OPTION";
 	private static final String CLEARED_VALUE_ELEMENT_NAME = "CLEARED_VALUE";
+
+	public static final String LAST_REGISTERED_DATE_ATTIBUTE = "LAST_REGISTERED";
+	public static final DateTimeFormatter LAST_REGISTERED_DATE_FORMATTER =
+		DateTimeFormatter.ISO_LOCAL_DATE;
+
 	public static final Set<Class<?>> PRIMITIVE_CLASSES = buildPrimitiveClassSet();
 	public static final Set<Class<?>> WRAPPABLE_CLASSES = buildWrappableClassSet();
 
@@ -91,7 +99,7 @@ public class ToolOptions extends AbstractOptions {
 	public ToolOptions(Element root) {
 		this(root.getAttributeValue(NAME_ATTRIBUTE));
 
-		SaveState saveState = new SaveState(root);
+		AttributedSaveState saveState = new AttributedSaveState(root);
 
 		readNonWrappedOptions(saveState);
 
@@ -103,14 +111,33 @@ public class ToolOptions extends AbstractOptions {
 		}
 	}
 
-	private void readNonWrappedOptions(SaveState saveState) {
+	private void readNonWrappedOptions(AttributedSaveState saveState) {
 		for (String optionName : saveState.getNames()) {
 			Object object = saveState.getObject(optionName);
-			Option option =
-				createUnregisteredOption(optionName, OptionType.getOptionType(object), null);
+			OptionType type = OptionType.getOptionType(object);
+			Option option = createUnregisteredOption(optionName, type, null);
 			option.doSetCurrentValue(object);  // use doSet versus set so that it is not registered
+
+			LocalDate date = getLastRegisteredDateString(saveState, optionName);
+			option.setLastRegisteredDate(date);
+
 			valueMap.put(optionName, option);
 		}
+	}
+
+	private LocalDate getLastRegisteredDateString(AttributedSaveState saveState,
+			String optionName) {
+
+		// Get the last registered date.  No date implies an old xml format.
+		Map<String, String> attrs = saveState.getAttributes(optionName);
+		if (attrs != null) {
+			String dateString = attrs.get(LAST_REGISTERED_DATE_ATTIBUTE);
+			if (dateString != null) {
+				return LocalDate.parse(dateString, LAST_REGISTERED_DATE_FORMATTER);
+			}
+		}
+
+		return LocalDate.now();
 	}
 
 	private void readWrappedOptions(Element root) throws ReflectiveOperationException {
@@ -124,19 +151,19 @@ public class ToolOptions extends AbstractOptions {
 				continue; // shouldn't happen
 			}
 
-			String optionName = element.getAttributeValue(NAME_ATTRIBUTE);
 			Class<?> c = Class.forName(element.getAttributeValue(CLASS_ATTRIBUTE));
 			Constructor<?> constructor = c.getDeclaredConstructor();
 			WrappedOption wo = (WrappedOption) constructor.newInstance();
 			wo.readState(new SaveState(element));
-
 			if (wo instanceof WrappedCustomOption wrappedCustom && !wrappedCustom.isValid()) {
 				continue;
 			}
+
 			if (wo instanceof WrappedKeyStroke wrappedKs) {
 				wo = wrappedKs.toWrappedActionTrigger();
 			}
 
+			String optionName = element.getAttributeValue(NAME_ATTRIBUTE);
 			Option option = createUnregisteredOption(optionName, wo.getOptionType(), null);
 			valueMap.put(optionName, option);
 
@@ -149,6 +176,15 @@ public class ToolOptions extends AbstractOptions {
 			else {
 				option.doSetCurrentValue(wo.getObject()); // use doSet so that it is not registered
 			}
+
+			// Get the last registered date.  No date implies an old xml format.
+			LocalDate date = LocalDate.now();
+			String dateString = element.getAttributeValue(LAST_REGISTERED_DATE_ATTIBUTE);
+			if (dateString != null) {
+				date = LocalDate.parse(dateString, LAST_REGISTERED_DATE_FORMATTER);
+			}
+
+			option.setLastRegisteredDate(date);
 		}
 	}
 
@@ -162,7 +198,7 @@ public class ToolOptions extends AbstractOptions {
 	 */
 	public Element getXmlRoot(boolean includeDefaultBindings) {
 
-		SaveState saveState = new SaveState(XML_ELEMENT_NAME);
+		AttributedSaveState saveState = new AttributedSaveState(XML_ELEMENT_NAME);
 
 		writeNonWrappedOptions(includeDefaultBindings, saveState);
 
@@ -174,16 +210,29 @@ public class ToolOptions extends AbstractOptions {
 		return root;
 	}
 
-	private void writeNonWrappedOptions(boolean includeDefaultBindings, SaveState saveState) {
+	private void writeNonWrappedOptions(boolean includeDefaultBindings,
+			AttributedSaveState saveState) {
 		for (String optionName : valueMap.keySet()) {
-			Option optionValue = valueMap.get(optionName);
-			if (includeDefaultBindings || !optionValue.isDefault()) {
-				Object value = optionValue.getValue(null);
-				if (isSupportedBySaveState(value)) {
-					saveState.putObject(optionName, value);
-				}
+			Option option = valueMap.get(optionName);
+			if (includeDefaultBindings || !option.isDefault()) {
+				writeNonWrappedOption(saveState, optionName, option);
 			}
 		}
+	}
+
+	private void writeNonWrappedOption(AttributedSaveState saveState, String optionName,
+			Option option) {
+		Object value = option.getValue(null);
+		if (!isSupportedBySaveState(value)) {
+			return;
+		}
+
+		saveState.putObject(optionName, value);
+
+		LocalDate date = option.getLastRegisteredDate();
+		String dateString = date.format(LAST_REGISTERED_DATE_FORMATTER);
+		Map<String, String> attrs = Map.of(LAST_REGISTERED_DATE_ATTIBUTE, dateString);
+		saveState.addAttributes(optionName, attrs);
 	}
 
 	private void writeWrappedOptions(boolean includeDefaultBindings, Element root) {
@@ -195,34 +244,45 @@ public class ToolOptions extends AbstractOptions {
 			}
 
 			if (includeDefaultBindings || !option.isDefault()) {
-				Object value = option.getCurrentValue();
-				if (isSupportedBySaveState(value)) {
-					continue; // handled above
-				}
-
-				WrappedOption wrappedOption = wrapOption(option);
-				if (wrappedOption == null) {
-					continue; // cannot write an option without a value to determine its type
-				}
-
-				SaveState ss = new SaveState(WRAPPED_OPTION_NAME);
-				Element elem = null;
-				if (value == null) {
-					// Handle the null case ourselves, not using the wrapped option (and when
-					// reading from xml) so the logic does not need to be in each wrapped option
-					elem = ss.saveToXml();
-					elem.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));
-				}
-				else {
-					wrappedOption.writeState(ss);
-					elem = ss.saveToXml();
-				}
-
-				elem.setAttribute(NAME_ATTRIBUTE, optionName);
-				elem.setAttribute(CLASS_ATTRIBUTE, wrappedOption.getClass().getName());
-				root.addContent(elem);
+				writeWrappedOption(root, optionName, option);
 			}
 		}
+	}
+
+	private void writeWrappedOption(Element root, String optionName, Option option) {
+		Object value = option.getCurrentValue();
+		if (isSupportedBySaveState(value)) {
+			return; // handled above
+		}
+
+		WrappedOption wrappedOption = wrapOption(option);
+		if (wrappedOption == null) {
+			return; // cannot write an option without a value to determine its type
+		}
+
+		SaveState ss = new SaveState(WRAPPED_OPTION_NAME);
+		Element element = null;
+		if (value == null) {
+			// Handle the null case ourselves, not using the wrapped option (and when
+			// reading from xml) so the logic does not need to be in each wrapped option
+			element = ss.saveToXml();
+			element.addContent(new Element(CLEARED_VALUE_ELEMENT_NAME));
+		}
+		else {
+			wrappedOption.writeState(ss);
+			element = ss.saveToXml();
+		}
+
+		element.setAttribute(NAME_ATTRIBUTE, optionName);
+
+		String className = wrappedOption.getClass().getName();
+		element.setAttribute(CLASS_ATTRIBUTE, className);
+
+		LocalDate date = option.getLastRegisteredDate();
+		String dateString = date.format(LAST_REGISTERED_DATE_FORMATTER);
+		element.setAttribute(LAST_REGISTERED_DATE_ATTIBUTE, dateString);
+
+		root.addContent(element);
 	}
 
 	private boolean isSupportedBySaveState(Object obj) {
@@ -310,7 +370,7 @@ public class ToolOptions extends AbstractOptions {
 		List<String> optionNames = new ArrayList<>(valueMap.keySet());
 		for (String optionName : optionNames) {
 			Option optionState = valueMap.get(optionName);
-			if (!optionState.isRegistered()) {
+			if (optionState.hasExpired()) {
 				removeOption(optionName);
 			}
 		}
@@ -377,11 +437,15 @@ public class ToolOptions extends AbstractOptions {
 		Set<String> keySet = valueMap.keySet();
 		for (String propertyName : keySet) {
 			Option optionState = valueMap.get(propertyName);
-			if (optionState.isRegistered()) {
+			if (optionState.isRegistered() || optionState.wasRegisteredInPreviousSession()) {
 				continue;
 			}
-			Msg.warn(this, "Unregistered property \"" + propertyName + "\" in Options \"" + name +
-				"\"\n     " + optionState.getInceptionInformation());
+
+			// getting here means that this option was used in the current tool session, but was not
+			// registered this session or in a previous session
+			Msg.warn(this,
+				"Unregistered property \"" + propertyName + "\" in Options \"" + name +
+					"\"\n     " + optionState.getInceptionInformation());
 		}
 	}
 

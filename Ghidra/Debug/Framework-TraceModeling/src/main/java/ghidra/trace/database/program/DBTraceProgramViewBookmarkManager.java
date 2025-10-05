@@ -55,6 +55,11 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	}
 
 	@Override
+	public boolean isDefinedType(String type) {
+		return bookmarkManager.isDefinedType(type);
+	}
+
+	@Override
 	public BookmarkType[] getBookmarkTypes() {
 		Collection<? extends TraceBookmarkType> types = bookmarkManager.getDefinedBookmarkTypes();
 		return types.toArray(new BookmarkType[types.size()]);

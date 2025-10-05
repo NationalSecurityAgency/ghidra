@@ -17,8 +17,7 @@ package ghidra.framework.main.projectdata.actions;
 
 import java.awt.Component;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.OptionDialogBuilder;
@@ -65,10 +64,21 @@ public class DeleteProjectFilesTask extends Task {
 
 		initializeMonitor(monitor);
 
-		deleteFiles(selectedFiles, monitor);
+		Set<DomainFile> resolvedFiles = resolveLinkedFiles(selectedFiles);
 
-		deleteFolders(selectedFolders, monitor);
+		Set<DomainFolder> resolvedFolders = resolveLinkedFolders(selectedFolders);
 
+		try {
+			deleteFiles(resolvedFiles, monitor);
+			deleteFolders(resolvedFolders, monitor);
+		}
+		catch (CancelledException e) {
+			// ignore
+		}
+
+	}
+
+	public void showReport() {
 		statistics.showReport(parent);
 	}
 
@@ -77,60 +87,105 @@ public class DeleteProjectFilesTask extends Task {
 		monitor.initialize(statistics.getFileCount());
 	}
 
-	private void deleteFiles(Set<DomainFile> files, TaskMonitor monitor) {
-		try {
-			for (DomainFile file : files) {
-				monitor.checkCancelled();
-				deleteFile(file);
-				monitor.incrementProgress(1);
+	/**
+	 * Domain file comparator for use in establishing order of file removal.
+	 * All real files (i.e., non-link-files) must be removed before link-files
+	 * afterwhich depth-first applies.
+	 */
+	private static final Comparator<DomainFile> FILE_PATH_COMPARATOR =
+		new Comparator<DomainFile>() {
+
+			@Override
+			public int compare(DomainFile o1, DomainFile o2) {
+
+				// Ensure that non-link-files occur first in sorted list
+				boolean isLink1 = o1.isLink();
+				boolean isLink2 = o2.isLink();
+				if (isLink1) {
+					if (!isLink2) {
+						return 1;
+					}
+				}
+				else if (isLink2) {
+					return -1;
+				}
+
+				// Compare paths to ensure deeper paths occur first in sorted list
+				String path1 = o1.getPathname();
+				String path2 = o2.getPathname();
+				return path2.compareTo(path1);
 			}
+		};
+
+	private Set<DomainFile> resolveLinkedFiles(Set<DomainFile> files) {
+		Set<DomainFile> resolvedFiles = new HashSet<>();
+		for (DomainFile file : files) {
+			// If file is contained within a linked-folder (LinkedDomainFile) we need to 
+			// use the actual linked file.  Since we should be dealing with internally
+			// linked content IOExceptions are unexpected.
+			if (file instanceof LinkedDomainFile linkedFile) {
+				try {
+					file = linkedFile.getRealFile();
+				}
+				catch (IOException e) {
+					continue; // Skip file if unable to resolve
+				}
+			}
+			resolvedFiles.add(file);
 		}
-		catch (CancelledException e) {
-			// just return so that statistics for what completed can be displayed
+		return resolvedFiles;
+	}
+
+	private Set<DomainFolder> resolveLinkedFolders(Set<DomainFolder> folders) {
+		Set<DomainFolder> resolvedFolders = new HashSet<>();
+		for (DomainFolder folder : folders) {
+			// If folder is a linked-folder (LinkedDomainFolder) we need to 
+			// use the actual linked folder.  Since we should be dealing with internally
+			// linked content IOExceptions are unexpected.
+			if (folder instanceof LinkedDomainFolder linkedFolder) {
+				try {
+					folder = linkedFolder.getRealFolder();
+				}
+				catch (IOException e) {
+					continue; // skip file if unable to resolve
+				}
+			}
+			resolvedFolders.add(folder);
+		}
+		return resolvedFolders;
+	}
+
+	private void deleteFiles(Set<DomainFile> files, TaskMonitor monitor) throws CancelledException {
+
+		ArrayList<DomainFile> sortedFiles = new ArrayList<>(files);
+		Collections.sort(sortedFiles, FILE_PATH_COMPARATOR);
+
+		for (DomainFile file : sortedFiles) {
+			monitor.checkCancelled();
+			deleteFile(file, monitor);
 		}
 	}
 
-	private void deleteFolders(Set<DomainFolder> folders, TaskMonitor monitor) {
+	private void deleteFolders(Set<DomainFolder> folders, TaskMonitor monitor)
+			throws CancelledException {
 
-		try {
-			for (DomainFolder folder : folders) {
-				deleteFolder(folder, monitor);
-			}
-		}
-		catch (CancelledException e) {
-			// just return so that statistics for what completed can be displayed
+		for (DomainFolder folder : folders) {
+			monitor.checkCancelled();
+			deleteFolder(folder, monitor);
 		}
 	}
 
 	private void deleteFolder(DomainFolder folder, TaskMonitor monitor) throws CancelledException {
 
-		while (folder instanceof LinkedDomainFolder linkedFolder) {
-			if (linkedFolder.isLinked()) {
-				throw new IllegalArgumentException(
-					"Linked-folder's originating file-link should have been removed instead: " +
-						linkedFolder.getPathname());
-			}
-			try {
-				folder = linkedFolder.getRealFolder();
-			}
-			catch (IOException e) {
-				Msg.error(this, "Error following linked-folder: " + e.getMessage() + "\n" +
-					folder.getPathname());
-				return;
-			}
-		}
-
 		for (DomainFolder subFolder : folder.getFolders()) {
 			monitor.checkCancelled();
-			if (!selectedFolders.contains(subFolder)) {
-				deleteFolder(subFolder, monitor);
-			}
+			deleteFolder(subFolder, monitor);
 		}
 
 		for (DomainFile file : folder.getFiles()) {
 			monitor.checkCancelled();
 			if (!selectedFiles.contains(file)) {
-				deleteFile(file);
+				deleteFile(file, monitor);
 				monitor.incrementProgress(1);
 			}
 		}
@@ -149,42 +204,47 @@ public class DeleteProjectFilesTask extends Task {
 		}
 	}
 
-	private void deleteFile(DomainFile file) throws CancelledException {
-		if (file.isOpen()) {
-			statistics.incrementFileInUse();
-			showFileInUseDialog(file);
+	private void deleteFile(DomainFile file, TaskMonitor monitor) throws CancelledException {
+
+		if (!file.exists()) {
 			return;
-		}
-
-		if (file.isVersioned() && file.isCheckedOut()) {
-			showCheckedOutVersionedDialog(file);
-			statistics.incrementCheckedOutVersioned();
-			return;
-		}
-
-		if (file.isReadOnly()) {
-			int result = showConfirmReadOnlyDialog(file);
-			if (result == OptionDialog.CANCEL_OPTION) {
-				throw new CancelledException();
-			}
-			if (result != OptionDialog.YES_OPTION) {
-				statistics.incrementReadOnly();
-				return;
-			}
-		}
-
-		if (file.isVersioned()) {
-			int result = showConfirmDeleteVersionedDialog(file);
-			if (result == OptionDialog.CANCEL_OPTION) {
-				throw new CancelledException();
-			}
-			if (result != OptionDialog.YES_OPTION) {
-				statistics.incrementVersioned();
-				return;
-			}
 		}
 
 		try {
+			if (file.isOpen()) {
+				statistics.incrementFileInUse();
+				showFileInUseDialog(file);
+				return;
+			}
+
+			if (file.isVersioned() && file.isCheckedOut()) {
+				showCheckedOutVersionedDialog(file);
+				statistics.incrementCheckedOutVersioned();
+				return;
+			}
+
+			if (file.isReadOnly()) {
+				int result = showConfirmReadOnlyDialog(file);
+				if (result == OptionDialog.CANCEL_OPTION) {
+					throw new CancelledException();
+				}
+				if (result != OptionDialog.YES_OPTION) {
+					statistics.incrementReadOnly();
+					return;
+				}
+			}
+
+			if (file.isVersioned()) {
+				int result = showConfirmDeleteVersionedDialog(file);
+				if (result == OptionDialog.CANCEL_OPTION) {
+					throw new CancelledException();
+				}
+				if (result != OptionDialog.YES_OPTION) {
+					statistics.incrementVersioned();
+					return;
+				}
+			}
+
 			file.delete();
 			statistics.incrementDeleted();
 		}
@@ -197,6 +257,9 @@ public class DeleteProjectFilesTask extends Task {
 			if (result == OptionDialog.CANCEL_OPTION) {
 				throw new CancelledException();
 			}
+		}
+		finally {
+			monitor.increment();
 		}
 	}
 

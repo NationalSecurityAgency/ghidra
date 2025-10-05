@@ -471,6 +471,32 @@ uintb PcodeOp::collapse(bool &markedInput) const {
   throw LowlevelError("Invalid constant collapse");
 }
 
+/// The p-code op must be \e special, or an exception is thrown.  The operation is performed
+/// and if there is no evaluation error, the result is returned and \b evalError is set to \b false.
+/// \param in is an array of input values
+/// \return the result of applying \b this operation to the input values
+uintb PcodeOp::executeSimple(uintb *in,bool &evalError) const
+
+{
+  uint4 evalType = getEvalType();
+  uintb res;
+  try {
+    if (evalType == PcodeOp::unary)
+      res = opcode->evaluateUnary(output->getSize(),inrefs[0]->getSize(),in[0]);
+    else if (evalType == PcodeOp::binary)
+      res = opcode->evaluateBinary(output->getSize(),inrefs[0]->getSize(),in[0],in[1]);
+    else if (evalType == PcodeOp::ternary)
+      res = opcode->evaluateTernary(output->getSize(),inrefs[0]->getSize(),in[0],in[1],in[2]);
+    else
+      throw LowlevelError("Cannot perform simple execution of "+(string)get_opname(code()));
+  } catch(EvaluationError &err) {
+    evalError = true;
+    return 0;
+  }
+  evalError = false;
+  return res;
+}
+
 /// Knowing that \b this PcodeOp has collapsed its constant inputs, one of which has
 /// symbol content, figure out if the symbol should propagate to the new given output constant.
 /// \param newConst is the given output constant

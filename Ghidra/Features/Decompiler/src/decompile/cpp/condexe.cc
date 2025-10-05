@@ -122,7 +122,12 @@ bool ConditionalExecution::testOpRead(Varnode *vn,PcodeOp *op)
 {
   if (op->getParent() == iblock) return true;
   PcodeOp *writeOp = vn->getDef();
-  if (writeOp->code() == CPUI_COPY || writeOp->code() == CPUI_SUBPIECE) {
+  OpCode opc = writeOp->code();
+  if (opc == CPUI_COPY || opc == CPUI_SUBPIECE || opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+    if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+      if (!writeOp->getIn(1)->isConstant())
+	return false;
+    }
     Varnode *invn = writeOp->getIn(0);
     if (invn->isWritten()) {
       PcodeOp *upop = invn->getDef();
@@ -146,18 +151,19 @@ Varnode *ConditionalExecution::findPullback(int4 inbranch)
   return pullback[inbranch];
 }
 
-/// Create a duplicate SUBPIECE outside the iblock.  If the SUBPIECE input is defined by a MULTIEQUAL in the iblock,
-/// the duplicate's input will be selected from the MULTIEQUAL input.
-/// \param subOp is the SUBPIECE in the iblock being replaced
+/// Create a duplicate PcodeOp outside the iblock. The first input to the PcodeOp can
+/// be defined by a MULTIEQUAL in the iblock, in which case the duplicate's input will be
+/// selected from the MULTIEQUAL input.  Any other inputs must be constants.
+/// \param op is the PcodeOp in the iblock being replaced
 /// \param inbranch is the direction to pullback from
-/// \return the output Varnode of the new SUBPIECE
-Varnode *ConditionalExecution::pullbackSubpiece(PcodeOp *subOp,int4 inbranch)
+/// \return the output Varnode of the new op
+Varnode *ConditionalExecution::pullbackOp(PcodeOp *op,int4 inbranch)
 
 {
   Varnode *invn = findPullback(inbranch);	// Look for pullback constructed for a previous read
   if (invn != (Varnode *)0)
     return invn;
-  invn = subOp->getIn(0);
+  invn = op->getIn(0);
   BlockBasic *bl;
   if (invn->isWritten()) {
     PcodeOp *defOp = invn->getDef();
@@ -166,17 +172,18 @@ Varnode *ConditionalExecution::pullbackSubpiece(PcodeOp *subOp,int4 inbranch)
       invn = defOp->getIn(inbranch);		// defOp must by MULTIEQUAL
     }
     else
-      bl = defOp->getParent();
+      bl = (BlockBasic *)iblock->getImmedDom();
   }
   else {
     bl = (BlockBasic *)iblock->getImmedDom();
   }
-  PcodeOp *newOp = fd->newOp(2,subOp->getAddr());
-  Varnode *origOutVn = subOp->getOut();
+  PcodeOp *newOp = fd->newOp(op->numInput(),op->getAddr());
+  Varnode *origOutVn = op->getOut();
   Varnode *outVn = fd->newVarnodeOut(origOutVn->getSize(),origOutVn->getAddr(),newOp);
-  fd->opSetOpcode(newOp,CPUI_SUBPIECE);
+  fd->opSetOpcode(newOp,op->code());
   fd->opSetInput(newOp,invn,0);
-  fd->opSetInput(newOp,subOp->getIn(1),1);
+  for(int4 i=1;i<op->numInput();++i)
+    fd->opSetInput(newOp,op->getIn(i),i);
   fd->opInsertEnd(newOp, bl);
   pullback[inbranch] = outVn;		// Cache pullback in case there are other reads
   return outVn;
@@ -245,10 +252,11 @@ Varnode *ConditionalExecution::resolveIblockRead(PcodeOp *op,int4 inbranch)
     else
       return vn;
   }
-  if (op->code() == CPUI_MULTIEQUAL)
+  OpCode opc = op->code();
+  if (opc == CPUI_MULTIEQUAL)
    return op->getIn(inbranch);
-  else if (op->code() == CPUI_SUBPIECE) {
-    return pullbackSubpiece(op, inbranch);
+  else if (opc == CPUI_SUBPIECE || opc == CPUI_INT_ADD || opc == CPUI_PTRSUB) {
+    return pullbackOp(op, inbranch);
   }
   throw LowlevelError("Conditional execution: Illegal op in iblock");
 }

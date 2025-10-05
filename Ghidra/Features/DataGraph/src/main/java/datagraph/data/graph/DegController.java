@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComponent;
 
 import datagraph.DataGraphProvider;
+import datagraph.DegSharedConfig;
 import datagraph.data.graph.DegVertex.DegVertexStatus;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import ghidra.app.util.XReferenceUtils;
@@ -43,6 +44,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.util.AddressFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -62,14 +64,17 @@ public class DegController implements DomainObjectListener {
 	private boolean navigateIn = false;
 	private boolean compactFormat = true;
 	private DataGraphProvider provider;
+	private DegSharedConfig sharedConfig;
 
 	/**
 	 * Constructs a new data exploration graph controller.
 	 * @param provider The data graph provider that created this controller
 	 * @param data the initial data to display in the graph
+	 * @param sharedConfig the shared data graph configuration state
 	 */
-	public DegController(DataGraphProvider provider, Data data) {
+	public DegController(DataGraphProvider provider, Data data, DegSharedConfig sharedConfig) {
 		this.provider = provider;
+		this.sharedConfig = sharedConfig;
 		this.program = data.getProgram();
 		view = new DegGraphView();
 		DegVertex root = new DataDegVertex(this, data, null, true);
@@ -88,8 +93,9 @@ public class DegController implements DomainObjectListener {
 	 */
 	public void navigateOut(Address address, int[] componentPath) {
 		if (navigateOut) {
+			// Using an address field location skips past pre or plate comments 
 			ProgramLocation location =
-				new ProgramLocation(program, address, address, componentPath, null, 0, 0, 0);
+				new AddressFieldLocation(program, address, componentPath, address.toString(), 0);
 			provider.navigateOut(location);
 		}
 	}
@@ -226,6 +232,7 @@ public class DegController implements DomainObjectListener {
 	public void orientAround(DegVertex newRoot) {
 		graph.setRoot(newRoot);
 		relayoutGraphAndCenter(newRoot);
+		provider.updateSubTitle();
 	}
 
 	public VisualGraphView<DegVertex, DegEdge, DataExplorationGraph> getView() {
@@ -247,6 +254,7 @@ public class DegController implements DomainObjectListener {
 	 */
 	public void setNavigateOut(boolean b) {
 		navigateOut = b;
+		sharedConfig.setNavigateOut(b);
 	}
 
 	/**
@@ -256,6 +264,7 @@ public class DegController implements DomainObjectListener {
 	 */
 	public void setNavigateIn(boolean b) {
 		navigateIn = b;
+		sharedConfig.setNavigateIn(b);
 	}
 
 	/**
@@ -270,6 +279,12 @@ public class DegController implements DomainObjectListener {
 			}
 		});
 		relayoutGraph();
+		sharedConfig.setCompactFormat(b);
+	}
+
+	public void setPopupsVisible(boolean b) {
+		view.setPopupsVisible(b);
+		sharedConfig.setShowPopups(b);
 	}
 
 	public boolean isCompactFormat() {
@@ -330,7 +345,7 @@ public class DegController implements DomainObjectListener {
 	 * graph will select that vertex.
 	 * @param location the new location for the tool
 	 */
-	public void locationChanged(ProgramLocation location) {
+	public void setLocation(ProgramLocation location) {
 		if (!navigateIn) {
 			return;
 		}

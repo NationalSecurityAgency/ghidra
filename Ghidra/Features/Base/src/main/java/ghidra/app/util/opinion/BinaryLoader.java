@@ -22,7 +22,6 @@ import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -31,7 +30,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 public class BinaryLoader extends AbstractProgramLoader {
 
@@ -269,55 +267,48 @@ public class BinaryLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, CancelledException {
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec importerCompilerSpec =
-			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
-
 		Address baseAddr =
 			importerLanguage.getAddressFactory().getDefaultAddressSpace().getAddress(0);
-		Program prog = createProgram(provider, programName, baseAddr, getName(), importerLanguage,
-			importerCompilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
+
+		Program prog = createProgram(baseAddr, settings);
+		Loaded<Program> loaded = new Loaded<Program>(prog, settings);
 
 		boolean success = false;
 		try {
-			loadInto(provider, loadSpec, options, log, prog, monitor);
-			createDefaultMemoryBlocks(prog, importerLanguage, log);
+			loadInto(prog, settings);
+			createDefaultMemoryBlocks(prog, settings);
 			success = true;
-			return loadedList;
+			return List.of(loaded);
 		}
 		finally {
 			if (!success) {
-				loadedList.forEach(Loaded::close);
+				loaded.close();
 			}
 		}
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+	protected void loadProgramInto(Program prog, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		long length = getLength(options);
+		long length = getLength(settings.options());
 		//File file = provider.getFile();
-		long fileOffset = getFileOffset(options);
-		Address baseAddr = getBaseAddr(options);
-		String blockName = getBlockName(options);
-		boolean isOverlay = isOverlay(options);
+		long fileOffset = getFileOffset(settings.options());
+		Address baseAddr = getBaseAddr(settings.options());
+		String blockName = getBlockName(settings.options());
+		boolean isOverlay = isOverlay(settings.options());
 
 		if (length == 0) {
-			length = provider.length();
+			length = settings.provider().length();
 		}
 
-		length = clipToMemorySpace(length, log, prog);
+		length = clipToMemorySpace(length, settings.log(), prog);
 
-		FileBytes fileBytes =
-			MemoryBlockUtils.createFileBytes(prog, provider, fileOffset, length, monitor);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, settings.provider(),
+			fileOffset, length, settings.monitor());
 		try {
 			AddressSpace space = prog.getAddressFactory().getDefaultAddressSpace();
 			if (baseAddr == null) {
@@ -326,7 +317,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 			if (blockName == null || blockName.length() == 0) {
 				blockName = generateBlockName(prog, isOverlay, baseAddr.getAddressSpace());
 			}
-			createBlock(prog, isOverlay, blockName, baseAddr, fileBytes, length, log);
+			createBlock(prog, isOverlay, blockName, baseAddr, fileBytes, length, settings.log());
 		}
 		catch (AddressOverflowException e) {
 			throw new LoadException("Invalid address range specified: start:" + baseAddr +
@@ -359,7 +350,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		long fileOffset = 0;
 		long origFileLength = -1;
 		try {
@@ -404,7 +395,8 @@ public class BinaryLoader extends AbstractProgramLoader {
 		list.add(new Option(OPTION_NAME_LEN, new HexLong(length), HexLong.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-length"));
 
-		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram));
+		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram,
+			mirrorFsLayout));
 		return list;
 	}
 

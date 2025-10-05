@@ -46,8 +46,9 @@ public class DWARFMacroParsingTests extends DWARFTestBase {
 		MacroInfo macroInfo = entry.getMacroInfo();
 		assertEquals(1, entry.getLineNumber());
 		assertFalse(macroInfo.isFunctionLike());
+		assertEquals("TEST", macroInfo.symbolName());
 		assertTrue(macroInfo.parameters().isEmpty());
-		assertEquals(macroInfo.definition(), StringUtils.EMPTY);
+		assertEquals(StringUtils.EMPTY, macroInfo.definition());
 	}
 
 	@Test
@@ -56,21 +57,81 @@ public class DWARFMacroParsingTests extends DWARFTestBase {
 		MacroInfo macroInfo = entry.getMacroInfo();
 		assertEquals(2, entry.getLineNumber());
 		assertFalse(macroInfo.isFunctionLike());
+		assertEquals("TEST", macroInfo.symbolName());
 		assertTrue(macroInfo.parameters().isEmpty());
 		assertEquals("0x4", macroInfo.definition());
 	}
 
 	@Test
+	public void testObjectListMacroExpression() throws IOException {
+		DWARFMacroDefine entry = new DWARFMacroDefine(2, "ONE_PLUS_TWO 1 + 2", header);
+		MacroInfo macroInfo = entry.getMacroInfo();
+		assertEquals(2, entry.getLineNumber());
+		assertFalse(macroInfo.isFunctionLike());
+		assertEquals("ONE_PLUS_TWO", macroInfo.symbolName());
+		assertTrue(macroInfo.parameters().isEmpty());
+		assertEquals("1 + 2", macroInfo.definition());
+	}
+
+	@Test
+	public void testObjectListMacroExpressionParens1() throws IOException {
+		DWARFMacroDefine entry = new DWARFMacroDefine(2, "ONE_PLUS_TWO (1) + (2)", header);
+		MacroInfo macroInfo = entry.getMacroInfo();
+		assertEquals(2, entry.getLineNumber());
+		assertFalse(macroInfo.isFunctionLike());
+		assertEquals("ONE_PLUS_TWO", macroInfo.symbolName());
+		assertTrue(macroInfo.parameters().isEmpty());
+		assertEquals("(1) + (2)", macroInfo.definition());
+	}
+
+	@Test
+	public void testObjectListMacroExpressionParens2() throws IOException {
+		DWARFMacroDefine entry = new DWARFMacroDefine(2, "ONE_PLUS_TWO ((1) + (2))", header);
+		MacroInfo macroInfo = entry.getMacroInfo();
+		assertEquals(2, entry.getLineNumber());
+		assertFalse(macroInfo.isFunctionLike());
+		assertEquals("ONE_PLUS_TWO", macroInfo.symbolName());
+		assertTrue(macroInfo.parameters().isEmpty());
+		assertEquals("((1) + (2))", macroInfo.definition());
+	}
+
+	@Test
 	public void testFunctionLikeMacro() throws IOException {
-		DWARFMacroDefine entry = new DWARFMacroDefine(3, "SUM(A,B) (A+B)", header);
+		DWARFMacroDefine entry = new DWARFMacroDefine(3, "SUM(A,B) A + B", header);
 		MacroInfo macroInfo = entry.getMacroInfo();
 		assertEquals(3, entry.getLineNumber());
 		assertTrue(macroInfo.isFunctionLike());
+		assertEquals("SUM", macroInfo.symbolName());
 		assertEquals(2, macroInfo.parameters().size());
 		assertEquals("A", macroInfo.parameters().get(0));
 		assertEquals("B", macroInfo.parameters().get(1));
-		assertEquals("(A+B)", macroInfo.definition());
+		assertEquals("A + B", macroInfo.definition());
+	}
 
+	@Test
+	public void testFunctionLikeMacroParens1() throws IOException {
+		DWARFMacroDefine entry = new DWARFMacroDefine(3, "SUM(A,B) (A) + (B)", header);
+		MacroInfo macroInfo = entry.getMacroInfo();
+		assertEquals(3, entry.getLineNumber());
+		assertTrue(macroInfo.isFunctionLike());
+		assertEquals("SUM", macroInfo.symbolName());
+		assertEquals(2, macroInfo.parameters().size());
+		assertEquals("A", macroInfo.parameters().get(0));
+		assertEquals("B", macroInfo.parameters().get(1));
+		assertEquals("(A) + (B)", macroInfo.definition());
+	}
+
+	@Test
+	public void testFunctionLikeMacroParens2() throws IOException {
+		DWARFMacroDefine entry = new DWARFMacroDefine(3, "SUM(A,B) ((A) + (B))", header);
+		MacroInfo macroInfo = entry.getMacroInfo();
+		assertEquals(3, entry.getLineNumber());
+		assertTrue(macroInfo.isFunctionLike());
+		assertEquals("SUM", macroInfo.symbolName());
+		assertEquals(2, macroInfo.parameters().size());
+		assertEquals("A", macroInfo.parameters().get(0));
+		assertEquals("B", macroInfo.parameters().get(1));
+		assertEquals("((A) + (B))", macroInfo.definition());
 	}
 
 }

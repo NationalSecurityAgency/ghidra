@@ -112,23 +112,35 @@ public final class LocalTreeNodeHandler
 	}
 
 	private boolean isValidDrag(DomainFolder destFolder, GTreeNode draggedNode) {
-		// NOTE: We may have issues since checks are not based on canonical paths
-		if (draggedNode instanceof DomainFolderNode folderNode) {
-			// This also checks cases where src/dest projects are using the same repository.
-			// Unfortunately, it will also prevent cases where shared-project folder 
-			// does not contain versioned content and could actually be allowed.
-			DomainFolder folder = folderNode.getDomainFolder();
-			return !folder.isSameOrAncestor(destFolder);
-		}
-		if (draggedNode instanceof DomainFileNode fileNode) {
-			DomainFolder folder = fileNode.getDomainFile().getParent();
-			DomainFile file = fileNode.getDomainFile();
-			if (file.isVersioned()) {
+		try {
+			// NOTE: destFolder should be real folder and not linked-folder
+			// NOTE: We may have issues since checks are not based on canonical paths
+			if (draggedNode instanceof DomainFolderNode folderNode) {
 				// This also checks cases where src/dest projects are using the same repository.
-				return !folder.isSame(destFolder);
+				// Unfortunately, it will also prevent cases where shared-project folder 
+				// does not contain versioned content and could actually be allowed.
+				DomainFolder folder = folderNode.getDomainFolder();
+				if (folder instanceof LinkedDomainFolder linkedFolder) {
+					folder = linkedFolder.getRealFolder();
+				}
+				return !folder.isSameOrAncestor(destFolder);
 			}
-			DomainFile destFile = destFolder.getFile(file.getName());
-			return destFile == null || !destFile.equals(file);
+			if (draggedNode instanceof DomainFileNode fileNode) {
+				DomainFile file = fileNode.getDomainFile();
+				if (file instanceof LinkedDomainFile linkedFile) {
+					file = linkedFile.getRealFile();
+				}
+				DomainFolder folder = file.getParent();
+				if (file.isVersioned()) {
+					// This also checks cases where src/dest projects are using the same repository.
+					return !folder.isSame(destFolder);
+				}
+				DomainFile destFile = destFolder.getFile(file.getName());
+				return destFile == null || !destFile.equals(file);
+			}
+		}
+		catch (IOException e) {
+			// ignore
 		}
 		return false;
 	}
@@ -165,6 +177,9 @@ public final class LocalTreeNodeHandler
 		}
 
 		try {
+			if (file instanceof LinkedDomainFile linkedFile) {
+				file = linkedFile.getRealFile();
+			}
 			file.moveTo(destFolder);
 		}
 		catch (IOException e) {
@@ -186,6 +201,9 @@ public final class LocalTreeNodeHandler
 		}
 
 		try {
+			if (sourceFolder instanceof LinkedDomainFolder linkedFolder) {
+				sourceFolder = linkedFolder.getRealFolder();
+			}
 			sourceFolder.moveTo(destFolder);
 		}
 		catch (DuplicateFileException dfe) {

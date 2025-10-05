@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,12 +106,11 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	@SuppressWarnings("hiding")
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws CancelledException, IOException {
-		this.log = log;
-		parseDumpFile(provider, program, options, loadSpec, monitor);
+		this.log = settings.log();
+		parseDumpFile(settings.provider(), program, settings.options(), settings.loadSpec(),
+			settings.monitor());
 	}
 
 	private void parseDumpFile(ByteProvider provider, Program program, List<Option> options,
@@ -300,7 +299,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
+			DomainObject domainObject, boolean isLoadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> options = new ArrayList<>();
 		try {
 			int size = loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace().getSize();

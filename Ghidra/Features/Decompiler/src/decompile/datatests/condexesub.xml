@@ -3,29 +3,43 @@
 <!--
    Example where a SUBPIECE gets placed in an iblock that should still be removed.
    The predicates should still all collapse to a single "if" body.
+   Example with INT_ADD in the iblock that should be removed. Should collapse to single if/else.
 -->
 <bytechunk space="ram" offset="0x402d29a8" readonly="true">
                 10402de9eaffffeb
 24309fe5003093e50120a0e31420c3e5
 000050e30030a0131730c0151630c015
 1530c0151040bde81eff2fe100003040
+0929d9bf026083604360c2607047
 </bytechunk>
 <symbol space="ram" offset="0x402d29a8" name="func"/>
 <symbol space="ram" offset="0x402d295c" name="other"/>
+<symbol space="ram" offset="0x402d29e0" name="iblockadd"/>
 </binaryimage>
 <script>
   <com>option readonly on</com>
+  <com>set context TMode 1 [ram,0x402d29e0] [ram,0x402d29ef]</com>
   <com>parse line struct foo { char buf[0x14]; char w; char x; char y; char z; };</com>
+  <com>parse line extern void iblockadd(int4 *iptr,int4 a,int4 b,int4 c);</com>
   <com>parse line extern foo *other(void);</com>
   <com>map addr r0x40300000 foo *glob1</com>
   <com>lo fu func</com>
   <com>decompile</com>
   <com>print C</com>
+  <com>lo fu iblockadd</com>
+  <com>decompile</com>
+  <com>print C</com>
 </script>
-<stringmatch name="Conditional Subpiece #1" min="1" max="1">if</stringmatch>
+<stringmatch name="Conditional Subpiece #1" min="1" max="1">if \(pfVar</stringmatch>
 <stringmatch name="Conditional Subpiece #2" min="0" max="0">\(char\)</stringmatch>
 <stringmatch name="Conditional Subpiece #3" min="1" max="1">glob1-&gt;w = '\\x01';</stringmatch>
 <stringmatch name="Conditional Subpiece #4" min="1" max="1">pfVar1-&gt;x = '\\0';</stringmatch>
 <stringmatch name="Conditional Subpiece #5" min="1" max="1">pfVar1-&gt;y = '\\0';</stringmatch>
 <stringmatch name="Conditional Subpiece #6" min="1" max="1">pfVar1-&gt;z = '\\0';</stringmatch>
+<stringmatch name="Conditional Add #1" min="1" max="1">if \(a</stringmatch>
+<stringmatch name="Conditional Add #2" min="1" max="1">\*iptr = b;
+                                                       iptr\[2\] = c;</stringmatch>
+<stringmatch name="Conditional Add #3" min="1" max="1">else \{
+						       iptr\[1\] = c;
+						       iptr\[3\] = b;</stringmatch>
 </decompilertest>

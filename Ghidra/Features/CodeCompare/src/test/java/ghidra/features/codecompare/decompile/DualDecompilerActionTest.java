@@ -756,9 +756,10 @@ public class DualDecompilerActionTest extends AbstractDualDecompilerTest {
 		provider = compareFunctions(Set.of(leftFunc, rightFunc));
 
 		DecompilerCodeComparisonView decompPanel = findDecompilerPanel(provider);
-		waitForDecompile(decompPanel);
-		decompPanel.setSynchronizedScrolling(true);
+		runSwing(() -> decompPanel.setSynchronizedScrolling(true));
+
 		setActivePanel(provider, decompPanel);
+		waitForDecompile(decompPanel);
 
 		assertEquals(decompPanel.getFunction(Side.LEFT), leftFunc);
 		assertEquals(decompPanel.getFunction(Side.RIGHT), rightFunc);

@@ -54,20 +54,21 @@ debug_callback = _debug_callback
 
 
 # Expose API
-from pyghidra.core import run_script, start, started, open_program
+from pyghidra.core import run_script, open_program
+from pyghidra.api import start, started
 from pyghidra.api import open_project, open_filesystem, consume_program, program_context, analyze
 from pyghidra.api import ghidra_script, transaction, analysis_properties, program_info
-from pyghidra.api import program_loader, dummy_monitor, walk_project, walk_programs
+from pyghidra.api import program_loader, monitor, walk_project, walk_programs
 from pyghidra.launcher import DeferredPyGhidraLauncher, GuiPyGhidraLauncher, HeadlessPyGhidraLauncher
 from pyghidra.script import get_current_interpreter
 from pyghidra.version import ApplicationInfo, ExtensionDetails
 
 
 __all__ = [
-    "debug_callback", "get_current_interpreter", "open_program", "run_script", "start",
-    "started", "ApplicationInfo", "DeferredPyGhidraLauncher", "ExtensionDetails",
-    "GuiPyGhidraLauncher", "HeadlessPyGhidraLauncher", "open_project", "open_filesystem", 
+    "debug_callback", "get_current_interpreter", "open_program", "run_script", "ApplicationInfo", 
+    "DeferredPyGhidraLauncher", "ExtensionDetails", "GuiPyGhidraLauncher", 
+    "HeadlessPyGhidraLauncher", "start", "started", "open_project", "open_filesystem", 
     "consume_program", "program_conext", "analyze", "ghidra_script", "transaction", 
-    "analysis_properties", "program_info", "program_loader", "dummy_monitor", "walk_project", 
+    "analysis_properties", "program_info", "program_loader", "monitor", "walk_project", 
     "walk_programs"
 ]

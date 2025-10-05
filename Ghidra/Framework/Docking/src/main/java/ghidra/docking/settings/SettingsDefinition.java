@@ -97,7 +97,7 @@ public interface SettingsDefinition {
 	public String getDescription();
 
 	/**
-	 * Removes any values in the given settings object assocated with this settings definition
+	 * Removes any values in the given settings object associated with this settings definition
 	 * @param settings the settings object to be cleared.
 	 */
 	public void clear(Settings settings);

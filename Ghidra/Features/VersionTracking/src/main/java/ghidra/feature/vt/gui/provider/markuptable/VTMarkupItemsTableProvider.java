@@ -78,7 +78,6 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	private static final Icon SHOW_LISTINGS_ICON =
 		new GIcon("icon.version.tracking.action.show.listings");
 
-	private static final Icon FILTER_ICON = new GIcon("icon.version.tracking.filter");
 	private static final String SHOW_COMPARE_ACTION_GROUP = "A9_ShowCompare"; // "A9_" forces to right of other dual view actions in toolbar.
 
 	private final VTController controller;
@@ -160,7 +159,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		functionComparisonPanel = fcService.createComparisonViewer();
 
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonView.NAME);
+		functionComparisonPanel.setActiveView(ListingCodeComparisonView.NAME);
 		functionComparisonPanel.getAccessibleContext().setAccessibleName("Function Comparison");
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 		ListingCodeComparisonView dualListingProvider =
@@ -320,16 +319,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		TableColumn column = columnModel.getColumn(columnIndex);
 		column.setCellEditor(new AddressInputDialog(controller));
 
-		// override the default behavior so we see our columns in their preferred size
-		Dimension size = table.getPreferredScrollableViewportSize();
-		Dimension preferredSize = table.getPreferredSize();
-
-		// ...account for the scroll bar width
-		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
-		scrollBar.getAccessibleContext().setAccessibleName("Markup Item Table");
-		Dimension scrollBarSize = scrollBar.getMinimumSize();
-		size.width = preferredSize.width + scrollBarSize.width;
-		table.setPreferredScrollableViewportSize(size);
+		// a reasonable starting size picked by trial-and-error
+		table.setPreferredScrollableViewportSize(new Dimension(1100, 600));
 		table.getAccessibleContext().setAccessibleName("Markup Item");
 		return table;
 	}
@@ -420,7 +411,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		nameFilterPanel.getAccessibleContext().setAccessibleName("Name Filter");
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
-		ancillaryFilterButton = new JButton(FILTER_ICON);
+		ancillaryFilterButton = new JButton(UNFILTERED_ICON);
 		ancillaryFilterButton.getAccessibleContext().setAccessibleName("Ancillary");
 		ancillaryFilterButton
 				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));

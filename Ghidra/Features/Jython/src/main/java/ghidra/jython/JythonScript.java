@@ -71,13 +71,20 @@ public class JythonScript extends GhidraScript {
 				updateStateFromVariables();
 			}
 
-			if (ghidraScript instanceof JythonScript) {
-				ghidraScript.set(scriptState);
-				JythonScript jythonScript = (JythonScript) ghidraScript;
-				interpreter.execFile(jythonScript.getSourceFile(), jythonScript);
+			try {
+				interpreter.saveLocals();
+				interpreter.clearLocals();
+				if (ghidraScript instanceof JythonScript) {
+					ghidraScript.set(scriptState);
+					JythonScript jythonScript = (JythonScript) ghidraScript;
+					interpreter.execFile(jythonScript.getSourceFile(), jythonScript);
+				}
+				else {
+					ghidraScript.execute(scriptState, getControls());
+				}
 			}
-			else {
-				ghidraScript.execute(scriptState, getControls());
+			finally {
+				interpreter.restoreLocals();
 			}
 
 			if (scriptState == state) {

@@ -255,11 +255,9 @@ public class FileSystemService {
 	 * @param fsrl {@link FSRL} of the desired file
 	 * @param monitor {@link TaskMonitor} so the user can cancel
 	 * @return a {@link RefdFile} which contains the resultant {@link GFile} and a
-	 * {@link FileSystemRef} that needs to be closed, or {@code null} if the filesystem
-	 * does not have the requested file.
-	 *
+	 * {@link FileSystemRef} that needs to be closed, never {@code null}
 	 * @throws CancelledException if the user cancels
-	 * @throws IOException if there was a file io problem
+	 * @throws IOException if file not found or there was a file io problem
 	 */
 	public RefdFile getRefdFile(FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -267,8 +265,8 @@ public class FileSystemService {
 		try {
 			GFile gfile = ref.getFilesystem().lookup(fsrl.getPath());
 			if (gfile == null) {
-				throw new IOException("File [" + fsrl + "] not found in filesystem [" +
-					ref.getFilesystem().getFSRL() + "]");
+				throw new IOException("File [%s] not found in filesystem [%s]"
+						.formatted(fsrl.getPath(), ref.getFilesystem().getFSRL()));
 			}
 			RefdFile result = new RefdFile(ref, gfile);
 			ref = null;

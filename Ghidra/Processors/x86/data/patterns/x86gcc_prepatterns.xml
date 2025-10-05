@@ -1,0 +1,20 @@
+<patternlist>
+  
+  <pattern>
+     <data>
+        0xff25........   <!-- jmp -->
+        0x68......00     <!-- push -->
+        0xe9......ff     <!-- jmp -addr -->
+     </data> <!-- .plt thunk -->
+     <funcstart thunk="true" section="(?i)(\.plt)"/>
+  </pattern>
+  
+  <pattern>
+     <data>
+        0xf3 0x0f 0x1e 0xfa        <!-- ENDBR64 --> 
+        0xf2 0xff 0x25             <!-- jmp qword ptr [0xxxx] -->
+     </data> <!-- .plt thunk -->
+     <funcstart thunk="true" section="(?i)(\.plt(\.sec)?)"/>
+  </pattern>
+
+</patternlist>

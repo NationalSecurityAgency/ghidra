@@ -567,14 +567,30 @@ public:
 
 /// \brief Propagate conditional constants
 class ActionConditionalConst : public Action {
+  /// \brief Description of a point in control-flow where a Varnode can propagate as a constant down a conditional branch
+  struct ConstPoint {
+    Varnode *vn;		///< Varnode that is constant for some reads
+    Varnode *constVn;		///< Representative of the constant (may be null)
+    uintb value;		///< The constant value
+    FlowBlock *constBlock;	///< Block that dominates all reads where vn is constant
+    int4 inSlot;		///< Input edge from condition block
+    bool blockIsDom;		///< Is \b true if block is dominated by constant path
+    ConstPoint(Varnode *v,Varnode *c,FlowBlock *bl,int4 slot,bool isDom) {
+      vn = v; constVn = c; value = c->getOffset(); constBlock = bl; inSlot = slot; blockIsDom = isDom; }	///< Construct from constant Varnode
+    ConstPoint(Varnode *v,uintb val,FlowBlock *bl,int4 slot,bool isDom) {
+      vn = v; constVn = (Varnode *)0; value = val; constBlock = bl; inSlot = slot; blockIsDom = isDom; }	///< Construct from constant value
+  };
   static void clearMarks(const vector<PcodeOp *> &opList);
   static void collectReachable(Varnode *vn,vector<PcodeOpNode> &phiNodeEdges,vector<PcodeOp *> &reachable);
   static bool flowToAlternatePath(PcodeOp *op);
   static bool flowTogether(const vector<PcodeOpNode> &edges,int4 i,vector<int4> &result);
   static Varnode *placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *constVn,Funcdata &data);
+  static void findConstCompare(list<ConstPoint> &points,Varnode *boolVn,FlowBlock *bl,bool *blockDom,bool flipEdge);
+  static void pushConstant(list<ConstPoint> &points,PcodeOp *op);
   static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,Varnode *constVn,Funcdata &data);
   void handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
-  void propagateConstant(Varnode *varVn,Varnode *constVn,uintb constVal,FlowBlock *constBlock,bool useMultiequal,Funcdata &data);
+  bool testAlternatePath(Varnode *vn,PcodeOp *op,int4 slot,int4 depth);
+  void propagateConstant(list<ConstPoint> &points,bool useMultiequal,Funcdata &data);
 public:
   ActionConditionalConst(const string &g) : Action(0,"condconst",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {

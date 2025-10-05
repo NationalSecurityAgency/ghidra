@@ -123,9 +123,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
 			list.add(new Option(FAKE_LINK_OPTION_NAME, FAKE_LINK_OPTION_DEFAULT));
 		}
@@ -162,21 +162,23 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
 
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		try {
-			CoffFileHeader header = new CoffFileHeader(provider);
+			CoffFileHeader header = new CoffFileHeader(settings.provider());
 			header.parse(monitor);
 
 			Map<CoffSectionHeader, Address> sectionsMap = new HashMap<>();
 			Map<CoffSymbol, Symbol> symbolsMap = new HashMap<>();
 
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
-				performFakeLinking(options));
+			FileBytes fileBytes =
+				MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
+			processSectionHeaders(settings.provider(), header, program, fileBytes, monitor, log,
+				sectionsMap, performFakeLinking(settings.options()));
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);

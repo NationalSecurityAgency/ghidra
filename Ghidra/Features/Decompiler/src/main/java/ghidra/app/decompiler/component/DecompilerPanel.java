@@ -90,6 +90,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	});
 
+	private Set<String> ignoredMiddleMouseTokens = Set.of("{", "}", ";");
 	private ActiveMiddleMouse activeMiddleMouse;
 	private int middleMouseHighlightButton;
 	private Color middleMouseHighlightColor;
@@ -102,7 +103,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private Color originalBackgroundColor;
 	private boolean useNonFunctionColor = false;
-	private boolean navitationEnabled = true;
+	private boolean navigationEnabled = true;
 
 	private DecompilerHoverProvider decompilerHoverProvider;
 
@@ -264,11 +265,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		// exclude tokens that users do not want to highlight
-		if (token instanceof ClangOpToken) {
+		if (shouldIgnoreOpToken(token)) {
 			return;
 		}
-
-		if (token instanceof ClangSyntaxToken syntaxToken && !isNamespace(syntaxToken)) {
+		if (shouldIgnoreSyntaxTokenHighlight(token)) {
 			return;
 		}
 
@@ -277,26 +277,24 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		activeMiddleMouse = newMiddleMouse;
 	}
 
-	private boolean isNamespace(ClangSyntaxToken token) {
-
-		String text = token.getText();
-		if (text.length() <= 1) {
+	private boolean shouldIgnoreOpToken(ClangToken token) {
+		if (!(token instanceof ClangOpToken)) {
 			return false;
 		}
 
-		// see if we have a '::' token trailing this token
-		ClangLine line = token.getLineParent();
-		int index = line.indexOfToken(token);
-		for (int i = index + 1; i < line.getNumTokens(); i++) {
-			ClangToken nextToken = line.getToken(i);
-			String nextText = nextToken.getText();
-			if (nextText.isBlank()) {
-				continue;
-			}
+		// users would like to be able to highlight return statements
+		String text = token.toString();
+		return !text.equals("return");
+	}
 
-			return nextText.equals("::");
+	private boolean shouldIgnoreSyntaxTokenHighlight(ClangToken token) {
+
+		if (!(token instanceof ClangSyntaxToken syntaxToken)) {
+			return false;
 		}
-		return false;
+
+		String string = syntaxToken.toString();
+		return ignoredMiddleMouseTokens.contains(string);
 	}
 
 	void addHighlighterHighlights(ClangDecompilerHighlighter highlighter,
@@ -760,7 +758,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param enabled false disabled mouse function navigation
 	 */
 	void setMouseNavigationEnabled(boolean enabled) {
-		navitationEnabled = enabled;
+		navigationEnabled = enabled;
 	}
 
 	@Override
@@ -771,7 +769,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		int clickCount = ev.getClickCount();
 		int buttonState = ev.getButton();
-
 		if (buttonState == MouseEvent.BUTTON1) {
 			if (DockingUtils.isControlModifier(ev) && clickCount == 2) {
 				tryToGoto(location, field, ev, true);
@@ -791,7 +788,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void tryToGoto(FieldLocation location, Field field, MouseEvent event,
 			boolean newWindow) {
-		if (!navitationEnabled) {
+		if (!navigationEnabled) {
 			return;
 		}
 

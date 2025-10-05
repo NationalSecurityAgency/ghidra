@@ -112,7 +112,7 @@ class ConditionalExecution {
   bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we move the MULTIEQUAL defining p-code of the given Varnode
   bool testRemovability(PcodeOp *op);		///< Test if the given PcodeOp can be removed from \b iblock
   Varnode *findPullback(int4 inbranch);		///< Find previously constructed pull-back op
-  Varnode *pullbackSubpiece(PcodeOp *subOp,int4 inbranch);	///< Pull-back SUBPIECE out of the iblock
+  Varnode *pullbackOp(PcodeOp *op,int4 inbranch);	///< Pull-back PcodeOp out of the iblock
   Varnode *getNewMulti(PcodeOp *op,BlockBasic *bl);
   Varnode *resolveRead(PcodeOp *op,BlockBasic *bl);	///< Resolve a read op coming through an arbitrary block
   Varnode *resolveIblockRead(PcodeOp *op,int4 inbranch);	///< Resolve a read op coming through the \b iblock

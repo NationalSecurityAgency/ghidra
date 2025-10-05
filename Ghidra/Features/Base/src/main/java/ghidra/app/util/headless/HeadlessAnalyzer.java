@@ -1543,6 +1543,7 @@ public class HeadlessAnalyzer {
 					.source(fsrl)
 					.project(project)
 					.projectFolderPath(folderPath)
+					.mirror(options.mirror)
 					.language(options.language)
 					.compiler(options.compilerSpec)
 					.loaders(options.loaderClass)

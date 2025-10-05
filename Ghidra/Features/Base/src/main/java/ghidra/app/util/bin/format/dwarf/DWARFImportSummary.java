@@ -27,6 +27,7 @@ public class DWARFImportSummary {
 	// member variables are package access
 	long dataTypeElapsedMS;
 	long funcsElapsedMS;
+	long macroElapsedMS;
 	long totalElapsedMS;
 
 	int dataTypesAdded;
@@ -39,6 +40,7 @@ public class DWARFImportSummary {
 	Set<String> typeRemappings = new HashSet<>();
 	int paramZeroLenDataType;
 	public int badSourceFileCount;
+	public int numEnumsCreated;
 
 	Set<Integer> dwarfVers = new HashSet<>();
 	int compUnitCount;
@@ -75,6 +77,13 @@ public class DWARFImportSummary {
 		if (funcSignaturesAdded > 0) {
 			Msg.info(this,
 				String.format("DWARF function signatures added: %d", funcSignaturesAdded));
+		}
+		if (numEnumsCreated > 0) {
+			Msg.info(this,
+				"DWARF enums created from macro info entries: %d".formatted(numEnumsCreated));
+		}
+		if (macroElapsedMS > 0) {
+			Msg.info(this, "DWARF enums from macros - elapsed: %dms".formatted(macroElapsedMS));
 		}
 		if (!compDirs.isEmpty()) {
 			Msg.info(this, "DWARF compile dirs: " + getSortedSet(compDirs).toString());

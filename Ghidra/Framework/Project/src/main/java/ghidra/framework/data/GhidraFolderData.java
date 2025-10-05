@@ -64,7 +64,7 @@ class GhidraFolderData {
 	// folderList and fileList are only be used if visited is true
 	private Set<String> folderList = new TreeSet<>();
 
-	private boolean visited; // true if full refresh was performed
+	private boolean visited; // true if full refresh was performed and change notifications get sent
 
 	private Map<String, GhidraFileData> fileDataCache = new HashMap<>();
 	private Map<String, GhidraFolderData> folderDataCache = new HashMap<>();
@@ -120,6 +120,15 @@ class GhidraFolderData {
 	 */
 	boolean visited() {
 		return visited;
+	}
+
+	/**
+	 * @return true if this folder must be visited when created to ensure that related change
+	 * notifications are properly conveyed.
+	 */
+	boolean mustVisit() {
+		RootGhidraFolderData rootFolderData = projectData.getRootFolderData();
+		return rootFolderData.mustVisit(getPathname());
 	}
 
 	/**
@@ -283,7 +292,7 @@ class GhidraFolderData {
 				parent.folderList.remove(oldName);
 				parent.folderList.add(newName);
 
-				// Must force refresh to ensure that all folder items are properly updted with new parent path
+				// Must force refresh to ensure that all folder items are properly updated with new parent path
 				refresh(true, true, projectData.getProjectDisposalMonitor());
 
 				listener.domainFolderRenamed(newFolder, oldName);
@@ -385,17 +394,14 @@ class GhidraFolderData {
 	 * @param newFileName file name after rename
 	 */
 	void fileRenamed(String oldFileName, String newFileName) {
-		GhidraFileData fileData;
-		synchronized (fileSystem) {
-			fileData = fileDataCache.remove(oldFileName);
-			if (fileData == null || this != fileData.getParent() ||
-				!newFileName.equals(fileData.getName())) {
-				throw new AssertException();
-			}
-			fileDataCache.put(newFileName, fileData);
-			if (visited) {
-				listener.domainFileRenamed(getDomainFile(newFileName), oldFileName);
-			}
+		GhidraFileData fileData = fileDataCache.remove(oldFileName);
+		if (fileData == null || this != fileData.getParent() ||
+			!newFileName.equals(fileData.getName())) {
+			throw new AssertException();
+		}
+		fileDataCache.put(newFileName, fileData);
+		if (visited) {
+			listener.domainFileRenamed(getDomainFile(newFileName), oldFileName);
 		}
 	}
 
@@ -510,15 +516,13 @@ class GhidraFolderData {
 	 * if this folder has been visited
 	 * @param folderName name of folder which was removed
 	 */
-	void folderRemoved(String folderName) {
-		synchronized (fileSystem) {
-			GhidraFolderData folderData = folderDataCache.remove(folderName);
-			if (folderData != null) {
-				folderData.dispose();
-			}
-			if (visited && folderList.remove(folderName)) {
-				listener.domainFolderRemoved(getDomainFolder(), folderName);
-			}
+	private void folderRemoved(String folderName) {
+		GhidraFolderData folderData = folderDataCache.remove(folderName);
+		if (folderData != null) {
+			folderData.dispose();
+		}
+		if (visited && folderList.remove(folderName)) {
+			listener.domainFolderRemoved(getDomainFolder(), folderName);
 		}
 	}
 
@@ -554,12 +558,16 @@ class GhidraFolderData {
 	}
 
 	/**
-	 * Refresh set of sub-folder names and identify added/removed folders.
+	 * Refresh set of sub-folder names and notify about adds/removes if appropriate
 	 * @param recursive recurse into visited subfolders if true
+	 * @param notifyAdd true if listener should be notified about newly discovered subfolders
 	 * @param monitor recursion task monitor - break from recursion if cancelled
 	 * @throws IOException if an IO error occurs during the refresh
 	 */
-	private void refreshFolders(boolean recursive, TaskMonitor monitor) throws IOException {
+	private void refreshFolders(boolean recursive, boolean notifyAdd, TaskMonitor monitor)
+			throws IOException {
+
+		// FIXME: inconsistent use of forced-recursive refresh and cached folderList
 
 		String path = getPathname();
 		HashSet<String> newSet = new HashSet<>();
@@ -624,7 +632,7 @@ class GhidraFolderData {
 			GhidraFolderData folderData = addFolderData(folderName);
 			if (folderData != null) {
 				folderList.add(folderName);
-				if (visited) {
+				if (notifyAdd) {
 					listener.domainFolderAdded(folderData.getDomainFolder());
 				}
 			}
@@ -672,7 +680,13 @@ class GhidraFolderData {
 		return map;
 	}
 
-	private void refreshFiles(TaskMonitor monitor) throws IOException {
+	/**
+	 * Refresh set of files and notify about adds/removes if appropriate
+	 * @param notifyAdd true if listener should be notified about newly discovered files
+	 * @param monitor return immediately if cancelled
+	 * @throws IOException if an IO error occurs during the refresh
+	 */
+	private void refreshFiles(boolean notifyAdd, TaskMonitor monitor) throws IOException {
 
 		String path = getPathname();
 
@@ -738,7 +752,7 @@ class GhidraFolderData {
 			FolderItem versionedFolderItem = versionedItemMap.get(fileName);
 
 			GhidraFileData fileData = addFileData(fileName, localFolderItem, versionedFolderItem);
-			if (visited) {
+			if (notifyAdd) {
 				listener.domainFileAdded(fileData.getDomainFile());
 			}
 		}
@@ -772,6 +786,10 @@ class GhidraFolderData {
 	void refresh(boolean recursive, boolean force, TaskMonitor monitor) throws IOException {
 		synchronized (fileSystem) {
 			if (recursive && !force) {
+
+// FIXME: Why must this restriction be imposed.  We need a lazy refresh that only refreshes
+// those folders that have been visited or must be visited.
+
 				throw new IllegalArgumentException("force must be true when recursive");
 			}
 			if (monitor != null && monitor.isCancelled()) {
@@ -780,6 +798,10 @@ class GhidraFolderData {
 			if (visited && !force) {
 				return;
 			}
+
+			boolean notifyAdd = visited;
+			visited = true;
+
 			try {
 				updateExistenceState();
 			}
@@ -797,18 +819,15 @@ class GhidraFolderData {
 				throw new FileNotFoundException("Folder not found: " + getPathname());
 			}
 
-			try {
-				refreshFiles(monitor);
+			// FIXME: If forced we should be refreshing folder/file lists
 
-				if (monitor != null && monitor.isCancelled()) {
-					return; // break-out from recursion on cancel
-				}
+			refreshFiles(notifyAdd, monitor);
 
-				refreshFolders(recursive, monitor);
+			if (monitor != null && monitor.isCancelled()) {
+				return; // break-out from recursion on cancel
 			}
-			finally {
-				visited = true;
-			}
+
+			refreshFolders(recursive, notifyAdd, monitor);
 		}
 	}
 
@@ -843,8 +862,11 @@ class GhidraFolderData {
 			try {
 				folderData = new GhidraFolderData(this, folderName);
 				folderDataCache.put(folderName, folderData);
+				if (folderData.mustVisit()) {
+					folderData.refresh(false, true, TaskMonitor.DUMMY);
+				}
 			}
-			catch (FileNotFoundException e) {
+			catch (IOException e) {
 				// ignore
 			}
 		}
@@ -1226,6 +1248,10 @@ class GhidraFolderData {
 				GhidraFolder newFolder = getDomainFolder();
 
 				if (parent.visited || newParent.visited) {
+
+					// Must force refresh to ensure that all folder items are properly updated with new parent path
+					refresh(true, true, projectData.getProjectDisposalMonitor());
+
 					listener.domainFolderMoved(newFolder, oldParent);
 				}
 
@@ -1398,17 +1424,34 @@ class GhidraFolderData {
 			String linkFilename, LinkHandler<?> lh) throws IOException {
 		synchronized (fileSystem) {
 			if (fileSystem.isReadOnly()) {
-				throw new ReadOnlyException("copyAsLink permitted to writeable project only");
+				throw new ReadOnlyException("createLinkFile permitted to writeable project only");
 			}
+
+			boolean referenceMyProject = (sourceProjectData == projectData);
+			boolean isFolderLink = (lh instanceof FolderLinkContentHandler);
 
 			if (!pathname.startsWith(FileSystem.SEPARATOR)) {
-				throw new IllegalArgumentException("invalid pathname specified");
+				throw new IllegalArgumentException(
+					"invalid absolute pathname specified: " + pathname);
 			}
 
+			if (isFolderLink) {
+				// Force folder link path to end with "/" for GhidraURL case to disambiguate
+				if (!referenceMyProject && !pathname.endsWith(FileSystem.SEPARATOR)) {
+					pathname += FileSystem.SEPARATOR;
+				}
+			}
+			else if (pathname.endsWith(FileSystem.SEPARATOR) || pathname.endsWith("/.") ||
+				pathname.endsWith("/..")) {
+				throw new IllegalArgumentException("invalid file pathname specified: " + pathname);
+			}
+
+			pathname = FileSystem.normalizePath(pathname);
+
 			String linkPath;
-			if (sourceProjectData == projectData) {
+			if (referenceMyProject) {
 				if (makeRelative) {
-					linkPath = getRelativePath(pathname, getPathname());
+					linkPath = getRelativePath(pathname, getPathname(), isFolderLink);
 				}
 				else {
 					linkPath = pathname;
@@ -1495,12 +1538,48 @@ class GhidraFolderData {
 		}
 	}
 
-	private static String getRelativePath(String referencedPathname, String linkParentPathname) {
-		Path referencedPath = Paths.get(referencedPathname);
+	/**
+	 * 
+	 * @param normalizedReferencedPathname an absolute normalized folder/file reference path
+	 * 			(see {@link FileSystem#normalizePath(String)}).
+	 * @param linkParentPathname an absolute Ghidra folder pathname which will be the origin
+	 * 			of the returned relative path and will be the folder where the lin-file is stored.
+	 * @param isFolderRef true if {@code normalizedReferencedPathname} refers to a folder, else false
+	 * @return relative path
+	 * @throws IllegalArgumentException if referenced path cannot be relativized.  This should not 
+	 * 			occur if absolute normalized path arguments are properly formed and are legal.
+	 */
+	static String getRelativePath(String normalizedReferencedPathname, String linkParentPathname,
+			boolean isFolderRef) throws IllegalArgumentException {
+
+		String finalRefElement = null;
+		if (!isFolderRef && !normalizedReferencedPathname.endsWith(FileSystem.SEPARATOR)) {
+			// Preserve last element name which may not be a folder name if not within root folder
+			int lastSepIx = normalizedReferencedPathname.lastIndexOf(FileSystem.SEPARATOR);
+			if (lastSepIx != 0) {
+				finalRefElement = normalizedReferencedPathname.substring(lastSepIx + 1);
+				normalizedReferencedPathname = normalizedReferencedPathname.substring(0, lastSepIx);
+			}
+		}
+
+		Path referencedPath = Paths.get(normalizedReferencedPathname);
 		Path linkParentPath = Paths.get(linkParentPathname);
 		Path relativePath = linkParentPath.relativize(referencedPath);
 		String path = relativePath.toString();
-		if (referencedPathname.endsWith(FileSystem.SEPARATOR) &&
+
+		// Re-apply preserved finalRefElement to relative path
+		if (finalRefElement != null) {
+			if (!path.isBlank()) {
+				path += FileSystem.SEPARATOR;
+			}
+			path += finalRefElement;
+		}
+
+		if (path.isBlank()) {
+			return ".";
+		}
+
+		if (normalizedReferencedPathname.endsWith(FileSystem.SEPARATOR) &&
 			!path.endsWith(FileSystem.SEPARATOR)) {
 			path += FileSystem.SEPARATOR;
 		}

@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
@@ -109,12 +108,12 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
-
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 		OmfFileHeader header = null;
-		AbstractOmfRecordFactory factory = new OmfRecordFactory(provider);
+		AbstractOmfRecordFactory factory = new OmfRecordFactory(settings.provider());
 		try {
 			header = OmfFileHeader.parse(factory, monitor, log);
 			header.resolveNames();
@@ -125,13 +124,15 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			if (header == null) {
 				throw new IOException("OMF File header was corrupted. " + e.getMessage());
 			}
-			log.appendMsg("File was corrupted - leaving partial program " + provider.getName());
+			log.appendMsg(
+				"File was corrupted - leaving partial program " + settings.provider().getName());
 		}
 
 		// We don't use the file bytes to create block because the bytes are manipulated before
 		// forming the block.  Creating the FileBytes anyway in case later we want access to all
 		// the original bytes.
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		FileBytes fileBytes =
+			MemoryBlockUtils.createFileBytes(program, settings.provider(), monitor);
 
 		try {
 			processSegmentHeaders(factory.getReader(), header, program, monitor, log);

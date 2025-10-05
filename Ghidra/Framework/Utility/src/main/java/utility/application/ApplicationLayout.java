@@ -129,9 +129,8 @@ public abstract class ApplicationLayout {
 	 * Returns a prioritized {@link List ordered list} of the application Extensions installation 
 	 * directories.   Typically, the values may be any of the following locations:<br>
 	 * <ul>
-	 * <li><code>[user settings dir]/Extensions</code></li>
-	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
-	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * <li>{@code [user settings dir]/Extensions}</li>
+	 * <li>{@code [application root dirs]/Extensions}</li>
 	 * </ul>
 	 *
 	 * @return an {@link List ordered list} of the application Extensions installation directories.

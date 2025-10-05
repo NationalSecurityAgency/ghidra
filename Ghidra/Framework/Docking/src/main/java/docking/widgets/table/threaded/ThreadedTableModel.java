@@ -203,7 +203,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	private void cancelCurrentWorkerJob() {
-		if (worker != null && worker.isBusy()) {
+		if (worker != null) {
 			worker.clearAllJobsWithInterrupt_IKnowTheRisks();
 		}
 	}

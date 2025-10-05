@@ -160,15 +160,16 @@ public class TaintLabelsTableProvider extends ComponentProviderAdapter {
 
 					TaintState state = plugin.getTaintState();
 
-					Task queryTask = new Task("Source-Sink Query Task", true, true, true, true) {
+					Task queryTask = new Task("Source-Sink Query Task", true, false, false, true) {
 						@Override
 						public void run(TaskMonitor monitor) {
-							state.setCancellation(false);
 							monitor.initialize(program.getFunctionManager().getFunctionCount());
 							// query index NOT the default query; use table data.
 							boolean successful =
 								state.queryIndex(currentProgram, tool, QueryType.SRCSINK);
-							state.setCancellation(!successful || monitor.isCancelled());
+							if (!successful) {
+								state.cancel();
+							}
 							monitor.clearCancelled();
 						}
 					};
@@ -180,7 +181,7 @@ public class TaintLabelsTableProvider extends ComponentProviderAdapter {
 					// 1. Query Index.
 					tool.execute(queryTask);
 
-					if (!state.wasCancelled()) {
+					if (!state.isCancelled()) {
 						// 2. Show Table.
 						SarifService sarifService = plugin.getSarifService();
 						sarifService.getController()
@@ -192,8 +193,6 @@ public class TaintLabelsTableProvider extends ComponentProviderAdapter {
 						TaintProvider provider = plugin.getProvider();
 						provider.setTaint();
 						plugin.consoleMessage("query complete");
-						state.setCancellation(false);
-
 					}
 					else {
 						plugin.consoleMessage("Source-Sink query was cancelled.");

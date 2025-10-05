@@ -36,7 +36,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.RollbackException;
@@ -44,7 +45,9 @@ import ghidra.util.exception.RollbackException;
 @Category(NightlyCategory.class)
 public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String COMPOSITE_DATA_ADDRESS = "00400050";
+	private static final int ARRAY_ELEMENT_COUNT = 6;
+	private static final String ARRAY_DATA_ADDRESS = "00400050";
+
 	private static final String DATA_STRING_ADDRESS = "0041fee4";
 	private static final String BYTE_SCALAR_ADDRESS = "00421eb0";
 	private static final String CHAR_SCALAR_ADDRESS = "00421ed0";
@@ -98,7 +101,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int txId = program.startTransaction("Test");
 		try {
-			createCompositeDataType();
+			createArrayDataType();
 			createByteDataType();
 			createCharDataType();
 			createDWordDataType();
@@ -212,9 +215,9 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testCompositeDataInTable() throws Exception {
+	public void testArrayDataInTable() throws Exception {
 		searchProgramAndDisplayResults(program, null, minScalarVal, maxScalarVal);
-		assertScalarsFromCompositeDataInTable();
+		assertScalarsFromArrayDataInTable();
 	}
 
 	@Test
@@ -417,25 +420,18 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, data.size());
 	}
 
-	private void assertScalarsFromCompositeDataInTable() {
+	private void assertScalarsFromArrayDataInTable() {
 
-		Listing listing = program.getListing();
-		DataIterator compositeData = listing.getCompositeData(true);
-		Data composite = compositeData.next();
-		assertTrue("Expected array; found: " + composite, composite.getDataType() instanceof Array);
-
-		//@formatter:off
 		List<ScalarRowObject> data = getTableData();
-		List<Address> addresses =
-			data.stream()
-				.map(rowObject -> rowObject.getAddress())
-				.collect(Collectors.toList())
-				;
-		//@formatter:on
+		List<Address> addresses = data.stream().map(rowObject -> rowObject.getAddress()).toList();
 
-		int n = composite.getNumComponents();
-		for (int i = 0; i < n; i++) {
-			Data child = composite.getComponent(i);
+		Address arrayAddr = program.getAddressFactory().getAddress(ARRAY_DATA_ADDRESS);
+		Data arrayData = program.getListing().getDefinedDataAt(arrayAddr);
+		assertNotNull(arrayData);
+		assertEquals("byte[6]", arrayData.getDataType().getName());
+
+		for (int i = 0; i < ARRAY_ELEMENT_COUNT; i++) {
+			Data child = arrayData.getComponent(i);
 			Address a = child.getAddress();
 			assertTrue(addresses.contains(a));
 		}
@@ -497,18 +493,12 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			tableAddress.add(rowObject.getAddress());
 		}
 
-		DataIterator compositeData = p.getListing().getCompositeData(true);
+		Address structAddr = p.getAddressFactory().getAddress(NESTED_STRUCTURE_DATA_ADDRESS);
+		Data compositeData = p.getListing().getDefinedDataAt(structAddr);
+		assertEquals("NESTED_STRUCTURE", compositeData.getDataType().getName());
 
-		while (compositeData.hasNext()) {
-
-			Data structureData = compositeData.next();
-			Address address = structureData.getComponent(0).getAddress();
-
-			if (!tableAddress.contains(address)) {
-				fail("Table not created correctly: could not find address " + address +
-					"in scalar table.");
-			}
-		}
+		assertTrue("Table not created correctly: could not find address " + structAddr +
+			"in scalar table.", tableAddress.contains(structAddr));
 	}
 
 	private void setFilterValues(int min, int max) {
@@ -555,15 +545,14 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			"A_virt2@401120", 16);
 		createFunction(builder, "00401130", "55 8b ec 51 89 4d fc b8 08 00 00 00 8b e5 5d c3",
 			"B_virt2@401130", 16);
-		createFunction(builder, "00401140", "48 83 ec cc",
-			"C_virt2@401140", 4);
+		createFunction(builder, "00401140", "48 83 ec cc", "C_virt2@401140", 4);
 		createFunction(builder, "00401150", "55 8b ec 51 89 4d fc b8 cc 00 00 00 8b e5 5d c3",
 			"C_virt2@401150", 16);
 
-		createBytes(builder, COMPOSITE_DATA_ADDRESS,
-			"0e 1f ba 0e 00 b4 09 cd 21 b8 01 4c cd 21 54 68 69 73 20 70 " +
-				"72 6f 67 72 61 6d 20 63 61 6e 6e 6f 74 20 62 65 20 72 75 6e " +
-				"20 69 6e 20 44 4f 53 20 6d 6f 64 65 2e 0d 0d 0a 24 00 00 00 " + "00 00 00 00");
+		createBytes(builder, ARRAY_DATA_ADDRESS,
+			"0e 1f ba 0e 00 b4 09 cd 21 b8 01 4c cd 21 54 68 69 73 20 70 72 6f 67 72 61 6d 20 63 " +
+				"61 6e 6e 6f 74 20 62 65 20 72 75 6e 20 69 6e 20 44 4f 53 20 6d 6f 64 65 2e 0d " +
+				"0d 0a 24 00 00 00 00 00 00 00");
 		createBytes(builder, BYTE_SCALAR_ADDRESS, "c4");
 		createBytes(builder, CHAR_SCALAR_ADDRESS, "28");
 		createBytes(builder, DWORD_SCALAR_ADDRESS, "08 34 23 cd");
@@ -686,9 +675,9 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		return dialog;
 	}
 
-	private void createCompositeDataType() throws Exception {
+	private void createArrayDataType() throws Exception {
 		ArrayDataType arrayDataType = new ArrayDataType(new ByteDataType(), 6, 2);
-		createData(addr(Long.parseLong(COMPOSITE_DATA_ADDRESS, 16)), arrayDataType);
+		createData(addr(Long.parseLong(ARRAY_DATA_ADDRESS, 16)), arrayDataType);
 	}
 
 	private void createByteDataType() throws Exception {

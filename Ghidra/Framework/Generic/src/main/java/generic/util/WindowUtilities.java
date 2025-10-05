@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import ghidra.util.Swing;
@@ -225,6 +226,14 @@ public class WindowUtilities {
 	 * the size of the given <code>child</code>.
 	 */
 	public static Point centerOnComponent(Component parent, Component child) {
+
+		// Clients inside of scroll panes can be much larger than what is visible.  We only wish to
+		// use the visible size when calculating the center position.
+		Container grandParent = parent.getParent();
+		if (grandParent instanceof JViewport) {
+			parent = grandParent.getParent();
+		}
+
 		Dimension parentSize = parent.getSize();
 		Dimension childSize = child.getSize();
 		int x = (parentSize.width >> 1) - (childSize.width >> 1);
@@ -351,12 +360,11 @@ public class WindowUtilities {
 		// 'pad' is for checking to avoid full-size windows with odd OS borders.  This is an 
 		// arbitrary number that is larger than the 'move' amount below.
 		int pad = 50;
-		int screenArea = screen.width * screen.height;
-		int boundsArea = bounds.width * bounds.height;
-		if (boundsArea > screenArea) {
-			int newWidth = screen.width - pad;
-			int newHeight = screen.height - pad;
-			bounds.setSize(newWidth, newHeight);
+		if (bounds.width > screen.width) {
+			bounds.width = screen.width - pad;
+		}
+		if (bounds.height > screen.height) {
+			bounds.height = screen.height - pad;
 		}
 
 		// Next, move the window as little as possible to get fully on-screen.

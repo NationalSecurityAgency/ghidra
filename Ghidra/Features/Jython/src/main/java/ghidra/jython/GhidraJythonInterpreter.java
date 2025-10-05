@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,8 @@ public class GhidraJythonInterpreter extends InteractiveInterpreter {
 	private PyModule introspectModule;
 	private PyModule builtinModule;
 	private PyObject interrupt;
-	private boolean scriptMethodsInjected;
 	private boolean cleanedUp;
+	private Stack<PyObject> localStack = new Stack<>();
 
 	/**
 	 * Gets a new GhidraPythonInterpreter instance.
@@ -126,6 +126,7 @@ public class GhidraJythonInterpreter extends InteractiveInterpreter {
 	/**
 	 * Initializes/resets the python path to include all known Ghidra script paths.
 	 */
+	@SuppressWarnings("deprecation")
 	private void initializePythonPath() {
 
 		// Restore the python path back to default.
@@ -359,24 +360,20 @@ public class GhidraJythonInterpreter extends InteractiveInterpreter {
 				}
 			}
 
-			// Add public methods (only once). Ignore inner classes.
+			// Add public methods. Ignore inner classes.
 			//
 			// NOTE: We currently do not have a way to safely add protected methods.  Disabling
 			// python.security.respectJavaAccessibility and adding in protected methods in the below
 			// loop caused an InaccessibleObjectException for some users (relating to core Java 
 			// modules, not the GhidraScript class hierarchy).
-			if (!scriptMethodsInjected) {
-				for (Method method : scriptClass.getDeclaredMethods()) {
-					if (!method.getName().contains("$") &&
-						Modifier.isPublic(method.getModifiers())) {
-						method.setAccessible(true);
-						setMethod(script, method);
-					}
+			for (Method method : scriptClass.getDeclaredMethods()) {
+				if (!method.getName().contains("$") &&
+					Modifier.isPublic(method.getModifiers())) {
+					method.setAccessible(true);
+					setMethod(script, method);
 				}
 			}
 		}
-
-		scriptMethodsInjected = true;
 	}
 
 	/**
@@ -393,6 +390,29 @@ public class GhidraJythonInterpreter extends InteractiveInterpreter {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Saves the interpreter's locals to a stack. These locals can be restored with the 
+	 * {@link #restoreLocals()} method.
+	 */
+	public void saveLocals() {
+		localStack.push(getLocals());
+	}
+
+	/**
+	 * Clears the interpreter's locals
+	 */
+	public void clearLocals() {
+		setLocals(new PyStringMap());
+	}
+
+	/**
+	 * Restores the locals that were last saved with the {@link #saveLocals()} method, and removes
+	 * them from the stack.
+	 */
+	public void restoreLocals() {
+		setLocals(localStack.pop());
 	}
 
 	/**
@@ -427,6 +447,8 @@ public class GhidraJythonInterpreter extends InteractiveInterpreter {
 				Msg.error(this,
 					"Method " + methodName + " of " + obj + " attempting to shadow method " +
 						pyMethod.__func__ + " of " + pyMethod.__self__);
+				set(methodName, new PyMethod(new PyReflectedFunction(method), Py.java2py(obj),
+					Py.java2py(obj.getClass())));
 				return false;
 			}
 			if (!(pyMethod.__func__ instanceof PyReflectedFunction)) {

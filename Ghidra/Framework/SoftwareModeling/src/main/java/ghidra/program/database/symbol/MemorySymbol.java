@@ -169,7 +169,7 @@ public abstract class MemorySymbol extends SymbolDB {
 					newNamespace.getID());
 			}
 			if (newSource != null) {
-				setSourceFlagBit(newSource);
+				setSourceFlagBits(newSource);
 			}
 			updatePinnedFlag(pinned);
 			updateRecord();

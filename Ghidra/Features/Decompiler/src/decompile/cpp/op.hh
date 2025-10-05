@@ -233,6 +233,7 @@ public:
   OpCode code(void) const { return opcode->getOpcode(); } ///< Get the opcode id (enum) for this op
   bool isCommutative(void) const { return ((flags & PcodeOp::commutative)!=0); } ///< Return \b true if inputs commute
   uintb collapse(bool &markedInput) const;	///< Calculate the constant output produced by this op
+  uintb executeSimple(uintb *in,bool &evalError) const;		///< Execute \b this operation on the given input values
   void collapseConstantSymbol(Varnode *newConst) const;	///< Propagate constant symbol from inputs to given output
   PcodeOp *nextOp(void) const;	///< Return the next op in the control-flow from this or \e null
   PcodeOp *previousOp(void) const; ///< Return the previous op within this op's basic block or \e null

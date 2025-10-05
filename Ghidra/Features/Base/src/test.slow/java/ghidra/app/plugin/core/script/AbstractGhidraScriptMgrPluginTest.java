@@ -1199,6 +1199,34 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		assertTrue("Timed-out waiting for cancelled script to complete", success);
 	}
 
+	protected void runScript(ResourceFile scriptFile) throws Exception {
+
+		GhidraScriptProvider scriptProvider = GhidraScriptUtil.getProvider(scriptFile);
+		GhidraScript script =
+			scriptProvider.getScriptInstance(scriptFile, new PrintWriter(System.err));
+
+		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
+		task.addTaskListener(provider.getTaskListener());
+
+		CountDownLatch latch = new CountDownLatch(1);
+		task.addTaskListener(new TaskListener() {
+
+			@Override
+			public void taskCompleted(Task t) {
+				latch.countDown();
+			}
+
+			@Override
+			public void taskCancelled(Task t) {
+				latch.countDown();
+			}
+		});
+
+		TaskLauncher.launch(task);
+
+		latch.await(TASK_RUN_SCRIPT_TIMEOUT_SECS, TimeUnit.SECONDS);
+	}
+
 	protected void startRunScriptTask(GhidraScript script) throws Exception {
 		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		task.addTaskListener(provider.getTaskListener());

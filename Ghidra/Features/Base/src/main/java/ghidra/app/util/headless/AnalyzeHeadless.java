@@ -52,6 +52,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		SCRIPT_LOG("-scriptlog", true, "<path to script log file>"),
 		LOG("-log", true, "<path to log file>"),
 		OVERWRITE("-overwrite", false),
+		MIRROR("-mirror", false),
 		RECURSIVE("-recursive", false),
 		READ_ONLY("-readOnly", false),
 		DELETE_PROJECT("-deleteProject", false),
@@ -242,6 +243,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if (checkArgument(Arg.OVERWRITE, args, argi)) {
 				options.enableOverwriteOnConflict(true);
+			}
+			else if (checkArgument(Arg.MIRROR, args, argi)) {
+				options.enableMirroring(true);
 			}
 			else if (checkArgument(Arg.NO_ANALYSIS, args, argi)) {
 				options.enableAnalysis(false);

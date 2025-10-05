@@ -92,8 +92,8 @@ if [ "$OS" = "Darwin" ]; then
 		OSDIR="mac_arm_64"
 		HOMEBREW="/opt/homebrew"
 	fi
-	POSTGRES_CONFIG_OPTIONS+="--with-includes=${HOMEBREW}/include"
-	POSTGRES_CONFIG_OPTIONS+="--with-libraries=${HOMEBREW}/lib"
+	POSTGRES_CONFIG_OPTIONS+=" --with-includes=${HOMEBREW}/include"
+	POSTGRES_CONFIG_OPTIONS+=" --with-libraries=${HOMEBREW}/lib"
 elif [ "$ARCH" = "x86_64" ]; then
 	OSDIR="linux_x86_64"
 elif [ "$ARCH" = "aarch64" ]; then

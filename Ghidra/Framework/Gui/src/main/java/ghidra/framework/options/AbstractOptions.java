@@ -260,8 +260,11 @@ public abstract class AbstractOptions implements Options {
 		if (option == null) {
 			return null;
 		}
-		if (option.getOptionType() != type) {
-			Msg.error(this, "Registered option incompatible with existing option: " + optionName,
+		OptionType existingType = option.getOptionType();
+		if (existingType != type) {
+			Msg.error(this, "Registered option incompatible with existing option: '%s'. " +
+				"Existing type '%s'; registered type '%s'.".formatted(optionName, existingType,
+					type),
 				new AssertException());
 			return null;
 		}

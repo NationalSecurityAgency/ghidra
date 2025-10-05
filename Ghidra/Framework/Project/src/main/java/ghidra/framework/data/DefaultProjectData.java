@@ -729,6 +729,10 @@ public class DefaultProjectData implements ProjectData {
 
 	@Override
 	public void refresh(boolean force) {
+		// FIXME: We ignore force.  We are forcing full recursive refresh on non-visited folders
+		//   only - seems inconsistent!!
+		//   Underlying method fails if recursive and force is false.
+		// NOTE: Refresh really does nothing if force is false and folder already visited
 		try {
 			rootFolderData.refresh(true, true, projectDisposalMonitor);
 		}
@@ -1057,7 +1061,8 @@ public class DefaultProjectData implements ProjectData {
 		@Override
 		public void folderCreated(final String parentPath, final String name) {
 			synchronized (fileSystem) {
-				GhidraFolderData folderData = rootFolderData.getFolderPathData(parentPath, true);
+				boolean lazy = !rootFolderData.mustVisit(parentPath);
+				GhidraFolderData folderData = rootFolderData.getFolderPathData(parentPath, lazy);
 				if (folderData != null) {
 					try {
 						folderData.folderChanged(name);
@@ -1111,7 +1116,9 @@ public class DefaultProjectData implements ProjectData {
 						// ignore
 					}
 				}
-				folderData = rootFolderData.getFolderPathData(newParentPath, true);
+
+				boolean lazy = !rootFolderData.mustVisit(newParentPath);
+				folderData = rootFolderData.getFolderPathData(newParentPath, lazy);
 				if (folderData != null) {
 					try {
 						folderData.folderChanged(folderName);
@@ -1338,7 +1345,7 @@ public class DefaultProjectData implements ProjectData {
 		}
 	}
 
-	GhidraFolderData getRootFolderData() {
+	RootGhidraFolderData getRootFolderData() {
 		return rootFolderData;
 	}
 

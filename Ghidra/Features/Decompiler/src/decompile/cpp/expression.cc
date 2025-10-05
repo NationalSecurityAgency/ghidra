@@ -413,8 +413,7 @@ static int4 functionalEqualityLevel0(Varnode *vn1,Varnode *vn2)
     return -1;
   }
   if (vn2->isConstant()) return -1;
-  if (vn1->isWritten() && vn2->isWritten()) return 1;
-  return -1;
+  return 1;
 }
 
 /// \brief Try to determine if \b vn1 and \b vn2 contain the same value
@@ -434,7 +433,11 @@ int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **
 
 {
   int4 testval = functionalEqualityLevel0(vn1,vn2);
-  if (testval != 1) return testval;
+  if (testval != 1)
+    return testval;
+  if (!vn1->isWritten() || !vn2->isWritten()) {
+    return -1;		// Did not find at least one level of match
+  }
   PcodeOp *op1 = vn1->getDef();
   PcodeOp *op2 = vn2->getDef();
   OpCode opc = op1->code();

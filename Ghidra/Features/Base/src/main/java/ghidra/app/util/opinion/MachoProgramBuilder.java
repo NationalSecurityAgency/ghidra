@@ -685,11 +685,11 @@ public class MachoProgramBuilder {
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
 				String name = null;
-				if (symbol != null) {
+				if (symbol != null && !symbol.getString().isBlank()) {
 					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				}
 				Function stubFunc = createOneByteFunction(program, name, startAddr);
-				if (stubFunc != null && symbol != null) {
+				if (stubFunc != null && name != null) {
 					ExternalLocation loc = program.getExternalManager()
 							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
 					stubFunc.setThunkedFunction(loc.createFunction());
@@ -731,7 +731,7 @@ public class MachoProgramBuilder {
 			return;
 		}
 		try {
-			Address addr = MachoProgramUtils.addExternalBlock(program,
+			Address addr = AbstractProgramLoader.addExternalBlock(program,
 				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
 			monitor.initialize(undefinedSymbols.size(), "Processing undefined symbols...");
 			for (NList symbol : undefinedSymbols) {

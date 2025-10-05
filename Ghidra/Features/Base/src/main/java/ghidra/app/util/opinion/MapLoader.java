@@ -19,7 +19,6 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -92,8 +91,11 @@ public class MapLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
+	public void load(Program prog, ImporterSettings settings)
+			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Program must be a " + PeLoader.PE_NAME);
@@ -103,7 +105,7 @@ public class MapLoader extends AbstractProgramWrapperLoader {
 		AddressSpace space = prog.getAddressFactory().getDefaultAddressSpace();
 		int successCount = 0;
 
-		List<MapSymbol> symbols = parseMapFile(provider, monitor, log);
+		List<MapSymbol> symbols = parseMapFile(settings.provider(), monitor, log);
 		monitor.initialize(symbols.size(), "Creating symbols...");
 		for (MapSymbol symbol : symbols) {
 			monitor.increment();

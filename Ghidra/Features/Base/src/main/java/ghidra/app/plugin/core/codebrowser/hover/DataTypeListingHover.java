@@ -31,8 +31,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.util.*;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.UniversalID;
+import ghidra.util.*;
 
 public class DataTypeListingHover extends AbstractConfigurableHover implements ListingHoverService {
 
@@ -132,8 +131,47 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 			dt = data.getDataType();
 			return createTooltipComponent(dt.getRepresentation(data, data, data.getLength()));
 		}
+		if (programLocation instanceof FieldNameFieldLocation nameLoc) {
+			Data data = nameLoc.getDataComponent();
+			Data parent = data == null ? null : data.getParent();
+			if (parent == null) {
+				return createTooltipComponent("Field Name: " + nameLoc.getFieldName());
+			}
+			StringBuilder sb = new StringBuilder(HTMLUtilities.HTML);
+			sb.append("<TABLE>");
+			if (parent != null) {
+				DataType parentType = parent.getDataType();
+				sb.append(row("Parent: ", parentType.getDataTypePath()));
+				int offset = (int) data.getAddress().subtract(parent.getAddress());
+				sb.append(row("Offset: ", NumericUtilities.toHexString(offset)));
+				sb.append(row("Field Name: ", nameLoc.getFieldName()));
+				if (parentType instanceof Structure pst) {
+					DataTypeComponent dtc = pst.getComponentAt(offset);
+					String comment = dtc == null ? null : dtc.getComment();
+					if (comment != null) {
+						sb.append(row("Comment: ", comment));
+					}
+				}
+			}
+			sb.append("</TABLE>");
+			return createTooltipComponent(sb.toString());
+		}
 
 		return null;
+	}
+
+	private String row(Object... cols) {
+		StringBuilder sb = new StringBuilder("<TR>");
+		for (Object col : cols) {
+			String escaped = escapeHtml(col);
+			sb.append("<TD>").append(escaped).append("</TD>");
+		}
+		sb.append("</TR>");
+		return sb.toString();
+	}
+
+	private String escapeHtml(Object obj) {
+		return obj == null ? "" : HTMLUtilities.friendlyEncodeHTML(obj.toString());
 	}
 
 	private String getLocationSupplimentalToolTipText(DataType dt, Data dataInstance) {
@@ -145,12 +183,12 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 		if (StringDataInstance.isString(dataInstance)) {
 			StringDataInstance sdi = StringDataInstance.getStringDataInstance(dataInstance);
 			if (sdi.isShowTranslation()) {
-				result += String.format("<br>Original value: %s",
-					HTMLUtilities.friendlyEncodeHTML(sdi.getStringValue()));
+				String escaped = escapeHtml(sdi.getStringValue());
+				result += String.format("<br>Original value: %s", escaped);
 			}
 			if (!sdi.isShowTranslation() && sdi.getTranslatedValue() != null) {
-				result += String.format("<br>Translated value: %s",
-					HTMLUtilities.friendlyEncodeHTML(sdi.getTranslatedValue()));
+				String escaped = escapeHtml(sdi.getTranslatedValue());
+				result += String.format("<br>Translated value: %s", escaped);
 			}
 			if (sdi.isMissingNullTerminator()) {
 				result += "<br>Missing NULL terminator.";

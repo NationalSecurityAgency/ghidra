@@ -32,10 +32,9 @@ import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A low-level structure embedded in golang binaries that contains useful bootstrapping
- * information.
+ * A low-level structure embedded in Go binaries that contains useful bootstrapping information.
  * <p>
- * Introduced in golang 1.16
+ * Introduced in Go 1.16
  * 
  */
 @StructureMapping(structureName = GoPcHeader.GO_STRUCTURE_NAME)
@@ -49,10 +48,10 @@ public class GoPcHeader {
 	public static final int GO_1_20_MAGIC = 0xfffffff1;
 
 	/**
-	 * Returns the {@link Address} (if present) of the go pclntab section or symbol.
+	 * Returns the {@link Address} (if present) of the Go pclntab section or symbol.
 	 *  
 	 * @param program {@link Program}
-	 * @return {@link Address} of go pclntab, or null if not present
+	 * @return {@link Address} of Go pclntab, or null if not present
 	 */
 	public static Address getPcHeaderAddress(Program program) {
 		MemoryBlock pclntabBlock = GoRttiMapper.getGoSection(program, GOPCLNTAB_SECTION_NAME);
@@ -207,25 +206,21 @@ public class GoPcHeader {
 	}
 
 	/**
-	 * Returns true if this pcln structure contains a textStart value (only present >= 1.18)
-	 * @return boolean true if struct has textstart value
+	 * {@return true if this pcln structure contains a textStart value (only present >= 1.18)}
 	 */
 	public boolean hasTextStart() {
 		return textStart != 0;
 	}
 
 	/**
-	 * Returns the address of where the text area starts.
-	 * 
-	 * @return address of text starts
+	 * {@return the address of where the text area starts}
 	 */
 	public Address getTextStart() {
 		return programContext.getDataAddress(textStart);
 	}
 
 	/**
-	 * Returns address of the func name slice
-	 * @return address of func name slice
+	 * {@return address of the func name slice}
 	 */
 	public Address getFuncnameAddress() {
 		return funcnameOffset != 0
@@ -274,16 +269,14 @@ public class GoPcHeader {
 	}
 
 	/**
-	 * Returns the min lc, used as the GoPcValueEvaluator's pcquantum
-	 * @return minLc
+	 * {@return the min lc, used as the GoPcValueEvaluator's pcquantum}
 	 */
 	public byte getMinLC() {
 		return minLC;
 	}
 
 	/**
-	 * Returns the pointer size
-	 * @return pointer size
+	 * {@return the pointer size}
 	 */
 	public byte getPtrSize() {
 		return ptrSize;

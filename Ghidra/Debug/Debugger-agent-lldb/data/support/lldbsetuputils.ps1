@@ -81,11 +81,11 @@ function Compute-Lldb-Usermode-Args {
 function Compute-Lldb-Platform-Args {
 	param($TargetImage, $TargetType, $TargetUrl, $RmiAddress)
 
-	$argslist = @("`"$Env:OPT_LLDB_PATH`"")
+	$arglist = @("`"$Env:OPT_LLDB_PATH`"")
 	Add-Lldb-Init-Args -ArgList ([ref]$arglist)
-	$argslist+=("-o", "`"platform select '$TargetType'`"")
-	$argslist+=("-o", "`"platform connect '$TargetUrl'`"")
-	Add-Lldb-Image-And-Args -ArgList ([ref]$arglistt) -TargetImage $TargetImage -TargetArgs $Env:OPT_TARGET_ARGS
+	$arglist+=("-o", "`"platform select '$TargetType'`"")
+	$arglist+=("-o", "`"platform connect '$TargetUrl'`"")
+	Add-Lldb-Image-And-Args -ArgList ([ref]$arglist) -TargetImage $TargetImage -TargetArgs $Env:OPT_TARGET_ARGS
 	Add-Lldb-Connect-And-Sync -ArgList ([ref]$arglist) -Address $RmiAddress
 	Add-Lldb-Start-If-Image -ArgList ([ref]$arglist) -TargetImage $TargetImage
 	Add-Lldb-Tail-Args -ArgList ([ref]$arglist)

@@ -150,12 +150,12 @@ public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 				// since decompile could fail and leave the source types changed.
 				Parameter retParam = func.getReturn();
 				if (retParam != null) {
-					if (!retParam.getSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+					if (retParam.getSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 						func.setReturn(retParam.getDataType(), retParam.getVariableStorage(),
 							SourceType.DEFAULT);
 					}
 				}
-				if (!func.getSignatureSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+				if (func.getSignatureSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 					func.setSignatureSource(SourceType.DEFAULT);
 				}
 			}

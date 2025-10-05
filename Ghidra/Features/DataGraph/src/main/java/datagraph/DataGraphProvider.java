@@ -29,10 +29,12 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
 import generic.theme.GIcon;
+import ghidra.app.nav.Navigatable;
 import ghidra.graph.VisualGraphComponentProvider;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.event.mouse.VertexMouseInfo;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -52,24 +54,28 @@ public class DataGraphProvider
 	private static final GIcon RESET_ICON = new GIcon("icon.plugin.datagraph.action.viewer.reset");
 	private static final String NAME = "Data Graph";
 
-	private AbstractDataGraphPlugin plugin;
+	private DataGraphPlugin plugin;
 	private JPanel mainPanel;
 
 	private DegController controller;
 	private ToggleDockingAction navagateInAction;
 	private ToggleDockingAction navagateOutAction;
 	private ToggleDockingAction expandedFormatAction;
+	private Navigatable navigatable;
+	private ToggleDockingAction togglePopups;
 
 	/**
 	 * Constructor
 	 * @param plugin the DataGraphPlugin
 	 * @param data the initial data object to display in the graph.
 	 */
-	public DataGraphProvider(AbstractDataGraphPlugin plugin, Data data) {
+	public DataGraphProvider(DataGraphPlugin plugin, Navigatable navigatable, Data data,
+			DegSharedConfig sharedConfig) {
 		super(plugin.getTool(), NAME, plugin.getName());
 		this.plugin = plugin;
-		controller = new DegController(this, data);
-		createActions();
+		this.navigatable = navigatable;
+		controller = new DegController(this, data, sharedConfig);
+		createActions(sharedConfig);
 		setTransient();
 
 		buildComponent();
@@ -77,6 +83,14 @@ public class DataGraphProvider
 		addSatelliteFeature(false, SatellitePosition.LOWER_LEFT);
 
 		setHelpLocation(new HelpLocation("DataGraphPlugin", "DataGraphPlugin"));
+		updateSubTitle();
+	}
+
+	public void updateSubTitle() {
+		Program program = controller.getProgram();
+		DataExplorationGraph graph = controller.getGraph();
+		Address address = graph.getRoot().getAddress();
+		setSubTitle(program.getName() + " @ " + address);
 	}
 
 	private void buildComponent() {
@@ -141,7 +155,7 @@ public class DataGraphProvider
 		return controller;
 	}
 
-	private void createActions() {
+	private void createActions(DegSharedConfig sharedConfig) {
 		new ActionBuilder("Select Home Vertex", plugin.getName())
 				.toolBarIcon(Icons.HOME_ICON)
 				.toolBarGroup("A")
@@ -159,6 +173,7 @@ public class DataGraphProvider
 				.toolBarIcon(DETAILS_ICON)
 				.toolBarGroup("A")
 				.description("Show Expanded information in data vertices.")
+				.selected(!sharedConfig.useCompactFormat())
 				.helpLocation(new HelpLocation("DataGraphPlugin", "Expanded_Format"))
 				.onAction(c -> controller.setCompactFormat(!expandedFormatAction.isSelected()))
 				.buildAndInstallLocal(this);
@@ -169,6 +184,7 @@ public class DataGraphProvider
 					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
 					.toolBarGroup("B")
 					.description("Attemps to select vertex corresponding to tool location changes.")
+					.selected(sharedConfig.isNavigateIn())
 					.helpLocation(new HelpLocation("DataGraphPlugin", "Navigate_In"))
 					.onAction(c -> controller.setNavigateIn(navagateInAction.isSelected()))
 					.buildAndInstallLocal(this);
@@ -180,9 +196,20 @@ public class DataGraphProvider
 				.sharedKeyBinding()
 				.description(
 					"Selecting vetices or locations inside a vertex sends navigates the tool.")
+				.selected(sharedConfig.isNavigateOut())
 				.helpLocation(new HelpLocation("DataGraphPlugin", "Navigate_Out"))
 				.onAction(c -> controller.setNavigateOut(navagateOutAction.isSelected()))
 				.selected(true)
+				.buildAndInstallLocal(this);
+
+		togglePopups = new ToggleActionBuilder("Display Popup Windows", plugin.getName())
+				.popupMenuPath("Display Popup Windows")
+				.description("Toggles whether or not to show tooltips")
+				.selected(sharedConfig.isShowPopups())
+				.helpLocation(new HelpLocation("DataGraphPlugin", "Show_Popups"))
+				.withContext(DegContext.class)
+				.popupWhen(c -> c.getVertex() == null)
+				.onAction(c -> controller.setPopupsVisible(togglePopups.isSelected()))
 				.buildAndInstallLocal(this);
 
 		new ActionBuilder("Incoming References", plugin.getName())
@@ -271,8 +298,8 @@ public class DataGraphProvider
 		return !v.isRoot();
 	}
 
-	void goTo(ProgramLocation location) {
-		controller.locationChanged(location);
+	void setLocation(ProgramLocation location) {
+		controller.setLocation(location);
 	}
 
 	private boolean canExpandRecursively(DegContext context) {
@@ -289,8 +316,7 @@ public class DataGraphProvider
 	}
 
 	public void navigateOut(ProgramLocation location) {
-		plugin.fireLocationEvent(location);
-
+		navigatable.goTo(location);
 	}
 
 }

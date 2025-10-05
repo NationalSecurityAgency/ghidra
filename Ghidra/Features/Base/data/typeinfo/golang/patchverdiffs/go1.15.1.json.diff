@@ -1,16 +1,32 @@
-@ ["all","Funcs","net/http/fcgi.(*response).Write","Params",1,"Name"]
+@ ["all","Funcs","net/http/fcgi.(*net/http/fcgi.response).Write","Params",1,"Name"]
 - "data"
 + "p"
-@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",0,"Name"]
-- ""
+@ ["all","Funcs","net/http/fcgi.(*net/http/fcgi.response).Write","Results",0,"Name"]
 + "n"
-@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",1,"Name"]
-- ""
+@ ["all","Funcs","net/http/fcgi.(*net/http/fcgi.response).Write","Results",1,"Name"]
 + "err"
-@ ["all","Funcs","net/http/cgi.(*response).writeCGIHeader"]
-+ {"Flags":4,"Params":[{"DataType":"*net/http/cgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
-@ ["all","Funcs","net/http/fcgi.(*response).writeCGIHeader"]
-+ {"Flags":4,"Params":[{"DataType":"*net/http/fcgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http/fcgi.ProcessEnv","Position"]
+- "$GOROOT/net/http/fcgi/child.go:358:6"
++ "$GOROOT/net/http/fcgi/child.go:377:6"
+@ ["all","Funcs","net/http/fcgi.Serve","Position"]
+- "$GOROOT/net/http/fcgi/child.go:331:6"
++ "$GOROOT/net/http/fcgi/child.go:350:6"
+@ ["all","Funcs","net/http/fcgi.addFastCGIEnvToContext","Position"]
+- "$GOROOT/net/http/fcgi/child.go:365:6"
++ "$GOROOT/net/http/fcgi/child.go:384:6"
+@ ["all","Funcs","net/http/fcgi.filterOutUsedEnvVars","Position"]
+- "$GOROOT/net/http/fcgi/child.go:269:6"
++ "$GOROOT/net/http/fcgi/child.go:286:6"
+@ ["all","Funcs","net/http/fcgi.newChild","Position"]
+- "$GOROOT/net/http/fcgi/child.go:145:6"
++ "$GOROOT/net/http/fcgi/child.go:162:6"
+@ ["all","Funcs","net/http/fcgi.newResponse","Position"]
+- "$GOROOT/net/http/fcgi/child.go:83:6"
++ "$GOROOT/net/http/fcgi/child.go:85:6"
+@ ["all","Funcs","net/http/cgi.(*net/http/cgi.response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/cgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}]}
+@ ["all","Funcs","net/http/fcgi.(*net/http/fcgi.response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/fcgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}]}
 @ ["all","Types","net/http/cgi.response","Fields",2]
   {"DataType":"net/http.Header","Name":"header"}
 + {"DataType":"int","Name":"code"}
@@ -21,6 +37,9 @@
   {"DataType":"*bufio.Writer","Name":"bufw"}
 - {"DataType":"bool","Name":"headerSent"}
 ]
+@ ["all","Types","net/http/fcgi.child","Position"]
+- "$GOROOT/net/http/fcgi/child.go:137:6"
++ "$GOROOT/net/http/fcgi/child.go:154:6"
 @ ["all","Types","net/http/fcgi.response","Fields",2]
   {"DataType":"net/http.Header","Name":"header"}
 + {"DataType":"int","Name":"code"}
@@ -31,55 +50,3 @@
   {"DataType":"*net/http/fcgi.bufWriter","Name":"w"}
 - {"DataType":"bool","Name":"wroteHeader"}
 ]
-@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["darwin-amd64","Types","func(string)","Params",0,"Name"]
-- "hostPort"
-+ "name"
-@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["darwin-amd64-cgo","Types","func(string)"]
-+ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
-@ ["darwin-cgo","Types","func(string)"]
-- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
-@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "address"
-+ "addr"
-@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
-- "addr"
-+ "address"
-@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
