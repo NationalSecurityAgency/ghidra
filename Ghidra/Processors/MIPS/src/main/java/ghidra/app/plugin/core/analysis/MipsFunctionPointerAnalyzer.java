@@ -31,6 +31,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.SymbolicPropogator;
 import ghidra.program.util.VarnodeContext;
@@ -41,120 +42,120 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Analyzer to detect and analyze function pointer tables in MIPS binaries.
- * 
+ *
  * This analyzer identifies common patterns for function pointer usage:
  * - Operation structures (ops tables) with function pointers
  * - Virtual function tables (vtables) for C++ objects
  * - Callback registration structures
  * - Function pointer arrays
- * 
+ *
  * It creates proper references from indirect call sites (jalr) to the
  * functions they may call, improving call graph completeness.
  */
 public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
-	
+
 	private static final String NAME = "MIPS Function Pointer Analyzer";
-	private static final String DESCRIPTION = 
+	private static final String DESCRIPTION =
 		"Detects function pointer tables, vtables, and operation structures. " +
 		"Creates references from indirect calls (jalr) to potential target functions.";
-	
+
 	private static final String OPTION_NAME_ENABLE = "Enable Function Pointer Detection";
-	private static final String OPTION_DESCRIPTION_ENABLE = 
+	private static final String OPTION_DESCRIPTION_ENABLE =
 		"Enable detection of function pointer tables and indirect call resolution";
-	
+
 	private static final String OPTION_NAME_MIN_TABLE_SIZE = "Minimum Table Size";
-	private static final String OPTION_DESCRIPTION_MIN_TABLE_SIZE = 
+	private static final String OPTION_DESCRIPTION_MIN_TABLE_SIZE =
 		"Minimum number of function pointers to consider a structure as a table (default: 3)";
-	
+
 	private static final String OPTION_NAME_MAX_TABLE_SIZE = "Maximum Table Size";
-	private static final String OPTION_DESCRIPTION_MAX_TABLE_SIZE = 
+	private static final String OPTION_DESCRIPTION_MAX_TABLE_SIZE =
 		"Maximum number of function pointers in a table (default: 256)";
-	
+
 	private static final boolean OPTION_DEFAULT_ENABLE = true;
 	private static final int OPTION_DEFAULT_MIN_TABLE_SIZE = 3;
 	private static final int OPTION_DEFAULT_MAX_TABLE_SIZE = 256;
-	
+
 	private boolean enableFunctionPointerDetection = OPTION_DEFAULT_ENABLE;
 	private int minTableSize = OPTION_DEFAULT_MIN_TABLE_SIZE;
 	private int maxTableSize = OPTION_DEFAULT_MAX_TABLE_SIZE;
-	
+
 	public MipsFunctionPointerAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
 		// Run after functions are created
 		setPriority(AnalysisPriority.FUNCTION_ANALYSIS.after());
 		setDefaultEnablement(true);
 	}
-	
+
 	@Override
 	public boolean canAnalyze(Program program) {
 		return program.getLanguage().getProcessor().equals(
 			Processor.findOrPossiblyCreateProcessor("MIPS"));
 	}
-	
+
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		
+
 		if (!enableFunctionPointerDetection) {
 			return false;
 		}
-		
+
 		int tablesFound = 0;
 		int referencesCreated = 0;
-		
+
 		// Strategy 1: Find function pointer tables in data sections
 		List<FunctionPointerTable> tables = findFunctionPointerTables(program, monitor);
 		tablesFound = tables.size();
-		
+
 		// Strategy 2: Analyze indirect calls (jalr) and try to resolve targets
 		referencesCreated = analyzeIndirectCalls(program, set, tables, monitor);
-		
+
 		if (tablesFound > 0 || referencesCreated > 0) {
-			Msg.info(this, "MIPS Function Pointer Analyzer: Found " + tablesFound + 
+			Msg.info(this, "MIPS Function Pointer Analyzer: Found " + tablesFound +
 				" function pointer tables, created " + referencesCreated + " references");
 		}
-		
+
 		return tablesFound > 0 || referencesCreated > 0;
 	}
-	
+
 	/**
 	 * Find function pointer tables in data sections
 	 */
-	private List<FunctionPointerTable> findFunctionPointerTables(Program program, 
+	private List<FunctionPointerTable> findFunctionPointerTables(Program program,
 			TaskMonitor monitor) throws CancelledException {
-		
+
 		List<FunctionPointerTable> tables = new ArrayList<>();
-		
+
 		// Search in data sections (.rodata, .data, .bss)
 		for (MemoryBlock block : program.getMemory().getBlocks()) {
 			monitor.checkCancelled();
-			
+
 			if (!block.isInitialized() || block.isExecute()) {
 				continue; // Skip uninitialized or executable blocks
 			}
-			
+
 			String blockName = block.getName().toLowerCase();
-			if (!blockName.contains("data") && !blockName.contains("rodata") && 
+			if (!blockName.contains("data") && !blockName.contains("rodata") &&
 			    !blockName.contains("bss")) {
 				continue; // Only check data sections
 			}
-			
+
 			monitor.setMessage("Scanning " + block.getName() + " for function pointer tables");
-			
+
 			// Scan the block for consecutive function pointers
 			Address addr = block.getStart();
 			while (addr != null && addr.compareTo(block.getEnd()) < 0) {
 				monitor.checkCancelled();
-				
+
 				FunctionPointerTable table = detectTableAt(program, addr);
 				if (table != null && table.size >= minTableSize) {
 					tables.add(table);
-					Msg.info(this, "Found function pointer table at " + addr + 
+					Msg.info(this, "Found function pointer table at " + addr +
 						" with " + table.size + " entries");
-					
+
 					// Create structure for the table
 					createTableStructure(program, table);
-					
+
 					// Skip past this table
 					addr = addr.add(table.size * program.getDefaultPointerSize());
 				} else {
@@ -162,10 +163,10 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 				}
 			}
 		}
-		
+
 		return tables;
 	}
-	
+
 	/**
 	 * Detect a function pointer table starting at the given address
 	 */
@@ -173,7 +174,7 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 		int pointerSize = program.getDefaultPointerSize();
 		List<Address> functions = new ArrayList<>();
 		Address current = addr;
-		
+
 		// Read consecutive pointers and check if they point to functions
 		for (int i = 0; i < maxTableSize; i++) {
 			try {
@@ -185,7 +186,7 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 				} else {
 					return null;
 				}
-				
+
 				// Check if this looks like a function pointer
 				if (offset == 0) {
 					// Null pointer - could be end of table or valid entry
@@ -196,7 +197,7 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 				} else {
 					Address target = program.getAddressFactory()
 						.getDefaultAddressSpace().getAddress(offset);
-					
+
 					if (isFunctionPointer(program, target)) {
 						functions.add(target);
 					} else {
@@ -204,21 +205,21 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 						break;
 					}
 				}
-				
+
 				current = current.add(pointerSize);
-				
+
 			} catch (Exception e) {
 				break; // Memory read error
 			}
 		}
-		
+
 		if (functions.size() >= minTableSize) {
 			return new FunctionPointerTable(addr, functions);
 		}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * Check if an address points to a function
 	 */
@@ -226,56 +227,56 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 		if (addr == null) {
 			return false;
 		}
-		
+
 		// Check if there's a function at this address
 		Function func = program.getFunctionManager().getFunctionAt(addr);
 		if (func != null) {
 			return true;
 		}
-		
+
 		// Check if there's an instruction at this address (potential function)
 		Instruction instr = program.getListing().getInstructionAt(addr);
 		if (instr != null) {
 			// Could be a function that hasn't been created yet
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Create a structure definition for a function pointer table
 	 */
 	private void createTableStructure(Program program, FunctionPointerTable table) {
 		// Create labels for the table and its entries
 		SymbolTable symTable = program.getSymbolTable();
-		
+
 		try {
 			// Create label for the table
-			symTable.createLabel(table.address, "func_ptr_table_" + 
-				table.address.toString().replace(":", "_"), 
+			symTable.createLabel(table.address, "func_ptr_table_" +
+				table.address.toString().replace(":", "_"),
 				SourceType.ANALYSIS);
-			
+
 			// Create labels for each entry
 			int pointerSize = program.getDefaultPointerSize();
 			for (int i = 0; i < table.functions.size(); i++) {
 				Address entryAddr = table.address.add(i * pointerSize);
 				Address funcAddr = table.functions.get(i);
-				
+
 				if (funcAddr != null) {
 					// Create reference from table entry to function
 					program.getReferenceManager().addMemoryReference(
-						entryAddr, funcAddr, RefType.DATA, 
+						entryAddr, funcAddr, RefType.DATA,
 						SourceType.ANALYSIS, 0);
 				}
 			}
-			
+
 		} catch (InvalidInputException e) {
-			Msg.warn(this, "Failed to create labels for function pointer table at " + 
+			Msg.warn(this, "Failed to create labels for function pointer table at " +
 				table.address + ": " + e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * Analyze indirect calls and create references to potential targets
 	 */
@@ -327,13 +328,15 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 				}
 
 				String instrType = isJalr ? "jalr call" : "jr jump";
-				Msg.info(this, "Found " + instrType + " at " + instr.getAddress());
+				Msg.info(this, "Found " + instrType + " at " + instr.getAddress() +
+					" (register: " + (targetReg != null ? targetReg.getName() : "unknown") + ")");
 				monitor.setMessage("Analyzing indirect " + instrType + " at " + instr.getAddress());
 
 				// targetReg already obtained above
 				if (targetReg != null) {
 					// Track back to find where this register was loaded
-					Address targetFunc = findFunctionPointerTarget(program, instr, targetReg);
+					// Pass the tables so they can be used during resolution
+					Address targetFunc = findFunctionPointerTarget(program, instr, targetReg, tables);
 
 					if (targetFunc != null) {
 						// Remove any existing flow references that might confuse the decompiler
@@ -381,31 +384,28 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 	 * @param targetFunc The resolved target function, or null if unresolved
 	 */
 	private void suppressSwitchTableRecovery(Program program, Instruction jalrInstr, Address targetFunc) {
+		// Only create override if we have a valid target
+		// Empty jump tables cause "Jumptable has no destinations" errors
+		if (targetFunc == null) {
+			return;
+		}
+
 		try {
 			Function function = program.getFunctionManager().getFunctionContaining(jalrInstr.getAddress());
 			if (function == null) {
 				return;
 			}
 
-			// Create a jump table override to suppress decompiler warnings
-			// If we have a target, create a single-entry table
-			// If we don't have a target, create an empty table (still suppresses warnings)
+			// Create a jump table override with the single target
 			java.util.ArrayList<Address> targetList = new java.util.ArrayList<>();
-			if (targetFunc != null) {
-				targetList.add(targetFunc);
-			}
+			targetList.add(targetFunc);
 
 			ghidra.program.model.pcode.JumpTable jumpTable =
 				new ghidra.program.model.pcode.JumpTable(jalrInstr.getAddress(), targetList, true);
 			jumpTable.writeOverride(function);
 
-			if (targetFunc != null) {
-				Msg.debug(this, "Created jump table override at " + jalrInstr.getAddress() +
-					" with target " + targetFunc);
-			} else {
-				Msg.debug(this, "Created empty jump table override at " + jalrInstr.getAddress() +
-					" to suppress warnings");
-			}
+			Msg.info(this, "Created jump table override at " + jalrInstr.getAddress() +
+				" with target " + targetFunc);
 		} catch (Exception e) {
 			Msg.warn(this, "Failed to create jump table override at " + jalrInstr.getAddress() +
 				": " + e.getMessage());
@@ -416,10 +416,10 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 	 * Track back from a jalr/jr instruction to find the function pointer being called.
 	 * Uses simple backward tracking - SymbolicPropagator is too complex for this use case.
 	 */
-	private Address findFunctionPointerTarget(Program program, Instruction jalrInstr, Register targetReg) {
-		// For now, just use the simple backward tracking
-		// TODO: Implement more sophisticated tracking using SymbolicPropagator with ContextEvaluator
-		return findFunctionPointerTargetSimple(program, jalrInstr, targetReg);
+	private Address findFunctionPointerTarget(Program program, Instruction jalrInstr, Register targetReg,
+			List<FunctionPointerTable> tables) {
+		// Use the simple backward tracking with table support
+		return findFunctionPointerTargetSimple(program, jalrInstr, targetReg, tables);
 	}
 
 	/**
@@ -427,7 +427,8 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 	 * Searches backward up to 100 instructions looking for loads into the target register.
 	 * Handles patterns like: lw $t9, offset($base) where offset is a constant.
 	 */
-	private Address findFunctionPointerTargetSimple(Program program, Instruction jalrInstr, Register targetReg) {
+	private Address findFunctionPointerTargetSimple(Program program, Instruction jalrInstr, Register targetReg,
+			List<FunctionPointerTable> tables) {
 		Memory memory = program.getMemory();
 		Listing listing = program.getListing();
 
@@ -439,18 +440,45 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 		Instruction current = jalrInstr.getPrevious();
 		int count = 0;
 		String failureReason = "No lw instruction found in function";
+		boolean allowReturnPattern = targetReg != null && ("v0".equals(targetReg.getName()) || "v1".equals(targetReg.getName()));
 
 		while (current != null) {
 			count++;
 
 			// Stop if we've left the function
 			if (functionStart != null && current.getAddress().compareTo(functionStart) < 0) {
-				failureReason = "No lw instruction found within function (searched " + count + " instructions)";
+				// If target is a return register, treat this as a return-value pattern instead of a failure
+				String regName = targetReg.getName();
+				if (allowReturnPattern) {
+					failureReason = "Return-value pattern: prior jal likely set $" + regName +
+						" (not assuming lw; deferring to signature analyzer)";
+				} else if (regName.equals("a0") || regName.equals("a1") || regName.equals("a2") || regName.equals("a3")) {
+					failureReason = "Register $" + regName + " is likely a function parameter (searched " + count + " instructions, no lw found)";
+				} else {
+					failureReason = "No lw instruction found within function (searched " + count + " instructions)";
+				}
+				break;
+			}
+
+			// Look for a preceding call (direct or PIC) - if seen before any lw into target, prefer return-value pattern
+			String mnemonic = current.getMnemonicString();
+			boolean isCall = current.getFlowType() != null && current.getFlowType().isCall();
+			if (allowReturnPattern && (isCall || mnemonic.equals("jal") || mnemonic.equals("_jal"))) {
+				// Try resolving the prior callee and its returned function pointer immediately
+				Function callee = resolvePriorCalleeFunction(program, current);
+				if (callee != null) {
+					Address ret = resolveReturnedFunctionPointer(program, callee);
+					if (ret != null) {
+						Msg.info(this, "  Resolved via return-value pattern: prior callee " + callee.getName() + " -> " + ret);
+						return ret;
+					}
+				}
+				failureReason = "Return-value pattern: found prior call before indirect call using $" + targetReg.getName() +
+					" (no lw; deferring to signature/signature-based resolution)";
 				break;
 			}
 
 			// Look for lw (load word) that writes to our target register
-			String mnemonic = current.getMnemonicString();
 			if (mnemonic.equals("lw") || mnemonic.equals("_lw")) {
 				Register destReg = current.getRegister(0);
 
@@ -466,7 +494,7 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 					}
 
 					// Try Method 2: Parse operands to get address
-					resolvedAddr = tryResolveFromOperands(program, current, memory, listing);
+					resolvedAddr = tryResolveFromOperands(program, current, memory, listing, tables);
 					if (resolvedAddr != null) {
 						Msg.info(this, "  Resolved via operand parsing");
 						return resolvedAddr;
@@ -504,13 +532,220 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 			current = current.getPrevious();
 		}
 
-		Msg.info(this, "  Failure: " + failureReason);
+		if (failureReason.startsWith("Return-value pattern")) {
+			// Try to resolve by analyzing the prior callee's return value
+			Function callee = resolvePriorCalleeFunction(program, jalrInstr);
+			if (callee != null) {
+				Address ret = resolveReturnedFunctionPointer(program, callee);
+				if (ret != null) {
+					Msg.info(this, "  Resolved via return-value pattern: prior callee " + callee.getName() +
+						" returns function pointer -> " + ret);
+					return ret;
+				}
+			}
+			Msg.info(this, "  Info: " + failureReason);
+		} else {
+			Msg.info(this, "  Failure: " + failureReason);
+		}
+		return null;
+	}
+
+	/**
+	 * Resolve the prior callee function invoked before the jalr/jr, including PIC patterns.
+	 */
+	private Function resolvePriorCalleeFunction(Program program, Instruction jalrInstr) {
+		Instruction cur = jalrInstr.getPrevious();
+		Function scope = program.getFunctionManager().getFunctionContaining(jalrInstr.getAddress());
+		int scanned = 0;
+		final int MAX_SCAN = 64;
+		while (cur != null && scanned++ < MAX_SCAN) {
+			Function curFunc = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+			if (scope != null && curFunc != scope) break;
+			if (cur.getFlowType() != null && cur.getFlowType().isCall()) {
+				// Try flow references first
+				for (Reference ref : cur.getReferencesFrom()) {
+					if (ref.getReferenceType().isCall() && !ref.getToAddress().isExternalAddress()) {
+						Function f = program.getFunctionManager().getFunctionAt(ref.getToAddress());
+						if (f != null) return f;
+					}
+				}
+				// Try operand address (direct jal)
+				if (cur.getNumOperands() > 0) {
+					Object[] objs = cur.getOpObjects(0);
+					if (objs != null && objs.length > 0 && objs[0] instanceof Address) {
+						Function f = program.getFunctionManager().getFunctionAt((Address) objs[0]);
+						if (f != null) return f;
+					}
+				}
+				// PIC-style: try resolving via register setup (hi/lo or gp-relative)
+				Function pic = resolvePicCallCallee(program, cur, scope);
+				if (pic != null) return pic;
+				break; // stop at the first prior call
+			}
+			cur = cur.getPrevious();
+		}
+		return null;
+	}
+
+	/**
+	 * Try to resolve simple cases where the callee function returns a constant function pointer.
+	 * Looks for:
+	 *  - hi/lo into $v0: addiu/ori v0, v0, lo; earlier lui v0, hi
+	 *  - gp-relative: lw v0, off(gp) where the GOT entry points to a function
+	 */
+	private Address resolveReturnedFunctionPointer(Program program, Function callee) {
+		Instruction cur = program.getListing().getInstructionAt(callee.getEntryPoint());
+		int scanned = 0;
+		final int MAX_SCAN = 128;
+		boolean lowSeen = false;
+		long lowImm = 0;
+		while (cur != null && scanned++ < MAX_SCAN) {
+			Function scope = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+			if (scope != callee) break;
+			String m = cur.getMnemonicString();
+			if (m.startsWith("_")) m = m.substring(1);
+			// gp-relative: lw v0, off(gp)
+			if ("lw".equals(m)) {
+				Register rd = cur.getRegister(0);
+				if (rd != null && "v0".equals(rd.getName())) {
+					// Follow reference to GOT entry and read pointer
+					for (Reference ref : cur.getReferencesFrom()) {
+						Address to = ref.getToAddress();
+						if (to != null && to.isMemoryAddress()) {
+							try {
+								Memory mem = program.getMemory();
+								int ptr = mem.getInt(to);
+								long p = Integer.toUnsignedLong(ptr);
+								Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(p);
+								if (program.getFunctionManager().getFunctionAt(addr) != null) {
+									return addr;
+								}
+							} catch (Exception e) { /* ignore */ }
+						}
+					}
+				}
+			}
+			// hi/lo: addiu/ori v0, v0, lo ; earlier lui v0, hi
+			if (!lowSeen && ("addiu".equals(m) || "ori".equals(m))) {
+				Register rd = cur.getRegister(0);
+				Register rs = cur.getRegister(1);
+				if (rd != null && rs != null && "v0".equals(rd.getName()) && "v0".equals(rs.getName())) {
+					Object[] objs = cur.getOpObjects(Math.min(2, cur.getNumOperands()-1));
+					for (Object o : objs) {
+						if (o instanceof ghidra.program.model.scalar.Scalar) {
+							lowImm = ((ghidra.program.model.scalar.Scalar)o).getSignedValue();
+							lowSeen = true;
+							break;
+						}
+					}
+				}
+			} else if (lowSeen && "lui".equals(m)) {
+				Register rd = cur.getRegister(0);
+				if (rd != null && "v0".equals(rd.getName())) {
+					Object[] objs = cur.getOpObjects(Math.min(1, cur.getNumOperands()-1));
+					for (Object o : objs) {
+						if (o instanceof ghidra.program.model.scalar.Scalar) {
+							long hi = ((ghidra.program.model.scalar.Scalar)o).getUnsignedValue() & 0xffffL;
+							long lo = lowImm & 0xffffL;
+							long addrVal = (hi << 16) | lo;
+							Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(addrVal);
+							if (program.getFunctionManager().getFunctionAt(addr) != null) {
+								return addr;
+							}
+						}
+					}
+				}
+			}
+			cur = cur.getNext();
+		}
 		return null;
 	}
 
 	/**
 	 * Analyze why a load instruction couldn't be resolved.
 	 */
+
+	/**
+	 * Resolve a PIC-style call target for a prior call instruction by scanning backward
+	 * for either gp-relative loads into the call register or hi/lo pairs.
+	 */
+		private Function resolvePicCallCallee(Program program, Instruction callInstr, Function scope) {
+			try {
+				// Determine the call register for jalr variants; for direct jal this is unused
+				Register callReg = null;
+				if (callInstr.getNumOperands() > 0) {
+					callReg = callInstr.getRegister(0);
+					if (callReg == null && callInstr.getNumOperands() > 1) {
+						callReg = callInstr.getRegister(1);
+					}
+				}
+				String callRegName = callReg != null ? callReg.getName() : null;
+				Instruction cur = callInstr.getPrevious();
+				boolean lowSeen = false;
+				long lowImm = 0;
+				int scanned = 0;
+				final int MAX_SCAN = 64;
+				while (cur != null && scanned < MAX_SCAN) {
+					Function curFunc = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+					if (scope != null && curFunc != scope) break;
+					scanned++;
+					String m = cur.getMnemonicString();
+					if (m.startsWith("_")) m = m.substring(1);
+					// gp-relative: lw callReg, off(gp)
+					if ("lw".equals(m)) {
+						Register rd = cur.getRegister(0);
+						if (rd != null && (callRegName == null || callRegName.equals(rd.getName()))) {
+							for (Reference ref : cur.getReferencesFrom()) {
+								Address to = ref.getToAddress();
+								if (to != null && to.isMemoryAddress()) {
+									try {
+										Memory mem = program.getMemory();
+										int ptr = mem.getInt(to);
+										long p = Integer.toUnsignedLong(ptr);
+										Address cand = program.getAddressFactory().getDefaultAddressSpace().getAddress(p);
+										Function f = program.getFunctionManager().getFunctionAt(cand);
+										if (f != null) return f;
+									} catch (Exception e) { /* ignore */ }
+								}
+							}
+						}
+					}
+					// hi/lo pair for call reg
+					if (!lowSeen && ("addiu".equals(m) || "ori".equals(m))) {
+						Register rd = cur.getRegister(0);
+						Register rs = cur.getRegister(1);
+						if (rd != null && rs != null && (callRegName == null || (callRegName.equals(rd.getName()) && callRegName.equals(rs.getName())))) {
+							Object[] objs = cur.getOpObjects(Math.min(2, cur.getNumOperands()-1));
+							for (Object o : objs) {
+								if (o instanceof ghidra.program.model.scalar.Scalar) {
+									lowImm = ((ghidra.program.model.scalar.Scalar)o).getSignedValue();
+									lowSeen = true;
+									break;
+								}
+							}
+						}
+					} else if (lowSeen && "lui".equals(m)) {
+						Register rd = cur.getRegister(0);
+						if (rd != null && (callRegName == null || callRegName.equals(rd.getName()))) {
+							Object[] objs = cur.getOpObjects(Math.min(1, cur.getNumOperands()-1));
+							for (Object o : objs) {
+								if (o instanceof ghidra.program.model.scalar.Scalar) {
+									long hi = ((ghidra.program.model.scalar.Scalar)o).getUnsignedValue() & 0xffffL;
+									long lo = lowImm & 0xffffL;
+									long addrVal = (hi << 16) | lo;
+									Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(addrVal);
+									Function f = program.getFunctionManager().getFunctionAt(addr);
+									if (f != null) return f;
+								}
+							}
+						}
+					}
+					cur = cur.getPrevious();
+				}
+			} catch (Exception e) { /* ignore */ }
+			return null;
+		}
+
 	private String analyzeLoadFailure(Instruction lwInstr) {
 		// Check the operand representation
 		String op1 = lwInstr.getDefaultOperandRepresentation(1);
@@ -564,7 +799,8 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Try to resolve function pointer by parsing instruction operands.
 	 */
-	private Address tryResolveFromOperands(Program program, Instruction lwInstr, Memory memory, Listing listing) {
+	private Address tryResolveFromOperands(Program program, Instruction lwInstr, Memory memory, Listing listing,
+			List<FunctionPointerTable> tables) {
 		// Check if operand 1 contains an address
 		if (lwInstr.getNumOperands() >= 2) {
 			Object[] opObjs = lwInstr.getOpObjects(1);
@@ -588,9 +824,315 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 				}
 			}
 		}
+
+		// Try register-relative tracking for structure member access
+		// Pattern: lw $dest, offset($base) where $base points to a structure
+		Address resolved = tryResolveRegisterRelative(program, lwInstr, memory, tables);
+		if (resolved != null) {
+			return resolved;
+		}
+
 		return null;
 	}
-	
+
+	/**
+	 * Try to resolve an indirect call by checking if it loads from a known function pointer table.
+	 * This handles patterns like:
+	 *   lui $v0, 0x7
+	 *   addiu $v0, $v0, 0xa764
+	 *   lw $t9, 0x10($v0)    # Load from table at 0x7a764 + 0x10
+	 *   jr $t9
+	 */
+	private Address tryResolveFromTables(Program program, Instruction jalrInstr, Register targetReg,
+			List<FunctionPointerTable> tables) {
+
+		// Track backward to find the lw instruction
+		Instruction current = jalrInstr.getPrevious();
+		int searchLimit = 50;  // Search further for register calculations
+
+		while (current != null && searchLimit-- > 0) {
+			String mnemonic = current.getMnemonicString();
+
+			if (mnemonic.equals("lw") || mnemonic.equals("_lw")) {
+				Register destReg = current.getRegister(0);
+
+				if (destReg != null && destReg.equals(targetReg)) {
+					// Found the load - try to calculate the address
+					// Pattern 1: Absolute address (rare)
+					if (current.getNumOperands() >= 2) {
+						Object[] opObjs = current.getOpObjects(1);
+						for (Object obj : opObjs) {
+							if (obj instanceof Address) {
+								Address loadAddr = (Address) obj;
+								Address resolved = checkTableMatch(program, loadAddr, tables);
+								if (resolved != null) return resolved;
+							}
+						}
+					}
+
+					// Pattern 2: Register-relative: lw $dest, offset($base)
+					// Need to track the base register to find the table address
+					String op1 = current.getDefaultOperandRepresentation(1);
+					if (op1.contains("(") && op1.contains(")")) {
+						int openParen = op1.indexOf('(');
+						int closeParen = op1.indexOf(')');
+						String offsetStr = op1.substring(0, openParen).trim();
+						String baseRegName = op1.substring(openParen + 1, closeParen).trim();
+
+						// Parse the offset
+						long offset = 0;
+						try {
+							if (offsetStr.startsWith("0x") || offsetStr.startsWith("-0x")) {
+								offset = Long.parseLong(offsetStr.replace("0x", "").replace("-0x", "-"), 16);
+							} else if (!offsetStr.isEmpty()) {
+								offset = Long.parseLong(offsetStr);
+							}
+						} catch (NumberFormatException e) {
+							// Can't parse offset
+							break;
+						}
+
+						// Track the base register backward to find its value
+						Register baseReg = program.getRegister(baseRegName);
+						if (baseReg != null) {
+							Address baseAddr = trackRegisterValue(program, current, baseReg);
+							if (baseAddr != null) {
+								try {
+									Address loadAddr = baseAddr.add(offset);
+									Address resolved = checkTableMatch(program, loadAddr, tables);
+									if (resolved != null) return resolved;
+								} catch (Exception e) {
+									// Address calculation failed
+								}
+							}
+						}
+					}
+
+					// Couldn't resolve this load
+					break;
+				}
+			}
+
+			current = current.getPrevious();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Check if an address falls within a known function pointer table and return the target.
+	 */
+	private Address checkTableMatch(Program program, Address loadAddr, List<FunctionPointerTable> tables) {
+		for (FunctionPointerTable table : tables) {
+			if (loadAddr.compareTo(table.address) >= 0) {
+				long offset = loadAddr.subtract(table.address);
+				int pointerSize = program.getDefaultPointerSize();
+				int index = (int)(offset / pointerSize);
+
+				if (index >= 0 && index < table.functions.size()) {
+					Address targetFunc = table.functions.get(index);
+					Msg.info(this, "  Resolved from table at " + table.address +
+						" index " + index + " -> " + targetFunc);
+					return targetFunc;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Track a register backward to find its value (address).
+	 * Handles simple patterns like:
+	 *   lui $v0, 0x7
+	 *   addiu $v0, $v0, 0xa764
+	 */
+	private Address trackRegisterValue(Program program, Instruction startInstr, Register targetReg) {
+		Instruction current = startInstr.getPrevious();
+		int searchLimit = 30;
+
+		Long upperBits = null;  // From lui
+		Long lowerBits = null;  // From addiu/ori
+
+		Msg.info(this, "  Tracking register " + targetReg.getName() + " backward from " + startInstr.getAddress());
+
+		while (current != null && searchLimit-- > 0) {
+			String mnemonic = current.getMnemonicString();
+			Register destReg = current.getRegister(0);
+
+			if (destReg != null && destReg.equals(targetReg)) {
+				// Found an instruction that writes to our target register
+				Msg.info(this, "    Found " + mnemonic + " at " + current.getAddress() + ": " + current);
+
+				if (mnemonic.equals("lui") || mnemonic.equals("_lui")) {
+					// lui $reg, imm - load upper immediate
+					if (current.getNumOperands() >= 2) {
+						Object[] opObjs = current.getOpObjects(1);
+						if (opObjs.length > 0 && opObjs[0] instanceof Scalar) {
+							upperBits = ((Scalar) opObjs[0]).getValue();
+							Msg.info(this, "    Got upper bits: 0x" + Long.toHexString(upperBits));
+						}
+					}
+					// Keep searching for addiu
+				}
+				else if (mnemonic.equals("addiu") || mnemonic.equals("_addiu") ||
+						 mnemonic.equals("ori") || mnemonic.equals("_ori")) {
+					// addiu $reg, $reg, imm - add immediate
+					if (current.getNumOperands() >= 3) {
+						Object[] opObjs = current.getOpObjects(2);
+						if (opObjs.length > 0 && opObjs[0] instanceof Scalar) {
+							lowerBits = ((Scalar) opObjs[0]).getValue();
+							Msg.info(this, "    Got lower bits: 0x" + Long.toHexString(lowerBits & 0xFFFF));
+						}
+					}
+					// Keep searching for lui
+				}
+				else {
+					// Some other instruction wrote to the register - stop
+					Msg.info(this, "    Register overwritten by " + mnemonic + ", stopping");
+					break;
+				}
+
+				// If we have both parts, calculate the address
+				if (upperBits != null && lowerBits != null) {
+					long addr = (upperBits << 16) | (lowerBits & 0xFFFF);
+					try {
+						Address result = program.getAddressFactory().getDefaultAddressSpace().getAddress(addr);
+						Msg.info(this, "    Calculated address: " + result);
+						return result;
+					} catch (Exception e) {
+						Msg.info(this, "    Failed to create address from 0x" + Long.toHexString(addr));
+						return null;
+					}
+				}
+			}
+
+			current = current.getPrevious();
+		}
+
+		Msg.info(this, "  Register tracking gave up after searching " + (30 - searchLimit) + " instructions");
+		return null;
+	}
+
+	/**
+	 * Try to resolve register-relative loads by tracking the base register.
+	 * This handles patterns like:
+	 *   lui $v0, 0x7
+	 *   addiu $v0, $v0, 0xa764  # $v0 = 0x7a764 (table address)
+	 *   lw $t9, 0x10($v0)       # Load from table[4]
+	 *   jr $t9                  # Call it
+	 */
+	private Address tryResolveRegisterRelative(Program program, Instruction lwInstr, Memory memory,
+			List<FunctionPointerTable> tables) {
+		// Parse the load instruction: lw $dest, offset($base)
+		if (lwInstr.getNumOperands() < 2) {
+			return null;
+		}
+
+		String op1 = lwInstr.getDefaultOperandRepresentation(1);
+		if (!op1.contains("(") || !op1.contains(")")) {
+			return null;  // Not register-relative
+		}
+
+		// Extract offset and base register
+		int openParen = op1.indexOf('(');
+		int closeParen = op1.indexOf(')');
+		String offsetStr = op1.substring(0, openParen).trim();
+		String baseRegName = op1.substring(openParen + 1, closeParen).trim();
+
+		Msg.info(this, "  Trying register tracking for: " + op1 + " (base=" + baseRegName + ", offset=" + offsetStr + ")");
+
+		// Parse offset
+		long offset;
+		try {
+			if (offsetStr.startsWith("0x") || offsetStr.startsWith("-0x")) {
+				offset = Long.parseLong(offsetStr.replace("0x", "").replace("-0x", "-"), 16);
+			} else {
+				offset = Long.parseLong(offsetStr);
+			}
+		} catch (NumberFormatException e) {
+			Msg.info(this, "  Failed to parse offset: " + offsetStr);
+			return null;
+		}
+
+		// Track the base register backward to find what it points to
+		Register baseReg = program.getRegister(baseRegName);
+		if (baseReg == null) {
+			Msg.info(this, "  Unknown register: " + baseRegName);
+			return null;
+		}
+
+		// Try to track the base register value using lui/addiu pattern
+		Address baseAddr = trackRegisterValue(program, lwInstr, baseReg);
+		if (baseAddr != null) {
+			try {
+				Address loadAddr = baseAddr.add(offset);
+
+				// Check if this address falls within a known function pointer table
+				Address resolved = checkTableMatch(program, loadAddr, tables);
+				if (resolved != null) {
+					return resolved;
+				}
+
+				// Not in a table, try reading directly from memory
+				long funcPtr = memory.getInt(loadAddr) & 0xFFFFFFFFL;
+				Address funcAddr = program.getAddressFactory()
+					.getDefaultAddressSpace().getAddress(funcPtr);
+
+				if (program.getFunctionManager().getFunctionAt(funcAddr) != null) {
+					Msg.info(this, "  Resolved via register tracking: " + baseAddr +
+						" + " + String.format("0x%x", offset) + " -> " + funcAddr);
+					return resolved;
+				}
+			} catch (Exception e) {
+				// Failed to resolve
+			}
+		}
+
+		// Fallback: Simple tracking - look for data references in the function
+		Function func = program.getFunctionManager().getFunctionContaining(lwInstr.getAddress());
+		if (func == null) {
+			Msg.info(this, "  No containing function");
+			return null;
+		}
+
+		// Search for data references in this function that might be structure pointers
+		ReferenceManager refMgr = program.getReferenceManager();
+		InstructionIterator instrs = program.getListing().getInstructions(func.getBody(), true);
+
+		int dataRefsFound = 0;
+		while (instrs.hasNext()) {
+			Instruction instr = instrs.next();
+			Reference[] refs = refMgr.getReferencesFrom(instr.getAddress());
+
+			for (Reference ref : refs) {
+				if (ref.isMemoryReference() && ref.getReferenceType().isData()) {
+					dataRefsFound++;
+					Address dataAddr = ref.getToAddress();
+
+					// Try to read a pointer from this data address + offset
+					try {
+						Address targetAddr = dataAddr.add(offset);
+						long funcPtr = memory.getInt(targetAddr) & 0xFFFFFFFFL;
+						Address funcAddr = program.getAddressFactory()
+							.getDefaultAddressSpace().getAddress(funcPtr);
+
+						// Check if it's a valid function
+						if (program.getFunctionManager().getFunctionAt(funcAddr) != null) {
+							Msg.info(this, "  Resolved via register tracking: " + dataAddr +
+								" + " + String.format("0x%x", offset) + " -> " + funcAddr);
+							return funcAddr;
+						}
+					} catch (Exception e) {
+						// Continue trying
+					}
+				}
+			}
+		}
+
+		Msg.info(this, "  Register tracking failed: found " + dataRefsFound + " data references, none resolved");
+		return null;
+	}
+
 	@Override
 	public void registerOptions(Options options, Program program) {
 		options.registerOption(OPTION_NAME_ENABLE, enableFunctionPointerDetection, null,
@@ -600,15 +1142,15 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 		options.registerOption(OPTION_NAME_MAX_TABLE_SIZE, maxTableSize, null,
 			OPTION_DESCRIPTION_MAX_TABLE_SIZE);
 	}
-	
+
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		enableFunctionPointerDetection = options.getBoolean(OPTION_NAME_ENABLE, 
+		enableFunctionPointerDetection = options.getBoolean(OPTION_NAME_ENABLE,
 			enableFunctionPointerDetection);
 		minTableSize = options.getInt(OPTION_NAME_MIN_TABLE_SIZE, minTableSize);
 		maxTableSize = options.getInt(OPTION_NAME_MAX_TABLE_SIZE, maxTableSize);
 	}
-	
+
 	/**
 	 * Try to resolve a $gp-relative load instruction.
 	 * Pattern: lw $reg, offset($gp)
