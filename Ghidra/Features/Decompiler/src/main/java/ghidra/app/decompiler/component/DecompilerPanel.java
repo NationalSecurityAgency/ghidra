@@ -858,7 +858,72 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				}
 			}
 
+			ClangToken cursorToken = getTokenAtCursor();
+			FieldLocation cursorPos = getCursorPosition();
+			boolean wasOnScreen = getOffscreenDistance(
+				cursorToken.getLineParent().getLineNumber() - 1
+			) == 0;
+
 			setDecompileData(decompileData);
+
+			if (! wasOnScreen) {
+				// If the cursor was not on screen to begin with, don't bother
+				// scrolling the cursor back into view.
+				return;
+			}
+
+			// Adjust the cursor to be at the same token
+			if (!cursorToken.getCollapsedToken()) {
+				// The token is still visible, it only moved to a different line
+				// The token only moved vertically, not horizontally, so we only
+				// adjust the row, not the column.
+				int lineNumber = cursorToken.getLineParent().getLineNumber() - 1;
+
+				fieldPanel.navigateTo(lineNumber, cursorPos.getCol());
+			} else {
+				// The token has been collapsed, iterate backwards until we find
+				// the first token that is not collapsed and target that
+
+				ClangNode cursorParent = cursorToken.Parent();
+				List<ClangNode> children = new ArrayList<>();
+				cursorParent.flatten(children);
+
+				int childIdx = children.indexOf(cursorToken);
+
+				// Attempt going up in the hierarchy at most 10 times
+				int j;
+				for (j = 0; j < 10; j++) {
+					int i;
+					for (i = childIdx; i >= 0; i--) {
+						ClangNode n = children.get(i);
+						if ((!(n instanceof ClangToken)) || ((ClangToken)n).getCollapsedToken()) {
+							continue;
+						}
+
+						cursorToken = (ClangToken)n;
+						break;
+					}
+
+					if (i >= 0) {
+						break;
+					}
+
+					// We did not find an uncollapsed token among these children,
+					// try the children of our parent.
+					ClangNode lastChild = children.get(0);
+					children.clear();
+					cursorParent = cursorParent.Parent();
+					cursorParent.flatten(children);
+					childIdx = children.indexOf(lastChild);
+				}
+
+				// Only change the token at the cursor if we managed to find an
+				// uncollapsed token. Otherwise, just leave the cursor at the
+				// same row/column position.
+				if (j != 10) {
+					goToToken(cursorToken);
+				}
+			}
 		}
 	}
 
