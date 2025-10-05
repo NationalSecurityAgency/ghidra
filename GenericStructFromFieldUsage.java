@@ -41,7 +41,7 @@ public class GenericStructFromFieldUsage extends GhidraScript {
 
         // Configuration
         final int MIN_OFFSETS_PER_FUNC = 2;   // require at least N distinct offsets seen in a function for a param
-        final int MIN_FUNCS_PER_CLUSTER = 5;  // only create/apply a struct when >= N functions share the same signature
+        final int MIN_FUNCS_PER_CLUSTER = 3;  // lowered: emit when >=3 functions share the same signature
         final int MAX_STRUCT_SIZE_PAD = 4;    // pad to 4-byte boundary
         final Set<String> MEM_OPS = new HashSet<>(Arrays.asList(
             "lw","sw","lb","sb","lh","sh","lhu","lbu","lwu","swr","lwr"));
@@ -57,6 +57,9 @@ public class GenericStructFromFieldUsage extends GhidraScript {
 
         // 1) Gather per-function, per-paramIndex distinct offsets used in memory ops base(param)
         Map<Function, Map<Integer, Set<Integer>>> funcParamOffsets = new HashMap<>();
+        // Track per-function per-param offset sizes for field-size inference
+        Map<Function, Map<Integer, Map<Integer, Integer>>> funcParamSizes = new HashMap<>();
+
 
         FunctionIterator fit = fm.getFunctions(true);
         int funcsScanned = 0;
@@ -64,21 +67,75 @@ public class GenericStructFromFieldUsage extends GhidraScript {
             Function f = fit.next();
             funcsScanned++;
             Map<Integer, Set<Integer>> perParam = new HashMap<>();
+            Map<Integer, Map<Integer,Integer>> perParamSizes = new HashMap<>();
+            // 1-hop base tracking: temp register derived from a0..a3 via addiu/move/addu/or-zero
+            Map<String, Integer> tempToParam = new HashMap<>();
+            Map<String, Integer> tempAddOff = new HashMap<>();
+
             InstructionIterator iit = listing.getInstructions(f.getBody(), true);
             while (iit.hasNext()) {
                 Instruction ins = iit.next();
                 String m = ins.getMnemonicString();
                 if (m.startsWith("_")) m = m.substring(1);
+
+                // Track 1-hop base derivations
+                if ("addiu".equals(m) || "addu".equals(m) || "move".equals(m) || "or".equals(m)) {
+                    Register dst = null, s1 = null, s2 = null;
+                    try { dst = ins.getRegister(0); } catch (Exception ignore) {}
+                    try { s1 = ins.getRegister(1); } catch (Exception ignore) {}
+                    try { s2 = ins.getRegister(2); } catch (Exception ignore) {}
+                    if (dst != null) {
+                        int srcParam = -1;
+                        int add = 0;
+                        if ("addiu".equals(m) && s1 != null) {
+                            for (int i=0;i<argRegs.length;i++) if (argRegs[i] != null && s1.equals(argRegs[i])) { srcParam = i; break; }
+                            // immediate
+                            for (int op=0; op<ins.getNumOperands(); op++) {
+                                Object[] objs = ins.getOpObjects(op);
+                                if (objs == null) continue;
+                                for (Object o : objs) {
+                                    if (o instanceof ghidra.program.model.scalar.Scalar) {
+                                        long v = ((ghidra.program.model.scalar.Scalar)o).getSignedValue();
+                                        if (v >= -0x8000 && v <= 0x7fff) { add = (int)v; break; }
+                                    }
+                                }
+                            }
+                        } else if ("move".equals(m) && s1 != null) {
+                            for (int i=0;i<argRegs.length;i++) if (argRegs[i] != null && s1.equals(argRegs[i])) { srcParam = i; break; }
+                        } else if ("addu".equals(m) || "or".equals(m)) {
+                            // treat as move when one src is zero and the other is a*
+                            Register other = null;
+                            if (s1 != null && "zero".equals(s2 != null ? s2.getName() : "")) other = s1;
+                            else if (s2 != null && "zero".equals(s1 != null ? s1.getName() : "")) other = s2;
+                            if (other != null) {
+                                for (int i=0;i<argRegs.length;i++) if (argRegs[i] != null && other.equals(argRegs[i])) { srcParam = i; break; }
+                            }
+                        }
+                        if (srcParam >= 0) {
+                            tempToParam.put(dst.getName(), srcParam);
+                            tempAddOff.put(dst.getName(), add);
+                        }
+                    }
+                }
+
+                // Only handle memory ops below
                 if (!MEM_OPS.contains(m)) continue;
+
                 // Expect form: <op> rt, imm(base)
                 Register base = null;
                 try { base = ins.getRegister(1); } catch (Exception ignore) {}
                 if (base == null) continue;
                 int pidx = -1;
+                int baseAdd = 0;
                 for (int i=0;i<argRegs.length;i++) {
                     if (argRegs[i] != null && base.equals(argRegs[i])) { pidx = i; break; }
                 }
-                if (pidx < 0) continue; // not an a0..a3-based access
+                if (pidx < 0) {
+                    Integer mapped = tempToParam.get(base.getName());
+                    if (mapped != null) { pidx = mapped; baseAdd = tempAddOff.getOrDefault(base.getName(), 0); }
+                }
+                if (pidx < 0) continue; // not an a0..a3-derived access
+
                 // Find immediate offset
                 Integer off = null;
                 for (int op=0; op<ins.getNumOperands(); op++) {
@@ -87,20 +144,27 @@ public class GenericStructFromFieldUsage extends GhidraScript {
                     for (Object o : objs) {
                         if (o instanceof ghidra.program.model.scalar.Scalar) {
                             long v = ((ghidra.program.model.scalar.Scalar)o).getSignedValue();
-                            // Heuristic: treat 16-bit immediates as the offset
-                            if (v >= -0x8000 && v <= 0x7fff) {
-                                off = (int)v; break;
-                            }
+                            if (v >= -0x8000 && v <= 0x7fff) { off = (int)v; break; }
                         }
                     }
                     if (off != null) break;
                 }
                 if (off == null) continue;
-                // Only positive/zero offsets for struct fields; skip negative stack-like
-                if (off < 0) continue;
-                perParam.computeIfAbsent(pidx,k->new HashSet<>()).add(off);
+                int effOff = off + baseAdd;
+                if (effOff < 0) continue; // skip negative
+
+                // Field size inference by op
+                int sz = 4;
+                if ("lb".equals(m) || "lbu".equals(m) || "sb".equals(m)) sz = 1;
+                else if ("lh".equals(m) || "lhu".equals(m) || "sh".equals(m)) sz = 2;
+                else sz = 4;
+
+                perParam.computeIfAbsent(pidx,k->new HashSet<>()).add(effOff);
+                Map<Integer,Integer> sizeMap = perParamSizes.computeIfAbsent(pidx,k->new HashMap<>());
+                sizeMap.merge(effOff, sz, Math::max);
             }
             if (!perParam.isEmpty()) funcParamOffsets.put(f, perParam);
+            if (!perParamSizes.isEmpty()) funcParamSizes.put(f, perParamSizes);
         }
 
         // 2) Build clusters by (paramIndex, sorted offsets signature)
@@ -130,7 +194,20 @@ public class GenericStructFromFieldUsage extends GhidraScript {
             String structName = String.format("inferred_param%d_s_%s", key.paramIndex+1, sigPart);
             StructureDataType sdt = new StructureDataType(structName, 0);
 
-            // Add fields at observed offsets; default each field size 4
+            // Compute max field size per offset across cluster
+            Map<Integer,Integer> sizeByOff = new HashMap<>();
+            for (Function f2 : funcs) {
+                Map<Integer, Map<Integer,Integer>> pp = funcParamSizes.get(f2);
+                if (pp == null) continue;
+                Map<Integer,Integer> sm = pp.get(key.paramIndex);
+                if (sm == null) continue;
+                for (int off : key.signature) {
+                    Integer s = sm.get(off);
+                    if (s != null) sizeByOff.merge(off, s, Math::max);
+                }
+            }
+
+            // Add fields at observed offsets; use inferred size (default 4)
             int maxEnd = 0;
             for (int off : key.signature) {
                 // Align padding to offset
@@ -138,9 +215,10 @@ public class GenericStructFromFieldUsage extends GhidraScript {
                     int pad = off - sdt.getLength();
                     sdt.add(new ArrayDataType(ByteDataType.dataType, pad, 1), "_pad_"+sdt.getLength(), null);
                 }
-                // Add a 4-byte field
-                sdt.add(Undefined4DataType.dataType, 4, String.format("f_%04x", off), null);
-                maxEnd = Math.max(maxEnd, off+4);
+                int fsz = sizeByOff.getOrDefault(off, 4);
+                DataType fdt = (fsz == 1) ? Undefined1DataType.dataType : (fsz == 2) ? Undefined2DataType.dataType : Undefined4DataType.dataType;
+                sdt.add(fdt, fsz, String.format("f_%04x", off), null);
+                maxEnd = Math.max(maxEnd, off+fsz);
             }
             // Final pad to align struct end
             int padTo = ((maxEnd + (MAX_STRUCT_SIZE_PAD-1)) / MAX_STRUCT_SIZE_PAD) * MAX_STRUCT_SIZE_PAD;

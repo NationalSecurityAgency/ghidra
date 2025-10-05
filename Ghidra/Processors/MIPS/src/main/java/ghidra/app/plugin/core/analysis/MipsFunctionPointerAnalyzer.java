@@ -441,6 +441,7 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 		int count = 0;
 		String failureReason = "No lw instruction found in function";
 		boolean allowReturnPattern = targetReg != null && ("v0".equals(targetReg.getName()) || "v1".equals(targetReg.getName()));
+		boolean suppressedFailure = false;
 
 		while (current != null) {
 			count++;
@@ -509,7 +510,32 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 
 					// Analyze why it failed
 					failureReason = analyzeLoadFailure(current);
-					Msg.info(this, "  " + failureReason);
+
+					// Determine base register used by the load
+					String op1 = current.getDefaultOperandRepresentation(1);
+					String baseName = null;
+					if (op1.contains("(") && op1.contains(")")) {
+						int o = op1.indexOf('(');
+						int c = op1.indexOf(')');
+						baseName = op1.substring(o + 1, c).trim();
+					}
+					Register baseRegObj = baseName != null ? program.getRegister(baseName) : null;
+
+					// If base is clearly parameter/saved/stack or 1-hop derived from a parameter, suppress noisy failure
+					if (baseName != null && (isParamSavedOrSp(baseName) ||
+							isOneHopDerivedFromParamBase(program, current, baseRegObj, 10))) {
+						Msg.debug(this, "  Skip register-relative load: " + op1 + " (base=" + baseName + ") (likely trampoline/stack)");
+						// Found the load but don't treat as an error; stop searching
+						suppressedFailure = true;
+						break;
+					}
+
+					// Demote v0/v1-based register-relative failures to DEBUG
+					if (baseName != null && ("v0".equals(baseName) || "v1".equals(baseName))) {
+						Msg.debug(this, "  " + failureReason);
+					} else {
+						Msg.info(this, "  " + failureReason);
+					}
 
 					// Found the load but couldn't resolve target - stop searching
 					break;
@@ -532,6 +558,9 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 			current = current.getPrevious();
 		}
 
+		if (suppressedFailure) {
+			return null;
+		}
 		if (failureReason.startsWith("Return-value pattern")) {
 			// Try to resolve by analyzing the prior callee's return value
 			Function callee = resolvePriorCalleeFunction(program, jalrInstr);
@@ -545,7 +574,11 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 			}
 			Msg.info(this, "  Info: " + failureReason);
 		} else {
-			Msg.info(this, "  Failure: " + failureReason);
+			if (failureReason.startsWith("Register-relative load:")) {
+				Msg.debug(this, "  " + failureReason);
+			} else {
+				Msg.info(this, "  Failure: " + failureReason);
+			}
 		}
 		return null;
 	}
@@ -767,6 +800,54 @@ public class MipsFunctionPointerAnalyzer extends AbstractAnalyzer {
 
 		return "Unknown load pattern";
 	}
+
+		// Helper: identify param/saved/stack base registers
+		private boolean isParamSavedOrSp(String name) {
+			if (name == null) return false;
+			switch (name) {
+				case "a0": case "a1": case "a2": case "a3":
+				case "s0": case "s1": case "s2": case "s3": case "s4": case "s5": case "s6": case "s7":
+				case "sp":
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		// Helper: one-hop derivation of base register from param/saved/sp via addiu/move/addu/or-with-zero
+		private boolean isOneHopDerivedFromParamBase(Program program, Instruction fromInstr, Register baseReg, int maxBack) {
+			if (baseReg == null) return false;
+			Instruction cur = fromInstr.getPrevious();
+			int scanned = 0;
+			String targetName = baseReg.getName();
+			while (cur != null && scanned++ < maxBack) {
+				String m = cur.getMnemonicString();
+				if (m.startsWith("_")) m = m.substring(1);
+				Register dst = null, s1 = null, s2 = null;
+				try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+				try { s1 = cur.getRegister(1); } catch (Exception ignore) {}
+				try { s2 = cur.getRegister(2); } catch (Exception ignore) {}
+				if (dst != null && targetName.equals(dst.getName())) {
+					if ("addiu".equals(m)) {
+						if (s1 != null && isParamSavedOrSp(s1.getName())) return true;
+					} else if ("move".equals(m)) {
+						if (s1 != null && isParamSavedOrSp(s1.getName())) return true;
+					} else if ("addu".equals(m) || "or".equals(m)) {
+						Register other = null;
+						if (s1 != null && s2 != null) {
+							if ("zero".equals(s1.getName()) && isParamSavedOrSp(s2.getName())) other = s2;
+							else if ("zero".equals(s2.getName()) && isParamSavedOrSp(s1.getName())) other = s1;
+						}
+						if (other != null) return true;
+					}
+					// Different kind of write to baseReg; stop scanning
+					break;
+				}
+				cur = cur.getPrevious();
+			}
+			return false;
+		}
+
 
 	/**
 	 * Try to resolve function pointer from existing data references on the instruction.
