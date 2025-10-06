@@ -939,18 +939,19 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                 int currentParamCount = func.getParameterCount();
                 int callerInferredCount = evidence.inferParameterCount(a3Threshold);
 
-                // Also check body-based evidence
-                int bodyInferredCount = analyzeFunctionBodyForParameters(program, func);
+                // Also check body-based evidence (this returns highest arg index; convert to count)
+                int bodyMaxArgIndex = analyzeFunctionBodyForParameters(program, func);
+                int bodyCount = bodyMaxArgIndex >= 0 ? (bodyMaxArgIndex + 1) : 0;
 
                 // Monotonic policy: never shrink below currentParamCount here.
-                // Use the MAXIMUM of caller consensus, body evidence (+1), and current count.
-                int inferredCount = Math.max(currentParamCount, Math.max(callerInferredCount, bodyInferredCount + 1));
+                // For non-trampolines, do NOT promote above body-based evidence; callers can be noisy.
+                int inferredCount = Math.max(currentParamCount, bodyCount);
 
                 if (verboseLogging) {
-                    Msg.debug(this, String.format("  Caller inferred: %d (a0=%d a1=%d a2=%d a3=%d, sites=%d)",
+                    Msg.debug(this, String.format("  Caller inferred (ignored for non-trampolines): %d (a0=%d a1=%d a2=%d a3=%d, sites=%d)",
                         callerInferredCount, evidence.a0Count, evidence.a1Count, evidence.a2Count,
                         evidence.a3Count, evidence.totalCallSites));
-                    Msg.debug(this, String.format("  Body inferred: %d", bodyInferredCount + 1));
+                    Msg.debug(this, String.format("  Body inferred: %d (index=%d)", bodyCount, bodyMaxArgIndex));
                     Msg.debug(this, String.format("  Final inferred: %d", inferredCount));
                 }
 
@@ -1473,6 +1474,8 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
             for (Map.Entry<String, List<AnalysisFinding>> entry : byCategory.entrySet()) {
                 Msg.info(this, String.format("  %s (%d findings):", entry.getKey(), entry.getValue().size()));
                 for (AnalysisFinding finding : entry.getValue()) {
+
+
                     Msg.info(this, "    " + finding.toString());
                 }
             }

@@ -251,9 +251,31 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			if (f == null || f.isExternal() || f.isThunk()) continue;
 			try {
 				int needBody = inferParamsFromBody(program, f, 200);
-				if (needBody == 0) {
-					// Disabled zero-arg collapse to avoid erroneous shrink on trampolines and wrappers
-					// Keep existing parameters; do not shrink here.
+				boolean isTramp = containsIndirectTailJump(program, f);
+				if (!isTramp && f.getSignatureSource() != SourceType.USER_DEFINED) {
+					int cur = f.getParameterCount();
+					int target = Math.max(0, Math.min(4, needBody));
+					if (target < cur) {
+						try { if (f.hasCustomVariableStorage()) f.setCustomVariableStorage(false); } catch (Exception ignore2) {}
+						try {
+							java.util.List<Parameter> empty = java.util.Collections.emptyList();
+							if (target == 0) {
+								f.replaceParameters(empty, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+								zeroShrunk++;
+							} else {
+								// Shrink to body-inferred count >0 by preserving leading params
+								Parameter[] curParams = f.getParameters();
+								java.util.List<Parameter> neu = new java.util.ArrayList<>();
+								for (int i = 0; i < target && i < curParams.length; i++) {
+									neu.add(new ParameterImpl(curParams[i].getName(), curParams[i].getDataType(), program));
+
+
+								}
+								f.replaceParameters(neu, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+								zeroShrunk++;
+							}
+						} catch (Exception shrinkIgnore) {}
+					}
 				}
 			} catch (Exception ignore) {}
 		}
@@ -289,6 +311,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			if (functionScope != null && curFunc != functionScope) {
 				break;
 			}
+
+
 
 			String mnemonic = current.getMnemonicString();
 
@@ -395,8 +419,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			return true;
 		} catch (InvalidInputException e) {
 			Msg.warn(this, "Failed to update signature for " + func.getName() + ": " + e.getMessage());
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -426,6 +450,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 							return r; // first non-ra register is our jump target
 						}
 						if (candidate == null) {
+
+
 							candidate = r; // fallback if only $ra is present
 
 
@@ -464,6 +490,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 							Register other = null;
 							if (s1 != null && "zero".equals(s2 != null ? s2.getName() : "")) other = s1;
 							else if (s2 != null && "zero".equals(s1 != null ? s1.getName() : "")) other = s2;
+
+
 							if (other != null && ("v0".equals(other.getName()) || "v1".equals(other.getName()))) return other;
 						} else if ("addiu".equals(m)) {
 							if (s1 != null && ("v0".equals(s1.getName()) || "v1".equals(s1.getName()))) return s1;
@@ -1088,6 +1116,34 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 				return 0;
 			}
 		}
+
+		/** Return true if the function body contains an indirect tail jump/call (jr/jalr to a
+		 *  register other than 'ra'), which indicates a trampoline/wrapper. We avoid
+		 *  shrinking params for such functions using body-only evidence.
+		 */
+		private boolean containsIndirectTailJump(Program program, Function func) {
+			try {
+				if (program == null || func == null) return false;
+				Instruction cur = program.getListing().getInstructionAt(func.getEntryPoint());
+				while (cur != null) {
+					Function scope = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+					if (scope != func) break;
+					String m = cur.getMnemonicString();
+					if (m != null && ("jr".equalsIgnoreCase(m) || "jalr".equalsIgnoreCase(m))) {
+						try {
+							Register r0 = cur.getRegister(0);
+							if (r0 != null) {
+								String rn = r0.getName();
+								if (rn != null && !"ra".equals(rn)) return true;
+							}
+						} catch (Exception ignore) {}
+					}
+					cur = cur.getNext();
+				}
+			} catch (Exception ignore) {}
+			return false;
+		}
+
 
 }
 
