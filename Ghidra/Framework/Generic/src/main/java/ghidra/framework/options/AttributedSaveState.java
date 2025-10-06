@@ -24,13 +24,13 @@ import org.jdom.Element;
 /**
  * A version of {@link SaveState} that allows clients to add attributes to properties in this save
  * state.  The following code shows how to use this class:
- * <pre>
+ * <pre>{@code
  * AttributedSaveState ss = new AttributedSaveState();
  * ss.putBoolean("Happy", true);
  * 
  * Map<String, String> attrs = Map.of("MyAttribute", "AttributeValue");
  * ss.addAttrbibutes("Happy", attrs);
- * </pre>
+ * }</pre>
  * 
  * <p>In this example, the property "Happy" will be given the attribute "MyAttribute" with the value
  * of "AttributeValue".  This is useful for clients that wish to add attributes to individual 
