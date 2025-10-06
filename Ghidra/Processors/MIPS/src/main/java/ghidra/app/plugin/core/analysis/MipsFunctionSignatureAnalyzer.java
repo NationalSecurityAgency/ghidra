@@ -160,8 +160,11 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 						try { instr.setFlowOverride(FlowOverride.CALL_RETURN); } catch (Exception ignore) {}
 						// Ensure wrapper has minimally-needed params inferred from usage and callers
 						Function wrap = program.getFunctionManager().getFunctionContaining(instr.getAddress());
-						int need = Math.max(inferMinParamsForTrampoline(program, instr, 60),
-						                     inferParamsFromCallers(program, wrap, 64, 200));
+						int readsNeed = inferMinParamsForTrampoline(program, instr, 60);
+						int callersNeed = inferParamsFromCallers(program, wrap, 96, 300);
+						int forwarded = inferForwardedLiveInsForTrampoline(program, instr, 200);
+						int cappedForward = Math.min(forwarded, Math.max(1, callersNeed));
+						int need = Math.max(readsNeed, Math.max(callersNeed, cappedForward));
 						ensureMinParams(program, wrap, need);
 						// Annotate the actual call register used by jalr/jr (not the resolved alias), with N-arg signature
 						annotateTrampolineCalleeWithSig(program, wrap, instr, targetReg, Math.max(0, need));
@@ -179,8 +182,11 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 						try { instr.setFlowOverride(FlowOverride.CALL_RETURN); } catch (Exception ignore) {}
 						// Ensure wrapper has minimally-needed params inferred from usage and callers
 						Function wrap = program.getFunctionManager().getFunctionContaining(instr.getAddress());
-						int need = Math.max(inferMinParamsForTrampoline(program, instr, 60),
-						                     inferParamsFromCallers(program, wrap, 64, 200));
+						int readsNeed = inferMinParamsForTrampoline(program, instr, 60);
+						int callersNeed = inferParamsFromCallers(program, wrap, 96, 300);
+						int forwarded = inferForwardedLiveInsForTrampoline(program, instr, 200);
+						int cappedForward = Math.min(forwarded, Math.max(1, callersNeed));
+						int need = Math.max(readsNeed, Math.max(callersNeed, cappedForward));
 						ensureMinParams(program, wrap, need);
 						// Annotate the actual call register used by jalr/jr (not the resolved alias), with N-arg signature
 						annotateTrampolineCalleeWithSig(program, wrap, instr, targetReg, Math.max(0, need));
@@ -729,7 +735,85 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 				int firstUseOffset = (int) (anchor.getAddress().subtract(wrap.getEntryPoint()));
 				// Helper to apply type to all register-backed locals for a register; if none, create one near anchor
 				final int anchorOff = firstUseOffset;
-
+				// Attempt to synthesize struct field typing for memory-derived expressions, so
+				// the decompiler will print arguments at (*pcVar)() even when it prefers the
+				// memory expression over the register local. We try to recover a pattern:
+				//   tmp1 = *(aX + off1);
+				//   callreg = *(tmp1 + off2);
+				// then set: aX : -> struct { off1: ptr -> struct { off2: fp_sigN* } }
+				try {
+					Instruction load2 = cur; // load producing the function pointer (callreg)
+					String op1 = (load2 != null && load2.getNumOperands() >= 2) ? load2.getDefaultOperandRepresentation(1) : null;
+					String base2 = null; int off2 = -1;
+					if (op1 != null) {
+						int o = op1.indexOf('('), c = op1.indexOf(')');
+						if (o >= 0 && c > o) {
+							base2 = op1.substring(o+1, c).trim();
+							String offTxt = op1.substring(0, o).trim();
+							try { off2 = Integer.decode(offTxt); } catch (Exception ignore) { try { off2 = Integer.parseInt(offTxt); } catch (Exception ignore2) {} }
+						}
+					}
+					String base1 = null; int off1 = -1;
+					if (base2 != null) {
+						Instruction s = (load2 != null) ? load2.getPrevious() : null;
+						int back = 0;
+						while (s != null && back++ < 32) {
+							Register dst = null;
+							try { dst = s.getRegister(0); } catch (Exception ignore) {}
+							if (dst != null && base2.equals(dst.getName())) {
+								String mnem = s.getMnemonicString();
+								if (mnem.startsWith("_")) mnem = mnem.substring(1);
+								mnem = mnem.toLowerCase();
+								boolean isLoad = mnem.startsWith("lw") || "ld".equals(mnem) || mnem.startsWith("ld");
+								if (isLoad && s.getNumOperands() >= 2) {
+									String op = s.getDefaultOperandRepresentation(1);
+									int o = op.indexOf('('), c = op.indexOf(')');
+									if (o >= 0 && c > o) {
+										base1 = op.substring(o+1, c).trim();
+										String offTxt = op.substring(0, o).trim();
+										try { off1 = Integer.decode(offTxt); } catch (Exception ignore) { try { off1 = Integer.parseInt(offTxt); } catch (Exception ignore2) {} }
+									}
+								}
+								break;
+							}
+							s = s.getPrevious();
+						}
+					}
+					if (base1 != null && ("a0".equals(base1) || "a1".equals(base1) || "a2".equals(base1) || "a3".equals(base1)) && off1 >= 0 && off2 >= 0) {
+						DataTypeManager dtm2 = program.getDataTypeManager();
+						int ptrSize = dtm2.getDataOrganization().getPointerSize();
+						// Inner struct with function pointer at off2
+						ghidra.program.model.data.StructureDataType inner = new ghidra.program.model.data.StructureDataType(new ghidra.program.model.data.CategoryPath("/MIPS/Driver"),
+								"drv_fp_inner_" + Integer.toHexString(off2), 0);
+						try {
+							if (inner.getLength() < off2 + ptrSize) inner.growStructure(off2 + ptrSize - inner.getLength());
+						} catch (Exception ignore) {}
+						try { inner.insertAtOffset(off2, funcPtr, ptrSize, "cb", null); } catch (Exception ignore) {}
+						// Outer struct with pointer to inner at off1
+						ghidra.program.model.data.Pointer innerPtr = new ghidra.program.model.data.PointerDataType(inner, dtm2);
+						ghidra.program.model.data.StructureDataType outer = new ghidra.program.model.data.StructureDataType(new ghidra.program.model.data.CategoryPath("/MIPS/Driver"),
+								"drv_fp_outer_" + Integer.toHexString(off1), 0);
+						try {
+							if (outer.getLength() < off1 + ptrSize) outer.growStructure(off1 + ptrSize - outer.getLength());
+						} catch (Exception ignore) {}
+						try { outer.insertAtOffset(off1, innerPtr, ptrSize, "ops", null); } catch (Exception ignore) {}
+						ghidra.program.model.data.Pointer outerPtr = new ghidra.program.model.data.PointerDataType(outer, dtm2);
+						int baseIdx = ("a0".equals(base1)?0:("a1".equals(base1)?1:("a2".equals(base1)?2:3)));
+						try {
+							// Ensure enough params to set the type
+							if (wrap.getParameterCount() <= baseIdx) {
+								int needParams = baseIdx + 1;
+								ensureMinParams(program, wrap, needParams);
+							}
+							ghidra.program.model.listing.Parameter p = wrap.getParameter(baseIdx);
+							if (p != null && (p.getSource() == SourceType.DEFAULT || p.getSource() == SourceType.ANALYSIS)) {
+								p.setDataType(outerPtr, SourceType.ANALYSIS);
+							}
+						} catch (Exception ignore) {}
+					}
+				} catch (Exception ex) {
+					Msg.debug(this, "struct-field typing failed: " + ex.getMessage());
+				}
 
 				java.util.function.BiConsumer<Register,String> apply = (reg, suggestedName) -> {
 					try {
@@ -822,7 +906,7 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 					if (dst != null) {
 						String dn = dst.getName();
 						int idx = ("a0".equals(dn)?0:("a1".equals(dn)?1:("a2".equals(dn)?2:("a3".equals(dn)?3:-1))));
-						if (idx>=0) { used[idx]=true; if (scanned<=NEAR) near[idx]=true; }
+						if (idx>=0 && scanned<=NEAR) { used[idx]=true; near[idx]=true; }
 					}
 					Integer srcIdx = null;
 					if (s1 != null) { String n = s1.getName(); if (n.length()==2 && n.charAt(0)=='a' && Character.isDigit(n.charAt(1))) { int idx=n.charAt(1)-'0'; if (idx>=0 && idx<=3) srcIdx = idx; } else if (derivedOf.containsKey(n)) srcIdx = derivedOf.get(n); }
@@ -830,7 +914,7 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 					if (dst != null && srcIdx != null) {
 						String dn = dst.getName();
 						derivedOf.put(dn, srcIdx);
-						if (pendingBases.contains(dn)) { used[srcIdx]=true; if (scanned<=NEAR) near[srcIdx]=true; }
+						if (pendingBases.contains(dn) && scanned<=NEAR) { used[srcIdx]=true; near[srcIdx]=true; }
 					}
 					if (cur.getNumOperands() >= 2) {
 						String op1 = cur.getDefaultOperandRepresentation(1);
@@ -838,8 +922,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 						if (o >= 0 && c > o) {
 							String baseName = op1.substring(o + 1, c).trim();
 							int idx = ("a0".equals(baseName)?0:("a1".equals(baseName)?1:("a2".equals(baseName)?2:("a3".equals(baseName)?3:-1))));
-							if (idx>=0) { used[idx]=true; if (scanned<=NEAR) near[idx]=true; }
-							else if (scanned <= NEAR) { pendingBases.add(baseName); }
+							if (idx>=0 && scanned<=NEAR) { used[idx]=true; near[idx]=true; }
+							else if (idx<0 && scanned <= NEAR) { pendingBases.add(baseName); }
 						}
 					}
 					cur = cur.getPrevious();
@@ -847,10 +931,15 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 				for (int i = 0; i < 4; i++) { if (used[i]) siteCount[i]++; if (near[i]) siteNearCount[i]++; }
 			}
 			int need = 1;
-			if (siteCount[1] > 0 || siteNearCount[1] > 0) need = Math.max(need, 2);
-			if (siteCount[2] > 0 || siteNearCount[2] > 0) need = Math.max(need, 3);
-			// Require stronger signal for a3: either seen at >=2 sites or near at >=1
-			if (siteCount[3] >= 2 || siteNearCount[3] >= 1) need = Math.max(need, 4);
+			// a1 promotion: any near or (fallback) any site evidence
+			if (siteNearCount[1] > 0 || siteCount[1] > 0) need = Math.max(need, 2);
+			// a2 promotion: any near or (fallback) any site evidence
+			if (siteNearCount[2] > 0 || siteCount[2] > 0) need = Math.max(need, 3);
+			// a3 promotion: be very strict to avoid false elevation to 4 params.
+			// Require near evidence at 3 or more callsites.
+			if (siteNearCount[3] >= 3) {
+				need = Math.max(need, 4);
+			}
 			return need;
 		} catch (Exception e) {
 			return 1;
@@ -916,6 +1005,44 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
+
+		/** Infer a0..a3 usage from the function body. Returns 0..4 based on whether
+
+		/** Infer how many a-registers (a0..a3) are forwarded by a trampoline: any aN not
+		 *  written before the jr/jalr is considered forwarded. This ignores reads; it's
+		 *  complementary to inferMinParamsForTrampoline (which is read-based).
+		 */
+		private int inferForwardedLiveInsForTrampoline(Program program, Instruction jrInstr, int maxBack) {
+			try {
+				boolean[] written = new boolean[] { false, false, false, false };
+				Instruction cur = jrInstr.getPrevious();
+				int scanned = 0;
+				Function scope = program.getFunctionManager().getFunctionContaining(jrInstr.getAddress());
+				while (cur != null && scanned++ < maxBack) {
+					Function f = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+					if (scope != null && f != scope) break; // left function
+					String m = cur.getMnemonicString();
+					if (m.startsWith("_")) m = m.substring(1);
+					ghidra.program.model.lang.Register dst = null;
+					try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+					if (dst != null) {
+						String dn = dst.getName();
+						if (dn.length() == 2 && dn.charAt(0) == 'a') {
+							int idx = dn.charAt(1) - '0';
+							if (idx >= 0 && idx <= 3) written[idx] = true;
+						}
+					}
+					cur = cur.getPrevious();
+				}
+				int forwardedMax = 0;
+				for (int i = 0; i < 4; i++) {
+					if (!written[i]) forwardedMax = i + 1; // highest aN that remains unmodified
+				}
+				return Math.max(1, forwardedMax);
+			} catch (Exception e) {
+				return 1;
+			}
+		}
 
 		/** Infer a0..a3 usage from the function body. Returns 0..4 based on whether
 		 *  reads of aN occur before any write to that aN within the first maxInstrs

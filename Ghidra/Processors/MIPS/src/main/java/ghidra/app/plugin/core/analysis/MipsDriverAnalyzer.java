@@ -688,7 +688,15 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
 
                 // Skip USER_DEFINED functions
                 if (func.getSignatureSource() == SourceType.USER_DEFINED) {
+                    if (verboseLogging) {
+                        Msg.debug(this, String.format("Skipping %s - USER_DEFINED signature", func.getName()));
+                    }
                     continue;
+                }
+
+                if (verboseLogging) {
+                    Msg.debug(this, String.format("Analyzing %s - current params: %d, source: %s",
+                        func.getName(), func.getParameterCount(), func.getSignatureSource()));
                 }
 
                 int currentParamCount = func.getParameterCount();
@@ -702,6 +710,14 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                 // - Caller evidence: if callers consistently pass parameters, they likely exist
                 // Both sources are valuable and we trust whichever shows more parameters
                 int inferredCount = Math.max(callerInferredCount, bodyInferredCount + 1);
+
+                if (verboseLogging) {
+                    Msg.debug(this, String.format("  Caller inferred: %d (a0=%d a1=%d a2=%d a3=%d, sites=%d)",
+                        callerInferredCount, evidence.a0Count, evidence.a1Count, evidence.a2Count,
+                        evidence.a3Count, evidence.totalCallSites));
+                    Msg.debug(this, String.format("  Body inferred: %d", bodyInferredCount + 1));
+                    Msg.debug(this, String.format("  Final inferred: %d", inferredCount));
+                }
 
                 // Check for zero-arg collapse
                 if (enableZeroArgCollapse && inferredCount == 0 && currentParamCount > 0) {
@@ -1006,23 +1022,12 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                 }
             }
 
-            // If we hit another call, check if the argument registers we've seen
-            // were written AFTER that call (meaning they're for our call)
-            // or BEFORE that call (meaning they might be for the nested call)
+            // If we hit another call, we've gone too far back
+            // Any arguments we haven't seen yet are probably not for our call
             FlowType flowType = instr.getFlowType();
             if (flowType.isCall()) {
-                // Found a nested call - invalidate any argument registers
-                // that were set before this call
-                for (int j = 0; j < argRegSet.length; j++) {
-                    if (argRegSet[j] && lastWriteAddr[j] != null) {
-                        if (lastWriteAddr[j].compareTo(instr.getAddress()) <= 0) {
-                            // This arg was set at or before the nested call
-                            // It's probably for the nested call, not our call
-                            argRegSet[j] = false;
-                        }
-                    }
-                }
-                // Stop looking further back
+                // Stop looking - we've hit a nested call
+                // Arguments set before this point are likely for the nested call
                 break;
             }
         }
@@ -1032,6 +1037,11 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
             if (argRegSet[i]) {
                 maxArgUsed = i;
             }
+        }
+
+        if (verboseLogging && maxArgUsed >= 0) {
+            Msg.debug(this, String.format("Call site analysis at %s: detected %d arguments (a0-a%d)",
+                callInstr.getAddress(), maxArgUsed + 1, maxArgUsed));
         }
 
         return maxArgUsed;
