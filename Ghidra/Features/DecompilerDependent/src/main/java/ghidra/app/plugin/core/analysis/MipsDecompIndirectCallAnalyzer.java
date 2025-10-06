@@ -31,7 +31,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOpAST;
@@ -122,20 +122,22 @@ public class MipsDecompIndirectCallAnalyzer extends AbstractAnalyzer {
                 int paramCount = Math.max(0, f.getParameterCount());
                 PointerDataType funcPtr = new PointerDataType(createFuncDef("fp_sig" + paramCount, paramCount), program.getDataTypeManager());
 
-                // Prefer retyping through the decompiler's HighSymbol, if this target is tied to one
+                // Prefer retyping through the decompiler's HighSymbol and commit to DB
                 HighVariable hv = target.getHigh();
                 boolean applied = false;
                 if (hv != null) {
                     try {
                         ghidra.program.model.pcode.HighSymbol hs = hv.getSymbol();
                         if (hs != null) {
-                            ghidra.program.model.symbol.Symbol dbSym = hs.getSymbol();
-                            if (dbSym instanceof ghidra.program.database.symbol.VariableSymbolDB vsdb) {
-                                Variable var = vsdb.getObject();
-                                if (var != null) {
-                                    var.setDataType(funcPtr, SourceType.USER_DEFINED);
-                                    applied = true;
-                                }
+                            int tx = program.startTransaction("MIPS Indirect Call Retype");
+                            try {
+                                DataType resolved = program.getDataTypeManager().resolve(funcPtr, null);
+                                HighFunctionDBUtil.updateDBVariable(hs, null, resolved, SourceType.USER_DEFINED);
+                                applied = true;
+                            } catch (Exception e) {
+                                // fall back below
+                            } finally {
+                                program.endTransaction(tx, applied);
                             }
                             // Hint the decompiler to keep the type once set
                             try { hs.setTypeLock(true); } catch (Exception ignore) {}
