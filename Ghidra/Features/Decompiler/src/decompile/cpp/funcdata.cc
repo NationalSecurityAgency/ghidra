@@ -418,6 +418,29 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
     typelock = false;
   outvn->updateType(ptrentrytype,typelock,false);
   if (extra != 0) {
+	 if ((intb)extra < 0) {
+      // Negative "extra" is likely an array offset
+      Datatype *dt = entry->getSizedType(Address(rampoint.getSpace(), 0), entry->getSize());
+      if (dt != 0 && dt->getMetatype() == TYPE_ARRAY)
+      {
+        int8 tmp;
+        int8 datasize = dt->getSubType(0, &tmp)->getSize();
+        extra += datasize;
+
+        // Insert a negative add of Type's size
+        // and use the remainder (abs(type_size % extra) as the real extra
+        // This allows the negative value to be collapsed into a negative array offset later
+        PcodeOp *negOp = newOp(2,op->getAddr());
+        opSetOpcode(negOp,CPUI_INT_ADD);
+        newUniqueOut(sz,negOp);
+        opInsertBefore(negOp,op);
+        Varnode *negconst = newConstant(sz, -datasize);
+        negconst->setPtrCheck();
+        opSetInput(negOp,outvn,0);
+        opSetInput(negOp,negconst,1);
+        outvn = negOp->getOut();
+      }
+    }
     if (extraOp == (PcodeOp *)0) {
       extraOp = newOp(2,op->getAddr());
       opSetOpcode(extraOp,CPUI_INT_ADD);
