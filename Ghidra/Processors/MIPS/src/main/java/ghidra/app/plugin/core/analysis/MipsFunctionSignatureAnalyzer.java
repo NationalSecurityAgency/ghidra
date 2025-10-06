@@ -27,6 +27,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -62,9 +63,9 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 
 	public MipsFunctionSignatureAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.INSTRUCTION_ANALYZER);
-		// Run after basic analysis but before function pointer analyzer
-		// This ensures instructions are analyzed but we fix signatures before resolving pointers
-		setPriority(AnalysisPriority.FUNCTION_ANALYSIS.before());
+		// Run late so that call references (PIC resolution, pointer analysis) exist when we infer params
+		// This allows caller-based inference to see references and delay-slot argument setup
+		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after());
 		// Enable: This target uses a jal -> jalr $v0 pattern where a function returns
 		// a function pointer that is immediately called via jalr $v0.
 		setDefaultEnablement(true);
@@ -159,9 +160,11 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 						try { instr.setFlowOverride(FlowOverride.CALL_RETURN); } catch (Exception ignore) {}
 						// Ensure wrapper has minimally-needed params inferred from usage and callers
 						Function wrap = program.getFunctionManager().getFunctionContaining(instr.getAddress());
-						int need = Math.max(inferMinParamsForTrampoline(program, instr, 40),
-						                     inferParamsFromCallers(program, wrap, 16, 40));
+						int need = Math.max(inferMinParamsForTrampoline(program, instr, 60),
+						                     inferParamsFromCallers(program, wrap, 64, 200));
 						ensureMinParams(program, wrap, need);
+						// Annotate the actual call register used by jalr/jr (not the resolved alias), with N-arg signature
+						annotateTrampolineCalleeWithSig(program, wrap, instr, targetReg, Math.max(0, need));
 						if (jalrCount <= 10) {
 							Msg.info(this, "Set FlowOverride=CALL_RETURN at " + instr.getAddress() + " (trampoline tailcall)");
 						}
@@ -176,9 +179,11 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 						try { instr.setFlowOverride(FlowOverride.CALL_RETURN); } catch (Exception ignore) {}
 						// Ensure wrapper has minimally-needed params inferred from usage and callers
 						Function wrap = program.getFunctionManager().getFunctionContaining(instr.getAddress());
-						int need = Math.max(inferMinParamsForTrampoline(program, instr, 40),
-						                     inferParamsFromCallers(program, wrap, 16, 40));
+						int need = Math.max(inferMinParamsForTrampoline(program, instr, 60),
+						                     inferParamsFromCallers(program, wrap, 64, 200));
 						ensureMinParams(program, wrap, need);
+						// Annotate the actual call register used by jalr/jr (not the resolved alias), with N-arg signature
+						annotateTrampolineCalleeWithSig(program, wrap, instr, targetReg, Math.max(0, need));
 						if (jalrCount <= 10) {
 							Msg.info(this, "Skip FP-return classification at " + instr.getAddress() +
 								" (likely trampoline): set FlowOverride=CALL_RETURN");
@@ -231,7 +236,31 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 
 		Msg.info(this, "Fixed " + signaturesFixed + " function signatures to return function pointers");
 
-		return signaturesFixed > 0;
+		// Phase 3: Zero-arg correction sweep — shrink obviously no-arg functions to 0 params
+		int zeroShrunk = 0;
+		FunctionIterator fit = program.getFunctionManager().getFunctions(set, true);
+		while (fit.hasNext()) {
+			monitor.checkCancelled();
+			Function f = fit.next();
+			if (f == null || f.isExternal() || f.isThunk()) continue;
+			try {
+				int needBody = inferParamsFromBody(program, f, 200);
+				if (needBody == 0) {
+					Parameter[] cur = f.getParameters();
+					boolean hasUserDefined = false;
+					for (Parameter p : cur) { if (p.getSource() == SourceType.USER_DEFINED) { hasUserDefined = true; break; } }
+					if (!hasUserDefined && cur.length > 0) {
+						f.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS, new Parameter[0]);
+						zeroShrunk++;
+					}
+				}
+			} catch (Exception ignore) {}
+		}
+		if (zeroShrunk > 0) {
+			Msg.info(this, "Shrunk " + zeroShrunk + " functions to 0 parameters based on body analysis");
+		}
+
+		return signaturesFixed > 0 || zeroShrunk > 0;
 	}
 
 	/**
@@ -351,27 +380,18 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 				Msg.debug(this, "Function " + func.getName() + " already returns pointer type, skipping");
 				return false;
 			}
-
-			// Create a generic function pointer type
-			// typedef void (*callback_t)(void);
+			// Create a permissive function pointer type so decompiler doesn't suppress args
+			// typedef void (*callback_t)(...);
 			DataTypeManager dtm = program.getDataTypeManager();
-
-			// Create function signature: void function(void)
 			FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType("callback");
 			funcDef.setReturnType(VoidDataType.dataType);
 			funcDef.setArguments(new ParameterDefinition[0]);
-
-			// Create pointer to function
+			funcDef.setVarArgs(true);
 			Pointer funcPtr = new PointerDataType(funcDef, dtm);
-
-			// Update the function's return type
 			func.setReturnType(funcPtr, SourceType.ANALYSIS);
-
-			Msg.info(this, "Updated " + func.getName() + " to return function pointer " +
+			Msg.info(this, "Updated " + func.getName() + " to return function pointer (varargs) " +
 				"(used " + usageCount + " times in indirect calls)");
-
 			return true;
-
 		} catch (InvalidInputException e) {
 			Msg.warn(this, "Failed to update signature for " + func.getName() + ": " + e.getMessage());
 			return false;
@@ -616,9 +636,12 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			if (func == null) return;
 			Parameter[] cur = func.getParameters();
 			if (cur.length >= min) return;
-			// Ensure dynamic storage is in effect and convention is sane
+			// Ensure dynamic storage is in effect and convention is set to default
 			try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
-			try { func.setCallingConvention(null); } catch (Exception ignore) {}
+			try {
+				ghidra.program.model.lang.PrototypeModel def = program.getCompilerSpec().getDefaultCallingConvention();
+				if (def != null) func.setCallingConvention(def.getName()); else func.setCallingConvention(null);
+			} catch (Exception ignore) {}
 			java.util.List<Parameter> neu = new java.util.ArrayList<>();
 			for (int i = 0; i < min; i++) {
 				if (i < cur.length) {
@@ -628,29 +651,168 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 				}
 			}
 			func.replaceParameters(neu, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+			// Make sure storage remains dynamic/unlocked after replacement
+			try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
 		} catch (Exception ignore) {}
 	}
+		/** Annotate the trampoline's call register and backtrack through simple moves to
+		 *  the last load producing the function pointer, applying a concrete N-arg
+		 *  function-pointer type to all involved regs. This ensures the decompiler
+		 *  prints arguments at the indirect call even if it prefers the loaded value
+		 *  (e.g., v0) over the jalr register (e.g., t9).
+		 */
+		private void annotateTrampolineCalleeWithSig(Program program, Function wrap, Instruction jalrInstr, Register callReg, int argCount) {
+			try {
+				if (program == null || wrap == null || jalrInstr == null || callReg == null) return;
+				DataTypeManager dtm = program.getDataTypeManager();
+				FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType("fp_sig" + argCount);
+				funcDef.setReturnType(VoidDataType.dataType);
+				ParameterDefinition[] args = new ParameterDefinition[Math.max(0, argCount)];
+				for (int i = 0; i < args.length; i++) {
+					args[i] = new ParameterDefinitionImpl("p" + (i+1), Undefined4DataType.dataType, null);
+				}
+				funcDef.setArguments(args);
+				Pointer funcPtr = new PointerDataType(funcDef, dtm);
+				// Collect all non-link operand registers from jalr/jr (avoid picking $ra/$zero)
+				java.util.LinkedHashMap<String, Register> flowRegs = new java.util.LinkedHashMap<>();
+				try {
+					int nops = jalrInstr.getNumOperands();
+					for (int i = 0; i < nops; i++) {
+						Register r = null;
+						try { r = jalrInstr.getRegister(i); } catch (Exception ignore) {}
+						if (r != null) {
+							String nm = r.getName();
+							if (!"ra".equals(nm) && !"zero".equals(nm)) {
+								flowRegs.put(nm, r);
+							}
+						}
+					}
+				} catch (Exception ignore) {}
+				// Fallback to the passed register if none found
+				if (flowRegs.isEmpty() && callReg != null) flowRegs.put(callReg.getName(), callReg);
+				Instruction cur = jalrInstr.getPrevious();
+				int steps = 0;
+				Register loadDst = null; // the register loaded from memory that holds the fp
+				while (cur != null && steps++ < 64) {
+					Register dst = null;
+					try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+					if (dst == null || !flowRegs.containsKey(dst.getName())) { cur = cur.getPrevious(); continue; }
+					// If this is a move/addu/or from another reg -> follow the source
+					Register s1 = null, s2 = null;
+					try { s1 = cur.getRegister(1); } catch (Exception ignore) {}
+					try { s2 = cur.getRegister(2); } catch (Exception ignore) {}
+					String mnem = cur.getMnemonicString().toLowerCase();
+					boolean isMoveLike = "move".equals(mnem) ||
+						("addu".equals(mnem) && ((s1 != null && "zero".equals(s2 != null ? s2.getName() : "")) || (s2 != null && "zero".equals(s1 != null ? s1.getName() : "")))) ||
+						("daddu".equals(mnem) && ((s1 != null && "zero".equals(s2 != null ? s2.getName() : "")) || (s2 != null && "zero".equals(s1 != null ? s1.getName() : "")))) ||
+						("or".equals(mnem) && ((s1 != null && "zero".equals(s2 != null ? s2.getName() : "")) || (s2 != null && "zero".equals(s1 != null ? s1.getName() : ""))));
+					boolean isLoad = mnem.startsWith("lw") || "ld".equals(mnem) || mnem.startsWith("ld");
+					if (isMoveLike) {
+						Register src = (s1 != null && !"zero".equals(s1.getName())) ? s1 : (s2 != null && !"zero".equals(s2.getName()) ? s2 : null);
+						if (src != null && !flowRegs.containsKey(src.getName())) {
+							flowRegs.put(src.getName(), src);
+						}
+					}
+					else if (isLoad) {
+						loadDst = dst;
+						break; // found the load producing the function pointer
+					}
+					else {
+						// some other defining op; stop here and annotate current dst
+						loadDst = dst;
+						break;
+					}
+					cur = cur.getPrevious();
+				}
+				// Determine anchor offset for first created var
+				Instruction anchor = (cur != null) ? cur : jalrInstr;
+				int firstUseOffset = (int) (anchor.getAddress().subtract(wrap.getEntryPoint()));
+				// Helper to apply type to all register-backed locals for a register; if none, create one near anchor
+				final int anchorOff = firstUseOffset;
 
 
-	/** Infer minimal number of a-register parameters (1..4) from callers of wrap.
-	 *  We scan a limited number of call sites and look backwards for a0..a3 definitions.
+				java.util.function.BiConsumer<Register,String> apply = (reg, suggestedName) -> {
+					try {
+						boolean updatedAny = false;
+						for (Variable v : wrap.getLocalVariables()) {
+							Register r = v.getRegister();
+							if (r == null || !r.getName().equals(reg.getName())) continue;
+							// Upgrade every local on this register, so whichever the decompiler chooses gets the type
+							v.setDataType(funcPtr, SourceType.USER_DEFINED);
+							updatedAny = true;
+						}
+						if (!updatedAny) {
+							Variable var = new LocalVariableImpl(suggestedName, anchorOff, funcPtr, reg, program);
+							wrap.addLocalVariable(var, SourceType.USER_DEFINED);
+						}
+					} catch (Exception ex) {
+						Msg.debug(this, "annotateTrampolineCalleeWithSig/apply failed: " + ex.getMessage());
+					}
+				};
+				// Apply to the loaded destination if found (preferred variable the decompiler may use)
+				if (loadDst != null) apply.accept(loadDst, "pcVar2");
+				// Also apply to the jalr register and any intermediate regs
+				int idx = 3; // pcVar3, pcVar4... for intermediates
+				for (Register r : flowRegs.values()) {
+					// Avoid duplicating the same reg as loadDst
+					if (loadDst != null && r.getName().equals(loadDst.getName())) continue;
+					apply.accept(r, "pcVar" + idx);
+					idx++;
+				}
+			} catch (Exception e) {
+				Msg.debug(this, "annotateTrampolineCalleeWithSig failed: " + e.getMessage());
+			}
+		}
+
+
+
+	/** Infer minimal number of a-register parameters (1..4) from callers of wrap, by
+	 *  aggregating evidence across call sites. a3 requires stronger consensus.
 	 */
 	private int inferParamsFromCallers(Program program, Function wrap, int maxSites, int maxBack) {
 		try {
 			if (wrap == null) return 1;
-			int need = 1;
+			final int NEAR = 24;
 			Address entry = wrap.getEntryPoint();
 			int seen = 0;
+			int[] siteCount = new int[] {0,0,0,0};
+			int[] siteNearCount = new int[] {0,0,0,0};
 			for (Reference ref : program.getReferenceManager().getReferencesTo(entry)) {
 				if (seen++ >= maxSites) break;
 				Address from = ref.getFromAddress();
 				Instruction call = program.getListing().getInstructionAt(from);
 				if (call == null) continue;
+				boolean[] used = new boolean[] { true, false, false, false }; // a0 always
+				boolean[] near = new boolean[] { false, false, false, false };
+				java.util.Map<String,Integer> derivedOf = new java.util.HashMap<>(); // temp -> aN index
+				java.util.Set<String> pendingBases = new java.util.HashSet<>();
+				// Delay slot counts as near evidence
+				Instruction delay = call.getNext();
+				if (delay != null) {
+					try {
+						Register dDst = delay.getRegister(0);
+						Register dS1 = null, dS2 = null;
+						try { dS1 = delay.getRegister(1); } catch (Exception ignore) {}
+						try { dS2 = delay.getRegister(2); } catch (Exception ignore) {}
+						if (dDst != null) { String dn = dDst.getName(); int idx = ("a0".equals(dn)?0:("a1".equals(dn)?1:("a2".equals(dn)?2:("a3".equals(dn)?3:-1)))); if (idx>=0) { used[idx]=true; near[idx]=true; } }
+						if (dS1 != null) { String n = dS1.getName(); int idx=("a0".equals(n)?0:("a1".equals(n)?1:("a2".equals(n)?2:("a3".equals(n)?3:-1)))); if (idx>=0) { used[idx]=true; near[idx]=true; } }
+						if (dS2 != null) { String n = dS2.getName(); int idx=("a0".equals(n)?0:("a1".equals(n)?1:("a2".equals(n)?2:("a3".equals(n)?3:-1)))); if (idx>=0) { used[idx]=true; near[idx]=true; } }
+						if (delay.getNumOperands() >= 2) {
+							String op1 = delay.getDefaultOperandRepresentation(1);
+							int o = op1.indexOf('('), c = op1.indexOf(')');
+							if (o >= 0 && c > o) {
+								String baseName = op1.substring(o + 1, c).trim();
+								int idx = ("a0".equals(baseName)?0:("a1".equals(baseName)?1:("a2".equals(baseName)?2:("a3".equals(baseName)?3:-1))));
+								if (idx>=0) { used[idx]=true; near[idx]=true; }
+							}
+						}
+					} catch (Exception ignore) {}
+				}
+				// Backward scan
 				Instruction cur = call.getPrevious();
 				int scanned = 0;
-				java.util.Set<String> defined = new java.util.HashSet<>();
-				int locNeed = 1;
-				while (cur != null && scanned++ < maxBack) {
+				while (cur != null && scanned < maxBack) {
+					scanned++;
 					String m = cur.getMnemonicString();
 					if (m.startsWith("_")) m = m.substring(1);
 					Register dst = null, s1 = null, s2 = null;
@@ -659,32 +821,36 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 					try { s2 = cur.getRegister(2); } catch (Exception ignore) {}
 					if (dst != null) {
 						String dn = dst.getName();
-						if ("a0".equals(dn) || "a1".equals(dn) || "a2".equals(dn) || "a3".equals(dn)) defined.add(dn);
+						int idx = ("a0".equals(dn)?0:("a1".equals(dn)?1:("a2".equals(dn)?2:("a3".equals(dn)?3:-1))));
+						if (idx>=0) { used[idx]=true; if (scanned<=NEAR) near[idx]=true; }
 					}
-					if (s1 != null) {
-						String n = s1.getName();
-						int idx = ("a0".equals(n)?0:("a1".equals(n)?1:("a2".equals(n)?2:("a3".equals(n)?3:-1))));
-						if (idx >= 0 && defined.contains(n)) locNeed = Math.max(locNeed, idx+1);
+					Integer srcIdx = null;
+					if (s1 != null) { String n = s1.getName(); if (n.length()==2 && n.charAt(0)=='a' && Character.isDigit(n.charAt(1))) { int idx=n.charAt(1)-'0'; if (idx>=0 && idx<=3) srcIdx = idx; } else if (derivedOf.containsKey(n)) srcIdx = derivedOf.get(n); }
+					if (srcIdx == null && s2 != null) { String n = s2.getName(); if (n.length()==2 && n.charAt(0)=='a' && Character.isDigit(n.charAt(1))) { int idx=n.charAt(1)-'0'; if (idx>=0 && idx<=3) srcIdx = idx; } else if (derivedOf.containsKey(n)) srcIdx = derivedOf.get(n); }
+					if (dst != null && srcIdx != null) {
+						String dn = dst.getName();
+						derivedOf.put(dn, srcIdx);
+						if (pendingBases.contains(dn)) { used[srcIdx]=true; if (scanned<=NEAR) near[srcIdx]=true; }
 					}
-					if (s2 != null) {
-						String n = s2.getName();
-						int idx = ("a0".equals(n)?0:("a1".equals(n)?1:("a2".equals(n)?2:("a3".equals(n)?3:-1))));
-						if (idx >= 0 && defined.contains(n)) locNeed = Math.max(locNeed, idx+1);
-					}
-					// off(aN) base used near call suggests aN was prepared
 					if (cur.getNumOperands() >= 2) {
 						String op1 = cur.getDefaultOperandRepresentation(1);
 						int o = op1.indexOf('('), c = op1.indexOf(')');
 						if (o >= 0 && c > o) {
 							String baseName = op1.substring(o + 1, c).trim();
 							int idx = ("a0".equals(baseName)?0:("a1".equals(baseName)?1:("a2".equals(baseName)?2:("a3".equals(baseName)?3:-1))));
-							if (idx >= 0) locNeed = Math.max(locNeed, idx+1);
+							if (idx>=0) { used[idx]=true; if (scanned<=NEAR) near[idx]=true; }
+							else if (scanned <= NEAR) { pendingBases.add(baseName); }
 						}
 					}
 					cur = cur.getPrevious();
 				}
-				need = Math.max(need, locNeed);
+				for (int i = 0; i < 4; i++) { if (used[i]) siteCount[i]++; if (near[i]) siteNearCount[i]++; }
 			}
+			int need = 1;
+			if (siteCount[1] > 0 || siteNearCount[1] > 0) need = Math.max(need, 2);
+			if (siteCount[2] > 0 || siteNearCount[2] > 0) need = Math.max(need, 3);
+			// Require stronger signal for a3: either seen at >=2 sites or near at >=1
+			if (siteCount[3] >= 2 || siteNearCount[3] >= 1) need = Math.max(need, 4);
 			return need;
 		} catch (Exception e) {
 			return 1;
@@ -749,6 +915,57 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			return 1;
 		}
 	}
+
+
+		/** Infer a0..a3 usage from the function body. Returns 0..4 based on whether
+		 *  reads of aN occur before any write to that aN within the first maxInstrs
+		 *  instructions of the function. Scans only within the function body.
+		 */
+		private int inferParamsFromBody(Program program, Function func, int maxInstrs) {
+			try {
+				if (func == null) return 0;
+				boolean[] need = new boolean[] { false, false, false, false };
+				java.util.Set<String> written = new java.util.HashSet<>();
+				Instruction cur = program.getListing().getInstructionAt(func.getEntryPoint());
+				int scanned = 0;
+				while (cur != null && scanned++ < maxInstrs) {
+					Function scope = program.getFunctionManager().getFunctionContaining(cur.getAddress());
+					if (scope != func) break; // left function
+					String m = cur.getMnemonicString();
+					if (m.startsWith("_")) m = m.substring(1);
+					Register dst = null, src1 = null, src2 = null;
+					try { dst = cur.getRegister(0); } catch (Exception ignore) {}
+					try { src1 = cur.getRegister(1); } catch (Exception ignore) {}
+					try { src2 = cur.getRegister(2); } catch (Exception ignore) {}
+					if (dst != null) {
+						String dn = dst.getName();
+						if (dn.length()==2 && dn.charAt(0)=='a') { int idx = dn.charAt(1)-'0'; if (idx>=0 && idx<=3) written.add(dn); }
+					}
+					if (src1 != null) {
+						String n = src1.getName();
+						if (n.length()==2 && n.charAt(0)=='a') { int idx = n.charAt(1)-'0'; if (idx>=0 && idx<=3 && !written.contains(n)) need[idx]=true; }
+					}
+					if (src2 != null) {
+						String n = src2.getName();
+						if (n.length()==2 && n.charAt(0)=='a') { int idx = n.charAt(1)-'0'; if (idx>=0 && idx<=3 && !written.contains(n)) need[idx]=true; }
+					}
+					if (cur.getNumOperands() >= 2) {
+						String op1 = cur.getDefaultOperandRepresentation(1);
+						int o = op1.indexOf('('), c = op1.indexOf(')');
+						if (o >= 0 && c > o) {
+							String baseName = op1.substring(o+1, c).trim();
+							if (baseName.length()==2 && baseName.charAt(0)=='a') { int idx = baseName.charAt(1)-'0'; if (idx>=0 && idx<=3 && !written.contains(baseName)) need[idx]=true; }
+						}
+					}
+					cur = cur.getNext();
+				}
+				int max = -1;
+				for (int i=0;i<4;i++) if (need[i]) max = i;
+				return max < 0 ? 0 : (max+1);
+			} catch (Exception e) {
+				return 0;
+			}
+		}
 
 }
 
