@@ -135,15 +135,14 @@ public class MipsDecompIndirectCallAnalyzer extends AbstractAnalyzer {
                                 String hvName = hv.getName();
                                 String newName = (hvName != null && hvName.startsWith("UNRECOVERED_JUMPTABLE")) ? "callTarget" : null;
                                 HighFunctionDBUtil.updateDBVariable(hs, newName, resolved, SourceType.USER_DEFINED);
+                                hs.setTypeLock(true);
+                                hs.setNameLock(true);
                                 applied = true;
                             } catch (Exception e) {
                                 // fall back below
                             } finally {
                                 program.endTransaction(tx, applied);
                             }
-                            // Hint the decompiler to keep the type and name once set
-                            try { hs.setTypeLock(true); } catch (Exception ignore) {}
-                            try { hs.setNameLock(true); } catch (Exception ignore) {}
                         }
                     } catch (Exception ignore) {}
                     if (!applied) {
