@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.util.*;
 
+
 import ghidra.app.services.AbstractAnalyzer;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
@@ -63,7 +64,7 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
     private static final boolean DEFAULT_ENABLE_STRUCT_SYNTHESIS = true;
     private static final int DEFAULT_MAX_SYNTHETIC_TYPES = 50;
     private static final boolean DEFAULT_ENABLE_ZERO_ARG_COLLAPSE = false; // monotonic by default
-    private static final boolean DEFAULT_VERBOSE_LOGGING = false;
+    private static final boolean DEFAULT_VERBOSE_LOGGING = true;
 
     // Configuration values
     private int nearWindow = DEFAULT_NEAR_WINDOW;
@@ -473,8 +474,8 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                     continue;
                 }
 
-                // For jalr (indirect calls), try to type the struct field if loaded from memory
-                if (site.isJalr && enableStructSynthesis) {
+                // For indirect calls (jalr or jr), try to type the struct field if loaded from memory
+                if (enableStructSynthesis) {
                     typeIndirectCallStructField(program, site, dtMgr);
                 }
 
@@ -579,8 +580,122 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                             }
                         }
                     } catch (Exception e) {
-                        // Silently ignore signature creation failures
+
+	                    // If the pointer came from *(a0 + off1) -> *(tmp + off2), retype param_1 as pointer to a struct
+	                    try {
+	                        Register baseReg2 = null;
+	                        ghidra.program.model.scalar.Scalar disp2 = null;
+	                        try {
+	                            baseReg2 = instr.getRegister(1);
+	                        } catch (Exception ignore) {}
+	                        try {
+	                            disp2 = instr.getScalar(1);
+	                        } catch (Exception ignore) {}
+	                        if (baseReg2 != null) {
+	                            // Search earlier for lw baseReg2, off1(a0)
+	                            Instruction scan = listing.getInstructionBefore(current);
+	                            int hops = 0;
+	                            while (scan != null && hops < 12) {
+	                                hops++;
+	                                Register d0 = null, b0 = null;
+	                                ghidra.program.model.scalar.Scalar off1 = null;
+	                                try { d0 = scan.getRegister(0); } catch (Exception ignore) {}
+	                                try { b0 = scan.getRegister(1); } catch (Exception ignore) {}
+	                                try { off1 = scan.getScalar(1); } catch (Exception ignore) {}
+	                                String m0 = scan.getMnemonicString();
+	                                if (("lw".equals(m0) || "_lw".equals(m0) || m0.startsWith("lw")) &&
+	                                    d0 != null && d0.equals(baseReg2) && b0 != null && "a0".equals(b0.getName())) {
+	                                    // Synthesize inner and outer structs
+	                                    int ptrSize = program.getDefaultPointerSize();
+	                                    int off1Int = off1 != null ? (int) off1.getUnsignedValue() : 0;
+	                                    int off2Int = disp2 != null ? (int) disp2.getUnsignedValue() : 0;
+	                                    FunctionDefinitionDataType funcDef3 = createFunctionSignature(
+	                                        "fp_sig" + (paramCount + 1), paramCount + 1, dtMgr);
+	                                    StructureDataType inner = new StructureDataType("drv_inner_sig", Math.max(off2Int + ptrSize, ptrSize), dtMgr);
+	                                    inner.replaceAtOffset(off2Int, new PointerDataType(funcDef3, dtMgr), ptrSize, "fp", null);
+	                                    PointerDataType innerPtr = new PointerDataType(inner, dtMgr);
+	                                    StructureDataType outer = new StructureDataType("drv_outer_ctx", Math.max(off1Int + ptrSize, ptrSize), dtMgr);
+	                                    outer.replaceAtOffset(off1Int, innerPtr, ptrSize, "ctx", null);
+	                                    PointerDataType outerPtr = new PointerDataType(outer, dtMgr);
+	                                    // Retype param_1 to outer*
+	                                    Function wrap = program.getFunctionManager().getFunctionContaining(site.address);
+	                                    if (wrap != null && wrap.getParameterCount() > 0) {
+	                                        try { if (wrap.hasCustomVariableStorage()) wrap.setCustomVariableStorage(false); } catch (Exception ignore) {}
+	                                        Parameter p0 = wrap.getParameter(0);
+	                                        if (p0.getSource() != SourceType.USER_DEFINED) {
+	                                            p0.setDataType(outerPtr, SourceType.ANALYSIS);
+	                                        }
+	                                    }
+	                                    break;
+	                                }
+	                                scan = listing.getInstructionBefore(scan.getAddress());
+	                            }
+	                        }
+	                    } catch (Exception ignore) {}
+
+
                     }
+
+                        // Also retype param_1 as pointer to nested struct if we detect a0+off1 -> +(off2) load chain
+                        try {
+                            Register baseReg2 = null;
+                            ghidra.program.model.scalar.Scalar disp2 = null;
+                            try { baseReg2 = instr.getRegister(1); } catch (Exception ignore) {}
+                            try { disp2 = instr.getScalar(1); } catch (Exception ignore) {}
+                            if (baseReg2 != null) {
+                                Instruction scan = listing.getInstructionBefore(current);
+                                int hops = 0;
+                                while (scan != null && hops < 12) {
+                                    hops++;
+                                    Register d0 = null, b0 = null;
+                                    ghidra.program.model.scalar.Scalar off1 = null;
+                                    try { d0 = scan.getRegister(0); } catch (Exception ignore) {}
+                                    try { b0 = scan.getRegister(1); } catch (Exception ignore) {}
+                                    try { off1 = scan.getScalar(1); } catch (Exception ignore) {}
+                                    String m0 = scan.getMnemonicString();
+                                    if (("lw".equals(m0) || "_lw".equals(m0) || m0.startsWith("lw")) &&
+                                        d0 != null && d0.equals(baseReg2) && b0 != null && "a0".equals(b0.getName())) {
+                                        int ptrSize = program.getDefaultPointerSize();
+                                        int off1Int = off1 != null ? (int) off1.getUnsignedValue() : 0;
+                                        int off2Int = disp2 != null ? (int) disp2.getUnsignedValue() : 0;
+                                        FunctionDefinitionDataType funcDef3 = createFunctionSignature(
+                                            "fp_sig" + (paramCount + 1), paramCount + 1, dtMgr);
+                                        StructureDataType inner = new StructureDataType("drv_inner_sig", Math.max(off2Int + ptrSize, ptrSize), dtMgr);
+                                        inner.replaceAtOffset(off2Int, new PointerDataType(funcDef3, dtMgr), ptrSize, "fp", null);
+                                        PointerDataType innerPtr = new PointerDataType(inner, dtMgr);
+                                        StructureDataType outer = new StructureDataType("drv_outer_ctx", Math.max(off1Int + ptrSize, ptrSize), dtMgr);
+                                        outer.replaceAtOffset(off1Int, innerPtr, ptrSize, "ctx", null);
+                                        PointerDataType outerPtr = new PointerDataType(outer, dtMgr);
+                                        Function wrap = program.getFunctionManager().getFunctionContaining(site.address);
+                                        if (wrap != null && wrap.getParameterCount() > 0) {
+                                            try { if (wrap.hasCustomVariableStorage()) wrap.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                                            Parameter p0 = wrap.getParameter(0);
+                                            if (p0.getSource() != SourceType.USER_DEFINED) {
+                                                p0.setDataType(outerPtr, SourceType.ANALYSIS);
+                                                recordFinding("Struct-Chain-Retype", wrap.getEntryPoint(), wrap.getName(),
+                                                    String.format("param_1 := %s", outerPtr.getName()),
+                                                    String.format("off1=0x%x off2=0x%x at %s", off1Int, off2Int, scan.getAddress()));
+                                            }
+                                            // Also type the local backed by baseReg2 (e.g., iVar2) as inner*
+                                            try {
+                                                for (Variable v : wrap.getLocalVariables()) {
+                                                    Register rloc = v.getRegister();
+                                                    if (rloc != null && rloc.getName().equals(baseReg2.getName())) {
+                                                        v.setDataType(innerPtr, SourceType.USER_DEFINED);
+                                                        recordFinding("Local-Retype", wrap.getEntryPoint(), wrap.getName(),
+                                                            String.format("%s := %s (reg %s)", v.getName(), innerPtr.getName(), rloc.getName()),
+                                                            String.format("at %s", scan.getAddress()));
+                                                    }
+                                                }
+                                            } catch (Exception ignore) {}
+                                        }
+                                        break;
+                                    }
+                                    scan = listing.getInstructionBefore(scan.getAddress());
+                                }
+                            }
+                        } catch (Exception ignore) {}
+
 
                         // Ensure the containing wrapper has at least as many params as the typed fp_sig
                         try {
@@ -610,9 +725,101 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                             }
                         } catch (Exception e) {
                             // Best-effort; ignore expansion failures
+
                         }
 
+                    // Annotate target/operand registers' locals with function pointer type so decompiler prints args
+                    try {
+                        FunctionDefinitionDataType funcDef2 = createFunctionSignature(
+                            "fp_sig" + (paramCount + 1), paramCount + 1, dtMgr);
+                        PointerDataType funcPtr2 = new PointerDataType(funcDef2, dtMgr);
+                        Function wrap = program.getFunctionManager().getFunctionContaining(site.address);
+                        if (wrap != null) {
+                            java.util.Set<String> regNames = new java.util.LinkedHashSet<>();
+                            // Include target register and any operand registers on the jr/jalr
+                            if (targetReg != null) regNames.add(targetReg.getName());
+                            try {
+                                int nops = site.instruction.getNumOperands();
+                                for (int oi = 0; oi < nops; oi++) {
+                                    Register r = site.instruction.getRegister(oi);
+                                    if (r != null) {
+                                        String nm = r.getName();
+                                        if (!"ra".equals(nm) && !"zero".equals(nm)) regNames.add(nm);
+                                    }
+                                }
+                            } catch (Exception ignore) {}
+
+                            boolean updatedAny = false;
+                            for (Variable v : wrap.getLocalVariables()) {
+                                Register r = v.getRegister();
+                                if (r != null && regNames.contains(r.getName())) {
+                                    v.setDataType(funcPtr2, SourceType.USER_DEFINED);
+                                    updatedAny = true;
+                                    recordFinding("Local-Retype", wrap.getEntryPoint(), wrap.getName(),
+                                        String.format("%s := %s (reg %s)", v.getName(), funcPtr2.getName(), r.getName()),
+                                        String.format("at %s", site.address));
+                                }
+                            }
+                            if (!updatedAny && targetReg != null) {
+                                int anchorOff = (int) (site.address.subtract(wrap.getEntryPoint()));
+                                try {
+                                    Variable var = new LocalVariableImpl("pcVar_fp", anchorOff, funcPtr2, targetReg, program);
+                                    wrap.addLocalVariable(var, SourceType.USER_DEFINED);
+                                } catch (Exception ignore) {}
+                            }
+                        }
+
+                            // As a fallback, match operand string names (e.g., "pcVar2") and type that local
+                            try {
+                                java.util.Set<String> opNames = new java.util.LinkedHashSet<>();
+                                int nops2 = site.instruction.getNumOperands();
+                                for (int oi = 0; oi < nops2; oi++) {
+                                    try {
+                                        String rep = site.instruction.getDefaultOperandRepresentation(oi);
+                                        if (rep != null) {
+                                            // crude tokenization: spaces, commas, parentheses
+                                            for (String tok : rep.split("[\\s,()]+")) {
+                                                if (tok.startsWith("pcVar") || tok.startsWith("pc_")) {
+                                                    opNames.add(tok);
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception ignore) {}
+                                }
+                                if (!opNames.isEmpty() && wrap != null) {
+                                    for (Variable v : wrap.getLocalVariables()) {
+                                        if (opNames.contains(v.getName())) {
+                                            v.setDataType(funcPtr2, SourceType.USER_DEFINED);
+                                            recordFinding("Local-Retype", wrap.getEntryPoint(), wrap.getName(),
+                                                String.format("%s := %s (by name)", v.getName(), funcPtr2.getName()),
+                                                String.format("at %s", site.address));
+                                        }
+                                    }
+                                }
+                            } catch (Exception ignore) {}
+
+
+                            // Broad fallback: if decompiler created a pcVar* local for the call target, type it
+                            try {
+                                if (wrap != null) {
+                                    for (Variable v : wrap.getLocalVariables()) {
+                                        String nm = v.getName();
+                                        if (nm != null && nm.startsWith("pcVar")) {
+                                            if (v.getSource() != SourceType.USER_DEFINED) {
+                                                v.setDataType(funcPtr2, SourceType.USER_DEFINED);
+                                                recordFinding("Local-Retype", wrap.getEntryPoint(), wrap.getName(),
+                                                    String.format("%s := %s (pcVar* fallback)", v.getName(), funcPtr2.getName()),
+                                                    String.format("at %s", site.address));
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (Exception ignore) {}
+
+                    } catch (Exception ignore) {}
+
                     break;  // Found the load, stop looking
+
                 }
             }
         }
