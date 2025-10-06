@@ -121,6 +121,10 @@ public class GTabPanel<T> extends JPanel {
 
 			@Override
 			public void focusLost(FocusEvent e) {
+				if (ignoreFocusLost) {
+					return;
+				}
+
 				highlightedValue = null;
 				updateAccessibleName();
 				updateTabColors();
