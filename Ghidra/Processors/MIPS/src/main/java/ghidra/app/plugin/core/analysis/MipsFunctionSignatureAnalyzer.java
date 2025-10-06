@@ -252,13 +252,8 @@ public class MipsFunctionSignatureAnalyzer extends AbstractAnalyzer {
 			try {
 				int needBody = inferParamsFromBody(program, f, 200);
 				if (needBody == 0) {
-					Parameter[] cur = f.getParameters();
-					boolean hasUserDefined = false;
-					for (Parameter p : cur) { if (p.getSource() == SourceType.USER_DEFINED) { hasUserDefined = true; break; } }
-					if (!hasUserDefined && cur.length > 0) {
-						f.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS, new Parameter[0]);
-						zeroShrunk++;
-					}
+					// Disabled zero-arg collapse to avoid erroneous shrink on trampolines and wrappers
+					// Keep existing parameters; do not shrink here.
 				}
 			} catch (Exception ignore) {}
 		}

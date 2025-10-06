@@ -58,11 +58,11 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
     private static final String OPTION_VERBOSE_LOGGING = "Verbose Debug Logging";
 
     // Default values
-    private static final int DEFAULT_NEAR_WINDOW = 5;
-    private static final int DEFAULT_A3_THRESHOLD = 2;
+    private static final int DEFAULT_NEAR_WINDOW = 24; // wider window to catch arg setup
+    private static final int DEFAULT_A3_THRESHOLD = 3; // be stricter for 4th arg
     private static final boolean DEFAULT_ENABLE_STRUCT_SYNTHESIS = true;
     private static final int DEFAULT_MAX_SYNTHETIC_TYPES = 50;
-    private static final boolean DEFAULT_ENABLE_ZERO_ARG_COLLAPSE = true;
+    private static final boolean DEFAULT_ENABLE_ZERO_ARG_COLLAPSE = false; // monotonic by default
     private static final boolean DEFAULT_VERBOSE_LOGGING = false;
 
     // Configuration values
@@ -582,6 +582,36 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                         // Silently ignore signature creation failures
                     }
 
+                        // Ensure the containing wrapper has at least as many params as the typed fp_sig
+                        try {
+                            Function wrap = program.getFunctionManager().getFunctionContaining(site.address);
+                            if (wrap != null && wrap.getSignatureSource() != SourceType.USER_DEFINED) {
+                                int required = Math.max(1, paramCount + 1); // fp_sigN => N params
+                                int curCount = wrap.getParameterCount();
+                                if (curCount < required) {
+                                    List<Parameter> params = new ArrayList<>();
+                                    for (int k = 0; k < required; k++) {
+                                        String paramName = "param_" + (k + 1);
+                                        DataType paramType = Undefined4DataType.dataType;
+                                        params.add(new ParameterImpl(paramName, paramType, program));
+                                    }
+                                    try { if (wrap.hasCustomVariableStorage()) wrap.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                                    try {
+                                        PrototypeModel def = program.getCompilerSpec().getDefaultCallingConvention();
+                                        if (def != null) wrap.setCallingConvention(def.getName()); else wrap.setCallingConvention(null);
+                                    } catch (Exception ignore) {}
+                                    wrap.updateFunction(null, null, params,
+                                        FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+                                    functionsParamsExpanded++;
+                                    recordFinding("Parameter-Expand", wrap.getEntryPoint(), wrap.getName(),
+                                        String.format("Expanded to %d based on typed function pointer field", required),
+                                        String.format("Struct field typed at %s", instr.getAddress()));
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Best-effort; ignore expansion failures
+                        }
+
                     break;  // Found the load, stop looking
                 }
             }
@@ -705,11 +735,9 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                 // Also check body-based evidence
                 int bodyInferredCount = analyzeFunctionBodyForParameters(program, func);
 
-                // Use the MAXIMUM of caller consensus and body evidence
-                // - Body evidence: if the function uses a parameter (directly or pass-through), it exists
-                // - Caller evidence: if callers consistently pass parameters, they likely exist
-                // Both sources are valuable and we trust whichever shows more parameters
-                int inferredCount = Math.max(callerInferredCount, bodyInferredCount + 1);
+                // Monotonic policy: never shrink below currentParamCount here.
+                // Use the MAXIMUM of caller consensus, body evidence (+1), and current count.
+                int inferredCount = Math.max(currentParamCount, Math.max(callerInferredCount, bodyInferredCount + 1));
 
                 if (verboseLogging) {
                     Msg.debug(this, String.format("  Caller inferred: %d (a0=%d a1=%d a2=%d a3=%d, sites=%d)",
@@ -719,27 +747,8 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                     Msg.debug(this, String.format("  Final inferred: %d", inferredCount));
                 }
 
-                // Check for zero-arg collapse
-                if (enableZeroArgCollapse && inferredCount == 0 && currentParamCount > 0) {
-                    // Collapse to zero parameters
-                    try {
-                        List<Parameter> emptyParams = new ArrayList<>();
-                        // Use DEFAULT source type to avoid "parameter storage is locked" warnings
-                        func.updateFunction(null, null, emptyParams,
-                            FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.DEFAULT);
-                        functionsParamsCollapsed++;
-
-                        recordFinding("Parameter-Collapse", func.getEntryPoint(), func.getName(),
-                            String.format("Collapsed from %d to 0 parameters", currentParamCount),
-                            String.format("No argument usage detected across %d call sites", evidence.totalCallSites));
-
-                        if (verboseLogging) {
-                            Msg.debug(this, String.format("Collapsed %s to 0 parameters", func.getName()));
-                        }
-                    } catch (Exception e) {
-                        Msg.warn(this, "Failed to collapse parameters for " + func.getName(), e);
-                    }
-                } else if (inferredCount > currentParamCount) {
+                // Monotonic enforcement: do not collapse/shrink here.
+                if (inferredCount > currentParamCount) {
                     // Expand parameters
                     try {
                         List<Parameter> params = new ArrayList<>();
@@ -749,10 +758,14 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                             params.add(new ParameterImpl(paramName, paramType, program));
                         }
 
-                        // Use DEFAULT source type to avoid "parameter storage is locked" warnings
-                        // This allows the decompiler to properly apply the calling convention
+                        // Ensure storage is dynamic/unlocked and calling convention is default before expanding
+                        try { if (func.hasCustomVariableStorage()) func.setCustomVariableStorage(false); } catch (Exception ignore) {}
+                        try {
+                            PrototypeModel def = program.getCompilerSpec().getDefaultCallingConvention();
+                            if (def != null) func.setCallingConvention(def.getName()); else func.setCallingConvention(null);
+                        } catch (Exception ignore) {}
                         func.updateFunction(null, null, params,
-                            FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.DEFAULT);
+                            FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
                         functionsParamsExpanded++;
 
                         recordFinding("Parameter-Expand", func.getEntryPoint(), func.getName(),
@@ -908,9 +921,27 @@ public class MipsDriverAnalyzer extends AbstractAnalyzer {
                                 }
                             }
                         }
+            }
+                }
+            } else {
+                // Treat jr/jalr to non-ra as call-like for pass-through detection in trampolines
+                String mnem = instr.getMnemonicString();
+                if ("jr".equals(mnem) || "_jr".equals(mnem) || "jalr".equals(mnem) || "_jalr".equals(mnem)) {
+                    Register r0 = null, r1 = null;
+                    try { r0 = instr.getRegister(0); } catch (Exception ignore) {}
+                    try { r1 = instr.getRegister(1); } catch (Exception ignore) {}
+                    Register tgt = (r1 != null) ? r1 : r0;
+                    if (tgt != null && !"ra".equals(tgt.getName())) {
+                        for (int j = 0; j < argRegs.length; j++) {
+                            if (!argRegWritten[j]) {
+                                argRegPassThrough[j] = true;
+                                argRegRead[j] = true;
+                            }
+                        }
                     }
                 }
             }
+
 
             // Check input operands (reads)
             Object[] inputs = instr.getInputObjects();
