@@ -341,7 +341,7 @@ public class ApplicationUtilities {
 	 * @throws FileNotFoundException if Java's user home directory is not defined or it is not an
 	 *   absolute path
 	 */
-	private static File getJavaUserHomeDir() throws FileNotFoundException {
+	public static File getJavaUserHomeDir() throws FileNotFoundException {
 		return getSystemPropertyFile("user.home", true);
 	}
 

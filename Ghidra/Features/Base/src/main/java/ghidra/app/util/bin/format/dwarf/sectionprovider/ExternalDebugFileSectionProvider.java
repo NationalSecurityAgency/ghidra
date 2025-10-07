@@ -15,17 +15,22 @@
  */
 package ghidra.app.util.bin.format.dwarf.sectionprovider;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.AccessMode;
 import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.dwarf.external.*;
+import ghidra.app.util.bin.FileByteProvider;
+import ghidra.app.util.bin.format.dwarf.external.ExternalDebugFilesService;
+import ghidra.app.util.bin.format.dwarf.external.ExternalDebugInfo;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.app.util.opinion.Loader.ImporterSettings;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.options.Options;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.program.database.ProgramDB;
@@ -56,20 +61,16 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 			}
 			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF external debug information found: " + extDebugInfo);
-			ExternalDebugFilesService edfs =
-				DWARFExternalDebugFilesPlugin.getExternalDebugFilesService(
-					SearchLocationRegistry.getInstance().newContext(program));
-			FSRL extDebugFile = edfs.findDebugFile(extDebugInfo, monitor);
+			ExternalDebugFilesService edfs = ExternalDebugFilesService.forProgram(program);
+			File extDebugFile = edfs.find(extDebugInfo, monitor);
 			if (extDebugFile == null) {
 				return null;
 			}
 			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF External Debug File: found: " + extDebugFile);
-			FileSystemService fsService = FileSystemService.getInstance();
-			try (
-					RefdFile refdDebugFile = fsService.getRefdFile(extDebugFile, monitor);
-					ByteProvider debugFileByteProvider =
-						fsService.getByteProvider(refdDebugFile.file.getFSRL(), false, monitor);) {
+			FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(extDebugFile);
+			try (ByteProvider debugFileByteProvider =
+				new FileByteProvider(extDebugFile, fsrl, AccessMode.READ)) {
 				Object consumer = new Object();
 				Language lang = program.getLanguage();
 				LoadSpec origLoadSpec = ImporterUtilities.getLoadSpec(program);

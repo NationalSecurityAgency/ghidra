@@ -17,11 +17,12 @@ package ghidra.app.plugin.core.string.translate.libretranslate;
 
 import static ghidra.app.plugin.core.string.translate.libretranslate.LibreTranslatePlugin.SOURCE_LANGUAGE_OPTION.*;
 import static ghidra.app.plugin.core.string.translate.libretranslate.LibreTranslateStringTranslationService.*;
+import static ghidra.test.MockHttpServerUtils.*;
+import static ghidra.test.MockHttpServerUtils.CONTENT_TYPE_HEADER;
 import static java.net.HttpURLConnection.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.gson.*;
-import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 
 import docking.AbstractErrDialog;
 import docking.widgets.SelectFromListDialog;
@@ -43,7 +45,6 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractProgramBasedTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -54,7 +55,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public class LibreTranslateStringTranslationServiceTest extends AbstractProgramBasedTest {
 
-	private static int LAST_SERVER_PORT_NUM = 8000 + 5000;
 	private int supportedLanguageCount = 10;
 	private AtomicInteger translateRequestCount = new AtomicInteger(); // number of times translate handler has been invoked
 	private AtomicInteger translateStringCount = new AtomicInteger(); // number of strings that translate handler has processed
@@ -91,7 +91,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		// test what happens when the server accepts requests on the REST api endpoint URL, but
 		// returns unexpected json values
 
-		HttpServer server = createMockHttpServer(false);
+		HttpServer server = createMockHttpServer();
 		server.createContext("/", this::mockUnexpectedJsonResultHandler);
 
 		try {
@@ -120,7 +120,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		// test what happens when the server accepts requests on the REST api endpoint URL, but its
 		// not json
 
-		HttpServer server = createMockHttpServer(false);
+		HttpServer server = createMockHttpServer();
 		server.createContext("/", this::mockUnexpectedTextResultHandler);
 
 		try {
@@ -149,7 +149,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		// test what happens when the URL doesn't point to active server
 
 		LibreTranslateStringTranslationService sts = new LibreTranslateStringTranslationService(
-			getURI(nextUnusedAddr()), null, AUTO, "en", 100, 1000, 1000);
+			getURI(nextLoopbackServerAddr()), null, AUTO, "en", 100, 1000, 1000);
 
 		setErrorsExpected(true); // don't kill the test because Msg.showError() was called somewhere
 		Swing.runNow(() -> sts.translate(program, List.of(progLoc(0)), TranslateOptions.NONE));
@@ -346,62 +346,8 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		return builder.getProgram();
 	}
 
-	private URI getURI(InetSocketAddress addr) {
-		return URI.create("http://%s:%d".formatted(addr.getHostString(), addr.getPort()));
-	}
-
-	private HttpServer createMockHttpServer() throws IOException {
-		return createMockHttpServer(true);
-	}
-
-	private HttpServer createMockHttpServer(boolean addDefaultHandler) throws IOException {
-		IOException lastException = null;
-		for (int retryNum = 0; retryNum < 10; retryNum++) {
-			LAST_SERVER_PORT_NUM++; // don't try to reuse the same server port num in the same session
-			InetSocketAddress serverAddress =
-				new InetSocketAddress(InetAddress.getLoopbackAddress(), LAST_SERVER_PORT_NUM);
-
-			try {
-				HttpServer server = HttpServer.create(serverAddress, 0);
-				if (addDefaultHandler) {
-					server.createContext("/", this::mock404Handler);
-				}
-				return server;
-			}
-			catch (IOException e) {
-				// ignore, just try again with next port num
-				lastException = e;
-			}
-		}
-		throw new IOException(
-			"Could not allocate port for mock http server, last attempted port: " +
-				LAST_SERVER_PORT_NUM,
-			lastException);
-	}
-
-	private InetSocketAddress nextUnusedAddr() {
-		LAST_SERVER_PORT_NUM++;
-		return new InetSocketAddress(InetAddress.getLoopbackAddress(), LAST_SERVER_PORT_NUM);
-	}
-
-	private void assertContentType(HttpExchange httpExchange, String expectedType) {
-		String contentType = httpExchange.getRequestHeaders()
-				.getFirst(LibreTranslateStringTranslationService.CONTENT_TYPE_HEADER);
-		contentType = Objects.requireNonNullElse(contentType, "missing");
-		if (!expectedType.equals(contentType)) {
-			fail("Content type incorrect: expected: %s, actual: %s".formatted(expectedType,
-				contentType));
-		}
-	}
-
-	private void log(HttpExchange httpExchange, String msg) {
-		Msg.info(this, "[%s %s] %s".formatted(httpExchange.getLocalAddress(),
-			httpExchange.getRequestURI(), msg));
-
-	}
-
 	private void mockLangHandler(HttpExchange httpExchange) throws IOException {
-		assertContentType(httpExchange, CONTENT_TYPE_JSON);
+		assertContentType(CONTENT_TYPE_JSON, httpExchange);
 		try {
 			JsonArray langsResult = new JsonArray();
 			for (int i = 0; i < supportedLanguageCount; i++) {
@@ -427,7 +373,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		try {
 			translateRequestCount.incrementAndGet();
 
-			assertContentType(httpExchange, CONTENT_TYPE_JSON);
+			assertContentType(CONTENT_TYPE_JSON, httpExchange);
 
 			String requestBody =
 				new String(httpExchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -438,7 +384,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 
 			translateSourceLangs.add(sourceLang);
 
-			log(httpExchange,
+			logMockHttp(httpExchange,
 				"request src=%s, strs=%s".formatted(sourceLang, queryStrs.toString()));
 
 			JsonObject xlateResultObj = new JsonObject();
@@ -447,7 +393,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 			for (int i = 0; i < queryStrs.size(); i++) {
 				xlatedResults.add("result" + translateStringCount.getAndIncrement());
 			}
-			log(httpExchange, "response: " + xlateResultObj);
+			logMockHttp(httpExchange, "response: " + xlateResultObj);
 			byte[] response = xlateResultObj.toString().getBytes();
 
 			httpExchange.getResponseHeaders().set(CONTENT_TYPE_HEADER, CONTENT_TYPE_JSON);
@@ -455,7 +401,7 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 			httpExchange.getResponseBody().write(response);
 		}
 		catch (Throwable th) {
-			log(httpExchange, "Error during mockTranslateHandler: " + th.getMessage());
+			logMockHttp(httpExchange, "Error during mockTranslateHandler: " + th.getMessage());
 			throw th;
 		}
 		finally {
@@ -482,27 +428,6 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 		httpExchange.sendResponseHeaders(HTTP_OK, response.length);
 		httpExchange.getResponseBody().write(response);
 		httpExchange.close();
-	}
-
-	private HttpHandler wrapHandlerWithDelay(HttpHandler delegate, int delayMS) {
-		return httpExchange -> {
-			try {
-				Thread.sleep(delayMS);
-			}
-			catch (InterruptedException e) {
-				// ignore
-			}
-			delegate.handle(httpExchange);
-		};
-	}
-
-	private void mock404Handler(HttpExchange httpExchange) throws IOException {
-		try {
-			httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
-		}
-		finally {
-			httpExchange.close();
-		}
 	}
 
 	private ProgramLocation progLoc(int stringNum) {
