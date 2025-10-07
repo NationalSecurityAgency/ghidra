@@ -517,6 +517,7 @@ src/main/help/help/topics/Intro/images/Simple_err_dialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/FieldNames.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/Labels.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/AddLabel.png||GHIDRA||||END|
+src/main/help/help/topics/LabelMgrPlugin/images/ChooseNamespace.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/EditFieldNameDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/LabelHistoryInputDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/SetLabel.png||GHIDRA||||END|
