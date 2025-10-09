@@ -1609,8 +1609,8 @@ define pcodeop stdcixOp;
 # ISA-info: lq - Form "DQ" Page 751 Category "LSQ"
 # binutils: power4.d:  +0:	e0 83 00 00 	lq      r4,0\(r3\)
 # binutils: power4.d:  +4:	e0 83 00 00 	lq      r4,0\(r3\)
-:lq RT,A,DQ is $(NOTVLE) & OP=56 & RT & Dp & A & DQ & BITS_0_3=0 & regp [regpset = Dp+1;] { 
-	ea:$(REGISTER_SIZE) = A + sext(DQ:2 << 4);
+:lq RT,dqPlusRaOrZeroAddress is $(NOTVLE) & OP=56 & RT & Dp & RA & DQs & dqPlusRaOrZeroAddress & regp [regpset = Dp+1;] {  
+	ea:$(REGISTER_SIZE) = dqPlusRaOrZeroAddress;
 @if ENDIAN == "big"
 	RT = *:$(REGISTER_SIZE) ea;
 	regp = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
@@ -1925,8 +1925,8 @@ define pcodeop stfdpOp;
 # binutils: power4.d:  +58:	f8 c7 ff f2 	stq     r6,-16\(r7\)
 # binutils: power4.d:  +5c:	f8 c7 80 02 	stq     r6,-32768\(r7\)
 # binutils: power4.d:  +60:	f8 c7 7f f2 	stq     r6,32752\(r7\)
-:stq RS,RA_OR_ZERO,DS is $(NOTVLE) & OP=62 & RS & Dp & RA_OR_ZERO & DS & BITS_0_1=2 & regp [regpset = Dp+1;] {
-	ea:$(REGISTER_SIZE) = RA_OR_ZERO + sext(DS:2 << 2);
+:stq RS,dsPlusRaOrZeroAddress is $(NOTVLE) & OP=62 & RS & Dp & dsPlusRaOrZeroAddress & BITS_0_1=2 & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = dsPlusRaOrZeroAddress;
 @if ENDIAN == "big"
 	*:$(REGISTER_SIZE) ea = RS;
 	*:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE)) = regp;
