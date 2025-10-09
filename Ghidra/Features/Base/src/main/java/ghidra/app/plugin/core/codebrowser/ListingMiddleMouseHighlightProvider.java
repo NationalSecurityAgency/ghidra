@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,10 +54,11 @@ import ghidra.util.datastruct.Stack;
 public class ListingMiddleMouseHighlightProvider
 		implements ButtonPressedListener, OptionsChangeListener, ListingHighlightProvider {
 	//@formatter:off
-	private static final GColor DEFAULT_HIGHLIGHT_COLOR = new GColor("color.bg.listing.highlighter.default");
+	private static final GColor DEFAULT_MIDDLE_MOUSE_HIGHLIGHT_COLOR = new GColor("color.bg.listing.highlighter.middle.mouse");
 	private static final GColor DEFAULT_SCOPED_READ_COLOR = new GColor("color.bg.listing.highlighter.scoped.read");
 	private static final GColor DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.bg.listing.highlighter.scoped.write");
 	private static final String DISPLAY_HIGHLIGHT_NAME = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
+	private static final String SCOPED_DEFAULT_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Default Color";
 	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
 	private static final String SCOPED_READ_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
 	private static final String SCOPE_REGISTER_OPERAND = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scope Register Operand";
@@ -873,8 +874,9 @@ public class ListingMiddleMouseHighlightProvider
 		ToolOptions opt = tool.getOptions(CATEGORY_BROWSER_FIELDS);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Cursor_Text_Highlight");
 
-		opt.registerThemeColorBinding(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR.getId(), hl,
-			"The color to use to highlight text.");
+		opt.registerThemeColorBinding(SCOPED_DEFAULT_HIGHLIGHT_COLOR,
+			DEFAULT_MIDDLE_MOUSE_HIGHLIGHT_COLOR.getId(), hl,
+			"The color to use to highlight the register text.");
 		opt.registerThemeColorBinding(SCOPED_WRITE_HIGHLIGHT_COLOR,
 			DEFAULT_SCOPED_WRITE_COLOR.getId(), hl,
 			"The color to use for showing a register being written.");
@@ -892,31 +894,23 @@ public class ListingMiddleMouseHighlightProvider
 
 		opt.addOptionsChangeListener(this);
 
-		/////////////////////////////////////////////////////
-
 		displayHighlight = opt.getBoolean(DISPLAY_HIGHLIGHT_NAME, true);
 		if (!displayHighlight) {
 			setHighlightString(null, null);
 		}
 
-		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR);
+		textMatchingHighlightColor =
+			opt.getColor(SCOPED_DEFAULT_HIGHLIGHT_COLOR, DEFAULT_MIDDLE_MOUSE_HIGHLIGHT_COLOR);
 		scopeWriteHighlightColor =
 			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, DEFAULT_SCOPED_WRITE_COLOR);
 		scopeReadHighlightColor =
 			opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, DEFAULT_SCOPED_READ_COLOR);
 
-		/////////////////////////////////////////////////////
-
 		CURSOR_MOUSE_BUTTON_NAMES mouseButton =
 			opt.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 
 		highlightButtonOption = mouseButton.getMouseEventID();
-
-		//////////////////////////////////////////////////////
-
 		scopeRegisterHighlight = opt.getBoolean(SCOPE_REGISTER_OPERAND, true);
-
-		//////////////////////////////////////////////////////
 
 		opt.addOptionsChangeListener(this);
 	}
@@ -931,7 +925,7 @@ public class ListingMiddleMouseHighlightProvider
 				clearHighlight();
 			}
 		}
-		else if (optionName.equals(HIGHLIGHT_COLOR_NAME)) {
+		else if (optionName.equals(SCOPED_DEFAULT_HIGHLIGHT_COLOR)) {
 			textMatchingHighlightColor = (Color) newValue;
 		}
 		else if (optionName.equals(SCOPED_WRITE_HIGHLIGHT_COLOR)) {

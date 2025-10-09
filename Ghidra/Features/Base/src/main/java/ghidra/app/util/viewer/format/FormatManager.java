@@ -32,6 +32,7 @@ import ghidra.program.model.data.Array;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -252,6 +253,25 @@ public class FormatManager implements OptionsChangeListener {
 		return models[FieldFormatModel.OPEN_DATA];
 	}
 
+	/**
+	 * Toggle the enablement for the field with the given name.
+	 * @param name the of the field to toggle
+	 */
+	public void toggleField(String name) {
+		for (FieldFormatModel model : models) {
+			for (int i = 0; i < model.getNumRows(); i++) {
+				FieldFactory[] rowFactories = model.getFactorys(i);
+				for (FieldFactory fieldFactory : rowFactories) {
+					if (fieldFactory.getFieldName().equals(name)) {
+						fieldFactory.setEnabled(!fieldFactory.isEnabled());
+						return;
+					}
+				}
+			}
+		}
+		Msg.showError(this, null, "Toggle Field Failed!", "No field named \"" + name + "\"");
+	}
+
 	private boolean isPrimitiveArrayElement(Data data) {
 		Data parent = data.getParent();
 		if (parent == null) {
@@ -331,6 +351,13 @@ public class FormatManager implements OptionsChangeListener {
 		return maxRowCount;
 	}
 
+	/**
+	 * {@return a list of field names that should have quick toggle actions.}
+	 */
+	public List<String> getQuickToggleFieldNames() {
+		return List.of("PCode");
+	}
+
 	private Element getDefaultModel(int modelID) {
 		switch (modelID) {
 			case FieldFormatModel.DIVIDER:
@@ -357,15 +384,26 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-
 		colElem.setAttribute("NAME", "Separator");
 		colElem.setAttribute("WIDTH", "80");
 		colElem.setAttribute("ENABLED", "true");
-
 		rowElem.addContent(colElem);
 		root.addContent(rowElem);
-		return root;
 
+		rowElem = new Element("ROW");
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "150");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("NAME", "Collapsed Code");
+		colElem.setAttribute("WIDTH", "200");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		root.addContent(rowElem);
+		return root;
 	}
 
 	private Element getDefaultPlateFormat() {
@@ -407,6 +445,12 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
 		colElem.setAttribute("WIDTH", "200");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
@@ -489,7 +533,13 @@ public class FormatManager implements OptionsChangeListener {
 		Element rowElem = new Element("ROW");
 
 		Element colElem = new Element("FIELD");
-		colElem.setAttribute("WIDTH", "90");
+		colElem.setAttribute("NAME", "+");
+		colElem.setAttribute("WIDTH", "20");
+		colElem.setAttribute("ENABLED", "true");
+		rowElem.addContent(colElem);
+
+		colElem = new Element("FIELD");
+		colElem.setAttribute("WIDTH", "70");
 		colElem.setAttribute("ENABLED", "true");
 		rowElem.addContent(colElem);
 
@@ -926,6 +976,9 @@ public class FormatManager implements OptionsChangeListener {
 		for (int i = 0; i < NUM_MODELS; i++) {
 			if (saveState.hasValue(models[i].getName())) {
 				models[i].restoreFromXml(saveState.getXmlElement(models[i].getName()));
+				// hack to make sure the new open/close variables field is present
+				// If missing, we are just going to reset it to the default format
+				checkForMissingNewCriticalFields(models[i]);
 			}
 			else {
 				models[i].restoreFromXml(getDefaultModel(i));
@@ -933,6 +986,36 @@ public class FormatManager implements OptionsChangeListener {
 		}
 		initialized = true;
 		modelChanged(null);
+	}
+
+	// This is a hack to make sure the new variables and functions open/close field is present.
+	// This was added in version 12.0/12.1 and can probably be removed in a few releases.
+	private void checkForMissingNewCriticalFields(FieldFormatModel model) {
+		if (model.getName().equals("Variable")) {
+			if (!hasField(model, "+")) {
+				model.restoreFromXml(getDefaultVariableFormat());
+			}
+		}
+		if (model.getName().equals("Function")) {
+			if (!hasField(model, "+")) {
+				model.restoreFromXml(getDefaultFunctionFormat());
+			}
+		}
+		if (model.getName().equals("Address Break")) {
+			if (!hasField(model, "Collapsed Code")) {
+				model.restoreFromXml(getDefaultDividerFormat());
+			}
+		}
+	}
+
+	private boolean hasField(FieldFormatModel model, String fieldName) {
+		FieldFactory[] unusedFactories = model.getUnusedFactories();
+		for (FieldFactory fieldFactory : unusedFactories) {
+			if (fieldFactory.getFieldName().equals(fieldName)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public ServiceProvider getServiceProvider() {

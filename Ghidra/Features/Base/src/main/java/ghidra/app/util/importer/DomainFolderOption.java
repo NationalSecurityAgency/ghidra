@@ -40,9 +40,10 @@ public class DomainFolderOption extends Option {
 	 * 
 	 * @param name The name of the option
 	 * @param arg The option's command line argument (could be null)
+	 * @param hidden true if this option should be hidden from the user; otherwise, false
 	 */
-	public DomainFolderOption(String name, String arg) {
-		super(name, String.class, "", arg, null, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, false);
+	public DomainFolderOption(String name, String arg, boolean hidden) {
+		super(name, String.class, "", arg, null, Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, hidden);
 	}
 
 	@Override
@@ -85,6 +86,6 @@ public class DomainFolderOption extends Option {
 
 	@Override
 	public Option copy() {
-		return new DomainFolderOption(getName(), getArg());
+		return new DomainFolderOption(getName(), getArg(), isHidden());
 	}
 }

@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 #---------------------------------------------------------------------
 # xmlldr.py - IDA XML loader
@@ -30,11 +30,6 @@ import ida_pro
 import idaxml
 import idc
 import sys
-
-if sys.version_info.major >= 3:
-    from idaxml import _exc_info
-    sys.exc_value = lambda: _exc_info()[1]
-    sys.exc_type = lambda: _exc_info()[0]
 
 """
 Loader functions
@@ -96,10 +91,10 @@ def load_file(li, neflags, format):
         msg += "\nimporting multiple address spaces."
         print("\n" + msg)
         idc.warning(msg)
-    except:
+    except Exception as e:
         print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print(f"\n{msg}\n{type(e).__name__}: {e}")
         print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:

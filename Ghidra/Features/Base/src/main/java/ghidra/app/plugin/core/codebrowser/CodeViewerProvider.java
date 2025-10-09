@@ -31,16 +31,19 @@ import javax.swing.event.ChangeListener;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.dnd.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.widgets.fieldpanel.internal.FieldPanelScrollCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.nav.LocationMemento;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
@@ -62,13 +65,13 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
 		ChangeListener, StringSelectionListener, PopupActionProvider {
 
+	private static final String SHOW_FUNCITON_VARS_OPTIONS_NAME = "SHOW_FUNCITON_VARS";
 	private static final String OLD_NAME = "CodeBrowserPlugin";
 	private static final String NAME = "Listing";
 	private static final String TITLE = NAME + ": ";
@@ -105,7 +108,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private ListingPanel otherPanel;
 	private CoordinatedListingPanelListener coordinatedListingPanelListener;
 	private FormatManager formatMgr;
-	private FieldPanelCoordinator coordinator;
+	private FieldPanelScrollCoordinator coordinator;
 	private ProgramSelectionListener liveProgramSelectionListener = (selection, trigger) -> {
 		liveSelection = selection;
 		updateSubTitle();
@@ -127,6 +130,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private FieldNavigator fieldNavigator;
 
 	private MultiListingLayoutModel multiModel;
+	private ToggleDockingAction toggleVariablesAction;
+	private ToggleDockingAction toggleFunctionsAction;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
 			boolean isConnected) {
@@ -152,6 +157,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		listingPanel = new ListingPanel(formatMgr);
 		listingPanel.enablePropertyBasedColorModel(true);
+
 		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);
 		ListingMiddleMouseHighlightProvider listingHighlighter =
 			createListingHighlighter(listingPanel, tool, decorationPanel);
@@ -430,6 +436,11 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		updateTitle();
 
 		listingPanel.setProgram(program);
+		ListingModel listingModel = listingPanel.getListingModel();
+		if (listingModel != null) {
+			boolean shouldShowVariables = toggleVariablesAction.isSelected();
+			listingModel.setAllFunctionVariablesOpen(shouldShowVariables);
+		}
 		codeViewerClipboardProvider.setProgram(program);
 		codeViewerClipboardProvider.setListingLayoutModel(listingPanel.getListingModel());
 		if (coordinatedListingPanelListener != null) {
@@ -471,21 +482,159 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
 
+		new ActionBuilder("Open All Functions", plugin.getName())
+				.popupMenuPath("Function", "Open All Functions")
+				.popupMenuGroup("Visibility", "1")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Open_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(true))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Close All Functions", plugin.getName())
+				.popupMenuPath("Function", "Close All Functions")
+				.popupMenuGroup("Visibility", "2")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Close_All_Functions"))
+				.withContext(ProgramLocationActionContext.class)
+				.onAction(c -> showAllFunctions(false))
+				.buildAndInstallLocal(this);
+		new ActionBuilder("Toggle Open Function", plugin.getName())
+				.popupMenuPath("Function", "Open/Close Function")
+				.popupMenuGroup("Visibility", "3")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Function"))
+				.keyBinding("SPACE")
+				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInCollapsableCodeArea)
+				.enabledWhen(this::isInCollapsableCodeArea)
+				.onAction(c -> toggleShowFunction(c))
+				.buildAndInstallLocal(this);
+
+		toggleVariablesAction =
+			new ToggleActionBuilder("Show Function Variables By Default", plugin.getName())
+					.popupMenuPath("Function", "Show Variables By Default")
+					.popupMenuGroup("Visibility", "5")
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_All_Variables"))
+					.selected(true)
+					.withContext(ProgramLocationActionContext.class)
+					.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))
+					.buildAndInstallLocal(this);
+
+		new ActionBuilder("Show/Hide Function Variables", plugin.getName())
+				.popupMenuPath("Function", "Show/Hide Variables")
+				.popupMenuGroup("Visibility", "4")
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
+				.keyBinding("SPACE")
+				.withContext(ProgramLocationActionContext.class)
+				.validWhen(this::isInFunctionVariablesArea)
+				.enabledWhen(this::isInFunctionVariablesArea)
+				.onAction(c -> toggleShowVariables(c.getAddress()))
+				.buildAndInstallLocal(this);
+
+		buildQuickTogleFieldActions();
+
 	}
 
-	void fieldOptionChanged(String fieldName, Object newValue) {
-		//TODO		if (name.startsWith(OPERAND_OPTIONS_PREFIX) && (newValue instanceof Boolean)) {
-		//			for (int i = 0; i < toggleOperandMarkupActions.length; i++) {
-		//				ToggleOperandMarkupAction action = toggleOperandMarkupActions[i];
-		//				if (name.equals(action.getOptionName())) {
-		//					boolean newState = ((Boolean)newValue).booleanValue();
-		//					if (action.isSelected() != newState) {
-		//						action.setSelected(newState);
-		//					}
-		//					break;
-		//				}
-		//			}
-		//		}
+	private void showAllFunctions(boolean selected) {
+		ListingModel model = listingPanel.getListingModel();
+		model.setAllFunctionsOpen(selected);
+	}
+
+	private void toggleShowFunction(ProgramLocationActionContext context) {
+		Address cuAddress = context.getAddress();
+		Function function = program.getListing().getFunctionContaining(cuAddress);
+		if (function == null) {
+			return;
+		}
+		ListingModel model = listingPanel.getListingModel();
+		Address functionAddress = function.getEntryPoint();
+		boolean open = model.isFunctionOpen(functionAddress);
+
+		model.setFunctionOpen(functionAddress, !open);
+		if (context.getLocation() instanceof FunctionSignatureFieldLocation) {
+			// no need to move cursor
+			return;
+		}
+		if (!open) {
+			setLocation(new ProgramLocation(program, cuAddress));
+		}
+		else {
+			// We have to use the CollapsedCodeLocation in this case, any other goto to 
+			// an address that is collapse will open it up, which we don't want since
+			// we just closed it. Also, we need to correct to the start of the range since
+			// that is the address that will have the CollapsedField
+			Address corrected = adjustToStartOfContainingRange(function, cuAddress);
+			setLocation(new CollapsedCodeLocation(program, corrected));
+		}
+	}
+
+	private Address adjustToStartOfContainingRange(Function function, Address cuAddress) {
+		AddressSetView body = function.getBody();
+		AddressRange range = body.getRangeContaining(cuAddress);
+		return range == null ? function.getEntryPoint() : range.getMinAddress();
+	}
+
+	private void toggleShowVariables(Address address) {
+		ListingModel model = listingPanel.getListingModel();
+		boolean open = model.areFunctionVariablesOpen(address);
+		model.setFunctionVariablesOpen(address, !open);
+		setLocation(new VariablesOpenCloseLocation(program, address));
+	}
+
+	private void showVariablesForAllFunctions(boolean selected) {
+		ListingModel model = listingPanel.getListingModel();
+		model.setAllFunctionVariablesOpen(selected);
+	}
+
+	private boolean isInFunctionVariablesArea(ProgramLocationActionContext context) {
+		ProgramLocation location = context.getLocation();
+		return location instanceof VariableLocation ||
+			location instanceof VariablesOpenCloseLocation;
+	}
+
+	private boolean isInCollapsableCodeArea(ProgramLocationActionContext context) {
+		ProgramLocation location = context.getLocation();
+
+		// this allows the code collapse to be toggled on instructions in the body of a function,
+		// but we have to exclude the variable locations so as to not interfere with the 
+		// open/close variables action which also is mapped to <SPACE> 
+		if (location instanceof CodeUnitLocation && !(location instanceof VariableLocation) &&
+			!(location instanceof VariablesOpenCloseLocation)) {
+			return true;
+		}
+
+		return location instanceof FunctionSignatureFieldLocation ||
+			location instanceof FunctionOpenCloseLocation ||
+			location instanceof CollapsedCodeLocation;
+	}
+
+	private void buildQuickTogleFieldActions() {
+		List<String> quickToggleFieldNames = formatMgr.getQuickToggleFieldNames();
+		int count = 0;
+		for (String fieldName : quickToggleFieldNames) {
+			String keyBinding = null;
+			if (count < 5) {
+				char c = (char) ('1' + count);
+				keyBinding = "control shift " + c;
+			}
+			else {
+				Msg.debug(this,
+					"Excessive Field Toggle actions . No keybinding assigned for field: " +
+						fieldName);
+			}
+
+			new ActionBuilder("Toggle " + fieldName, plugin.getName())
+					.popupMenuPath("Toggle Field", fieldName)
+					.popupMenuGroup("Field", "" + count)
+					.keyBinding(keyBinding)
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Toggle_Field"))
+					// only show this action when over the listing field header
+					.popupWhen(c -> c.getContextObject() instanceof FieldHeaderLocation)
+					.onAction(c -> formatMgr.toggleField(fieldName))
+					.buildAndInstallLocal(this);
+
+			// automatically assign keybindings to the first 5 toggle fields. 
+			count++;
+		}
+		tool.setMenuGroup(new String[] { "Toggle Field" }, "Disassembly");
+
 	}
 
 	public ListingPanel getListingPanel() {
@@ -753,7 +902,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ListingModel otherAlignedModel = multiModel.getAlignedModel(1);
 		listingPanel.setListingModel(myAlignedModel);
 		lp.setListingModel(otherAlignedModel);
-		coordinator = new FieldPanelCoordinator(
+		coordinator = new FieldPanelScrollCoordinator(
 			new FieldPanel[] { listingPanel.getFieldPanel(), lp.getFieldPanel() });
 		addHoverServices(otherPanel);
 		HoverHandler hoverHandler = listingPanel.getFieldPanel().getHoverHandler();
@@ -805,12 +954,19 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	void saveState(SaveState saveState) {
 		saveState.putInt(DIVIDER_LOCATION, getListingPanel().getDividerLocation());
 		saveState.putBoolean(HOVER_MODE, toggleHoverAction.isSelected());
+		saveState.putBoolean(SHOW_FUNCITON_VARS_OPTIONS_NAME, toggleVariablesAction.isSelected());
 	}
 
 	void readState(SaveState saveState) {
 		getListingPanel().setDividerLocation(
 			saveState.getInt(DIVIDER_LOCATION, ListingPanel.DEFAULT_DIVIDER_LOCATION));
 		toggleHoverAction.setSelected(saveState.getBoolean(HOVER_MODE, true));
+		boolean showVariables = saveState.getBoolean(SHOW_FUNCITON_VARS_OPTIONS_NAME, true);
+		toggleVariablesAction.setSelected(showVariables);
+		ListingModel listingModel = listingPanel.getListingModel();
+		if (listingModel != null) {
+			listingModel.setAllFunctionVariablesOpen(showVariables);
+		}
 	}
 
 	private void setHoverEnabled(boolean enabled) {
@@ -936,9 +1092,12 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		// (its done in an invoke later)
 		Swing.runLater(() -> {
 			newProvider.doSetProgram(program);
+			SaveState saveState = new SaveState();
+			saveState(saveState);
+			newProvider.readState(saveState);
+			newProvider.setLocation(currentLocation);
 			newProvider.listingPanel.getFieldPanel()
 					.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
-			newProvider.setLocation(currentLocation);
 		});
 	}
 

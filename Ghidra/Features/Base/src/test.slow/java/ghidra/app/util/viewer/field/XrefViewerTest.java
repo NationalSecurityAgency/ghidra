@@ -153,7 +153,7 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 			01001046		?? thunk_FUN_01001005	UNCONDITIONAL_CALL	thunk
 		 */
 
-		doubleClickXRef(baseFunctionAddress, "XREF[1]: ");
+		doubleClickXRef(baseFunctionAddress, "XREF[2]: ");
 		ComponentProvider comp = waitForComponentProvider(TableComponentProvider.class);
 		TableComponentProvider<?> tableProvider = (TableComponentProvider<?>) comp;
 		GhidraProgramTableModel<?> model = tableProvider.getModel();

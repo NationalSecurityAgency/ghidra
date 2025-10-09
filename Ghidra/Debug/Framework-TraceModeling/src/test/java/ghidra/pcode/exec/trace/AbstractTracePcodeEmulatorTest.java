@@ -22,12 +22,16 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
+import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
+import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.target.schema.SchemaContext;
@@ -35,6 +39,14 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
 public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	protected PcodeTraceAccess createAccess(TracePlatform platform, long snap) {
+		return new DefaultPcodeTraceAccess(platform, snap);
+	}
+
+	protected Writer createWriter(TracePlatform platform, long snap) {
+		return TraceEmulationIntegration.bytesDelayedWrite(createAccess(platform, snap));
+	}
 
 	public TraceThread initTrace(ToyDBTraceBuilder tb, String stateInit,
 			List<String> assembly) throws Throwable {

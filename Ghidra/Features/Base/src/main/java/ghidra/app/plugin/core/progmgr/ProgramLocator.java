@@ -85,7 +85,7 @@ public class ProgramLocator {
 				try {
 					// Attempt to resolve to actual linked-file to allow for
 					// direct URL reference
-					domainFile = linkedFile.getLinkedFile();
+					domainFile = linkedFile.getRealFile();
 				}
 				catch (IOException e) {
 					Msg.error(this, "Failed to resolve linked-file", e);

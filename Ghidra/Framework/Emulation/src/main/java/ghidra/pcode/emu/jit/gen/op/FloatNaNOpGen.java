@@ -33,7 +33,7 @@ import ghidra.pcode.emu.jit.op.JitFloatNaNOp;
  * This uses the unary operator generator and emits an invocation of {@link Float#isNaN(float)} or
  * {@link Double#isNaN(double)}, depending on the type.
  */
-public enum FloatNaNOpGen implements UnOpGen<JitFloatNaNOp> {
+public enum FloatNaNOpGen implements FloatUnOpGen<JitFloatNaNOp> {
 	/** The generator singleton */
 	GEN;
 

@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.symz3.trace;
 
-import ghidra.pcode.emu.symz3.plain.SymZ3Space;
+import ghidra.pcode.emu.symz3.state.SymZ3Space;
 import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.AddressSpace;
 
@@ -25,6 +25,8 @@ import ghidra.program.model.address.AddressSpace;
  * <p>
  * This adds to {@link SymZ3Space} the ability to load symbolic values from a trace and the ability
  * to save them back into a trace.
+ * 
+ * TODO: Delete me
  */
 public abstract class SymZ3TraceSpace extends SymZ3Space {
 	protected final AddressSpace space;

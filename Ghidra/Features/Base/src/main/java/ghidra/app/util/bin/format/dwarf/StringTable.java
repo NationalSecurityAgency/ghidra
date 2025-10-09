@@ -32,6 +32,7 @@ public class StringTable {
 	 * Creates a StringTable instance, if the supplied BinaryReader is non-null.
 	 * 
 	 * @param reader BinaryReader
+	 * @param charset {@link Charset} of strings in table
 	 * @return new instance, or null if reader is null
 	 */
 	public static StringTable of(BinaryReader reader, Charset charset) {
@@ -49,7 +50,7 @@ public class StringTable {
 	 * Creates a StringTable
 	 * 
 	 * @param reader {@link BinaryReader} .debug_str or .debug_line_str
-	 * @param charset {@link Charset} of strings
+	 * @param charset {@link Charset} of strings in table
 	 */
 	public StringTable(BinaryReader reader, Charset charset) {
 		this.reader = reader;
@@ -81,7 +82,7 @@ public class StringTable {
 	 */
 	public String getStringAtOffset(long offset) throws IOException {
 		if (!isValid(offset)) {
-			throw new IOException("Invalid offset requested " + offset);
+			throw new IOException("Invalid offset requested %d [0x%x]".formatted(offset, offset));
 		}
 
 		String s = cache.get(offset);

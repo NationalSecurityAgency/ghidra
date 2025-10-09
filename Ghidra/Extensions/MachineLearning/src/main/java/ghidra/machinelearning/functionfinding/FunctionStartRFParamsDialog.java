@@ -154,7 +154,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private RandomForestTableModel tableModel;
 	private Program trainingSource;
 	private FunctionStartRFParams params;
-	private Vector<Long> moduli = new Vector<>(Arrays.asList(new Long[] { 4l, 8l, 16l, 32l }));
+	private List<Long> moduli = Arrays.asList(new Long[] { 4l, 8l, 16l, 32l });
 	private GComboBox<Long> modBox;
 	private JButton trainButton;
 	private JCheckBox includeBeforeAndAfterBox;

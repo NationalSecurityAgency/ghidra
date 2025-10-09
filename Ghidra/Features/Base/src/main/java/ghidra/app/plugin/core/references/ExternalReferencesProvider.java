@@ -155,11 +155,18 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		JPanel panel = new JPanel(new BorderLayout());
 		tableModel = new ExternalNamesTableModel();
 		table = new GhidraTable(tableModel);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
 
-		JScrollPane sp = new JScrollPane(table);
+			contextChanged();
+		});
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		ToolTipManager.sharedInstance().registerComponent(table);
+
+		JScrollPane sp = new JScrollPane(table);
 		panel.add(sp, BorderLayout.CENTER);
 
 		String namePrefix = "External Programs";

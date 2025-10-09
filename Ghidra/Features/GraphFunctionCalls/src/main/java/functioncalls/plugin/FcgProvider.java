@@ -533,7 +533,8 @@ public class FcgProvider
 		addLocalAction(resetGraphAction);
 
 		MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>> layoutAction =
-			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName(),
+				KeyBindingType.SHARED) {
 
 				@Override
 				public void actionPerformed(ActionContext context) {

@@ -450,6 +450,16 @@
             <ref name="boolean_type"/>
           </attribute>
         </optional>
+		<optional>
+          <attribute name="stackspill">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="fillalternate">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
         <optional>
           <attribute name="storage"/>
         </optional>
@@ -461,6 +471,16 @@
         </optional>
       </element>
     </choice>
+	<zeroOrMore>
+      <element name="extra_stack">
+        <optional>
+          <attribute name="afterbytes"/>
+        </optional>
+        <optional>
+          <attribute name="afterstorage"/>
+        </optional>
+      </element>
+    </zeroOrMore>
     <zeroOrMore>
       <element name="consume_extra">
         <attribute name="storage"/>
@@ -474,13 +494,8 @@
     <zeroOrMore>
       <element name="consume_remaining">
         <attribute name="storage"/>
-      </element>
-    </zeroOrMore>
-    <zeroOrMore>
-      <element name="extra_stack">
-        <empty/>
-      </element>
-    </zeroOrMore>
+	  </element>
+	</zeroOrMore>
   </define>
  
   <define name="prototype_type">

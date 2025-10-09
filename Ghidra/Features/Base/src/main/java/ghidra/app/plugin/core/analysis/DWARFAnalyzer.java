@@ -121,6 +121,10 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		catch (CancelledException ce) {
 			throw ce;
 		}
+		catch (DWARFException e) {
+			log.appendMsg("Error during DWARFAnalyzer import: " + e.getMessage());
+			Msg.error(this, "Error during DWARFAnalyzer import: " + e.getMessage());
+		}
 		catch (IOException e) {
 			log.appendMsg("Error during DWARFAnalyzer import: " + e);
 			Msg.error(this, "Error during DWARFAnalyzer import: ", e);

@@ -64,7 +64,7 @@ define token m16instr (16)
   m16_code=(5,10)
 ;
   
-attach variables [ m16_rx m16_ry m16_rz m16_mv_rz ]
+attach variables [ m16_rx m16_ry m16_rz m16_mv_rz ext_rb ]
                  [ s0 s1 v0 v1 a0 a1 a2 a3 ];
                  
 attach variables [ ext_m16r32 m16_i8_r32 ] [ 
@@ -143,7 +143,7 @@ EXT_IS8L3: val						is ext_is_ext=0 & ext_value_1511 & ext_value_1005 & m16_is8_
 EXT_IU8: val						is ext_is_ext=1 & ext_value_1511 & ext_value_1005 & m16_i8_imm [val = (ext_value_1511 << 11) | (ext_value_1005 << 5) | m16_i8_imm; ] { export *[const]:2 val; }
 EXT_IU8: val						is ext_is_ext=0 & m16_iu8_imm [val = m16_iu8_imm << 2; ] { export *[const]:2 val; }
 
-EXT_LIU8: val						is ext_is_ext=1 & m16_ri_z=0 & ext_value_1511 & ext_value_1005 & m16_i8_imm [val = (ext_value_1511 << 11) | (ext_value_1005 << 5) | m16_i8_imm; ] { export *[const]:2 val; }
+EXT_LIU8: val						is ext_is_ext=1 & ext_value_1511 & ext_value_1005 & m16_i8_imm [val = (ext_value_1511 << 11) | (ext_value_1005 << 5) | m16_i8_imm; ] { export *[const]:2 val; }
 EXT_LIU8: m16_iu8_imm				is ext_is_ext=0 & m16_iu8_imm { export *[const]:2 m16_iu8_imm; }
 
 EXT_SHIFT: ext_value_sa40			is ext_is_ext=1 & ext_value_saz=0 & m16_shft_sa=0 & ext_value_sa40 { export *[const]:1 ext_value_sa40;}
@@ -761,4 +761,262 @@ SAVE_TOP: SAVE_ARG^EXT_FRAME^SAVE_RA^SAVE_SREG^SAVE_STAT	is EXT_FRAME & SAVE_RA 
 :zeh m16_rx							is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b11101 & m16_rr_z=0b001 & m16_rr_f=0b10001 & m16_rx {
 	tmp:2 = m16_rx:2;
     m16_rx = zext(tmp); 
+}
+
+
+
+################
+#
+# MIPS16e2
+#
+# MIPS16e2 Application Specific Extension
+# Technical Reference Manual
+#
+# Document #: MD01172 Rev 1.00 April 26, 2016
+#
+################
+
+
+E2_REGOFF: imm is ext_imm_2124 & m16_i_imm [ imm = m16_i_imm | (ext_imm_2124 << 5);] { export *[const]:2 imm; }
+
+
+:addiu m16_rx, gp, EXT_IS8			    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & m16_op=0b00000 & ext_is_ext=1 & gp & m16_rx & m16_ri_z=1 & EXT_IS8  {
+	m16_rx = gp + sext(EXT_IS8);
+}
+
+:andi m16_rx, EXT_LIU8			        is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & m16_op=0b01101 & m16_rx & m16_ri_z=3 & EXT_LIU8 {
+	m16_rx = m16_rx & zext(EXT_LIU8);
+}
+
+:cache ext_imm_1620, E2_REGOFF(m16_rx)	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1620 & m16_op=0b11010 & m16_rx & m16_ri_z=5 & E2_REGOFF {
+    local tmp:$(REGSIZE) = m16_rx + sext(E2_REGOFF);
+    cacheOp(ext_imm_1620:1, tmp);
+}
+
+:di	    	    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00110 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=0b01100 {
+    Status = Status & ~1;
+}
+:di m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00010 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=0b01100 {
+    m16_ry = Status;
+    Status = Status & ~1;   # clearing last bit (ffff..fffe == -2 signed)
+}
+
+:dmt	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0b001 & ext_imm_1620=0b00110 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=1 {
+	# Clear VPEControl IE bit (bit 15)
+	VPEControl = VPEControl & ~0x8000; #VPEControl[15,1] = 0;
+}
+:dmt m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0b001 & ext_imm_1620=0b00010 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=1 {
+    # Clear VPEControl IE bit (bit 15)
+	m16_ry = VPEControl; VPEControl = VPEControl & ~0x8000; #VPEControl[15,1] = 0;
+}
+
+:dvpe m16_ry	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0b001 & ext_imm_1620=0b00010 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=0 {
+	# Clear MVPControl EVP bit (bit 0)
+	m16_ry = MVPControl; MVPControl = MVPControl & ~0x1;
+}
+:dvpe	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0b001 & ext_imm_1620=0b00110 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=0 {
+	# Clear MVPControl EVP bit (bit 0)
+	MVPControl = MVPControl & ~0x1;
+}
+
+:ehb		    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0b00011 & ext_imm_21=0 & ext_imm_1620=0 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=4 & m16_shft_f=0 {
+}
+
+:ei	    	    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00111 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=0b01100 {
+    Status = Status | 1;
+}
+:ei m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=0 & ext_imm_1620=0b00011 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=0b01100 {
+    m16_ry = Status;
+    Status = Status | 1;
+}
+
+:emt	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=1 & ext_imm_1620=0b00111 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=1 {
+    # Set VPEControl TE bit (bit 15)
+	VPEControl = VPEControl | 0x8000; # VPEControl[15,1] = 1;
+}
+:emt m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=1 & ext_imm_1620=0b00011 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=1 {
+    # Set VPEControl TE bit (bit 15)
+	m16_ry = VPEControl; VPEControl = VPEControl | 0x8000; # VPEControl[15,1] = 1;
+}
+
+:evpe	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=1 & ext_imm_1620=0b00111 & m16_op=0b01100 & m16_rx=0b111 & m16_ry=0 & m16_i_imm=0 {
+    # Set MVPControl EVP bit (bit 0)h
+	MVPControl = MVPControl | 0x1;
+}
+:evpe m16_ry	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123=1 & ext_imm_1620=0b00011 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm=0 {
+    # Set MVPControl EVP bit (bit 0)h
+	m16_ry = MVPControl;
+	MVPControl = MVPControl | 0x1;
+}
+
+:ext m16_ry, m16_rx, ext_imm_2226, ext_size  	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=1 & ext_imm_1620 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0 [ ext_size = ext_imm_1620+1; ] {
+    local rs_tmp:$(REGSIZE) = m16_rx << ($(REGSIZE) * 8 - (ext_size + ext_imm_2226));
+    rs_tmp = rs_tmp >> ($(REGSIZE) * 8 - ext_size);
+    m16_ry = zext(rs_tmp);
+}
+:ins m16_ry, m16_rx, ext_imm_2226, ins_size		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=1 & ext_imm_1620 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0 [ ins_size = ext_imm_1620 - ext_imm_2226 + 1; ] {
+    local tmpa:$(REGSIZE) = -1;
+    tmpa = tmpa >> ($(REGSIZE) * 8 - ins_size);
+    local tmpb:$(REGSIZE) = m16_rx & tmpa;
+    tmpa = tmpa << ext_imm_2226;
+    tmpa = ~tmpa;
+    tmpb = tmpb << ext_imm_2226;
+    m16_ry = (m16_ry & tmpa) | tmpb;
+
+}
+:ins m16_ry, zero, ext_imm_2226, ins_size		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=0 & ext_imm_1620 & m16_op=0b00110 & m16_rx=0 & m16_ry & m16_shft_sa=1 & m16_shft_f=0 & zero [ ins_size = ext_imm_1620 - ext_imm_2226 + 1; ] {
+	local tmpa:$(REGSIZE) = -1;
+    tmpa = tmpa >> ($(REGSIZE) * 8 - ins_size);
+    tmpa = tmpa << ext_imm_2226;
+    tmpa = ~tmpa;
+    m16_ry = (m16_ry & tmpa);
+}
+
+# LB/LBU/LH/LHU/LW - handled by mips16
+
+:ll m16_rx, E2_REGOFF(ext_rb)		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0 & ext_rb & m16_op=0b10010 & m16_rx & m16_ri_z=6 & E2_REGOFF {
+    local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+	local tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+    m16_rx = sext(*[ram]:4 tmpa);
+    lockload(tmp);
+}
+
+:lui m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & m16_op=0b01101 & m16_rx & m16_ri_z=1 & EXT_LIU8 {
+	m16_rx = zext(EXT_LIU8) << 16;
+}
+
+:lwl m16_rx, E2_REGOFF(ext_rb)		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0 & ext_rb & m16_op=0b10010 & m16_rx & m16_ri_z=7 & E2_REGOFF {
+	local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+    local shft:$(REGSIZE) = tmp & 0x3;
+    local addr:$(REGSIZE) = tmp - shft;
+    local valOrig:4 = m16_rx:$(SIZETO4) & (0xffffffff >> ((4-shft) * 8));
+    local valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad << (shft * 8);
+    m16_rx = sext( valLoad | valOrig );
+}
+
+:lwr m16_rx, E2_REGOFF(ext_rb)		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0b10 & ext_rb & m16_op=0b10010 & m16_rx & m16_ri_z=7 & E2_REGOFF {
+	local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+    local shft:$(REGSIZE) = tmp & 0x3;
+    local addr:$(REGSIZE) = tmp - shft;
+    local valOrig:4 = m16_rx:$(SIZETO4) & (0xffffffff << ((shft+1) * 8));
+    local valLoad:4 = 0;
+    MemSrcCast(valLoad,addr);
+    valLoad = valLoad >> ((3-shft) * 8);
+    m16_rx = sext( valOrig | valLoad );
+}
+
+:mfc0 m16_ry, m16_i_imm, ext_imm_2123		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=0 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm {
+    m16_ry = getCopReg(0:1,m16_i_imm:1,ext_imm_2123:1);
+}
+:mtc0 m16_ry, m16_i_imm, ext_imm_2123		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2426=0 & ext_imm_2123 & ext_imm_1620=1 & m16_op=0b01100 & m16_rx=0b111 & m16_ry & m16_i_imm {
+    setCopReg(0:1,m16_ry,m16_i_imm:1,ext_imm_2123:1);
+}
+
+:movz m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 {
+    if(m16_ry != 0) goto inst_next;
+        m16_rx = ext_rb;
+}
+
+:movz m16_rx, zero, m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb=0 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=1 & m16_shft_f=0b10 & zero {
+    if(m16_ry != 0) goto inst_next;
+        m16_rx = 0;
+}
+
+:movn m16_rx, m16_ry, ext_rb	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 {
+    if(m16_ry == 0) goto inst_next;
+        m16_rx = ext_rb;
+}
+
+:movn m16_rx, zero, m16_ry		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb=0 & m16_op=0b00110 & m16_rx & m16_ry & m16_shft_sa=2 & m16_shft_f=0b10 & zero {
+   if(m16_ry == 0) goto inst_next;
+        m16_rx = 0;
+}
+
+:movtn m16_rx, zero	        	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0b10 & zero {
+    if(t8 == 0) goto inst_next;
+        m16_rx = 0;
+}
+
+:movtn m16_rx, ext_rb	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0b10 {
+    if(t8 == 0) goto inst_next;
+        m16_rx = ext_rb;
+}
+
+:movtz m16_rx, zero	           	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=5 & m16_shft_f=0b10 & zero {
+    if(t8 != 0) goto inst_next;
+        m16_rx = 0;
+}
+
+:movtz m16_rx, ext_rb	    	is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=1 & ext_imm_1920=0 & ext_rb & m16_op=0b00110 & m16_rx & m16_rr_z=0 & m16_shft_sa=5 & m16_shft_f=0b10 {
+    if(t8 != 0) goto inst_next;
+        m16_rx = ext_rb;
+}
+
+:pause      is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0b00101 & ext_imm_21=0 & ext_imm_1620=0 & m16_op=0b00110 & m16_rx=0 & m16_rr_z=0 & m16_shft_sa=6 & m16_shft_f=0 {
+    wait();
+}
+
+:pref ext_imm_1620, E2_REGOFF(m16_rx) 		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1620 & ext_rb & m16_op=0b11010 & m16_rx & m16_ri_z=4 & E2_REGOFF  {
+    local tmp:$(REGSIZE) = m16_rx + sext(E2_REGOFF);
+    prefetch(tmp, ext_imm_1620:1);
+}
+
+:ori m16_rx, EXT_LIU8				is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & m16_op=0b01101 & m16_rx & m16_ri_z=2 & EXT_LIU8 {
+	m16_rx = m16_rx | zext(EXT_LIU8);
+}
+
+:rdhwr m16_ry, ext_imm_1620         is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226=0 & ext_imm_21=0 & ext_imm_1620 & m16_op=0b00110 & m16_rx=0 & m16_ry & m16_shft_sa=3 & m16_shft_f=0 {
+   m16_ry = getHWRegister(ext_imm_1620:1);
+}
+
+# SB/SH/SW - handled by mips16
+
+:sc	m16_rx, E2_REGOFF(ext_rb)	    is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0 & ext_rb & m16_op=0b11010 & m16_rx & m16_ri_z=6 & E2_REGOFF{
+    local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+    lockwrite(tmp);
+	local tmpa:$(ADDRSIZE) = 0;
+	ValCast(tmpa,tmp);
+	*[ram]:4 tmpa = m16_rx;
+	m16_rx = 1;
+}
+
+:swl m16_rx, E2_REGOFF(ext_rb)		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0b00 & ext_rb & m16_op=0b11010 & m16_rx & m16_ri_z=7 & E2_REGOFF{
+    local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+    local tmpRT:4 = m16_rx:$(SIZETO4);
+    local shft:$(REGSIZE) = tmp & 0x3;
+    local addr:$(REGSIZE) = tmp - shft;
+    local valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff << ((4-shft) * 8));
+    local valStore:4 = (tmpRT >> (shft * 8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:swr m16_rx, E2_REGOFF(ext_rb)		is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2526=0 & ext_imm_1920=0b10 & ext_rb & m16_op=0b11010 & m16_rx & m16_ri_z=7 & E2_REGOFF {
+    local tmp:$(REGSIZE) = sext(E2_REGOFF);
+	tmp = tmp + ext_rb;
+    local tmpRT:4 = m16_rx:$(SIZETO4);
+    local shft:$(REGSIZE) = tmp & 0x3;
+    local addr:$(REGSIZE) = tmp - shft;
+    local valOrig:4 = 0;
+    MemSrcCast(valOrig,addr);
+    valOrig = valOrig & (0xffffffff >> ((shft+1) * 8));
+    local valStore:4 = (tmpRT << ((3-shft)*8)) | valOrig;
+    MemDestCast(addr,valStore);
+}
+
+:sync ext_imm_2226                  is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & ext_imm_2226 & ext_imm_21=0 & ext_imm_1620=0 & m16_op=0b00110 & m16_rx=0 & m16_ry=0 & m16_shft_sa=5 & m16_shft_f=0b00 {
+    SYNC(ext_imm_2226:1);
+}
+
+:xori m16_rx, EXT_LIU8		        is ISA_MODE=1 & RELP=1 & ext_isjal=0 & ext_is_ext=1 & m16_op=0b01101 & m16_rx & m16_ri_z=4 & EXT_LIU8 {
+	m16_rx = m16_rx ^ zext(EXT_LIU8);
 }

@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.decompiler.taint.ctadl;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.List;
 
 import generic.jar.ResourceFile;
@@ -42,9 +41,9 @@ public class CTADLTaintState extends AbstractTaintState {
 	}
 
 	@Override
-	public void buildQuery(List<String> paramList, Path engine, File indexDBFile,
+	public void buildQuery(List<String> paramList, String enginePath, File indexDBFile,
 			String indexDirectory) {
-		paramList.add(engine.toString());
+		paramList.add(enginePath);
 		paramList.add("--directory");
 		paramList.add(indexDirectory);
 		paramList.add("query");
@@ -66,15 +65,15 @@ public class CTADLTaintState extends AbstractTaintState {
 	}
 
 	@Override
-	public void buildIndex(List<String> paramList, String engine_path, String facts_path,
+	public void buildIndex(List<String> paramList, String enginePath, String factsPath,
 			String indexDirectory) {
-		paramList.add(engine_path);
+		paramList.add(enginePath);
 		paramList.add("--directory");
 		paramList.add(indexDirectory);
 		paramList.add("index");
 		paramList.add("-j8");
 		paramList.add("-f");
-		paramList.add(facts_path);
+		paramList.add(factsPath);
 	}
 
 	@Override

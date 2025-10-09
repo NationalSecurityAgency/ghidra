@@ -19,6 +19,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.var.JitMemoryOutVar;
 
 /**
@@ -29,7 +30,7 @@ public enum MemoryOutVarGen implements MemoryVarGen<JitMemoryOutVar> {
 	GEN;
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitMemoryOutVar v, JitType type,
+	public void generateVarWriteCode(JitCodeGenerator gen, JitMemoryOutVar v, JitType type, Ext ext,
 			MethodVisitor rv) {
 		VarGen.generateValWriteCodeDirect(gen, v, type, rv);
 	}

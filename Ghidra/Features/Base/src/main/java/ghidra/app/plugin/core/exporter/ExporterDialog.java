@@ -233,7 +233,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 				return "Unexpected exception validating options: " + e.getMessage();
 			}
 		};
-		AddressFactoryService svc = (domainObject instanceof Program) ? null : this;
+		AddressFactoryService svc = (domainObject instanceof Program) ? this : null;
 		OptionsDialog optionsDialog = new OptionsDialog(options, validator, svc);
 		optionsDialog
 				.setHelpLocation(new HelpLocation("ExporterPlugin", getAnchorForSelectedFormat()));

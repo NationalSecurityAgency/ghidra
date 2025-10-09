@@ -18,7 +18,10 @@ package ghidra.app.plugin.core.function.editor;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.ListCellRenderer;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
@@ -38,6 +41,11 @@ public class RegisterDropDownSelectionDataModel implements DropDownTextFieldData
 	}
 
 	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH);
+	}
+
+	@Override
 	public ListCellRenderer<Register> getListRenderer() {
 		return new GListCellRenderer<Register>();
 	}
@@ -54,9 +62,18 @@ public class RegisterDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<Register> getMatchingData(String searchText) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
 
-		if (searchText == null || searchText.length() == 0) {
+	@Override
+	public List<Register> getMatchingData(String searchText, SearchMode searchMode) {
+		if (StringUtils.isBlank(searchText)) {
 			return registers;
+		}
+
+		if (searchMode != SearchMode.STARTS_WITH) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + searchMode);
 		}
 
 		searchText = searchText.toLowerCase();
@@ -85,5 +102,4 @@ public class RegisterDropDownSelectionDataModel implements DropDownTextFieldData
 		}
 		return 0;
 	}
-
 }

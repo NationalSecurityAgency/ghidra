@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.task.ApplyMarkupAtDestinationAddressTask;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonView;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
@@ -41,7 +41,7 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 	private Duo<ListingPanel> listingPanels;
 
 	private VTController controller;
-	ListingCodeComparisonPanel dualListingPanel;
+	ListingCodeComparisonView dualListingProvider;
 
 	// Drag-N-Drop
 	private DragSource dragSource;
@@ -53,11 +53,11 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
 
 	public VTDualListingDragNDropHandler(VTController controller,
-			ListingCodeComparisonPanel dualListingPanel) {
+			ListingCodeComparisonView dualListingProvider) {
 		this.controller = controller;
-		this.dualListingPanel = dualListingPanel;
-		ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
-		ListingPanel rightPanel = dualListingPanel.getListingPanel(RIGHT);
+		this.dualListingProvider = dualListingProvider;
+		ListingPanel leftPanel = dualListingProvider.getListingPanel(LEFT);
+		ListingPanel rightPanel = dualListingProvider.getListingPanel(RIGHT);
 		listingPanels = new Duo<>(leftPanel, rightPanel);
 		setUpDragDrop();
 	}
@@ -109,7 +109,7 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		ProgramLocation programLocation = listingPanels.get(LEFT).getProgramLocation(p);
 		VTMarkupItem markupItem =
 			controller.getCurrentMarkupForLocation(programLocation,
-				dualListingPanel.getProgram(LEFT));
+				dualListingProvider.getProgram(LEFT));
 		if (markupItem == null) {
 			return false;
 		}
@@ -131,7 +131,7 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 
 		ProgramLocation programLocation = listingPanels.get(LEFT).getProgramLocation(p);
 		VTMarkupItem markupItem = controller.getCurrentMarkupForLocation(programLocation,
-			dualListingPanel.getProgram(LEFT));
+			dualListingProvider.getProgram(LEFT));
 		if (markupItem == null) {
 			return null;
 		}
@@ -151,16 +151,16 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		ProgramLocation loc = listingPanels.get(RIGHT).getProgramLocation(p);
 
 		Address newDestinationAddress =
-			markupType.getAddress(loc, dualListingPanel.getProgram(RIGHT));
+			markupType.getAddress(loc, dualListingProvider.getProgram(RIGHT));
 		if (newDestinationAddress == null) {
-			Msg.showInfo(getClass(), dualListingPanel, "Invalid Drop Location",
+			Msg.showInfo(getClass(), dualListingProvider, "Invalid Drop Location",
 				markupType.getDisplayName() + " was not dropped at a valid location.");
 			return;
 		}
 		if ((markupItem.getStatus() == VTMarkupItemStatus.SAME) &&
 			(SystemUtilities.isEqual(markupItem.getDestinationAddress(), newDestinationAddress))) {
 			// Dropped at expected address and already the same there.
-			Msg.showInfo(getClass(), dualListingPanel, "Already The Same", markupType
+			Msg.showInfo(getClass(), dualListingProvider, "Already The Same", markupType
 					.getDisplayName() +
 				" was dropped at its expected\ndestination where the value is already the same.");
 			return;

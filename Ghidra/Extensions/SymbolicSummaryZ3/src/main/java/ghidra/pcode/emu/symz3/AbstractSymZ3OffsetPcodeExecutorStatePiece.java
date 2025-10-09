@@ -16,13 +16,12 @@
 package ghidra.pcode.emu.symz3;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.stream.Stream;
 
 import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.Context;
 
-import ghidra.pcode.exec.PcodeArithmetic;
-import ghidra.pcode.exec.PcodeExecutorStatePiece;
+import ghidra.pcode.exec.*;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.symz3.model.SymValueZ3;
@@ -39,82 +38,11 @@ import ghidra.util.Msg;
  */
 public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 		implements PcodeExecutorStatePiece<SymValueZ3, SymValueZ3> {
-	/**
-	 * A map of address spaces to objects which store or cache state for that space
-	 *
-	 * @param <S> the type of object for each address space
-	 */
-	public abstract static class AbstractSpaceMap<S> {
-		protected final Map<AddressSpace, S> spaces = new HashMap<>();
-
-		public abstract S getForSpace(AddressSpace space, boolean toWrite);
-
-		public Collection<S> values() {
-			return spaces.values();
-		}
-	}
-
-	/**
-	 * Use this when each S contains the complete state for the address space
-	 * 
-	 * @param <S> the type of object for each address space
-	 */
-	public abstract static class SimpleSpaceMap<S> extends AbstractSpaceMap<S> {
-		/**
-		 * Construct a new space internally associated with the given address space
-		 * 
-		 * <p>
-		 * As the name implies, this often simply wraps {@code S}'s constructor
-		 * 
-		 * @param space the address space
-		 * @return the new space
-		 */
-		protected abstract S newSpace(AddressSpace space);
-
-		@Override
-		public S getForSpace(AddressSpace space, boolean toWrite) {
-			return spaces.computeIfAbsent(space, s -> newSpace(s));
-		}
-	}
-
-	/**
-	 * Use this when each S is possibly a cache to some other state (backing) object
-	 *
-	 * @param <B> the type of the object backing the cache for each address space
-	 * @param <S> the type of cache for each address space
-	 */
-	public abstract static class CacheingSpaceMap<B, S> extends AbstractSpaceMap<S> {
-		/**
-		 * Get the object backing the cache for the given address space
-		 * 
-		 * @param space the space
-		 * @return the backing object
-		 */
-		protected abstract B getBacking(AddressSpace space);
-
-		/**
-		 * Construct a new space internally associated with the given address space, having the
-		 * given backing
-		 * 
-		 * <p>
-		 * As the name implies, this often simply wraps {@code S}'s constructor
-		 * 
-		 * @param space the address space
-		 * @param backing the backing, if applicable. null for the unique space
-		 * @return the new space
-		 */
-		protected abstract S newSpace(AddressSpace space, B backing);
-
-		@Override
-		public S getForSpace(AddressSpace space, boolean toWrite) {
-			return spaces.computeIfAbsent(space,
-				s -> newSpace(s, s.isUniqueSpace() ? null : getBacking(s)));
-		}
-	}
 
 	protected final Language language;
 	protected final PcodeArithmetic<SymValueZ3> addressArithmetic;
 	protected final PcodeArithmetic<SymValueZ3> arithmetic;
+	protected final PcodeStateCallbacks cb;
 	protected final AddressSpace uniqueSpace;
 
 	/**
@@ -123,12 +51,15 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param language the language (used for its memory model)
 	 * @param addressArithmetic the arithmetic used for addresses
 	 * @param arithmetic an arithmetic used to generate default values of {@code T}
+	 * @param cb callbacks to receive emulation events
 	 */
 	public AbstractSymZ3OffsetPcodeExecutorStatePiece(Language language,
-			PcodeArithmetic<SymValueZ3> addressArithmetic, PcodeArithmetic<SymValueZ3> arithmetic) {
+			PcodeArithmetic<SymValueZ3> addressArithmetic, PcodeArithmetic<SymValueZ3> arithmetic,
+			PcodeStateCallbacks cb) {
 		this.language = language;
 		this.addressArithmetic = addressArithmetic;
 		this.arithmetic = arithmetic;
+		this.cb = cb;
 		uniqueSpace = language.getAddressFactory().getUniqueSpace();
 	}
 
@@ -147,6 +78,11 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 		return arithmetic;
 	}
 
+	@Override
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
 	/**
 	 * Set a value in the unique space
 	 * 
@@ -158,9 +94,9 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param size the number of bytes to write (the size of the value)
 	 * @param val the value to store
 	 */
-	protected void setUnique(SymValueZ3 offset, int size, SymValueZ3 val) {
+	protected void setUnique(SymValueZ3 offset, int size, SymValueZ3 val, PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, true);
-		setInSpace(s, offset, size, val);
+		setInSpace(s, offset, size, val, cb);
 	}
 
 	/**
@@ -173,9 +109,9 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param size the number of bytes to read (the size of the value)
 	 * @return the read value
 	 */
-	protected SymValueZ3 getUnique(SymValueZ3 offset, int size) {
+	protected SymValueZ3 getUnique(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
 		S s = getForSpace(uniqueSpace, false);
-		return getFromSpace(s, offset, size);
+		return getFromSpace(s, offset, size, cb);
 	}
 
 	/**
@@ -196,8 +132,10 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to write (the size of the value)
 	 * @param val the value to store
+	 * @param cb callbacks to receive emulation events
 	 */
-	protected abstract void setInSpace(S space, SymValueZ3 offset, int size, SymValueZ3 val);
+	protected abstract void setInSpace(S space, SymValueZ3 offset, int size, SymValueZ3 val,
+			PcodeStateCallbacks cb);
 
 	/**
 	 * Get a value from the given space
@@ -205,9 +143,11 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param space the address space
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param cb callbacks to receive emulation events
 	 * @return the read value
 	 */
-	protected abstract SymValueZ3 getFromSpace(S space, SymValueZ3 offset, int size);
+	protected abstract SymValueZ3 getFromSpace(S space, SymValueZ3 offset, int size,
+			PcodeStateCallbacks cb);
 
 	/**
 	 * In case spaces are generated lazily, and we're reading from a space that doesn't yet exist,
@@ -219,16 +159,14 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 	 * @param size the number of bytes to read (the size of the value)
 	 * @return the default value
 	 */
-	protected SymValueZ3 getFromNullSpace(int size) {
+	protected SymValueZ3 getFromNullSpace(int size, PcodeStateCallbacks cb) {
 		Msg.warn(this,
 			"getFromNullSpace is returning 0 but that might not be what we want for symz3");
 		return arithmetic.fromConst(0, size);
 	}
 
-	@Override
-	public void setVar(AddressSpace space, SymValueZ3 offset, int size, boolean quantize,
-			SymValueZ3 val) {
-
+	protected void setVarInternal(AddressSpace space, SymValueZ3 offset, int size, boolean quantize,
+			SymValueZ3 val, PcodeStateCallbacks cb) {
 		//Msg.info(this, "setVar for space: " + space + " offset: " + offset + " size: " + size + " val: " + val);
 		assert val != null;
 		assert offset != null;
@@ -246,7 +184,7 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 			throw new IllegalArgumentException("Cannot write to constant space");
 		}
 		if (space.isUniqueSpace()) {
-			setUnique(offset, size, val);
+			setUnique(offset, size, val, cb);
 			return;
 		}
 		S s = getForSpace(space, true);
@@ -256,12 +194,22 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 		 * convert to long, and quantize. You could also express the quantization symbolically, but
 		 * it rarely comes up.
 		 */
-		setInSpace(s, offset, size, val);
+		setInSpace(s, offset, size, val, cb);
 	}
 
 	@Override
-	public SymValueZ3 getVar(AddressSpace space, SymValueZ3 offset, int size, boolean quantize,
-			Reason reason) {
+	public void setVar(AddressSpace space, SymValueZ3 offset, int size, boolean quantize,
+			SymValueZ3 val) {
+		setVarInternal(space, offset, size, quantize, val, cb);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, SymValueZ3 offset, int size, SymValueZ3 val) {
+		setVarInternal(space, offset, size, false, val, PcodeStateCallbacks.NONE);
+	}
+
+	protected SymValueZ3 getVarInternal(AddressSpace space, SymValueZ3 offset, int size,
+			boolean quantize, Reason reason, PcodeStateCallbacks cb) {
 		//checkRange(space, offset, size);
 		//Msg.info(this, "getVar for space: " + space + " offset: " + offset + " size: " + size + " quantize: " + quantize);
 		if (space.isConstantSpace()) {
@@ -281,14 +229,26 @@ public abstract class AbstractSymZ3OffsetPcodeExecutorStatePiece<S>
 			}
 		}
 		if (space.isUniqueSpace()) {
-			return getUnique(offset, size);
+			return getUnique(offset, size, cb);
 		}
 		S s = getForSpace(space, false);
 		//Msg.info(this, "Now we likely have a space to get from: " + s);
 		if (s == null) {
-			return getFromNullSpace(size);
+			return getFromNullSpace(size, cb);
 		}
 		//offset = quantizeOffset(space, offset);
-		return getFromSpace(s, offset, size);
+		return getFromSpace(s, offset, size, cb);
+	}
+
+	@Override
+	public SymValueZ3 getVar(AddressSpace space, SymValueZ3 offset, int size, boolean quantize,
+			Reason reason) {
+		return getVarInternal(space, offset, size, quantize, reason, cb);
+	}
+
+	@Override
+	public SymValueZ3 getVarInternal(AddressSpace space, SymValueZ3 offset, int size,
+			Reason reason) {
+		return getVarInternal(space, offset, size, false, reason, PcodeStateCallbacks.NONE);
 	}
 }

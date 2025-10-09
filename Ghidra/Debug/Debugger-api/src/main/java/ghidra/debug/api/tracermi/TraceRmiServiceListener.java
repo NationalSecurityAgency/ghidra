@@ -86,8 +86,9 @@ public interface TraceRmiServiceListener {
 	 * 
 	 * <p>
 	 * The acceptor remains valid until one of three events occurs:
-	 * {@linkplain} #connected(TraceRmiConnection, ConnectMode, TraceRmiAcceptor)},
-	 * {@linkplain} #acceptCancelled(TraceRmiAcceptor)}, or {@linkplain} #acceptFailed(Exception)}.
+	 * {@link #connected(TraceRmiConnection, ConnectMode, TraceRmiAcceptor)},
+	 * {@link #acceptCancelled(TraceRmiAcceptor)}, or
+	 * {@link #acceptFailed(TraceRmiAcceptor, Exception)}.
 	 * 
 	 * @param acceptor the acceptor waiting
 	 */

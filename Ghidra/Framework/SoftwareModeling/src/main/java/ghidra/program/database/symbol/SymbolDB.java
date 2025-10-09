@@ -253,7 +253,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				throw new IllegalArgumentException(msg);
 			}
 			if (record != null) {
-				setSourceFlagBit(newSource);
+				setSourceFlagBits(newSource);
 				updateRecord();
 				symbolMgr.symbolSourceChanged(this);
 			}
@@ -263,10 +263,10 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	protected void setSourceFlagBit(SourceType newSource) {
+	protected void setSourceFlagBits(SourceType newSource) {
 		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-		byte clearBits = SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
-		byte setBits = (byte) newSource.ordinal();
+		byte clearBits = SymbolDatabaseAdapter.SYMBOL_SOURCE_MASK;
+		byte setBits = SymbolDatabaseAdapter.getSourceTypeFlagsBits(newSource);
 		flags &= ~clearBits;
 		flags |= setBits;
 		record.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
@@ -280,10 +280,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			if (record == null) {
 				return SourceType.DEFAULT;
 			}
-			byte sourceBits = SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
 			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-			byte adapterSource = (byte) (flags & sourceBits);
-			return SourceType.values()[adapterSource];
+			return SymbolDatabaseAdapter.decodeSourceTypeFromFlags(flags);
 		}
 		finally {
 			lock.release();
@@ -448,8 +446,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 	private void updateSymbolSource(DBRecord symbolRecord, SourceType source) {
 		byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
-		flags &= ~SymbolDatabaseAdapter.SYMBOL_SOURCE_BITS;
-		flags |= (byte) source.ordinal();
+		flags &= ~SymbolDatabaseAdapter.SYMBOL_SOURCE_MASK; // clear source type bits
+		flags |= SymbolDatabaseAdapter.getSourceTypeFlagsBits(source);
 		symbolRecord.setByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL, flags);
 	}
 

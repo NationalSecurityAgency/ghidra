@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,17 +17,16 @@ package ghidra.pcode.emu.auxiliary;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.pcode.emu.AbstractPcodeMachine;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.lang.Language;
 
 /**
- * A stand-alone emulator whose parts are manufactured by a {@link AuxEmulatorPartsFactory}
+ * An emulator whose parts are manufactured by a {@link AuxEmulatorPartsFactory}
  * 
  * <p>
  * See the parts factory interface: {@link AuxEmulatorPartsFactory}. Also see the Taint Analyzer for
- * a complete solution based on this class.
+ * a complete example based on this class.
  * 
  * @param <U> the type of auxiliary values
  */
@@ -36,9 +35,10 @@ public abstract class AuxPcodeEmulator<U> extends AbstractPcodeMachine<Pair<byte
 	 * Create a new emulator
 	 * 
 	 * @param language the language (processor model)
+	 * @param cb callbacks to receive emulation events
 	 */
-	public AuxPcodeEmulator(Language language) {
-		super(language);
+	public AuxPcodeEmulator(Language language, PcodeEmulationCallbacks<Pair<byte[], U>> cb) {
+		super(language, cb);
 	}
 
 	/**
@@ -72,15 +72,17 @@ public abstract class AuxPcodeEmulator<U> extends AbstractPcodeMachine<Pair<byte
 
 	@Override
 	protected PcodeExecutorState<Pair<byte[], U>> createSharedState() {
+		PcodeStateCallbacks scb = cb.wrapFor(null);
 		return getPartsFactory().createSharedState(this,
-			new BytesPcodeExecutorStatePiece(language));
+			new BytesPcodeExecutorStatePiece(language, scb), scb);
 	}
 
 	@Override
 	protected PcodeExecutorState<Pair<byte[], U>> createLocalState(
 			PcodeThread<Pair<byte[], U>> thread) {
+		PcodeStateCallbacks scb = cb.wrapFor(thread);
 		return getPartsFactory().createLocalState(this, thread,
-			new BytesPcodeExecutorStatePiece(language));
+			new BytesPcodeExecutorStatePiece(language, scb), scb);
 	}
 
 	@Override

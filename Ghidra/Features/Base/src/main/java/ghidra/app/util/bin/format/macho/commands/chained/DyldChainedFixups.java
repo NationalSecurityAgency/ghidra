@@ -24,8 +24,8 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.MachoProgramBuilder;
-import ghidra.app.util.opinion.MachoProgramUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -153,7 +153,7 @@ public class DyldChainedFixups {
 					.mapToLong(DyldFixup::size)
 					.sum();
 			if (externalSize > 0) {
-				extAddr = MachoProgramUtils.addExternalBlock(program, externalSize, log);
+				extAddr = AbstractProgramLoader.addExternalBlock(program, externalSize, log);
 			}
 		}
 		catch (Exception e) {

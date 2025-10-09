@@ -24,7 +24,7 @@ import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
 
 /**
- * Golang type information about a specific slice type.
+ * Go type information about a specific slice type.
  * <p>
  * See {@link GoTypeManager#getGenericSliceDT()} or the "runtime.slice" type for the definition of
  * a instance of a slice variable in memory. 
@@ -41,8 +41,7 @@ public class GoSliceType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the element's type.
-	 * @return reference to the element's type
+	 * {@return a reference to the element's type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -51,12 +50,14 @@ public class GoSliceType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		Structure genericSliceDT = programContext.getGoTypes().getGenericSliceDT();
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataTypeManager dtm = goTypes.getDTM();
+		Structure genericSliceDT = goTypes.getGenericSliceDT();
 
 		StructureDataType sliceDT =
 			new StructureDataType(goTypes.getCP(this), goTypes.getTypeName(this),
-				genericSliceDT.getLength(), goTypes.getDTM());
+				genericSliceDT.getLength(), dtm);
 
 		// ensure the sliceDT is filled out before getting the element's data type to ensure
 		// any other data types pulled in that ref this slice don't change size when trying to
@@ -67,8 +68,8 @@ public class GoSliceType extends GoType {
 
 		// fixup the generic void* field with the specific element* type
 		GoType elementType = getElement();
-		DataType elementDT = goTypes.getGhidraDataType(elementType);
-		Pointer elementPtrDT = goTypes.getDTM().getPointer(elementDT);
+		DataType elementDT = goTypes.getDataType(elementType);
+		Pointer elementPtrDT = dtm.getPointer(elementDT);
 
 		int arrayPtrComponentIndex = 0; /* HACK, field ordinal of void* data field in slice type */
 		DataTypeComponent arrayDTC = genericSliceDT.getComponent(arrayPtrComponentIndex);
@@ -88,6 +89,23 @@ public class GoSliceType extends GoType {
 			elementType.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public String getPackagePathString() {
+		String ppStr = super.getPackagePathString();
+		if (ppStr == null || ppStr.isEmpty()) {
+			try {
+				GoType elemType = getElement();
+				if (elemType != null) {
+					ppStr = elemType.getPackagePathString();
+				}
+			}
+			catch (IOException e) {
+				// fall thru
+			}
+		}
+		return ppStr;
 	}
 
 	@Override

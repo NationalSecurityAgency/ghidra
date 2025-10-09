@@ -24,6 +24,8 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 import javax.swing.JComponent;
@@ -34,7 +36,7 @@ import org.junit.*;
 
 import generic.test.AbstractGuiTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.exception.InvalidInputException;
 import gui.event.MouseBinding;
@@ -454,12 +456,133 @@ public class OptionsTest extends AbstractGuiTest {
 		assertTrue(options.contains("Foo"));
 		assertTrue(options.contains("Bar"));
 
-		options.registerOption("Bar", 0, null, "foo");
-
+		options.registerOption("Bar", 0, null, "Bar description");
 		options.removeUnusedOptions();
 
-		assertFalse(options.contains("Foo"));
+		// registered; should stay around
 		assertTrue(options.contains("Bar"));
+		// not registered, but not aged-off; should stay around
+		assertTrue(options.contains("Foo"));
+
+		// Save, edit the date of the options to be older than 1 year, which is our age cutoff. 
+		// Make sure any unregistered option is then removed.
+		Element savedRoot = options.getXmlRoot(false);
+		LocalDate twoYearsAgo = LocalDate.now().minusYears(2);
+		Set<String> optionNames = Set.of("Bar", "Foo");
+		setLastUsedDate(savedRoot, twoYearsAgo, optionNames);
+
+		options = new ToolOptions(savedRoot);
+		assertTrue(options.contains("Foo"));
+		assertTrue(options.contains("Bar"));
+
+		options.registerOption("Bar", 0, null, "Bar description");
+		options.removeUnusedOptions();
+
+		// registered; should stay around
+		assertTrue(options.contains("Bar"));
+		// not registered, and older than 1 year; should be removed
+		assertFalse(options.contains("Foo"));
+	}
+
+	@Test
+	public void testRemoveUnusedOption_WrappedOption() throws Exception {
+
+		Date date = new Date();
+		options.setDate("Foo", date);
+		options.setDate("Bar", date);
+		saveAndRestoreOptions();
+		assertEquals(date, options.getDate("Foo", null));
+		assertEquals(date, options.getDate("Bar", null));
+
+		Date defaultDate = new SimpleDateFormat("yyyy-MM-dd").parse("2025-09-12");
+
+		options.registerOption("Bar", defaultDate, null, "Bar description");
+		options.removeUnusedOptions();
+
+		// registered; should stay around
+		assertTrue(options.contains("Bar"));
+		// not registered, but not aged-off; should stay around
+		assertTrue(options.contains("Foo"));
+
+		// Save, edit the date of the options to be older than 1 year, which is our age cutoff. 
+		// Make sure any unregistered option is then removed.
+		Element savedRoot = options.getXmlRoot(false);
+		LocalDate twoYearsAgo = LocalDate.now().minusYears(2);
+		Set<String> optionNames = Set.of("Bar", "Foo");
+		setLastUsedDate(savedRoot, twoYearsAgo, optionNames);
+
+		options = new ToolOptions(savedRoot);
+		assertTrue(options.contains("Foo"));
+		assertTrue(options.contains("Bar"));
+
+		options.registerOption("Bar", defaultDate, null, "Bar description");
+		options.removeUnusedOptions();
+
+		// registered; should stay around
+		assertTrue(options.contains("Bar"));
+		// not registered, and older than 1 year; should be removed
+		assertFalse(options.contains("Foo"));
+	}
+
+	@Test
+	public void testUnregisteredWarningMessage() {
+
+		/*
+		 	Test that options access, but not registered, will trigger a warning message.   
+		 */
+
+		SpyErrorLogger spyLogger = new SpyErrorLogger();
+		Msg.setErrorLogger(spyLogger);
+
+		options.getInt("Foo", 1);
+		assertTrue(spyLogger.isEmtpy());
+
+		options.validateOptions();
+		spyLogger.assertLogMessage("Unregistered", "property", "Foo");
+
+		spyLogger.reset();
+		options.registerOption("Foo", 0, null, "Description");
+		options.getInt("Foo", 2);
+		options.validateOptions();
+		assertTrue(spyLogger.isEmtpy());
+	}
+
+	private void setLastUsedDate(Element savedRoot, LocalDate lastRegisteredDate,
+			Set<String> names) {
+
+		/*
+		 
+		 Msg.debug(this, XmlUtilities.toString(savedRoot));
+		
+			<CATEGORY NAME="Test">
+			    <SAVE_STATE NAME="Bar" TYPE="int" VALUE="3" LAST_REGISTERED="2025-09-17" />
+				<SAVE_STATE NAME="Bar" TYPE="boolean" VALUE="false" LAST_REGISTERED="2025-09-17" />
+			</CATEGORY> 
+		
+		 */
+
+		String dateString = lastRegisteredDate.format(ToolOptions.LAST_REGISTERED_DATE_FORMATTER);
+
+		List<Element> elements = getElementsByName(savedRoot, names);
+		for (Element element : elements) { // <SAVE_STATE NAME="Foo" ...>
+			element.setAttribute(ToolOptions.LAST_REGISTERED_DATE_ATTIBUTE, dateString);
+		}
+
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Element> getElementsByName(Element savedRoot, Set<String> names) {
+
+		List<Element> matches = new ArrayList<>();
+		List<Element> children = savedRoot.getChildren();
+		for (Element saveState : children) {
+			String name = saveState.getAttributeValue("NAME");
+			if (names.contains(name)) {
+				matches.add(saveState);
+			}
+		}
+
+		return matches;
 	}
 
 	@Test

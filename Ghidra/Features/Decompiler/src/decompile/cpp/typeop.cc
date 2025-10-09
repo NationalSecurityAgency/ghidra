@@ -591,7 +591,12 @@ void TypeOpBranch::printRaw(ostream &s,const PcodeOp *op)
 
 {
   s << name << ' ';
-  Varnode::printRaw(s,op->getIn(0));
+  const BlockBasic *parent = op->getParent();
+  if (parent != (const BlockBasic *)0 && parent->sizeOut() == 1) {
+    parent->getOut(0)->printShortHeader(s);
+  }
+  else
+    Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpCbranch::TypeOpCbranch(TypeFactory *t) : TypeOp(t,CPUI_CBRANCH,"goto")
@@ -617,13 +622,25 @@ void TypeOpCbranch::printRaw(ostream &s,const PcodeOp *op)
 
 {
   s << name << ' ';
-  Varnode::printRaw(s,op->getIn(0));	// Print the distant (non-fallthru) destination
+  const BlockBasic *parent = op->getParent();
+  FlowBlock *falseOut = (FlowBlock *)0;
+  if (parent != (const BlockBasic *)0 && parent->sizeOut() == 2) {
+    FlowBlock *trueOut = parent->getTrueOut();
+    falseOut = parent->getFalseOut();
+    trueOut->printShortHeader(s);
+  }
+  else
+    Varnode::printRaw(s,op->getIn(0));	// Print the distant (non-fallthru) destination
   s << " if (";
   Varnode::printRaw(s,op->getIn(1));
-  if (op->isBooleanFlip()^op->isFallthruTrue())
+  if (op->isBooleanFlip())
     s << " == 0)";
   else
     s << " != 0)";
+  if (falseOut != (FlowBlock *)0) {
+    s << " else ";
+    falseOut->printShortHeader(s);
+  }
 }
 
 TypeOpBranchind::TypeOpBranchind(TypeFactory *t) : TypeOp(t,CPUI_BRANCHIND,"switch")
@@ -2209,7 +2226,7 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 {
   opflags = PcodeOp::ternary | PcodeOp::nocollapse;
   addlflags = arithmetic_op;
-  behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
+  behave = new OpBehaviorPtradd();
 }
 
 Datatype *TypeOpPtradd::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -2279,7 +2296,7 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// allow this to be commutative.
   opflags = PcodeOp::binary|PcodeOp::nocollapse;
   addlflags = arithmetic_op;
-  behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
+  behave = new OpBehaviorPtrsub();
 }
 
 Datatype *TypeOpPtrsub::getOutputLocal(const PcodeOp *op) const

@@ -166,6 +166,16 @@ public class GhidraFile implements DomainFile, LinkFileInfo {
 	}
 
 	@Override
+	public boolean isFolderLink() {
+		try {
+			return getFileData().isFolderLink();
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	@Override
 	public LinkFileInfo getLinkInfo() {
 		return isLink() ? this : null;
 	}
@@ -642,7 +652,7 @@ public class GhidraFile implements DomainFile, LinkFileInfo {
 		catch (IOException e) {
 			fileError(e);
 		}
-		return new HashMap<>();
+		return Map.of();
 	}
 
 	void fileChanged() {

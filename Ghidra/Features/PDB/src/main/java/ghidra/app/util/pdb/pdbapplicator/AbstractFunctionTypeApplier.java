@@ -287,6 +287,9 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		RecordNumber argsRecord = getArgListRecordNumber(type);
 		AbstractMsType aType = applicator.getTypeRecord(argsRecord);
 		if (!(aType instanceof AbstractArgumentsListMsType argsList)) {
+			if (aType instanceof PrimitiveMsType pt && pt.isNoType()) {
+				return new ArrayList<>();
+			}
 			throw new PdbException(
 				"Expecting arguments list but got: " + aType.getClass().getSimpleName());
 		}

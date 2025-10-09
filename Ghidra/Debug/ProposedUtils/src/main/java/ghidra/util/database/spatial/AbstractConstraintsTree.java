@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import db.DBRecord;
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import generic.util.PeekableIterator;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -119,7 +119,6 @@ public abstract class AbstractConstraintsTree< //
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
 	 * 
 	 * @param parent the parent node
-	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
 	 */
 	protected Collection<DR> getDataChildrenOf(NR parent) {
@@ -137,7 +136,6 @@ public abstract class AbstractConstraintsTree< //
 	 * {@link TreeRecordVisitor}.
 	 * 
 	 * @param parent the parent node
-	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
 	 */
 	protected Collection<? extends DBTreeRecord<?, ? extends NS>> getChildrenOf(NR parent) {
@@ -289,7 +287,7 @@ public abstract class AbstractConstraintsTree< //
 			}
 			nodes.add(n);
 		}
-		return NestedIterator.start(nodes.iterator(), n -> iterator(n, query));
+		return FlattenedIterator.start(nodes.iterator(), n -> iterator(n, query));
 	}
 
 	protected Iterator<DR> orderedIterator(Q query) {

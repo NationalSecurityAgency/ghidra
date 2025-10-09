@@ -211,13 +211,14 @@ public interface FileSystem {
 	 * @param contentType application defined content type
 	 * @param textData text data (required)
 	 * @param comment file comment (may be null, only used if versioning is enabled)
+	 * @param user name of user creating item (required for local versioned item)
 	 * @return new data file
 	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
 	 * @throws InvalidNameException if the name has illegal characters.
 	 * @throws IOException if an IO error occurs.
 	 */
 	public TextDataItem createTextDataItem(String parentPath, String name, String fileID,
-			String contentType, String textData, String comment)
+			String contentType, String textData, String comment, String user)
 			throws InvalidNameException, IOException;
 
 	/**
@@ -344,23 +345,22 @@ public interface FileSystem {
 	 */
 	public static String normalizePath(String path) throws IllegalArgumentException {
 		if (!path.startsWith(SEPARATOR)) {
-			throw new IllegalArgumentException("Absolute path required");
+			throw new IllegalArgumentException("Absolute path required: " + path);
 		}
 
 		String[] split = path.split(SEPARATOR);
 
 		ArrayList<String> elements = new ArrayList<>();
+		elements.add(SEPARATOR);
 		for (int i = 1; i < split.length; i++) {
 			String e = split[i];
 			if (e.length() == 0) {
 				throw new IllegalArgumentException("Invalid path with empty element: " + path);
 			}
 			if ("..".equals(e)) {
-				try {
-					// remove last element
-					elements.removeLast();
-				}
-				catch (NoSuchElementException ex) {
+				// remove last element
+				elements.removeLast();
+				if (elements.size() == 0) {
 					throw new IllegalArgumentException("Invalid path: " + path);
 				}
 			}
@@ -369,6 +369,9 @@ public interface FileSystem {
 				continue;
 			}
 			else {
+				if (i < (split.length - 1)) {
+					e += SEPARATOR;
+				}
 				elements.add(e);
 			}
 		}
@@ -379,8 +382,10 @@ public interface FileSystem {
 
 		StringBuilder buf = new StringBuilder();
 		for (String e : elements) {
-			buf.append(SEPARATOR);
 			buf.append(e);
+		}
+		if (path.endsWith(SEPARATOR)) {
+			buf.append(SEPARATOR);
 		}
 		return buf.toString();
 	}

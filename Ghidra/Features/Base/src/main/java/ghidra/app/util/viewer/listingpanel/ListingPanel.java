@@ -679,7 +679,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return null;
 		}
 
-		openDataAsNeeded(loc);
+		openDataOrFunctionAsNeeded(loc);
 
 		FieldLocation floc = layoutModel.getFieldLocation(loc);
 		if (floc != null) {
@@ -719,15 +719,40 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return layoutModel.getFieldLocation(new ProgramLocation(program, address));
 	}
 
-	private void openDataAsNeeded(ProgramLocation location) {
+	private void openDataOrFunctionAsNeeded(ProgramLocation location) {
+		if (location instanceof CollapsedCodeLocation) {
+			return;
+		}
 		Address address = location.getByteAddress();
 		Program program = getProgram();
 		CodeUnit cu = program.getListing().getCodeUnitContaining(address);
-		if (!(cu instanceof Data)) {
-			return;
+		if (cu instanceof Data data) {
+			openData(data, address);
+		}
+		else if (cu instanceof Instruction instruction) {
+			openFunction(instruction);
 		}
 
-		Data data = (Data) cu;
+	}
+
+	private void openFunction(Instruction instruction) {
+		Address address = instruction.getMinAddress();
+		Program program = instruction.getProgram();
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return;
+		}
+		Address functionAddress = function.getEntryPoint();
+		// don't auto-open entry point addresses
+		if (address.equals(functionAddress)) {
+			return;
+		}
+		if (!listingModel.isFunctionOpen(functionAddress)) {
+			listingModel.setFunctionOpen(functionAddress, true);
+		}
+	}
+
+	private void openData(Data data, Address address) {
 		if (data.getComponent(0) == null) {
 			// not sub data to open
 			return;
@@ -741,6 +766,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (openAllData(subData)) {
 			layoutModel.dataChanged(true);
 		}
+
 	}
 
 	private FieldLocation getFieldLocationForDataAndOpenAsNeeded(Data data, Address address) {

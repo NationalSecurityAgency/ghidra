@@ -27,6 +27,9 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.framework.data.LinkHandler;
 import ghidra.framework.main.datatree.DataTreeNode.NodeType;
 import ghidra.framework.model.*;
+import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 /**
  * Class to handle changes when a domain folder changes; updates the
@@ -48,6 +51,10 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 	private LinkedTreeNode linkTreeRoot = new LinkedTreeNode(null, null);
 
 	private boolean skipLinkUpdate = false; // updates within Swing event dispatch thread only
+
+	// The refreshedTrackingSet is used to track recursive path refreshes to avoid infinite 
+	// recursion.  See updateLinkedContent and LinkedTreeNode.refreshLinks methods.
+	private HashSet<String> refreshedTrackingSet;
 
 	ChangeManager(ProjectDataTreePanel treePanel) {
 		this.treePanel = treePanel;
@@ -75,11 +82,13 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFileAdded(DomainFile file) {
+
 		boolean isFolderLink = file.isLink() && file.getLinkInfo().isFolderLink();
 		String fileName = file.getName();
 		DomainFolder parentFolder = file.getParent();
-		updateLinkedContent(parentFolder, p -> addFileNode(p, fileName, isFolderLink),
+		updateLinkedContent(parentFolder.getPathname(), p -> addFileNode(p, fileName, isFolderLink),
 			ltn -> ltn.refreshLinks(fileName));
+
 		DomainFolderNode folderNode = findDomainFolderNode(parentFolder, true);
 		if (folderNode != null && folderNode.isLoaded()) {
 			addFileNode(folderNode, fileName, isFolderLink);
@@ -88,7 +97,9 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFileRemoved(DomainFolder parent, String name, String fileID) {
-		updateLinkedContent(parent, null, ltn -> ltn.refreshLinks(name));
+
+		updateLinkedContent(parent.getPathname(), null, ltn -> ltn.refreshLinks(name));
+
 		DomainFolderNode folderNode = findDomainFolderNode(parent, true);
 		if (folderNode != null) {
 			updateChildren(folderNode);
@@ -97,14 +108,16 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFileRenamed(DomainFile file, String oldName) {
+
 		boolean isFolderLink = file.isLink() && file.getLinkInfo().isFolderLink();
-		updateLinkedContent(file.getParent(), p -> {
+		updateLinkedContent(file.getParent().getPathname(), p -> {
 			updateChildren(p);
 			addFileNode(p, file.getName(), isFolderLink);
 		}, ltn -> {
 			ltn.refreshLinks(oldName);
 			ltn.refreshLinks(file.getName());
 		});
+
 		DomainFolder parent = file.getParent();
 		skipLinkUpdate = true;
 		try {
@@ -124,10 +137,22 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
+
+		LinkFileInfo linkInfo = file.getLinkInfo();
+		boolean isFolderLink = linkInfo != null && linkInfo.isFolderLink();
+
 		DomainFolder parentFolder = file.getParent();
-		updateLinkedContent(parentFolder, fn -> {
-			/* No folder update required */
+		updateLinkedContent(parentFolder.getPathname(), fn -> {
+			// Refresh any linked folder content containing file
+			if (fn.isLoaded()) {
+				NodeType type = isFolderLink ? NodeType.FOLDER_LINK : NodeType.FILE;
+				DomainFileNode fileNode = (DomainFileNode) fn.getChild(file.getName(), type);
+				if (fileNode != null) {
+					fileNode.refresh();
+				}
+			}
 		}, ltn -> ltn.refreshLinks(file.getName()));
+
 		DomainFileNode fileNode = findDomainFileNode(file, true);
 		if (fileNode != null) {
 			fileNode.refresh();
@@ -141,10 +166,12 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFolderAdded(DomainFolder folder) {
+
 		String folderName = folder.getName();
 		DomainFolder parentFolder = folder.getParent();
-		updateLinkedContent(parentFolder, p -> addFolderNode(p, folderName),
+		updateLinkedContent(parentFolder.getPathname(), p -> addFolderNode(p, folderName),
 			ltn -> ltn.refreshLinks(folderName));
+
 		DomainFolderNode folderNode = findDomainFolderNode(parentFolder, true);
 		if (folderNode != null && folderNode.isLoaded()) {
 			addFolderNode(folderNode, folderName);
@@ -153,7 +180,9 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFolderRemoved(DomainFolder parent, String name) {
-		updateLinkedContent(parent, null, ltn -> ltn.refreshLinks(name));
+
+		updateLinkedContent(parent.getPathname(), null, ltn -> ltn.refreshLinks(name));
+
 		DomainFolderNode folderNode = findDomainFolderNode(parent, true);
 		if (folderNode != null) {
 			updateChildren(folderNode);
@@ -162,17 +191,12 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFolderRenamed(DomainFolder folder, String oldName) {
-		updateLinkedContent(folder.getParent(), p -> {
-			updateChildren(p);
-			addFolderNode(p, folder.getName());
-		}, ltn -> {
-			ltn.refreshLinks(oldName);
-			ltn.refreshLinks(folder.getName());
-		});
-		DomainFolder parent = folder.getParent();
+
+		domainFolderMoved(folder.getParent().getPathname(), oldName, folder);
+
 		skipLinkUpdate = true;
 		try {
-			domainFolderRemoved(parent, oldName);
+			domainFolderRemoved(folder.getParent(), oldName);
 			domainFolderAdded(folder);
 		}
 		finally {
@@ -182,8 +206,17 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 	@Override
 	public void domainFolderMoved(DomainFolder folder, DomainFolder oldParent) {
-		domainFolderRemoved(oldParent, folder.getName());
-		domainFolderAdded(folder);
+
+		domainFolderMoved(oldParent.getPathname(), folder.getName(), folder);
+
+		skipLinkUpdate = true;
+		try {
+			domainFolderRemoved(oldParent, folder.getName());
+			domainFolderAdded(folder);
+		}
+		finally {
+			skipLinkUpdate = false;
+		}
 	}
 
 	@Override
@@ -192,6 +225,36 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		if (folderNode != null) {
 			tree.setSelectedNode(folderNode);
 		}
+	}
+
+	/**
+	 * Following a folder move or rename where only a single notification is provided this
+	 * method should be used to propogate link related updates which may refer to the affected
+	 * folder or its children.  This method is invoked recursively for all child folders.
+	 * @param oldParentPath folder's old parent path
+	 * @param oldName folder's previous name
+	 * @param folder folder instance following rename
+	 */
+	private void domainFolderMoved(String oldParentPath, String oldName, DomainFolder folder) {
+
+		String oldFolderPathname = LocalFileSystem.getPath(oldParentPath, oldName);
+
+		// Recurse over all child folders.
+		for (DomainFolder childFolder : folder.getFolders()) {
+			domainFolderMoved(oldFolderPathname, childFolder.getName(), childFolder);
+		}
+
+		// Refresh links to old placement
+		updateLinkedContent(oldParentPath, null, ltn -> {
+			ltn.refreshLinks(oldName);
+		});
+
+		// Refresh links to new placement
+		String newName = folder.getName();
+		updateLinkedContent(folder.getParent().getPathname(), p -> addFolderNode(p, newName),
+			ltn -> {
+				ltn.refreshLinks(newName);
+			});
 	}
 
 	//
@@ -210,9 +273,11 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 	}
 
 	private void addFileNode(DataTreeNode node, String fileName, boolean isFolderLink) {
+
 		if (node.isLeaf() || !node.isLoaded()) {
 			return;
 		}
+
 		// Check for existance of file by that name
 		DomainFileNode fileNode = (DomainFileNode) node.getChild(fileName,
 			isFolderLink ? NodeType.FOLDER_LINK : NodeType.FILE);
@@ -234,6 +299,7 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		if (node.isLeaf() || !node.isLoaded()) {
 			return;
 		}
+
 		// Check for existance of folder by that name
 		if (node.getChild(folderName, NodeType.FOLDER) != null) {
 			return;
@@ -262,6 +328,20 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		return findDomainFolderNode(folderPath, lazy);
 	}
 
+//	private List<String> getPathAsList(String pathname) {
+//		ArrayList<String> folderPath = new ArrayList<String>();
+//		String[] pathSplit = pathname.split(FileSystem.SEPARATOR);
+//		for (int i = 1; i < pathSplit.length; i++) {
+//			folderPath.add(pathSplit[i]);
+//		}
+//		return folderPath;
+//	}
+//
+//	private DomainFolderNode findDomainFolderNode(String pathname, boolean lazy) {
+//		List<String> folderPath = getPathAsList(pathname);
+//		return findDomainFolderNode(folderPath, lazy);
+//	}
+
 	private DomainFolderNode findDomainFolderNode(List<String> folderPath, boolean lazy) {
 		DomainFolderNode folderNode = root;
 		for (String name : folderPath) {
@@ -284,6 +364,7 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		if (lazy && !folderNode.isLoaded()) {
 			return null; // not visited 
 		}
+
 		boolean isFolderLink = domainFile.isLink() && domainFile.getLinkInfo().isFolderLink();
 		return (DomainFileNode) folderNode.getChild(domainFile.getName(),
 			isFolderLink ? NodeType.FOLDER_LINK : NodeType.FILE);
@@ -334,40 +415,51 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 	@Override
 	public void treeStructureChanged(TreeModelEvent e) {
 
-		// This is used when an existing node is loaded to register all of its link-file children
-		// since the occurance of treeNodesChanged cannot be relied upon for notification of
-		// these existing children.
+		// NOTE: We have seen getTreePath return null in the test environment 
+		// immediately before ChangeManager disposal
 
 		TreePath treePath = e.getTreePath();
-		if (treePath == null) {
-			return;
+
+		Object[] changedChildren = e.getChildren();
+		if (changedChildren != null) {
+			for (Object child : changedChildren) {
+				treeNodeChanged(child, true);
+			}
 		}
-		Object treeNode = treePath.getLastPathComponent();
+		else if (treePath != null) {
+			treeNodeChanged(treePath.getLastPathComponent(), true);
+		}
+	}
+
+	private void treeNodeChanged(Object treeNode, boolean processLoadedChildren) {
+
 		if (!(treeNode instanceof DataTreeNode dataTreeNode)) {
 			return;
 		}
-		if (!dataTreeNode.isLoaded()) {
-			return;
+
+		if (treeNode instanceof DomainFileNode fileNode) {
+			addLinkFile(fileNode);
 		}
-		// Register all visible link-file nodes
-		for (GTreeNode child : dataTreeNode.getChildren()) {
-			if (child instanceof DomainFileNode fileNode) {
-				if (fileNode.getDomainFile().isLink()) {
-					addLinkFile(fileNode);
-				}
-			}
-		}
+
+		// TODO: Not sure we need the following code
+//		if (processLoadedChildren && dataTreeNode.isLoaded()) {
+//			for (GTreeNode node : dataTreeNode.getChildren()) {
+//				treeNodeChanged(node, true);
+//			}
+//		}
 	}
 
 	@Override
 	public void treeNodesChanged(TreeModelEvent e) {
 
-		// This is used to register link-file nodes which may be added to the tree as a result
-		// of changes to the associated project data.
-
-		Object treeNode = e.getTreePath().getLastPathComponent();
-		if (treeNode instanceof DomainFileNode fileNode) {
-			addLinkFile(fileNode);
+		Object[] changedChildren = e.getChildren();
+		if (changedChildren != null) {
+			for (Object child : changedChildren) {
+				treeNodeChanged(child, false);
+			}
+		}
+		else {
+			treeNodeChanged(e.getTreePath().getLastPathComponent(), false);
 		}
 	}
 
@@ -384,6 +476,19 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 	//
 	// Link tracking tree update support
 	//
+
+	private void addLoadedChildren(DataTreeNode node) {
+
+		if (!node.isLoaded()) {
+			return;
+		}
+
+		for (GTreeNode child : node.getChildren()) {
+			if (child instanceof DomainFileNode fileNode) {
+				addLinkFile(fileNode);
+			}
+		}
+	}
 
 	/**
 	 * Update link tree if the specified {@code domainFileNode} corresponds to an link-file
@@ -403,6 +508,7 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		}
 
 		try {
+
 			String linkPath = LinkHandler.getAbsoluteLinkPath(file);
 			if (linkPath == null) {
 				return;
@@ -420,6 +526,7 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 			if (isFolderLink) {
 				folderLinkNode.addLinkedFolder(domainFileNode);
+				addLoadedChildren(domainFileNode);
 			}
 			else {
 				folderLinkNode.addLinkedFile(pathElements[lastFolderIndex + 1], domainFileNode);
@@ -439,38 +546,62 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 	 * once if a {@code LinkedTreeNode} is found which corresponds to the specified 
 	 * {@code parentFolder}.  This allows targeted refresh of link-files.
 	 * 
-	 * @param parentFolder a parent folder which relates to a change
+	 * @param parentFolderPath the parent folder path which relates to a change
 	 * @param folderNodeConsumer optional consumer which will be invoked for each loaded parent 
 	 * tree node which is a linked-reflection of the specified {@code parentFolder}.  If null is 
 	 * specified for this consumer a general update will be performed to remove any missing nodes.
 	 * @param linkNodeConsumer optional consumer which will be invoked once if a {@code LinkedTreeNode}
 	 * is found which corresponds to the specified {@code parentFolder}.
 	 */
-	void updateLinkedContent(DomainFolder parentFolder, Consumer<DataTreeNode> folderNodeConsumer,
-			Consumer<LinkedTreeNode> linkNodeConsumer) {
+	private void updateLinkedContent(String parentFolderPath,
+			Consumer<DataTreeNode> folderNodeConsumer, Consumer<LinkedTreeNode> linkNodeConsumer) {
+
+		if (!Swing.isSwingThread()) {
+			throw new RuntimeException(
+				"Listener and all node updates must operate in Swing thread");
+		}
+
 		if (skipLinkUpdate) {
 			return;
 		}
-		String pathname = parentFolder.getPathname();
-		String[] pathElements = pathname.split("/");
-		LinkedTreeNode folderLinkNode = linkTreeRoot;
-		folderLinkNode.updateLinkedContent(pathElements, 1, folderNodeConsumer);
-		for (int i = 1; i < pathElements.length; i++) {
-			folderLinkNode = folderLinkNode.folderMap.get(pathElements[i]);
-			if (folderLinkNode == null) {
-				return; // requested folder not contained within link-tree
-			}
-			folderLinkNode.updateLinkedContent(pathElements, i + 1, folderNodeConsumer);
+
+		// NOTE: This method must track those paths which have been refreshed to avoid the
+		// possibility of infinite recursion when circular links exist.
+		boolean clearRefreshedTrackingSet = false;
+		if (refreshedTrackingSet == null) {
+			refreshedTrackingSet = new HashSet<>();
+			clearRefreshedTrackingSet = true;
 		}
 
-		// Requested folder was found in link-tree - invoke consumer to perform
-		// selective refresh
-		if (linkNodeConsumer != null) {
-			linkNodeConsumer.accept(folderLinkNode);
+		try {
+			String[] pathElements = parentFolderPath.split("/");
+			LinkedTreeNode folderLinkNode = linkTreeRoot;
+			folderLinkNode.updateLinkedContent(pathElements, 1, folderNodeConsumer);
+			for (int i = 1; i < pathElements.length; i++) {
+				folderLinkNode = folderLinkNode.folderMap.get(pathElements[i]);
+				if (folderLinkNode == null) {
+					return; // requested folder not contained within link-tree
+				}
+				folderLinkNode.updateLinkedContent(pathElements, i + 1, folderNodeConsumer);
+			}
+
+			// Requested folder was found in link-tree - invoke consumer to perform
+			// selective refresh
+			if (linkNodeConsumer != null) {
+				linkNodeConsumer.accept(folderLinkNode);
+			}
+		}
+		finally {
+			if (clearRefreshedTrackingSet) {
+				refreshedTrackingSet = null;
+			}
 		}
 	}
 
 	private class LinkedTreeNode {
+
+		// NOTE: The use of HashSet to track LinkedTreeNodes relies on identity hashcode and 
+		//       same instance for equality.
 
 		private final LinkedTreeNode parent;
 		private final String name;
@@ -491,7 +622,14 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 
 			boolean updateThisNode = subFolderPathIndex >= pathElements.length;
 
-			for (DomainFileNode folderLink : folderLinks) {
+			Iterator<DomainFileNode> folderLinkIter = folderLinks.iterator();
+			while (folderLinkIter.hasNext()) {
+
+				DomainFileNode folderLink = folderLinkIter.next();
+				if (folderLink.getParent() == null) {
+					// Remove disposed link node
+					folderLinkIter.remove();
+				}
 
 				if (!folderLink.isLoaded()) {
 					continue;
@@ -529,6 +667,25 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		}
 
 		private void refreshLinks(String childName) {
+
+			String childPathName = LocalFileSystem.getPath(getPathname(), childName);
+			if (!refreshedTrackingSet.add(childPathName)) {
+				return;
+			}
+
+			// If links are defined be sure to visit DomainFolder so that we pickup on change 
+			// events even if not visible within tree.
+// TODO: Should no longer be needed after changes were made to force domain folder events
+// which would affect discovered link-files
+//			if (!folderMap.isEmpty()) {
+//				String path = LocalFileSystem.getPath(getPathname(), childName);
+//				DomainFolder folder =
+//					projectData.getFolder(path, DomainFolderFilter.ALL_INTERNAL_FOLDERS_FILTER);
+//				if (folder != null) {
+//					folder.getFolders(); // forced visit to folder
+//				}
+//			}
+
 			// We are forced to refresh file-links and folder-links since a folder-link may be
 			// referencing another folder-link file and not the final referenced folder.
 			if (refreshFileLinks(childName) || refreshFolderLinks(childName)) {
@@ -537,10 +694,28 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 		}
 
 		private boolean refreshFolderLinks(String folderName) {
+
 			LinkedTreeNode linkedTreeNode = folderMap.get(folderName);
 			if (linkedTreeNode != null) {
+
 				refresh(linkedTreeNode.folderLinks);
-				return linkedTreeNode.folderLinks.isEmpty();
+				boolean removed = linkedTreeNode.folderLinks.isEmpty();
+
+				// Refresh all file links refering to files within this folder
+				Collection<Set<DomainFileNode>> linkedFileSets =
+					linkedTreeNode.linkedFilesMap.values();
+				if (!linkedFileSets.isEmpty()) {
+					Iterator<Set<DomainFileNode>> iterator = linkedFileSets.iterator();
+					while (iterator.hasNext()) {
+						Set<DomainFileNode> linkFileSet = iterator.next();
+						refresh(linkFileSet);
+						if (linkFileSet.isEmpty()) {
+							iterator.remove();
+							removed = true;
+						}
+					}
+				}
+				return removed;
 			}
 			return false;
 		}
@@ -557,12 +732,22 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 			return false;
 		}
 
+		/**
+		 * Add or get existing named child folder node for this folder node
+		 * @param folderName child folder node
+		 * @return new or existing named child folder node
+		 */
 		private LinkedTreeNode addFolder(String folderName) {
 			return folderMap.computeIfAbsent(folderName, n -> new LinkedTreeNode(this, n));
 		}
 
-		private void addLinkedFolder(DomainFileNode folderLink) {
-			folderLinks.add(folderLink);
+		/**
+		 * Add a folder-link which references this folder node
+		 * @param folderLink link which references this folder node
+		 * @return true if the set did not already contain the specified folderLink
+		 */
+		private boolean addLinkedFolder(DomainFileNode folderLink) {
+			return folderLinks.add(folderLink);
 		}
 
 		private void addLinkedFile(String fileName, DomainFileNode fileLink) {
@@ -579,23 +764,27 @@ class ChangeManager implements DomainFolderChangeListener, TreeModelListener {
 			}
 		}
 
-		private static void refresh(Set<DomainFileNode> linkFiles) {
-			List<DomainFileNode> purgeList = null;
-			for (DomainFileNode fileLink : linkFiles) {
-				DomainFile file = fileLink.getDomainFile();
-				// Perform lazy purge of missing link files
-				if (!file.isLink()) {
-					if (purgeList == null) {
-						purgeList = new ArrayList<>();
-					}
-					purgeList.add(fileLink);
+		private void refresh(Set<DomainFileNode> linkFiles) {
+			Iterator<DomainFileNode> linkFileIter = linkFiles.iterator();
+			while (linkFileIter.hasNext()) {
+				DomainFileNode fileLink = linkFileIter.next();
+				if (fileLink.getParent() == null || !fileLink.getDomainFile().isLink()) {
+					linkFileIter.remove();
 				}
 				else {
 					fileLink.refresh();
+
+					GTreeNode linkParent = fileLink.getParent();
+					if (linkParent instanceof DomainFolderNode linkParentNode) {
+
+						// TODO: What about LinkedDomainFolders?
+						ChangeManager.this.updateLinkedContent(linkParentNode.getPathname(), fn -> {
+							/* do nothing */ }, ltn -> {
+								ltn.refreshLinks(fileLink.getName());
+							});
+					}
+
 				}
-			}
-			if (purgeList != null) {
-				linkFiles.removeAll(purgeList);
 			}
 		}
 

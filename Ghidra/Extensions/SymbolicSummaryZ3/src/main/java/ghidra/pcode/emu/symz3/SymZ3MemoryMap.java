@@ -24,6 +24,7 @@ import com.microsoft.z3.*;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
 import ghidra.pcode.emu.symz3.lib.Z3MemoryWitness;
 import ghidra.pcode.emu.symz3.lib.Z3MemoryWitness.WitnessType;
+import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.lang.Language;
 import ghidra.symz3.model.SymValueZ3;
 import ghidra.util.Msg;
@@ -67,6 +68,8 @@ import ghidra.util.Msg;
 public class SymZ3MemoryMap {
 	// TODO ... encapsulate traversal of memvals so it can become private
 	public Map<String, SymValueZ3> memvals;
+	private NavigableMap<Long, SymValueZ3> byOffset;
+
 	private List<Z3MemoryWitness> witnesses;
 
 	private Language language;
@@ -80,9 +83,9 @@ public class SymZ3MemoryMap {
 	}
 
 	public SymZ3MemoryMap(Language language) {
-		memvals = new HashMap<String, SymValueZ3>();
+		memvals = new HashMap<>();
 		this.language = language;
-		witnesses = new ArrayList<Z3MemoryWitness>();
+		witnesses = new ArrayList<>();
 	}
 
 	protected Entry<String, String> valuationForMemval(Context ctx, Z3InfixPrinter z3p,
@@ -110,7 +113,7 @@ public class SymZ3MemoryMap {
 		if (!reported.add(addressExpr)) {
 			return null;
 		}
-		SymValueZ3 vv = load(w.address(), w.bytesMoved(), false);
+		SymValueZ3 vv = load(w.address(), w.bytesMoved(), false, PcodeStateCallbacks.NONE);
 		BitVecExpr v = vv.getBitVecExpr(ctx);
 		if (v == null) {
 			return Map.entry("MEM " + z3p.infixWithBrackets(addressExpr), "null (?)");
@@ -159,7 +162,8 @@ public class SymZ3MemoryMap {
 					continue;
 				}
 				reported.add(addressExpr);
-				SymValueZ3 value = load(w.address(), w.bytesMoved(), false);
+				SymValueZ3 value =
+					load(w.address(), w.bytesMoved(), false, PcodeStateCallbacks.NONE);
 				BitVecExpr vexpr = value.getBitVecExpr(ctx);
 				if (vexpr == null) {
 					result.append("MEM " + z3p.infixWithBrackets(addressExpr) + " is null (?)");
@@ -192,7 +196,8 @@ public class SymZ3MemoryMap {
 		return Stream.concat(forMemVals, forWitnesses);
 	}
 
-	public SymValueZ3 load(SymValueZ3 offset, int size, boolean addWitness) {
+	public SymValueZ3 load(SymValueZ3 offset, int size, boolean addWitness,
+			PcodeStateCallbacks cb) {
 		try (Context ctx = new Context()) {
 			if (addWitness) {
 				witnesses.add(new Z3MemoryWitness(offset, size, WitnessType.LOAD));
@@ -273,6 +278,7 @@ public class SymZ3MemoryMap {
 				// this is the primary advantage of the non-byte based model, storage is super easy
 				Msg.debug(this, "set memory location " + address + " size " + size + " to " + val);
 				memvals.put(offset.bitVecExprString, val);
+				byOffset = null;
 			}
 			else {
 				// for the byte-based model, we simply must store each byte separately.
@@ -299,6 +305,7 @@ public class SymZ3MemoryMap {
 					}
 					BitVecExpr valportion = ctx.mkExtract(high, low, bval);
 					memvals.put(byteAddressAsString, new SymValueZ3(ctx, valportion));
+					byOffset = null;
 				}
 			}
 		}
@@ -313,5 +320,20 @@ public class SymZ3MemoryMap {
 			return true;
 		}
 		return false;
+	}
+
+	public Entry<Long, SymValueZ3> getNextEntry(long offset) {
+		if (byOffset == null) {
+			byOffset = new TreeMap<>(Long::compareUnsigned);
+			try (Context ctx = new Context()) {
+				for (Entry<String, SymValueZ3> ent : memvals.entrySet()) {
+					BitVecExpr bvOff = SymValueZ3.deserializeBitVecExpr(ctx, ent.getKey());
+					if (bvOff.isNumeral()) {
+						byOffset.put(((BitVecNum) bvOff).getLong(), ent.getValue());
+					}
+				}
+			}
+		}
+		return byOffset.ceilingEntry(offset);
 	}
 }

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
@@ -41,6 +40,7 @@ import ghidra.xml.*;
  */
 public class MultiSlotAssign extends AssignAction {
 	private StorageClass resourceType;	// Resource list from which to consume
+	private boolean isBigEndian;		// True for big endian architectures
 	private boolean consumeFromStack;	// True if resources should be consumed from the stack
 	private boolean consumeMostSig;		// True if resources are consumed starting with most significant bytes
 	private boolean enforceAlignment;	// True if register resources are discarded to match alignment
@@ -74,6 +74,7 @@ public class MultiSlotAssign extends AssignAction {
 	 */
 	protected MultiSlotAssign(ParamListStandard res) {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		resourceType = StorageClass.GENERAL;	// Join general purpose registers
 		consumeFromStack = !(res instanceof ParamListStandardOut);	// Spill into stack by default
 		consumeMostSig = false;
@@ -81,7 +82,7 @@ public class MultiSlotAssign extends AssignAction {
 		justifyRight = false;
 		adjacentEntries = true;
 		allowBackfill = false;
-		if (res.getEntry(0).isBigEndian()) {
+		if (isBigEndian) {
 			consumeMostSig = true;
 			justifyRight = true;
 		}
@@ -92,6 +93,7 @@ public class MultiSlotAssign extends AssignAction {
 			boolean justRight, boolean backfill, ParamListStandard res)
 			throws InvalidInputException {
 		super(res);
+		isBigEndian = res.isBigEndian();
 		resourceType = store;
 		consumeFromStack = stack;
 		consumeMostSig = mostSig;
@@ -227,7 +229,8 @@ public class MultiSlotAssign extends AssignAction {
 				return FAIL;
 			}
 			int grp = stackEntry.getGroup();
-			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param);	// Consume all the space we need	
+			tmpStatus[grp] =
+				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);	// Consume all the space we need	
 			if (param.address == null) {
 				return FAIL;
 			}
@@ -239,20 +242,8 @@ public class MultiSlotAssign extends AssignAction {
 				// Floating-point register holding extended lower precision value
 				onePieceJoin = true;		// Treat as "join" of full size register
 			}
-			else if (justifyRight) {
-				// Initial bytes are padding
-				Varnode vn = pieces.get(0);
-				Address addr = vn.getAddress().add(-sizeLeft);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(addr, sz);
-				pieces.set(0, vn);
-			}
 			else {
-				int end = pieces.size() - 1;
-				Varnode vn = pieces.get(end);
-				int sz = vn.getSize() + sizeLeft;
-				vn = new Varnode(vn.getAddress(), sz);
-				pieces.set(end, vn);
+				justifyPieces(pieces, -sizeLeft, isBigEndian, consumeMostSig, justifyRight);
 			}
 		}
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
@@ -264,10 +255,10 @@ public class MultiSlotAssign extends AssignAction {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_JOIN);
-		if (resource.getEntry(0).isBigEndian() != justifyRight) {
+		if (resource.isBigEndian() != justifyRight) {
 			encoder.writeBool(ATTRIB_REVERSEJUSTIFY, true);
 		}
-		if (resource.getEntry(0).isBigEndian() != consumeMostSig) {
+		if (resource.isBigEndian() != consumeMostSig) {
 			encoder.writeBool(ATTRIB_REVERSESIGNIF, true);
 		}
 		if (resourceType != StorageClass.GENERAL) {

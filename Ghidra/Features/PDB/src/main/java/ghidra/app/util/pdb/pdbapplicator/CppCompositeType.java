@@ -1209,16 +1209,15 @@ public class CppCompositeType {
 	 * @throws CancelledException upon user cancellation
 	 */
 	private void createMembersOnlyClassLayout(TaskMonitor monitor) throws CancelledException {
-		TreeMap<Long, ClassPdbMember> map = new TreeMap<>();
+		List<ClassPdbMember> pdbMembers = new ArrayList<>();
 		for (Member member : layoutMembers) {
 			ClassPdbMember classPdbMember =
 				new ClassPdbMember(member.getName(), member.getDataType(),
 					member.isFlexibleArray(), member.getOffset(), member.getComment());
-			map.put((long) member.getOffset(), classPdbMember);
+			pdbMembers.add(classPdbMember);
 		}
-		List<ClassPdbMember> sm = new ArrayList<>(map.values());
 		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size,
-			sm, msg -> Msg.warn(this, msg), monitor)) {
+			pdbMembers, msg -> Msg.warn(this, msg), monitor)) {
 			clearComponents(composite);
 		}
 		selfBaseType = composite;
@@ -1320,54 +1319,72 @@ public class CppCompositeType {
 	 * @return the members
 	 */
 	private List<ClassPdbMember> getSelfBaseClassMembers() {
-		// Attempting to use TreeMap to sort with the key being a record of
-		//  ByteBitOffset (Long byteOff, int bitOff, int ordinal) {}
-		//  so that vxtptrs could get injected properly, but this did not work until the "ordinal"
-		//  field was included, but the overall solution still does not work because of the
-		//  ordering of records when flattened (as MSFT does them) unions are in play.  In such
-		//  cases we might get members at offsets: 0, 4, 8, 12, 14, 16, 20 24, 12, 16, 24, 28, 32
-		//  which has a union at offset 12 within this outer type.
-		// Thus, we just insert the vxts into the members list that is constructed with
-		//  base classes and regular members
-		hasZeroBaseSize = true;
-		List<ClassPdbMember> members = new ArrayList<>();
-		String accumulatedComment = "";
+		// Using TreeMap to get base classes and vxtptrs in the correct order.  None of these
+		//  should have the same offset unless there are zero-sized base classes in play.  Found
+		//  examples, however where some "empty" base classes were given unique offsets (e.g., 12,
+		//  13) with the standard size-one reserved space when they were direct base classes, but
+		//  we are using a TreeMap key that also incorporates an ordinal just in case there are
+		//  zero-sized direct base classes that don't have unique offsets (which might be the case
+		//  with some older-tool-chain-built eamples); zero-sized virtual base classes seen
+		//  previously had not had space allocated for them, which is different, but makes some
+		//  sense (regardless of the possibility that they were built with an older tool chain).
+		// After the bases and vxptrs are gathered, then the regular members are gathered in
+		//  the order that they are presented.  The belief is that none of these will have an
+		//  offset less than or equal to the largest offset of the first group.  However the
+		//  regular members can have repeated offsets (due to bit-fields) and can have out-of-order
+		//  offsets for the way that MSFT flattens unions into incorporating structures
+		//  (e.g., 0, 4, 8, 12, 14, 16, 20 24, 12, 16, 24, 28, 32, where there is a union at
+		//  offset 12).  The algorithms for determining the struct/union nestings do better when
+		//  we do not change (sort) these offsets.
+
+		// Example created that caused change has this:
+		// Class E:
+		//   0 self base of E
+		//   24 padding (I think it is vtordisp of D)
+		//   28 virtual base of D
+		// Base of class E:
+		//   0 base of C
+		//   8 vfptr
+		//   12 empty base of A (A has no virtual parents, but has non-virt method) <==== ****
+		//   13 empty base of B (B has no virtual parents, but has non-virt method) <==== ****
+		//   16 int x (member of E)
+		//   20 int:2 x1 (bitfield member of E)
+		// Shows empty base classes occupying space in base of E and coming after vfptr!
+		boolean hasZeroParentBaseSize = true;
+		TreeMap<OffsetOrdinal, ClassPdbMember> map = new TreeMap<>();
+
+		int ordinal = 0;
 		for (DirectLayoutBaseClass base : directLayoutBaseClasses) {
 			CppCompositeType baseComposite = base.getBaseClassType();
+			int offset = base.getOffset();
 			// Cannot do baseComposite.getSelfBaseType().isZeroLength()
 			//  or baseComposite.getComposite().isZeroLength()
-			if (!baseComposite.hasZeroBaseSize()) {
-				hasZeroBaseSize = false;
-				String comment = BASE_COMMENT;
-				if (!accumulatedComment.isEmpty()) {
-					comment += " and previous " + accumulatedComment;
-				}
-				Composite baseDataType = base.getSelfBaseDataType();
-				int offset = base.getOffset();
-				// This does not have attributes like "Member" does (consider changes?)
-				ClassPdbMember classPdbMember =
-					new ClassPdbMember("", baseDataType, false, offset, comment);
-				members.add(classPdbMember);
-				accumulatedComment = "";
+			if (!(baseComposite.hasZeroBaseSize() && offset == 0)) {
+				hasZeroParentBaseSize = false;
 			}
-			else {
-				// Note that if there is only base and it has zero size, this message will not
-				// get output.  Consider where we might notate this case in the structure for
-				// an improved result
-				String comment =
-					"(Empty Base " + base.getDataTypePath().getDataTypeName() + ")";
-				accumulatedComment += comment;
+			if (offset >= size) {
+				// Mainly considering zero-sized bases at end of class, but not checking for
+				//  zero size; checking for any offset that would push the edge of the containing
+				//  class, but not checking for whether the baseStart + baseSize of a parent
+				//  extends beyond the parent size
+				continue;
 			}
+			String comment = BASE_COMMENT;
+			Composite baseDataType = base.getSelfBaseDataType();
+			// This does not have attributes like "Member" does (consider changes?)
+			ClassPdbMember classPdbMember =
+				new ClassPdbMember("", baseDataType, false, offset, comment);
+			map.put(new OffsetOrdinal(offset, ordinal++), classPdbMember);
 		}
+		hasZeroBaseSize = hasZeroParentBaseSize;
 		hasZeroBaseSize &= layoutVftPtrMembers.size() == 0;
 		hasZeroBaseSize &= layoutVbtPtrMembers.size() == 0;
 		hasZeroBaseSize &= layoutMembers.size() == 0;
 
-		for (Member member : layoutMembers) {
-			ClassPdbMember classPdbMember =
-				new ClassPdbMember(member.getName(), member.getDataType(),
-					member.isFlexibleArray(), member.getOffset(), member.getComment());
-			members.add(classPdbMember);
+		if (hasZeroParentBaseSize) {
+			// throw out the bases
+			ordinal = 0;
+			map = new TreeMap<>();
 		}
 
 		for (Member vftMember : layoutVftPtrMembers) { // not expecting more than one
@@ -1375,30 +1392,48 @@ public class CppCompositeType {
 				new ClassPdbMember(vftMember.getName(), vftMember.getDataType(),
 					vftMember.isFlexibleArray(), vftMember.getOffset(), vftMember.getComment());
 			int vOff = vftMember.getOffset();
-			int index = 0;
-			for (ClassPdbMember member : members) {
-				if (member.getOffset() >= vOff) {
-					break;
-				}
-				index++;
-			}
-			members.add(index, classPdbMember);
+			map.put(new OffsetOrdinal(vOff, ordinal++), classPdbMember);
 		}
 		for (Member vbtMember : layoutVbtPtrMembers) { // not expecting more than one
 			ClassPdbMember classPdbMember =
 				new ClassPdbMember(vbtMember.getName(), vbtMember.getDataType(),
 					vbtMember.isFlexibleArray(), vbtMember.getOffset(), vbtMember.getComment());
 			int vOff = vbtMember.getOffset();
-			int index = 0;
-			for (ClassPdbMember member : members) {
-				if (member.getOffset() >= vOff) {
-					break;
-				}
-				index++;
-			}
-			members.add(index, classPdbMember);
+			map.put(new OffsetOrdinal(vOff, ordinal++), classPdbMember);
 		}
+		List<ClassPdbMember> members = new ArrayList<>(map.values());
+		int lastOffset = members.isEmpty() ? -1 : members.getLast().getOffset();
+
+		List<ClassPdbMember> standardMembers = new ArrayList<>();
+		for (Member member : layoutMembers) {
+			ClassPdbMember classPdbMember =
+				new ClassPdbMember(member.getName(), member.getDataType(),
+					member.isFlexibleArray(), member.getOffset(), member.getComment());
+			standardMembers.add(classPdbMember);
+			//members.add(classPdbMember);
+		}
+
+		int firstStandardOffset =
+			standardMembers.isEmpty() ? lastOffset + 1 : standardMembers.getFirst().getOffset();
+		if (firstStandardOffset <= lastOffset) {
+			// we are expecting this to never happen, but continue anyway... maybe check exemplars
+			//  with breakpoint
+		}
+		members.addAll(standardMembers);
 		return members;
+	}
+
+	private static record OffsetOrdinal(Integer off, Integer ord)
+			implements Comparable<OffsetOrdinal> {
+
+		@Override
+		public int compareTo(OffsetOrdinal other) {
+			int val = Integer.compare(off, other.off);
+			if (val != 0) {
+				return val;
+			}
+			return Integer.compare(ord, other.ord);
+		}
 	}
 
 	/**
@@ -2401,8 +2436,7 @@ public class CppCompositeType {
 	 * not used in comparison.  Should we convert from record to class?
 	 */
 	private record VxtPtrInfo(Long finalOffset, Long accumOffset, ClassID baseId,
-			List<ClassID> parentage)
-			implements Comparable<VxtPtrInfo> {
+			List<ClassID> parentage) implements Comparable<VxtPtrInfo> {
 		@Override
 		public int compareTo(VxtPtrInfo other) {
 			int val = Long.compare(finalOffset, other.finalOffset);

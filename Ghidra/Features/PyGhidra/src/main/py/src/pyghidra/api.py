@@ -15,11 +15,13 @@
 ##
 import sys
 import contextlib
-from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Any
+from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Any, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
 if TYPE_CHECKING:
+    from pyghidra.launcher import PyGhidraLauncher
+    from ghidra.app.plugin.core.analysis import AutoAnalysisManager
     from ghidra.program.model.listing import Program
     from ghidra.program.util import GhidraProgramUtilities
     from ghidra.framework.model import Project, DomainFile
@@ -29,8 +31,31 @@ if TYPE_CHECKING:
     from ghidra.util.task import TaskMonitor
     from ghidra.app.script import GhidraScript
     from ghidra.app.util.importer import ProgramLoader
+    from ghidra.pyghidra import PyGhidraTaskMonitor
     from generic.jar import ResourceFile
     from java.lang import Object # type:ignore @UnresolvedImport
+
+def start(verbose=False, *, install_dir: Optional[Path] = None) -> "PyGhidraLauncher":
+    """
+    Starts the JVM and fully initializes Ghidra in Headless mode.
+
+    :param verbose: Enable verbose output during JVM startup (Defaults to False)
+    :param install_dir: The path to the Ghidra installation directory.
+        (Defaults to the GHIDRA_INSTALL_DIR environment variable or "lastrun" file)
+    :return: The PyGhidraLauncher used to start the JVM
+    """
+    from pyghidra.launcher import HeadlessPyGhidraLauncher
+    launcher = HeadlessPyGhidraLauncher(verbose=verbose,  install_dir=install_dir)
+    launcher.start()
+    return launcher
+
+
+def started() -> bool:
+    """
+    Whether the PyGhidraLauncher has already started.
+    """
+    from pyghidra.launcher import PyGhidraLauncher
+    return PyGhidraLauncher.has_launched()
 
 def open_project(
         path: Union[str, Path],
@@ -72,7 +97,7 @@ def open_filesystem(
     
     service = FileSystemService.getInstance()
     fsrl = service.getLocalFS().getLocalFSRL(File(path))
-    fs = service.openFileSystemContainer(fsrl, dummy_monitor())
+    fs = service.openFileSystemContainer(fsrl, monitor())
     if fs is None:
         raise ValueError(f'"{fsrl}" is not a supported GFileSystem!')
     return fs
@@ -80,7 +105,7 @@ def open_filesystem(
 def consume_program(
         project: "Project", 
         path: Union[str, Path],
-        consumer: Any = None
+        consumer: Optional[Any] = None
     ) -> Tuple["Program", "Object"]:
     """
     Gets the Ghidra program from the given project with the given project path. The returned program
@@ -106,7 +131,7 @@ def consume_program(
     df = project_data.getFile(path)
     if df is None:
         raise FileNotFoundError(f'"{path}" does not exist in the Project')
-    dobj = df.getDomainObject(consumer, True, False, dummy_monitor())
+    dobj = df.getDomainObject(consumer, True, False, monitor())
     program_cls = Program.class_
     if not program_cls.isAssignableFrom(dobj.getClass()):
         dobj.release(consumer)
@@ -134,27 +159,46 @@ def program_context(
     finally:
         program.release(consumer)
 
-def analyze(program: "Program"):
+def analyze(
+        program: "Program", 
+        monitor: Optional["TaskMonitor"] = None
+    ) -> str:
     """
     Analyzes the given program.
 
     :param program: The Ghidra program to analyze.
+    :return: The analysis log.
     """
     from ghidra.app.script import GhidraScriptUtil
-    from ghidra.program.flatapi import FlatProgramAPI
     from ghidra.program.util import GhidraProgramUtilities
+    from ghidra.app.plugin.core.analysis import AutoAnalysisManager
+    
+    if monitor is None:
+        monitor = monitor()
+        
     with transaction(program, "Analyze"):
         GhidraScriptUtil.acquireBundleHostReference()
         try:
-            FlatProgramAPI(program).analyzeAll(program)
+            mgr: AutoAnalysisManager = AutoAnalysisManager.getAnalysisManager(program);
+            mgr.initializeOptions();
+            mgr.reAnalyzeAll(None);
+            mgr_log = ""
+            def get_log(manager, _is_cancelled):
+                nonlocal mgr_log
+                mgr_log += manager.getMessageLog().toString()
+            mgr.addListener(get_log)
+            mgr.startAnalysis(monitor, True); # yields to analysis
+            if not monitor.isCancelled():
+                monitor.cancel()
             GhidraProgramUtilities.markProgramAnalyzed(program)
+            return mgr_log
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
     
 def ghidra_script(
         path: Union[str, Path],
         project: "Project",
-        program: "Program" = None,
+        program: Optional["Program"] = None,
         script_args: List[str] = [],
         echo_stdout = True,
         echo_stderr = True
@@ -192,7 +236,7 @@ def ghidra_script(
         controls = ScriptControls(
             PrintWriter(stdout_string_writer, True),
             PrintWriter(stderr_string_writer, True),
-            dummy_monitor()
+            monitor()
         )
         script.setScriptArgs(script_args)
         script.execute(state, controls)
@@ -256,14 +300,19 @@ def program_loader() -> "ProgramLoader.Builder":
     from ghidra.app.util.importer import ProgramLoader
     return ProgramLoader.builder()
 
-def dummy_monitor() -> "TaskMonitor":
+def monitor(
+        timeout: Optional[int] = None
+    ) -> "PyGhidraTaskMonitor":
     """
-    Convenience function to get the Ghidra "TaskMonitor.DUMMY" object.
+    Convenience function to get a "PyGhidraTaskMonitor" object.
 
-    :return: The Ghidra "TaskMonitor.DUMMY" object.
+    :param timeout: An optional number of seconds to wait before canceling the monitor.
+    :return: A "PyGhidraTaskMonitor"  object.
     """
-    from ghidra.util.task import TaskMonitor
-    return TaskMonitor.DUMMY
+    from ghidra.pyghidra import PyGhidraTaskMonitor
+    from jpype.types import JInt
+    t = None if timeout is None else JInt(timeout)
+    return PyGhidraTaskMonitor(t, None)
 
 def walk_project(
         project: "Project",

@@ -526,7 +526,6 @@ public class ProjectCopyPasteFromRepositoryTest extends AbstractGhidraHeadedInte
 		// of folder or another folder-link-file at the referenced location
 		//
 		String urlPath = sharedFolderURL.toExternalForm(); // will end with '/'
-		urlPath = urlPath.substring(0, urlPath.length() - 1); // strip trailing '/'
 
 		assertEquals(urlPath, linkInfo.getLinkPath());
 
@@ -593,7 +592,7 @@ public class ProjectCopyPasteFromRepositoryTest extends AbstractGhidraHeadedInte
 			viewTreeHelper.getDomainFileActionContext(f1LinkFile);
 
 		URL sharedFolderURL = GhidraURL.makeURL("localhost", ServerTestUtil.GHIDRA_TEST_SERVER_PORT,
-			"Test", "/f1Link", null);
+			"Test", "/f1Link/", null);
 
 		DockingActionIf copyAction = getAction(env.getFrontEndTool(), "Copy");
 		assertNotNull("Copy action not found", copyAction);

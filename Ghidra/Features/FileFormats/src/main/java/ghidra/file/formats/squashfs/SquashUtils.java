@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.file.formats.squashfs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+import java.util.Arrays;
 
 import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStream;
 import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorInputStream;
@@ -25,10 +25,6 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.tukaani.xz.LZMAInputStream;
 
 import ghidra.app.util.bin.*;
-import ghidra.file.formats.gzip.GZipConstants;
-import ghidra.formats.gfilesystem.FileSystemIndexHelper;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,9 +36,8 @@ public class SquashUtils {
 	 * @return Whether or not the bytes match the SquashFS magic
 	 */
 	public static boolean isSquashFS(byte[] bytes) {
-		return bytes.length >= GZipConstants.MAGIC_BYTES.length &&
-			bytes[0] == SquashConstants.MAGIC[0] && bytes[1] == SquashConstants.MAGIC[1] &&
-			bytes[2] == SquashConstants.MAGIC[2] && bytes[3] == SquashConstants.MAGIC[3];
+		return bytes.length >= SquashConstants.MAGIC.length && Arrays.equals(SquashConstants.MAGIC,
+			0, SquashConstants.MAGIC.length, bytes, 0, SquashConstants.MAGIC.length);
 	}
 
 	/**
@@ -157,128 +152,4 @@ public class SquashUtils {
 		}
 	}
 
-	/**
-	 * Assemble the directory structure of the archive
-	 * @param fragTable The processed fragment table of the archive
-	 * @param dirTable The processed directory table of the archive
-	 * @param inodes The processed inode table of the archive
-	 * @param fsih An index helper
-	 * @param monitor Monitor to allow the user to cancel the load
-	 * @throws CancelledException Archive load was cancelled
-	 * @throws IOException Root inode was not a directory
-	 */
-	public static void buildDirectoryStructure(SquashFragmentTable fragTable,
-			SquashDirectoryTable dirTable, SquashInodeTable inodes,
-			FileSystemIndexHelper<SquashedFile> fsih, TaskMonitor monitor)
-			throws CancelledException, IOException {
-
-		SquashInode[] inodeArray = inodes.getInodes();
-
-		SquashInode rootInode = inodes.getRootInode();
-
-		// Make sure the root inode is a directory
-		if (rootInode != null && rootInode.isDir()) {
-
-			// Treat root inode as a directory inode
-			SquashBasicDirectoryInode dirInode = (SquashBasicDirectoryInode) rootInode;
-
-			// For each header associated with the root inode, process all entries
-			List<SquashDirectoryTableHeader> headers = dirTable.getHeaders(dirInode);
-
-			if (headers.size() == 0) {
-				throw new IOException("Unable to find headers for the root directory");
-			}
-
-			for (SquashDirectoryTableHeader header : headers) {
-
-				// For all files/directories immediately under the root
-				List<SquashDirectoryTableEntry> entries = header.getEntries();
-				for (SquashDirectoryTableEntry entry : entries) {
-
-					// Recurse down the directory tree, storing directories and files
-					assignPathsRecursively(fragTable, dirTable, entry, inodeArray,
-						fsih.getRootDir(), fsih, monitor);
-				}
-			}
-		}
-		else {
-			// If root is NOT a directory, stop processing
-			throw new IOException("Root inode was not a directory!");
-		}
-	}
-
-	/**
-	 * Recursively assign paths to each of the inodes
-	 * @param dirTable The processed directory table of the archive
-	 * @param entry The directory table entry currently being processed
-	 * @param inodes An array of inodes within the archive
-	 * @param parentDir The parent of the current entry
-	 * @param fsih An index helper
-	 * @param monitor Monitor to allow the user to cancel the load
-	 * @throws CancelledException Archive load was cancelled
-	 * @throws IOException Entry found with an invalid inode number
-	 */
-	private static void assignPathsRecursively(SquashFragmentTable fragTable,
-			SquashDirectoryTable dirTable, SquashDirectoryTableEntry entry, SquashInode[] inodes,
-			GFile parentDir, FileSystemIndexHelper<SquashedFile> fsih, TaskMonitor monitor)
-			throws CancelledException, IOException {
-
-		// Check if the user cancelled the load
-		monitor.checkCancelled();
-
-		// Validate the inode number of the current entry
-		if (entry == null || entry.getInodeNumber() < 1 || entry.getInodeNumber() > inodes.length) {
-			throw new IOException(
-				"Entry found with invalid inode number: " + entry.getInodeNumber());
-		}
-
-		// Get the inode for the current entry
-		SquashInode inode = inodes[entry.getInodeNumber()];
-
-		// If the inode is a directory, recurse downward. Otherwise, just store the file
-		if (inode.isDir()) {
-
-			// Treat as directory inode
-			SquashBasicDirectoryInode dirInode = (SquashBasicDirectoryInode) inode;
-			// Create and store a "file" representing the current directory
-			SquashedFile squashedDirFile = new SquashedFile(dirInode, null);
-			GFile dirGFile = fsih.storeFileWithParent(entry.getFileName(), parentDir,
-				inode.getNumber(), true, -1, squashedDirFile);
-
-			// Get the directory headers for the current inode and process each entry within them
-			List<SquashDirectoryTableHeader> headers = dirTable.getHeaders(dirInode);
-			for (SquashDirectoryTableHeader header : headers) {
-
-				// For each sub-directory, recurse downward and add each file/directory encountered
-				List<SquashDirectoryTableEntry> entries = header.getEntries();
-				for (SquashDirectoryTableEntry currentEntry : entries) {
-					assignPathsRecursively(fragTable, dirTable, currentEntry, inodes, dirGFile,
-						fsih, monitor);
-				}
-			}
-		}
-		else if (inode.isFile()) {
-
-			// Treat as file inode
-			SquashBasicFileInode fileInode = (SquashBasicFileInode) inode;
-
-			SquashFragment fragment = fragTable.getFragment(fileInode.getFragmentIndex());
-
-			// Store the current file
-			fsih.storeFileWithParent(entry.getFileName(), parentDir, fileInode.getNumber(), false,
-				fileInode.getFileSize(), new SquashedFile(fileInode, fragment));
-		}
-		else if (inode.isSymLink()) {
-
-			// Treat as symbolic link inode
-			SquashSymlinkInode symLinkInode = (SquashSymlinkInode) inode;
-
-			fsih.storeSymlinkWithParent(entry.getFileName(), parentDir, symLinkInode.getNumber(),
-				symLinkInode.getPath(), 0, new SquashedFile(symLinkInode, null));
-		}
-		else {
-			Msg.info(SquashUtils.class,
-				"Inode #" + inode.getNumber() + " is not a file or directory. Skipping...");
-		}
-	}
 }

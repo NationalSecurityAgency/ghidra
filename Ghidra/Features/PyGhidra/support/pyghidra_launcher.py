@@ -279,11 +279,11 @@ def main() -> None:
 
     # Launch PyGhidra
     save_python_cmd(install_dir, python_cmd, args.dev)
-    py_args: List[str] = python_cmd + ['-m', 'pyghidra.ghidra_launch', '--install-dir', str(install_dir)]
+    py_args: List[str] = python_cmd + ['-m']
     if args.headless:
-        py_args += ['ghidra.app.util.headless.AnalyzeHeadless']
+        py_args += ['pyghidra.ghidra_launch', '--install-dir', str(install_dir), 'ghidra.app.util.headless.AnalyzeHeadless']
     else:
-        py_args += ['-g', 'ghidra.GhidraRun']
+        py_args += ['pyghidra', '-g', '--install-dir', str(install_dir)]
     if args.console:
         subprocess.call(py_args + remaining)
     else:

@@ -32,7 +32,7 @@ import ghidra.pcode.emu.jit.op.JitFloatSubOp;
  * This uses the binary operator generator and simply emits {@link #FSUB} or {@link #DSUB} depending
  * on the type.
  */
-public enum FloatSubOpGen implements BinOpGen<JitFloatSubOp> {
+public enum FloatSubOpGen implements FloatBinOpGen<JitFloatSubOp> {
 	/** The generator singleton */
 	GEN;
 

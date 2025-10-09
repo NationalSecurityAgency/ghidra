@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
 package ghidra.file.formats.squashfs;
 
 import java.io.IOException;
+import java.util.Date;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Msg;
@@ -31,13 +32,13 @@ public class SquashSuperBlock {
 	private final int magic;
 
 	// The number of inodes in the archive
-	private final long inodeCount;
+	private final int inodeCount;
 
 	// Unix timestamp of the last time the archive was modified (not counting leap seconds)
 	private final long modTime;
 
 	// The size of a data block in bytes (must be a power of 2 between 4KB and 1 MiB)
-	private final long blockSize;
+	private final int blockSize;
 
 	// The number of entries in the fragment table
 	private final long totalFragments;
@@ -120,10 +121,10 @@ public class SquashSuperBlock {
 	SquashSuperBlock(BinaryReader reader) throws IOException {
 
 		// Fetch the 32 bit integer fields
-		magic = reader.readNextUnsignedIntExact();
-		inodeCount = reader.readNextUnsignedInt();
+		magic = reader.readNextInt();
+		inodeCount = reader.readNextUnsignedIntExact();
 		modTime = reader.readNextUnsignedInt();
-		blockSize = reader.readNextUnsignedInt();
+		blockSize = reader.readNextUnsignedIntExact();
 		totalFragments = reader.readNextUnsignedInt();
 
 		// Fetch the 16 bit short fields
@@ -148,16 +149,20 @@ public class SquashSuperBlock {
 		checkCompatibility();
 	}
 
-	public long getMagicBytes() {
+	public int getMagic() {
 		return magic;
 	}
 
-	public long getInodeCount() {
+	public int getInodeCount() {
 		return inodeCount;
 	}
 
 	public long getModTime() {
 		return modTime;
+	}
+
+	public Date getModTimeAsDate() {
+		return new Date(modTime * 1000);
 	}
 
 	public long getBlockSize() {

@@ -28,7 +28,7 @@ import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
 import ghidra.pcode.emu.symz3.SymZ3PcodeThread;
 import ghidra.pcode.emu.symz3.lib.SymZ3EmuUnixFileSystem;
 import ghidra.pcode.emu.symz3.lib.SymZ3LinuxAmd64SyscallLibrary;
-import ghidra.pcode.emu.symz3.plain.SymZ3PcodeEmulator;
+import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;

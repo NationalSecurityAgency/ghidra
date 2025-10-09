@@ -89,6 +89,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 		return addressFactory.getAddressSpace(spaceId);
 	}
 
+	private final Set<String> definedTypes = new HashSet<>();
 	protected final Map<String, DBTraceBookmarkType> typesByName = new HashMap<>();
 	protected final Collection<DBTraceBookmarkType> typesView =
 		Collections.unmodifiableCollection(typesByName.values());
@@ -155,6 +156,10 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 		return type;
 	}
 
+	public boolean isDefinedType(String type) {
+		return definedTypes.contains(type);
+	}
+
 	@Override
 	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, Icon icon,
 			Color color, int priority) {
@@ -169,6 +174,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			}
 			type = new DBTraceBookmarkType(this, typeName, icon, color, priority);
 			typesByName.put(typeName, type);
+			definedTypes.add(typeName);
 		}
 		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_TYPE_ADDED, null, type));
 		return type;

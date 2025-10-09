@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,16 +23,13 @@ import ghidra.pcode.exec.*;
 import ghidra.program.model.lang.Language;
 
 /**
- * An auxiliary emulator parts factory for stand-alone emulation
+ * An auxiliary emulator parts factory
  *
  * <p>
- * This can manufacture all the parts needed for a stand-alone emulator with concrete and some
+ * This can manufacture all the parts needed for an emulator with concrete and some
  * implementation-defined auxiliary state. More capable emulators may also use many of these parts.
  * Usually, the additional capabilities deal with how state is loaded and stored or otherwise made
- * available to the user. The pattern of use for a stand-alone emulator is usually in a script:
- * Create an emulator, initialize its state, write instructions to its memory, create and initialize
- * a thread, point its counter at the instructions, instrument, step/run, inspect, and finally
- * terminate.
+ * available to the user.
  * 
  * <p>
  * This "parts factory" pattern aims to flatten the extension points of the
@@ -49,7 +46,7 @@ import ghidra.program.model.lang.Language;
  */
 public interface AuxEmulatorPartsFactory<U> {
 	/**
-	 * Get the arithmetic for the emulator given a target langauge
+	 * Get the arithmetic for the emulator given a target language
 	 * 
 	 * @param language the language
 	 * @return the arithmetic
@@ -111,7 +108,7 @@ public interface AuxEmulatorPartsFactory<U> {
 	}
 
 	/**
-	 * Create the shared (memory) state of a new stand-alone emulator
+	 * Create the shared (memory) state of a new emulator
 	 * 
 	 * <p>
 	 * This is usually composed of pieces using {@link PairedPcodeExecutorStatePiece}, but it does
@@ -120,13 +117,14 @@ public interface AuxEmulatorPartsFactory<U> {
 	 * 
 	 * @param emulator the emulator
 	 * @param concrete the concrete piece
+	 * @param cb callbacks to receive emulation events
 	 * @return the composed state
 	 */
 	PcodeExecutorState<Pair<byte[], U>> createSharedState(AuxPcodeEmulator<U> emulator,
-			BytesPcodeExecutorStatePiece concrete);
+			BytesPcodeExecutorStatePiece concrete, PcodeStateCallbacks cb);
 
 	/**
-	 * Create the local (register) state of a new stand-alone emulator
+	 * Create the local (register) state of a new emulator
 	 * 
 	 * <p>
 	 * This is usually composed of pieces using {@link PairedPcodeExecutorStatePiece}, but it does
@@ -136,8 +134,10 @@ public interface AuxEmulatorPartsFactory<U> {
 	 * @param emulator the emulator
 	 * @param thread the thread
 	 * @param concrete the concrete piece
+	 * @param cb callbacks to receive emulation events
 	 * @return the composed state
 	 */
 	PcodeExecutorState<Pair<byte[], U>> createLocalState(AuxPcodeEmulator<U> emulator,
-			PcodeThread<Pair<byte[], U>> thread, BytesPcodeExecutorStatePiece concrete);
+			PcodeThread<Pair<byte[], U>> thread, BytesPcodeExecutorStatePiece concrete,
+			PcodeStateCallbacks cb);
 }

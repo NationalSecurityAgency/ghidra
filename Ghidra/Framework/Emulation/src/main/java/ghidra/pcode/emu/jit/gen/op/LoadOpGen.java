@@ -26,6 +26,7 @@ import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.*;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.op.JitLoadOp;
 import ghidra.program.model.lang.Endian;
 
@@ -184,9 +185,9 @@ public enum LoadOpGen implements OpGen<JitLoadOp> {
 		// [...]
 		gen.requestFieldForSpaceIndirect(op.space()).generateLoadCode(gen, rv);
 		// [...,space]
-		JitType offsetType = gen.generateValReadCode(op.offset(), op.offsetType());
+		JitType offsetType = gen.generateValReadCode(op.offset(), op.offsetType(), Ext.ZERO);
 		// [...,space,offset:?INT/LONG]
-		TypeConversions.generateToLong(offsetType, LongJitType.I8, rv);
+		TypeConversions.generateToLong(offsetType, LongJitType.I8, Ext.ZERO, rv);
 		// [...,space,offset:LONG]
 		rv.visitLdcInsn(op.out().size());
 		// [...,space,offset,size]
@@ -204,7 +205,7 @@ public enum LoadOpGen implements OpGen<JitLoadOp> {
 			default -> throw new AssertionError();
 		}
 		// [...,value]
-		gen.generateVarWriteCode(op.out(), outType);
+		gen.generateVarWriteCode(op.out(), outType, Ext.ZERO);
 		// [...]
 	}
 }

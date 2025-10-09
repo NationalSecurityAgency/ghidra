@@ -87,7 +87,7 @@ import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String SCREENSHOT_USER_NAME = "User-1";
+	protected static final String SCREENSHOT_USER_NAME = "User-1";
 
 	static {
 		System.setProperty("user.name", "User-1");

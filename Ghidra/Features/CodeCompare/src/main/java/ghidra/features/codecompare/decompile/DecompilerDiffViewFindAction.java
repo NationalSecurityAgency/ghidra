@@ -67,11 +67,11 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DualDecompilerActionContext dualContext = (DualDecompilerActionContext) context;
-		DecompilerCodeComparisonPanel decompilerCompPanel =
-			dualContext.getCodeComparisonPanel();
+		DecompilerCodeComparisonView provider =
+			dualContext.getCodeComparisonView();
 
-		Side focusedSide = decompilerCompPanel.getActiveSide();
-		DecompilerPanel focusedPanel = decompilerCompPanel.getDecompilerPanel(focusedSide);
+		Side focusedSide = provider.getActiveSide();
+		DecompilerPanel focusedPanel = provider.getDecompilerPanel(focusedSide);
 		FindDialog dialog = findDialogs.get(focusedSide);
 		if (dialog == null) {
 			dialog = createFindDialog(focusedPanel, focusedSide);

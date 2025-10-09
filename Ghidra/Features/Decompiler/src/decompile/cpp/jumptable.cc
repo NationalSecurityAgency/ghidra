@@ -1284,6 +1284,18 @@ bool JumpBasic::flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp)
   return true;
 }
 
+/// \param arr is the array of Varnodes
+/// \return \b true if all elements are the same
+bool JumpBasic::duplicateVarnodes(const vector<Varnode *> &arr)
+
+{
+  Varnode *vn = arr[0];
+  for(int4 i=1;i<arr.size();++i) {
+    if (arr[i] != vn) return false;
+  }
+  return true;
+}
+
 /// All CBRANCHs in addition to flowing to the given block, must also flow to another common block,
 /// and each boolean value must select between the given block and the common block in the same way.
 /// If this flow exists, \b true is returned and the boolean Varnode inputs to each CBRANCH are passed back.
@@ -1338,9 +1350,14 @@ void JumpBasic::checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmas
   int4 indpathstore = bl->getIn(0)->getFlipPath() ? 1-indpath : indpath;
   PcodeOp *readOp = cbranch;
   for(int4 j=0;j<maxpullback;++j) {
-    PcodeOp *multiOp = bl->findMultiequal(varArray);
-    if (multiOp != (PcodeOp *)0) {
-      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,multiOp->getOut(),true));
+    if (duplicateVarnodes(varArray)) {
+      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,varArray[0],true));
+    }
+    else {
+      PcodeOp *multiOp = bl->findMultiequal(varArray);
+      if (multiOp != (PcodeOp *)0) {
+	selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,multiOp->getOut(),true));
+      }
     }
     Varnode *markup;		// Throw away markup information
     Varnode *vn = varArray[0];

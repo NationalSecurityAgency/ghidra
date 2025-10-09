@@ -44,7 +44,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int MAX_LOCAL_OFFSET = -(64 * 1024);  // max size of local reference space
 
 	private final static String X86_NAME = "x86";
-	
+
 	private boolean dontCreateNewVariables = false;
 
 	private final boolean forceProcessing;
@@ -55,7 +55,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private Program program;
 	private Register stackReg;
 	private int purge = 0;
-	
+
 	private boolean isX86 = false;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
@@ -105,7 +105,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	@Override
 	public boolean applyTo(Program p, TaskMonitor monitor) {
 		program = p;
-		
+
 		isX86 = checkForX86(p);
 
 		int count = 0;
@@ -145,8 +145,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	}
 
 	private boolean checkForX86(Program p) {
-		return program.getLanguage().getProcessor().equals(
-			Processor.findOrPossiblyCreateProcessor(X86_NAME)) && program.getDefaultPointerSize() <= 32;
+		return program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor(X86_NAME)) &&
+			program.getDefaultPointerSize() <= 32;
 	}
 
 	/**
@@ -221,7 +223,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 
 	private boolean isProtectedVariable(Variable var) {
 		return !var.isStackVariable() || !Undefined.isUndefined(var.getDataType()) ||
-			var.getSource() == SourceType.IMPORTED || var.getSource() == SourceType.USER_DEFINED ||
+			var.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED) ||
 			var.isCompoundVariable();
 	}
 
@@ -339,9 +341,11 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 							return;
 						}
 					}
-					long extendedOffset = extendOffset(address.getOffset(), stackReg.getBitLength());
-					
-					defineFuncVariable(symEval, func, instr, opIndex, (int) extendedOffset, sortedVariables);
+					long extendedOffset =
+						extendOffset(address.getOffset(), stackReg.getBitLength());
+
+					defineFuncVariable(symEval, func, instr, opIndex, (int) extendedOffset,
+						sortedVariables);
 				}
 			}
 
@@ -634,8 +638,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 //		return true;
 //	}
 
-	private void defineFuncVariable(SymbolicPropogator symEval, Function func, Instruction instr, int opIndex, int stackOffset,
-			List<Variable> sortedVariables) {
+	private void defineFuncVariable(SymbolicPropogator symEval, Function func, Instruction instr,
+			int opIndex, int stackOffset, List<Variable> sortedVariables) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 		int refSize = getRefSize(symEval, instr, opIndex);

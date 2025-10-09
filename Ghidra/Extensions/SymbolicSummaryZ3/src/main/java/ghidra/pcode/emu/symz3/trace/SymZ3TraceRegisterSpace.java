@@ -22,6 +22,8 @@ import com.microsoft.z3.Context;
 
 import ghidra.pcode.emu.symz3.SymZ3RegisterMap;
 import ghidra.pcode.emu.symz3.lib.Z3InfixPrinter;
+import ghidra.pcode.emu.symz3.state.SymZ3WriteDownHelper;
+import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -37,6 +39,8 @@ import ghidra.util.Msg;
  * stand-alone emulator, this is the full state. For a trace- or Debugger-integrated emulator, this
  * is a cache of values loaded from a trace backing this emulator. Most likely, that trace is the
  * user's current trace.
+ * 
+ * TODO: Delete me
  */
 public class SymZ3TraceRegisterSpace extends SymZ3TraceSpace {
 	private final SymZ3RegisterMap rmap = new SymZ3RegisterMap();
@@ -79,7 +83,7 @@ public class SymZ3TraceRegisterSpace extends SymZ3TraceSpace {
 	}
 
 	@Override
-	public void set(SymValueZ3 offset, int size, SymValueZ3 val) {
+	public void set(SymValueZ3 offset, int size, SymValueZ3 val, PcodeStateCallbacks cb) {
 		assert offset != null;
 		assert val != null;
 		Register r = getRegister(offset, size);
@@ -92,7 +96,7 @@ public class SymZ3TraceRegisterSpace extends SymZ3TraceSpace {
 	}
 
 	@Override
-	public SymValueZ3 get(SymValueZ3 offset, int size) {
+	public SymValueZ3 get(SymValueZ3 offset, int size, PcodeStateCallbacks cb) {
 		assert offset != null;
 		Register r = getRegister(offset, size);
 		if (r == null) {
@@ -111,5 +115,10 @@ public class SymZ3TraceRegisterSpace extends SymZ3TraceSpace {
 	@Override
 	public void writeDown(PcodeTracePropertyAccess<String> into) {
 		SymZ3WriteDownHelper.writeDown(rmap, into);
+	}
+
+	@Override
+	public Entry<Long, SymValueZ3> getNextEntry(long offset) {
+		return rmap.getNextEntry(offset);
 	}
 }

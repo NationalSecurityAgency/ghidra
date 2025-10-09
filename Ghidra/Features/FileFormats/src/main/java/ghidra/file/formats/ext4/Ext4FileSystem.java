@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Date;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
@@ -176,10 +178,31 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
 
+		if (fsIndex.getRootDir().equals(file)) {
+			result.add(NAME_ATTR, file.getName());
+			result.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
+			String volStr = superBlock.getVolumeName();
+			if (!volStr.isEmpty()) {
+				result.add("Volume", volStr);
+			}
+			String lastMountedAt = superBlock.getLastMountedString();
+			if (!lastMountedAt.isEmpty()) {
+				result.add("Last Mounted At", lastMountedAt);
+			}
+			result.add("UUID", uuid);
+			result.add(MODIFIED_DATE_ATTR, "Superblock last mod",
+				new Date((long) superBlock.getS_mtime() * 1000));
+			result.add(MODIFIED_DATE_ATTR, "Superblock last write",
+				new Date((long) superBlock.getS_wtime() * 1000));
+			result.add(CREATE_DATE_ATTR, new Date((long) superBlock.getS_mkfs_time() * 1000));
+			return result;
+		}
+
 		Ext4File ext4File = fsIndex.getMetadata(file);
 		if (ext4File != null) {
 			Ext4Inode inode = ext4File.getInode();
 			result.add(NAME_ATTR, ext4File.getName());
+			result.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
 			result.add(SIZE_ATTR, inode.getSize());
 			result.add(FILE_TYPE_ATTR, inodeToFileType(inode));
 			if (inode.isSymLink()) {
@@ -192,7 +215,7 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 				}
 				result.add(SYMLINK_DEST_ATTR, symLinkDest);
 			}
-			result.add(MODIFIED_DATE_ATTR, new Date(inode.getI_mtime() * 1000));
+			result.add(MODIFIED_DATE_ATTR, new Date((long) inode.getI_mtime() * 1000));
 			result.add(UNIX_ACL_ATTR, (long) (inode.getI_mode() & 0xFFF));
 			result.add(USER_ID_ATTR, Short.toUnsignedLong(inode.getI_uid()));
 			result.add(GROUP_ID_ATTR, Short.toUnsignedLong(inode.getI_gid()));

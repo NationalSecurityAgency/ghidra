@@ -91,6 +91,17 @@ public:
   uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const {
     return behave->evaluateBinary(sizeout,sizein,in1,in2); }
 
+  /// \brief Emulate the ternary op-code on an input value
+  ///
+  /// \param sizeout is the size of the output in bytes
+  /// \param sizein is the size of the inputs in bytes
+  /// \param in1 is the first input value
+  /// \param in2 is the second input value
+  /// \param in3 is the third input value
+  /// \return the output value
+  uintb evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const {
+    return behave->evaluateTernary(sizeout,sizein,in1,in2,in3); }
+
   /// \brief Reverse the binary op-code operation, recovering a constant input value
   ///
   /// If the output value and one of the input values is known, recover the value

@@ -57,6 +57,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private static final String PREF_STRIPCONTAINER = "BATCHIMPORT.STRIPCONTAINER";
 	private static final String PREF_STRIPLEADING = "BATCHIMPORT.STRIPLEADING";
+	private static final String PREF_MIRRORFS = "BATCHIMPORT.MIRRORFS";
 	private static final String LAST_IMPORT_DIR = "LastBatchImportDir";
 
 	/**
@@ -92,7 +93,12 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private ProgramManager programManager;
 	private boolean stripLeading = getBooleanPref(PREF_STRIPLEADING, true);
 	private boolean stripContainer = getBooleanPref(PREF_STRIPCONTAINER, false);
+	private boolean mirrorFs = getBooleanPref(PREF_MIRRORFS, false);
 	private boolean openAfterImporting = false;
+
+	private GCheckBox stripLeadingCb;
+	private GCheckBox stripContainerCb;
+	private GCheckBox mirrorFsCb;
 
 	private BatchImportTableModel tableModel;
 	private GTable table;
@@ -315,17 +321,24 @@ public class BatchImportDialog extends DialogComponentProvider {
 		outputChoicesPanel.setLayout(new BoxLayout(outputChoicesPanel, BoxLayout.LINE_AXIS));
 		outputChoicesPanel.getAccessibleContext().setAccessibleName("Output Choices");
 
-		GCheckBox stripLeadingCb = new GCheckBox("Strip leading path", stripLeading);
+		stripLeadingCb = new GCheckBox("Strip leading path", stripLeading);
 		stripLeadingCb.addChangeListener(e -> setStripLeading(stripLeadingCb.isSelected()));
 		stripLeadingCb.setToolTipText("The destination folder for imported files will not " +
 			"include the source file's leading path");
 		stripLeadingCb.getAccessibleContext().setAccessibleName("Strip Leading Path");
 
-		GCheckBox stripContainerCb = new GCheckBox("Strip container paths", stripContainer);
+		stripContainerCb = new GCheckBox("Strip container paths", stripContainer);
 		stripContainerCb.addChangeListener(e -> setStripContainer(stripContainerCb.isSelected()));
 		stripContainerCb.setToolTipText(
 			"The destination folder for imported files will not include any source path names");
 		stripContainerCb.getAccessibleContext().setAccessibleName("Strip Container Paths");
+
+		mirrorFsCb = new GCheckBox("Mirror Filesystem", mirrorFs);
+		mirrorFsCb.addChangeListener(e -> setMirrorFs(mirrorFsCb.isSelected()));
+		mirrorFsCb.setToolTipText(
+			"The imported files' project paths will mirror the filesystem rooted at the desination folder");
+		mirrorFsCb.getAccessibleContext().setAccessibleName("Mirror Filesystem");
+		setMirrorFs(mirrorFs); // needed to possibly disable other checkboxes
 
 		GCheckBox openAfterImportCb = new GCheckBox("Open after import", openAfterImporting);
 		openAfterImportCb
@@ -335,6 +348,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		outputChoicesPanel.add(stripLeadingCb);
 		outputChoicesPanel.add(stripContainerCb);
+		outputChoicesPanel.add(mirrorFsCb);
 		if (programManager != null) {
 			outputChoicesPanel.add(openAfterImportCb);
 		}
@@ -464,7 +478,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	protected void okCallback() {
 		new TaskLauncher(
 			new ImportBatchTask(batchInfo, destinationFolder,
-				openAfterImporting ? programManager : null, stripLeading, stripContainer),
+				openAfterImporting ? programManager : null, stripLeading, stripContainer, mirrorFs),
 			getComponent());
 		close();
 	}
@@ -614,6 +628,13 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private void setStripContainer(boolean stripContainer) {
 		this.stripContainer = stripContainer;
 		setBooleanPref(PREF_STRIPCONTAINER, stripContainer);
+	}
+
+	private void setMirrorFs(boolean mirrorFs) {
+		this.mirrorFs = mirrorFs;
+		setBooleanPref(PREF_MIRRORFS, mirrorFs);
+		stripContainerCb.setEnabled(!mirrorFs);
+		stripContainerCb.setSelected(mirrorFs ? false : stripContainer);
 	}
 
 	private void setMaxDepth(int newMaxDepth) {

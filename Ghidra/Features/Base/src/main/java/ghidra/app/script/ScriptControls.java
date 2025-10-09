@@ -97,7 +97,7 @@ public class ScriptControls {
 	 * @param monitor A cancellable monitor
 	 */
 	public ScriptControls(InterpreterConsole console, TaskMonitor monitor) {
-		this(console.getStdOut(), console.getStdErr(), monitor);
+		this(console.getOutWriter(), console.getErrWriter(), monitor);
 	}
 
 	/**

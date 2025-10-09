@@ -30,7 +30,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -174,32 +173,27 @@ public class SarifLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
-			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
 
 		//throw new RuntimeException("SARIF importer supports only 'Add To Program'");
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
-		CompilerSpec importerCompilerSpec =
-			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
 
-		ParseResult result = parse(provider, log);
+		ParseResult result = parse(settings.provider(), settings.log());
 
 		Address imageBase = null;
 		if (result.lastInfo.imageBase != null) {
 			imageBase = importerLanguage.getAddressFactory().getAddress(result.lastInfo.imageBase);
 		}
-		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
-			importerCompilerSpec, consumer);
-		List<Loaded<Program>> loadedList =
-			List.of(new Loaded<>(prog, programName, project, programFolderPath, consumer));
+		Program prog = createProgram(imageBase, settings);
+		List<Loaded<Program>> loadedList = List.of(new Loaded<>(prog, settings));
 		boolean success = false;
 		try {
-			success = doImport(result.lastSarifMgr, options, log, prog, monitor, false);
+			success = doImport(result.lastSarifMgr, settings.options(), settings.log(), prog,
+				settings.monitor(), false);
 			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
+				createDefaultMemoryBlocks(prog, settings);
 				return loadedList;
 			}
 			throw new LoadException("Failed to load");
@@ -212,11 +206,11 @@ public class SarifLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
+	protected void loadProgramInto(Program prog, ImporterSettings settings)
 			throws IOException, LoadException, CancelledException {
-		File file = provider.getFile();
-		doImport(new ProgramSarifMgr(prog, file, log), options, log, prog, monitor, true);
+		File file = settings.provider().getFile();
+		doImport(new ProgramSarifMgr(prog, file, settings.log()), settings.options(),
+			settings.log(), prog, settings.monitor(), true);
 	}
 
 	private boolean doImportWork(final ProgramSarifMgr mgr, final List<Option> options,
@@ -313,7 +307,7 @@ public class SarifLoader extends AbstractProgramLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		return new SarifProgramOptions().getOptions(loadIntoProgram);
 	}
 
@@ -323,7 +317,8 @@ public class SarifLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		try {
 			new SarifProgramOptions().setOptions(options);
 		}

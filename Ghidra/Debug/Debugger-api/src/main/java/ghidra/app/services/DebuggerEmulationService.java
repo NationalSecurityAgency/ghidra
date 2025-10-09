@@ -19,9 +19,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
@@ -68,11 +69,12 @@ public interface DebuggerEmulationService {
 	 * 
 	 * @param trace the trace the emulator is bound to
 	 * @param emulator the emulator itself
+	 * @param writer the callbacks with delayed writes for trace/UI integration
 	 * @param version the cache version. See {@link #isValid()}.
 	 */
-	record CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator, long version) {
-		public CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator) {
-			this(trace, emulator, trace.getEmulatorCacheVersion());
+	record CachedEmulator(Trace trace, PcodeMachine<?> emulator, Writer writer, long version) {
+		public CachedEmulator(Trace trace, PcodeMachine<?> emulator, Writer writer) {
+			this(trace, emulator, writer, trace.getEmulatorCacheVersion());
 		}
 
 		/**
@@ -96,7 +98,7 @@ public interface DebuggerEmulationService {
 		 * @return the emulator
 		 */
 		@Override
-		public DebuggerPcodeMachine<?> emulator() {
+		public PcodeMachine<?> emulator() {
 			return emulator;
 		}
 
@@ -136,7 +138,7 @@ public interface DebuggerEmulationService {
 	 * 
 	 * @return the collection of factories
 	 */
-	Collection<DebuggerPcodeEmulatorFactory> getEmulatorFactories();
+	Collection<EmulatorFactory> getEmulatorFactories();
 
 	/**
 	 * Set the current emulator factory
@@ -153,14 +155,14 @@ public interface DebuggerEmulationService {
 	 * 
 	 * @param factory the chosen factory
 	 */
-	void setEmulatorFactory(DebuggerPcodeEmulatorFactory factory);
+	void setEmulatorFactory(EmulatorFactory factory);
 
 	/**
 	 * Get the current emulator factory
 	 * 
 	 * @return the factory
 	 */
-	DebuggerPcodeEmulatorFactory getEmulatorFactory();
+	EmulatorFactory getEmulatorFactory();
 
 	/**
 	 * Load the given program into a trace suitable for emulation in the UI, starting at the given
@@ -290,7 +292,7 @@ public interface DebuggerEmulationService {
 	 * @param time the time coordinates, including initial snap, steps, and p-code steps
 	 * @return the copied p-code frame
 	 */
-	DebuggerPcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time);
+	PcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time);
 
 	/**
 	 * Get the emulators which are current executing

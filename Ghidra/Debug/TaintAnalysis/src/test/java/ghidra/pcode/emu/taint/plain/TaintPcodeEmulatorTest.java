@@ -29,6 +29,7 @@ import ghidra.pcode.emu.linux.AbstractEmuLinuxSyscallUseropLibrary;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest.Syscall;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
+import ghidra.pcode.emu.taint.TaintPcodeEmulator;
 import ghidra.pcode.emu.taint.lib.TaintEmuUnixFileSystem;
 import ghidra.pcode.emu.taint.lib.TaintFileReadsLinuxAmd64SyscallLibrary;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;

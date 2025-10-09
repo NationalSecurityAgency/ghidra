@@ -1043,6 +1043,58 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
+	 * Prints the {@link #decorateOutput optionally} {@link #decorate(String) decorated} message
+	 * followed by a line feed to this script's {@code stdout} {@link PrintWriter}, which is set by 
+	 * {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the always {@link #decorate(String) decorated} message is written to Ghidra's 
+	 * log.
+	 *
+	 * @param message the message to print
+	 * @param color the color for the text
+	 */
+	public void println(String message, Color color) {
+
+		String decoratedMessage = decorate(message);
+
+		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
+
+		if (writer instanceof DecoratingPrintWriter scriptWriter) {
+			scriptWriter.println(decorateOutput ? decoratedMessage : message, color);
+			return;
+		}
+
+		if (writer != null) {
+			writer.println(decorateOutput ? decoratedMessage : message);
+		}
+	}
+
+	/**
+	 * Prints the undecorated message with no newline to this script's {@code stdout} 
+	 * {@link PrintWriter}, which is set by {@link #set(GhidraState, ScriptControls)}.
+	 * <p>
+	 * Additionally, the undecorated message is written to Ghidra's log.
+	 *
+	 * @param message the message to print
+	 * @param color the color for the text
+	 */
+	public void print(String message, Color color) {
+
+		String decoratedMessage = decorate(message);
+
+		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
+
+		if (writer instanceof DecoratingPrintWriter scriptWriter) {
+			scriptWriter.print(decorateOutput ? decoratedMessage : message, color);
+			return;
+		}
+
+		if (writer != null) {
+			writer.print(decorateOutput ? decoratedMessage : message);
+		}
+	}
+
+	/**
 	 * Prints the undecorated {@link java.util.Formatter formatted message} to this script's 
 	 * {@code stdout} {@link PrintWriter}, which is set by 
 	 * {@link #set(GhidraState, ScriptControls)}.

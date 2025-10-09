@@ -19,23 +19,31 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.objectweb.asm.*;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.gen.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator.RetireMode;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitCallOtherDefOp;
 import ghidra.pcode.emu.jit.op.JitCallOtherOpIf;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -153,6 +161,31 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		transition.generateInv(rv);
 	}
 
+	static Parameter findOutputParameter(Parameter[] parameters, Method method) {
+		List<Parameter> found =
+			Stream.of(parameters).filter(p -> p.getAnnotation(OpOutput.class) != null).toList();
+		return switch (found.size()) {
+			case 0 -> null;
+			case 1 -> {
+				Parameter p = found.get(0);
+				if (p.getType() == int[].class) {
+					yield p;
+				}
+				throw new IllegalArgumentException("""
+						@%s requires parameter to have type int[] when functional=true. \
+						Got %s (method %s)""".formatted(
+					OpOutput.class.getSimpleName(), p, method.getName()));
+			}
+			default -> {
+				throw new IllegalArgumentException("""
+						@%s can only be applied to one parameter of method %s. \
+						It is applied to: %s""".formatted(
+					OpOutput.class.getSimpleName(), method.getName(),
+					found.stream().map(Parameter::toString).collect(Collectors.joining(", "))));
+			}
+		};
+	}
+
 	/**
 	 * Emit code to implement the Direct strategy (see the class documentation)
 	 * 
@@ -175,6 +208,8 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		rv.visitTryCatchBlock(tryStart, tryEnd,
 			gen.requestExceptionHandler((DecodedPcodeOp) op.op(), block).label(), NAME_THROWABLE);
 
+		JitAllocationModel am = gen.getAllocationModel();
+
 		// []
 		useropField.generateLoadCode(gen, rv);
 		// [userop]
@@ -186,29 +221,106 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		rv.visitTypeInsn(CHECKCAST, owningLibName);
 		// [library:OWNING_TYPE]
 		Parameter[] parameters = method.getParameters();
-		for (int i = 0; i < op.args().size(); i++) {
-			JitVal arg = op.args().get(i);
-			Parameter p = parameters[i];
-
-			JitType type = gen.generateValReadCode(arg, JitTypeBehavior.ANY);
-			if (p.getType() == boolean.class) {
-				TypeConversions.generateIntToBool(type, rv);
+		Parameter outputParameter = findOutputParameter(parameters, method);
+		if (outputParameter != null && method.getReturnType() != void.class) {
+			throw new IllegalArgumentException("""
+					@%s cannot be applied to any parameter of a method returning non-void. \
+					It's applied to %s of %s""".formatted(
+				OpOutput.class.getSimpleName(), outputParameter, method.getName()));
+		}
+		try (JvmTempAlloc out =
+			am.allocateTemp(rv, "out", int[].class, outputParameter == null ? 0 : 1)) {
+			MpIntJitType outMpType;
+			if (outputParameter != null) {
+				if (!(op instanceof JitCallOtherDefOp defOp)) {
+					outMpType = null;
+					rv.visitInsn(ACONST_NULL);
+				}
+				else {
+					outMpType = MpIntJitType.forSize(defOp.out().size());
+					rv.visitLdcInsn(outMpType.legsAlloc());
+					rv.visitIntInsn(NEWARRAY, T_INT);
+				}
+				rv.visitVarInsn(ASTORE, out.idx(0));
 			}
 			else {
-				TypeConversions.generate(gen, type, JitType.forJavaType(p.getType()), rv);
+				outMpType = null;
+			}
+
+			int argIdx = 0;
+			for (int i = 0; i < parameters.length; i++) {
+				Parameter p = parameters[i];
+
+				if (p == outputParameter) {
+					rv.visitVarInsn(ALOAD, out.idx(0));
+					continue;
+				}
+
+				JitVal arg = op.args().get(argIdx++);
+
+				// TODO: Should this always be zero extension?
+				JitType type = gen.generateValReadCode(arg, JitTypeBehavior.ANY, Ext.ZERO);
+				if (p.getType() == boolean.class) {
+					TypeConversions.generateIntToBool(type, rv);
+					continue;
+				}
+
+				if (p.getType() == int[].class) {
+					MpIntJitType mpType = MpIntJitType.forSize(type.size());
+					// NOTE: Would be nice to have annotation specify signedness
+					TypeConversions.generate(gen, type, mpType, Ext.ZERO, rv);
+					int legCount = mpType.legsAlloc();
+					try (JvmTempAlloc temp = am.allocateTemp(rv, "temp", legCount)) {
+						OpGen.generateMpLegsIntoTemp(temp, legCount, rv);
+						OpGen.generateMpLegsIntoArray(temp, legCount, legCount, rv);
+					}
+					continue;
+				}
+
+				// Some primitive/simple type
+				// TODO: Should this always be zero extension? Can annotation specify?
+				TypeConversions.generate(gen, type, JitType.forJavaType(p.getType()), Ext.ZERO,
+					rv);
+			}
+			// [library,params...]
+			rv.visitLabel(tryStart);
+			rv.visitMethodInsn(INVOKEVIRTUAL, owningLibName, method.getName(),
+				Type.getMethodDescriptor(method), false);
+			// [return?]
+			rv.visitLabel(tryEnd);
+			if (outputParameter != null) {
+				if (outMpType != null && op instanceof JitCallOtherDefOp defOp) {
+					rv.visitVarInsn(ALOAD, out.idx(0));
+					OpGen.generateMpLegsFromArray(outMpType.legsAlloc(), rv);
+					// NOTE: Want annotation to specify signedness
+					gen.generateVarWriteCode(defOp.out(), outMpType, Ext.ZERO);
+				}
+				// Else there's either no @OpOutput or the output operand is absent
+			}
+			else if (op instanceof JitCallOtherDefOp defOp) {
+				// TODO: Can annotation specify signedness of return value?
+				gen.generateVarWriteCode(defOp.out(), JitType.forJavaType(method.getReturnType()),
+					Ext.ZERO);
+			}
+			else if (method.getReturnType() != void.class) {
+				TypeConversions.generatePop(JitType.forJavaType(method.getReturnType()), rv);
 			}
 		}
-		// [library,params...]
-		rv.visitLabel(tryStart);
-		rv.visitMethodInsn(INVOKEVIRTUAL, owningLibName, method.getName(),
-			Type.getMethodDescriptor(method), false);
-		// [return?]
-		rv.visitLabel(tryEnd);
-		if (op instanceof JitCallOtherDefOp defOp) {
-			gen.generateVarWriteCode(defOp.out(), JitType.forJavaType(method.getReturnType()));
+	}
+
+	static class ResourceGroup implements AutoCloseable {
+		private final List<AutoCloseable> resources = new ArrayList<>();
+
+		@Override
+		public void close() throws Exception {
+			for (AutoCloseable r : resources) {
+				r.close();
+			}
 		}
-		else if (method.getReturnType() != void.class) {
-			TypeConversions.generatePop(JitType.forJavaType(method.getReturnType()), rv);
+
+		public <T extends AutoCloseable> T add(T resource) {
+			resources.add(resource);
+			return resource;
 		}
 	}
 

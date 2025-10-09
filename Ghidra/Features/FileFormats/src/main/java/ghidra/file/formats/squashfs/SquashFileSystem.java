@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,17 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.formats.gfilesystem.fileinfo.FileType;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -37,19 +41,20 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 	private BinaryReader reader;
 	private SquashSuperBlock superBlock;
 
-	public SquashFileSystem(FSRLRoot fsFSRL, ByteProvider provider, FileSystemService fsService) {
+	public SquashFileSystem(FSRLRoot fsFSRL, FileSystemService fsService) {
 		super(fsFSRL, fsService);
 		fsIndex = new FileSystemIndexHelper<>(this, fsFSRL);
+	}
+
+	public void mount(ByteProvider provider, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		monitor.setMessage("Opening " + SquashFileSystem.class.getSimpleName() + "...");
 
 		this.provider = provider;
 
 		// BinaryReader representing the entire archive
 		// Squash versions after 3.0 (2006) should be little endian
 		reader = new BinaryReader(provider, true /* LE */);
-	}
-
-	public void mount(TaskMonitor monitor) throws IOException, CancelledException {
-		monitor.setMessage("Opening " + SquashFileSystem.class.getSimpleName() + "...");
 
 		// Get the super block information for how to process the archive
 		superBlock = new SquashSuperBlock(reader);
@@ -72,8 +77,7 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 		directoryTable.assignInodes(inodes, monitor);
 
 		// Give file structure to Ghidra to present to the user
-		SquashUtils.buildDirectoryStructure(fragmentTable, directoryTable, inodes, fsIndex,
-			monitor);
+		buildDirectoryStructure(fragmentTable, directoryTable, inodes, monitor);
 	}
 
 	@Override
@@ -265,45 +269,44 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 
 		FileAttributes result = new FileAttributes();
 
+		// Add general attributes
+		result.add(NAME_ATTR, file.getName());
+		result.add(FSRL_ATTR, file.getFSRL());
+		result.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
+
 		SquashedFile squashedFile = fsIndex.getMetadata(file);
+		Object squashInfo = fsIndex.getRootDir().equals(file) ? superBlock
+				: squashedFile != null ? squashedFile.getInode() : null;
 
-		if (squashedFile != null) {
-
-			SquashInode inode = squashedFile.getInode();
-
-			// Add additional attributes to the root directory
-			if (fsIndex.getRootDir().equals(file)) {
+		switch (squashInfo) {
+			case SquashSuperBlock sb: // superBlock also avail as member var
 				result.add("Compression used", superBlock.getCompressionTypeString());
 				result.add("Block size", superBlock.getBlockSize());
 				result.add("Inode count", superBlock.getInodeCount());
 				result.add("Fragment count", superBlock.getTotalFragments());
 				result.add("SquashFS version", superBlock.getVersionString());
-				result.add(MODIFIED_DATE_ATTR, new Date(superBlock.getModTime()));
-			}
-			else {
-				result.add(MODIFIED_DATE_ATTR, new Date(inode.getModTime()));
-			}
-
-			// Add general attributes
-			result.add(NAME_ATTR, squashedFile.getName());
-			result.add(FSRL_ATTR, file.getFSRL());
-
-			// Add file-related attributes
-			if (inode.isFile()) {
-				SquashBasicFileInode fileInode = (SquashBasicFileInode) inode;
-
+				result.add(MODIFIED_DATE_ATTR, superBlock.getModTimeAsDate());
+				break;
+			case SquashBasicFileInode fileInode:
 				result.add(SIZE_ATTR, squashedFile.getUncompressedSize());
 				result.add(COMPRESSED_SIZE_ATTR, fileInode.getCompressedFileSize());
-
-			}
-			else if (inode.isSymLink()) {
-
-				SquashSymlinkInode symLinkInode = (SquashSymlinkInode) inode;
-				result.add(SYMLINK_DEST_ATTR, symLinkInode.getPath());
-
-			}
+				result.add(FILE_TYPE_ATTR, fileInode.isDir() ? FileType.DIRECTORY : FileType.FILE);
+				result.add(MODIFIED_DATE_ATTR, fileInode.getModTimeAsDate());
+				result.add(UNIX_ACL_ATTR, (long) fileInode.getPermissions());
+				break;
+			case SquashBasicDirectoryInode dirInode:
+				result.add(FILE_TYPE_ATTR, FileType.DIRECTORY);
+				result.add(MODIFIED_DATE_ATTR, dirInode.getModTimeAsDate());
+				result.add(UNIX_ACL_ATTR, (long) dirInode.getPermissions());
+				break;
+			case SquashSymlinkInode symlinkInode:
+				result.add(SYMLINK_DEST_ATTR, symlinkInode.getPath());
+				result.add(FILE_TYPE_ATTR, FileType.SYMBOLIC_LINK);
+				result.add(MODIFIED_DATE_ATTR, symlinkInode.getModTimeAsDate());
+				result.add(UNIX_ACL_ATTR, (long) symlinkInode.getPermissions());
+				break;
+			default:
 		}
-
 		return result;
 	}
 
@@ -314,6 +317,110 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 		if (provider != null) {
 			provider.close();
 			provider = null;
+			reader = null;
 		}
 	}
+
+	private void buildDirectoryStructure(SquashFragmentTable fragTable,
+			SquashDirectoryTable dirTable, SquashInodeTable inodes, TaskMonitor monitor)
+			throws CancelledException, IOException {
+
+		SquashInode[] inodeArray = inodes.getInodes();
+
+		SquashInode rootInode = inodes.getRootInode();
+
+		// Make sure the root inode is a directory
+		if (rootInode != null && rootInode.isDir()) {
+
+			// Treat root inode as a directory inode
+			SquashBasicDirectoryInode dirInode = (SquashBasicDirectoryInode) rootInode;
+
+			// For each header associated with the root inode, process all entries
+			List<SquashDirectoryTableHeader> headers = dirTable.getHeaders(dirInode);
+
+			if (headers.size() == 0) {
+				throw new IOException("Unable to find headers for the root directory");
+			}
+
+			for (SquashDirectoryTableHeader header : headers) {
+
+				// For all files/directories immediately under the root
+				List<SquashDirectoryTableEntry> entries = header.getEntries();
+				for (SquashDirectoryTableEntry entry : entries) {
+
+					// Recurse down the directory tree, storing directories and files
+					assignPathsRecursively(fragTable, dirTable, entry, inodeArray,
+						fsIndex.getRootDir(), monitor);
+				}
+			}
+		}
+		else {
+			// If root is NOT a directory, stop processing
+			throw new IOException("Root inode was not a directory!");
+		}
+	}
+
+	private void assignPathsRecursively(SquashFragmentTable fragTable,
+			SquashDirectoryTable dirTable, SquashDirectoryTableEntry entry, SquashInode[] inodes,
+			GFile parentDir, TaskMonitor monitor) throws CancelledException, IOException {
+
+		// Check if the user cancelled the load
+		monitor.checkCancelled();
+
+		// Validate the inode number of the current entry
+		if (entry == null || entry.getInodeNumber() < 1 || entry.getInodeNumber() > inodes.length) {
+			throw new IOException(
+				"Entry found with invalid inode number: " + entry.getInodeNumber());
+		}
+
+		// Get the inode for the current entry
+		SquashInode inode = inodes[entry.getInodeNumber()];
+
+		// If the inode is a directory, recurse downward. Otherwise, just store the file
+		if (inode.isDir()) {
+
+			// Treat as directory inode
+			SquashBasicDirectoryInode dirInode = (SquashBasicDirectoryInode) inode;
+			// Create and store a "file" representing the current directory
+			SquashedFile squashedDirFile = new SquashedFile(dirInode, null);
+			GFile dirGFile = fsIndex.storeFileWithParent(entry.getFileName(), parentDir,
+				inode.getNumber(), true, -1, squashedDirFile);
+
+			// Get the directory headers for the current inode and process each entry within them
+			List<SquashDirectoryTableHeader> headers = dirTable.getHeaders(dirInode);
+			for (SquashDirectoryTableHeader header : headers) {
+
+				// For each sub-directory, recurse downward and add each file/directory encountered
+				List<SquashDirectoryTableEntry> entries = header.getEntries();
+				for (SquashDirectoryTableEntry currentEntry : entries) {
+					assignPathsRecursively(fragTable, dirTable, currentEntry, inodes, dirGFile,
+						monitor);
+				}
+			}
+		}
+		else if (inode.isFile()) {
+
+			// Treat as file inode
+			SquashBasicFileInode fileInode = (SquashBasicFileInode) inode;
+
+			SquashFragment fragment = fragTable.getFragment(fileInode.getFragmentIndex());
+
+			// Store the current file
+			fsIndex.storeFileWithParent(entry.getFileName(), parentDir, fileInode.getNumber(),
+				false, fileInode.getFileSize(), new SquashedFile(fileInode, fragment));
+		}
+		else if (inode.isSymLink()) {
+
+			// Treat as symbolic link inode
+			SquashSymlinkInode symLinkInode = (SquashSymlinkInode) inode;
+
+			fsIndex.storeSymlinkWithParent(entry.getFileName(), parentDir, symLinkInode.getNumber(),
+				symLinkInode.getPath(), 0, new SquashedFile(symLinkInode, null));
+		}
+		else {
+			Msg.info(SquashUtils.class,
+				"Inode #" + inode.getNumber() + " is not a file or directory. Skipping...");
+		}
+	}
+
 }

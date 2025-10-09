@@ -17,19 +17,12 @@ package ghidra.pcode.emu.symz3;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.core.debug.service.emulation.RWTargetMemoryPcodeExecutorStatePiece;
-import ghidra.app.plugin.core.debug.service.emulation.RWTargetRegistersPcodeExecutorStatePiece;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
+import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
-import ghidra.pcode.emu.symz3.plain.SymZ3PcodeExecutorState;
-import ghidra.pcode.emu.symz3.trace.SymZ3TracePcodeExecutorState;
+import ghidra.pcode.emu.symz3.state.SymZ3PcodeExecutorState;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory;
-import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerPcodeEmulator;
-import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece;
-import ghidra.pcode.exec.trace.TracePcodeExecutorState;
-import ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator;
 import ghidra.program.model.lang.Language;
 import ghidra.symz3.model.SymValueZ3;
 
@@ -48,21 +41,16 @@ import ghidra.symz3.model.SymValueZ3;
  * <li>P-code Arithmetic: {@link SymZ3PcodeArithmetic}</li>
  * <li>Userop Library: {@link SymZ3PcodeUseropLibrary}</li>
  * <li>P-code Executor: {@link SymZ3PcodeThreadExecutor}</li>
- * <li>Machine State</li>
- * <ul>
- * <li>Stand alone: {@link SymZ3PcodeExecutorState}</li>
- * <li>Trace integrated: {@link SymZ3TracePcodeExecutorState}</li>
- * <li>Debugger integrated: Not applicable. Uses trace integration only.</li>
- * </ul>
+ * <li>Machine State: {@link SymZ3PcodeExecutorState}</li>
  * </ul>
  * 
  * <p>
  * If you're following from the {@link ghidra.symz3} package documentation, you'll want to return to
- * {@link ghidra.pcode.emu.symz3.plain} before you examine the trace-integrated state. Similarly,
+ * {@link ghidra.pcode.emu.symz3.state} before you examine the trace-integrated state. Similarly,
  * you'll want to return to {@link ghidra.pcode.emu.symz3.trace} before you examine the
  * Debugger-integrated state.
  */
-public enum SymZ3PartsFactory implements AuxDebuggerEmulatorPartsFactory<SymValueZ3> {
+public enum SymZ3PartsFactory implements AuxEmulatorPartsFactory<SymValueZ3> {
 	/** This singleton factory instance */
 	INSTANCE;
 
@@ -140,44 +128,15 @@ public enum SymZ3PartsFactory implements AuxDebuggerEmulatorPartsFactory<SymValu
 
 	@Override
 	public PcodeExecutorState<Pair<byte[], SymValueZ3>> createSharedState(
-			AuxPcodeEmulator<SymValueZ3> emulator, BytesPcodeExecutorStatePiece concrete) {
-		return new SymZ3PcodeExecutorState(emulator.getLanguage(), concrete);
+			AuxPcodeEmulator<SymValueZ3> emulator, BytesPcodeExecutorStatePiece concrete,
+			PcodeStateCallbacks cb) {
+		return new SymZ3PcodeExecutorState(emulator.getLanguage(), concrete, cb);
 	}
 
 	@Override
 	public PcodeExecutorState<Pair<byte[], SymValueZ3>> createLocalState(
 			AuxPcodeEmulator<SymValueZ3> emulator, PcodeThread<Pair<byte[], SymValueZ3>> thread,
-			BytesPcodeExecutorStatePiece concrete) {
-		return new SymZ3PcodeExecutorState(emulator.getLanguage(), concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], SymValueZ3>> createTraceSharedState(
-			AuxTracePcodeEmulator<SymValueZ3> emulator,
-			BytesTracePcodeExecutorStatePiece concrete) {
-		return new SymZ3TracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], SymValueZ3>> createTraceLocalState(
-			AuxTracePcodeEmulator<SymValueZ3> emulator,
-			PcodeThread<Pair<byte[], SymValueZ3>> emuThread,
-			BytesTracePcodeExecutorStatePiece concrete) {
-		return new SymZ3TracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], SymValueZ3>> createDebuggerSharedState(
-			AuxDebuggerPcodeEmulator<SymValueZ3> emulator,
-			RWTargetMemoryPcodeExecutorStatePiece concrete) {
-		return new SymZ3TracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], SymValueZ3>> createDebuggerLocalState(
-			AuxDebuggerPcodeEmulator<SymValueZ3> emulator,
-			PcodeThread<Pair<byte[], SymValueZ3>> emuThread,
-			RWTargetRegistersPcodeExecutorStatePiece concrete) {
-		return new SymZ3TracePcodeExecutorState(concrete);
+			BytesPcodeExecutorStatePiece concrete, PcodeStateCallbacks cb) {
+		return new SymZ3PcodeExecutorState(emulator.getLanguage(), concrete, cb);
 	}
 }

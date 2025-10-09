@@ -129,6 +129,11 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 		}
 
 		@Override
+		public Class<?> getOutputType() {
+			return rtOp.getOutputType();
+		}
+
+		@Override
 		public Method getJavaMethod() {
 			return rtOp.getJavaMethod();
 		}

@@ -142,19 +142,7 @@ public class DataTree extends GTree {
 		}
 		else if (node instanceof DomainFileNode fileNode) {
 			if (fileNode.isFolderLink()) {
-				// Handle case where file node corresponds to a folder-link.
-				// Folder-Link status needs to be checked to ensure it corresponds to a folder
-				// internal to the same project.
-				LinkFileInfo linkInfo = fileNode.getDomainFile().getLinkInfo();
-				if (linkInfo == null) {
-					return null; // unexpected
-				}
-				LinkStatus linkStatus = linkInfo.getLinkStatus(null);
-				if (linkStatus != LinkStatus.INTERNAL) {
-					return null;
-				}
-				// Get linked folder - status check ensures null will not be returned
-				folder = linkInfo.getLinkedFolder();
+				folder = getLinkedFolder(fileNode);
 			}
 			else {
 				// Handle normal file cases where we return node's parent folder
@@ -162,8 +150,12 @@ public class DataTree extends GTree {
 				if (parent instanceof DomainFolderNode folderNode) {
 					folder = folderNode.getDomainFolder();
 				}
+				else if (parent instanceof DomainFileNode parentFileNode) {
+					folder = getLinkedFolder(parentFileNode);
+				}
 			}
 		}
+
 		if (folder instanceof LinkedDomainFolder linkedFolder) {
 			// Resolve linked internal folder to its real folder
 			try {
@@ -174,5 +166,21 @@ public class DataTree extends GTree {
 			}
 		}
 		return folder;
+	}
+
+	private static DomainFolder getLinkedFolder(DomainFileNode fileNode) {
+		// Handle case where file node corresponds to a folder-link.
+		// Folder-Link status needs to be checked to ensure it corresponds to a folder
+		// internal to the same project.
+		LinkFileInfo linkInfo = fileNode.getDomainFile().getLinkInfo();
+		if (linkInfo == null) {
+			return null; // unexpected
+		}
+		LinkStatus linkStatus = linkInfo.getLinkStatus(null);
+		if (linkStatus != LinkStatus.INTERNAL) {
+			return null;
+		}
+		// Get linked folder - status check ensures null will not be returned
+		return linkInfo.getLinkedFolder();
 	}
 }

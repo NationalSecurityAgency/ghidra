@@ -2169,8 +2169,19 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
   return 0;
 }
 
+/// \param vn is the given Varnode
+/// \return \b true if it is a constant or a COPY of a constant
+bool ActionRestructureVarnode::isCopyConstant(Varnode *vn)
+
+{
+  if (vn->isConstant()) return true;
+  if (!vn->isWritten()) return false;
+  if (vn->getDef()->code() != CPUI_COPY) return false;
+  return vn->getDef()->getIn(0)->isConstant();
+}
+
 /// Return \b true if either the Varnode is a constant or if it is the not yet simplified
-/// INT_ADD of constants.
+/// COPY or INT_ADD of constants.
 /// \param vn is the given Varnode to test
 /// \return \b true if the Varnode will be a constant
 bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
@@ -2179,14 +2190,13 @@ bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
   if (vn->isConstant()) return true;
   if (!vn->isWritten()) return false;
   PcodeOp *op = vn->getDef();
-  if (op->code() != CPUI_INT_ADD) return false;
-  if (!op->getIn(1)->isConstant()) return false;
-  Varnode *cvn = op->getIn(0);
-  if (cvn->isConstant()) return true;
-  if (!cvn->isWritten()) return false;
-  PcodeOp *copy = cvn->getDef();
-  if (copy->code() != CPUI_COPY) return false;
-  return copy->getIn(0)->isConstant();
+  OpCode opc = op->code();
+  if (opc == CPUI_COPY)
+    return op->getIn(0)->isConstant();
+  if (opc != CPUI_INT_ADD) return false;
+  if (!isCopyConstant(op->getIn(1))) return false;
+  if (!isCopyConstant(op->getIn(0))) return false;
+  return true;
 }
 
 /// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
@@ -4238,6 +4248,40 @@ void ActionConditionalConst::placeMultipleConstants(vector<PcodeOpNode> &phiNode
   }
 }
 
+/// \brief Try to push the constant at the front point through to the output of the given PcodeOp
+///
+/// If successful, create a ConstPoint to search for reads of this new constant.
+/// \param points is the set of points with the current point at the front
+/// \param op is p-code op to push the constant through
+void ActionConditionalConst::pushConstant(list<ConstPoint> &points,PcodeOp *op)
+
+{
+  if ((op->getEvalType() & PcodeOp::special) != 0) return;
+  if (op->getOpcode()->isFloatingPointOp()) return;
+  Varnode *outvn = op->getOut();
+  if (outvn->getSize() > sizeof(uintb)) return;
+  Varnode *vn = points.front().vn;
+  int4 slot = op->getSlot(vn);
+  uintb in[3];
+  for(int4 i=0;i<op->numInput();++i) {
+    if (i == slot)
+      in[i] = points.front().value;
+    else {
+      Varnode *inVn = op->getIn(i);
+      if (inVn->getSize() > sizeof(uintb)) return;
+      if (inVn->isConstant())
+	in[i] = op->getIn(i)->getOffset();
+      else
+	return;		// Not all inputs are constant
+    }
+  }
+  bool evalError;
+  uintb outval = op->executeSimple(in,evalError);
+  if (evalError)
+    return;
+  points.emplace_back(outvn,outval,points.front().constBlock,points.front().inSlot,points.front().blockIsDom);
+}
+
 /// \brief Replace MULTIEQUAL edges with constant if there is no alternate flow
 ///
 /// A given Varnode is known to be constant along a set of MULTIEQUAL edges. If these edges are excised from the
@@ -4287,53 +4331,107 @@ void ActionConditionalConst::handlePhiNodes(Varnode *varVn,Varnode *constVn,vect
   }
 }
 
-/// \brief Replace reads of a given Varnode with a constant.
+/// \brief Test if we can reach the given Varnode via a path other than through the immediate edge
 ///
-/// For each read op, check that is in or dominated by a specific block we known
-/// the Varnode is constant in.
-/// \param varVn is the given Varnode
-/// \param constVn is the constant Varnode to replace with
-/// \param constBlock is the block which dominates ops reading the constant value
+/// The given Varnode is an input to a MULTIEQUAL through a specific input slot.  If we can reach the
+/// same Varnode backtracking through one of the other slots, return \b true.  We can backtrack
+/// through MULTIEQUALs up to a given depth and possibly a final INT_ADD.
+/// \param vn is the given Varnode
+/// \param op is the MULTIEQUAL reading \b vn
+/// \param slot is the input index of \b vn
+/// \param depth is the maximum depth to backtrack
+/// \return \b true if an alternate path to the Varnode is found
+bool ActionConditionalConst::testAlternatePath(Varnode *vn,PcodeOp *op,int4 slot,int4 depth)
+
+{
+  for(int4 i=0;i<op->numInput();++i) {
+    if (i == slot) continue;
+    Varnode *inVn = op->getIn(i);
+    if (inVn == vn) return true;
+    if (inVn->isWritten()) {
+      PcodeOp *curOp = inVn->getDef();
+      OpCode opc = curOp->code();
+      if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB || opc == CPUI_PTRADD) {
+	if (curOp->getIn(0) == vn || curOp->getIn(1) == vn)
+	  return true;
+      }
+      else if (opc == CPUI_MULTIEQUAL) {
+	if (depth == 0) continue;
+	if (testAlternatePath(vn,curOp,-1,depth-1))
+	  return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// \brief At each ConstPoint, replace reads of the Varnode down the constant path with a constant Varnode
+///
+/// Process ConstPoints from the front of the list.
+/// For each read op of current point's Varnode, check if it is in the constant path.
+/// If it is, replace the read with a new constant Varnode.
+/// If not in the constant path, attempt to make the output Varnode into a new ConstPoint that may have
+/// have reads in the constant path.
+/// \param points is the list of ConstPoints
 /// \param useMultiequal is \b true if conditional constants can be applied to MULTIEQUAL ops
 /// \param data is the function being analyzed
-void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data)
+void ActionConditionalConst::propagateConstant(list<ConstPoint> &points,bool useMultiequal,Funcdata &data)
 
 {
   vector<PcodeOpNode> phiNodeEdges;
-  list<PcodeOp *>::const_iterator iter,enditer;
-  iter = varVn->beginDescend();
-  enditer = varVn->endDescend();
-  while(iter != enditer) {
-    PcodeOp *op = *iter;
-    while(iter != enditer && *iter == op)
-      ++iter;				// Advance iterator off of current op, as this descendant may be erased
-    OpCode opc = op->code();
-    if (opc == CPUI_INDIRECT)			// Don't propagate constant into these
-      continue;
-    else if (opc == CPUI_MULTIEQUAL) {
-      if (!useMultiequal)
+  while(!points.empty()) {
+    ConstPoint &point(points.front());
+    Varnode *varVn = point.vn;
+    Varnode *constVn = point.constVn;
+    FlowBlock *constBlock = point.constBlock;
+    list<PcodeOp *>::const_iterator iter = varVn->beginDescend();
+    list<PcodeOp *>::const_iterator enditer = varVn->endDescend();
+    while(iter != enditer) {
+      PcodeOp *op = *iter;
+      while(iter != enditer && *iter == op)
+	++iter;				// Advance iterator off of current op, as this descendant may be erased
+      OpCode opc = op->code();
+      if (opc == CPUI_INDIRECT)			// Don't propagate constant into these
 	continue;
-      if (varVn->isAddrTied() && varVn->getAddr() == op->getOut()->getAddr())
-	continue;
-      FlowBlock *bl = op->getParent();
-      for(int4 slot=0;slot<op->numInput();++slot) {
-	if (op->getIn(slot) == varVn) {
-	  if (constBlock->dominates(bl->getIn(slot))) {
-	    phiNodeEdges.emplace_back(op,slot);
+      else if (opc == CPUI_MULTIEQUAL) {
+	if (!useMultiequal)
+	  continue;
+	if (varVn->isAddrTied() && varVn->getAddr() == op->getOut()->getAddr())
+	  continue;
+	FlowBlock *bl = op->getParent();
+	if (bl == constBlock) {		// The immediate edge from the conditional block, coming into a MULTIEQUAL
+	  if (op->getIn(point.inSlot) == varVn) {
+	    // Its possible the compiler still intends the constant value to be the same variable
+	    // Test for conditions when this is likely so we don't unnecessarily create a new variable
+	    if (point.value > 1) continue;
+	    if (op->getOut()->isAddrTied()) continue;
+	    if (testAlternatePath(varVn, op, point.inSlot, 2)) continue;
+	    phiNodeEdges.emplace_back(op,point.inSlot);
 	  }
 	}
+	else if (point.blockIsDom) {
+	  for(int4 slot=0;slot<op->numInput();++slot) {
+	    if (op->getIn(slot) == varVn) {
+	      if (constBlock->dominates(bl->getIn(slot))) {
+		phiNodeEdges.emplace_back(op,slot);
+	      }
+	    }
+	  }
+	}
+	continue;
       }
-      continue;
-    }
-    else if (opc == CPUI_COPY) {		// Don't propagate into COPY unless...
-      PcodeOp *followOp = op->getOut()->loneDescend();
-      if (followOp == (PcodeOp *)0) continue;
-      if (followOp->isMarker()) continue;
-      if (followOp->code() == CPUI_COPY) continue;
+      else if (opc == CPUI_COPY) {		// Don't propagate into COPY unless...
+	PcodeOp *followOp = op->getOut()->loneDescend();
+	if (followOp == (PcodeOp *)0) continue;
+	if (followOp->isMarker()) continue;
+	if (followOp->code() == CPUI_COPY) continue;
 						// ...unless COPY is into something more interesting
-    }
-    if (constBlock->dominates(op->getParent())) {
-      if (opc == CPUI_RETURN){
+      }
+      if (!point.blockIsDom) continue;
+      if (constBlock->dominates(op->getParent())) {
+	if (constVn == (Varnode *)0)
+	  constVn = data.newConstant(varVn->getSize(), point.value);
+	if (opc == CPUI_RETURN) {
           // CPUI_RETURN ops can't directly take constants
           // as inputs
           PcodeOp *copyBeforeRet = data.newOp(1, op->getAddr());
@@ -4342,16 +4440,70 @@ void ActionConditionalConst::propagateConstant(Varnode *varVn,Varnode *constVn,F
           data.newVarnodeOut(varVn->getSize(),varVn->getAddr(),copyBeforeRet);
           data.opSetInput(op,copyBeforeRet->getOut(),1);
           data.opInsertBefore(copyBeforeRet,op);
+	}
+	else {
+	  int4 slot = op->getSlot(varVn);
+	  data.opSetInput(op,constVn,slot);	// Replace ref with constant!
+	}
+	count += 1;			// We made a change
       }
       else {
-        int4 slot = op->getSlot(varVn);
-        data.opSetInput(op,constVn,slot);	// Replace ref with constant!
+	pushConstant(points, op);
       }
-      count += 1;			// We made a change
     }
+    if (!phiNodeEdges.empty()) {
+      if (constVn == (Varnode *)0)
+	constVn = data.newConstant(varVn->getSize(), point.value);
+      handlePhiNodes(varVn, constVn, phiNodeEdges, data);
+      phiNodeEdges.clear();
+    }
+    points.pop_front();
   }
-  if (!phiNodeEdges.empty())
-    handlePhiNodes(varVn, constVn, phiNodeEdges, data);
+}
+
+/// \brief Find a Varnode being compared to a constant creating the given CBRANCH boolean
+///
+/// If the boolean is created by comparing a Varnode to a constant, create a ConstPoint record
+/// indicating the path down which the Varnode can be considered constant.
+/// \param points will hold any new ConstPoint
+/// \param boolVn is the given CBRANCH boolean
+/// \param bl is the block constaining the CBRANCH
+/// \param blockDom is an array of booleans indicating along which out edges a constant could be pushed
+/// \param flipEdge is \b true if the meaning of the CBRANCH has been flipped
+void ActionConditionalConst::findConstCompare(list<ConstPoint> &points,Varnode *boolVn,FlowBlock *bl,
+					      bool *blockDom,bool flipEdge)
+{
+  if (!boolVn->isWritten()) return;
+  PcodeOp *compOp = boolVn->getDef();
+  OpCode opc = compOp->code();
+  if (opc == CPUI_BOOL_NEGATE) {
+    flipEdge = !flipEdge;
+    boolVn = compOp->getIn(0);
+    if (!boolVn->isWritten()) return;
+    compOp = boolVn->getDef();
+    opc = compOp->code();
+  }
+  int4 constEdge;			// Out edge where value is constant
+  if (opc == CPUI_INT_EQUAL)
+    constEdge = 1;
+  else if (opc == CPUI_INT_NOTEQUAL)
+    constEdge = 0;
+  else
+    return;
+  // Find the variable and verify that it is compared to a constant
+  Varnode *varVn = compOp->getIn(0);
+  Varnode *constVn = compOp->getIn(1);
+  if (!constVn->isConstant()) {
+    if (!varVn->isConstant())
+      return;
+    Varnode *tmp = constVn;
+    constVn = varVn;
+    varVn = tmp;
+  }
+  if (varVn->loneDescend() != (PcodeOp *)0) return;
+  if (flipEdge)
+    constEdge = 1 - constEdge;
+  points.emplace_back(varVn,constVn,bl->getOut(constEdge),bl->getOutRevIndex(constEdge),blockDom[constEdge]);
 }
 
 int4 ActionConditionalConst::apply(Funcdata &data)
@@ -4367,44 +4519,23 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       useMultiequal = false;	// Don't propagate into MULTIEQUAL
   }
   const BlockGraph &blockGraph(data.getBasicBlocks());
+  bool blockDom[2];
+  list<ConstPoint> points;
   for(int4 i=0;i<blockGraph.getSize();++i) {
     FlowBlock *bl = blockGraph.getBlock(i);
     PcodeOp *cBranch = bl->lastOp();
     if (cBranch == (PcodeOp *)0 || cBranch->code() != CPUI_CBRANCH) continue;
     Varnode *boolVn = cBranch->getIn(1);
-    if (!boolVn->isWritten()) continue;
-    PcodeOp *compOp = boolVn->getDef();
-    OpCode opc = compOp->code();
+    blockDom[0] = bl->getOut(0)->restrictedByConditional(bl);	// Make sure boolean constant holds down false branch
+    blockDom[1] = bl->getOut(1)->restrictedByConditional(bl);
     bool flipEdge = cBranch->isBooleanFlip();
-    if (opc == CPUI_BOOL_NEGATE) {
-      flipEdge = !flipEdge;
-      boolVn = compOp->getIn(0);
-      if (!boolVn->isWritten()) continue;
-      compOp = boolVn->getDef();
-      opc = compOp->code();
+    if (boolVn->loneDescend() == (PcodeOp *)0) {	// If the boolean is read more than once
+      // Search for implied constants, bool=0 down false branch, bool=1 down true branch
+      points.emplace_back(boolVn, flipEdge ? 1 : 0, bl->getFalseOut(),bl->getOutRevIndex(0),blockDom[0]);
+      points.emplace_back(boolVn, flipEdge ? 0 : 1, bl->getTrueOut(),bl->getOutRevIndex(1),blockDom[1]);
     }
-    int4 constEdge;			// Out edge where value is constant
-    if (opc == CPUI_INT_EQUAL)
-      constEdge = 1;
-    else if (opc == CPUI_INT_NOTEQUAL)
-      constEdge = 0;
-    else
-      continue;
-    // Find the variable and verify that it is compared to a constant
-    Varnode *varVn = compOp->getIn(0);
-    Varnode *constVn = compOp->getIn(1);
-    if (!constVn->isConstant()) {
-      if (!varVn->isConstant())
-	continue;
-      Varnode *tmp = constVn;
-      constVn = varVn;
-      varVn = tmp;
-    }
-    if (flipEdge)
-      constEdge = 1 - constEdge;
-    FlowBlock *constBlock = bl->getOut(constEdge);
-    if (!constBlock->restrictedByConditional(bl)) continue;	// Make sure condition holds
-    propagateConstant(varVn,constVn,constBlock,useMultiequal,data);
+    findConstCompare(points, boolVn, bl, blockDom, flipEdge);
+    propagateConstant(points, useMultiequal, data);
   }
   return 0;
 }
@@ -5279,66 +5410,6 @@ int4 ActionInferTypes::apply(Funcdata &data)
   return 0;
 }
 
-/// Assuming root->getOut() is the root of an expression formed with the
-/// CPUI_INT_ADD op, collect all the Varnode \e terms of the expression.
-void TermOrder::collect(void)
-
-{
-  Varnode *curvn;
-  PcodeOp *curop;
-  PcodeOp *subop,*multop;
-
-  vector<PcodeOp *> opstack;	// Depth first traversal path
-  vector<PcodeOp *> multstack;
-
-  opstack.push_back(root);
-  multstack.push_back((PcodeOp *)0);
-
-  while(!opstack.empty()) {
-    curop = opstack.back();
-    multop = multstack.back();
-    opstack.pop_back();
-    multstack.pop_back();
-    for(int4 i=0;i<curop->numInput();++i) {
-      curvn = curop->getIn(i);	// curvn is a node of the subtree IF
-      if (!curvn->isWritten()) { // curvn is not defined by another operation
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      if (curvn->loneDescend() == (PcodeOp *)0) { // curvn has more then one use
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      subop = curvn->getDef();
-      if (subop->code() != CPUI_INT_ADD) { // or if curvn is defined with some other type of op
-	if ((subop->code()==CPUI_INT_MULT)&&(subop->getIn(1)->isConstant())) {
-	  PcodeOp *addop = subop->getIn(0)->getDef();
-	  if ((addop!=(PcodeOp *)0)&&(addop->code()==CPUI_INT_ADD)) {
-	    if (addop->getOut()->loneDescend()!=(PcodeOp *)0) {
-	      opstack.push_back(addop);
-	      multstack.push_back(subop);
-	      continue;
-	    }
-	  }
-	}
-	terms.push_back(AdditiveEdge(curop,i,multop));
-	continue;
-      }
-      opstack.push_back(subop);
-      multstack.push_back(multop);
-    }
-  }
-}
-
-void TermOrder::sortTerms(void)
-
-{
-  for(vector<AdditiveEdge>::iterator iter=terms.begin();iter!=terms.end();++iter)
-    sorter.push_back( &(*iter) );
-
-  sort(sorter.begin(),sorter.end(),additiveCompare);
-}
-
 /// (Re)build the default \e root Actions: decompile, jumptable, normalize, paramid, register, firstpass
 void ActionDatabase::buildDefaultGroups(void)
 
@@ -5356,7 +5427,7 @@ void ActionDatabase::buildDefaultGroups(void)
   setGroup("decompile",members);
 
   const char *jumptab[] = { "base", "noproto", "localrecovery", "deadcode", "stackptrflow",
-			    "stackvars", "analysis", "segment", "subvar", "conditionalexe", "" };
+			    "stackvars", "analysis", "segment", "subvar", "normalizebranches", "conditionalexe", "" };
   setGroup("jumptable",jumptab);
 
  const  char *normali[] = { "base", "protorecovery", "protorecovery_b", "deindirect", "localrecovery",
@@ -5441,6 +5512,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePullsubIndirect("analysis"));
 	actprop->addRule( new RulePushMulti("nodejoin"));
 	actprop->addRule( new RuleSborrow("analysis") );
+	actprop->addRule( new RuleScarry("analysis") );
 	actprop->addRule( new RuleIntLessEqual("analysis") );
 	actprop->addRule( new RuleTrivialArith("analysis") );
 	actprop->addRule( new RuleTrivialBool("analysis") );

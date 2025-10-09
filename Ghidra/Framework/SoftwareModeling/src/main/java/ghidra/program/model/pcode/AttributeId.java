@@ -247,10 +247,13 @@ public record AttributeId(String name, int id) {
 	// modelrules
 	public static final AttributeId ATTRIB_SIZES = new AttributeId("sizes", 151);
 	public static final AttributeId ATTRIB_BACKFILL = new AttributeId("backfill", 152);
-
 	public static final AttributeId ATTRIB_MAX_PRIMITIVES = new AttributeId("maxprimitives", 153);
 	public static final AttributeId ATTRIB_REVERSESIGNIF = new AttributeId("reversesignif", 154);
 	public static final AttributeId ATTRIB_MATCHSIZE = new AttributeId("matchsize", 155);
+	public static final AttributeId ATTRIB_AFTER_BYTES = new AttributeId("afterbytes", 156);
+	public static final AttributeId ATTRIB_AFTER_STORAGE = new AttributeId("afterstorage", 157);
+	public static final AttributeId ATTRIB_FILL_ALTERNATE = new AttributeId("fillalternate", 158);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 156);
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 159);
+
 }

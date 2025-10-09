@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.diff;
 
 import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.widgets.dialogs.ReadTextDialog;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -28,7 +29,9 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -67,82 +70,84 @@ class ApplyDiffCommand extends BackgroundCommand<Program> implements AnalysisWor
 
 	@Override
 	public boolean applyTo(Program program, TaskMonitor monitor) {
+
 		monitor.setMessage("ApplyDiffTask starting...");
 		applied = false;
-		final ProgramLocation origLocation = plugin.getProgramLocation();
-		if (!plugin.isTaskInProgress()) {
+		if (plugin.isTaskInProgress()) {
+			return false;
+		}
 
-			plugin.setTaskInProgress(true);
-			String statusMsg = "One or more differences couldn't be applied.";
-			title = "Program Diff: One or more differences couldn't be applied.";
-			applyMsg = null;
-			setStatusMsg(null);
-			try {
-				AutoAnalysisManager autoAnalysisManager =
-					AutoAnalysisManager.getAnalysisManager(plugin.getFirstProgram());
-				boolean merged = autoAnalysisManager.scheduleWorker(this, null, false, monitor);
-				if (merged) {
-					statusMsg = "Apply differences has finished." +
-						" If your expected change didn't occur, check your Diff Apply Settings.";
-					title = "Program Diff: Apply differences has finished.";
-					applied = true;
-				}
-				else {
-					applyMsg = diffControl.getApplyMessage();
-				}
+		ProgramLocation restoreLocation = plugin.getProgramLocation();
+
+		plugin.setTaskInProgress(true);
+		String statusMsg = "One or more differences couldn't be applied.";
+		title = "Program Diff: One or more differences couldn't be applied.";
+		applyMsg = null;
+		setStatusMsg(null);
+		try {
+			AutoAnalysisManager aaManager =
+				AutoAnalysisManager.getAnalysisManager(plugin.getFirstProgram());
+			boolean merged = aaManager.scheduleWorker(this, null, false, monitor);
+			if (merged) {
+				statusMsg = "Apply differences has finished." +
+					" If your expected change didn't occur, check your Diff Apply Settings.";
+				title = "Program Diff: Apply differences has finished.";
+				applied = true;
 			}
-			catch (InterruptedException e) {
-				applyMsg = "Unexpected InterruptedException\n" + diffControl.getApplyMessage();
-			}
-			catch (InvocationTargetException e) {
-				Throwable t = e.getCause();
-				String message = "";
-				// Protect against dereferencing the getCause call above, which may return null.
-				if (t != null) {
-					String excMessage = t.getMessage();
-					if (excMessage != null && excMessage.length() > 0) {
-						message = excMessage + "\n";
-					}
-				}
-				Msg.showError(this, plugin.getListingPanel(), "Error Applying Diff",
-					"An error occurred while applying differences.\n" +
-						"Only some of the differences may have been applied.",
-					(t != null) ? t : e);
-				applyMsg = message + diffControl.getApplyMessage();
-			}
-			catch (CancelledException e) {
-				statusMsg = "User cancelled \"Apply Differences\". " +
-					"Differences were only partially applied.";
+			else {
 				applyMsg = diffControl.getApplyMessage();
 			}
-			finally {
-				setStatusMsg(statusMsg);
-				plugin.getTool().setStatusInfo(statusMsg);
-				plugin.setTaskInProgress(false);
+		}
+		catch (InterruptedException e) {
+			applyMsg = "Unexpected InterruptedException\n" + diffControl.getApplyMessage();
+		}
+		catch (InvocationTargetException e) {
+			Throwable t = ExceptionUtils.getRootCause(e);
+			String message = ExceptionUtils.getMessage(t);
+			Msg.showError(this, plugin.getListingPanel(), "Error Applying Diff",
+				"An error occurred while applying differences.\n" +
+					"Only some of the differences may have been applied.",
+				(t != null) ? t : e);
+			applyMsg = message + diffControl.getApplyMessage();
+		}
+		catch (CancelledException e) {
+			statusMsg = "User cancelled \"Apply Differences\". " +
+				"Differences were only partially applied.";
+			applyMsg = diffControl.getApplyMessage();
+		}
+		finally {
+			setStatusMsg(statusMsg);
+			plugin.getTool().setStatusInfo(statusMsg);
+			plugin.setTaskInProgress(false);
 
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						plugin.adjustDiffDisplay();
-						plugin.firePluginEvent(new ProgramSelectionPluginEvent(plugin.getName(),
-							plugin.getCurrentSelection(), plugin.getCurrentProgram()));
-						plugin.programLocationChanged(origLocation, null);
-						if (applyMsg != null && applyMsg.length() > 0) {
-							ReadTextDialog detailsDialog = new ReadTextDialog(title, applyMsg);
-							plugin.getTool().showDialog(detailsDialog, plugin.getListingPanel());
-						}
-					}
-				};
-//				// The events were disabled while doing apply Diff. Now re-enable them by firing object restored event.
-//				((DomainObjectAdapter)currentProgram).fireEvent(new DomainObjectChangeRecord(
-//									DomainObjectEvent.RESTORED));
-//				((DomainObjectAdapter)currentProgram).flushEvents();
-				if (!monitor.isCancelled()) {
-					SwingUtilities.invokeLater(r);
-				}
+			if (!monitor.isCancelled()) {
+				updatePluginState(restoreLocation);
 			}
 		}
 		return applied;
 	}
 
+	private void updatePluginState(ProgramLocation restoreLocation) {
+
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				plugin.adjustDiffDisplay();
+
+				String name = plugin.getName();
+				ProgramSelection selection = plugin.getCurrentSelection();
+				Program program = plugin.getCurrentProgram();
+				plugin.firePluginEvent(new ProgramSelectionPluginEvent(name, selection, program));
+				plugin.programLocationChanged(restoreLocation, null);
+				if (!StringUtils.isBlank(applyMsg)) {
+					ReadTextDialog detailsDialog = new ReadTextDialog(title, applyMsg);
+					plugin.getTool().showDialog(detailsDialog, plugin.getListingPanel());
+				}
+			}
+		};
+
+		// Note: a run later will not work here, since it may not happen before any
+		// follow-on jobs
+		Swing.runNow(r);
+	}
 }

@@ -274,7 +274,7 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 			DomainFile[] files = linkedFolder.getFiles();
 			LinkedGhidraFile[] linkedSubFolders = new LinkedGhidraFile[files.length];
 			for (int i = 0; i < files.length; i++) {
-				linkedSubFolders[i] = new LinkedGhidraFile(this, files[i].getName());
+				linkedSubFolders[i] = new LinkedGhidraFile(this, files[i]);
 			}
 			return linkedSubFolders;
 		}
@@ -286,6 +286,10 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 
 	/**
 	 * Get the true file within this linked folder.
+	 * <P>
+	 * NOTE: The returned file is the "real" file and would be the have the equivalence:
+	 * {@code folder.getLinkedFileNoError("X") == folder.getFile("X").getRealFile() }.
+	 * 
 	 * @param name file name
 	 * @return file or null if not found or error occurs
 	 */
@@ -300,6 +304,16 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 		return null;
 	}
 
+	/**
+	 * Get the true file within this linked folder.
+	 * <P>
+	 * NOTE: The returned file is the "real" file and would be the have the equivalence:
+	 * {@code folder.getLinkedFile("X") == folder.getFile("X").getRealFile() }.
+	 * 
+	 * @param name file name
+	 * @return file or null if not found or error occurs
+	 * @throws IOException if an IO error ocurs such as FileNotFoundException
+	 */
 	DomainFile getLinkedFile(String name) throws IOException {
 		DomainFolder linkedFolder = getRealFolder();
 		DomainFile df = linkedFolder.getFile(name);
@@ -311,8 +325,8 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 
 	@Override
 	public DomainFile getFile(String name) {
-		DomainFile f = getLinkedFileNoError(name);
-		return f != null ? new LinkedGhidraFile(this, name) : null;
+		DomainFile file = getLinkedFileNoError(name);
+		return file != null ? new LinkedGhidraFile(this, file) : null;
 	}
 
 	@Override
@@ -333,36 +347,40 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	public DomainFile createFile(String name, DomainObject obj, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		DomainFolder linkedFolder = getRealFolder();
-		return linkedFolder.createFile(name, obj, monitor);
+		DomainFile file = linkedFolder.createFile(name, obj, monitor);
+		return getFile(file.getName());
 	}
 
 	@Override
 	public DomainFile createFile(String name, File packFile, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		DomainFolder linkedFolder = getRealFolder();
-		return linkedFolder.createFile(name, packFile, monitor);
+		DomainFile file = linkedFolder.createFile(name, packFile, monitor);
+		return getFile(file.getName());
 	}
 
 	@Override
 	public DomainFile createLinkFile(ProjectData sourceProjectData, String pathname,
 			boolean makeRelative, String linkFilename, LinkHandler<?> lh) throws IOException {
 		DomainFolder linkedFolder = getRealFolder();
-		return linkedFolder.createLinkFile(sourceProjectData, pathname, makeRelative, linkFilename,
-			lh);
+		DomainFile file = linkedFolder.createLinkFile(sourceProjectData, pathname, makeRelative,
+			linkFilename, lh);
+		return getFile(file.getName());
 	}
 
 	@Override
 	public DomainFile createLinkFile(String ghidraUrl, String linkFilename, LinkHandler<?> lh)
 			throws IOException {
 		DomainFolder linkedFolder = getRealFolder();
-		return linkedFolder.createLinkFile(ghidraUrl, linkFilename, lh);
+		DomainFile file = linkedFolder.createLinkFile(ghidraUrl, linkFilename, lh);
+		return getFile(file.getName());
 	}
 
 	@Override
 	public DomainFolder createFolder(String name) throws InvalidNameException, IOException {
 		DomainFolder linkedFolder = getRealFolder();
-		DomainFolder child = linkedFolder.createFolder(name);
-		return new LinkedGhidraSubFolder(parent, child.getName());
+		DomainFolder folder = linkedFolder.createFolder(name);
+		return getFolder(folder.getName());
 	}
 
 	@Override

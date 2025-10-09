@@ -63,7 +63,7 @@ public class OperandLabelDialog extends DialogComponentProvider {
 		myChoice = new GhidraComboBox<>();
 		myChoice.setName("MYCHOICE");
 		myChoice.setEditable(true);
-		myChoice.addActionListener(ev -> okCallback());
+
 		myChoice.getAccessibleContext().setAccessibleName("My Choice");
 		mainPanel.add(label);
 		mainPanel.add(myChoice);

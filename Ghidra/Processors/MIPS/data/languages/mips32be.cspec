@@ -25,6 +25,7 @@
   </returnaddress>
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
+    <!-- This is based on the System V ABI -->
       <input>
         <pentry minsize="1" maxsize="8" metatype="float">
           <register name="f12_13"/>
@@ -47,6 +48,52 @@
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="16" space="stack"/>
         </pentry>
+        <!-- Parameters within the ellipses only use integer registers -->
+        <rule>
+          <datatype name="float"/>
+          <varargs first="0"/>
+          <consume storage="general"/>
+        </rule>
+        <!-- special case: first two args are float,double, which produces a 'hole' in the
+             second word of the argument space, which must be explicitly consumed -->
+        <rule>
+          <datatype name="float" minsize="1" maxsize="4"/>
+          <position index="0"/>
+          <datatype_at index="1">
+            <datatype name="float" minsize="5" maxsize="8"/>
+          </datatype_at>
+          <consume storage="float"/>
+          <consume_extra storage="general"/>
+          <consume_extra storage="general"/>
+        </rule>
+        <!-- Only leading floating-point parameters can use float registers -->
+        <rule>
+          <datatype name="float" minsize="1" maxsize="8"/>  <!-- float parameter -->
+          <position index="0"/>                             <!-- as first input parameter -->
+          <consume storage="float"/>                       <!-- use f12_f13 -->
+          <consume_extra storage="general"/>
+        </rule>
+        <rule>
+          <datatype name="float" minsize="1" maxsize="8"/>  <!-- float parameter -->
+          <position index="1"/>                             <!-- as second input parameter -->
+          <datatype_at index="0">							<!-- if the first input -->
+            <datatype name="float" minsize="1" maxsize="8"/> <!-- is a float parameter -->
+          </datatype_at>
+          <consume storage="float"/>	                    <!-- use f14_f15 -->
+          <consume_extra storage="general"/>
+        </rule>
+        <rule>
+          <datatype name="struct"/>
+          <join align="true" reversejustify="true"/>
+        </rule>
+        <rule>
+          <datatype name="union"/>
+          <join align="true" reversejustify="true"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>  <!-- otherwise any parameter -->
+          <join align="true"/>    <!-- should split across general purpose registers -->
+        </rule>
       </input>
       <output>
         <pentry minsize="1" maxsize="8" metatype="float">
@@ -55,9 +102,25 @@
         <pentry minsize="1" maxsize="4">
           <register name="v0"/>
         </pentry>
-		<pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="v0" piece2="v1"/>
+		<pentry minsize="1" maxsize="4">
+          <register name="v1"/>
         </pentry>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="struct"/>
+          <hidden_return/>				<!-- structures always passed as hidden return parameter -->
+        </rule>
+        <rule>
+          <datatype name="union"/>
+          <hidden_return/>				<!-- unions always passed as hidden return parameter -->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
       <unaffected>
         <register name="s0"/>
@@ -72,12 +135,24 @@
         <register name="sp"/>
         <register name="gp"/>
         <register name="f20"/>
+        <register name="f21"/>
         <register name="f22"/>
+        <register name="f23"/>
         <register name="f24"/>
+        <register name="f25"/>
         <register name="f26"/>
+        <register name="f27"/>
         <register name="f28"/>
+        <register name="f29"/>
         <register name="f30"/>
       </unaffected>
+      <killedbycall>
+        <register name="at"/>
+        <register name="v0"/>
+        <register name="v1"/>
+        <register name="f0"/>
+        <register name="f1"/>
+      </killedbycall>
       <internal_storage>
         <register name="gp"/>  <!-- Compilers may save gp to the stack before a call and restore it afterward -->
       </internal_storage>

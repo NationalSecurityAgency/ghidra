@@ -26,7 +26,7 @@ import ghidra.util.Msg;
 
 /**
  * Subclass of {@link AbstractMatchedTokensAction} for actions in a 
- * {@link DecompilerCodeComparisonPanel} that are available only when the matched tokens are
+ * {@link DecompilerCodeComparisonView} that are available only when the matched tokens are
  * function calls
  */
 public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedTokensAction {
@@ -37,12 +37,12 @@ public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedT
 	 * 
 	 * @param actionName name of action
 	 * @param owner owner of action
-	 * @param diffPanel diff panel containing action
+	 * @param comparisonProvider diff comparison provider containing action
 	 * @param disableOnReadOnly if true, action will be disabled for read-only programs
 	 */
 	public AbstractMatchedCalleeTokensAction(String actionName, String owner,
-			DecompilerCodeComparisonPanel diffPanel, boolean disableOnReadOnly) {
-		super(actionName, owner, diffPanel, disableOnReadOnly);
+			DecompilerCodeComparisonView comparisonProvider, boolean disableOnReadOnly) {
+		super(actionName, owner, comparisonProvider, disableOnReadOnly);
 	}
 
 	@Override
@@ -69,15 +69,15 @@ public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedT
 
 	@Override
 	public void dualDecompilerActionPerformed(DualDecompilerActionContext context) {
-		DecompilerCodeComparisonPanel decompPanel = context.getCodeComparisonPanel();
+		DecompilerCodeComparisonView provider = context.getCodeComparisonView();
 
 		TokenPair currentPair = context.getTokenPair();
 
 		ClangFuncNameToken leftFuncToken = (ClangFuncNameToken) currentPair.leftToken();
 		ClangFuncNameToken rightFuncToken = (ClangFuncNameToken) currentPair.rightToken();
 
-		Function leftFunction = getFuncFromToken(leftFuncToken, decompPanel.getProgram(LEFT));
-		Function rightFunction = getFuncFromToken(rightFuncToken, decompPanel.getProgram(RIGHT));
+		Function leftFunction = getFuncFromToken(leftFuncToken, provider.getProgram(LEFT));
+		Function rightFunction = getFuncFromToken(rightFuncToken, provider.getProgram(RIGHT));
 		if (leftFunction == null || rightFunction == null) {
 			return;
 		}

@@ -114,6 +114,8 @@ public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 		TarArchiveEntry blob = tmd.tarArchiveEntry;
 		return FileAttributes.of(
 			FileAttribute.create(NAME_ATTR, FilenameUtils.getName(blob.getName())),
+			FileAttribute.create(PATH_ATTR,
+				FilenameUtils.getFullPathNoEndSeparator(blob.getName())),
 			FileAttribute.create(SIZE_ATTR, blob.getSize()),
 			FileAttribute.create(MODIFIED_DATE_ATTR, blob.getLastModifiedDate()),
 			FileAttribute.create(FILE_TYPE_ATTR, tarToFileType(blob)),

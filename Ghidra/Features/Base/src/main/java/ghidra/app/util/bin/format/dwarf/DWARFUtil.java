@@ -465,7 +465,7 @@ public class DWARFUtil {
 	 * @param lang {@link Language} to query
 	 * @param name name of the value
 	 * @return String value
-	 * @throws IOException
+	 * @throws IOException if invalid language or multiple values with same name
 	 */
 	public static String getLanguageExternalNameValue(Language lang, String name)
 			throws IOException {
@@ -552,8 +552,8 @@ public class DWARFUtil {
 		if (VoidDataType.dataType.isEquivalent(dt)) {
 			return true;
 		}
-		if (!dt.isZeroLength() && dt instanceof Array) {
-			dt = DataTypeUtilities.getArrayBaseDataType((Array) dt);
+		if (!dt.isZeroLength() && dt instanceof Array array) {
+			dt = DataTypeUtilities.getArrayBaseDataType(array);
 		}
 		return dt.isZeroLength();
 	}
@@ -567,4 +567,8 @@ public class DWARFUtil {
 			varnode.getAddress().getAddressSpace().getType() == AddressSpace.TYPE_STACK;
 	}
 
+	public static boolean isConstVarnode(Varnode varnode) {
+		return varnode != null &&
+			varnode.getAddress().getAddressSpace().getType() == AddressSpace.TYPE_CONSTANT;
+	}
 }
