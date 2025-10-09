@@ -111,7 +111,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			TaskMonitor monitor) throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			makeVfunctionsThisCalls,isDwarfLoaded, monitor);
+			makeVfunctionsThisCalls, isDwarfLoaded, monitor);
 
 		this.isDwarfLoaded = isDwarfLoaded;
 
@@ -212,6 +212,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Msg.debug(this, "Processing constructors and destructors");
 		processConstructorAndDestructors();
+
+		identifyPureVirtualFunction(recoveredClasses);
 
 		Msg.debug(this, "Creating vftable order maps");
 		createVftableOrderMap(recoveredClasses);
