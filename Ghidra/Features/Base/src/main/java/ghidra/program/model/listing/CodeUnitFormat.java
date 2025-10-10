@@ -322,13 +322,14 @@ public class CodeUnitFormat {
 			}
 			else if (options.includeInferredVariableMarkup) {
 				boolean isRead = isRead(reg, instr);
+				boolean operandIsOnlyReg = instr.getRegister(opIndex) != null;
 				Variable regVar = program.getFunctionManager()
 						.getReferencedVariable(instr.getMinAddress(), reg.getAddress(),
 							reg.getMinimumByteSize(), isRead);
 				if (regVar != null) {
 					// TODO: If register appears more than once, how can we distinguish read vs. write occurrence in operands
 					if (isRead && isWritten(reg, instr) && !hasRegisterWriteReference(instr, reg) &&
-						instr.getRegister(opIndex) != null) {
+						operandIsOnlyReg) {
 						// If register both read and written and there are no write references for this instruction
 						// see if there is only one reference to choose from - if not we can't determine how to markup
 						Variable regWriteVar = program.getFunctionManager()
@@ -341,8 +342,13 @@ public class CodeUnitFormat {
 
 					// if can't get just a register out of it, assume indirection for the VariableOffset
 					long offset = 0;
-					varOff = new VariableOffset(regVar, offset, instr.getRegister(opIndex) == null,
-						true);
+					if (operandIsOnlyReg) {
+						offset = regVar.getVariableStorage().getRegisterOffset(reg);
+						if (offset < 0) {
+							offset = 0; // failed?
+						}
+					}
+					varOff = new VariableOffset(regVar, offset, !operandIsOnlyReg, true);
 				}
 			}
 			if (varOff != null) {
