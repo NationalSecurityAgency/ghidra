@@ -1143,8 +1143,21 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     PcodeOp *nextop = *iter;
     retaddr = nextop->getAddr();
     if (op->getAddr() == retaddr) {
-      inline_head->warning("Return address prevents inlining here",op->getAddr());
-      return false;
+      // special case if the next op is a 'RETURN' - then we can tail-call and let
+      // the return in the inlined function handle the return from this function.
+      if (nextop->code() != CPUI_RETURN) {
+	ostringstream ss;
+	ss << "call op: '";
+	op->printRaw(ss);
+	ss << "'; next op: '";
+	nextop->printRaw(ss);
+	ss << "'";
+	inline_head->warning("CALL needs to be last p-code op at address, but isn't: " + ss.str(), op->getAddr());
+	return false;
+      }
+      // set an invalid address so the return of the inlined function will not
+      // be changed to a BRANCH op
+      retaddr = Address();
     }
     // If the inlining "jumps back" this starts a new basic block
     data.opMarkStartBasic(nextop);
