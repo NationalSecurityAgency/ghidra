@@ -1113,7 +1113,9 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
     PcodeOp *op = *iter;
     if (op->code() == CPUI_RETURN) break;
     SeqNum myseq(calladdr,op->getSeqNum().getTime());
-    data.cloneOp(op,myseq);
+    PcodeOp *cloneop = data.cloneOp(op,myseq);
+    if (cloneop->isCallOrBranch())
+      xrefInlinedBranch(cloneop);
   }
   // Because we are processing only straightline code and it is all getting assigned to one
   // address, we don't touch unprocessed, addrlist, or visited
@@ -1165,15 +1167,17 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
   return true;
 }
 
-/// A function is in the EZ model if it is a straight-line leaf function.
-/// \return \b true if this flow contains no CALL or BRANCH ops
+/// A function is in the EZ model if it is a straight-line leaf function. Note
+/// that we need to avoid branches to the middle of an address, ensure there are
+/// no branch operations.
+/// \return \b true if this flow contains no BRANCH ops
 bool FlowInfo::checkEZModel(void) const
 
 {
   list<PcodeOp *>::const_iterator iter = obank.beginDead();
   while(iter != obank.endDead()) {
     PcodeOp *op = *iter;
-    if (op->isCallOrBranch()) return false;
+    if (op->isCallOrBranch() && (op->code() != CPUI_CALL)) return false;
     ++iter;
   }
   return true;
