@@ -1168,8 +1168,9 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
 }
 
 /// A function is in the EZ model if it is a straight-line leaf function. Note
-/// that we need to avoid branches to the middle of an address, ensure there are
-/// no branch operations.
+/// that we need to ensure that these instructions can all form a single basic
+/// block, since we cannot split a basic block in the middle of an address. As
+/// such, branches are disallowed, but CALL operations are allowed.
 /// \return \b true if this flow contains no BRANCH ops
 bool FlowInfo::checkEZModel(void) const
 
