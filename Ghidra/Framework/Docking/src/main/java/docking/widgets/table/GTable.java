@@ -1012,20 +1012,32 @@ public class GTable extends JTable {
 	}
 
 	public void scrollToSelectedRow() {
+		Container parent = getParent();
+		if (!(parent instanceof JViewport viewport)) {
+			return;
+		}
+
 		int[] selectedRows = getSelectedRows();
 		if (selectedRows == null || selectedRows.length == 0) {
 			return;
 		}
 
-		// just make sure that the first row is visible
+		// Update the cell rectangle to be the entire row so that if the user is horizontally
+		// scrolled, then we do not change that.
 		int row = selectedRows[0];
-
-		// update the cell rectangle to be the entire row so that if the user is horizontally
-		// scrolled, then we do not change that
-		Rectangle visibleRect = getVisibleRect();
 		Rectangle cellRect = getCellRect(row, 0, true);
-		cellRect.x = visibleRect.x;
+		Rectangle visibleRect = getVisibleRect();
+		cellRect.x = visibleRect.x; // use the view x to prevent side scrolling
 		cellRect.width = visibleRect.width;
+
+		// Swing will scroll the view such that the given cell rectangle is at the bottom of the 
+		// scroll pane.  It looks nicer if the row is centered.
+		int halfViewport = viewport.getHeight() / 2;
+		int halfCell = cellRect.height / 2;
+		int center = halfViewport - halfCell;
+		int middleY = visibleRect.y + center;
+		boolean below = cellRect.y > middleY;
+		cellRect.y += below ? center : -center;
 
 		scrollRectToVisible(cellRect);
 	}
