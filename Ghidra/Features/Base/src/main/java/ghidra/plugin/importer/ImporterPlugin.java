@@ -28,13 +28,14 @@ import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
-import docking.widgets.tree.GTreeNode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
+import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.FileImporterService;
 import ghidra.app.services.ProgramManager;
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.FSRL;
@@ -42,8 +43,7 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
-import ghidra.framework.main.datatree.DataTree;
-import ghidra.framework.main.datatree.JavaFileListHandler;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -52,6 +52,7 @@ import ghidra.framework.preferences.Preferences;
 import ghidra.framework.store.local.ItemDeserializer;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.plugins.importer.batch.BatchImportDialog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -169,19 +170,15 @@ public class ImporterPlugin extends Plugin
 		if (loadSpec == null) {
 			return false;
 		}
-		return loadSpec.getLoader()
-				.getDefaultOptions(provider, loadSpec, null, false, false)
-				.stream()
-				.anyMatch(e -> e.getName()
-						.equals(AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME));
+
+		String option = AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME;
+		Loader loader = loadSpec.getLoader();
+		List<Option> options = loader.getDefaultOptions(provider, loadSpec, null, false, false);
+		return options.stream().anyMatch(e -> e.getName().equals(option));
 	}
 
 	@Override
 	public void importFiles(DomainFolder destFolder, List<File> files) {
-
-		if (destFolder == null) {
-			destFolder = tool.getProject().getProjectData().getRootFolder();
-		}
 
 		files = handleSimpleDBUnpack(destFolder, files);
 		if (files.isEmpty()) {
@@ -189,17 +186,12 @@ public class ImporterPlugin extends Plugin
 		}
 
 		List<FSRL> fsrls = files.stream().map(f -> fsService().getLocalFSRL(f)).toList();
-		BatchImportDialog.showAndImport(tool, null, fsrls, destFolder,
-			getTool().getService(ProgramManager.class));
+		ProgramManager programManager = getTool().getService(ProgramManager.class);
+		BatchImportDialog.showAndImport(tool, null, fsrls, destFolder, programManager);
 	}
 
 	@Override
 	public void importFile(DomainFolder folder, File file) {
-
-		if (folder == null) {
-			folder = tool.getProject().getProjectData().getRootFolder();
-		}
-
 		if (handleSimpleDBUnpack(folder, file)) {
 			return;
 		}
@@ -234,52 +226,34 @@ public class ImporterPlugin extends Plugin
 		return name;
 	}
 
-	private List<File> handleSimpleDBUnpack(DomainFolder folder, List<File> files) {
+	private boolean handleSimpleDBUnpack(DomainFolder folder, File file) {
+		List<File> files = handleSimpleDBUnpack(folder, List.of(file));
+		return files.isEmpty();
+	}
+
+	private List<File> handleSimpleDBUnpack(DomainFolder destinationFolder, List<File> files) {
 		if (frontEndService == null || !isSimpleUnpackEnabled()) {
 			return files;
 		}
 
-		ArrayList<File> remainingFiles = new ArrayList<>();
+		if (destinationFolder == null) {
+			Project project = tool.getProject();
+			ProjectData projectData = project.getProjectData();
+			destinationFolder = projectData.getRootFolder();
+		}
 
-		Task task = new Task("", true, true, true) {
+		DomainFolder folder = destinationFolder;
+		List<File> failedFiles = new ArrayList<>();
+		Task task = new Task("Unpack Files", true, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
 
 				for (File f : files) {
 					monitor.checkCancelled();
-
-					// Test for Packed DB file using ItemDeserializer
-					ItemDeserializer itemDeserializer = null;
-					try {
-						itemDeserializer = new ItemDeserializer(f); // fails for non-packed file
-					}
-					catch (IOException e) {
-						remainingFiles.add(f);
-						continue; // not a Packed DB - skip file
-					}
-					finally {
-						if (itemDeserializer != null) {
-							itemDeserializer.dispose();
-						}
-					}
-
-					monitor.setMessage("Unpacking " + f.getName() + " ...");
-
-					// Perform direct unpack of Packed DB file
-					String filename = makeValidUniqueFilename(f.getName(), folder);
-					try {
-						DomainFile df = folder.createFile(filename, f, monitor);
-						Msg.info(this, "Imported " + f.getName() + " to " + df.getPathname());
-					}
-					catch (InvalidNameException e) {
-						throw new AssertException(e); // unexpected - valid name was used
-					}
-					catch (IOException e) {
-						Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
-							"Packed DB Import Failed", "Failed to import " + f.getName(), e);
+					if (!doUnpackFile(folder, monitor, f)) {
+						failedFiles.add(f);
 					}
 				}
-
 			}
 		};
 
@@ -288,12 +262,43 @@ public class ImporterPlugin extends Plugin
 			return List.of(); // return empty list if cancelled
 		}
 
-		return remainingFiles; // return files not yet imported
+		return failedFiles; // return files not yet imported
 	}
 
-	private boolean handleSimpleDBUnpack(DomainFolder folder, File file) {
-		List<File> files = handleSimpleDBUnpack(folder, List.of(file));
-		return files.isEmpty();
+	private boolean doUnpackFile(DomainFolder folder, TaskMonitor monitor, File f)
+			throws CancelledException {
+
+		// Test for Packed DB file using ItemDeserializer
+		ItemDeserializer deserializer = null;
+		try {
+			deserializer = new ItemDeserializer(f); // fails for non-packed file
+		}
+		catch (IOException e) {
+			return false;
+		}
+		finally {
+			if (deserializer != null) {
+				deserializer.dispose();
+			}
+		}
+
+		monitor.setMessage("Unpacking " + f.getName() + " ...");
+
+		// Perform direct unpack of Packed DB file
+		String filename = makeValidUniqueFilename(f.getName(), folder);
+		try {
+			DomainFile df = folder.createFile(filename, f, monitor);
+			Msg.info(this, "Imported " + f.getName() + " to " + df.getPathname());
+			return true;
+		}
+		catch (InvalidNameException e) {
+			throw new AssertException(e); // unexpected - valid name was used
+		}
+		catch (IOException e) {
+			Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
+				"Packed DB Import Failed", "Failed to import " + f.getName(), e);
+		}
+		return false;
 	}
 
 	private boolean isSimpleUnpackEnabled() {
@@ -335,7 +340,8 @@ public class ImporterPlugin extends Plugin
 		importAction = new DockingAction(title, this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				doSingleImportAction(getFolderFromContext(context));
+				DomainFolder folder = getFolderFromContext(context);
+				doSingleImportAction(folder);
 			}
 		};
 		importAction.setMenuBarData(new MenuData(new String[] { "&File", title + "..." }, null,
@@ -352,8 +358,9 @@ public class ImporterPlugin extends Plugin
 		batchImportAction = new DockingAction(title, this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				BatchImportDialog.showAndImport(tool, null, null, getFolderFromContext(context),
-					getTool().getService(ProgramManager.class));
+				DomainFolder folder = getFolderFromContext(context);
+				ProgramManager programManager = getTool().getService(ProgramManager.class);
+				BatchImportDialog.showAndImport(tool, null, null, folder, programManager);
 			}
 
 			@Override
@@ -376,15 +383,15 @@ public class ImporterPlugin extends Plugin
 			public void actionPerformed(ActionContext context) {
 				if (context instanceof ListingActionContext) {
 					ListingActionContext lac = (ListingActionContext) context;
-					doImportSelectionAction(lac.getProgram(), lac.getSelection());
+					doImportSelection(lac.getProgram(), lac.getSelection());
 				}
 			}
 
 			@Override
 			public boolean isValidContext(ActionContext context) {
 				if (context instanceof ListingActionContext) {
-					ProgramSelection selection =
-						((ListingActionContext) context).getNavigatable().getSelection();
+					Navigatable navigatable = ((ListingActionContext) context).getNavigatable();
+					ProgramSelection selection = navigatable.getSelection();
 					return selection != null && selection.getNumAddressRanges() == 1;
 				}
 				return false;
@@ -445,13 +452,13 @@ public class ImporterPlugin extends Plugin
 	private static DomainFolder getFolderFromContext(ActionContext context) {
 		DomainFolder folder = null;
 		Object contextObj = context.getContextObject();
-		if (contextObj instanceof GTreeNode dataTreeNode) {
+		if (contextObj instanceof DomainFolderNode dataTreeNode) {
 			folder = DataTree.getRealInternalFolderForNode(dataTreeNode);
 		}
 		if (folder != null && folder.isInWritableProject()) {
 			return folder;
 		}
-		return AppInfo.getActiveProject().getProjectData().getRootFolder();
+		return null;
 	}
 
 	private void initializeChooser(String title, String buttonText, boolean multiSelect) {
@@ -528,7 +535,7 @@ public class ImporterPlugin extends Plugin
 		});
 	}
 
-	protected void doImportSelectionAction(Program program, ProgramSelection selection) {
+	protected void doImportSelection(Program program, ProgramSelection selection) {
 		if (selection == null || selection.getNumAddressRanges() != 1) {
 			return;
 		}
@@ -545,23 +552,24 @@ public class ImporterPlugin extends Plugin
 
 			// create a tmp ByteProvider that contains the bytes from the selected region
 			FileCacheEntry tmpFile;
+			Address minAddress = range.getMinAddress();
 			try (FileCacheEntryBuilder tmpFileBuilder =
 				fsService().createTempFile(range.getLength())) {
 				byte[] bytes = new byte[(int) range.getLength()];
-				memory.getBytes(range.getMinAddress(), bytes);
+				memory.getBytes(minAddress, bytes);
 				tmpFileBuilder.write(bytes);
 				tmpFile = tmpFileBuilder.finish();
 			}
 
-			MemoryBlock block = memory.getBlock(range.getMinAddress());
-			String rangeName =
-				block.getName() + "[" + range.getMinAddress() + "," + range.getMaxAddress() + "]";
-			ByteProvider bp =
-				fsService().getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
+			MemoryBlock block = memory.getBlock(minAddress);
+			Address maxAddress = range.getMaxAddress();
+			String rangeName = block.getName() + "[" + minAddress + "," + maxAddress + "]";
+			String tempName = program.getName() + " " + rangeName;
+			ByteProvider bp = fsService().getNamedTempFile(tmpFile, tempName);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
 
-			ImporterDialog importerDialog = new ImporterDialog(tool,
-				tool.getService(ProgramManager.class), loaderMap, bp, null);
+			ProgramManager pm = tool.getService(ProgramManager.class);
+			ImporterDialog importerDialog = new ImporterDialog(tool, pm, loaderMap, bp, null);
 			tool.showDialog(importerDialog);
 		}
 		catch (IOException e) {
