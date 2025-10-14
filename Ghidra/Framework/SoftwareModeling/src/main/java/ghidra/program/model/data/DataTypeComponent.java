@@ -140,6 +140,29 @@ public interface DataTypeComponent {
 	}
 
 	/**
+	 * Returns true if the given string represents the default field name for this data type 
+	 * component.  This value returned from {@link #getDefaultFieldName()} may not be a default name
+	 * when this method returns true.  
+	 * 
+	 * @param s the string to check
+	 * @return true if the given string is the default name for this component
+	 */
+	public default boolean isDefaultFieldName(String s) {
+		if (isZeroBitFieldComponent()) {
+			return false;
+		}
+
+		String offset = "";
+		if (getParent() instanceof Structure) {
+			offset += "_0x" + Integer.toHexString(getOffset());
+		}
+
+		String newStyleName = DEFAULT_FIELD_NAME_PREFIX + getOrdinal() + offset;
+		String oldStyleName = DEFAULT_FIELD_NAME_PREFIX + offset;
+		return newStyleName.equals(s) || oldStyleName.equals(s);
+	}
+
+	/**
 	 * Returns true if the given dataTypeComponent is equivalent to this dataTypeComponent.
 	 * A dataTypeComponent is "equivalent" if the other component has a data type
 	 * that is equivalent to this component's data type. The dataTypeComponents must

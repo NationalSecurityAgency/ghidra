@@ -32,6 +32,8 @@ import utility.function.Dummy;
  */
 public class ExpiringSwingTimer extends GhidraSwingTimer {
 
+	private static int DEFAULT_EXPIRE_MS = 750;
+
 	private static Set<ExpiringSwingTimer> instances = new HashSet<>();
 
 	private long startMs = System.currentTimeMillis();
@@ -60,6 +62,31 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 		//       to this method. For now, just use something reasonable.
 		int delay = 250;
 		ExpiringSwingTimer timer = new ExpiringSwingTimer(delay, expireMs, isReady, runnable);
+		timer.start();
+		return timer;
+	}
+
+	/**
+	 * Runs the given client runnable when the given condition returns true.  The returned timer
+	 * will be running.
+	 * 
+	 * <p>Once the timer has performed the work, any calls to start the returned timer will
+	 * not perform any work.  You can check {@link #didRun()} to see if the work has been completed.
+	 * 
+	 * <p>The timer's expiration is set to the default value of 
+	 * {@value ExpiringSwingTimer#DEFAULT_EXPIRE_MS}.
+	 * 
+	 * @param isReady true if the code should be run
+	 * @param runnable the code to run
+	 * @return the timer object that is running, which will execute the given code when ready
+	 */
+	public static ExpiringSwingTimer runWhen(BooleanSupplier isReady, Runnable runnable) {
+
+		// Note: we could let the client specify the delay, but that would add an extra argument
+		//       to this method. For now, just use something reasonable.
+		int delay = 250;
+		ExpiringSwingTimer timer =
+			new ExpiringSwingTimer(delay, DEFAULT_EXPIRE_MS, isReady, runnable);
 		timer.start();
 		return timer;
 	}
