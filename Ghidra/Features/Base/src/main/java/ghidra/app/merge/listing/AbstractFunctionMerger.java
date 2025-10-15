@@ -35,7 +35,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.DiffUtility;
 import ghidra.program.util.ProgramMerge;
 import ghidra.util.*;
 import ghidra.util.datastruct.ObjectIntHashtable;
@@ -2179,8 +2178,9 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //					new FunctionDetailChangeListener(FUNC_RETURN_TYPE, entryPt, panel, monitor));
 //			}
 			if (((conflicts & FUNC_RETURN_ADDRESS_OFFSET) != 0)) {
-				String latest = DiffUtility.toSignedHexString(latestStack.getReturnAddressOffset());
-				String my = DiffUtility.toSignedHexString(myStack.getReturnAddressOffset());
+				String latest =
+					NumericUtilities.toSignedHexString(latestStack.getReturnAddressOffset());
+				String my = NumericUtilities.toSignedHexString(myStack.getReturnAddressOffset());
 				panel.addSingleChoice("Return Address Offset", new String[] { latest, my },
 					new FunctionDetailChangeListener(FUNC_RETURN_ADDRESS_OFFSET, functions, panel,
 						monitor));
@@ -2202,8 +2202,8 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //			}
 			if ((conflicts & FUNC_STACK_PURGE_SIZE) != 0) {
 				String latest =
-					DiffUtility.toSignedHexString(functions[LATEST].getStackPurgeSize());
-				String my = DiffUtility.toSignedHexString(functions[MY].getStackPurgeSize());
+					NumericUtilities.toSignedHexString(functions[LATEST].getStackPurgeSize());
+				String my = NumericUtilities.toSignedHexString(functions[MY].getStackPurgeSize());
 				panel.addSingleChoice("Stack Purge Size", new String[] { latest, my },
 					new FunctionDetailChangeListener(FUNC_STACK_PURGE_SIZE, functions, panel,
 						monitor));

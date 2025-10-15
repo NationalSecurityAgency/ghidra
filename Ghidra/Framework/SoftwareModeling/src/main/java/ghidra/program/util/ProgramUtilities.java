@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.program.util;
 
 import java.util.*;
 
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
@@ -30,6 +30,8 @@ import ghidra.util.exception.InvalidInputException;
  * to deal with Program objects. 
  */
 public class ProgramUtilities {
+
+	private final static String EXTERNAL_ADDRESS_PREFIX = AddressSpace.EXTERNAL_SPACE.toString();
 
 	private ProgramUtilities() {
 	}
@@ -66,25 +68,72 @@ public class ProgramUtilities {
 		return Collections.unmodifiableSet(openProgramsWeakMap.keySet()).iterator();
 	}
 
+	/**
+	 * Parse an {@link Address} string which corresponds to the specified program.  
+	 * Supported addresses include (order also indicates precedence):
+	 * <ul>
+	 * <li>Default loaded memory space (hex-offset only or with space-name, e.g., 'abcd', '0xabcd')</li>
+	 * <li>Memory space-name based address (with hex-offset, e.g., 'ram:abc', see Note-1)</li>
+	 * <li>External address (e.g., EXTERNAL:00001234, see Note-2)</li>
+	 * <li>Stack address (e.g., Stack[0xa], Stack[-0xa], Stack[10], Stack[-10])</li>
+	 * </ul>
+	 * <p>
+	 * NOTES:
+	 * <ol>
+	 * <li>Specifying only a hex offset should be restricted to a valid default address space offset
+	 * to avoid having an arbitrary address space address returned.  A non-default space address
+	 * should include the appropriate address space name prefix.</li>
+	 * <li>If an external address is returned it does not indicate that it is defined by the 
+	 * program.</li>
+	 * </ol>
+	 * 
+	 * @param program program whose memory spaces should be considered
+	 * @param addressString address string to be parsed (use of address space name prefix is
+	 * case-sensitive).
+	 * @return parsed address or null if parse failed
+	 */
 	public static Address parseAddress(Program program, String addressString) {
-		Address[] addrs = program.parseAddress(addressString);
+		Address[] addrs = program.getAddressFactory().getAllAddresses(addressString);
 		if (addrs != null && addrs.length > 0) {
 			return addrs[0];
 		}
-		String stackPrefix = "Stack[";
-		if (addressString.startsWith(stackPrefix)) {
-			String offsetString =
-				addressString.substring(stackPrefix.length(), addressString.length() - 1);
+		Address addr = tryParseExternalAddress(addressString);
+		if (addr == null) {
+			addr = tryParseStackAddress(program, addressString);
+		}
+		return addr;
+	}
+
+	private static Address tryParseStackAddress(Program program, String addressString) {
+		if (addressString.startsWith(GenericAddress.STACK_ADDRESS_PREFIX) &&
+			addressString.endsWith(GenericAddress.STACK_ADDRESS_SUFFIX)) {
 			try {
+				AddressSpace stackSpace = program.getAddressFactory().getStackSpace();
+				String offsetString = // hex (0x) or decimal
+					addressString.substring(GenericAddress.STACK_ADDRESS_PREFIX.length(),
+						addressString.length() - 1);
 				long offset = NumericUtilities.parseLong(offsetString);
-				return program.getAddressFactory().getStackSpace().getAddress(offset);
+				return stackSpace.getAddress(offset);
 			}
-			catch (NumberFormatException e) {
-				return null;
+			catch (AddressOutOfBoundsException | NumberFormatException e) {
+				// ignore - return null below
 			}
 		}
 		return null;
+	}
 
+	private static Address tryParseExternalAddress(String addressString) {
+		if (addressString.startsWith(EXTERNAL_ADDRESS_PREFIX)) {
+			try {
+				String offsetString = addressString.substring(EXTERNAL_ADDRESS_PREFIX.length());
+				long offset = Long.parseLong(offsetString, 16); // hex offset only
+				return AddressSpace.EXTERNAL_SPACE.getAddress(offset);
+			}
+			catch (AddressOutOfBoundsException | NumberFormatException e) {
+				// ignore - return null below
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -119,6 +168,7 @@ public class ProgramUtilities {
 	/**
 	 * Convert old function wrapped external pointers.  Migrate function to
 	 * external function.
+	 * @param functionSymbol old fake IAT function to be migrated
 	 */
 	public static void convertFunctionWrappedExternalPointer(Symbol functionSymbol) {
 		if (functionSymbol.getSymbolType() != SymbolType.FUNCTION) {
