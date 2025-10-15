@@ -168,7 +168,7 @@ abstract class PythonTypeStubElement<T extends Element> {
 		if (PY_KEYWORDS.contains(value)) {
 			return value + "_";
 		}
-		return value;
+		return value.replace('$', '_');
 	}
 
 	/**
