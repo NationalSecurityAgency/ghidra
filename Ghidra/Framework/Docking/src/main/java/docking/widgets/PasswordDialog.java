@@ -266,9 +266,27 @@ public class PasswordDialog extends DialogComponentProvider {
 //		setInitialLocation( centerPoint.x, centerPoint.y );
 	}
 
+	/**
+	 * Get the {@link Preferences} key used to retain the last used user ID for a specific server.
+	 * Values supplied must match those used to instantiate password dialog.
+	 * @param serverType server type string
+	 * @param serverName server name (e.g., hostname, IP address).
+	 * @return preference key
+	 */
+	public static String getPreferredUserIdPreferenceKey(String serverType, String serverName) {
+		return "UserID_" + sanitizeString(serverType) + "_" + sanitizeString(serverName);
+	}
+
+	private static String sanitizeString(String str) {
+		if (str == null) {
+			return "_";
+		}
+		String newStr = str.replaceAll("[^a-zA-Z0-9_-]", "");
+		return newStr.length() == 0 ? "_" : newStr;
+	}
+
 	private String getPreferredUserId(String serverType, String serverName) {
-		userIdPreferenceKey =
-			"UserID_" + sanitizeString(serverType) + "_" + sanitizeString(serverName);
+		userIdPreferenceKey = getPreferredUserIdPreferenceKey(serverType, serverName);
 		return Preferences.getProperty(userIdPreferenceKey, defaultUserId);
 	}
 
@@ -276,14 +294,6 @@ public class PasswordDialog extends DialogComponentProvider {
 		if (userIdPreferenceKey != null) {
 			Preferences.setProperty(userIdPreferenceKey, userId);
 		}
-	}
-
-	private String sanitizeString(String str) {
-		if (str == null) {
-			return "_";
-		}
-		String newStr = str.replaceAll("[^a-zA-Z0-9_-]", "");
-		return newStr.length() == 0 ? "_" : newStr;
 	}
 
 	/**
