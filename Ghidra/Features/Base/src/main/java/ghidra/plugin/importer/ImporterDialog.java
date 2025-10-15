@@ -65,6 +65,8 @@ import ghidra.util.task.TaskBuilder;
  */
 public class ImporterDialog extends DialogComponentProvider {
 
+	private static final String PREFERENCES_LAST_FOLDER = "IMPORTER_DIALOG_LAST_FOLDER";
+
 	protected PluginTool tool;
 	private ProgramManager programManager;
 	protected FSRL fsrl;
@@ -131,7 +133,8 @@ public class ImporterDialog extends DialogComponentProvider {
 		setDefaultButton(okButton);
 		setOkEnabled(false);
 
-		setDestinationFolder(getProjectRootFolder());
+		DomainFolder folder = initializeDestinationFolder();
+		setDestinationFolder(folder);
 		selectedLoaderChanged();
 		setMinimumSize(new Dimension(500, getPreferredSize().height));
 		setRememberSize(false);
@@ -376,6 +379,15 @@ public class ImporterDialog extends DialogComponentProvider {
 		//@formatter:on
 
 		close();
+
+		saveLastUsedFolder();
+	}
+
+	private void saveLastUsedFolder() {
+
+		String path = destinationFolder.getPathname();
+		Preferences.setProperty(PREFERENCES_LAST_FOLDER, path);
+		Preferences.store();
 	}
 
 	private String removeTrailingSlashes(String path) {
@@ -595,15 +607,26 @@ public class ImporterDialog extends DialogComponentProvider {
 		return preferredSpecPair;
 	}
 
-	private DomainFolder getProjectRootFolder() {
+	private DomainFolder initializeDestinationFolder() {
 		Project project = AppInfo.getActiveProject();
 		ProjectData projectData = project.getProjectData();
+		String lastFolderPath = Preferences.getProperty(PREFERENCES_LAST_FOLDER);
+		if (lastFolderPath == null) {
+			return projectData.getRootFolder();
+		}
+
+		DomainFolder folder = projectData.getFolder(lastFolderPath);
+		if (folder != null) {
+			return folder;
+		}
+
 		return projectData.getRootFolder();
 	}
 
 	private void chooseProjectFolder() {
+		JComponent component = getComponent();
 		DataTreeDialog dataTreeDialog =
-			new DataTreeDialog(getComponent(), "Choose a project folder", CHOOSE_FOLDER);
+			new DataTreeDialog(component, "Choose a Project Folder", CHOOSE_FOLDER);
 		dataTreeDialog.setSelectedFolder(destinationFolder);
 		dataTreeDialog.showComponent();
 		DomainFolder folder = dataTreeDialog.getDomainFolder();
@@ -612,9 +635,10 @@ public class ImporterDialog extends DialogComponentProvider {
 		}
 	}
 
-	///////////////////////////////////////
-	// Methods for testing              ///
-	///////////////////////////////////////
+	public DomainFolder getDestinationFolder() {
+		return destinationFolder;
+	}
+
 	JComboBox<Loader> getFormatComboBox() {
 		return loaderComboBox;
 	}
