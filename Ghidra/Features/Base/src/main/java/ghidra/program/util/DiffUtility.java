@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.*;
 
 /**
@@ -530,29 +531,6 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Returns the signed hex string representing the int value. 
-	 * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
-	 * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
-	 * @param value the value
-	 * @return the signed hex string
-	 */
-	public static String toSignedHexString(int value) {
-		return (value >= 0 ? "0x" + Integer.toHexString(value)
-				: "-0x" + Integer.toHexString(-value));
-	}
-
-	/**
-	 * Returns the signed hex string representing the long value. 
-	 * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
-	 * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
-	 * @param value the value
-	 * @return the signed hex string
-	 */
-	public static String toSignedHexString(long value) {
-		return (value >= 0 ? "0x" + Long.toHexString(value) : "-0x" + Long.toHexString(-value));
-	}
-
-	/**
 	 * Returns the string representation of the specified reference's "to" address.
 	 * @param program the program containing the reference
 	 * @param ref the reference
@@ -571,13 +549,14 @@ public class DiffUtility extends SimpleDiffUtility {
 
 		if (ref.isStackReference()) {
 			int offset = ((StackReference) ref).getStackOffset();
-			return "Stack[" + toSignedHexString(offset) + "]";
+			return GenericAddress.STACK_ADDRESS_PREFIX +
+				NumericUtilities.toSignedHexString(offset) + GenericAddress.STACK_ADDRESS_SUFFIX;
 		}
 		else if (ref.isOffsetReference()) {
 			OffsetReference oref = (OffsetReference) ref;
 			return toAddr.toString() + " " + "base:" +
 				DiffUtility.getUserToAddressString(program, oref.getBaseAddress()) + " " +
-				"offset:" + DiffUtility.toSignedHexString(oref.getOffset());
+				"offset:" + NumericUtilities.toSignedHexString(oref.getOffset());
 
 		}
 		else if (ref.isShiftedReference()) {
@@ -619,7 +598,7 @@ public class DiffUtility extends SimpleDiffUtility {
 			}
 		}
 		else if (address.isStackAddress()) {
-			return "stack:" + toSignedHexString(address.getOffset());
+			return "stack:" + NumericUtilities.toSignedHexString(address.getOffset());
 		}
 		return address.toString();
 	}

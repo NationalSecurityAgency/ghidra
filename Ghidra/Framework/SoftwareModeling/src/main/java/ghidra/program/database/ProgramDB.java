@@ -820,9 +820,15 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				}
 			}
 		}
+
+		// TODO: Support for trailing 'h' should be dropped since it is not consistently
+		// supported by other parse methods (block-based above and within AddressFactory).
+		// AbstractAddressSpace.getAddress allows for '0x' or '0X' offset prefix but not 
+		// a trailing 'h'.
 		if (addrStr.endsWith("h")) {
 			addrStr = addrStr.substring(0, addrStr.length() - 1);
 		}
+
 		return addressFactory.getAllAddresses(addrStr, caseSensitive);
 	}
 
