@@ -53,24 +53,36 @@ public class GoFunctionFixup {
 		this.func = func;
 		this.storageAllocator = new GoParamStorageAllocator(program, goVersion);
 		this.newSignature = func.getSignature();
-		this.newCallingConv = null;
 
 		if (GoRttiMapper.isAbi0Func(func.getEntryPoint(), program)) {
 			// Some (typically lower level) functions in the binary will be marked with a 
 			// symbol that ends in the string "abi0".  
 			// Throw away all registers and force stack allocation for everything 
 			storageAllocator.setAbi0Mode();
+			this.newCallingConv = GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME;
+		}
+		else {
+			this.newCallingConv = null;
 		}
 	}
 
-	public GoFunctionFixup(Function func, FunctionSignature newSignature, String newCallingConv,
+	public GoFunctionFixup(Function func, FunctionSignature newSignature, String defaultCCName,
 			GoParamStorageAllocator storageAllocator) {
 		this.program = func.getProgram();
 		this.dtm = program.getDataTypeManager();
 		this.func = func;
 		this.storageAllocator = storageAllocator;
 		this.newSignature = newSignature;
-		this.newCallingConv = newCallingConv;
+		if (GoRttiMapper.isAbi0Func(func.getEntryPoint(), program)) {
+			// Some (typically lower level) functions in the binary will be marked with a 
+			// symbol that ends in the string "abi0".  
+			// Throw away all registers and force stack allocation for everything 
+			storageAllocator.setAbi0Mode();
+			this.newCallingConv = GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME;
+		}
+		else {
+			this.newCallingConv = defaultCCName;
+		}
 	}
 
 	public static boolean isClosureContext(ParameterDefinition p) {

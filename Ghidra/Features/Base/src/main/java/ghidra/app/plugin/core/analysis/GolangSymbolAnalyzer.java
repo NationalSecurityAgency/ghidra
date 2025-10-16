@@ -276,17 +276,19 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					functionSignatureFromMethod++;
 				}
 
-				GoFunctionFixup ff = new GoFunctionFixup(func, funcDefResult.funcDef(),
-					goBinary.getCallingConventionFor(funcdata), goBinary.newStorageAllocator());
+				if (funcdata.getFlags().isEmpty()) {
+					GoFunctionFixup ff = new GoFunctionFixup(func, funcDefResult.funcDef(),
+						goBinary.getDefaultCallingConventionName(), goBinary.newStorageAllocator());
 
-				try {
-					ff.apply();
-				}
-				catch (DuplicateNameException | InvalidInputException
-						| IllegalArgumentException e) {
-					MarkupSession.logWarningAt(program, func.getEntryPoint(),
-						"Failed to update function signature: " + e.getMessage());
-					continue;
+					try {
+						ff.apply();
+					}
+					catch (DuplicateNameException | InvalidInputException
+							| IllegalArgumentException e) {
+						MarkupSession.logWarningAt(program, func.getEntryPoint(),
+							"Failed to update function signature: " + e.getMessage());
+						continue;
+					}
 				}
 
 				if (funcDefResult.symbolName().hasReceiver()) {
