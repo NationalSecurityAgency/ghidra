@@ -101,6 +101,15 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	}
 
 	@Override
+	public void validate() {
+		super.validate();
+
+		if (rendererComponent != null) {
+			rendererComponent.validate();
+		}
+	}
+
+	@Override
 	public void paint(Graphics g) {
 
 		updateClipping();
@@ -111,6 +120,14 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		// we must update the colors here as well.  
 		rendererComponent.setBackground(getBackground());
 		rendererComponent.setForeground(getForeground());
+
+		// Our parent renderer pane will add us as a child.  Some Lafs, like Windows, need to be a
+		// child of the renderer pane to work correctly.
+		Container parent = getParent();
+		Container rendererParent = rendererComponent.getParent();
+		if (rendererParent != parent) {
+			parent.add(rendererComponent);
+		}
 
 		rendererComponent.paint(g);
 
