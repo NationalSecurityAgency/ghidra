@@ -552,14 +552,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return false;
 	}
 
-	public String getCallingConventionFor(GoFuncData func) {
-		// TODO: this logic needs work.  Currently we are not strongly declaring functions
-		// as abi0.
-		return defaultCCName != null && !isAbi0Func(func.getFuncAddress(), program)
-				? defaultCCName
-				: null;
-	}
-
 	/**
 	 * Returns true if the specified calling convention is defined for the program.
 	 * @param ccName calling convention name
