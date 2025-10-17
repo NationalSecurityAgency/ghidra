@@ -195,13 +195,17 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 	}
 
 	private static String getStackAddressRepresentation(Address address) {
-		return GenericAddress.STACK_ADDRESS_PREFIX +
-			NumericUtilities.toSignedHexString(address.getOffset()) +
-			GenericAddress.STACK_ADDRESS_SUFFIX;
+		int offset = (int) address.getOffset();
+		boolean neg = (offset < 0);
+		return "Stack[" + (neg ? "-" : "+") + "0x" + Integer.toHexString(neg ? -offset : offset) +
+			"]";
 	}
 
 	private static String getConstantAddressRepresentation(Address address) {
-		return "Constant[" + NumericUtilities.toSignedHexString(address.getOffset()) + "]";
+		int offset = (int) address.getOffset();
+		boolean neg = (offset < 0);
+		return "Constant[" + (neg ? "-" : "+") + "0x" +
+			Integer.toHexString(neg ? -offset : offset) + "]";
 	}
 
 	private static String getVariableAddressRepresentation() {
