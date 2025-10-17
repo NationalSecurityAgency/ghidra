@@ -15,25 +15,12 @@
  */
 package ghidra.doclets.typestubs;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.QualifiedNameable;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
 
 import com.sun.source.doctree.*;
 
@@ -218,9 +205,7 @@ public class JavadocConverter extends DocConverter {
 				if (tag instanceof HtmlDocTree html) {
 					yield htmlConverter.convertHtml(html, el, it);
 				}
-				else {
-					yield tag.toString();
-				}
+				yield tag.toString();
 			}
 			case SPEC -> "";
 			case SERIAL -> "";
@@ -352,6 +337,9 @@ public class JavadocConverter extends DocConverter {
 	 */
 	private static String getConstantValue(VariableElement el, ValueTree tag) {
 		Object value = el.getConstantValue();
+		if (value == null) {
+			return "";
+		}
 		TextTree format = tag.getFormat();
 		if (format != null) {
 			try {
