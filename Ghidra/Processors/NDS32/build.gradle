@@ -1,0 +1,15 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors NDS32'
+
+
+dependencies {
+	compile project(':Base')
+	// Temporary dependency so that pcodeTests can use the Decompiler switch recovery
+	compile project(':Decompiler')
+}
+
