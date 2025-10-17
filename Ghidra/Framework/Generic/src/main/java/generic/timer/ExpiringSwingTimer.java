@@ -32,7 +32,7 @@ import utility.function.Dummy;
  */
 public class ExpiringSwingTimer extends GhidraSwingTimer {
 
-	private static int DEFAULT_EXPIRE_MS = 750;
+	private static final int DEFAULT_EXPIRE_MS = 750;
 
 	private static Set<ExpiringSwingTimer> instances = new HashSet<>();
 

@@ -98,17 +98,29 @@ if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR") && isCurrentWindows()) {
 
 def sortVisualStudioVersions(vswhereJson) {
 
-	// Try to parse each version using Java's own version parser, marking the entries that failed
+	// Try to parse each version using Gradle's own version parser, marking the entries that failed
 	// (none should fail)
+	def validVersions = true
 	vswhereJson.each {
 		try {
-			Runtime.Version.parse(it.installationVersion)
+			GradleVersion.version(it.installationVersion)
 		}
 		catch (Exception e) {
 			it.put("unsupportedVersion", "true")
+			validVersions = false
 		}
 	}
 	
-	vswhereJson.sort { a, b -> b.instanceId <=> a.instanceId } // secondary sort
-	vswhereJson.sort { a, b -> Runtime.Version.parse(b.installationVersion) <=> Runtime.Version.parse(a.installationVersion) } // primary sort
+	// Establish a consistent ordering by first sorting by instance ID
+	vswhereJson.sort { a, b -> b.instanceId <=> a.instanceId }
+	
+	// Primary sort by installation version. If all the version numbers were parseable with the
+	// GradleVersion class, use that class to achieve the correct ordering. Otherwise, fall back to
+	// lexicographic order.
+	if (validVersions) {
+		vswhereJson.sort { a, b -> GradleVersion.version(b.installationVersion) <=> GradleVersion.version(a.installationVersion) } // primary sort
+	}
+	else {
+		vswhereJson.sort { a, b -> b.installationVersion <=> a.installationVersion } // primary sort
+	}
 }
