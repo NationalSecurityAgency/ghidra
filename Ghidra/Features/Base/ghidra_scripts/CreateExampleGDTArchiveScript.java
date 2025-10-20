@@ -252,8 +252,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"af_irda.h",
 				"in6addr.h",
 				"mstcpip.h",
-				"ws2def.h",
-				"winsock.h",
 				"winsock2.h",
 				"nsemail.h",
 				"nspapi.h",
