@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.feature.vt.api.markupitem;
 
-import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.ADD;
-import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.REPLACE;
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_NAME;
+import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.*;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 import static org.junit.Assert.*;
 
 import java.util.List;
@@ -26,6 +25,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import ghidra.app.util.NamespaceUtils;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.FunctionNameMarkupType;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionNameChoices;
@@ -34,19 +34,15 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DWordDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
-	public FunctionNameMarkupItemTest() {
-		super();
-	}
-
 	@Test
-	public void testFindAndApplyMarkupItem_ReplaceDefault_WithDefaultDestinationName()
+	public void testReplaceDefault_DefaultDestinationName()
 			throws Exception {
 
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
@@ -57,17 +53,14 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator =
-			new FunctionNameValidator(sourceFunction, destinationFunction, sourceName,
-				destinationName, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+			new FunctionNameValidator(sourceFunction, destinationFunction,
+				FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_ReplaceDefault_WithNonDefaultDestinationName()
+	public void testReplaceDefault_NonDefaultDestinationName()
 			throws Exception {
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
@@ -79,30 +72,15 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
 		String sourceName = sourceFunction.getName() + getNonDynamicName();
 		setFunctionName(sourceFunction, sourceName);
-		String destinationName = destinationFunction.getName();
 
 		FunctionNameValidator validator =
-			new FunctionNameValidator(sourceFunction, destinationFunction, sourceName,
-				destinationName, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+			new FunctionNameValidator(sourceFunction, destinationFunction,
+				FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 		doTestFindAndApplyMarkupItem_NoEffect(validator);
 	}
 
-	private void setFunctionName(Function sourceFunction, String sourceName) {
-		boolean commit = true;
-		int txID = sourceProgram.startTransaction("Change Source Function Name");
-		try {
-			sourceFunction.setName(sourceName, sourceFunction.getSymbol().getSource());
-		}
-		catch (Exception e) {
-			commit = false;
-		}
-		finally {
-			sourceProgram.endTransaction(txID, commit);
-		}
-	}
-
 	@Test
-	public void testFindAndApplyMarkupItem_ReplaceAlways_WithExistingDuplicateDestinationName()
+	public void testReplaceAlways_WithExistingDuplicateDestinationName()
 			throws Exception {
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
@@ -112,16 +90,13 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.REPLACE_ALWAYS);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_ReplaceAlways_WithNewName() throws Exception {
+	public void testReplaceAlways_WithNewName() throws Exception {
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
 		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
@@ -130,52 +105,66 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.REPLACE_ALWAYS);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_Add_WithNewName() throws Exception {
+	public void testReplaceAlways_DifferentName_DifferentNamespace()
+			throws Exception {
+
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
 		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
 
-		Address destinationAddress = addr("0x0100415a", destinationProgram);
+		Address destinationAddress = addr("0x010048a3", destinationProgram);
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
+		setNamespace(sourceFunction, "Source::Foo::Bar");
+		setNamespace(destinationFunction, "Destination::Baz");
 
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
+
+		ToolOptions options = validator.getOptions();
+		options.setBoolean(USE_NAMESPACE_FUNCTIONS, false);
+
+		// this method will use the options to ensure that the namespace has been applied
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_Add_WithNewName_MyPrimary() throws Exception {
+	public void testReplaceAlways_SameName_DifferentNamespace() throws Exception {
+
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
 		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
 
-		Address destinationAddress = addr("0x0100415a", destinationProgram);
+		Address destinationAddress = addr("0x010048a3", destinationProgram);
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
+		setName(destinationFunction, sourceFunction.getName());
+
+		setNamespace(sourceFunction, "Source::Foo::Bar");
+		setNamespace(destinationFunction, "Destination::Baz");
 
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD_AS_PRIMARY);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
+
+		ToolOptions options = validator.getOptions();
+		options.setBoolean(USE_NAMESPACE_FUNCTIONS, true);
+
+		// this method will use the options to ensure that the namespace has been applied
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_Add_WithDefault() throws Exception {
+	public void testReplaceAlways_DifferentNamespace_WithDefaultDestinationName()
+			throws Exception {
+
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
 		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
@@ -184,16 +173,22 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
+		setNamespace(sourceFunction, "Source");
+		setNamespace(destinationFunction, "Destination");
 
-		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD);
+		FunctionNameValidator validator =
+			new FunctionNameValidator(sourceFunction, destinationFunction,
+				FunctionNameChoices.REPLACE_ALWAYS);
+
+		// do not apply the namespace
+		ToolOptions options = validator.getOptions();
+		options.setBoolean(USE_NAMESPACE_FUNCTIONS, false);
+
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyFunctionName_IgnoreAction() throws Exception {
+	public void testAdd_WithNewName() throws Exception {
 		Address sourceAddress = addr("0x01002cf5", sourceProgram);
 		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
 		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
@@ -202,18 +197,61 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
 		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
 
-		String sourceName = sourceFunction.getName() + getNonDynamicName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.EXCLUDE);
+			destinationFunction, FunctionNameChoices.ADD);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
-////// External Function Name Tests //////
+	@Test
+	public void testAdd_WithNewName_DifferentNamespace() throws Exception {
+		Address sourceAddress = addr("0x01002cf5", sourceProgram);
+		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
+		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
+
+		Address destinationAddress = addr("0x0100415a", destinationProgram);
+		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
+		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
+
+		setNamespace(sourceFunction, "Source::Foo::Bar");
+		setNamespace(destinationFunction, "Destination::Baz");
+
+		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
+			destinationFunction, FunctionNameChoices.ADD);
+		doTestFindAndApplyMarkupItem(validator);
+	}
 
 	@Test
-	public void testFindAndApplyExternalMarkupItem_ReplaceDefault_WithDefaultDestinationName()
+	public void testAdd_WithNewName_MyPrimary() throws Exception {
+		Address sourceAddress = addr("0x01002cf5", sourceProgram);
+		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
+		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
+
+		Address destinationAddress = addr("0x0100415a", destinationProgram);
+		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
+		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
+
+		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
+			destinationFunction, FunctionNameChoices.ADD_AS_PRIMARY);
+		doTestFindAndApplyMarkupItem(validator);
+	}
+
+	@Test
+	public void testAdd_WithDefault() throws Exception {
+		Address sourceAddress = addr("0x01002cf5", sourceProgram);
+		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
+		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
+
+		Address destinationAddress = addr("0x01003f9e", destinationProgram);
+		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
+		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
+
+		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
+			destinationFunction, FunctionNameChoices.ADD);
+		doTestFindAndApplyMarkupItem(validator);
+	}
+
+	@Test
+	public void testExternal_ReplaceDefault_WithDefaultDestinationName()
 			throws Exception {
 
 		Function addedSourceFunction =
@@ -228,17 +266,14 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator =
-			new FunctionNameValidator(sourceFunction, destinationFunction, sourceName,
-				destinationName, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+			new FunctionNameValidator(sourceFunction, destinationFunction,
+				FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_ReplaceDefault_WithNonDefaultDestinationName()
+	public void testExternal_ReplaceDefault_WithNonDefaultDestinationName()
 			throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples");
@@ -252,17 +287,14 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator =
-			new FunctionNameValidator(sourceFunction, destinationFunction, sourceName,
-				destinationName, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+			new FunctionNameValidator(sourceFunction, destinationFunction,
+				FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 		doTestFindAndApplyMarkupItem_NoEffect(validator);
 	}
 
 	@Test
-	public void testFindAndApplyExternalMarkupItem_ReplaceAlways_WithExistingDuplicateDestinationName()
+	public void testExternal_ReplaceAlways_WithExistingDuplicateDestinationName()
 			throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples");
@@ -270,24 +302,14 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 			addExternalFunction(destinationProgram, "Modify Destination Program", "oranges");
 
 		// Make a duplicate named external function.
-		Function duplicateApplesFunction = null;
-		int txId = destinationProgram.startTransaction("Modify Destination Program");
-		boolean commit = false;
-		try {
-			duplicateApplesFunction =
+		tx(destinationProgram, () -> {
+			Function applesFunction =
 				createExternalFunction(destinationProgram, new String[] { "user32.dll", "apples" });
-			addStackParameter(duplicateApplesFunction, "P1", SourceType.USER_DEFINED,
+			addStackParameter(applesFunction, "P1", SourceType.USER_DEFINED,
 				new DWordDataType(), 4, "Test Parameter Comment");
-			addStackParameter(duplicateApplesFunction, "P2", SourceType.USER_DEFINED,
+			addStackParameter(applesFunction, "P2", SourceType.USER_DEFINED,
 				new DWordDataType(), 8, "Test Parameter Comment");
-			commit = true;
-		}
-		catch (Exception e) {
-			Assert.fail(e.getMessage());
-		}
-		finally {
-			destinationProgram.endTransaction(txId, commit);
-		}
+		});
 
 		// Check the function just created.
 		Function sourceFunction = getExternalFunction(sourceProgram, addedSourceFunction.getName());
@@ -296,16 +318,13 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.REPLACE_ALWAYS);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_ReplaceAlways_WithNewName() throws Exception {
+	public void testExternal_ReplaceAlways_WithNewName() throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples", "origina-apples");
 		Function addedDestinationFunction = addExternalFunction(destinationProgram,
@@ -318,16 +337,13 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.REPLACE_ALWAYS);
+			destinationFunction, FunctionNameChoices.REPLACE_ALWAYS);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_Add_WithNewName() throws Exception {
+	public void testExternal_Add_WithNewName() throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples");
 		Function addedDestinationFunction =
@@ -340,16 +356,13 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD);
+			destinationFunction, FunctionNameChoices.ADD);
 		doTestFindAndApplyMarkupItem_ApplyFails(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_Add_WithNewName_MyPrimary() throws Exception {
+	public void testExternal_Add_WithNewName_MyPrimary() throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples");
 		Function addedDestinationFunction =
@@ -362,16 +375,13 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD_AS_PRIMARY);
+			destinationFunction, FunctionNameChoices.ADD_AS_PRIMARY);
 		doTestFindAndApplyMarkupItem_ApplyFails(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_Add_WithDefault() throws Exception {
+	public void testExternal_Add_WithDefault() throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "oranges");
 		Function addedDestinationFunction = addDefaultExternalFunction(destinationProgram,
@@ -384,16 +394,28 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.ADD);
+			destinationFunction, FunctionNameChoices.ADD);
 		doTestFindAndApplyMarkupItem_ApplyFails(validator);
 	}
 
 	@Test
-	public void testApplyExternalFunctionName_IgnoreAction() throws Exception {
+	public void testIgnoreAction() throws Exception {
+		Address sourceAddress = addr("0x01002cf5", sourceProgram);
+		FunctionManager sourceFunctionManager = sourceProgram.getFunctionManager();
+		Function sourceFunction = sourceFunctionManager.getFunctionAt(sourceAddress);
+
+		Address destinationAddress = addr("0x0100415a", destinationProgram);
+		FunctionManager destinationFunctionManager = destinationProgram.getFunctionManager();
+		Function destinationFunction = destinationFunctionManager.getFunctionAt(destinationAddress);
+
+		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
+			destinationFunction, FunctionNameChoices.EXCLUDE);
+		doTestFindAndApplyMarkupItem(validator);
+	}
+
+	@Test
+	public void testExternal_IgnoreAction() throws Exception {
 		Function addedSourceFunction =
 			addExternalFunction(sourceProgram, "Modify Source Program", "apples");
 		Function addedDestinationFunction =
@@ -406,11 +428,8 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		assertEquals(addedSourceFunction.getName(), sourceFunction.getName());
 		assertEquals(addedDestinationFunction.getName(), destinationFunction.getName());
 
-		String sourceName = sourceFunction.getName();
-		String destinationName = destinationFunction.getName();
-
 		FunctionNameValidator validator = new FunctionNameValidator(sourceFunction,
-			destinationFunction, sourceName, destinationName, FunctionNameChoices.EXCLUDE);
+			destinationFunction, FunctionNameChoices.EXCLUDE);
 		doTestFindAndApplyMarkupItem(validator);
 	}
 
@@ -420,26 +439,25 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
 	private class FunctionNameValidator extends TestDataProviderAndValidator {
 
-		private String sourceName;
-		private String sourceOriginalName;
-		private String destinationName;
-		private String destinationOriginalName;
 		private Function sourceFunction;
 		private Function destinationFunction;
 		private FunctionNameChoices functionNameChoice;
 
+		private String destinationOriginalName;
+		private String destinationOriginalExternalName;
+		private String destinationOriginalNamespace;
+
 		FunctionNameValidator(Function sourceFunction, Function destinationFunction,
-				String sourceName, String destinationName, FunctionNameChoices functionNameChoice) {
+				FunctionNameChoices functionNameChoice) {
 
 			this.sourceFunction = sourceFunction;
 			this.destinationFunction = destinationFunction;
-			this.destinationName = destinationName;
-			this.sourceName = sourceName;
+			this.destinationOriginalName = destinationFunction.getName();
+			this.destinationOriginalNamespace = destinationFunction.getParentNamespace().toString();
 			if (sourceFunction.isExternal()) {
 				assertTrue("Expected both functions to be external",
 					destinationFunction.isExternal());
-				sourceOriginalName = sourceFunction.getExternalLocation().getOriginalImportedName();
-				destinationOriginalName =
+				destinationOriginalExternalName =
 					destinationFunction.getExternalLocation().getOriginalImportedName();
 			}
 			this.functionNameChoice = functionNameChoice;
@@ -494,86 +512,109 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		}
 
 		private void updateSourceName() {
-			int id = sourceFunction.getProgram().startTransaction("update name");
-			try {
+			String sourceName = sourceFunction.getName();
+			tx(sourceProgram, () -> {
 				sourceFunction.setName(sourceName, SourceType.USER_DEFINED);
-			}
-			catch (Exception e) {
-				throw new RuntimeException("Update source name failed: " + e.getMessage());
-			}
-			finally {
-				sourceFunction.getProgram().endTransaction(id, true);
-			}
-
+			});
 		}
 
 		@Override
 		protected void assertApplied() {
+
+			boolean useNamespace = options.getBoolean(USE_NAMESPACE_FUNCTIONS, false);
+			String destinationName = destinationOriginalName;
+
+			String sourceName = sourceFunction.getName(useNamespace);
+			String appliedDestinationName = destinationFunction.getName(useNamespace);
+
 			boolean sourceIsDefault = isDefaultFunctionName(sourceName, sourceFunction);
 			boolean destinationIsDefault =
 				isDefaultFunctionName(destinationName, destinationFunction);
+
 			SymbolTable symbolTable = destinationFunction.getProgram().getSymbolTable();
 			if (functionNameChoice == FunctionNameChoices.ADD_AS_PRIMARY) {
 				if (!sourceIsDefault) {
 					assertEquals("Function name was not applied", sourceName,
-						destinationFunction.getName());
+						appliedDestinationName);
 					if (!destinationIsDefault) {
-						Symbol otherSymbol = symbolTable.getGlobalSymbol(destinationName,
-							getDestinationMatchAddress());
-						assertNotNull(otherSymbol);
-						assertEquals(SymbolType.LABEL, otherSymbol.getSymbolType());
+						Address addr = getDestinationApplyAddress();
+						Symbol symbol = getSymbol(symbolTable, destinationName, addr);
+						assertNotNull(symbol);
+						assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 						assertEquals("Additional label was not applied", destinationName,
-							otherSymbol.getName());
+							symbol.getName());
 					}
 				}
 				else if (!destinationIsDefault) {
 					assertEquals("Function name should not have been applied", destinationName,
-						destinationFunction.getName());
-					Symbol destinationSymbol =
-						symbolTable.getGlobalSymbol(destinationName, getDestinationMatchAddress());
-					assertNotNull("Expected an additional label", destinationSymbol);
-					assertEquals(SymbolType.LABEL, destinationSymbol.getSymbolType());
+						appliedDestinationName);
+					Address addr = getDestinationMatchAddress();
+					Symbol symbol = getSymbol(symbolTable, destinationName, addr);
+					assertNotNull("Expected an additional label", symbol);
+					assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 				}
 			}
 			else if (functionNameChoice == FunctionNameChoices.ADD) {
 				if (!destinationIsDefault) {
 					assertEquals("Function name was improperly added", destinationName,
-						destinationFunction.getName());
+						appliedDestinationName);
 					if (!sourceIsDefault) {
-						Symbol otherSymbol =
-							symbolTable.getGlobalSymbol(sourceName, getDestinationMatchAddress());
-						assertNotNull(otherSymbol);
-						assertEquals(SymbolType.LABEL, otherSymbol.getSymbolType());
+						Address addr = getDestinationMatchAddress();
+						Symbol symbol = getSymbol(symbolTable, sourceName, addr);
+						assertNotNull(symbol);
+						assertEquals(SymbolType.LABEL, symbol.getSymbolType());
 					}
 				}
 				else if (!sourceIsDefault) {
 					assertEquals("Function name should have been applied", sourceName,
-						destinationFunction.getName());
-					Symbol destinationSymbol =
-						symbolTable.getGlobalSymbol(destinationName, getDestinationMatchAddress());
-					assertNull("Additional label was unexpected", destinationSymbol);
+						appliedDestinationName);
+					Address addr = getDestinationMatchAddress();
+					Symbol symbol = getSymbol(symbolTable, destinationName, addr);
+					assertNull("Additional label was unexpected", symbol);
 				}
 			}
 			else if (functionNameChoice == FunctionNameChoices.REPLACE_ALWAYS) {
-				// TODO: Was not implemented ??  Should it be ??
+
 				if (sourceIsDefault) {
 					assertEquals("Function name was improperly renamed", destinationName,
-						destinationFunction.getName());
+						appliedDestinationName);
 					if (destinationFunction.isExternal()) {
-						assertTrue("External Function original name was improperly renamed",
-							SystemUtilities.isEqual(
-								destinationFunction.getExternalLocation().getOriginalImportedName(),
-								destinationOriginalName));
+						ExternalLocation externalLocation =
+							destinationFunction.getExternalLocation();
+						String originalImportedName = externalLocation.getOriginalImportedName();
+						assertEquals("External Function original name was improperly renamed",
+							originalImportedName, destinationOriginalExternalName);
 					}
 				}
 				else {
+
 					assertEquals("Function name should have been applied", sourceName,
-						destinationFunction.getName());
-//					if (destinationFunction.isExternal()) {
-//						// original name may get set if symbol type was IMPORTED
-//					}
+						appliedDestinationName);
+
+					String sourceNs = sourceFunction.getParentNamespace().toString();
+					if (useNamespace) {
+						String destNs = destinationFunction.getParentNamespace().toString();
+						assertEquals(sourceNs, destNs);
+					}
+					else {
+						String currentDestNs = destinationFunction.getParentNamespace().toString();
+						assertEquals(destinationOriginalNamespace, currentDestNs);
+					}
+
 				}
 			}
+		}
+
+		private Symbol getSymbol(SymbolTable symbolTable, String name, Address addr) {
+
+			Symbol[] symbols = symbolTable.getSymbols(addr);
+			for (Symbol s : symbols) {
+				String symbolName = s.getName();
+				if (symbolName.equals(name)) {
+					return s;
+				}
+			}
+			return null;
 		}
 
 		private boolean isDefaultFunctionName(String functionName, Function function) {
@@ -584,13 +625,18 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
 		@Override
 		protected void assertUnapplied() {
-			assertEquals("Function name was not unapplied", destinationName,
+
+			String sourceName = sourceFunction.getName();
+
+			assertEquals("Function name was not unapplied", destinationOriginalName,
 				destinationFunction.getName());
 			if (functionNameChoice == FunctionNameChoices.ADD &&
-				!isDefaultFunctionName(destinationName, destinationFunction)) {
+				!isDefaultFunctionName(destinationOriginalName, destinationFunction)) {
 				Symbol sourceSymbol =
-					destinationFunction.getProgram().getSymbolTable().getGlobalSymbol(sourceName,
-						getDestinationMatchAddress());
+					destinationFunction.getProgram()
+							.getSymbolTable()
+							.getGlobalSymbol(sourceName,
+								getDestinationMatchAddress());
 				assertNull(sourceSymbol);
 			}
 		}
@@ -694,13 +740,30 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		Parameter parameter1 =
 			new ParameterImpl(name, dataType, stackOffset, function.getProgram());
 		parameter1.setComment(comment);
-		return function.addParameter(parameter1, sourceType);
+
+		function.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
+			true, sourceType, parameter1);
+		return function.getParameter(0);
 	}
 
 	void checkDataType(DataType expectedDataType, DataType actualDataType) {
 		String failureMessage = "Expected external data type '" + expectedDataType.getName() +
 			"' but was '" + ((actualDataType != null) ? actualDataType.getName() : null) + "'";
 		assertTrue(failureMessage, expectedDataType.isEquivalent(actualDataType));
+	}
+
+	private void setFunctionName(Function sourceFunction, String sourceName) {
+		boolean commit = true;
+		int txID = sourceProgram.startTransaction("Change Source Function Name");
+		try {
+			sourceFunction.setName(sourceName, sourceFunction.getSymbol().getSource());
+		}
+		catch (Exception e) {
+			commit = false;
+		}
+		finally {
+			sourceProgram.endTransaction(txID, commit);
+		}
 	}
 
 	private Function addExternalFunction(Program program, String txDescription,
@@ -733,24 +796,34 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
 	private Function addDefaultExternalFunction(Program program, String txDescription,
 			String memAddress) {
-		Function function = null;
-		int txId = program.startTransaction(txDescription);
-		boolean commit = false;
-		try {
-			function = createExternalFunction(program, new String[] { "user32.dll", null },
+
+		return tx(program, () -> {
+			Function function = createExternalFunction(program, new String[] { "user32.dll", null },
 				addr(memAddress, program));
 			addStackParameter(function, "P1", SourceType.USER_DEFINED, new DWordDataType(), 4,
 				"Test Parameter Comment");
 			addStackParameter(function, "P2", SourceType.USER_DEFINED, new DWordDataType(), 8,
 				"Test Parameter Comment");
-			commit = true;
-		}
-		catch (Exception e) {
-			Assert.fail(e.getMessage());
-		}
-		finally {
-			program.endTransaction(txId, commit);
-		}
-		return function;
+			return function;
+		});
+	}
+
+	private void setName(Function f, String name) {
+		Program p = f.getProgram();
+		tx(p, () -> {
+			f.setName(name, SourceType.DEFAULT);
+		});
+	}
+
+	private void setNamespace(Function f, String namespacePath) {
+
+		Program p = f.getProgram();
+		tx(p, () -> {
+			Namespace globalNamespace = p.getGlobalNamespace();
+			Namespace ns =
+				NamespaceUtils.createNamespaceHierarchy(namespacePath, globalNamespace, p,
+					SourceType.USER_DEFINED);
+			f.setParentNamespace(ns);
+		});
 	}
 }
