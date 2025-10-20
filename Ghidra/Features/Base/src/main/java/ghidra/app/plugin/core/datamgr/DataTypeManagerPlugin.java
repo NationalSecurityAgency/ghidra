@@ -318,7 +318,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	protected void programClosed(Program program) {
 		// assumption: at this point programDeactivated(Program) has been called, so we don't
 		// have to perform any cleanup that is done by that method.
-		provider.programClosed();
+		provider.programClosed(program);
 		editorManager.dismissEditors(program.getDataTypeManager());
 	}
 

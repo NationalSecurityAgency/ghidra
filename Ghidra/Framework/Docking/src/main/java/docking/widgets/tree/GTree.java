@@ -520,6 +520,10 @@ public class GTree extends JPanel implements BusyListener {
 		setSelectionPaths(paths, true, EventOrigin.API_GENERATED);
 	}
 
+	public void addSelectionPath(TreePath path) {
+		tree.addSelectionPath(path);
+	}
+
 	public void setSelectedNode(GTreeNode node) {
 		setSelectionPaths(new TreePath[] { node.getTreePath() });
 	}
@@ -1089,10 +1093,6 @@ public class GTree extends JPanel implements BusyListener {
 
 	public void setRowHeight(int rowHeight) {
 		tree.setRowHeight(rowHeight);
-	}
-
-	public void addSelectionPath(TreePath path) {
-		tree.addSelectionPath(path);
 	}
 
 	public void addTreeExpansionListener(TreeExpansionListener listener) {

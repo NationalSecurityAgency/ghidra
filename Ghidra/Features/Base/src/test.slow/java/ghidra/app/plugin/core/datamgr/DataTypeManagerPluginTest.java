@@ -28,6 +28,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellEditor;
@@ -51,6 +52,7 @@ import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
+import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
@@ -61,8 +63,8 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
+import ghidra.program.model.listing.Program;
+import ghidra.test.*;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -73,7 +75,6 @@ import utilities.util.FileUtilities;
 
 public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String BUILTIN_NAME = "BuiltInTypes";
-	private static final String PROGRAM_FILENAME = "sample";
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -104,7 +105,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		jTree = (JTree) invokeInstanceMethod("getJTree", tree);
 		waitForTree();
 		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
+		programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
@@ -125,7 +126,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		builder = new ProgramBuilder("sample", ProgramBuilder._TOY, this);
+		builder = new ProgramBuilder("Program1", ProgramBuilder._TOY, this);
 
 		builder.createMemory(".text", "0x1001000", 0x100);
 		CategoryPath miscPath = new CategoryPath("/MISC");
@@ -668,7 +669,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		toggleDetailedSearch(true);
 		assertSingleFilterMatch(
-			new String[] { "Data Types", "sample", "Category1", "Category2", "MyStruct" });
+			new String[] { "Data Types", "Program1", "Category1", "Category2", "MyStruct" });
 	}
 
 	@Test
@@ -682,6 +683,84 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		//verify all nodes are collapsed
 		checkNodesCollapsed(rootNode);
+	}
+
+	@Test
+	public void testTreeRemembersSelectionWhenSwitchingPrograms() throws Exception {
+
+		env.open(new ClassicSampleX86ProgramBuilder().getProgram());
+
+		String p1 = "Program1";
+		String p2 = "sample";
+
+		// Open and select a path in the current program, 
+		selectPath(p2, "CoolUnion");
+
+		// Now select a path in the first program
+		switchTo(p1);
+		selectPath(p1, "MISC", "ArrayStruct");
+
+		// Switch back and forth and the selected paths should be restored
+		switchTo(p2);
+		assertSelectedPath(p2, "CoolUnion");
+
+		switchTo(p1);
+		assertSelectedPath(p1, "MISC", "ArrayStruct");
+
+		switchTo(p2);
+		assertSelectedPath(p2, "CoolUnion");
+	}
+
+	private void assertSelectedPath(String... expectedPath) {
+
+		String[] fullExpectedPath = new String[expectedPath.length + 1];
+		fullExpectedPath[0] = "Data Types";
+		System.arraycopy(expectedPath, 0, fullExpectedPath, 1, expectedPath.length);
+
+		waitForTree();
+		TreePath treePath = runSwing(() -> tree.getSelectionPath());
+		assertNotNull("No tree path selected", treePath);
+		Object[] treePathElements = treePath.getPath();
+		List<String> actualNamesList =
+			Arrays.stream(treePathElements)
+					.map(o -> o.toString())
+					.collect(Collectors.toList());
+		String[] actualPath = actualNamesList.toArray(String[]::new);
+		assertArraysEqualOrdered("Tree path not seleced", fullExpectedPath, actualPath);
+	}
+
+	private void switchTo(String programName) {
+
+		ProgramManagerPlugin pm = getPlugin(tool, ProgramManagerPlugin.class);
+		Program[] programs = pm.getAllOpenPrograms();
+		for (Program p : programs) {
+			String name = p.getName();
+			if (name.equals(programName)) {
+				pm.setCurrentProgram(p);
+				waitForBusyTool(tool);
+				return;
+			}
+		}
+		fail("Could not switch to program '%s'".formatted(programName));
+	}
+
+	private void selectPath(String... names) {
+
+		GTreeNode root = tree.getModelRoot();
+		GTreeNode node = root;
+		for (String name : names) {
+			GTreeNode child = node.getChild(name);
+			String message = "Could not find '%s' in '%s'".formatted(name, Arrays.toString(names));
+			assertNotNull(message, child);
+
+			tree.expandPath(node);
+			waitForTree();
+
+			node = child;
+		}
+
+		tree.setSelectedNode(node);
+		waitForTree();
 	}
 
 	@Test
@@ -1323,7 +1402,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		GTreeNode node = rootNode;
 		for (int i = 0; i < path.length; i++) {
 			String nodeName = path[i];
-			assertEquals(node.getName(), nodeName);
+			assertEquals(nodeName, node.getName());
 
 			final GTreeNode finalNode = node;
 			final GTreeNode[] childBox = new GTreeNode[1];
