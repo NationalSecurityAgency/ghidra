@@ -1,4 +1,4 @@
-# Contributors Guide
+# Contributor's Guide
 
 Ghidra is an open source project. If you are interested in making it better,
 there are many ways you can contribute. For example, you can:
@@ -23,7 +23,7 @@ reported. If you are unable to find an existing issue, consider using one of
 the provided templates to create a new issue and provide as many details as you
 can to assist in reproducing the bug or explaining your proposed feature.
 
-## Patch Submission tips
+## Patch Submission Tips
 
 Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
@@ -32,7 +32,7 @@ smooth process when submitting a patch:
 - Ensure that the patch compiles and runs in at least our development environment, and ideally our
   full build too. Even the most trivial change done in the GitHub editor has a chance to cause
   problems in the full development environment for unexpected reasons.
-- If using "AI" to assist in development, please apply extra scrutity to its suggestions, in terms
+- If using "AI" to assist in development, please apply extra scrutiny to its suggestions, in terms
   of both correctness and adherence to our [legal](#legal) requirements.
 - Be understanding, patient, and friendly; developers may need time to review your submissions 
   before they can take action or respond. This does not mean your contribution is not valued. If 
@@ -57,7 +57,7 @@ smooth process when submitting a patch:
 - Unless it addresses a critical security update, avoid pull requests that update jars or other 3rd
   party libraries. It is preferred that these changes are made internally by the team. If you have
   a need for an updated library, please submit an issue with your request instead of a pull request.
-- Before submission, please squash your commits to using a message that starts with the issue number
+- Before submission, please squash your commits using a message that starts with the issue number
   and a description of the changes.
 - Isolate multiple patches from each other. If you wish to make several independent patches, do so 
   in separate, smaller pull requests that can be reviewed more easily.
@@ -83,7 +83,7 @@ smooth process when submitting a patch:
 
 ## Getting Started
 
-Once available, please see the [developer's guide][devguide] for instructions to set up a suitable 
+Once available, please see the [Developer's Guide][devguide] for instructions to set up a suitable 
 development environment.
 
 ## Timeline and Managing Expectations
