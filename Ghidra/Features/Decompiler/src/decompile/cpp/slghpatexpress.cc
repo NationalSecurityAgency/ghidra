@@ -15,6 +15,7 @@
  */
 #include "slghpatexpress.hh"
 #include "sleighbase.hh"
+#include <memory>
 
 namespace ghidra {
 
@@ -503,10 +504,12 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
   else if (el == sla::ELEM_NOT_EXP)
     res = new NotExpression();
   else
-    return (PatternExpression *)0;
+    throw DecoderError("Invalid pattern expression element");
 
-  res->decode(decoder,trans);
-  return res;
+  // Call PatternExpression::release on decoding failure
+  std::unique_ptr<PatternExpression, void(*)(PatternExpression *)> patexp(res, PatternExpression::release);
+  patexp->decode(decoder, trans);
+  return patexp.release();
 }
 
 static intb getInstructionBytes(ParserWalker &walker,int4 bytestart,int4 byteend,bool bigendian)
@@ -826,6 +829,9 @@ void OperandValue::decode(Decoder &decoder,Translate *trans)
   uintm ctid = decoder.readUnsignedInteger(sla::ATTRIB_CT);
   SleighBase *sleigh = (SleighBase *)trans;
   SubtableSymbol *tab = dynamic_cast<SubtableSymbol *>(sleigh->findSymbol(tabid));
+  if (ctid >= tab->getNumConstructors()) {
+    throw DecoderError("Invalid constructor id");
+  }
   ct = tab->getConstructor(ctid);
   decoder.closeElement(el);
 }
