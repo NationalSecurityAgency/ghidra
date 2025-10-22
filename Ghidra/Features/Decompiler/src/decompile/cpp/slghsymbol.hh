@@ -27,7 +27,7 @@ class SleighSymbol {
 public:
   enum symbol_type { space_symbol, token_symbol, userop_symbol, value_symbol, valuemap_symbol,
 		     name_symbol, varnode_symbol, varnodelist_symbol, operand_symbol,
-		     start_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
+		     start_symbol, end_symbol, next2_symbol, seg_symbol, subtable_symbol, macro_symbol, section_symbol,
                      bitrange_symbol, context_symbol, epsilon_symbol, label_symbol, flowdest_symbol, flowref_symbol,
 		     dummy_symbol };
 private:
@@ -402,6 +402,23 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return next2_symbol; }
+  virtual void encode(Encoder &encoder) const;
+  virtual void encodeHeader(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,SleighBase *trans);
+};
+
+class SegSymbol : public SpecificSymbol {
+  AddrSpace *const_space;
+  PatternExpression *patexp;
+public:
+  SegSymbol(void) { patexp = (PatternExpression *)0; } // For use with decode
+  SegSymbol(const string &nm,AddrSpace *cspc);
+  virtual ~SegSymbol(void);
+  virtual VarnodeTpl *getVarnode(void) const;
+  virtual PatternExpression *getPatternExpression(void) const { return patexp; }
+  virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
+  virtual void print(ostream &s,ParserWalker &walker) const;
+  virtual symbol_type getType(void) const { return seg_symbol; }
   virtual void encode(Encoder &encoder) const;
   virtual void encodeHeader(Encoder &encoder) const;
   virtual void decode(Decoder &decoder,SleighBase *trans);
