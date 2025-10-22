@@ -15,13 +15,9 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import static docking.KeyBindingPrecedence.ActionMapLevel;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.tree.*;
+import static docking.KeyBindingPrecedence.*;
 
 import java.awt.datatransfer.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +26,15 @@ import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeTransferHandler;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.*;
 
 public class CopyAction extends DockingAction {
 	private Clipboard clipboard;
@@ -46,7 +46,7 @@ public class CopyAction extends DockingAction {
 
 		setPopupMenuData(new MenuData(new String[] { "Copy" }, group));
 		setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_C,
-			InputEvent.CTRL_DOWN_MASK), ActionMapLevel));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK), ActionMapLevel));
 		setEnabled(true);
 	}
 
@@ -109,7 +109,8 @@ public class CopyAction extends DockingAction {
 	 * @param clipboard clipboard in which to place our contents
 	 * @param list list of nodes to place into the clipboard
 	 */
-	private void setClipboardContents(GTree gTree, Clipboard clipboard, final List<GTreeNode> list) {
+	private void setClipboardContents(GTree gTree, Clipboard clipboard,
+			final List<GTreeNode> list) {
 		GTreeTransferHandler dragNDropHandler = gTree.getDragNDropHandler();
 		Transferable contents = new GTreeNodeTransferable(dragNDropHandler, list);
 

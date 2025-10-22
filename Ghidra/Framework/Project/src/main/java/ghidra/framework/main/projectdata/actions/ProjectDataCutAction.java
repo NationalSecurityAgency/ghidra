@@ -15,11 +15,10 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
-import java.awt.event.InputEvent;
-
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
@@ -34,7 +33,7 @@ public class ProjectDataCutAction extends ProjectDataCopyCutBaseAction {
 	public ProjectDataCutAction(String owner, String group) {
 		super("Cut", owner);
 		setPopupMenuData(new MenuData(new String[] { "Cut" }, ICON, group));
-		setKeyBindingData(new KeyBindingData('X', InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(new KeyBindingData('X', DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHelpLocation(new HelpLocation("FrontEndPlugin", "Cut"));
 	}
 

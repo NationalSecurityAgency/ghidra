@@ -25,6 +25,7 @@ import javax.swing.JComponent;
 import org.jdom.Element;
 
 import docking.ComponentProvider;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
@@ -180,7 +181,7 @@ public class ReferencesPlugin extends Plugin {
 			new String[] { SUBMENU_NAME, CreateDefaultReferenceAction.DEFAULT_MENU_ITEM_NAME },
 			null, SHOW_REFS_GROUP));
 		createAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_R,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 
 		createAction.setDescription("Create default forward reference");
 		tool.addAction(createAction);
@@ -733,8 +734,10 @@ public class ReferencesPlugin extends Plugin {
 			path, addr, label, editRef.getReferenceType());
 
 		if (tool.execute(cmd, p)) {
-			if (!p.getReferenceManager().getReferencesTo(
-				oldExtLoc.getExternalSpaceAddress()).hasNext() &&
+			if (!p.getReferenceManager()
+					.getReferencesTo(
+						oldExtLoc.getExternalSpaceAddress())
+					.hasNext() &&
 				OptionDialog.YES_OPTION == OptionDialog.showYesNoDialog(tool.getActiveWindow(),
 					"Delete Unused External Location?",
 					"Remove unused external location symbol '" + oldExtLoc.toString() + "'?")) {
@@ -804,8 +807,10 @@ public class ReferencesPlugin extends Plugin {
 			Reference oldRef) {
 
 		if (oldRef == null) {
-			Reference[] refs = fromCodeUnit.getProgram().getReferenceManager().getReferencesFrom(
-				fromCodeUnit.getMinAddress(), opIndex);
+			Reference[] refs = fromCodeUnit.getProgram()
+					.getReferenceManager()
+					.getReferencesFrom(
+						fromCodeUnit.getMinAddress(), opIndex);
 			if (refs.length != 0) {
 				oldRef = refs[0];
 			}

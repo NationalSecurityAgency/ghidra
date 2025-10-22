@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.*;
@@ -127,7 +126,8 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, "Go To Program..." }, null,
 				ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, firstGroup));
 		goToProgramAction
-				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK));
+				.setKeyBindingData(
+					new KeyBindingData(KeyEvent.VK_F7, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		goToProgramAction.setEnabled(false);
 		goToProgramAction.setDescription(
@@ -177,7 +177,8 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 			new String[] { ToolConstants.MENU_NAVIGATION, "Go To Last Active Program" }, null,
 			ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, secondGroup));
 		goToLastActiveProgramAction
-				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK));
+				.setKeyBindingData(
+					new KeyBindingData(KeyEvent.VK_F6, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		goToLastActiveProgramAction.setEnabled(false);
 		goToLastActiveProgramAction
 				.setDescription("Activates the last program used before the current program");
