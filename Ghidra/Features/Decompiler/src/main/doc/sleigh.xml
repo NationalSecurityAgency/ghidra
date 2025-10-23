@@ -1097,6 +1097,10 @@ We list all of the symbols that are predefined by SLEIGH.
   <td><code>epsilon</code></td>
   <td>A special identifier indicating an empty bit pattern.</td>
 </tr>
+<tr>
+  <td><code>operand_offset</code></td>
+  <td>Offset of the address of the current operand. Useful for variable-length instructions.</td>
+</tr>
 </tbody>
 </table>
 </informalexample>
@@ -1113,6 +1117,9 @@ identifiers are address spaces. The <emphasis>epsilon</emphasis>
 identifier is inherited from SLED and is a specific symbol equivalent
 to the constant zero. The <emphasis>instruction</emphasis> identifier
 is the root instruction table.
+<emphasis>operand_offset</emphasis> was introduced to support VAX
+variable-length, multi-operand instructions. PC-relative addressing in
+VAX is relative to the operand address, not the instruction address.
 </para>
 </sect2>
 </sect1>
