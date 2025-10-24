@@ -511,7 +511,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			new ToggleActionBuilder("Show Function Variables By Default", plugin.getName())
 					.popupMenuPath("Function", "Show Variables By Default")
 					.popupMenuGroup("Visibility", "5")
-					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_All_Variables"))
+					.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Variables"))
 					.selected(true)
 					.withContext(ProgramLocationActionContext.class)
 					.onAction(c -> showVariablesForAllFunctions(toggleVariablesAction.isSelected()))

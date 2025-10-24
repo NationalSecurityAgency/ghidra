@@ -27,35 +27,35 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Enum;
 import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.Range;
 import ghidra.util.datastruct.SortedRangeList;
 import util.CollectionUtils;
 
 /**
- * Allows the user to supply one or more offsets that are used to search for structures that have
- * any of those offsets.   
+ * Finds enum data types by matching user supplied enum values or ranges.
  */
-public class FindStructuresByOffsetAction extends DockingAction {
+public class FindEnumsByValueAction extends DockingAction {
 
-	public static final String NAME = "Find Structures by Offset";
+	public static final String NAME = "Find Enums by Value";
 
 	private DataTypeManagerPlugin plugin;
 
-	public FindStructuresByOffsetAction(DataTypeManagerPlugin plugin, String menuSubGroup) {
+	public FindEnumsByValueAction(DataTypeManagerPlugin plugin, String menuSubGroup) {
 		super(NAME, plugin.getName());
 		this.plugin = plugin;
 
 		setMenuBarData(
 			new MenuData(new String[] { NAME + "..." }, null, "VeryLast", -1, menuSubGroup));
-		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Structures_By_Offset"));
+		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Enums_By_Value"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		NumberRangeInputDialog inputDialog = new NumberRangeInputDialog(NAME, "Offset(s)");
+		NumberRangeInputDialog inputDialog = new NumberRangeInputDialog(NAME, "Values(s)");
 		inputDialog.setHelpLocation(getHelpLocation());
 		if (!inputDialog.show()) {
 			return;
@@ -90,19 +90,20 @@ public class FindStructuresByOffsetAction extends DockingAction {
 			}
 			DataTypeNode dataTypeNode = (DataTypeNode) node;
 			DataType dataType = dataTypeNode.getDataType();
-			if (!(dataType instanceof Structure)) {
+			if (!(dataType instanceof Enum)) {
 				return false;
 			}
 
-			Structure structure = (Structure) dataType;
-			OffsetIterator it = new OffsetIterator(structure);
-			for (Integer structureOffset : CollectionUtils.asIterable(it)) {
+			Enum enuum = (Enum) dataType;
+			OffsetIterator it = new OffsetIterator(enuum);
+			for (Long value : CollectionUtils.asIterable(it)) {
 				for (Range range : offsets) {
-					if (range.contains(structureOffset)) {
+					int offset = value.intValue();
+					if (range.contains(offset)) {
 						return true;
 					}
-					if (structureOffset < range.min) {
-						// ranges are ascending sorted order; the structure offset is already 
+					if (offset < range.min) {
+						// ranges are ascending sorted order; the enum value is already 
 						// smaller than this range, so no more ranges can match
 						break;
 					}
@@ -112,15 +113,15 @@ public class FindStructuresByOffsetAction extends DockingAction {
 			return false;
 		}
 
-		private class OffsetIterator implements Iterator<Integer> {
+		private class OffsetIterator implements Iterator<Long> {
 
-			private DataTypeComponent[] components;
 			private int index = 0;
 			private int length;
+			private long[] values;
 
-			OffsetIterator(Structure s) {
-				this.components = s.getComponents();
-				this.length = components.length;
+			OffsetIterator(Enum enuum) {
+				this.values = enuum.getValues();
+				this.length = values.length;
 			}
 
 			@Override
@@ -132,9 +133,8 @@ public class FindStructuresByOffsetAction extends DockingAction {
 			}
 
 			@Override
-			public Integer next() {
-				DataTypeComponent dtc = components[index++];
-				return dtc.getOffset();
+			public Long next() {
+				return values[index++];
 			}
 		}
 	}

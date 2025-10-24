@@ -189,12 +189,13 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// VeryLast group
 		addLocalAction(new FindDataTypesByNameAction(plugin, "1"));
 		addLocalAction(new FindDataTypesBySizeAction(plugin, "2"));
-		addLocalAction(new FindStructuresByOffsetAction(plugin, "3"));
-		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
-		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "5");
+		addLocalAction(new FindEnumsByValueAction(plugin, "3"));
+		addLocalAction(new FindStructuresByOffsetAction(plugin, "4"));
+		addLocalAction(new FindStructuresBySizeAction(plugin, "5"));
+		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "6");
 		addLocalAction(includeDataMembersInSearchAction);
 
-		filterOnNameOnlyAction = new FilterOnNameOnlyAction(plugin, this, "6");
+		filterOnNameOnlyAction = new FilterOnNameOnlyAction(plugin, this, "7");
 		addLocalAction(filterOnNameOnlyAction);
 
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree
