@@ -1170,15 +1170,16 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
 /// A function is in the EZ model if it is a straight-line leaf function. Note
 /// that we need to ensure that these instructions can all form a single basic
 /// block, since we cannot split a basic block in the middle of an address. As
-/// such, branches are disallowed, but CALL operations are allowed.
-/// \return \b true if this flow contains no BRANCH ops
+/// such, branches to different addresses (i.e. non-pcode relative branches) are
+/// disallowed, but CALL(IND) and p-code relative (C)BRANCH operations are allowed.
+/// \return \b true if this flow can be inlined using the EZ model
 bool FlowInfo::checkEZModel(void) const
 
 {
   list<PcodeOp *>::const_iterator iter = obank.beginDead();
   while(iter != obank.endDead()) {
     PcodeOp *op = *iter;
-    if (op->isCallOrBranch() && (op->code() != CPUI_CALL)) return false;
+    if (op->isBranch() && !(((op->code() == CPUI_BRANCH) || (op->code() == CPUI_CBRANCH)) && op->getIn(0)->isConstant())) return false;
     ++iter;
   }
   return true;
