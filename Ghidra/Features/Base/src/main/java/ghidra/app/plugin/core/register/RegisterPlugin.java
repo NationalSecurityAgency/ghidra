@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.register;
 
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.register.SetRegisterCmd;
@@ -110,7 +112,7 @@ public class RegisterPlugin extends ProgramPlugin {
 		setRegisterAction.setPopupMenuData(
 			new MenuData(new String[] { "Set Register Values..." }, null, "Registers"));
 		setRegisterAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
+			new KeyBindingData(KeyEvent.VK_R, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		setRegisterAction.setDescription("Set register values in a program.");
 		setRegisterAction.setHelpLocation(new HelpLocation("RegisterPlugin", "SetRegisterValues"));
@@ -159,8 +161,10 @@ public class RegisterPlugin extends ProgramPlugin {
 							Address addr = loc.getAddress();
 							Register reg = loc.getRegister();
 							RegisterValue regVal =
-								context.getProgram().getProgramContext().getNonDefaultValue(reg,
-									addr);
+								context.getProgram()
+										.getProgramContext()
+										.getNonDefaultValue(reg,
+											addr);
 							return regVal != null && regVal.hasValue();
 						}
 					}
@@ -191,8 +195,10 @@ public class RegisterPlugin extends ProgramPlugin {
 							Address addr = loc.getAddress();
 							Register reg = loc.getRegister();
 							RegisterValue regVal =
-								context.getProgram().getProgramContext().getNonDefaultValue(reg,
-									addr);
+								context.getProgram()
+										.getProgramContext()
+										.getNonDefaultValue(reg,
+											addr);
 							return regVal != null && regVal.hasValue();
 						}
 					}

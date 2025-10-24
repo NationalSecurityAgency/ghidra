@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -400,7 +401,7 @@ public class ImporterPlugin extends Plugin
 		importSelectionAction.setPopupMenuData(new MenuData(new String[] { title + "..." }, null,
 			IMPORT_MENU_GROUP, MenuData.NO_MNEMONIC, "d"));
 		importSelectionAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_I,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 		importSelectionAction.setDescription(IMPORTER_PLUGIN_DESC);
 		importSelectionAction.setEnabled(tool.getProject() != null);
 
