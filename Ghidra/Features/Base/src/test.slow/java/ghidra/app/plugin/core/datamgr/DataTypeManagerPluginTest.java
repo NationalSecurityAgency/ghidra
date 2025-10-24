@@ -63,6 +63,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 import util.CollectionUtils;
@@ -722,9 +723,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull("No tree path selected", treePath);
 		Object[] treePathElements = treePath.getPath();
 		List<String> actualNamesList =
-			Arrays.stream(treePathElements)
-					.map(o -> o.toString())
-					.collect(Collectors.toList());
+			Arrays.stream(treePathElements).map(o -> o.toString()).collect(Collectors.toList());
 		String[] actualPath = actualNamesList.toArray(String[]::new);
 		assertArraysEqualOrdered("Tree path not seleced", fullExpectedPath, actualPath);
 	}
@@ -850,6 +849,26 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
+	public void testAction_FindEnumByValue_Range() {
+
+		createEnumWithValues_2_4_8();
+		createEnumWithValues_100_200();
+		createEnumWithValues_1_300_1000();
+
+		DockingActionIf action = getAction(plugin, FindEnumsByValueAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x8:0x10, 300");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindEnumsByValueAction.NAME);
+		assertMatchingEnums(resultsProvider, "Enum_2_4_8", "Enum_1_300_1000");
+	}
+
+	@Test
 	public void testAction_FindStructureByOffset() {
 
 		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
@@ -903,7 +922,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		createStructureWithOffset_0x4(); // 0x4
 		createStructureWithOffset_0x8(); // 0x4, 0x8
 		createStructureWithOffset_0x10(); // 0x4, 0x8, 0x10
-		createStructureWithOffset_0x20(); // 0x8, 0x16, 0x20
+		createStructureWithOffset_0x20(); // 0x8, 0x10, 0x18, 0x32
 
 		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
 		performAction(action, false);
@@ -924,8 +943,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		createStructureWithOffset_0x4(); // 6
 		createStructureWithOffset_0x8(); // 10
-		createStructureWithOffset_0x10(); // 12
-		createStructureWithOffset_0x20(); // 22
+		createStructureWithOffset_0x10(); // 18
+		createStructureWithOffset_0x20(); // 40
 
 		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
 		performAction(action, false);
@@ -964,14 +983,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		createStructureWithOffset_0x4(); // 6
 		createStructureWithOffset_0x8(); // 10
-		createStructureWithOffset_0x10(); // 12
-		createStructureWithOffset_0x20(); // 22
+		createStructureWithOffset_0x10(); // 18
+		createStructureWithOffset_0x20(); // 40
 
 		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
 		performAction(action, false);
 
 		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
-		setText(dialog, "12:22");
+		setText(dialog, "12:42");
 
 		pressButtonByText(dialog, "OK");
 
@@ -1132,8 +1151,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		Collection<DataTypeNode> values = nodesByName.values();
 		for (DataTypeNode node : values) {
 			DataType dt = node.getDataType();
-			assertTrue("Found an array in '%s'".formatted(dtm.getName()),
-				!(dt instanceof Array));
+			assertTrue("Found an array in '%s'".formatted(dtm.getName()), !(dt instanceof Array));
 		}
 	}
 
@@ -1262,6 +1280,32 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree(tree);
 	}
 
+	private void createEnumWithValues_2_4_8() {
+
+		EnumDataType enuum = new EnumDataType("Enum_2_4_8", 3);
+		enuum.add("Two", 2);
+		enuum.add("Four", 4);
+		enuum.add("Eight", 8);
+		builder.addDataType(enuum);
+	}
+
+	private void createEnumWithValues_100_200() {
+
+		EnumDataType enuum = new EnumDataType("Enum_100_200", 2);
+		enuum.add("One Hundred", 100);
+		enuum.add("Two Hundred", 200);
+		builder.addDataType(enuum);
+	}
+
+	private void createEnumWithValues_1_300_1000() {
+
+		EnumDataType enuum = new EnumDataType("Enum_1_300_1000", 3);
+		enuum.add("One", 1);
+		enuum.add("Three Hundred", 300);
+		enuum.add("One Thousand", 1000);
+		builder.addDataType(enuum);
+	}
+
 	private void createStructureWithOffset_0x4() {
 
 		StructureDataType stuct = new StructureDataType("Structure_0x4", 0);
@@ -1282,10 +1326,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private void createStructureWithOffset_0x10() {
 
 		StructureDataType stuct = new StructureDataType("Structure_0x10", 0);
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
 		stuct.add(new DWordDataType());
-		stuct.add(new DWordDataType());
-		stuct.add(new WordDataType());
-		stuct.add(new WordDataType());
 		builder.addDataType(stuct);
 	}
 
@@ -1294,8 +1337,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		StructureDataType stuct = new StructureDataType("Structure_0x20", 0);
 		stuct.add(new QWordDataType());
 		stuct.add(new QWordDataType());
-		stuct.add(new DWordDataType());
-		stuct.add(new WordDataType());
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
 		builder.addDataType(stuct);
 	}
 
@@ -1422,6 +1466,21 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
+	private void assertMatchingEnums(DataTypesProvider resultsProvider, String... names) {
+
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		waitForTree(gTree);
+		Map<String, Enum> enums = getEnums(resultsProvider);
+		assertEquals("Incorrect number of matches.\n\tExpected: " + Arrays.toString(names) +
+			"\n\tFound: " + enums.keySet(), names.length, enums.size());
+		assertEquals(names.length, enums.size());
+		for (String name : names) {
+			if (!enums.containsKey(name)) {
+				fail("Enum not found in results: '" + name + "'.\nFound: " + enums.keySet());
+			}
+		}
+	}
+
 	private void assertMatchingStructures(DataTypesProvider resultsProvider, String... names) {
 
 		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
@@ -1435,6 +1494,26 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 					structures.keySet());
 			}
 		}
+	}
+
+	private Map<String, Enum> getEnums(DataTypesProvider resultsProvider) {
+
+		Map<String, Enum> map = new HashMap<>();
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		GTreeNode rootNode = gTree.getViewRoot();
+		Iterator<GTreeNode> it = rootNode.iterator(true);
+		for (GTreeNode node : CollectionUtils.asIterable(it)) {
+			if (!(node instanceof DataTypeNode)) {
+				continue;
+			}
+			DataTypeNode dtNode = (DataTypeNode) node;
+			DataType dt = dtNode.getDataType();
+			if (dt instanceof Enum) {
+				map.put(dt.getName(), (Enum) dt);
+			}
+		}
+
+		return map;
 	}
 
 	private Map<String, Structure> getStructures(DataTypesProvider resultsProvider) {
