@@ -3,15 +3,27 @@
 # fcvt.l.s d,S,m c0200053 fff0007f SIMPLE (64, 0) 
 :fcvt.l.s rdL,frs1S,FRM is frs1S & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x2
 {
-	rdL = trunc(frs1S);
+	local low:4 = 0xDF000000;
+	local high:4 = 0x5F000000;
+	if (frs1S f>= low && frs1S f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	local tmp:$(DXLEN) = trunc(frs1S);
+	rdL = sext(tmp);
 }
 
 
 # fcvt.lu.s d,S,m c0300053 fff0007f SIMPLE (64, 0) 
 :fcvt.lu.s rdL,frs1S,FRM is frs1S & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x3
 {
+	local low:4 = 0x0;
+	local high:4 = 0x5F800000;
+	if (frs1S f>= low && frs1S f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	local tmp:$(DXLEN) = trunc(frs1S);
 	#TODO  unsigned
-	rdL = trunc(frs1S);
+	rdL = sext(tmp);
 }
 
 
