@@ -174,7 +174,7 @@ fi
 # Specify JVM arguments for direct invocations of YAJSW wrapper, including specification
 # of maximum heap size (-Xmx) option.
 VMARGS=()
-VMARGS+=("-Xmx1G")
+VMARGS+=("-Xmx512M")
 VMARGS+=("-Djna_tmpdir=${WRAPPER_TMPDIR}")
 VMARGS+=("-Djava.io.tmpdir=${WRAPPER_TMPDIR}")
 
