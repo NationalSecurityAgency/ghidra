@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
+data/loongarch-pltThunks.xml||GHIDRA||||END|
 data/languages/ilp32d.cspec||GHIDRA||||END|
 data/languages/ilp32f.cspec||GHIDRA||||END|
 data/languages/lasx.sinc||GHIDRA||||END|

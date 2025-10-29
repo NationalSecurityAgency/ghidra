@@ -1,0 +1,14 @@
+<patternlist>
+    <!--
+    This file contains all known call stub (i.e., thunk) patterns which
+    utilize t1 and t3 register values in determining the thunked function
+    to which any given call stub branches.
+    -->
+<pattern> <!-- .plt entry thunk -->
+    <data>
+        ...01111 ........ ........ 0001110. # pcaddu12i t3, x
+        0xef ......01 11...... 0x28         # ld.ld t3, t3(x)
+        0xed 0x01 0x00 0x4c                 # jirl t1, t3, 0
+    </data>
+</pattern>
+</patternlist>
