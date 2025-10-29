@@ -836,7 +836,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
 def write_mem(process: Process, address: Address, data: bytes) -> None:
     """Write memory."""
     nproc = find_proc_by_obj(process)
-    offset = process.trace.extra.required_mm().map_back(nproc, address)
+    offset = process.trace.extra.require_mm().map_back(nproc, address)
     dbg().write(offset, data)
 
 
