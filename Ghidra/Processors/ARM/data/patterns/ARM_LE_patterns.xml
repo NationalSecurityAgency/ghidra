@@ -68,7 +68,7 @@
       <data> ........ 1110.... 00101101 11100101      0x..d.4de2                         </data> <!--  str lr,[sp,#...]; sub sp,sp;   -->
       <data> ........ 1110.... 00101101 11100101      0x........    0x..d.4de2           </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
       <data>0x08 0xe0 0x2d 0xe5                                                         </data> <!--  str lr,[sp,#-0x8] -->
-      <data>0x0dc0a0e1                             0x....2de9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+      <data>0x0dc0a0e1                             0x.0 11...... 0x2. 0xe9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
       <data> ........ 0100.... 00101101 11101001                                        </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12};  -->
       <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
@@ -156,7 +156,7 @@
   </pattern>
  
    <pattern> <!-- 32 bit ARM --> 
-       <data>0x0dc0a0e1                             0x....2de9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+       <data>0x0dc0a0e1                             0x.0 11...... 0x2. 0xe9                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
        <align mark="0" bits="2"/>
        <setcontext name="TMode" value="0"/>
        <codeboundary />                                 <!-- can't say it is a function yet, have seen instructions before -->
@@ -173,7 +173,7 @@
       <data> 0x2de9 ........ 010.....                    </data> <!-- push { rlist, lr !pc !sp } -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <possiblefuncstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
+      <possiblefuncstart after="defined" validcode="20" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
