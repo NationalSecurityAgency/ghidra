@@ -1462,7 +1462,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 }
 
 # MUL.AD.* - Signed Multiply, pg. 432.
-:mul.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x4 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x4 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as:2;
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1470,21 +1470,21 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = sext(M1:2) * sext(M2:2);
 }
 
-:mul.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x5 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x5 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as(2);
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
 	M2 = zext(tm2);
 	ACC = sext(M1:2) * sext(M2:2);
 }
-:mul.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x6 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x6 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as:2;
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
 	M2 = zext(tm2);
 	ACC = sext(M1:2) * sext(M2:2);
 }
-:mul.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x7 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x7 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as(2);
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1526,7 +1526,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 }
 
 # MUL.AD.* - Signed Multiply, pg. 434.
-:mul.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x4 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x4 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1534,7 +1534,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = sext(M1:2) * sext(M2:2);
 }
 
-:mul.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x5 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x5 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1542,7 +1542,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = sext(M1:2) * sext(M2:2);
 }
 
-:mul.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x6 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x6 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1550,7 +1550,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = sext(M1:2) * sext(M2:2);
 }
 
-:mul.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x7 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mul.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x7 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1590,7 +1590,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x8 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x8 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as:2;
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1598,21 +1598,21 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x9 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x9 & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as(2);
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
 	M2 = zext(tm2);
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
-:mula.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xa & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xa & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as:2;
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
 	M2 = zext(tm2);
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
-:mula.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xb & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xb & ar = 0 & as & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = as(2);
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1652,7 +1652,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x8 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x8 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1660,7 +1660,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x9 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x9 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6:2;
 	M1 = zext(tm1);
@@ -1668,7 +1668,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xa & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xa & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1676,7 +1676,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	ACC = ACC + (sext(M1:2) * sext(M2:2));
 }
 
-:mula.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xb & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xb & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6(2);
 	M1 = zext(tm1);
@@ -1775,7 +1775,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 }
 
 # Signed Mult/Accum, Ld/Autodec MULA.DD.*.LDDEC, pg. 446.
-:mula.dd.ll.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & op0 = 0x4 {
+:mula.dd.ll.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & op0 = 0x4 {
 	local vaddr:4 = as - 4;
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6:2;
@@ -1786,7 +1786,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.dd.hl.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.hl.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as - 4;
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6(2);
@@ -1797,7 +1797,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.dd.lh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.lh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as - 4;
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6:2;
@@ -1808,7 +1808,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.dd.hh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.dd.hh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as - 4;
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6(2);
@@ -1820,7 +1820,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 }
 
 # Signed Mult/Accum, Ld/Autoinc MULA.DD.*.LDINC, pg. 448.
-:mula.da.ll.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.da.ll.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as + 4;
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6:2;
@@ -1831,7 +1831,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.da.hl.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.da.hl.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as + 4;
 	tm1:2 = m0m1_14_14:2;
 	tm2:2 = m2m3_6_6(2);
@@ -1842,7 +1842,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.da.lh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.da.lh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as + 4;
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6:2;
@@ -1853,7 +1853,7 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 	mw_12_13 = *:4 vaddr;
 }
 
-:mula.da.hh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+:mula.da.hh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & t2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
 	local vaddr:4 = as + 4;
 	tm1:2 = m0m1_14_14(2);
 	tm2:2 = m2m3_6_6(2);
