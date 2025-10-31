@@ -91,3 +91,7 @@ core.*
 # python files
 *.egg-info
 __pycache__
+gradle.properties
+#*#
+ghidra_12.1_DEV/
+build/
