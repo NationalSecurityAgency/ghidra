@@ -52,14 +52,56 @@ define space CODE     type=ram_space      size=$(PTRSIZE)  default;
 define space INTMEM   type=ram_space      size=1;
 define space EXTMEM   type=ram_space      size=2;
 @if defined(CIP51)
+#
+# CIP-51 allows up to 256 128-byte pages of these, or 32768 bytes, so two address bytes
+# are needed for SFR space.
+#
+# At execution, SFR page selection uses the 8-bit SFRPAGE SFR to provide the page number,
+# which effectively is the upper byte of SFR's full address.
+#
+# The devices covered in the F12x/13x datasheet only have 5 SFR pages and numbers them 0,
+# 1, 2, 3, and F. The datasheet doesn't go into detail about SFRPAGE bits 2 to 6, but
+# I suppose that for Ghidra instruction decoding it would suffice to just decode the full
+# byte. A custom analyzer or script could check for the use of undefined SFRPAGEs.
+#
 define space SFR      type=ram_space      size=2;
 @else
+#
+# Intel MCS-51 devices have a maximum of 128 SFRs and a byte-wide address suffices
+#
 define space SFR      type=ram_space      size=1;
 @endif
 define space BITS     type=ram_space      size=1;
 
 @if defined(CIP51)
+# Per the datasheet https://www.silabs.com/documents/public/data-sheets/C8051F12x-13x.pdf
+# (rev 1.4)
+# on-chip (internal) flash program/data memory addresses are
+# 	00000 - 1fbff		F120/1/2/3/4/5/6/7, F130/1
+#   00000 - 0ffff		F132/3
+# All of the 12x/13x chips covered by the datasheet have
+# on-chip scratchpad (i.e. data only) flash:
+#	20000 - 200FF
+# So allowing 3 address bytes for CIP51 will cover the entire address range for the
+# on-chip (internal) flash
 define space IFLASH   type=ram_space      size=3;
+#
+# As with Intel's original MCS-51 architecture, CIP-51 "internal" ordinary RAM resides on
+# the processor chip and uses single-byte addressing.
+#
+# The lower half of internal RAM can be accessed either directly (by encoding an 8 bit
+# address in the opcode) or indirectly (via an address stored in R0 or R1).
+#
+# The upper half of internal RAM can be accessed only indirectly, again via R0 or R1.
+#
+#  00 - 7f		directly and indirectly addressable
+#  80 - ff		indirectly addressable only (via R0 or R1)
+#
+# In CIP51 chips, addresses in the upper half of the range (that is, 80 - FF), when used
+# directly, rather than accessing ordinary RAM get mapped to the chip's special function
+# register  RAM.
+#
+
 define space XRAM     type=ram_space	  size=2;
 @endif
 

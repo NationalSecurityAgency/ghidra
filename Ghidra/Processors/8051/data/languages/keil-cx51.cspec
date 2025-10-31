@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiler_spec>
+<!-- Since data_organization isn't present in the other 8051-family cspecs, I suspect
+  -- it's not needed here either, so although I've provided what I hope would be appropriate
+  -- if it should prove necessary, I've commented it out.
+  -->
+<!--
  <data_organization>
    <absolute_max_alignment value="0" />
    <machine_alignment value="1" />
@@ -20,6 +25,7 @@
      <entry size="4" alignment="1" />
    </size_alignment_map>
  </data_organization>
+-->
 
  <global>
    <range space="IFLASH"/>
