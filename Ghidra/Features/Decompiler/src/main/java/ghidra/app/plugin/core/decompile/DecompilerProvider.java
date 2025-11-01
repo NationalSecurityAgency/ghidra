@@ -636,23 +636,61 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			return;
 		}
 
-		try {
-			// try space/overlay which contains function
-			AddressSpace space = controller.getFunction().getEntryPoint().getAddressSpace();
-			goToAddress(space.getAddress(value), newWindow);
-			return;
+		Address targetAddress = null;
+		Function currentFunction = controller.getFunction();
+		
+		if (currentFunction != null) {
+			// try space/overlay which contains function first
+			AddressSpace space = currentFunction.getEntryPoint().getAddressSpace();
+			try {
+				targetAddress = createAddressFromScalar(space, currentFunction.getEntryPoint(), value);
+				if (targetAddress != null && program.getMemory().contains(targetAddress)) {
+					goToAddress(targetAddress, newWindow);
+					return;
+				}
+			}
+			catch (Exception e) {
+				// ignore and try default space
+			}
 		}
-		catch (AddressOutOfBoundsException e) {
+		
+		// try default address space with segmented support
+		try {
+			AddressSpace defaultSpace = program.getAddressFactory().getDefaultAddressSpace();
+			Address contextAddress = (currentFunction != null) ? 
+				currentFunction.getEntryPoint() : program.getMinAddress();
+			targetAddress = createAddressFromScalar(defaultSpace, contextAddress, value);
+			if (targetAddress != null) {
+				goToAddress(targetAddress, newWindow);
+				return;
+			}
+		}
+		catch (Exception e) {
 			// ignore
 		}
+		
+		tool.setStatusInfo("Invalid address: " + value);
+	}
+
+	/**
+	 * Creates an address from a scalar value with segmented address space support.
+	 * Uses the same logic as the disassembler's OperandFieldMouseHandler.
+	 */
+	private Address createAddressFromScalar(AddressSpace space, Address contextAddress, long value) {
 		try {
-			AddressSpace space = controller.getFunction().getEntryPoint().getAddressSpace();
-			space.getAddress(value);
-			goToAddress(program.getAddressFactory().getDefaultAddressSpace().getAddress(value),
-				newWindow);
+			// Enhanced segmented address support: Check if we're in a segmented space
+			// and should use segment register to resolve immediate values
+			if (space instanceof ghidra.program.model.address.SegmentedAddressSpace) {
+				ghidra.program.model.address.SegmentedAddressSpace segSpace = 
+					(ghidra.program.model.address.SegmentedAddressSpace) space;
+				return ghidra.app.util.SegmentedAddressHelper.createSegmentedAddress(
+					program, contextAddress, segSpace, value);
+			} else {
+				return space.getAddress(value, true);
+			}
 		}
-		catch (AddressOutOfBoundsException e) {
-			tool.setStatusInfo("Invalid address: " + value);
+		catch (Exception e) {
+			return null;
 		}
 	}
 
