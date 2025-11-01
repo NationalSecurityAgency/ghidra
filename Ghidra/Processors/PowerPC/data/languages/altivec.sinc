@@ -12,6 +12,8 @@ define pcodeop loadVectorForShiftLeft;
 define pcodeop loadVectorForShiftRight;
 define pcodeop loadVectorIndexed;
 define pcodeop loadVectorIndexedLRU;
+define pcodeop loadVectorLeftIndexed;
+define pcodeop loadVectorRightIndexed;
 define pcodeop moveFromVectorStatusAndControlRegister;
 define pcodeop moveToVectorStatusAndControlRegister;
 define pcodeop storeVectorElementByteIndexed;
@@ -244,6 +246,16 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 :lvxl vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=359 & Rc=0
 {   # TODO definition
 	vrD = loadVectorIndexedLRU(A,B);
+}
+
+:lvlx vrD,RA_OR_ZERO,B      is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=519 & Rc=0
+{
+    vrD = loadVectorLeftIndexed(RA_OR_ZERO,B);
+}
+
+:lvrx vrD,RA_OR_ZERO,B      is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=551 & Rc=0
+{
+    vrD = loadVectorRightIndexed(RA_OR_ZERO,B);
 }
 
 :mfvscr vrD			is OP=4 & vrD & vrAR=0 & vrBR=0 & XOP_1_10=770 & Rc=0
