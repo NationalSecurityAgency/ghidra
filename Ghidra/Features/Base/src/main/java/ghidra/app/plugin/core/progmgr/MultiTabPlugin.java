@@ -31,6 +31,7 @@ import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
@@ -57,7 +58,7 @@ import help.Help;
 	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramVisibilityChangePluginEvent.class }
 )
 //@formatter:on
-public class MultiTabPlugin extends Plugin implements DomainObjectListener, OptionsChangeListener {
+public class MultiTabPlugin extends Plugin implements TransactionListener, OptionsChangeListener {
 	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
 	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
 	private static final String SHOW_TABS_ALWAYS = "Show Program Tabs Always";
@@ -249,14 +250,6 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 	}
 
 	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.getSource() instanceof Program) {
-			Program program = (Program) ev.getSource();
-			tabPanel.refreshTab(program);
-		}
-	}
-
-	@Override
 	protected void init() {
 		tabPanel = new GTabPanel<Program>("Program");
 		tabPanel.setNameFunction(p -> getTabName(p));
@@ -314,14 +307,14 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 
 		if (progService.isVisible(prog)) {
 			tabPanel.addTab(prog);
-			prog.removeListener(this);
-			prog.addListener(this);
+			prog.removeTransactionListener(this);
+			prog.addTransactionListener(this);
 			updateActionEnablement();
 		}
 	}
 
 	private void remove(Program prog) {
-		prog.removeListener(this);
+		prog.removeTransactionListener(this);
 		tabPanel.removeTab(prog);
 		updateActionEnablement();
 	}
@@ -377,6 +370,26 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 		selectHighlightedProgramTimer.stop();
 		tabPanel.removeAll();
 		cvService.setNorthComponent(null);
+	}
+
+	@Override
+	public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
+		// don't care
+	}
+
+	@Override
+	public void transactionEnded(DomainObjectAdapterDB domainObj) {
+		tabPanel.refreshTab((Program) domainObj);
+	}
+
+	@Override
+	public void undoStackChanged(DomainObjectAdapterDB domainObj) {
+		// don't care
+	}
+
+	@Override
+	public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
+		tabPanel.refreshTab((Program) domainObj);
 	}
 
 }
