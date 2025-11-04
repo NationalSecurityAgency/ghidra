@@ -1,6 +1,11 @@
 /* ###
  * IP: GHIDRA
  *
+ * Ported and adapted from rustc-demangle (https://github.com/rust-lang/rustc-demangle),
+ * which is dual-licensed under Apache-2.0 and MIT. This implementation is
+ * derived from commit c5688cfec32d2bd00701836f12beb3560ee015b8 and adjusted
+ * for Ghidra’s Java runtime.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
