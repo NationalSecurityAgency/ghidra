@@ -42,24 +42,45 @@ public class RustDemanglerLegacy {
 		}
 
 		ArrayList<String> elements = new ArrayList<String>();
-		char[] chars = symbol.toCharArray();
 		int i = 0;
+		int length = symbol.length();
 
-		while (chars[i] != 'E') {
-			if (chars[i] < '0' || chars[i] > '9') {
+		while (i < length && symbol.charAt(i) != 'E') {
+			char c = symbol.charAt(i);
+			if (c < '0' || c > '9') {
 				return null;
 			}
 
-			int l = 0;
-			while (chars[i + l] >= '0' && chars[i + l] <= '9') {
-				l += 1;
+			int start = i;
+			while (i < length && symbol.charAt(i) >= '0' && symbol.charAt(i) <= '9') {
+				i++;
+			}
+			if (i >= length) {
+				return null; // missing element after length prefix
 			}
 
-			String lengthString = symbol.substring(i, i + l);
-			int length = Integer.parseInt(lengthString);
-			String element = symbol.substring(i + l, i + l + length);
+			int elementLength;
+			try {
+				elementLength = Integer.parseInt(symbol.substring(start, i));
+			}
+			catch (NumberFormatException e) {
+				return null;
+			}
+
+			if (elementLength < 0 || i + elementLength > length) {
+				return null;
+			}
+
+			String element = symbol.substring(i, i + elementLength);
+			if (element.startsWith("_$")) {
+				element = element.substring(1);
+			}
 			elements.add(element);
-			i = i + l + length;
+			i += elementLength;
+		}
+
+		if (i >= length || symbol.charAt(i) != 'E') {
+			return null;
 		}
 
 		for (int j = 0; j < elements.size(); j++) {
