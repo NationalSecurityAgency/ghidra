@@ -6,6 +6,7 @@ data/languages/RV64.pspec||GHIDRA||||END|
 data/languages/andestar_v5.instr.sinc||GHIDRA||||END|
 data/languages/andestar_v5.ldefs||GHIDRA||||END|
 data/languages/andestar_v5.slaspec||GHIDRA||||END|
+data/languages/old/riscv_deprecated.ldefs||GHIDRA||||END|
 data/languages/riscv.csr.sinc||GHIDRA||||END|
 data/languages/riscv.custom.sinc||GHIDRA||||END|
 data/languages/riscv.ilp32d.slaspec||GHIDRA||||END|
