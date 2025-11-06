@@ -6,6 +6,7 @@ data/languages/ilp32d.cspec||GHIDRA||||END|
 data/languages/ilp32f.cspec||GHIDRA||||END|
 data/languages/lasx.sinc||GHIDRA||||END|
 data/languages/lbt.sinc||GHIDRA||||END|
+data/languages/loongarch.dwarf||GHIDRA||||END|
 data/languages/loongarch.ldefs||GHIDRA||||END|
 data/languages/loongarch.opinion||GHIDRA||||END|
 data/languages/loongarch32.pspec||GHIDRA||||END|
