@@ -113,6 +113,9 @@ public class VTOptionDefines {
 	public static final String USE_NAMESPACE_FUNCTIONS =
 		APPLY_MARKUP_OPTIONS_NAME + ".Replace Namespace";
 
+	public static final String USE_NAMESPACE_TOOLTIP =
+		"Apply the non-Global source namespace to the destination function.";
+
 	// Auto VT Options
 	public static final String AUTO_VT_OPTIONS_NAME = "Auto Version Tracking Options";
 
