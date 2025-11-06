@@ -44,8 +44,8 @@
     <compiler name="default" spec="lp64f.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="loongarch.dwarf"/>
-    <external_name tool="qemu" name="qemu-mips64el"/>
-    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
+    <external_name tool="qemu" name="qemu-loongarch64"/>
+    <external_name tool="qemu_system" name="qemu-system-loongarch64"/>
   </language>
   
   <language processor="Loongarch"
@@ -61,8 +61,8 @@
     <compiler name="default" spec="lp64d.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="loongarch.dwarf"/>
-    <external_name tool="qemu" name="qemu-mips64el"/>
-    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
+    <external_name tool="qemu" name="qemu-loongarch64"/>
+    <external_name tool="qemu_system" name="qemu-system-loongarch64"/>
   </language>
 
 </language_definitions>
