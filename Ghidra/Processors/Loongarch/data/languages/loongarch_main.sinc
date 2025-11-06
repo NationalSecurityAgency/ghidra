@@ -457,9 +457,9 @@ pcala12: reloffs  is simm5_20 [reloffs = (inst_start & ~0xfff) + (simm5_20 << 12
 
 pcadd18: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 18);] { export *[const]:$(REGSIZE) reloffs; }
 
-Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *:$(ADDRSIZE) reloc; }
-Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
-Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *:$(ADDRSIZE) reloc; }
+Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *[ram]:$(ADDRSIZE) reloc; }
+Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *[ram]:$(ADDRSIZE) reloc; }
+Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *[ram]:$(ADDRSIZE) reloc; }
 
 RelJ16: RJsrc, simm10_16  is RJsrc & simm10_16 { local tmp:$(ADDRSIZE) = RJsrc + (simm10_16 << 2); export tmp; }
 
