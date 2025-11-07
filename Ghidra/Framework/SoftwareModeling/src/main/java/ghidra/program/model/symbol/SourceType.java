@@ -22,25 +22,46 @@ import ghidra.program.model.listing.Program;
 /**
  * {@link SourceType} provides a prioritized indication as to the general source of a specific
  * markup made to a {@link Program}.  The priority of each defined source type may be used to 
- * restrict impact or protect the related markup.  Source types include: {@link #USER_DEFINED}, 
- * which is higher priority than {@link #IMPORTED}, which is higher priority than {@link #ANALYSIS},
- * which is higher priority than {@link #DEFAULT}.  The {@link #AI} source type is primarliy 
- * intended to allow AI generated markup to be identified and currently has the same priority 
- * as {@link #ANALYSIS}.
+ * restrict the impact or protect the related markup.
+ * <P>
+ * The following ordered list indicates the relative priority of the defined source types, where
+ * the highest-priority is listed first and the lowest-priority is listed last.  The ANALYSIS and AI
+ * source types have equal priority.
+ * <ul>
+ * <li>USER_DEFINED</li>
+ * <li>IMPORTED</li>
+ * <li>ANALYSIS / AI</li>
+ * <li>DEFAULT</li>
+ * </ul>
  */
 public enum SourceType {
 	// WARNING WARNING: the assigned storage IDs are used for persistent serialization.
 	// Any change or re-use must consider data upgrade concerns.
 
-	/** The object's source indicator for a default. */
+	/**
+	 * DEFAULT: (lowest priority) generally reflects dynamicaly produced content. 
+	 */
 	DEFAULT("Default", 1, 2),
-	/** The object's source indicator for an auto analysis. */
+
+	/**
+	 * ANALYSIS: (same level as AI) reflects content produced by an analyzer.
+	 */
 	ANALYSIS("Analysis", 2, 0),
-	/** The object's source indicator for something that was produced with AI assistance. */
+
+	/**
+	 * AI: (same level as ANALYSIS) reflects content produced through AI assistance.
+	 */
 	AI("AI", 2, 4),
-	/** The object's source indicator for an imported. */
+
+	/**
+	 * IMPORTED: reflects content produced during import of reliable data.
+	 */
 	IMPORTED("Imported", 3, 3),
-	/** The object's source indicator for a user defined. */
+
+	/**
+	 * USER_DEFINED: (highest priority) reflects content produced by the user or in response to 
+	 * a user action.
+	 */
 	USER_DEFINED("User Defined", 4, 1);
 
 	// SourceType values indexed by storageID (use null for undefined IDs).
