@@ -58,8 +58,6 @@ public class ApplyMarkupPropertyEditor implements OptionsEditor {
 	private static final String FUNCTION_SIGNATURE_TOOLTIP =
 		"<html>The apply action for the <b>function signature</b> " +
 			"when performing bulk apply operations</html>";
-	private static final String USE_NAMESPACE_TOOLTIP =
-		"<html>When true function namespaces will be applied when names are applied.";
 	private static final String PLATE_COMMENT_TOOLTIP =
 		"<html>The apply action for <b>plate comments</b> when performing bulk apply operations</html>";
 	private static final String PRE_COMMENT_TOOLTIP =
