@@ -879,10 +879,13 @@ public class SymbolicPropogator {
 			try {
 				switch (ptype) {
 					case PcodeOp.COPY:
-						if (in[0].isAddress() &&
-							!in[0].getAddress().getAddressSpace().hasMappedRegisters()) {
-							makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
-								null, RefType.READ, ptype, true, monitor);
+						if (in[0].isAddress()) {
+							AddressSpace addressSpace = in[0].getAddress().getAddressSpace();
+							// if not address mapped, or no register defined there
+							if (!addressSpace.hasMappedRegisters() || program.getRegister(in[0]) == null) {
+							    makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
+								    null, RefType.READ, ptype, true, monitor);
+							}
 						}
 						vContext.copy(out, in[0], mustClearAll, evaluator);
 						break;
