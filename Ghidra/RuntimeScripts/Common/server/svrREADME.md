@@ -662,23 +662,15 @@ modified to properly identify the server's key/certificate location (_ghidra.key
 ([Back to Top][top])
 
 ## Managing PKI Certificate Authorities
+The Ghidra cacerts file may be used in either PEM or JKS format. 
+
 When utilizing PKI authentication for a Ghidra Server a set of certificates for trusted Certificate 
-Authorities (CA) must be collected and added to a cacerts keystore file created using the Java 
-keytool.  The Java keytool can be found within the Java Development Kit (JDK) provided with 
-Ghidra (_java/bin/keytool_) or any other Java distribution.  The default cacerts keystore file 
-location is _Ghidra/cacerts_ and is also specified by the _ghidra.cacerts_ property setting within 
-the _server.conf_ file.  Uncomment this specification within the _server.conf_ file to activate use
-of the _cacerts_ for all incoming SSL/TLS connections (i.e., all Ghidra client users must install 
-and employ the use of their personal PKI signing certificate for both headed and headless use - see 
-[PKI Certificates](#pki-certificates)).  Clients can also impose server authentication for all HTTPS
-and Ghidra Server connections by creating the _cacerts_ file and enabling the _ghidra.cacerts_ 
-property setting within the _support/launch.sh_ and/or _support/launch.bat_ scripts.
-
-Individual CA public key certificates should be obtained in a Base64 encoding (see sample below). 
-If pasting the encoded certificate into a file, be sure to include an extra blank line after the 
-`END CERTIFICATE` line.
-
-Sample Base64 encoded certificate:
+Authorities (CA) must be collected and added to a cacerts keystore file.  The collection of CA 
+certificates can be used in the form of a PEM Base64 encoded text format (e.g., *.crt, *.cer, *.pem) 
+or as Java keystore file (JKS, *.jks).  The collection of CA certificates within a PEM file
+(a.k.a., Apache Certification Authority Bundle) is a simple concatenation of Base64 encoded entries
+such as the following sample.  If concatenating encoded certificate into a PEM file, be sure to 
+include an extra blank line after each `END CERTIFICATE` line.
 ```
 -----BEGIN CERTIFICATE-----
 laSKCIElkjsudCUDusjSUkjeMSUjAJHDuLQWMCMausALkKXMXOOjSKSUjssjSKAA
@@ -688,7 +680,21 @@ ksJKDwocQwyeEIcbzHtyrSLfoeyGCmvbNLGHpgoruSTYQafzDFTgwjkJHCXVDjdg
 KDowiyYTXkcuiwCJXuyqCHpdoORriwwcCWUskucuwHDJskuejdkUWJCUDSjujsUE
 -----END CERTIFICATE-----
 ```
-You can inspect the contents of a Base64 encoded certificate file with the following command:
+Within a password protected JKS file each CA certificate must be identified with an alias name and 
+added one at a time using the Java `keytool` command.  The Java keytool can be found within the 
+Java Development Kit (JDK).  
+
+The default cacerts keystore file location is _Ghidra/cacerts_ and is also specified by the 
+_ghidra.cacerts_ property setting within the _server.conf_ file.  Uncomment this specification 
+within the _server.conf_ file to activate use of the _cacerts_ for all incoming SSL/TLS connections 
+(i.e., all Ghidra client users must install and employ the use of their personal PKI signing 
+certificate for both headed and headless use - see [PKI Certificates](#pki-certificates)).  
+Clients can also impose server authentication for all HTTPS and Ghidra Server connections by creating
+the _cacerts_ file and enabling the _ghidra.cacerts_ property setting within the 
+_support/launch.sh_ and/or _support/launch.bat_ scripts; however, this would require the 
+Ghidra Server to use a properly signed PKI server certificate and key (See ...).
+
+You can inspect the contents of a Base64 encoded PEM certificate file with the following command:
 
 ```bash
 keytool -printcert -v -file <base64file>
@@ -697,9 +703,10 @@ where:
 * `<base64file>` is the file containing the Base64 encoded CA certificate to be imported.
 
 The Owner common name (CN) displayed by this command should be used as the alias when importing the 
-certificate into your cacerts file.
+certificate into a JKS cacerts file.
 
-The following command should be used to add a CA certificate to a new or existing cacerts file:
+The following command should be used to add a CA certificate to a new or existing cacerts file.  
+Only one CA cert is added with each invocation as specified by the CN/alias.
 
 ```bash
     keytool -import -alias "<caAlias>" -file <base64file> -storetype jks -keystore <cacerts-file>
@@ -710,7 +717,12 @@ where:
 * `<cacerts-file>` is the cacerts file to be used by the Ghidra Server (and/or client if needed).
     
 The keystore password will be requested and is used to restrict future modifications to the 
-_cacerts_ file.
+_cacerts_ JKS file.  The following command may be used to print all the certificates contained
+within a JKS file:
+
+```bash
+    keytool -list -v -keystore <cacerts-file>
+```
 
 When starting the Ghidra Server with PKI authentication enabled, the CA certificates contained 
 within the _cacerts_ file will be dumped to the log with their expiration dates.

@@ -23,7 +23,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -295,9 +294,6 @@ public class MemoryDiff {
 					return true;
 				}
 				catch (LockException e) {
-					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				}
-				catch (NotFoundException e) {
 					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 				}
 				catch (AddressOutOfBoundsException e) {

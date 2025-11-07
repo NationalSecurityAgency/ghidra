@@ -828,7 +828,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
             display_result=False)
         if result['count'] == 0:
             commands.putmem_state(
-                offset_start, offset_start + range.length() - 1, 'error')
+                offset_start, range.length() - 1, 'error')
 
 
 @REGISTRY.method()

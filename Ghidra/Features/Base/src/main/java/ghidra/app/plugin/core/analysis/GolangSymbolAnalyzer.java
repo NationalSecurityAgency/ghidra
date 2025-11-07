@@ -695,7 +695,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					memBlk = memory.getBlock(afterFlag);
 					memBlk.setName(memBlk.getName().replaceFirst("(\\.split)+$", ".part2"));
 				}
-				catch (MemoryBlockException | LockException | NotFoundException e) {
+				catch (MemoryBlockException | LockException e) {
 					Msg.error(this, "Failed to fixup runtime.writeBarrier flag", e);
 				}
 			}

@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="MXL" val="1"/>
+    </context_set>
+  </context_data>
+  
+  <default_memory_blocks>
+    <memory_block name="csr" start_address="csreg:0x0" length="0x4000" initialized="false"/>
+  </default_memory_blocks>
+  
+  <!-- TODO: add include directive and move to shared include -->
+  <default_symbols>
+     <symbol name="ustatus"       address="csreg:0x000"       size="4" description="" />
+     <symbol name="fflags"        address="csreg:0x001"       size="4" description="" />
+     <symbol name="frm"           address="csreg:0x002"       size="4" description="" />
+     <symbol name="fcsr"          address="csreg:0x003"       size="4" description="" />
+     <symbol name="uie"           address="csreg:0x004"       size="4" description="" />
+     <symbol name="utvec"         address="csreg:0x005"       size="4" description="" />
+
+     <symbol name="vstart"        address="csreg:0x008"       size="4" description="" />
+     <symbol name="vxsat"         address="csreg:0x009"       size="4" description="" />
+     <symbol name="vxrm"          address="csreg:0x00a"       size="4" description="" />
+     <symbol name="vcsr"          address="csreg:0x00f"       size="4" description="" />
+
+
+     <symbol name="uscratch"      address="csreg:0x040"       size="4" description="" />
+     <symbol name="uepc"                 address="next"       size="4" description="" />
+     <symbol name="ucause"               address="next"       size="4" description="" />
+     <symbol name="utval"                address="next"       size="4" description="" />
+     <symbol name="uip"                  address="next"       size="4" description="" />
+
+
+     <symbol name="sstatus"       address="csreg:0x100"       size="4" description="" />
+     <symbol name="sedeleg"              address="next"       size="4" description="" />
+     <symbol name="sideleg"              address="next"       size="4" description="" />
+     <symbol name="sie"                  address="next"       size="4" description="" />
+     <symbol name="stvec"                address="next"       size="4" description="" />
+     <symbol name="scounteren"           address="next"       size="4" description="" />
+     
+
+     <symbol name="sscratch"      address="csreg:0x140"       size="4" description="" />
+     <symbol name="sepc"                 address="next"       size="4" description="" />
+     <symbol name="scause"               address="next"       size="4" description="" />
+     <symbol name="stval"                address="next"       size="4" description="" />
+     <symbol name="sip"                  address="next"       size="4" description="" />
+
+
+     <symbol name="satp"          address="csreg:0x180"       size="4" description="" />
+
+
+     <symbol name="vsstatus"      address="csreg:0x200"       size="4" description="" />
+     <symbol name="vsie"          address="csreg:0x204"       size="4" description="" />
+     <symbol name="vstvec"               address="next"       size="4" description="" />
+
+
+     <symbol name="vsscratch"     address="csreg:0x240"       size="4" description="" />
+     <symbol name="vsepc"                address="next"       size="4" description="" />
+     <symbol name="vscause"              address="next"       size="4" description="" />
+     <symbol name="vstval"               address="next"       size="4" description="" />
+     <symbol name="vsip"                 address="next"       size="4" description="" />
+
+
+     <symbol name="vsatp"         address="csreg:0x280"       size="4" description="" />
+
+
+     <symbol name="mstatus"       address="csreg:0x300"       size="4" description="" />
+     <symbol name="misa"                 address="next"       size="4" description="" />
+     <symbol name="medeleg"              address="next"       size="4" description="" />
+     <symbol name="mideleg"              address="next"       size="4" description="" />
+     <symbol name="mie"                  address="next"       size="4" description="" />
+     <symbol name="mtvec"                address="next"       size="4" description="" />
+     <symbol name="mcounteren"           address="next"       size="4" description="" />
+
+
+     <symbol name="mstatush"      address="csreg:0x310"       size="4" description="" />
+
+
+     <symbol name="mcountinhibit" address="csreg:0x320"       size="4" description="" />
+     <symbol name="mhpmevent3"    address="csreg:0x323"       size="4" description="" />
+     <symbol name="mhpmevent4"    address="csreg:0x324"       size="4" description="" />
+     <symbol name="mhpmevent5"    address="csreg:0x325"       size="4" description="" />
+     <symbol name="mhpmevent6"    address="csreg:0x326"       size="4" description="" />
+     <symbol name="mhpmevent7"    address="csreg:0x327"       size="4" description="" />
+
+     <symbol name="mhpmevent8"    address="csreg:0x328"       size="4" description="" />
+     <symbol name="mhpmevent9"    address="csreg:0x329"       size="4" description="" />
+     <symbol name="mhpmevent10"   address="csreg:0x32a"       size="4" description="" />
+     <symbol name="mhpmevent11"   address="csreg:0x32b"       size="4" description="" />
+     <symbol name="mhpmevent12"   address="csreg:0x32c"       size="4" description="" />
+     <symbol name="mhpmevent13"   address="csreg:0x32d"       size="4" description="" />
+     <symbol name="mhpmevent14"   address="csreg:0x32e"       size="4" description="" />
+     <symbol name="mhpmevent15"   address="csreg:0x32f"       size="4" description="" />
+
+     <symbol name="mhpmevent16"   address="csreg:0x330"       size="4" description="" />
+     <symbol name="mhpmevent17"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent18"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent19"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent20"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent21"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent22"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent23"          address="next"       size="4" description="" />
+
+     <symbol name="mhpmevent24"   address="csreg:0x338"       size="4" description="" />
+     <symbol name="mhpmevent25"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent26"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent27"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent28"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent29"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent30"          address="next"       size="4" description="" />
+     <symbol name="mhpmevent31"          address="next"       size="4" description="" />
+
+     <symbol name="mscratch"      address="csreg:0x340"       size="4" description="" />
+     <symbol name="mepc"          address="csreg:0x341"       size="4" description="" />
+     <symbol name="mcause"        address="csreg:0x342"       size="4" description="" />
+     <symbol name="mtval"         address="csreg:0x343"       size="4" description="" />
+     <symbol name="mip"           address="csreg:0x344"       size="4" description="" />
+
+     <symbol name="mtinst"        address="csreg:0x34a"       size="4" description="" />
+     <symbol name="mtval2"        address="csreg:0x34b"       size="4" description="" />
+
+
+     <symbol name="mbase"         address="csreg:0x380"       size="4" description="" />
+     <symbol name="mbound"        address="csreg:0x381"       size="4" description="" />
+     <symbol name="mibase"        address="csreg:0x382"       size="4" description="" />
+     <symbol name="mibound"       address="csreg:0x383"       size="4" description="" />
+     <symbol name="mdbase"        address="csreg:0x384"       size="4" description="" />
+     <symbol name="mdbound"       address="csreg:0x385"       size="4" description="" />
+
+
+     <symbol name="pmpcfg0"       address="csreg:0x3a0"       size="4" description="" />
+     <symbol name="pmpcfg1"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg2"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg3"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg4"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg5"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg6"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg7"              address="next"       size="4" description="" />
+
+     <symbol name="pmpcfg8"       address="csreg:0x3a8"       size="4" description="" />
+     <symbol name="pmpcfg9"              address="next"       size="4" description="" />
+     <symbol name="pmpcfg10"             address="next"       size="4" description="" />
+     <symbol name="pmpcfg11"             address="next"       size="4" description="" />
+     <symbol name="pmpcfg12"             address="next"       size="4" description="" />
+     <symbol name="pmpcfg13"             address="next"       size="4" description="" />
+     <symbol name="pmpcfg14"             address="next"       size="4" description="" />
+     <symbol name="pmpcfg15"             address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr0"      address="csreg:0x3b0"       size="4" description="" />
+     <symbol name="pmpaddr1"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr2"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr3"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr4"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr5"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr6"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr7"             address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr8"      address="csreg:0x3b8"       size="4" description="" />
+     <symbol name="pmpaddr9"             address="next"       size="4" description="" />
+     <symbol name="pmpaddr10"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr11"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr12"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr13"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr14"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr15"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr16"     address="csreg:0x3c0"       size="4" description="" />
+     <symbol name="pmpaddr17"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr18"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr19"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr20"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr21"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr22"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr23"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr24"     address="csreg:0x3c8"       size="4" description="" />
+     <symbol name="pmpaddr25"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr26"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr27"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr28"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr29"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr30"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr31"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr32"     address="csreg:0x3d0"       size="4" description="" />
+     <symbol name="pmpaddr33"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr34"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr35"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr36"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr37"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr38"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr39"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr40"     address="csreg:0x3d8"       size="4" description="" />
+     <symbol name="pmpaddr41"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr42"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr43"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr44"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr45"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr46"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr47"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr48"     address="csreg:0x3e0"       size="4" description="" />
+     <symbol name="pmpaddr49"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr50"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr51"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr52"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr53"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr54"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr55"            address="next"       size="4" description="" />
+
+     <symbol name="pmpaddr56"     address="csreg:0x3e8"       size="4" description="" />
+     <symbol name="pmpaddr57"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr58"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr59"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr60"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr61"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr62"            address="next"       size="4" description="" />
+     <symbol name="pmpaddr63"            address="next"       size="4" description="" />
+
+
+     <symbol name="scontext"      address="csreg:0x5a8"       size="4" description="" />
+
+
+     <symbol name="hstatus"       address="csreg:0x600"       size="4" description="" />
+     <symbol name="hedeleg"       address="csreg:0x602"       size="4" description="" />
+     <symbol name="hideleg"       address="csreg:0x603"       size="4" description="" />
+     <symbol name="hie"           address="csreg:0x604"       size="4" description="" />
+     <symbol name="htimedelta"    address="csreg:0x605"       size="4" description="" />
+     <symbol name="hcounteren"    address="csreg:0x606"       size="4" description="" />
+     <symbol name="hgeie"         address="csreg:0x607"       size="4" description="" />
+
+
+     <symbol name="htimedeltah"   address="csreg:0x615"       size="4" description="" />
+
+
+     <symbol name="htval"         address="csreg:0x643"       size="4" description="" />
+     <symbol name="hip"           address="csreg:0x644"       size="4" description="" />
+     <symbol name="hvip"          address="csreg:0x645"       size="4" description="" />
+
+     <symbol name="htinst"        address="csreg:0x64a"       size="4" description="" />
+
+
+     <symbol name="hgatp"         address="csreg:0x680"       size="4" description="" />
+
+
+     <symbol name="hcontext"      address="csreg:0x6a8"       size="4" description="" />
+
+
+     <symbol name="tselect"       address="csreg:0x7a0"       size="4" description="" />
+     <symbol name="tdata1"        address="csreg:0x7a1"       size="4" description="" />
+     <symbol name="tdata2"        address="csreg:0x7a2"       size="4" description="" />
+     <symbol name="tdata3"        address="csreg:0x7a3"       size="4" description="" />
+
+     <symbol name="mcontext"      address="csreg:0x7a8"       size="4" description="" />
+
+     <symbol name="dcsr"          address="csreg:0x7b0"       size="4" description="" />
+     <symbol name="dpc"           address="csreg:0x7b1"       size="4" description="" />
+     <symbol name="dscratch0"     address="csreg:0x7b2"       size="4" description="" />
+     <symbol name="dscratch1"     address="csreg:0x7b3"       size="4" description="" />
+
+
+     <symbol name="mcycle"        address="csreg:0xa00"       size="4" description="" />
+     <symbol name="minstret"      address="csreg:0xa02"       size="4" description="" />
+     <symbol name="mhpmcounter3"  address="csreg:0xa03"       size="4" description="" />
+     <symbol name="mhpmcounter4"         address="next"       size="4" description="" />
+     <symbol name="mhpmcounter5"         address="next"       size="4" description="" />
+     <symbol name="mhpmcounter6"         address="next"       size="4" description="" />
+     <symbol name="mhpmcounter7"         address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter8"  address="csreg:0xa08"       size="4" description="" />
+     <symbol name="mhpmcounter9"         address="next"       size="4" description="" />
+     <symbol name="mhpmcounter10"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter11"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter12"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter13"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter14"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter15"        address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter16" address="csreg:0xa10"       size="4" description="" />
+     <symbol name="mhpmcounter17"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter18"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter19"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter20"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter21"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter22"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter23"        address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter24" address="csreg:0xa18"       size="4" description="" />
+     <symbol name="mhpmcounter25"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter26"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter27"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter28"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter29"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter30"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter31"        address="next"       size="4" description="" />
+
+
+     <symbol name="mcycleh"       address="csreg:0xb80"       size="4" description="" />
+     <symbol name="minstreth"            address="next"       size="4" description="" />
+     <symbol name="mhpmcounter3h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter4h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter5h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter6h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter7h"        address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter8h" address="csreg:0xb88"       size="4" description="" />
+     <symbol name="mhpmcounter9h"         address="next"       size="4" description="" />
+     <symbol name="mhpmcounter10h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter11h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter12h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter13h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter14h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter15h"        address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter16h" address="csreg:0xb90"       size="4" description="" />
+     <symbol name="mhpmcounter17h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter18h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter19h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter20h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter21h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter22h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter23h"        address="next"       size="4" description="" />
+
+     <symbol name="mhpmcounter24h" address="csreg:0xb98"       size="4" description="" />
+     <symbol name="mhpmcounter25h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter26h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter27h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter28h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter29h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter30h"        address="next"       size="4" description="" />
+     <symbol name="mhpmcounter31h"        address="next"       size="4" description="" />
+
+
+     <symbol name="cycle"         address="csreg:0xc00"       size="4" description="" />
+     <symbol name="time"                 address="next"       size="4" description="" />
+     <symbol name="instret"              address="next"       size="4" description="" />
+     <symbol name="hpmcounter3"          address="next"       size="4" description="" />
+     <symbol name="hpmcounter4"          address="next"       size="4" description="" />
+     <symbol name="hpmcounter5"          address="next"       size="4" description="" />
+     <symbol name="hpmcounter6"          address="next"       size="4" description="" />
+     <symbol name="hpmcounter7"          address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter8"   address="csreg:0xc08"       size="4" description="" />
+     <symbol name="hpmcounter9"          address="next"       size="4" description="" />
+     <symbol name="hpmcounter10"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter11"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter12"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter13"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter14"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter15"         address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter16"  address="csreg:0xc10"       size="4" description="" />
+     <symbol name="hpmcounter17"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter18"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter19"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter20"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter21"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter22"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter23"         address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter24"  address="csreg:0xc18"       size="4" description="" />
+     <symbol name="hpmcounter25"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter26"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter27"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter28"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter29"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter30"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter31"         address="next"       size="4" description="" />
+
+     <symbol name="vl"            address="csreg:0xc20"       size="4" description="" />
+     <symbol name="vtype"                address="next"       size="4" description="" />
+     <symbol name="vlenb"                address="next"       size="4" description="" />
+
+
+     <symbol name="cycleh"        address="csreg:0xc80"       size="4" description="" />
+     <symbol name="timeh"                address="next"       size="4" description="" />
+     <symbol name="instreth"             address="next"       size="4" description="" />
+     <symbol name="hpmcounter3h"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter4h"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter5h"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter6h"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter7h"         address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter8h"  address="csreg:0xc88"       size="4" description="" />
+     <symbol name="hpmcounter9h"         address="next"       size="4" description="" />
+     <symbol name="hpmcounter10h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter11h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter12h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter13h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter14h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter15h"        address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter16h" address="csreg:0xc90"       size="4" description="" />
+     <symbol name="hpmcounter17h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter18h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter19h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter20h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter21h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter22h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter23h"        address="next"       size="4" description="" />
+
+     <symbol name="hpmcounter24h" address="csreg:0xc98"       size="4" description="" />
+     <symbol name="hpmcounter25h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter26h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter27h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter28h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter29h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter30h"        address="next"       size="4" description="" />
+     <symbol name="hpmcounter31h"        address="next"       size="4" description="" />
+
+
+     <symbol name="hgeip"         address="csreg:0xe12"       size="4" description="" />
+
+
+     <symbol name="mvendorid"     address="csreg:0xf11"       size="4" description="" />
+     <symbol name="marchid"       address="csreg:0xf12"       size="4" description="" />
+     <symbol name="mimpid"        address="csreg:0xf13"       size="4" description="" />
+     <symbol name="mhartid"       address="csreg:0xf14"       size="4" description="" />
+
+  </default_symbols>
+</processor_spec>

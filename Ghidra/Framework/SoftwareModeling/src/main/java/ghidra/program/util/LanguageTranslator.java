@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.program.util;
 
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
@@ -34,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
  * instantiate Language, AddressSpace, AddressFactory or Register objects until isValid() is invoked.
  */
 public interface LanguageTranslator extends ExtensionPoint {
-	
+
 	/**
 	 * Validate translator to complete initialization and ensure language compatibility.
 	 * This method will be invoked by the LanguageTranslatorFactory before handing out this
@@ -42,7 +43,7 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * @return true if translator successfully validated
 	 */
 	public boolean isValid();
-	
+
 	/**
 	 * Returns old language
 	 * @throws IllegalStateException if instance has not been validated
@@ -54,27 +55,27 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * Returns new language
 	 */
 	public Language getNewLanguage();
-	
+
 	/**
 	 * Returns old language name
 	 */
 	public LanguageID getOldLanguageID();
-	
+
 	/**
 	 * Returns new language name
 	 */
 	public LanguageID getNewLanguageID();
-	
+
 	/**
 	 * Returns old language version
 	 */
 	public int getOldVersion();
-	
+
 	/**
 	 * Returns new language version
 	 */
 	public int getNewVersion();
-	
+
 	/**
 	 * Translate BASE address spaces (Overlay spaces are not handled)
 	 * @param oldSpaceName old space name
@@ -92,7 +93,7 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * @see #getOldRegisterContaining(Address) 
 	 */
 	public Register getOldRegister(Address oldAddr, int size);
-	
+
 	/**
 	 * Get the largest old register which contains the specified oldAddr
 	 * @param oldAddr old register address which may be offcut
@@ -104,14 +105,14 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * Returns the old processor context register or null if not defined
 	 */
 	public Register getOldContextRegister();
-	
+
 	/**
 	 * Find new register which corresponds to the specified old register.
 	 * @param oldReg old register
 	 * @return new register or null if corresponding register not found.
 	 */
 	public Register getNewRegister(Register oldReg);
-	
+
 	/**
 	 * Returns the new processor context register or null if not defined
 	 */
@@ -150,7 +151,8 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 * @throws CompilerSpecNotFoundException if new compiler spec not found based upon 
 	 * translator mappings.
 	 */
-	public CompilerSpec getOldCompilerSpec(CompilerSpecID oldCompilerSpecID) throws CompilerSpecNotFoundException;
+	public CompilerSpec getOldCompilerSpec(CompilerSpecID oldCompilerSpecID)
+			throws CompilerSpecNotFoundException;
 
 	/**
 	 * Invoked after Program language upgrade has completed.  
@@ -172,4 +174,5 @@ public interface LanguageTranslator extends ExtensionPoint {
 	 */
 	public void fixupInstructions(Program program, Language oldLanguage, TaskMonitor monitor)
 			throws Exception, CancelledException;
+
 }

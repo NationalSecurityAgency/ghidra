@@ -47,6 +47,7 @@ import ghidra.program.model.util.ProcessorSymbolType;
 import ghidra.sleigh.grammar.SleighPreprocessor;
 import ghidra.sleigh.grammar.SourceFileIndexer;
 import ghidra.util.*;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -787,10 +788,9 @@ public class SleighLanguage implements Language {
 						AddressLabelInfo info;
 						try {
 							info = new AddressLabelInfo(startAddress, rangeSize, labelName, comment,
-								false,
-								isEntry, type, isVolatile);
+								false, isEntry, type, isVolatile);
 						}
-						catch (AddressOverflowException e) {
+						catch (AddressOverflowException | InvalidInputException e) {
 							throw new XmlParseException("invalid symbol definition: " + labelName,
 								e);
 						}
@@ -1242,9 +1242,7 @@ public class SleighLanguage implements Language {
 		ManualEntry manualEntry = null;
 		int maxInCommon = -1;
 
-		Iterator<Entry<String, ManualEntry>> ii = subMap.entrySet().iterator();
-		while (ii.hasNext()) {
-			Entry<String, ManualEntry> mapEntry = ii.next();
+		for (Entry<String, ManualEntry> mapEntry : subMap.entrySet()) {
 			String key = mapEntry.getKey();
 			if (instruction.startsWith(key) && key.length() > maxInCommon) {
 				manualEntry = mapEntry.getValue();
