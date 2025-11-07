@@ -433,8 +433,8 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						if (fixupFunc.hasNoReturn()) {
 							return fixupFunc;
 						}
-						return null;
 					}
+					return null;
 				}
 			}
 
