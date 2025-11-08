@@ -1079,11 +1079,11 @@ SKIP :
 TOKEN :
 {
     <INTEGER_LITERAL : 
-        <DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i" | "I")? ( ["0"-"9"] )*
         |
-        <HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i" | "I")? ( ["0"-"9"] )*
         |
-        <OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        <OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i" | "I")? ( ["0"-"9"] )*
     >
     |
     <#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
