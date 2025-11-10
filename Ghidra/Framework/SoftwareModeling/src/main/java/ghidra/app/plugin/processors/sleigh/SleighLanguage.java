@@ -116,6 +116,7 @@ public class SleighLanguage implements Language {
 	private void initialize(SleighLanguageDescription langDescription)
 			throws DecoderException, SAXException, IOException {
 		this.defaultSymbols = new ArrayList<>();
+		this.defaultMemoryBlocks = new MemoryBlockDefinition[0];
 		this.compilerSpecDescriptions = new LinkedHashMap<>();
 		for (CompilerSpecDescription compilerSpecDescription : langDescription
 				.getCompatibleCompilerSpecDescriptions()) {
