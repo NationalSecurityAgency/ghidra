@@ -360,11 +360,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		try {
 			LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 			Language language = getLanguageService().getLanguage(pair.languageID);
-			MemoryBlockDefinition[] defaultMemoryBlocks = language.getDefaultMemoryBlocks();
-			if (defaultMemoryBlocks == null) {
-				return;
-			}
-			for (MemoryBlockDefinition blockDef : defaultMemoryBlocks) {
+			for (MemoryBlockDefinition blockDef : language.getDefaultMemoryBlocks()) {
 				try {
 					blockDef.createBlock(program);
 				}
