@@ -225,6 +225,9 @@
 	<schema name="RegisterValueContainer" attributeResync="NEVER">
 		<interface name="RegisterContainer" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="VOID" />
+		<attribute schema="Register" />
+	</schema>
+	<schema name="Register">
+		<interface name="Register" />
 	</schema>
 </context>
