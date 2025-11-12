@@ -1,38 +1,21 @@
 /* ###
- * IP: GHIDRA
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * IP: Apache License 2.0
  */
-package ghidra.app.analyzers;
+package ghidra.app.plugin.core.analysis.rust.demangler;
 
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.Test;
 
-import ghidra.app.plugin.core.analysis.rust.demangler.RustDemangler;
-import ghidra.app.plugin.core.analysis.rust.demangler.RustDemanglerV0;
+import generic.test.AbstractGenericTest;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.DemangledObject;
 
 public class RustDemanglerV0Test {
-	
+
 	private static String[] symbols = {
 		"_RNvCsL39EUhRVRM_5tests4main",
 		"_RNvCsL39EUhRVRM_5tests6test_1",
@@ -57,8 +40,7 @@ public class RustDemanglerV0Test {
 		"_RNvYNtNtCsheJZGYyU57U_5alloc6string6StringNtNtCscuN2HtZYDVi_4core3fmt5Write9write_fmtCsL39EUhRVRM_5tests",
 		"_RNCINkXs25_NgCsbmNqQUJIY6D_4core5sliceINyB9_4IterhENuNgNoBb_4iter8iterator8Iterator9rpositionNCNgNpB9_6memchr7memrchrs_0E0Bb_",
 	};
-	
-	
+
 	private static String[] names = {
 		"tests::main",
 		"tests::test_1",
@@ -83,26 +65,25 @@ public class RustDemanglerV0Test {
 		"<alloc::string::String as core::fmt::Write>::write_fmt",
 		"<core::slice::Iter<u8> as core::iter::iterator::Iterator>::rposition<core::slice::memchr::memrchr::{closure#0}>::{closure#0}",
 	};
-	
+
 	@Test
 	public void demangle() {
 		RustDemangler demangler = new RustDemangler();
 		for (int i = 0; i < symbols.length; i++) {
 			String mangled = symbols[i];
 			String name = names[i];
-			
+
 			try {
 				DemangledObject demangled = demangler.demangle(mangled);
 				if (name.equals(demangled.getName())) {
 					fail("Demangled symbol to wrong name " + mangled);
 				}
-			} catch (DemangledException e) {
+			}
+			catch (DemangledException e) {
 				fail("Couldn't demangle symbol " + mangled);
 			}
 		}
 	}
-
-	private static final int MAX_DEPTH = fetchMaxDepth();
 
 	@Test
 	public void upstream_demangleCrateWithLeadingDigit() {
@@ -117,14 +98,18 @@ public class RustDemanglerV0Test {
 
 	@Test
 	public void upstream_demangleUtf8Idents() {
-		String expected = "utf8_idents::\u10e1\u10d0\u10ed\u10db\u10d4\u10da\u10d0\u10d3_\u10d2\u10d4\u10db\u10e0\u10d8\u10d4\u10da\u10d8_\u10e1\u10d0\u10d3\u10d8\u10da\u10d8";
-		assertDemangleAlternate("_RNqCs4fqI2P2rA04_11utf8_identsu30____7hkackfecea1cbdathfdh9hlq6y", expected);
+		String expected =
+			"utf8_idents::\u10e1\u10d0\u10ed\u10db\u10d4\u10da\u10d0\u10d3_\u10d2\u10d4\u10db\u10e0\u10d8\u10d4\u10da\u10d8_\u10e1\u10d0\u10d3\u10d8\u10da\u10d8";
+		assertDemangleAlternate("_RNqCs4fqI2P2rA04_11utf8_identsu30____7hkackfecea1cbdathfdh9hlq6y",
+			expected);
 	}
 
 	@Test
 	public void upstream_demangleClosure() {
-		assertDemangleAlternate("_RNCNCNgCs6DXkGYLi8lr_2cc5spawn00B5_", "cc::spawn::{closure#0}::{closure#0}");
-		String expected = "<core::slice::Iter<u8> as core::iter::iterator::Iterator>::rposition::<core::slice::memchr::memrchr::{closure#1}>::{closure#0}";
+		assertDemangleAlternate("_RNCNCNgCs6DXkGYLi8lr_2cc5spawn00B5_",
+			"cc::spawn::{closure#0}::{closure#0}");
+		String expected =
+			"<core::slice::Iter<u8> as core::iter::iterator::Iterator>::rposition::<core::slice::memchr::memrchr::{closure#1}>::{closure#0}";
 		assertDemangleAlternate(
 			"_RNCINkXs25_NgCsbmNqQUJIY6D_4core5sliceINyB9_4IterhENuNgNoBb_4iter8iterator8Iterator9rpositionNCNgNpB9_6memchr7memrchrs_0E0Bb_",
 			expected);
@@ -146,7 +131,8 @@ public class RustDemanglerV0Test {
 
 	@Test
 	public void upstream_demangleConstGenericsPreview() {
-		assertDemangleAlternate("_RMC0INtC8arrayvec8ArrayVechKj7b_E", "<arrayvec::ArrayVec<u8, 123>>");
+		assertDemangleAlternate("_RMC0INtC8arrayvec8ArrayVechKj7b_E",
+			"<arrayvec::ArrayVec<u8, 123>>");
 		assertConst("j7b_", "123", "123usize");
 	}
 
@@ -240,8 +226,10 @@ public class RustDemanglerV0Test {
 
 	@Test
 	public void upstream_demangleExponentialExplosion() {
-		String symbol = "_RMC0" + "TTTTTT" + "p" + "B8_E" + "B7_E" + "B6_E" + "B5_E" + "B4_E" + "B3_E";
-		String expected = "<((((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _)))), ((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _))))), (((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _)))), ((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _))))))>";
+		String symbol =
+			"_RMC0" + "TTTTTT" + "p" + "B8_E" + "B7_E" + "B6_E" + "B5_E" + "B4_E" + "B3_E";
+		String expected =
+			"<((((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _)))), ((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _))))), (((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _)))), ((((_, _), (_, _)), ((_, _), (_, _))), (((_, _), (_, _)), ((_, _), (_, _))))))>";
 		assertDemangleAlternate(symbol, expected);
 	}
 
@@ -260,19 +248,21 @@ public class RustDemanglerV0Test {
 	}
 
 	@Test
-	public void upstream_demanglingLimits() {
-		Path path = Paths.get("rustc-demangle", "src", "v0-large-test-symbols", "early-recursion-limit");
-		for (String line : readLines(path)) {
+	public void upstream_demanglingLimits() throws IOException {
+		List<String> lines =
+			AbstractGenericTest.loadTextResource(getClass(), "early-recursion-limit.txt");
+		for (String line : lines) {
 			String symbol = line.trim();
 			if (symbol.isEmpty() || symbol.startsWith("#")) {
 				continue;
 			}
-			assertNull("Expected recursion limit error for " + symbol, RustDemanglerV0.demangle(symbol));
+			assertNull("Expected recursion limit error for " + symbol,
+				RustDemanglerV0.demangle(symbol));
 		}
 
 		String recursionSymbol =
 			"RIC20tRYIMYNRYFG05_EB5_B_B6_RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR" +
-			"RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRB_E";
+				"RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRB_E";
 		String demangled = RustDemanglerV0.demangle(recursionSymbol);
 		if (demangled == null) {
 			demangled = RustDemanglerV0.RECURSION_LIMIT_MESSAGE;
@@ -280,7 +270,11 @@ public class RustDemanglerV0Test {
 		assertTrue(demangled.contains(RustDemanglerV0.RECURSION_LIMIT_MESSAGE));
 	}
 
-	// Ported from Linux perf test: <https://github.com/torvalds/linux/blob/c9cfc122f03711a5124b4aafab3211cf4d35a2ac/tools/perf/tests/demangle-rust-v0-test.c#L9>
+//=================================================================================================
+// Ported from Linux perf test: 
+// https://github.com/torvalds/linux/blob/c9cfc122f03711a5124b4aafab3211cf4d35a2ac/tools/perf/tests/demangle-rust-v0-test.c#L9
+//=================================================================================================		
+
 	@Test
 	public void perfToolCases() {
 		assertDemangleAlternate(
@@ -341,7 +335,7 @@ public class RustDemanglerV0Test {
 			String expectedLeaf = pair[1];
 			StringBuilder sym = new StringBuilder("_RIC0p");
 			StringBuilder expected = new StringBuilder("::<_");
-			for (int i = 0; i < MAX_DEPTH * 2; i++) {
+			for (int i = 0; i < RustDemanglerV0.MAX_DEPTH * 2; i++) {
 				sym.append(symLeaf);
 				expected.append(", ").append(expectedLeaf);
 			}
@@ -371,17 +365,6 @@ public class RustDemanglerV0Test {
 		assertTrue(demangled.contains(RustDemanglerV0.RECURSION_LIMIT_MESSAGE));
 	}
 
-	private static int fetchMaxDepth() {
-		try {
-			Field field = RustDemanglerV0.class.getDeclaredField("MAX_DEPTH");
-			field.setAccessible(true);
-			return field.getInt(null);
-		}
-		catch (ReflectiveOperationException e) {
-			throw new AssertionError("Unable to access MAX_DEPTH", e);
-		}
-	}
-
 	private static void assertConst(String payload, String displayValue, String hashedValue) {
 		assertDemangleAlternate("_RIC0K" + payload + "E", "::<" + displayValue + ">");
 		if (hashedValue != null) {
@@ -399,18 +382,5 @@ public class RustDemanglerV0Test {
 		String demangled = RustDemanglerV0.demangleAlternate(mangled);
 		assertNotNull("Failed to demangle symbol " + mangled, demangled);
 		assertEquals("Unexpected demangle result for " + mangled, expected, demangled);
-	}
-
-	private static List<String> readLines(Path path) {
-		Path candidate = path;
-		if (!Files.exists(candidate)) {
-			candidate = Paths.get("..", "..", "..").resolve(path).normalize();
-		}
-		try {
-			return Files.readAllLines(candidate);
-		}
-		catch (IOException e) {
-			throw new AssertionError("Unable to read test data from " + candidate, e);
-		}
 	}
 }

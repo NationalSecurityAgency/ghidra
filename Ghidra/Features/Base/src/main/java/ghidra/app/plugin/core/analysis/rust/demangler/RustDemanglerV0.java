@@ -1,22 +1,12 @@
 /* ###
- * IP: GHIDRA
- *
+ * IP: Apache License 2.0
+ */
+
+/*
  * Ported and adapted from rustc-demangle (https://github.com/rust-lang/rustc-demangle),
  * which is dual-licensed under Apache-2.0 and MIT. This implementation is
  * derived from commit c5688cfec32d2bd00701836f12beb3560ee015b8 and adjusted
  * for Ghidra’s Java runtime.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package ghidra.app.plugin.core.analysis.rust.demangler;
 
@@ -36,7 +26,7 @@ public final class RustDemanglerV0 {
 
 	public static final String RECURSION_LIMIT_MESSAGE = "{recursion limit reached}";
 
-	private static final int MAX_DEPTH = 500;
+	public static final int MAX_DEPTH = 500;
 
 	private RustDemanglerV0() {
 		// utility class
@@ -119,8 +109,8 @@ public final class RustDemanglerV0 {
 	}
 
 	/**
-	 * Strips the first char of the mangled string if it's equal to the argument
-	 * @param c the char to strip
+	 * Removes known rust prefixes
+	 * @param symbol the string substring
 	 * @return if the strip succeeded
 	 */
 	private static String stripPrefix(String symbol) {
@@ -174,28 +164,28 @@ public final class RustDemanglerV0 {
 		private static final long serialVersionUID = 1L;
 		final ParseErrorKind kind;
 
-	ParseException(ParseErrorKind kind) {
-		this.kind = kind;
+		ParseException(ParseErrorKind kind) {
+			this.kind = kind;
+		}
+
+		boolean isRecursedTooDeep() {
+			return kind == ParseErrorKind.RECURSED_TOO_DEEP;
+		}
+
+		String message() {
+			return switch (kind) {
+				case RECURSED_TOO_DEEP -> RECURSION_LIMIT_MESSAGE;
+				case INVALID -> "{invalid syntax}";
+			};
+		}
 	}
 
-	boolean isRecursedTooDeep() {
-		return kind == ParseErrorKind.RECURSED_TOO_DEEP;
-	}
-
-	String message() {
-		return switch (kind) {
-			case RECURSED_TOO_DEEP -> RECURSION_LIMIT_MESSAGE;
-			case INVALID -> "{invalid syntax}";
-		};
-	}
-	}
-
-/**
- * Stateful cursor used while walking the v0 grammar. The parser owns the original
- * mangled string, maintains the current offset, and keeps a recursion counter so we can
- * mirror rustc's depth limits when following backrefs.
- */
-private static final class Parser {
+	/**
+	 * Stateful cursor used while walking the v0 grammar. The parser owns the original
+	 * mangled string, maintains the current offset, and keeps a recursion counter so we can
+	 * mirror rustc's depth limits when following backrefs.
+	 */
+	private static final class Parser {
 		private final String sym;
 		private int next;
 		private int depth;
@@ -234,6 +224,8 @@ private static final class Parser {
 
 		/**
 		 * Advances the cursor when the next character matches {@code expected}.
+		 * @param expected the expected character
+		 * @return true if advanced
 		 */
 		boolean eat(char expected) {
 			if (peek() == expected) {
@@ -245,6 +237,8 @@ private static final class Parser {
 
 		/**
 		 * Consumes and returns the next character.
+		 * @return the next character
+		 * @throws ParseException if the cursor is past the end of the string
 		 */
 		char next() throws ParseException {
 			if (next >= sym.length()) {
@@ -267,6 +261,8 @@ private static final class Parser {
 		/**
 		 * Reads a sequence of hexadecimal digits terminated by {@code '_'} and exposes them as a
 		 * {@link HexNibbles} helper.
+		 * @return the hex nibbles
+		 * @throws ParseException if the expected format is not found
 		 */
 		HexNibbles hexNibbles() throws ParseException {
 			int start = next;
@@ -285,6 +281,8 @@ private static final class Parser {
 
 		/**
 		 * Parses a decimal digit character.
+		 * @return the digit
+		 * @throws ParseException if the next character is not a digit 
 		 */
 		int digit10() throws ParseException {
 			int p = peek();
@@ -297,6 +295,8 @@ private static final class Parser {
 
 		/**
 		 * Parses the next base-62 digit.
+		 * @return the digit
+		 * @throws ParseException if the next character is not a digit 
 		 */
 		int digit62() throws ParseException {
 			int p = peek();
@@ -317,6 +317,8 @@ private static final class Parser {
 
 		/**
 		 * Reads a base-62 integer terminated by {@code '_'} and returns the decoded value.
+		 * @return the integer value
+		 * @throws ParseException if no integer value is found
 		 */
 		long integer62() throws ParseException {
 			if (eat('_')) {
@@ -333,6 +335,9 @@ private static final class Parser {
 
 		/**
 		 * Optionally consumes a base-62 integer prefixed by {@code tag} and returns the decoded value.
+		 * @param tag the tag prefix
+		 * @return the integer
+		 * @throws ParseException if the incorrect integer value is found 
 		 */
 		long optInteger62(char tag) throws ParseException {
 			if (!eat(tag)) {
@@ -343,6 +348,8 @@ private static final class Parser {
 
 		/**
 		 * Parses the optional `s` disambiguator used to render hash-like suffixes.
+		 * @return the integer value
+		 * @throws ParseException if the incorrect integer value is found 
 		 */
 		long disambiguator() throws ParseException {
 			return optInteger62('s');
@@ -350,6 +357,8 @@ private static final class Parser {
 
 		/**
 		 * Reads the namespace designator that precedes nested paths.
+		 * @return the namespace designator
+		 * @throws ParseException if no valid designator is found
 		 */
 		Character namespace() throws ParseException {
 			char c = next();
@@ -364,6 +373,8 @@ private static final class Parser {
 
 		/**
 		 * Resolves a backreference, returning a new parser positioned at the referenced start.
+		 * @return the parser
+		 * @throws ParseException if an incorrect offset value is found 
 		 */
 		Parser backref() throws ParseException {
 			int start = next - 1;
@@ -378,6 +389,8 @@ private static final class Parser {
 
 		/**
 		 * Parses an identifier, handling punycode (for non-ASCII) and optional disambiguator suffixes.
+		 * @return the identifier
+		 * @throws ParseException if the incorrect identifier values are found 
 		 */
 		Ident ident() throws ParseException {
 			boolean isPunycode = eat('u');
@@ -424,16 +437,16 @@ private static final class Parser {
 		}
 	}
 
-/**
- * Pretty printer that mirrors the upstream rustc-demangle formatter. It consumes parsed
- * tokens by delegating back into {@link Parser} and emits either the normal or the
- * alternate (hash-stripped) textual form depending on the {@code alternate} flag.
- */
-private static final class Printer {
+	/**
+	 * Pretty printer that mirrors the upstream rustc-demangle formatter. It consumes parsed
+	 * tokens by delegating back into {@link Parser} and emits either the normal or the
+	 * alternate (hash-stripped) textual form depending on the {@code alternate} flag.
+	 */
+	private static final class Printer {
 		private Parser parser;
 		private StringBuilder out;
 		private int boundLifetimeDepth;
- 		private final boolean alternate;
+		private final boolean alternate;
 
 		Printer(Parser parser, StringBuilder out, boolean alternate) {
 			this.parser = parser;
@@ -465,6 +478,8 @@ private static final class Printer {
 
 		/**
 		 * Prints a v0 path grammar node. This mirrors the old implementation's {@code RustPath.parse}.
+		 * @param inValue true if in the middle of parsing a value
+		 * @throws ParseException if an invalid identifier is encountered
 		 */
 		void printPath(boolean inValue) throws ParseException {
 			parser.pushDepth();
@@ -1018,7 +1033,7 @@ private static final class Printer {
 				print('_');
 				return;
 			}
-			long depth = (long) boundLifetimeDepth - lt;
+			long depth = boundLifetimeDepth - lt;
 			if (depth < 0) {
 				throw new ParseException(ParseErrorKind.INVALID);
 			}
@@ -1281,7 +1296,9 @@ private static final class Printer {
 				bytes[i] = (byte) ((hi << 4) | lo);
 			}
 			try {
-				return StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString();
+				return StandardCharsets.UTF_8.newDecoder()
+						.decode(ByteBuffer.wrap(bytes))
+						.toString();
 			}
 			catch (CharacterCodingException e) {
 				return null;
