@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.navigation.locationreferences;
+package docking.widgets.search;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.widgets.search.SearchLocationContext.*;
 import generic.json.Json;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext.*;
 
 /**
- * A builder for {@link LocationReferenceContext} objects.  Use {@link #append(String)} for normal
+ * A builder for {@link SearchLocationContext} objects.  Use {@link #append(String)} for normal
  * text pieces.  Use {@link #appendMatch(String)} for text that is meant to be rendered specially
  * by the context class.
  */
-public class LocationReferenceContextBuilder {
+public class SearchLocationContextBuilder {
 
 	private List<Part> parts = new ArrayList<>();
 
@@ -35,7 +35,7 @@ public class LocationReferenceContextBuilder {
 	 * @param text the text
 	 * @return this builder
 	 */
-	public LocationReferenceContextBuilder append(String text) {
+	public SearchLocationContextBuilder append(String text) {
 		if (text == null) {
 			text = "";
 		}
@@ -45,12 +45,12 @@ public class LocationReferenceContextBuilder {
 
 	/**
 	 * Appends the given text to this builder.   This text represents a client-defined 'match' that
-	 * will be rendered with markup when {@link LocationReferenceContext#getBoldMatchingText()} is
+	 * will be rendered with markup when {@link SearchLocationContext#getBoldMatchingText()} is
 	 * called.
 	 * @param text the text
 	 * @return this builder
 	 */
-	public LocationReferenceContextBuilder appendMatch(String text) {
+	public SearchLocationContextBuilder appendMatch(String text) {
 		if (text == null) {
 			throw new NullPointerException("Match text cannot be null");
 		}
@@ -62,7 +62,7 @@ public class LocationReferenceContextBuilder {
 	 * Adds a newline character to the previously added text. 
 	 * @return this builder
 	 */
-	public LocationReferenceContextBuilder newline() {
+	public SearchLocationContextBuilder newline() {
 		if (parts.isEmpty()) {
 			throw new IllegalStateException("Cannot add a newline without first appending text");
 		}
@@ -72,12 +72,12 @@ public class LocationReferenceContextBuilder {
 	}
 
 	/**
-	 * Builds a {@link LocationReferenceContext} using the text supplied via the {@code append}
+	 * Builds a {@link SearchLocationContext} using the text supplied via the {@code append}
 	 * methods.
 	 * @return the context
 	 */
-	public LocationReferenceContext build() {
-		return new LocationReferenceContext(parts);
+	public SearchLocationContext build() {
+		return new SearchLocationContext(parts);
 	}
 
 	/**

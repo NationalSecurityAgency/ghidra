@@ -18,8 +18,8 @@ package ghidra.app.extension.datatype.finder;
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.address.Address;
@@ -240,7 +240,7 @@ public class VariableAccessDR extends DecompilerReference {
 	protected DataTypeReference createReference(DecompilerVariable var) {
 
 		DataType dataType = var.getDataType();
-		LocationReferenceContext context = getContext(var);
+		SearchLocationContext context = getContext(var);
 		Function function = var.getFunction();
 		Address address = getAddress(var);
 		return new DataTypeReference(dataType, null, function, address, context);
@@ -248,16 +248,16 @@ public class VariableAccessDR extends DecompilerReference {
 
 	private DataTypeReference createReference(DecompilerVariable var, DecompilerVariable field) {
 		DataType dataType = var.getDataType();
-		LocationReferenceContext context = getContext(var);
+		SearchLocationContext context = getContext(var);
 		Function function = var.getFunction();
 		Address address = getAddress(var);
 		return new DataTypeReference(dataType, field.getName(), function, address, context);
 	}
 
 	@Override
-	protected LocationReferenceContext getContext(DecompilerVariable var) {
+	protected SearchLocationContext getContext(DecompilerVariable var) {
 		DecompilerVariable field = findFieldFor(var);
-		LocationReferenceContext context = super.getContext(field);
+		SearchLocationContext context = super.getContext(field);
 		return context;
 	}
 

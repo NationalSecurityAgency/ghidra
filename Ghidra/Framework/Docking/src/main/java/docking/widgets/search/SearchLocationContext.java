@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.navigation.locationreferences;
+package docking.widgets.search;
 
 import java.util.*;
 
+import docking.widgets.SearchLocation;
 import generic.json.Json;
 import ghidra.util.HTMLUtilities;
 
 /**
- * A class to hold context representation for {@link LocationReference}s.
+ * A class to hold context representation for {@link SearchLocation}s.
  *
- * @see LocationReferenceContextBuilder
+ * @see SearchLocationContextBuilder
  */
-public class LocationReferenceContext {
+public class SearchLocationContext {
 
 	private static final String EMBOLDEN_START =
 		"<span style=\"background-color: #a3e4d7; color: black;\"><b><font size=4>";
 	private static final String EMBOLDEN_END = "</font></b></span>";
 
-	public static final LocationReferenceContext EMPTY_CONTEXT = new LocationReferenceContext();
+	public static final SearchLocationContext EMPTY_CONTEXT = new SearchLocationContext();
 
 	private final List<Part> parts;
 
@@ -42,8 +43,8 @@ public class LocationReferenceContext {
 	 * @param text the text
 	 * @return the context
 	 */
-	public static LocationReferenceContext get(String text) {
-		return text == null ? EMPTY_CONTEXT : new LocationReferenceContext(text);
+	public static SearchLocationContext get(String text) {
+		return text == null ? EMPTY_CONTEXT : new SearchLocationContext(text);
 	}
 
 	/**
@@ -51,14 +52,14 @@ public class LocationReferenceContext {
 	 * @param context the context to verify is not null
 	 * @return the given context or the {@link #EMPTY_CONTEXT} if the given context is null
 	 */
-	public static LocationReferenceContext get(LocationReferenceContext context) {
+	public static SearchLocationContext get(SearchLocationContext context) {
 		return context == null ? EMPTY_CONTEXT : context;
 	}
 
 	/**
 	 * Creates an empty context object
 	 */
-	private LocationReferenceContext() {
+	private SearchLocationContext() {
 		this.parts = List.of(new BasicPart(""));
 	}
 
@@ -66,7 +67,7 @@ public class LocationReferenceContext {
 	 * Creates a context with the raw and decorated context being the same.
 	 * @param context the context; cannot be null
 	 */
-	private LocationReferenceContext(String context) {
+	private SearchLocationContext(String context) {
 		Objects.requireNonNull(context);
 		this.parts = List.of(new BasicPart(context));
 	}
@@ -74,9 +75,9 @@ public class LocationReferenceContext {
 	/**
 	 * Constructor used to create this context by providing the given text parts
 	 * @param parts the parts
-	 * @see LocationReferenceContextBuilder
+	 * @see SearchLocationContextBuilder
 	 */
-	LocationReferenceContext(List<Part> parts) {
+	SearchLocationContext(List<Part> parts) {
 		this.parts = parts;
 	}
 
@@ -120,7 +121,7 @@ public class LocationReferenceContext {
 	/**
 	 * Returns any sub-strings of this context's overall text that match client-defined input
 	 *
-	 * See the {@link LocationReferenceContextBuilder} for how to define matching text pieces
+	 * See the {@link SearchLocationContextBuilder} for how to define matching text pieces
 	 * @return the matching strings
 	 */
 	public List<String> getMatches() {
