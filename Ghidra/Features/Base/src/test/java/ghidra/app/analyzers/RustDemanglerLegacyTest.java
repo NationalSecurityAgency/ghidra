@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.analysis.rust.demangler.RustDemangler;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.program.model.lang.CompilerSpec;
+import ghidra.app.plugin.core.analysis.rust.demangler.RustDemanglerLegacy;
 
 public class RustDemanglerLegacyTest {
 
@@ -36,7 +37,7 @@ public class RustDemanglerLegacyTest {
 			"_ZN5alloc5alloc18handle_alloc_error8rt_error17h4b79f8a717741b7cE",
 			"_ZN3std6thread7current17h20e47a880e55afd5E", };
 
-	private static String[] names = { RUSTCALL + " _<char_as_core::fmt::Display>::fmt(void)",
+	private static String[] names = { RUSTCALL + " <char_as_core::fmt::Display>::fmt(void)",
 		RUSTCALL + " core::option::expect_failed(void)",
 		RUSTCALL + " core::fmt::Formatter::debug_lower_hex(void)",
 		RUSTCALL + " std::path::Components::as_path(void)",
@@ -61,5 +62,32 @@ public class RustDemanglerLegacyTest {
 				fail("Couldn't demangle symbol " + mangled);
 			}
 		}
+	}
+
+	@Test
+	public void legacy_handleAssocTypes() {
+		assertEquals(
+			"<alloc::boxed::Box<alloc::boxed::FnBox<A, Output=R> + 'a> as core::ops::function::FnOnce<A>>::call_once",
+			RustDemanglerLegacy.demangle(
+				"_ZN151_$LT$alloc..boxed..Box$LT$alloc..boxed..FnBox$LT$A$C$$u20$Output$u3d$R$GT$$u20$$u2b$$u20$$u27$a$GT$$u20$as$u20$core..ops..function..FnOnce$LT$A$GT$$GT$9call_once17h69e8f44b3723e1caE"));
+	}
+
+	@Test
+	public void legacy_handleBang() {
+		assertEquals(
+			"<core::result::Result<!, E> as std::process::Termination>::report",
+			RustDemanglerLegacy.demangle(
+				"_ZN88_$LT$core..result..Result$LT$$u21$$C$$u20$E$GT$$u20$as$u20$std..process..Termination$GT$6report17hfc41d0da4a40b3e8E"));
+	}
+
+	@Test
+	public void legacy_preservesModuleSeparators() {
+		assertEquals("foo::bar::baz", RustDemanglerLegacy.demangle("_ZN3foo3bar3bazE"));
+	}
+
+	@Test
+	public void legacy_handlesUnicodeEscapes() {
+		assertEquals("unicode::∂value",
+			RustDemanglerLegacy.demangle("_ZN7unicode12$u2202$valueE"));
 	}
 }
