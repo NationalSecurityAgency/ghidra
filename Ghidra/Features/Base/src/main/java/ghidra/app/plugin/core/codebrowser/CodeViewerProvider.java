@@ -72,7 +72,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		ChangeListener, StringSelectionListener, PopupActionProvider {
 
 	private static final String SHOW_FUNCITON_VARS_OPTIONS_NAME = "SHOW_FUNCITON_VARS";
-	private static final String OLD_NAME = "CodeBrowserPlugin";
 	private static final String NAME = "Listing";
 	private static final String TITLE = NAME + ": ";
 
@@ -131,7 +130,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private MultiListingLayoutModel multiModel;
 	private ToggleDockingAction toggleVariablesAction;
-	private ToggleDockingAction toggleFunctionsAction;
 
 	public CodeViewerProvider(CodeBrowserPluginInterface plugin, FormatManager formatMgr,
 			boolean isConnected) {
@@ -140,9 +138,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		this.plugin = plugin;
 		this.formatMgr = formatMgr;
 
-		// note: the owner has not changed, just the name; remove sometime after version 10
-		String owner = plugin.getName();
-		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
 		registerAdjustableFontId(ListingDisplayOptionsEditor.DEFAULT_FONT_ID);
 		setConnected(isConnected);
 		setIcon(new GIcon("icon.plugin.codebrowser.provider"));

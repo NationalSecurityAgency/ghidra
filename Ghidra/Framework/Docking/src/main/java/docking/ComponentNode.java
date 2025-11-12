@@ -27,10 +27,8 @@ import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import help.HelpService;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Node object for managing one or more components. If more that one managed component
@@ -265,18 +263,6 @@ class ComponentNode extends Node {
 		populateActiveComponents(activeComponents);
 		int count = activeComponents.size();
 		if (count == 1) {
-
-			//
-			// TODO Hack Alert!  (When this is removed, also update ComponentPlaceholder)
-			// 
-			ComponentPlaceholder nextTop = activeComponents.get(0);
-			if (nextTop.isDisposed()) {
-				// This should not happen!  We have seen this bug recently
-				Msg.debug(this, "Found disposed component that was not removed from the active " +
-					"list: " + nextTop, ReflectionUtilities.createJavaFilteredThrowable());
-				return null;
-			}
-
 			top = activeComponents.get(0);
 			comp = top.getComponent();
 			comp.setBorder(BorderFactory.createRaisedBevelBorder());
