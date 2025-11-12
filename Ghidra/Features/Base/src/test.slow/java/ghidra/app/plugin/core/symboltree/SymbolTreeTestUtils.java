@@ -41,6 +41,7 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.program.model.address.Address;
@@ -68,7 +69,7 @@ class SymbolTreeTestUtils {
 	private DockingActionIf selectionAction;
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
-	private ToggleDockingAction goToToggleAction;
+	private ToggleDockingAction navigateIncomingAction;
 
 	/** A comparator to sort Symbols the same way as the SymbolNode sorts */
 	// Note: a bit of guilty knowledge: the SymbolNodes will sort first on name, then on
@@ -399,12 +400,12 @@ class SymbolTreeTestUtils {
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
 
-		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 	}
 
 	void setGoToNavigationSelected(boolean selected) {
-		runSwing(() -> goToToggleAction.setSelected(true));
+		runSwing(() -> navigateIncomingAction.setSelected(true));
 	}
 
 	void closeProgram() throws Exception {
