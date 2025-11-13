@@ -241,7 +241,7 @@ If you already know this language, then there is little more to learn.
 Of note, you may use labels from mapped program databases in your expression.
 For example, to see how far a return address is into `main`, you could use `*:8 RSP - main`.
 
-For the complete specification, see the Semantic Section in the [Sleigh documentation](../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml).
+For the complete specification, see the Semantic Section in the [Sleigh documentation](../../../docs/languages/html/sleigh.html).
 
 Sleigh is a bit unconventional in that its operators are typed rather than its variables.
 All variables are fixed-length bit vectors.

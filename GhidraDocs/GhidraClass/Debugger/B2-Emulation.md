@@ -357,7 +357,7 @@ We initialize RAX to 0, and then check if the current character is NULL, or the 
 If so, we are done; if not, we increment RAX and repeat.
 Finally, because we are *replacing* the semantics of the `CALL` instruction, we tell the emulator to skip the current instruction.
 
-For the complete specification of Sleigh, see the Semantic Section in the [Sleigh documentation](../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml).
+For the complete specification of Sleigh, see the Semantic Section in the [Sleigh documentation](../../../docs/languages/html/sleigh.html).
 The emulator adds a few userops:
 
 * `emu_skip_decoded()`: Skip the current instruction.
