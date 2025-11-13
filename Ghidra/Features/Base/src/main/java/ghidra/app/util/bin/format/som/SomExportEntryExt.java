@@ -53,7 +53,7 @@ public class SomExportEntryExt implements StructConverter {
 	}
 
 	/**
-	 * {@return the size of the export symbol and is only valid for exports of type {@code ST_DATA}
+	 * {@return the size of the export symbol and is only valid for exports of type {@code ST_DATA}}
 	 */
 	public int getSize() {
 		return size;
