@@ -318,7 +318,8 @@ can be found in the `<GhidraInstallDir>/Extensions` directory:
 * Ghidra extensions are designed to be installed and uninstalled from the Ghidra front-end GUI:
   1. Click `File -> Install Extensions`
   2. Check boxes to install extensions; uncheck boxes to uninstall extensions
-  3. Restart Ghidra for the changes to take effect
+  3. External extensions may not appear in the default location used for internal extensions.  Click the green plus sign to search for an external extension.  The external extension should compressed in ZIP format.
+  4. Restart Ghidra for the changes to take effect
 
 * Extensions installed from the Ghidra front-end GUI get installed at `<UserSettings>/Extensions`, 
   where `<UserSettings>` can be looked up in the Ghidra front-end GUI under 
