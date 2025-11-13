@@ -7285,7 +7285,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=1 & b_21=0 & Rm_FPR64 & b_15=0 & R
 :fmadd Rd_FPR32, Rn_FPR32, Rm_FPR32, Ra_FPR32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1f & ftype=0 & b_21=0 & Rm_FPR32 & b_15=0 & Ra_FPR32 & Rn_FPR32 & Rd_FPR32 & Zd
 {
-	Rd_FPR32 = Rn_FPR32 f+ (Rm_FPR32 f* Ra_FPR32); #NEON_fmadd(Rn_FPR32, Rm_FPR32, Ra_FPR32);
+	Rd_FPR32 = Ra_FPR32 f+ (Rm_FPR32 f* Rn_FPR32); #NEON_fmadd(Rn_FPR32, Rm_FPR32, Ra_FPR32);
 }
 
 # C7.2.100 FMADD page C7-2246 line 131323 MATCH x1f000000/mask=xff208000
