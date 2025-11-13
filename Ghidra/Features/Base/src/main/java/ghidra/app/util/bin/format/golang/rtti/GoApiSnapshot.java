@@ -31,6 +31,7 @@ import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -124,30 +125,44 @@ public class GoApiSnapshot {
 			return null;
 		}
 
-		ByteProvider bp = null;
-		if (goVer.getPatch() == 0) {
-			// doesn't need diffpatching
-			bp = fsService.getByteProvider(fsService.getLocalFSRL(jsonFile), false, monitor);
+		File patchDiffFile = getPatchVerDiffFile(goVer);
+		if (patchDiffFile == null) {
+			return fsService.getByteProvider(fsService.getLocalFSRL(jsonFile), false, monitor);
+		}
+
+		FSRL fsrl = fsService.getFullyQualifiedFSRL(fsService.getLocalFSRL(jsonFile), monitor);
+		ByteProvider bp = fsService.getDerivedByteProviderPush(fsrl, null,
+			"go%s.json".formatted(goVer), -1, os -> {
+				JsonPatch jsonPatch = JsonPatch.read(patchDiffFile);
+				JsonPatchApplier jpa = new JsonPatchApplier(jsonFile);
+				monitor.initialize(jsonPatch.getSectionCount(),
+					"Patching Go API snapshot %s -> %s".formatted(baseVer, goVer));
+				jpa.apply(jsonPatch, monitor);
+				OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+				new Gson().toJson(jpa.getJson(), osw);
+				osw.flush(); // don't close outputstream, handled by caller
+			}, monitor);
+		return bp;
+	}
+
+	static File getPatchVerDiffFile(GoVer goVer) {
+		// returns the closest patch file that is present, or null if patch-ver-num is already 0
+		// or no patch diff files are found for the specified major.minor version.
+		GoVer patchVer = goVer;
+		File patchDiffFile = null;
+		while (patchVer.getPatch() > 0 &&
+			(patchDiffFile = getApiSnapshotFile(patchVer, "patchverdiffs/", ".diff")) == null) {
+			patchVer = patchVer.prevPatch();
+		}
+
+		if (patchVer.getPatch() != goVer.getPatch()) {
+			Msg.warn(GoApiSnapshot.class,
+				"Falling back from %s to %s for Go API snapshot".formatted(goVer, patchVer));
 		}
 		else {
-			File patchDiffFile = getApiSnapshotFile(goVer, "patchverdiffs/", ".diff");
-			if (patchDiffFile != null) {
-				FSRL fsrl =
-					fsService.getFullyQualifiedFSRL(fsService.getLocalFSRL(jsonFile), monitor);
-				bp = fsService.getDerivedByteProviderPush(fsrl, null,
-					"go%s.json".formatted(goVer), -1, os -> {
-						JsonPatch jsonPatch = JsonPatch.read(patchDiffFile);
-						JsonPatchApplier jpa = new JsonPatchApplier(jsonFile);
-						monitor.initialize(jsonPatch.getSectionCount(),
-							"Patching Go API snapshot %s -> %s".formatted(baseVer, goVer));
-						jpa.apply(jsonPatch, monitor);
-						OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-						new Gson().toJson(jpa.getJson(), osw);
-						osw.flush(); // don't close outputstream, handled by caller
-					}, monitor);
-			}
+			Msg.info(GoApiSnapshot.class, "Using Go API snapshot for %s".formatted(goVer));
 		}
-		return bp;
+		return patchDiffFile;
 	}
 
 	static File getApiSnapshotFile(GoVer goVer, String subdir, String suffix) {
@@ -189,7 +204,7 @@ public class GoApiSnapshot {
 	 */
 	private static GoApiSnapshot read(InputStream is, List<String> archNames, GoVer ver)
 			throws IOException {
-		Gson gson = new GsonBuilder()
+		Gson gson = new GsonBuilder() // register postfix handler
 				.registerTypeAdapter(GoTypeDef.class, new GoTypeDefDeserializer())
 				.registerTypeAdapterFactory(new GsonPostFixupAdapter())
 				.create();
@@ -418,6 +433,7 @@ public class GoApiSnapshot {
 				TypeParams = List.of();
 			}
 		}
+
 		@Override
 		public String toString() {
 			return "GoFuncTypeDef [Params=" + Params + ", Results=" + Results + ", TypeParams=" +
