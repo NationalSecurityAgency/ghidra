@@ -34,8 +34,9 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 	private int metadataPositiveSizeInWords;
 	private int numImmediateMembers;
 	private int numFields;
+    private int fieldOffsetVectorOffset;
 
-	/**
+    /**
 	 * Creates a new {@link TargetClassDescriptor}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
@@ -48,6 +49,7 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		metadataPositiveSizeInWords = reader.readNextInt();
 		numImmediateMembers = reader.readNextInt();
 		numFields = reader.readNextInt();
+        fieldOffsetVectorOffset = reader.readNextInt();
 	}
 
 	/**
@@ -105,6 +107,17 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 		return numFields;
 	}
 
+    /**
+     * Gets the offset of the field offset vector for this class's stored properties in its
+     * metadata, in words. 0 means there is no field offset vector.
+     *
+     * @return THe offset of the field offset vector for this class's stored properties in its
+     *   metadata, in words. 0 means there is no field offset vector.
+     */
+    public int getFieldOffsetVectorOffset() {
+        return fieldOffsetVectorOffset;
+    }
+
 	@Override
 	public String getStructureName() {
 		return TargetClassDescriptor.class.getSimpleName();
@@ -129,6 +142,8 @@ public final class TargetClassDescriptor extends TargetTypeContextDescriptor {
 			"The number of additional members added by this class to the class metadata");
 		struct.add(DWORD, "NumFields",
 			"The number of stored properties in the class, not including its superclasses. If there is a field offset vector, this is its length.");
+        struct.add(DWORD, "FieldOffsetVectorOffset",
+                "The offset of the field offset vector for this class's stored properties in its metadata, in words. 0 means there is no field offset vector.");
 		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
