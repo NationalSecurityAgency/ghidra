@@ -47,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * This implementation keeps a local index of Address to row object (which are ProgramLocations)
  * so that DomainObjectChangedEvent events can be efficiently handled.
  */
-class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
+class DefinedStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 
 	private Map<Address, ProgramLocation> rowsIndexedByAddress = new HashMap<>();
 
@@ -66,7 +66,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		TRANSLATED_VALUE
 	}
 
-	ViewStringsTableModel(PluginTool tool) {
+	DefinedStringsTableModel(PluginTool tool) {
 		super("Defined String Table", tool, null, null);
 	}
 
@@ -136,9 +136,9 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 	}
 
 	public void removeDataInstanceAt(Address addr) {
-		ProgramLocation progLoc = rowsIndexedByAddress.get(addr);
-		if (progLoc != null) {
-			removeObject(progLoc);
+		ProgramLocation pl = rowsIndexedByAddress.get(addr);
+		if (pl != null) {
+			removeObject(pl);
 			rowsIndexedByAddress.remove(addr);
 		}
 	}
@@ -149,17 +149,18 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 
 	public void addDataInstance(Program localProgram, Data data) {
 		for (Data stringInstance : DefinedStringIterator.forDataInstance(data)) {
-			addObject(createIndexedStringInstanceLocation(localProgram, stringInstance));
+			ProgramLocation pl = createIndexedStringInstanceLocation(localProgram, stringInstance);
+			addObject(pl);
 		}
 	}
 
 	@Override
 	public ProgramSelection getProgramSelection(int[] rows) {
 		AddressSet set = new AddressSet();
-		for (int element : rows) {
-			ProgramLocation progLoc = filteredData.get(element);
-			Data data = getProgram().getListing().getDataContaining(progLoc.getAddress());
-			data = data.getComponent(progLoc.getComponentPath());
+		for (int row : rows) {
+			ProgramLocation pl = filteredData.get(row);
+			Data data = getProgram().getListing().getDataContaining(pl.getAddress());
+			data = data.getComponent(pl.getComponentPath());
 			set.addRange(data.getMinAddress(), data.getMaxAddress());
 		}
 		return new ProgramSelection(set);

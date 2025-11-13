@@ -58,7 +58,7 @@ import resources.ResourceManager;
 	servicesRequired = { GoToService.class }
 )
 //@formatter:on
-public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectListener {
+public class DefinedStringsPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	private static Icon REFRESH_NOT_NEEDED_ICON =
@@ -66,10 +66,10 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 	private DockingAction refreshAction;
 	private SelectionNavigationAction linkNavigationAction;
-	private ViewStringsProvider provider;
+	private DefinedStringsProvider provider;
 	private SwingUpdateManager reloadUpdateMgr;
 
-	public ViewStringsPlugin(PluginTool tool) {
+	public DefinedStringsPlugin(PluginTool tool) {
 		super(tool);
 	}
 
@@ -81,7 +81,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	protected void init() {
 		super.init();
 
-		provider = new ViewStringsProvider(this);
+		provider = new DefinedStringsProvider(this);
 		reloadUpdateMgr = new SwingUpdateManager(100, 60000, this::doReload);
 		createActions();
 	}
@@ -105,7 +105,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		tool.addLocalAction(provider, linkNavigationAction);
 
 		new ActionBuilder("Data Settings", getName()) // create pop-up menu item "Settings..."
-				.withContext(ViewStringsContext.class)
+				.withContext(DefinedStringsContext.class)
 				.popupMenuPath("Settings...")
 				.popupMenuGroup("R")
 				.helpLocation(new HelpLocation("DataPlugin", "Data_Settings"))
@@ -128,7 +128,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 				.buildAndInstallLocal(provider);
 
 		new ActionBuilder("Default Settings", getName()) // create pop-up menu item "Default Settings..."
-				.withContext(ViewStringsContext.class)
+				.withContext(DefinedStringsContext.class)
 				.popupMenuPath("Default Settings...")
 				.popupMenuGroup("R")
 				.helpLocation(new HelpLocation("DataPlugin", "Default_Settings"))
@@ -211,7 +211,6 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 						}
 						break;
 					default:
-						//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
 						break;
 				}
 			}
