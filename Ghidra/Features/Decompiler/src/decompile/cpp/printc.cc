@@ -2288,7 +2288,11 @@ void PrintC::emitStatement(const PcodeOp *inst)
   int4 id = emit->beginStatement(inst);
   emitExpression(inst);
   emit->endStatement(id);
-  if (!isSet(comma_separate))
+  // HACK: This is a terrible hack that is used by CPUI_LOAD operations that are
+  // part of an in-place LOAD/OP/STORE combination. The LOAD op signals that it
+  // hasn't emitted by setting the 'pending_brace' flag, so we need to not emit
+  // a semicolon now.
+  if (!(isSet(comma_separate)||isSet(pending_brace)))
     emit->print(SEMICOLON);
 }
 
@@ -2411,6 +2415,37 @@ void PrintC::docTypeDefinitions(const TypeFactory *typegrp)
   }
 }
 
+/// Check that two varnodes are equivalent, up to a certain depth
+/// Return values:
+/// 0: Definitely not equivalent
+/// 1: Definitely equivalent
+/// 2: Equivalent up to max_depth
+/// \param max_depth is the number of steps in the varnode tree that should be considered
+/// \param vn1 is a pointer to the first varnode to compare
+/// \param vn2 is a pointer to the second varnode to compare
+/// \return 0 if not equivalent, 1 if equivalent, and 2 if equivalent up to max_depth
+static int4 equivalentUpTo(int4 max_depth, Varnode *vn1, Varnode *vn2) {
+  if (max_depth <= 0) return 2;
+
+  Varnode *args1[2];
+  Varnode *args2[2];
+  int num_pairs = functionalEqualityLevel(vn1, vn2, args1, args2);
+  if (num_pairs < 0) return 0; // Not equivalent
+  if (num_pairs == 0) return 1; // Equivalent
+
+  // Whether the varnodes are equivalent depends on the inputs. If one of
+  // num_pairs pairs is equivalent, the original varnodes are equivalent as well.
+  int4 best = 0;
+  for (int i = 0; i < num_pairs; i++) {
+    int4 rec = equivalentUpTo(max_depth - 1, args1[i], args2[i]);
+    if (rec == 0) continue;
+    if (rec == 1) return 1; // Equivalent
+    if (rec == 2) best = 2; // Cut short by depth limit, but maybe another pair leads to a decisive answer
+  }
+
+  return best;
+}
+
 /// Check that the given p-code op has an \e in-place token form and if the first input and the output
 /// are references to  the same variable. If so, emit the expression using the \e in-place token.
 /// \param op is the given PcodeOp
@@ -2419,9 +2454,75 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
 
 {
   OpToken *tok;
+  const PcodeOp *store_op;
   const Varnode *outVar = op->getOut();
+  bool is_store = op->code() == CPUI_STORE;
+  bool is_load = op->code() == CPUI_LOAD;
   if (op->code() == CPUI_COPY && op->getIn(0)->isWritten()) {
     op = op->getIn(0)->getDef();
+  } else if (is_store) {
+    store_op = op;
+    // We're looking for a pattern like:
+    // ---
+    // var = LOAD space, loc
+    // var = var OP x
+    // STORE space, loc, var
+    // ---
+    // So the real op that we can make an in-place operation is 'OP' and not the
+    // 'STORE'. First check if this structure even exists, and if the storage
+    // space and address for the CPUI_LOAD and CPUI_STORE are the same.
+    const Varnode *store_space = op->getIn(0);
+    const Varnode *store_addr = op->getIn(1);
+    const Varnode *var = op->getIn(2);
+
+    // Check that var is actually written and not an input to the function
+    if (!var->isWritten()) return false;
+    op = var->getDef();
+    const Varnode *var2 = op->getIn(0);
+
+    // Check that var2 is actually written and not an input to the function
+    if (!var2->isWritten()) return false;
+    const PcodeOp* load_op = var2->getDef();
+
+    // Check that var2 is set by a LOAD op, and not something else
+    if (load_op->code() != CPUI_LOAD) return false;
+    const Varnode *load_space = load_op->getIn(0);
+    const Varnode *load_addr = load_op->getIn(1);
+
+    // Check that store_addr and load_addr are equivalent
+    if (! functionalEquality((Varnode *)load_space, (Varnode *)store_space)) return false;
+    if (equivalentUpTo(15, (Varnode *)load_addr, (Varnode *)store_addr) != 1) return false;
+  } else if (is_load) {
+    // Check if the loaded value will be stored to the same place - if so, don't
+    // emit this load.
+
+    // We're looking for a pattern like:
+    // ---
+    // var = LOAD space, loc
+    // var = var OP x
+    // STORE space, loc, var
+    // ---
+    const Varnode *load_space = op->getIn(0);
+    const Varnode *load_addr = op->getIn(1);
+    const Varnode *var = op->getOut();
+
+    op = var->loneDescend();
+    if (op == ((const PcodeOp *)0)) return false;
+    if (op->getSlot(var) != 0) return false;
+
+    const Varnode *var2 = op->getOut();
+    if (var2 == (const Varnode *)0) return false;
+
+    const PcodeOp *store_op = var2->loneDescend();
+    if (store_op == ((const PcodeOp *)0)) return false;
+    if (store_op->code() != CPUI_STORE) return false;
+    if (store_op->getSlot(var2) != 2) return false;
+
+    // Check if it's the same location
+    const Varnode *store_space = store_op->getIn(0);
+    const Varnode *store_addr = store_op->getIn(1);
+    if (! functionalEquality((Varnode *)load_space, (Varnode *)store_space)) return false;
+    if (equivalentUpTo(15, (Varnode *)load_addr, (Varnode *)store_addr) != 1) return false;
   }
   switch(op->code()) {
   case CPUI_INT_MULT:
@@ -2464,6 +2565,43 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
   default:
     return false;
   }
+  if (is_store) {
+    // This is case is a bit special, because the output operand of 'op' is not
+    // the final storage location, but an intermediate varnode. As such, we
+    // should emit the storage location (i.e. input 1 of 'store_op'), instead of
+    // the output varnode of 'op'.
+    const Varnode *vn = store_op->getIn(1);
+
+    // The code below attempts to emulate the below call, with some changes to
+    // ensure the right varnodes are emitted.
+    //   store_op->getOpcode()->push(this,store_op,(PcodeOp *)0);
+    uint4 m = mods;
+    pushOp(tok, store_op);
+    bool usearray = checkArrayDeref(store_op->getIn(1));
+    if (usearray && (!isSet(force_pointer)))
+      m |= print_store_value;
+    else
+      pushOp(&dereference, store_op);
+    // implied vn's pushed on in reverse order for efficiency
+    // see PrintLanguage::pushVnImplied
+    pushVn(op->getIn(1), store_op, mods);
+    pushVn(vn, store_op, m);
+    recurse();
+    return true;
+  }
+  if (is_load) {
+    // The 'op' can be emitted in-place, and it's the only use of the out varnode
+    // of this load. As such, don't emit this load - the load will be implied at
+    // the store (which will use an in-place op).
+    // HACK: This is a terrible hack that is used by CPUI_LOAD operations that
+    // are part of an in-place LOAD/OP/STORE combination. The LOAD op signals
+    // that it hasn't emitted by setting the 'pending_brace' flag, which is then
+    // recognised by other parts of the emitting process to not emit a semicolon
+    // and newline. First, we push the current modifiers somewhere safe though.
+    pushMod();
+    setMod(pending_brace);
+    return true;
+  }
   const Varnode *vn = op->getIn(0);
   if (outVar->getHigh() != vn->getHigh()) return false;
   pushOp(tok,op);
@@ -2476,6 +2614,9 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
 void PrintC::emitExpression(const PcodeOp *op)
    
 {
+  if (op->code() == CPUI_STORE) {
+    if (option_inplace_ops && emitInplaceOp(op)) return;
+  }
   const Varnode *outvn = op->getOut();
   if (outvn != (Varnode *)0) {
     if (option_inplace_ops && emitInplaceOp(op)) return;
@@ -2718,7 +2859,14 @@ void PrintC::emitBlockBasic(const BlockBasic *bb)
 	}
 	else {
 	  emitCommentGroup(inst);
-	  emit->tagLine();
+	  // HACK: This is a terrible hack that is used by CPUI_LOAD operations
+	  // that are part of an in-place LOAD/OP/STORE combination. The LOAD op
+	  // signals that it hasn't emitted by setting the 'pending_brace' flag,
+	  // so we need to pop the previous mods, and avoid emitting a new line.
+	  if (isSet(pending_brace))
+	    popMod();
+	  else
+	    emit->tagLine();
 	}
       }
       else if (!isSet(comma_separate)) {
