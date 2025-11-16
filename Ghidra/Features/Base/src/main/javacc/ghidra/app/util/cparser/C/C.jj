@@ -521,7 +521,6 @@ public class CParser {
         String enumName = (t != null ? t.image : ("enum_" + cnt++));
         int defaultSize = (dtMgr != null && dtMgr.getDataOrganization() != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
         int initialEnumSize = defaultSize;
-        addNearParseMessage("Enum " + enumName + " is packed: " + isPacked);
         
         if (underlyingTypeDecl != null) {
             DataType resolvedUnderlyingType = underlyingTypeDecl.getDataType();
@@ -2281,27 +2280,27 @@ DataType EnumSpecifier() : {
 }
 {
     <ENUM> 
-    [AttributeSpecList(attributeDecl)]
+    [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
     (
         LOOKAHEAD(4)
         [ t= <IDENTIFIER> ]
-        [ ":" typeDecl= BuiltInTypeSpecifier(new Declaration()) ]
+        [ LOOKAHEAD(2) ":" typeDecl= TypeName() ]
         "{" list= EnumeratorList() "}"
-        [AttributeSpecList(attributeDecl)]
+        [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
         {
             isPacked = attributeDecl.getQualifiers().contains(PACKED);
             dt = allocateEnumDT(t, typeDecl, list, isPacked);
         }
         |
         t= <IDENTIFIER>
-        [ ":" typeDecl= BuiltInTypeSpecifier(new Declaration()) ]
-        [AttributeSpecList(attributeDecl)]
+        [ LOOKAHEAD(2) ":" typeDecl= TypeName() ]
+        [ LOOKAHEAD(2) AttributeSpecList(attributeDecl) ]
         {
             dt= getEnumDef(t.image);
             // not defined yet, define an empty one
             if (dt == null) {
                 isPacked = attributeDecl.getQualifiers().contains(PACKED);
-            	dt = allocateEnumDT(t, typeDecl, null, isPacked);
+                dt = allocateEnumDT(t, typeDecl, null, isPacked);
             }
         }
     )
