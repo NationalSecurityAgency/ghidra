@@ -990,6 +990,12 @@ enum _C23_enum_longlong : long long
     B = 2,
     C = 3
 };
+enum _C23_enum_DWORD : DWORD {
+    A = 1,
+    B = 2,
+    C = 3
+};
+
 
 /**
  ** Packed enums

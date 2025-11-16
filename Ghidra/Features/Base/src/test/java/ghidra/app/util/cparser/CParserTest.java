@@ -495,6 +495,9 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_longlong");
 		assertTrue(dt instanceof Enum);
 		assertEquals("enum _C23_enum_longlong size not correct", 8, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_DWORD");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_DWORD size not correct", 4, dt.getLength());
 		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_1");
 		assertTrue(dt instanceof Enum);
