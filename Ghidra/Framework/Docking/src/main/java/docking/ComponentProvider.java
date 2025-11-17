@@ -923,7 +923,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *
 	 * @param group the group for this provider.
 	 */
-	protected void setWindowGroup(String group) {
+	public void setWindowGroup(String group) {
 		this.group = group;
 	}
 

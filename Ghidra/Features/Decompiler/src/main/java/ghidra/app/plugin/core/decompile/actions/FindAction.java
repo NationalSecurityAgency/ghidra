@@ -81,6 +81,11 @@ public class FindAction extends AbstractDecompilerAction {
 			dialog.setSearchText(text);
 		}
 
+		if (dialog.isShowing()) {
+			dialog.toFront();
+			return;
+		}
+
 		// show over the root frame, so the user can still see the Decompiler window
 		context.getTool().showDialog(dialog);
 	}

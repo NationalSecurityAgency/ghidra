@@ -443,6 +443,7 @@ public class ComponentPlaceholder {
 	 * @param newProvider the new provider
 	 */
 	void setProvider(ComponentProvider newProvider) {
+
 		this.componentProvider = newProvider;
 		actions.clear();
 		if (newProvider != null) {

@@ -304,14 +304,16 @@ class ComponentNode extends Node {
 			ComponentPlaceholder placeholder = activeComponents.get(i);
 			DockableComponent c = placeholder.getComponent();
 			c.setBorder(BorderFactory.createEmptyBorder());
-			String title = placeholder.getTitle();
+
+			// The renderer uses use the full title as the tooltip for the tab
+			String fullTitle = placeholder.getFullTitle();
 			String tabText = placeholder.getTabText();
 
-			final DockableComponent component = placeholder.getComponent();
-			tabbedPane.add(component, title);
+			DockableComponent component = placeholder.getComponent();
+			tabbedPane.add(fullTitle, component);
 
 			DockingTabRenderer tabRenderer =
-				createTabRenderer(tabbedPane, placeholder, title, tabText, component);
+				createTabRenderer(tabbedPane, placeholder, fullTitle, tabText, component);
 
 			c.installDragDropTarget(tabbedPane);
 

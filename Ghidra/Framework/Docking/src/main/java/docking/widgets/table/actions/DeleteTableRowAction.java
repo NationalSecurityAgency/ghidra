@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.table.actions;
+package docking.widgets.table.actions;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -24,14 +24,13 @@ import javax.swing.KeyStroke;
 import javax.swing.table.TableModel;
 
 import docking.ActionContext;
+import docking.Tool;
 import docking.action.*;
 import docking.actions.SharedDockingActionPlaceholder;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
-import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.timer.GTimer;
@@ -46,7 +45,7 @@ import ghidra.util.timer.GTimer;
  * not altering the database.
  * <p>
  * Tip: if you are a plugin that uses transient providers, then use 
- * {@link #registerDummy(PluginTool, String)} at creation time to install a dummy representative of
+ * {@link #registerDummy(Tool, String)} at creation time to install a dummy representative of
  * this action in the Tool's options so that user's can update keybindings, regardless of whether
  * they have ever shown one of your transient providers.  
  */
@@ -54,7 +53,7 @@ public class DeleteTableRowAction extends DockingAction {
 
 	private static final KeyStroke DEFAULT_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-	private static final Icon ICON = new GIcon("icon.plugin.table.delete.row");
+	private static final Icon ICON = new GIcon("icon.widget.table.delete.row");
 	private static final String NAME = "Remove Items";
 
 	private GTable table;
@@ -67,7 +66,7 @@ public class DeleteTableRowAction extends DockingAction {
 	 * @param tool the tool whose options will updated with a dummy keybinding
 	 * @param owner the owner of the action that may be installed
 	 */
-	public static void registerDummy(PluginTool tool, String owner) {
+	public static void registerDummy(Tool tool, String owner) {
 		tool.getToolActions().registerSharedActionPlaceholder(new DeleteActionPlaceholder(owner));
 	}
 
@@ -85,7 +84,7 @@ public class DeleteTableRowAction extends DockingAction {
 		super(name, owner, KeyBindingType.SHARED);
 
 		setDescription("Remove the selected rows from the table");
-		setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Remove_Items"));
+		setHelpLocation(new HelpLocation("Search", "Remove_Items"));
 		setToolBarData(new ToolBarData(ICON, null));
 		setPopupMenuData(new MenuData(new String[] { "Remove Items" }, ICON, menuGroup));
 
@@ -166,7 +165,7 @@ public class DeleteTableRowAction extends DockingAction {
 		return false;
 	}
 
-	private void selectRow(TableModel model, final int row) {
+	protected void selectRow(TableModel model, final int row) {
 		Swing.runLater(() -> {
 
 			if (checkForBusy(model)) {

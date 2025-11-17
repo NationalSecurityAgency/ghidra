@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.search.SearchLocationContext;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -176,7 +177,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			}
 
 			// when the row object does not represent an applied reference, then it may have context
-			LocationReferenceContext context = rowObject.getContext();
+			SearchLocationContext context = rowObject.getContext();
 			String text = context.getBoldMatchingText();
 			setText(text);
 			return this;
@@ -202,7 +203,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 				return refTypeString;
 			}
 
-			LocationReferenceContext context = rowObject.getContext();
+			SearchLocationContext context = rowObject.getContext();
 			return context.getPlainText();
 		}
 	}
