@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,15 @@ import javax.swing.table.TableColumn;
 
 import org.junit.Test;
 
-import ghidra.app.plugin.core.strings.ViewStringsProvider;
+import ghidra.app.plugin.core.strings.DefinedStringsProvider;
 import ghidra.app.services.ProgramManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.test.ToyProgramBuilder;
 
-public class ViewStringsPluginScreenShots extends GhidraScreenShotGenerator {
+public class DefinedStringsPluginScreenShots extends GhidraScreenShotGenerator {
 
-	public ViewStringsPluginScreenShots() {
+	public DefinedStringsPluginScreenShots() {
 		super();
 	}
 
@@ -82,14 +82,14 @@ public class ViewStringsPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testDefined_String_Table() {
-		ViewStringsProvider provider = showProvider(ViewStringsProvider.class);
+		DefinedStringsProvider provider = showProvider(DefinedStringsProvider.class);
 		TableColumn addrCol = provider.getTable().getColumnModel().getColumn(0);
 		addrCol.setMaxWidth(200);
 
 		TableColumn dataTypeCol = provider.getTable().getColumnModel().getColumn(3);
 		dataTypeCol.setMaxWidth(200);
 
-		captureIsolatedProvider(ViewStringsProvider.class, 600, 300);
+		captureIsolatedProvider(DefinedStringsProvider.class, 600, 300);
 	}
 
 }

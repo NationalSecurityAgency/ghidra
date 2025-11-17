@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,20 +38,20 @@ import ghidra.util.table.*;
 /**
  * Provider for the defined strings table.
  */
-public class ViewStringsProvider extends ComponentProviderAdapter {
+public class DefinedStringsProvider extends ComponentProviderAdapter {
 
 	public static final Icon ICON = new GIcon("icon.plugin.viewstrings.provider");
 
 	private GhidraThreadedTablePanel<ProgramLocation> threadedTablePanel;
 	private GhidraTableFilterPanel<ProgramLocation> filterPanel;
 	private GhidraTable table;
-	private ViewStringsTableModel stringModel;
+	private DefinedStringsTableModel stringModel;
 	private JComponent mainPanel;
 	private Program currentProgram;
 	private HelpLocation helpLocation;
 	private AtomicReference<ProgramLocation> delayedShowProgramLocation = new AtomicReference<>();
 
-	ViewStringsProvider(ViewStringsPlugin plugin) {
+	DefinedStringsProvider(DefinedStringsPlugin plugin) {
 		super(plugin.getTool(), "Defined Strings", plugin.getName());
 		mainPanel = createWorkPanel();
 		setIcon(ICON);
@@ -70,8 +70,8 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 	}
 
 	@Override
-	public ViewStringsContext getActionContext(MouseEvent event) {
-		return new ViewStringsContext(this, table, stringModel);
+	public DefinedStringsContext getActionContext(MouseEvent event) {
+		return new DefinedStringsContext(this, table, stringModel);
 	}
 
 	@Override
@@ -79,9 +79,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	/*
-	 * @see ghidra.framework.docking.HelpTopic#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return helpLocation;
@@ -107,12 +104,16 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 	private JComponent createWorkPanel() {
 
-		stringModel = new ViewStringsTableModel(tool);
+		stringModel = new DefinedStringsTableModel(tool);
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000);
 		table = threadedTablePanel.getTable();
 		table.setPreferredScrollableViewportSize(new Dimension(350, 150));
-		table.getSelectionModel().addListSelectionListener(e -> notifyContextChanged());
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				notifyContextChanged();
+			}
+		});
 
 		stringModel.addTableModelListener(e -> {
 			int rowCount = stringModel.getRowCount();
@@ -148,7 +149,7 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 			}
 		});
 		TableColumn stringRepCol = table.getColumnModel()
-				.getColumn(ViewStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
+				.getColumn(DefinedStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
 
 		stringRepCol.setCellEditor(new StringRepCellEditor());
 
@@ -201,23 +202,23 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 		return table;
 	}
 
-	public ViewStringsTableModel getModel() {
+	public DefinedStringsTableModel getModel() {
 		return stringModel;
 	}
 
-	private void doShowProgramLocation(ProgramLocation loc) {
-		ProgramLocation realLoc = stringModel.findEquivProgramLocation(loc);
-		if (realLoc != null) {
-			int rowIndex = stringModel.getViewIndex(realLoc);
-			if (rowIndex >= 0) {
-				table.selectRow(rowIndex);
-				table.scrollToSelectedRow();
-			}
-			else {
-				getTool().setStatusInfo(
-					"String at " + realLoc.getAddress() + " is filtered out of table view", false);
-			}
+	private void doShowProgramLocation(ProgramLocation pl) {
+		ProgramLocation modelLocation = stringModel.findEquivProgramLocation(pl);
+		if (modelLocation == null) {
+			return;
 		}
+
+		int newRow = stringModel.getViewIndex(modelLocation);
+		if (newRow < 0) {
+			return;
+		}
+
+		table.selectRow(newRow);
+		table.scrollToSelectedRow();
 	}
 
 	public void showProgramLocation(ProgramLocation loc) {

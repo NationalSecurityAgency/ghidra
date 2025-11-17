@@ -1011,6 +1011,10 @@ public class GTable extends JTable {
 		}
 	}
 
+	/**
+	 * Scrolls the selected row into the view center.  This call will not scroll if the selected row
+	 * is already in the view.
+	 */
 	public void scrollToSelectedRow() {
 		Container parent = getParent();
 		if (!(parent instanceof JViewport viewport)) {
@@ -1027,6 +1031,10 @@ public class GTable extends JTable {
 		int row = selectedRows[0];
 		Rectangle cellRect = getCellRect(row, 0, true);
 		Rectangle visibleRect = getVisibleRect();
+		if (visibleRect.contains(cellRect)) {
+			return;
+		}
+
 		cellRect.x = visibleRect.x; // use the view x to prevent side scrolling
 		cellRect.width = visibleRect.width;
 
