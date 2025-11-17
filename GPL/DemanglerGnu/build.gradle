@@ -77,6 +77,7 @@ model {
 		//
 		demangler_gnu_v2_41(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
@@ -100,6 +101,7 @@ model {
 		//
 		demangler_gnu_v2_24(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
+			targetPlatform "win_arm_64"
 			targetPlatform "linux_x86_64"
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
