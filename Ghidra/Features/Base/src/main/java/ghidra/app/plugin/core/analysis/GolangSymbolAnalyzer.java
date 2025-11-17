@@ -130,6 +130,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
+		Msg.info(this, "Go version %s".formatted(goBinary.getGoVer()));
+
 		goTypes = goBinary.getGoTypes();
 		markupSession = goBinary.createMarkupSession(monitor);
 
