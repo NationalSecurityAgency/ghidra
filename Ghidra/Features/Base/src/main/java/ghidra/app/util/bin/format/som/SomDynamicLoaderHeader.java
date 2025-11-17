@@ -452,7 +452,7 @@ public class SomDynamicLoaderHeader implements StructConverter {
 	}
 
 	/**
-	 * {@return the {@link List} of {@link SomExportEntryExt export entry extensions}
+	 * {@return the {@link List} of {@link SomExportEntryExt export entry extensions}}
 	 */
 	public List<SomExportEntryExt> getExportExtensions() {
 		return exportExtensions;

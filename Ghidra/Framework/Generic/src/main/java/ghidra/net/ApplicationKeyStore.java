@@ -95,7 +95,6 @@ public class ApplicationKeyStore {
 	/**
 	 * Attempt to load a client/server keystore in a PKCS12 form (*.p12, *.pks, *.pfx) or 
 	 * Java JKS (*.jks) form.
-	 * @param path keystore file path
 	 * @param pwd keystore password
 	 * @return keystore instance
 	 * @throws IOException
