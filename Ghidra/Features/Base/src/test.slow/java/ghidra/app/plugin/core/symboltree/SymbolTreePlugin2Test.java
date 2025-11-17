@@ -35,6 +35,7 @@ import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolCategoryNode;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.viewer.field.*;
@@ -65,7 +66,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
 	private DockingActionIf convertToClassAction;
-	private ToggleDockingAction goToToggleAction;
+	private ToggleDockingAction navigateIncomingAction;
 	private SymbolTreeTestUtils util;
 	private SymbolGTree tree;
 
@@ -89,7 +90,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		getActions();
 		rootNode = util.getRootNode();
 		tree = util.getTree();
-		SwingUtilities.invokeAndWait(() -> goToToggleAction.setSelected(true));
+		SwingUtilities.invokeAndWait(() -> navigateIncomingAction.setSelected(true));
 	}
 
 	@After
@@ -103,7 +104,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// select a node; code browser should go there
 
-		assertTrue(goToToggleAction.isSelected());
+		assertTrue(navigateIncomingAction.isSelected());
 
 		GTreeNode fNode = getFunctionsNode();
 		util.expandNode(fNode);
@@ -732,8 +733,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		convertToClassAction = getAction(plugin, "Convert to Class");
 		assertNotNull(convertToClassAction);
 
-		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 	}
 
 	private void performTreeAction(DockingActionIf action, ActionContext context) {
