@@ -155,7 +155,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * @return new {@link GoRttiMapper}, or null if basic Go information is not found in the
 	 * binary
 	 * @throws BootstrapInfoException if it is a Go binary and has an unsupported or
-	 * unparseable version number or if there was a missing Go bootstrap .gdt file
+	 * unparseable version number or if Go bootstrap info was missing
 	 * @throws IOException if there was an error in the Ghidra Go RTTI reading logic 
 	 */
 	public static GoRttiMapper getGoBinary(Program program, TaskMonitor monitor)
@@ -326,9 +326,9 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * @param goVer version of Go
 	 * @param apiSnapshot json func signatures and data types 
 	 * @throws IOException if error linking a structure mapped structure to its matching
-	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
-	 * @throws BootstrapInfoException if there is no matching bootstrap gdt for this specific
-	 * type of Go binary
+	 * ghidra structure, which is a programming error or invalid bootstrap info
+	 * @throws BootstrapInfoException if there is no bootstrap info for this specific
+	 * type and version of Go binary
 	 */
 	public GoRttiMapper(Program program, GoBuildInfo buildInfo, int ptrSize, GoVer goVer,
 			GoApiSnapshot apiSnapshot) throws IOException, BootstrapInfoException {
