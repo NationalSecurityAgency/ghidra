@@ -197,7 +197,7 @@ public class TextComponentSearcherTest extends AbstractDockingTest {
 		results.activate();
 		assertActive(results);
 
-		results.dispose();
+		runSwing(() -> results.dispose());
 		assertInactive(results);
 
 		// make sure active() does not work once disposed

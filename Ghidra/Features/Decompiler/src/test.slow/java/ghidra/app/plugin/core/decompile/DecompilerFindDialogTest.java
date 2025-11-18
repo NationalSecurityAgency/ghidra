@@ -23,18 +23,19 @@ import org.junit.After;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.widgets.FindDialogResultsProvider;
+import docking.widgets.SearchLocation;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.table.GTable;
+import docking.widgets.table.RowObjectFilterModel;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
-import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
-import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.GhidraThreadedTablePanel;
+import util.CollectionUtils;
 
 public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
@@ -306,20 +307,16 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 	}
 
 	private GTable getResultsTable() {
-		@SuppressWarnings("unchecked")
-		TableComponentProvider<DecompilerSearchLocation> tableProvider =
-			waitForComponentProvider(TableComponentProvider.class);
-		GhidraThreadedTablePanel<DecompilerSearchLocation> panel =
-			tableProvider.getThreadedTablePanel();
-		return panel.getTable();
+		FindDialogResultsProvider tableProvider =
+			waitForComponentProvider(FindDialogResultsProvider.class);
+		return tableProvider.getTable();
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<DecompilerSearchLocation> getResults(GTable table) {
-		@SuppressWarnings("unchecked")
-		GhidraProgramTableModel<DecompilerSearchLocation> model =
-			(GhidraProgramTableModel<DecompilerSearchLocation>) table.getModel();
-		waitForTableModel(model);
-		return model.getModelData();
+		RowObjectFilterModel<SearchLocation> model =
+			(RowObjectFilterModel<SearchLocation>) table.getModel();
+		return CollectionUtils.asList(model.getModelData(), DecompilerSearchLocation.class);
 	}
 
 	private void next() {
@@ -331,7 +328,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 	}
 
 	private void searchAll() {
-		pressButtonByText(findDialog, "Search All");
+		pressButtonByText(findDialog, "Find All");
 	}
 
 	private void assertSearchHit(int line, int column, int length) {

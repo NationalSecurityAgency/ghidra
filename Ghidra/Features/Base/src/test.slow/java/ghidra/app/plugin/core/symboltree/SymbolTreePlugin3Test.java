@@ -27,6 +27,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.tree.GTree;
@@ -334,15 +335,15 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSaveState() throws Exception {
-		final ToggleDockingAction navigateIncomingAction =
+		ToggleDockingAction navigateIncomingAction =
 			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
 		assertNotNull(navigateIncomingAction);
-		runSwing(() -> navigateIncomingAction.setSelected(true));
+		setToggleActionSelected(navigateIncomingAction, new DefaultActionContext(), true);
 
 		SaveState saveState = new SaveState("Test");
 		plugin.writeConfigState(saveState);
 
-		assertTrue(saveState.getBoolean("GO_TO_TOGGLE_STATE", false));
+		assertTrue(saveState.getBoolean("NAVIGATE_INCOMING", false));
 
 		runSwing(() -> {
 			tool.removePlugins(List.of(plugin));
@@ -357,13 +358,13 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(plugin);
 		util.setPlugin(plugin);
 
-		ToggleDockingAction goToToggleAction2 =
-			(ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction2);
-		assertFalse(goToToggleAction2.isSelected());
+		navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
+		assertFalse(navigateIncomingAction.isSelected());
 		plugin.readConfigState(saveState);
 
-		assertTrue(goToToggleAction2.isSelected());
+		assertTrue(navigateIncomingAction.isSelected());
 	}
 
 	@Test

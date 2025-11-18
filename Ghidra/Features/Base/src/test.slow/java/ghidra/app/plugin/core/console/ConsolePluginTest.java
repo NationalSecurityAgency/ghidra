@@ -407,18 +407,25 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void next() {
 		pressButtonByText(findDialog, "Next");
-		waitForTasks();
+		waitForNotBusy();
 	}
 
 	private void previous() {
 		pressButtonByText(findDialog, "Previous");
-		waitForTasks();
+		waitForNotBusy();
 	}
 
 	private void findAll(String text) {
 		runSwing(() -> findDialog.setSearchText(text));
 		pressButtonByText(findDialog, "Find All");
-		waitForTasks();
+		waitForNotBusy();
+	}
+
+	private void waitForNotBusy() {
+		TextComponentSearcher searcher = (TextComponentSearcher) findDialog.getSearcher();
+		waitForSwing();
+		waitFor(() -> !searcher.isBusy());
+		waitForSwing();
 	}
 
 	private void assertSearchModelHasNoSearchResults() {
@@ -489,6 +496,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void selectRow(FindDialogResultsProvider resultsProvider, int row) {
 		GTable table = resultsProvider.getTable();
 		runSwing(() -> table.selectRow(row));
+		waitForSwing();
 	}
 
 	private void verfiyHighlightColor(List<TestTextMatch> matches)
@@ -523,7 +531,6 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private List<TestTextMatch> getExpectedMatches() {
-
 		String searchText = findDialog.getSearchText();
 		assertFalse(searchText.isEmpty());
 		return getExpectedMatches(searchText);
@@ -541,7 +548,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int index = text.indexOf(searchText);
 		while (index != -1) {
-			results.add(new TestTextMatch(index, index + searchText.length()));
+			results.add(new TestTextMatch(searchText, index, index + searchText.length()));
 			index = text.indexOf(searchText, index + 1);
 		}
 
@@ -559,7 +566,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return waitForDialogComponent(FindDialog.class);
 	}
 
-	private record TestTextMatch(int start, int end) {
+	private record TestTextMatch(String searchText, int start, int end) {
 
 		boolean contains(int caret) {
 			return start <= caret && caret <= end;
@@ -567,7 +574,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public String toString() {
-			return "[" + start + ',' + end + ']';
+			return searchText + ": [" + start + ',' + end + ']';
 		}
 	}
 }
