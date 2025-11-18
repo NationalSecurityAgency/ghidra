@@ -26,7 +26,6 @@ import javax.swing.KeyStroke;
 import org.junit.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -35,7 +34,7 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-		GhidraScriptUtil.initialize(new BundleHost(), null);
+		GhidraScriptUtil.acquireBundleHostReference();
 		Path userScriptDir = java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
 		if (Files.notExists(userScriptDir)) {
 			Files.createDirectories(userScriptDir);
@@ -44,7 +43,7 @@ public class PythonScriptInfoTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		GhidraScriptUtil.dispose();
+		GhidraScriptUtil.releaseBundleHostReference();
 	}
 
 	@Test
