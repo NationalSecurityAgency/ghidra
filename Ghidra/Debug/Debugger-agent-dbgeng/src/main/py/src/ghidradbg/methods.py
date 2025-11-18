@@ -845,7 +845,9 @@ def write_mem(process: Process, address: Address, data: bytes) -> None:
 def write_reg(frame: StackFrame, name: str, value: bytes) -> None:
     """Write a register."""
     f = find_frame_by_obj(frame)
-    util.select_frame(f.FrameNumber)
+    current = util.selected_frame()
+    if f.FrameNumber != current:
+        raise Exception("Mismatch on frame")
     nproc = util.selected_process()
     trace: Trace[commands.Extra] = frame.trace
     rv = trace.extra.require_rm().map_value_back(nproc, name, value)
