@@ -152,6 +152,11 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	 * @return the token under the cursor
 	 */
 	protected ClangToken getToken() {
+		waitForDecompiler();
+		return getToken(provider);
+	}
+
+	protected ClangToken getCursorToken() {
 		return getToken(provider);
 	}
 

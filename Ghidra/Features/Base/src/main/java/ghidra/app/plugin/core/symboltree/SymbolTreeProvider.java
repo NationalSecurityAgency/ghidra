@@ -604,13 +604,13 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	void readConfigState(SaveState saveState) {
-		navigateIncomingAction.setSelected(saveState.getBoolean("NAVIGTE_INCOMING", false));
-		navigateOutgoingAction.setSelected(saveState.getBoolean("NAVIGTE_OUTGOING", true));
+		navigateIncomingAction.setSelected(saveState.getBoolean("NAVIGATE_INCOMING", false));
+		navigateOutgoingAction.setSelected(saveState.getBoolean("NAVIGATE_OUTGOING", true));
 	}
 
 	void writeConfigState(SaveState saveState) {
-		saveState.putBoolean("NAVIGTE_INCOMING", navigateIncomingAction.isSelected());
-		saveState.putBoolean("NAVIGTE_OUTGOING", navigateOutgoingAction.isSelected());
+		saveState.putBoolean("NAVIGATE_INCOMING", navigateIncomingAction.isSelected());
+		saveState.putBoolean("NAVIGATE_OUTGOING", navigateOutgoingAction.isSelected());
 	}
 
 	void dispose() {

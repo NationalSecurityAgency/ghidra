@@ -74,6 +74,10 @@ public class TextComponentSearcher implements FindDialogSearcher {
 		this.maxContextChars = max;
 	}
 
+	public boolean isBusy() {
+		return worker.isBusy();
+	}
+
 	@Override
 	public void dispose() {
 

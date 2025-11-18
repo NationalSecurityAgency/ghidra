@@ -1405,7 +1405,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			Map<Integer, List<DecompilerSearchLocation>> locationsByLine =
 				currentSearchResults.getLocationsByLine();
 			List<DecompilerSearchLocation> locationsOnLine = locationsByLine.get(lineNumber);
-			if (locationsOnLine.isEmpty()) {
+			if (locationsOnLine == null) {
 				return new Highlight[0];
 			}
 
