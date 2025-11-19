@@ -57,7 +57,9 @@ def get_user_settings_dir(install_dir: Path, dev: bool) -> Path:
     app_release_name: str = app_props['application.release.name']
     versioned_name: str = f'{app_name}_{app_version}_{app_release_name}'
     if dev:
-        versioned_name += f'_location_{install_dir.parent.name}'
+        ghidra_repos_config = install_dir / 'ghidra.repos.config'
+        dir_name = install_dir.parent.name if ghidra_repos_config.is_file() else install_dir.name
+        versioned_name += f'_location_{dir_name}'
 
     # Check for application.settingsdir in launch.properties
     for launch_prop in get_launch_properties(install_dir, dev):
@@ -223,6 +225,8 @@ def main() -> None:
     dist_dir: Path = pyghidra_dir / 'pypkg' / 'dist'
     venv_dir = get_ghidra_venv(install_dir, args.dev)
     python_cmd: List[str] = find_supported_python_exe(install_dir, args.dev)
+    
+    print(install_dir)
     
     if python_cmd is not None:
         print(f'Using Python command: "{" ".join(python_cmd)}"')
