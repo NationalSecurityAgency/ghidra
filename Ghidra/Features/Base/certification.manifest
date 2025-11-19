@@ -823,6 +823,7 @@ src/main/resources/defaultTools/images/tar.png||Nuvola Icons - LGPL 2.1|||Nuvola
 src/main/resources/defaultTools/images/tools.png||Oxygen Icons - LGPL 3.0|||originally configure.png from tango|END|
 src/main/resources/defaultTools/images/video-x-generic.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/defaultTools/images/viewedCode.gif||GHIDRA||||END|
+src/main/resources/ghidra/app/plugin/core/analysis/rust/demangler/early-recursion-limit.txt||Apache License 2.0||||END|
 src/main/resources/ghidra/app/plugin/core/totd/tips.txt||GHIDRA||||END|
 src/main/resources/help/Dummy_HelpSet.hs||GHIDRA||reviewed||END|
 src/main/resources/help/empty.htm||GHIDRA||||END|
@@ -1086,7 +1087,6 @@ src/test.slow/resources/dirlist.txt||GHIDRA||reviewed||END|
 src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
-src/test/java/ghidra/app/plugin/core/analysis/rust/demangler/early-recursion-limit.txt||Apache License 2.0||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|
