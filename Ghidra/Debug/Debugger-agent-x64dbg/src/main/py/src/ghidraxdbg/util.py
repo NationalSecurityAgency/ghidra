@@ -102,6 +102,7 @@ def compute_dbg_ver() -> DbgVersion:
 
 
 DBG_VERSION = compute_dbg_ver()
+last_process = None
 
 
 def get_target():
@@ -124,12 +125,14 @@ def get_inst_sz(addr: int) -> int:
 
 
 def selected_process() -> int:
+    global last_process
     try:
         pid = dbg.client.debugee_pid()
+        if pid is not None:
+            last_process = pid
         return pid
     except:
-        # NB: we're intentionally returning 0 instead of None
-        return 0
+        return None
 
 
 def selected_process_space() -> int:
@@ -202,11 +205,13 @@ def process_list0(running: bool = False) -> Union[
         Iterable[Tuple[int, str, int]], Iterable[Tuple[int]]]:
     """Get the list of all processes."""
     nproc = selected_process()
-    proc = psutil.Process(nproc)
     sysids = []
     names = []
+    if nproc is None:
+        return zip(sysids)
 
     try:
+        proc = psutil.Process(nproc)
         sysids.append(nproc)
         names.append(proc.name())
         return zip(sysids, names)

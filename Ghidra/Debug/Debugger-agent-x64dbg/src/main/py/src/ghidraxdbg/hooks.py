@@ -107,14 +107,12 @@ class ProcessState:
 
     def record_exited(self, description: Optional[str] = None,
                       time: Optional[Schedule] = None) -> None:
-        # print("RECORD_EXITED")
         trace = commands.STATE.require_trace()
         if description is not None:
-            trace.snapshot(description, time=time)
-        proc = util.selected_process()
-        ipath = commands.PROCESS_PATTERN.format(procnum=proc)
+            trace.snapshot(f"Exited {description}", time=time)
+        ipath = commands.PROCESS_PATTERN.format(procnum=util.last_process)
         procobj = trace.proxy_object_path(ipath)
-        #procobj.set_value('Exit Code', exit_code)
+        procobj.set_value('Exit Code', description)
         procobj.set_value('State', 'TERMINATED')
 
 
@@ -165,13 +163,15 @@ def on_state_changed(*args) -> None:
     ev_type = args[0].event_type
     # print(ev_type)
     proc = util.selected_process()
-    if proc not in PROC_STATE:
-        return
-    PROC_STATE[proc].waiting = False
     trace = commands.STATE.require_trace()
     with trace.client.batch():
         with trace.open_tx("State changed proc {}".format(proc)):
             commands.put_state(proc)
+    if proc not in PROC_STATE:
+        if ev_type == EventType.EVENT_EXIT_PROCESS:
+            on_process_deleted(args)
+        return
+    PROC_STATE[proc].waiting = False
     try:
         if ev_type == EventType.EVENT_RESUME_DEBUG:
             on_cont()
@@ -219,10 +219,9 @@ def on_process_selected() -> None:
 
 @log_errors
 def on_process_deleted(*args) -> None:
-    # print("ON_PROCESS_DELETED")
-    exit_code = args[0]
+    # print("PROCESS_DELETED: args={}".format(args))
     proc = util.selected_process()
-    on_exited(proc)
+    on_exited(args)
     if proc in PROC_STATE:
         del PROC_STATE[proc]
     trace = commands.STATE.trace
@@ -342,20 +341,17 @@ def on_stop(*args) -> None:
             commands.activate()
 
 
-def on_exited(proc) -> None:
+def on_exited(*args) -> None:
     # print("ON EXITED")
-    if proc not in PROC_STATE:
-        # print("not in state")
-        return
     trace = commands.STATE.trace
     if trace is None:
         return
-    state = PROC_STATE[proc]
+    state = PROC_STATE[util.last_process]
     state.visited.clear()
-    description = "Exited"
     with trace.client.batch():
         with trace.open_tx("Exited"):
-            state.record_exited(description)
+            exit_code = args[0][0].event_data.dwExitCode
+            state.record_exited(exit_code)
             commands.activate()
 
 
@@ -394,7 +390,12 @@ def install_hooks() -> None:
     dbg.watch_debug_event(EventType.EVENT_STEPPED, lambda x: on_state_changed(x))
     dbg.watch_debug_event(EventType.EVENT_PAUSE_DEBUG, lambda x: on_state_changed(x))
     dbg.watch_debug_event(EventType.EVENT_RESUME_DEBUG, lambda x: on_state_changed(x))
-    #dbg.watch_debug_event(EventType.EVENT_DEBUG, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_ATTACH, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_DETACH, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_INIT_DEBUG, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_STOP_DEBUG, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_CREATE_PROCESS, lambda x: on_state_changed(x))
+    dbg.watch_debug_event(EventType.EVENT_EXIT_PROCESS, lambda x: on_state_changed(x))
 
 
 def remove_hooks() -> None:
@@ -410,6 +411,7 @@ def enable_current_process() -> None:
 
 
 def disable_current_process() -> None:
+    # print("Disable current process")
     proc = util.selected_process()
     if proc in PROC_STATE:
         # Silently ignore already disabled
