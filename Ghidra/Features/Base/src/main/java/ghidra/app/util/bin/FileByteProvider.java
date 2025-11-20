@@ -106,7 +106,7 @@ public class FileByteProvider implements MutableByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		return currentLength;
 	}
 

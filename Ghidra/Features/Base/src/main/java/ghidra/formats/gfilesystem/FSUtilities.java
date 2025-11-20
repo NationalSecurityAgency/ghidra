@@ -33,6 +33,7 @@ import org.apache.commons.io.FilenameUtils;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.factory.FileSystemFactoryDependencyException;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -301,7 +302,12 @@ public class FSUtilities {
 			displayCryptoException(originator, parent, title, message, (CryptoException) throwable);
 		}
 		else {
-			Msg.showError(originator, parent, title, message, throwable);
+			if (throwable instanceof FileSystemFactoryDependencyException) {
+				Msg.showError(originator, parent, title, message + "\n\n" + throwable.getMessage());
+			}
+			else {
+				Msg.showError(originator, parent, title, message, throwable);
+			}
 		}
 	}
 

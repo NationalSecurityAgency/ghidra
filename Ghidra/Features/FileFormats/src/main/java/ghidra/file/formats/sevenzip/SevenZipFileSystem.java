@@ -294,6 +294,19 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 	}
 
 	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		synchronized (fsIndex) {
+			ISimpleInArchiveItem item = fsIndex.getMetadata(f);
+			try {
+				return item.isFolder() ? FileType.DIRECTORY : FileType.FILE;
+			}
+			catch (SevenZipException e) {
+				return FileType.UNKNOWN;
+			}
+		}
+	}
+
+	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try {
