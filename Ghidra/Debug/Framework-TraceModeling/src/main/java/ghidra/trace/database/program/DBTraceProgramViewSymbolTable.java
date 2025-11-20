@@ -557,4 +557,16 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 		}
 	}
 
+	@Override
+	public int anonymizeLabelHistory(String anonymousName) {
+		// Trace programs don't support label history anonymization
+		return 0;
+	}
+
+	@Override
+	public int anonymizeLabelHistory(String anonymousName, Address addr) {
+		// Trace programs don't support label history anonymization
+		return 0;
+	}
+
 }
