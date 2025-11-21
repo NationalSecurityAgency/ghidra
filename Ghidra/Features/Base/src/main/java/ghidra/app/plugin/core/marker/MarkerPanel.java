@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,12 @@ import javax.swing.JPanel;
 import javax.swing.ToolTipManager;
 
 import docking.widgets.fieldpanel.FieldPanel;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.listingpanel.VerticalPixelAddressMap;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.util.UniversalID;
 
 /**
  * Panel to display markers. Normally placed to the left hand side of the scrolled
@@ -36,29 +38,40 @@ import ghidra.program.model.listing.Program;
 public class MarkerPanel extends JPanel {
 
 	private MarkerManager manager;
-
 	private Program program;
 	private AddressIndexMap addrMap;
-	private VerticalPixelAddressMap pixmap;
+	private VerticalPixelAddressMap pixMap;
+	private UniversalID ownerId;
 
 	MarkerPanel(MarkerManager manager) {
 		super();
 		this.manager = manager;
-
 		this.setPreferredSize(new Dimension(16, 1));
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}
 
-	void setProgram(Program program, AddressIndexMap addrMap, VerticalPixelAddressMap pixmap) {
-		this.program = program;
-		this.addrMap = addrMap;
-		this.pixmap = pixmap;
+	void setOwnerId(UniversalID ownerId) {
+		this.ownerId = ownerId;
+	}
+
+	void dispose() {
+		this.program = null;
+		this.addrMap = null;
+		this.pixMap = null;
+		ToolTipManager.sharedInstance().unregisterComponent(this);
+	}
+
+	void listingUpdated(ListingPanel listingPanel, AddressIndexMap addressMap,
+			VerticalPixelAddressMap pixelMap) {
+		this.program = listingPanel.getProgram();
+		this.addrMap = addressMap;
+		this.pixMap = pixelMap;
 	}
 
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		manager.paintMarkers(program, g, pixmap, addrMap);
+		manager.paintMarkers(ownerId, program, g, pixMap, addrMap);
 	}
 
 	@Override
@@ -81,14 +94,14 @@ public class MarkerPanel extends JPanel {
 	}
 
 	String generateToolTip(MouseEvent event) {
-		if (pixmap == null) {
+		if (pixMap == null) {
 			return null;
 		}
 
 		int y = event.getY();
 		int x = event.getX();
-		int layoutIndex = pixmap.findLayoutAt(y);
-		Address layoutAddress = pixmap.getLayoutAddress(layoutIndex);
+		int layoutIndex = pixMap.findLayoutAt(y);
+		Address layoutAddress = pixMap.getLayoutAddress(layoutIndex);
 		if (layoutAddress == null) {
 			return null;
 		}
@@ -99,7 +112,8 @@ public class MarkerPanel extends JPanel {
 
 	private List<String> getMarkerTooltipLines(int y, int x, int layoutIndex,
 			Address layoutAddress) {
-		Address endAddr = pixmap.getLayoutEndAddress(layoutIndex);
+		Address endAddr = pixMap.getLayoutEndAddress(layoutIndex);
 		return manager.getMarkerTooltipLines(program, y, layoutIndex, layoutAddress, endAddr);
 	}
+
 }

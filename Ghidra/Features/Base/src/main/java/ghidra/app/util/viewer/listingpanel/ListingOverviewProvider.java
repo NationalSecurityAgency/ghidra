@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,28 +22,32 @@ import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.listing.Program;
 
 /**
- * Interface implemented by classes that provide overview components to the right side of the
- * listing.
+ * An overview component that will be placed to the right side of the listing.
  */
-public interface OverviewProvider {
+public interface ListingOverviewProvider {
 	/**
 	 * Returns the component to display in the right margin of the listing.
 	 * @return the component
 	 */
-	JComponent getComponent();
+	public JComponent getComponent();
 
 	/**
-	 * Sets the current program and associated address-index map
+	 * Called to notify this margin provider that the current screen information has changed.
 	 * 
-	 * @param program the program to use.
-	 * @param map the address-index map to use.
+	 * @param program the program to use
+	 * @param map the address index map to use
 	 */
-	void setProgram(Program program, AddressIndexMap map);
+	public void screenDataChanged(Program program, AddressIndexMap map);
 
 	/**
 	 * Set the component provider that this overview navigates
 	 * 
 	 * @param navigatable the navigatable provider
 	 */
-	void setNavigatable(Navigatable navigatable);
+	public void setNavigatable(Navigatable navigatable);
+
+	/**
+	 * Clients call this when they are done with this provider.
+	 */
+	public void dispose();
 }

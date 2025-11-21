@@ -97,18 +97,17 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
-		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
-		if (highlightMarkers != null) {
-			highlightMarkers.clearAll();
-		}
-		if (highlight != null && currentProgram != null) {
-			if (highlightMarkers != null) {
-				highlightMarkers.add(highlight);
-			}
-		}
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
 		if (provider == connectedProvider) {
 			tool.firePluginEvent(new ProgramHighlightPluginEvent(getName(), highlight,
+				connectedProvider.getProgram()));
+		}
+	}
+
+	@Override
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation location) {
+		if (provider == connectedProvider) {
+			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), location,
 				connectedProvider.getProgram()));
 		}
 	}
@@ -125,7 +124,7 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 				currentProgram.removeListener(this);
 			}
 			ProgramActivatedPluginEvent evt = (ProgramActivatedPluginEvent) event;
-			clearMarkers(currentProgram); // do this just before changing the program
+			connectedProvider.clearMarkers(currentProgram); // do this before changing the program
 
 			currentProgram = evt.getActiveProgram();
 			if (currentProgram != null) {
@@ -135,12 +134,13 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 			else {
 				currentView = new AddressSet();
 			}
+
 			connectedProvider.doSetProgram(currentProgram);
 
-			updateHighlightProvider();
-			updateBackgroundColorModel();
-			setHighlight(new FieldSelection());
-			setSelection(new ProgramSelection());
+			connectedProvider.updateHighlightProvider();
+			updateBackgroundColorModel(connectedProvider);
+			setConnectedProviderHighlight(new FieldSelection());
+			setConnectedProviderSelection(new ProgramSelection());
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			ProgramLocationPluginEvent evt = (ProgramLocationPluginEvent) event;
@@ -156,12 +156,12 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		}
 		else if (event instanceof ProgramSelectionPluginEvent) {
 			ProgramSelectionPluginEvent evt = (ProgramSelectionPluginEvent) event;
-			setSelection(evt.getSelection());
+			setConnectedProviderSelection(evt.getSelection());
 		}
 		else if (event instanceof ProgramHighlightPluginEvent) {
 			ProgramHighlightPluginEvent evt = (ProgramHighlightPluginEvent) event;
 			if (evt.getProgram() == currentProgram) {
-				setHighlight(evt.getHighlight());
+				connectedProvider.setHighlight(evt.getHighlight());
 			}
 		}
 		else if (event instanceof ViewChangedPluginEvent) {
@@ -206,10 +206,13 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		if (location != null) {
 			connectedProvider.setLocation(location);
 		}
-		setHighlight(highlight);
+
+		connectedProvider.setHighlight(highlight);
+
 		if (selection != null) {
 			connectedProvider.setSelection(selection);
 		}
+
 		if (vp != null) {
 			FieldPanel fieldPanel = connectedProvider.getListingPanel().getFieldPanel();
 			fieldPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
@@ -268,7 +271,7 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		FieldSelection highlight = new FieldSelection();
 		highlight.load(saveState);
 		if (!highlight.isEmpty()) {
-			setHighlight(highlight);
+			setConnectedProviderHighlight(highlight);
 		}
 	}
 
@@ -284,19 +287,6 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 		super.readConfigState(saveState);
 		formatMgr.readState(saveState);
 		connectedProvider.readState(saveState);
-	}
-
-	@Override
-	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
-		if (provider == connectedProvider) {
-			MarkerSet cursorMarkers = getCursorMarkers(currentProgram);
-			if (cursorMarkers != null) {
-				cursorMarkers.clearAll();
-				cursorMarkers.add(location.getAddress());
-			}
-			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), location,
-				connectedProvider.getProgram()));
-		}
 	}
 
 	@Override

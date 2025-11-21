@@ -394,8 +394,8 @@ public class ListingCodeComparisonView
 	public Object getContextObjectForMarginPanels(ListingPanel panel, MouseEvent event) {
 		Object source = event.getSource();
 		// Is event source a marker margin provider on the left side of the listing?
-		List<MarginProvider> marginProviders = panel.getMarginProviders();
-		for (MarginProvider marginProvider : marginProviders) {
+		List<ListingMarginProvider> marginProviders = panel.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProviders) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -406,8 +406,8 @@ public class ListingCodeComparisonView
 			}
 		}
 		// Is event source an overview provider on the right side of the listing?
-		List<OverviewProvider> overviewProviders = panel.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProviders) {
+		List<ListingOverviewProvider> overviewProviders = panel.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProviders) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source; // Return the overview provider that was clicked.
@@ -623,8 +623,8 @@ public class ListingCodeComparisonView
 
 	private Object getContextForMarginPanels(ListingPanel lp, MouseEvent event) {
 		Object source = event.getSource();
-		List<MarginProvider> marginProvidersForLP = lp.getMarginProviders();
-		for (MarginProvider marginProvider : marginProvidersForLP) {
+		List<ListingMarginProvider> marginProvidersForLP = lp.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProvidersForLP) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -634,8 +634,8 @@ public class ListingCodeComparisonView
 				return source;
 			}
 		}
-		List<OverviewProvider> overviewProvidersForLP = lp.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProvidersForLP) {
+		List<ListingOverviewProvider> overviewProvidersForLP = lp.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProvidersForLP) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source;

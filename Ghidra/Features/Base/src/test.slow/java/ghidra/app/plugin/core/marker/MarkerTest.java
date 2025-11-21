@@ -44,17 +44,15 @@ import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.highlight.SetHighlightPlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.viewer.listingpanel.OverviewProvider;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
-import ghidra.util.Msg;
+import ghidra.util.datastruct.WeakSet;
 
 public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -162,8 +160,13 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		setSelection(fp, sel);
 
 		MarkerManager mm = (MarkerManager) markerService;
-		OverviewProvider op = mm.getOverviewProvider();
-		JPanel navPanel = (JPanel) op.getComponent();
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerOverviewProvider> overviewProviders =
+			(WeakSet<MarkerOverviewProvider>) getInstanceField("overviewProviders", mm);
+		MarkerOverviewProvider provider = overviewProviders.iterator().next();
+
+		JPanel navPanel = (JPanel) provider.getComponent();
 
 		waitForProgram(program);
 
@@ -224,8 +227,13 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(addrSet.contains(addr("0xf000131b")));
 
 		MarkerManager mm = (MarkerManager) markerService;
-		OverviewProvider op = mm.getOverviewProvider();
-		JPanel navPanel = (JPanel) op.getComponent();
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerOverviewProvider> overviewProviders =
+			(WeakSet<MarkerOverviewProvider>) getInstanceField("overviewProviders", mm);
+		MarkerOverviewProvider provider = overviewProviders.iterator().next();
+
+		JPanel navPanel = (JPanel) provider.getComponent();
 
 		waitForProgram(program);
 
@@ -278,7 +286,12 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseEvent dummyEvent =
 			new MouseEvent(cb.getFieldPanel(), (int) time, time, 0, x, y, 1, false);
 		MarkerManager mm = (MarkerManager) markerService;
-		String tooltip = runSwing(() -> mm.generateToolTip(dummyEvent));
+
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerMarginProvider> marginProviders =
+			(WeakSet<MarkerMarginProvider>) getInstanceField("marginProviders", mm);
+		MarkerMarginProvider provider = marginProviders.iterator().next();
+		String tooltip = runSwing(() -> provider.generateToolTip(dummyEvent));
 		assertEquals(
 			"<html><font size=\"4\">Cursor<BR>Note [TEST]: comment<BR>Changes: Unsaved<BR>",
 			tooltip);
@@ -316,11 +329,11 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseEvent dummyEvent = new MouseEvent(cb.getFieldPanel(), (int) System.currentTimeMillis(),
 			System.currentTimeMillis(), 0, x, y, 1, false);
 
-		// debug
-		ProgramLocation location = cb.getListingPanel().getProgramLocation(dummyEvent.getPoint());
-		Msg.debug(this, "location for point: " + location + "; at " + location.getAddress());
-
-		String tooltip = runSwing(() -> mm.generateToolTip(dummyEvent));
+		@SuppressWarnings("unchecked")
+		WeakSet<MarkerMarginProvider> marginProviders =
+			(WeakSet<MarkerMarginProvider>) getInstanceField("marginProviders", mm);
+		MarkerMarginProvider provider = marginProviders.iterator().next();
+		String tooltip = runSwing(() -> provider.generateToolTip(dummyEvent));
 		assertNotNull("No tooltip for field: " + cb.getCurrentField() + "\n\tat address: " +
 			cb.getCurrentAddress(), tooltip);
 
