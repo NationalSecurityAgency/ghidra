@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.sparseimage;
+package ghidra.file.formats.zstd;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.file.formats.sevenzip.SevenZipCliToolWrapper;
 import ghidra.formats.gfilesystem.AbstractSinglePayloadFileSystem;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 
 /**
- * A pseudo filesystem that contains a single file that is the decompressed contents
- * of the sparse container file.
+ * GFileSystem that decompresses a zstd file and presents the decompressed payload as the file
+ * system's single file.
+ * <p>
+ * Depends on the user already having a zstd or 7zip cmd line tool installed somewhere within their 
+ * operating system's PATH.
+ * <p>
+ * See {@link ZstdCliToolWrapper} and {@link SevenZipCliToolWrapper}.
  */
-@FileSystemInfo(type = "simg", description = "Android Sparse Image (simg)", factory = SparseImageFileSystemFactory.class)
-public class SparseImageFileSystem extends AbstractSinglePayloadFileSystem {
+@FileSystemInfo(type = "zstd", description = "zStandard", factory = ZstdFileSystemFactory.class)
+public class ZstdFileSystem extends AbstractSinglePayloadFileSystem {
 
-
-	public SparseImageFileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider,
-			String payloadFilename, FileAttributes attrs) {
+	public ZstdFileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider, String payloadFilename,
+			FileAttributes attrs) {
 		super(fsFSRL, payloadProvider, payloadFilename, attrs);
 	}
 }
