@@ -139,10 +139,7 @@ public abstract class SearchResults {
 	}
 
 	/**
-	 * Runs the given job, cancelling any currently running jobs.  We assume that only one job 
-	 * should be run at a time for the given worker for all search results sharing that worker, 
-	 * not just a single search results.  This keeps multiple search results from interfering with
-	 * each other as the user interacts with the results.
+	 * Schedules the given job to run. This does not cancel any other pending work.
 	 * @param job the job
 	 */
 	protected void runJob(FindJob job) {
@@ -179,7 +176,6 @@ public abstract class SearchResults {
 
 		@Override
 		public final void run(TaskMonitor monitor) throws CancelledException {
-
 			monitor.checkCancelled();
 
 			if (runnable != null) {
@@ -254,7 +250,7 @@ public abstract class SearchResults {
 
 	public class SwingJob extends FindJob {
 		public SwingJob(Runnable r) {
-			this.runnable = m -> r.run();
+			this.runnable = m -> Swing.runNow(r);
 		}
 	}
 
