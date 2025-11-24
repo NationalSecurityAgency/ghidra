@@ -71,6 +71,7 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 	protected static boolean didSetupPython = false;
 
 	public static final String NOTEPAD = "C:\\\\Windows\\\\notepad.exe";
+	public static final String NETSTAT = "C:\\\\Windows\\\\System32\\\\netstat.exe";
 	public static final String INSTRUMENT_STATE = """
 			import sys
 			from ghidraxdbg import commands

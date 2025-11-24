@@ -391,7 +391,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 	@Test
 	public void testRemoveProcess() throws Exception {
 		try (PythonAndConnection conn = startAndConnectPython()) {
-			start(conn, "netstat.exe");
+			start(conn, NETSTAT);
 			txPut(conn, "processes");
 
 			RemoteMethod removeProcess = conn.getMethod("remove_process");
@@ -404,7 +404,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				String out = conn.executeCapture("print(list(util.process_list0()))");
 				conn.execute("util.terminate_session()");
 
-				assertThat(out, containsString("python.exe"));
+				assertEquals(out, "[]\n");
 			}
 		}
 	}
@@ -465,7 +465,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 	@Test
 	public void testDetach() throws Exception {
 		try (PythonAndConnection conn = startAndConnectPython()) {
-			start(conn, "netstat.exe");
+			start(conn, NETSTAT);
 			txPut(conn, "processes");
 
 			RemoteMethod detach = conn.getMethod("detach");
@@ -525,7 +525,7 @@ public class X64dbgMethodsTest extends AbstractX64dbgTraceRmiTest {
 				String out = conn.executeCapture("print(list(util.process_list0()))");
 				conn.execute("util.terminate_session()");
 
-				assertThat(out, containsString("python.exe"));
+				assertEquals(out, "[]\n");
 			}
 		}
 	}

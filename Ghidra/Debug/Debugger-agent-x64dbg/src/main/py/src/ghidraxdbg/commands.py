@@ -838,6 +838,8 @@ def ghidra_trace_disassemble(address: Union[str, int]) -> None:
 
 
 def compute_proc_state(nproc: Optional[int] = None) -> str:
+    if nproc is None:
+        return 'TERMINATED'
     try:
         if util.dbg.client.is_running():
             return 'RUNNING'
@@ -873,10 +875,12 @@ def put_processes(running: bool = False) -> None:
 
 
 def put_state(event_process: int) -> None:
+    state = compute_proc_state(event_process)
+    if event_process is None:
+        event_process = util.last_process
     ipath = PROCESS_PATTERN.format(procnum=event_process)
     trace = STATE.require_trace()
     procobj = trace.create_object(ipath)
-    state = compute_proc_state(event_process)
     procobj.set_value('State', state)
     procobj.insert()
     tnum = util.selected_thread()
