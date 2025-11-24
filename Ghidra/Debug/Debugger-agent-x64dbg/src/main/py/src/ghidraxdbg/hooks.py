@@ -105,14 +105,14 @@ class ProcessState:
         except Exception:
             pass
 
-    def record_exited(self, description: Optional[str] = None,
+    def record_exited(self, exit_code: Optional[str] = None,
                       time: Optional[Schedule] = None) -> None:
         trace = commands.STATE.require_trace()
-        if description is not None:
-            trace.snapshot(f"Exited {description}", time=time)
+        if exit_code is not None:
+            trace.snapshot(f"Exited {exit_code}", time=time)
         ipath = commands.PROCESS_PATTERN.format(procnum=util.last_process)
         procobj = trace.proxy_object_path(ipath)
-        procobj.set_value('Exit Code', description)
+        procobj.set_value('Exit Code', exit_code)
         procobj.set_value('State', 'TERMINATED')
 
 
