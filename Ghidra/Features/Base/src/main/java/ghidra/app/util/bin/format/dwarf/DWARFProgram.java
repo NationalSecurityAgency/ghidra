@@ -570,7 +570,10 @@ public class DWARFProgram implements Closeable {
 		}
 		ByteProvider bp = br.getByteProvider();
 		if (bp instanceof MemoryByteProvider mbp && !mbp.isEmpty()) {
-			if (program.getRelocationTable().getRelocations(mbp.getAddressSet()).hasNext()) {
+			Program providerProgram = mbp.getMemory().getProgram();
+			if (providerProgram.getRelocationTable()
+					.getRelocations(mbp.getAddressSet())
+					.hasNext()) {
 				return true;
 			}
 		}
