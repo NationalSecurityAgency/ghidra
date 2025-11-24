@@ -25,61 +25,53 @@ import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift {@code AssociatedTypeRecord} structure
+ * Represents a Swift {@code TargetResilientSuperclass} structure
  * 
- * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
+public class TargetResilientSuperclass extends SwiftTypeMetadataStructure {
+
+	private int superclass;
 
 	/**
-	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
-	 */
-	public static final int SIZE = 8;
-
-	private String name;
-	private String substitutedTypeName;
-
-	/**
-	 * Creates a new {@link AssociatedTypeRecord}
+	 * Create a new {@link TargetResilientSuperclass}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+	public TargetResilientSuperclass(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		name = reader.readNext(SwiftUtils::relativeString);
-		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
+		superclass = reader.readNextInt();
 	}
 
 	/**
-	 * {@return the name}
+	 * {@return the superclass of this class, or 0 if there isn't one}
 	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * {@return the substituted type name}
-	 */
-	public String getSubstitutedTypeName() {
-		return substitutedTypeName;
+	public int getSuperclass() {
+		return superclass;
 	}
 
 	@Override
 	public String getStructureName() {
-		return AssociatedTypeRecord.class.getSimpleName();
+		return getMyStructureName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "associated type record";
+		return "resilient superclass";
+	}
+
+	/**
+	 * {@return this class's structure name (will not be affected by subclass's name)}
+	 */
+	private final String getMyStructureName() {
+		return TargetResilientSuperclass.class.getSimpleName();
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
-		struct.add(SwiftUtils.PTR_STRING, "Name", "");
-		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getMyStructureName(), 0);
+		struct.add(SwiftUtils.PTR_RELATIVE, "Superclass", "The superclass of this class.");
 		return struct;
 	}
 

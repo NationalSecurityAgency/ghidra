@@ -16,15 +16,17 @@
 package ghidra.app.util.bin.format.swift.types;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.CategoryPath;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift TargetStructDescriptor structure
+ * Represents a Swift {@code TargetStructDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
@@ -32,6 +34,11 @@ public final class TargetStructDescriptor extends TargetTypeContextDescriptor {
 
 	private int numFields;
 	private int fieldOffsetVectorOffset;
+
+	// Trailing objects
+	private TargetTypeGenericContextDescriptorHeader genericHeader;
+	private TargetSingletonMetadataInitialization singleton;
+	private TargetForeignMetadataInitialization foreign;
 
 	/**
 	 * Creates a new {@link TargetStructDescriptor}
@@ -43,28 +50,91 @@ public final class TargetStructDescriptor extends TargetTypeContextDescriptor {
 		super(reader);
 		numFields = reader.readNextInt();
 		fieldOffsetVectorOffset = reader.readNextInt();
+
+		if (flags.isGeneric()) {
+			genericHeader = new TargetTypeGenericContextDescriptorHeader(reader);
+		}
+
+		switch (flags.getMetadataInitialization()) {
+			case NoMetadataInitialization:
+				break;
+			case SingletonMetadataInitialization:
+				singleton = new TargetSingletonMetadataInitialization(reader, flags);
+				break;
+			case ForeignMetadataInitialization:
+				foreign = new TargetForeignMetadataInitialization(reader);
+				break;
+		}
+
+		if (flags.isGeneric() &&
+			flags.hasCanonicalMetadataPrespecializationsOrSingletonMetadataPonter()) {
+			throw new IOException("Unimplemented TargetCanonicalSpecializedMetadatas detected.");
+		}
+
+		if (flags.hasInvertableProtocols()) {
+			throw new IOException("Unimplemented InvertibleProtocolSet detected.");
+		}
+
+		if (!flags.isGeneric() &&
+			flags.hasCanonicalMetadataPrespecializationsOrSingletonMetadataPonter()) {
+			throw new IOException("Unimplemented TargetSingletonMetadataPointer detected.");
+		}
 	}
 
 	/**
-	 * Gets the number of stored properties in the struct. If there is a field offset vector, 
-	 * this is its length.
-	
-	 * @return The number of stored properties in the struct. If there is a field offset vector, 
-	 *   this is its length.
+	 * {@return the number of stored properties in the struct (if there is a field offset vector, 
+	 * this is its length}
 	 */
 	public int getNumFields() {
 		return numFields;
 	}
 
 	/**
-	 * Gets the offset of the field offset vector for this struct's stored properties in its 
-	 * metadata, if any. 0 means there is no field offset vector.
-	 * 
-	 * @return The offset of the field offset vector for this struct's stored properties in its 
-	 *   metadata, if any. 0 means there is no field offset vector.
+	 * {@return the offset of the field offset vector for this struct's stored properties in its 
+	 * metadata, if any. 0 means there is no field offset vector}
 	 */
 	public int getFieldOffsetVectorOffset() {
 		return fieldOffsetVectorOffset;
+	}
+
+	/**
+	 * {@return the {@link TargetTypeGenericContextDescriptorHeader}, or {@code null} if it doesn't 
+	 * exist}
+	 */
+	public TargetTypeGenericContextDescriptorHeader getGenericHeader() {
+		return genericHeader;
+	}
+
+	/**
+	 * {@return the {@link TargetSingletonMetadataInitialization}, or {@code null} if it doesn't
+	 * exist}
+	 */
+	public TargetSingletonMetadataInitialization getTargetSingletonMetadataInitialization() {
+		return singleton;
+	}
+
+	/**
+	 * {@return the {@link TargetForeignMetadataInitialization}, or {@code null} if it doesn't
+	 * exist}
+	 */
+	public TargetForeignMetadataInitialization getTargetForeignMetadataInitialization() {
+		return foreign;
+	}
+
+	@Override
+	public List<SwiftTypeMetadataStructure> getTrailingObjects() {
+		List<SwiftTypeMetadataStructure> ret = new ArrayList<>();
+		if (genericHeader != null) {
+			ret.add(genericHeader);
+			ret.addAll(genericHeader.getTrailingObjects());
+		}
+		if (singleton != null) {
+			ret.add(singleton);
+		}
+		if (foreign != null) {
+			ret.add(foreign);
+		}
+		return ret;
 	}
 
 	@Override
@@ -79,13 +149,12 @@ public final class TargetStructDescriptor extends TargetTypeContextDescriptor {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(super.toDataType(), super.getStructureName(), "");
 		struct.add(DWORD, "NumFields",
 			"The number of stored properties in the struct. If there is a field offset vector, this is its length.");
 		struct.add(DWORD, "FieldOffsetVectorOffset",
 			"The offset of the field offset vector for this struct's stored properties in its metadata, if any. 0 means there is no field offset vector.");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

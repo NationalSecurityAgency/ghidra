@@ -16,15 +16,17 @@
 package ghidra.app.util.bin.format.swift.types;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.CategoryPath;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift TargetEnumDescriptor structure
+ * Represents a Swift {@code TargetEnumDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
@@ -32,6 +34,11 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 
 	private int numPayloadCasesAndPayloadSizeOffset;
 	private int numEmptyCases;
+
+	// Trailing objects
+	private TargetTypeGenericContextDescriptorHeader genericHeader;
+	private TargetSingletonMetadataInitialization singleton;
+	private TargetForeignMetadataInitialization foreign;
 
 	/**
 	 * Creates a new {@link TargetEnumDescriptor}
@@ -43,6 +50,35 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 		super(reader);
 		numPayloadCasesAndPayloadSizeOffset = reader.readNextInt();
 		numEmptyCases = reader.readNextInt();
+
+		if (flags.isGeneric()) {
+			genericHeader = new TargetTypeGenericContextDescriptorHeader(reader);
+		}
+
+		switch (flags.getMetadataInitialization()) {
+			case NoMetadataInitialization:
+				break;
+			case SingletonMetadataInitialization:
+				singleton = new TargetSingletonMetadataInitialization(reader, flags);
+				break;
+			case ForeignMetadataInitialization:
+				foreign = new TargetForeignMetadataInitialization(reader);
+				break;
+		}
+
+		if (flags.isGeneric() &&
+			flags.hasCanonicalMetadataPrespecializationsOrSingletonMetadataPonter()) {
+			throw new IOException("Unimplemented TargetCanonicalSpecializedMetadatas detected.");
+		}
+
+		if (flags.hasInvertableProtocols()) {
+			throw new IOException("Unimplemented InvertibleProtocolSet detected.");
+		}
+
+		if (!flags.isGeneric() &&
+			flags.hasCanonicalMetadataPrespecializationsOrSingletonMetadataPonter()) {
+			throw new IOException("Unimplemented TargetSingletonMetadataPointer detected.");
+		}
 	}
 
 	/**
@@ -56,12 +92,50 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 	}
 
 	/**
-	 * Gets the number of empty cases in the enum
-	 * 
-	 * @return The number of empty cases in the enum
+	 * {@return the number of empty cases in the enum}
 	 */
 	public int getNumEmptyCases() {
 		return numEmptyCases;
+	}
+
+	/**
+	 * {@return the {@link TargetTypeGenericContextDescriptorHeader}, or {@code null} if it doesn't 
+	 * exist}
+	 */
+	public TargetTypeGenericContextDescriptorHeader getGenericHeader() {
+		return genericHeader;
+	}
+
+	/**
+	 * {@return the {@link TargetSingletonMetadataInitialization}, or {@code null} if it doesn't
+	 * exist}
+	 */
+	public TargetSingletonMetadataInitialization getTargetSingletonMetadataInitialization() {
+		return singleton;
+	}
+
+	/**
+	 * {@return the {@link TargetForeignMetadataInitialization}, or {@code null} if it doesn't
+	 * exist}
+	 */
+	public TargetForeignMetadataInitialization getTargetForeignMetadataInitialization() {
+		return foreign;
+	}
+
+	@Override
+	public List<SwiftTypeMetadataStructure> getTrailingObjects() {
+		List<SwiftTypeMetadataStructure> ret = new ArrayList<>();
+		if (genericHeader != null) {
+			ret.add(genericHeader);
+			ret.addAll(genericHeader.getTrailingObjects());
+		}
+		if (singleton != null) {
+			ret.add(singleton);
+		}
+		if (foreign != null) {
+			ret.add(foreign);
+		}
+		return ret;
 	}
 
 	@Override
@@ -76,12 +150,11 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getStructureName(), 0);
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
 		struct.add(super.toDataType(), super.getStructureName(), "");
 		struct.add(DWORD, "NumPayloadCasesAndPayloadSizeOffset",
 			"The number of non-empty cases in the enum are in the low 24 bits; the offset of the payload size in the metadata record in words, if any, is stored in the high 8 bits.");
 		struct.add(DWORD, "NumEmptyCases", "The number of empty cases in the enum");
-		struct.setCategoryPath(new CategoryPath(DATA_TYPE_CATEGORY));
 		return struct;
 	}
 

@@ -25,61 +25,54 @@ import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift {@code AssociatedTypeRecord} structure
+ * Represents a Swift {@code TargetObjCResilientClassStubInfo} structure
  * 
- * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
+public class TargetObjCResilientClassStubInfo extends SwiftTypeMetadataStructure {
+
+	private int stub;
 
 	/**
-	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
-	 */
-	public static final int SIZE = 8;
-
-	private String name;
-	private String substitutedTypeName;
-
-	/**
-	 * Creates a new {@link AssociatedTypeRecord}
+	 * Create a new {@link TargetObjCResilientClassStubInfo}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+	public TargetObjCResilientClassStubInfo(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		name = reader.readNext(SwiftUtils::relativeString);
-		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
+		stub = reader.readNextInt();
 	}
 
 	/**
-	 * {@return the name}
+	 * {@return a relative pointer to an Objective-C resilient class stub}
 	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * {@return the substituted type name}
-	 */
-	public String getSubstitutedTypeName() {
-		return substitutedTypeName;
+	public int getStub() {
+		return stub;
 	}
 
 	@Override
 	public String getStructureName() {
-		return AssociatedTypeRecord.class.getSimpleName();
+		return getMyStructureName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "associated type record";
+		return "objc resilient class stub";
+	}
+
+	/**
+	 * {@return this class's structure name (will not be affected by subclass's name)}
+	 */
+	private final String getMyStructureName() {
+		return TargetObjCResilientClassStubInfo.class.getSimpleName();
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
-		struct.add(SwiftUtils.PTR_STRING, "Name", "");
-		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
+		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getMyStructureName(), 0);
+		struct.add(SwiftUtils.PTR_RELATIVE, "Stub",
+			"A relative pointer to an Objective-C resilient class stub.");
 		return struct;
 	}
 

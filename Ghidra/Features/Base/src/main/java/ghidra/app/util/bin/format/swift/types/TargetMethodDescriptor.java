@@ -25,62 +25,61 @@ import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift {@code AssociatedTypeRecord} structure
+ * Represents a Swift {@code TargetMethodDescriptor} structure
  * 
- * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
+ * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/ABI/Metadata.h">swift/ABI/Metadata.h</a> 
  */
-public final class AssociatedTypeRecord extends SwiftTypeMetadataStructure {
+public class TargetMethodDescriptor extends SwiftTypeMetadataStructure {
 
 	/**
-	 * The size (in bytes) of an {@link AssociatedTypeRecord} structure
+	 * The size (in bytes) of a {@link TargetMethodDescriptor} structure
 	 */
 	public static final int SIZE = 8;
 
-	private String name;
-	private String substitutedTypeName;
+	private MethodDescriptorFlags flags;
+	private int impl;
 
 	/**
-	 * Creates a new {@link AssociatedTypeRecord}
+	 * Creates a new {@link TargetMethodDescriptor}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the structure
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
-	public AssociatedTypeRecord(BinaryReader reader) throws IOException {
+	public TargetMethodDescriptor(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
-		name = reader.readNext(SwiftUtils::relativeString);
-		substitutedTypeName = reader.readNext(SwiftUtils::relativeString);
+		flags = new MethodDescriptorFlags(reader);
+		impl = reader.readNextInt();
 	}
 
 	/**
-	 * {@return the name}
+	 * {@return the flags}
 	 */
-	public String getName() {
-		return name;
+	public MethodDescriptorFlags getFlags() {
+		return flags;
 	}
 
 	/**
-	 * {@return the substituted type name}
+	 * {@return the method implementation's relative offset}
 	 */
-	public String getSubstitutedTypeName() {
-		return substitutedTypeName;
+	public int getImpl() {
+		return impl;
 	}
 
 	@Override
 	public String getStructureName() {
-		return AssociatedTypeRecord.class.getSimpleName();
+		return TargetMethodDescriptor.class.getSimpleName();
 	}
 
 	@Override
 	public String getDescription() {
-		return "associated type record";
+		return "method descriptor";
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(CATEGORY_PATH, getStructureName(), 0);
-		struct.add(SwiftUtils.PTR_STRING, "Name", "");
-		struct.add(SwiftUtils.PTR_STRING, "SubstitutedTypeName", "");
+		struct.add(flags.toDataType(), "Flags", "Flags describing the method");
+		struct.add(SwiftUtils.PTR_RELATIVE, "Impl", "The method implementation");
 		return struct;
 	}
-
 }

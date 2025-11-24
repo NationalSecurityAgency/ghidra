@@ -32,10 +32,21 @@ public class SwiftUtils {
 	public static final String SWIFT_COMPILER = "swift";
 
 	/**
-	 * A {@link PointerTypedef pointer} to a relative 4-byte offset
+	 * A {@link TypeDef pointer} to a relative 4-byte offset
 	 */
-	public static final PointerTypedef PTR_RELATIVE =
-		new PointerTypedef(null, null, 4, null, PointerType.RELATIVE);
+	public static final TypeDef PTR_RELATIVE =
+		new PointerTypedefBuilder(Pointer32DataType.dataType, null)
+				.type(PointerType.RELATIVE)
+				.build();
+
+	/**
+	 * A {@link TypeDef pointer} to a relative 4-byte offset (low bit masked off)
+	 */
+	public static final TypeDef PTR_RELATIVE_MASKED =
+		new PointerTypedefBuilder(Pointer32DataType.dataType, null)
+				.type(PointerType.RELATIVE)
+				.bitMask(~1)
+				.build();
 
 	/**
 	 * A {@link PointerTypedef string pointer} to a 4-byte relative offset
@@ -44,10 +55,9 @@ public class SwiftUtils {
 		new PointerTypedef(null, StringDataType.dataType, 4, null, PointerType.RELATIVE);
 
 	/**
-	 * Checks if the given {@link Program} is a Swift program
+	 * {@return true if the given {@link Program} is a Swift program; otherwise, false}
 	 * 
 	 * @param program The {@link Program} to check
-	 * @return True if the given {@link Program} is a Swift program; otherwise, false
 	 */
 	public static boolean isSwift(Program program) {
 		List<String> prefixes = List.of("__swift", "swift", ".sw5");
@@ -60,11 +70,10 @@ public class SwiftUtils {
 	}
 
 	/**
-	 * Checks if the given {@link List} of section names contains a Swift section name
+	 * {@return true if the given {@link List} of section names contains a Swift section name;
+	 * otherwise, false}
 	 * 
 	 * @param sectionNames The {@link List} of section names to check
-	 * @return True if the given {@link List} of section names contains a Swift section name; otherwise, 
-	 *   false
 	 */
 	public static boolean isSwift(List<String> sectionNames) {
 		List<String> prefixes = List.of("__swift", "swift", ".sw5");
@@ -77,11 +86,10 @@ public class SwiftUtils {
 	}
 
 	/**
-	 * Gets a {@link List} of {@link MemoryBlock}s that match the given {@link SwiftSection}
+	 * {@return a {@link List} of {@link MemoryBlock}s that match the given {@link SwiftSection}}
 	 * 
 	 * @param section The {@link SwiftSection}
 	 * @param program The {@link Program}
-	 * @return A {@link List} of {@link MemoryBlock}s that match the given {@link SwiftSection}
 	 */
 	public static List<MemoryBlock> getSwiftBlocks(SwiftSection section, Program program) {
 		List<MemoryBlock> result = new ArrayList<>();

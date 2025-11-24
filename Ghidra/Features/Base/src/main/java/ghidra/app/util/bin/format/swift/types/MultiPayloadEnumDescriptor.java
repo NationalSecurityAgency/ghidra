@@ -24,7 +24,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a Swift MultiPayloadEnumDescriptor structure
+ * Represents a Swift {@code MultiPayloadEnumDescriptor} structure
  * 
  * @see <a href="https://github.com/swiftlang/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
@@ -32,7 +32,7 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 
 	/**
 	 * The size (in bytes) of a {@link MultiPayloadEnumDescriptor} structure.  This size does not
-	 * take into account the size of the <code>contents</code> array.
+	 * take into account the size of the {@code contents} array.
 	 * 
 	 * @see #getContentsSize()
 	 */
@@ -56,27 +56,21 @@ public final class MultiPayloadEnumDescriptor extends SwiftTypeMetadataStructure
 	}
 
 	/**
-	 * Gets the type name
-	 * 
-	 * @return The type name
+	 * {@return the type name}
 	 */
 	public String getTypeName() {
 		return typeName;
 	}
 
 	/**
-	 * Gets the contents
-	 * 
-	 * @return The contents
+	 * {@return the contents}
 	 */
 	public int[] getContents() {
 		return contents;
 	}
 
 	/**
-	 * Gets the size of the contents in bytes
-	 * 
-	 * @return The size of the contents in bytes
+	 * {@return The size of the contents in bytes}
 	 */
 	public long getContentsSize() {
 		return contents.length * Integer.BYTES;
