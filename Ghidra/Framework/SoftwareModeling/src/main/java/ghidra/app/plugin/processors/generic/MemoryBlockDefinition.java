@@ -33,10 +33,7 @@ import ghidra.util.xml.XmlUtilities;
 import ghidra.xml.XmlElement;
 
 /**
- * 
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
+ * {@link MemoryBlockDefinition} provides a default memory block specification.
  */
 public class MemoryBlockDefinition {
 
@@ -229,7 +226,7 @@ public class MemoryBlockDefinition {
 
 			if (bitMappedAddress != null) {
 				Address mappedAddr = parseAddress(bitMappedAddress, program, "bit-mapped address");
-				if (addr.equals(currentStartAddress) &&
+				if (addr.equals(currentStartAddress) && sourceInfo.getMappedRange().isPresent() &&
 					mappedAddr.equals(sourceInfo.getMappedRange().get().getMinAddress()) &&
 					length == block.getSize()) {
 					return block;
@@ -240,7 +237,7 @@ public class MemoryBlockDefinition {
 			else if (byteMappedAddress != null) {
 				Address mappedAddr =
 					parseAddress(byteMappedAddress, program, "byte-mapped address");
-				if (addr.equals(currentStartAddress) &&
+				if (addr.equals(currentStartAddress) && sourceInfo.getMappedRange().isPresent() &&
 					mappedAddr.equals(sourceInfo.getMappedRange().get().getMinAddress()) &&
 					length == block.getSize()) {
 					return block;

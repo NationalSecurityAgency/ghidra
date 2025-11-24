@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.symbol.SymbolManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.AddressLabelInfo;
@@ -28,6 +29,7 @@ import ghidra.program.model.mem.MemoryBlockException;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * {@link LanguageFixupUtil} provides utility method intended for internal language upgrade
@@ -40,12 +42,16 @@ public class LanguageFixupUtil {
 	 * generally required.  Reconciling symbols is limited to those symbols contained within
 	 * processor defined memory blocks which are not within either the default code or data spaces.
 	 * @param programDB target program
+	 * @param monitor task monitor
+	 * @throws CancelledException if fixup task is cancelled
 	 */
-	public static void applyPSpecFixups(ProgramDB programDB) throws CancelledException {
+	public static void applyPSpecFixups(ProgramDB programDB, TaskMonitor monitor)
+			throws CancelledException {
 
 		try {
-
 			Language language = programDB.getLanguage();
+			ProgramDataTypeManager dtm = programDB.getDataTypeManager();
+
 			AddressSpace defaultSpace = language.getDefaultSpace();
 			AddressSpace defaultDataSpace = language.getDefaultDataSpace();
 
@@ -59,6 +65,7 @@ public class LanguageFixupUtil {
 			AddressSet processorDefinedSafeBlockSet = new AddressSet();
 
 			for (MemoryBlockDefinition defaultMemoryBlockDef : language.getDefaultMemoryBlocks()) {
+				monitor.checkCancelled();
 				try {
 					MemoryBlock block = defaultMemoryBlockDef.fixupBlock(programDB);
 					AddressRange blockRange = block.getAddressRange();
@@ -78,9 +85,10 @@ public class LanguageFixupUtil {
 				}
 			}
 
-			HashSet<Symbol> goodSymbols = new HashSet<>();
-
+			// Create default symbols within processorDefinedBlockSet if missing.
+			// The goodSymbols set is used to record all processor defined symbols to assist cleanup
 			SymbolManager symbolTable = programDB.getSymbolTable();
+			HashSet<Symbol> goodSymbols = new HashSet<>();
 			for (AddressLabelInfo labelInfo : language.getDefaultSymbols()) {
 
 				String name = labelInfo.getLabel();
@@ -94,14 +102,18 @@ public class LanguageFixupUtil {
 				// Check all symbols within processor-defined blocks
 				Symbol existingSymbol = null;
 				for (Symbol s : symbolTable.getGlobalSymbols(name)) {
+					monitor.checkCancelled();
 					if (s.getSymbolType() != SymbolType.LABEL) {
 						continue;
 					}
 					if (addr.equals(s.getAddress())) {
+						// Keep existing label which matches spec
 						existingSymbol = s;
 						goodSymbols.add(s);
 					}
-					else if (s.getSource() == SourceType.IMPORTED) {
+					else if (s.getSource() == SourceType.IMPORTED &&
+						processorDefinedBlockSet.contains(s.getAddress())) {
+						// Remove label from its old location 
 						s.delete();
 					}
 				}
@@ -117,23 +129,26 @@ public class LanguageFixupUtil {
 				}
 			}
 
-			// Remove all symbols with processor defined blocks which are no longer defined.
+			// Remove all symbols within processor defined blocks which are no longer defined.
 			// This is restricted to safe address spaces since loader may have imported other symbols
-			// which we do not want to delete.
+			// which we do not want to delete.  We collect symbols first to avoid concurent 
+			// modification concerns.
 			List<Symbol> deleteSet = new ArrayList<>(); // defered delete to avoid iterator resets
 			for (Symbol s : symbolTable.getSymbols(processorDefinedSafeBlockSet, SymbolType.LABEL,
 				true)) {
+				monitor.checkCancelled();
 				if (s.getSource() == SourceType.IMPORTED && !goodSymbols.contains(s)) {
 					deleteSet.add(s);
 				}
 			}
 			for (Symbol s : deleteSet) {
+				monitor.checkCancelled();
 				s.delete();
 			}
-
 		}
 		catch (UnsupportedOperationException e) {
 			// skip
 		}
 	}
+
 }
