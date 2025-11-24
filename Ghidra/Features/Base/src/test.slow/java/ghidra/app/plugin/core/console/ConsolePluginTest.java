@@ -147,9 +147,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// highlighted correctly.
 		String newSearchText = "java";
 		runSwing(() -> findDialog.setSearchText(newSearchText));
-		pressButtonByText(findDialog, "Next");
+		next();
 		matches = getExpectedMatches();
 		assertEquals(2, matches.size());
+
 		verfiyHighlightColor(matches);
 
 		close(findDialog);

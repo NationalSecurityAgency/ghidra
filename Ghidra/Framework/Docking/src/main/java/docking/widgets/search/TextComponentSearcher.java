@@ -212,7 +212,7 @@ public class TextComponentSearcher implements FindDialogSearcher {
 		private boolean useRegex;
 
 		SearchTask(String searchText, boolean useRegex) {
-			super("Help Search Task", true, false, true, true);
+			super("Text Find Task", true, false, true, true);
 			this.searchText = searchText;
 			this.useRegex = useRegex;
 		}

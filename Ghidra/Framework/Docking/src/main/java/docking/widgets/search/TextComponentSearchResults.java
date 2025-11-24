@@ -405,6 +405,7 @@ public class TextComponentSearchResults extends SearchResults {
 		maybeInstallHighlighter();
 
 		Collection<TextComponentSearchLocation> locations = matchesByPosition.values();
+
 		for (TextComponentSearchLocation location : locations) {
 			doHighlightLocation(location);
 		}
@@ -462,7 +463,6 @@ public class TextComponentSearchResults extends SearchResults {
 
 	@Override
 	public void dispose() {
-		deactivate();
 		caretUpdater.dispose();
 
 		if (editorPane != null) {
