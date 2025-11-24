@@ -224,9 +224,7 @@ def main() -> None:
     dist_dir: Path = pyghidra_dir / 'pypkg' / 'dist'
     venv_dir = get_ghidra_venv(install_dir, args.dev)
     python_cmd: List[str] = find_supported_python_exe(install_dir, args.dev)
-    
-    print(install_dir)
-    
+      
     if python_cmd is not None:
         print(f'Using Python command: "{" ".join(python_cmd)}"')
     else:
