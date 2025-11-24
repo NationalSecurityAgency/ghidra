@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.taint.model.TaintSet;
 import ghidra.taint.model.TaintVec;
 import ghidra.util.MathUtilities;
@@ -39,6 +40,7 @@ public class TaintSpace {
 	protected final TaintPcodeExecutorStatePiece piece;
 	// TODO: There must be a better way. Similar to SemisparseByteArray?
 	protected final NavigableMap<Long, TaintSet> taints = new TreeMap<>(Long::compareUnsigned);
+	protected final NavigableMap<Long, PcodeOp> ops = new TreeMap<>(Long::compareUnsigned);
 
 	public TaintSpace(AddressSpace space, TaintPcodeExecutorStatePiece piece) {
 		this.space = space;
@@ -59,6 +61,7 @@ public class TaintSpace {
 	 * @param cb callbacks to receive emulation events
 	 */
 	public void set(long offset, TaintVec val, PcodeStateCallbacks cb) {
+		ops.put(offset, val.getOriginatingOp());
 		for (int i = 0; i < val.length; i++) {
 			TaintSet s = val.get(i);
 			/*
@@ -148,7 +151,8 @@ public class TaintSpace {
 		while (taints.get(end) != null) {
 			end++;
 		}
-		TaintVec vec = new TaintVec(MathUtilities.unsignedMin(1024, end - offset));
+		PcodeOp pcodeOp = ops.get(offset);  // Needed here to generate the TaintVec
+		TaintVec vec = new TaintVec(MathUtilities.unsignedMin(1024, end - offset), pcodeOp);
 		getInto(offset, vec, PcodeStateCallbacks.NONE);
 		return Map.entry(offset, vec);
 	}

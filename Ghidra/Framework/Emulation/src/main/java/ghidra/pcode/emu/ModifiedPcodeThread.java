@@ -31,6 +31,7 @@ import ghidra.pcode.memstate.MemoryBank;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
@@ -121,7 +122,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
 			@Override
 			public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-					Varnode outVar, List<Varnode> inVars) {
+					PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 				behavior.evaluate(emulate, outVar, inVars.toArray(Varnode[]::new));
 			}
 

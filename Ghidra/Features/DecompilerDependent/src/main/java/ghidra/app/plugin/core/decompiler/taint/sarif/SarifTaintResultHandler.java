@@ -220,6 +220,9 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
+				if (kind == null) {
+					continue;
+				}
 				if (kind.equals("member") || kind.startsWith("path ")) {
 					getTaintedInstruction(map, r);
 				}
