@@ -24,7 +24,7 @@ import javax.swing.*;
 
 import docking.action.DockingActionIf;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.util.viewer.listingpanel.OverviewProvider;
+import ghidra.app.util.viewer.listingpanel.ListingOverviewProvider;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -35,7 +35,7 @@ import ghidra.util.task.SwingUpdateManager;
  * Overview bar component. Uses color to indicate various snap-based properties for a program.
  * Uses an {@link TimeOverviewColorService} to get the appropriate color for a snaps.
  */
-public class TimeOverviewColorComponent extends JPanel implements OverviewProvider {
+public class TimeOverviewColorComponent extends JPanel implements ListingOverviewProvider {
 	private static final Color DEFAULT_COLOR = Color.GRAY;
 	protected TimeOverviewColorService service;
 	private Color[] colorsByPixel = new Color[0];
@@ -101,7 +101,7 @@ public class TimeOverviewColorComponent extends JPanel implements OverviewProvid
 							stop = start;
 							start = tmp;
 						}
-						span  = Lifespan.span(start, stop);
+						span = Lifespan.span(start, stop);
 					}
 					plugin.setLifespan(span);
 					enableDrag = false;
@@ -111,6 +111,11 @@ public class TimeOverviewColorComponent extends JPanel implements OverviewProvid
 		});
 		ToolTipManager.sharedInstance().registerComponent(this);
 		actions = service.getActions();
+	}
+
+	@Override
+	public void dispose() {
+		uninstallActions();
 	}
 
 	/**
@@ -233,13 +238,13 @@ public class TimeOverviewColorComponent extends JPanel implements OverviewProvid
 	public Lifespan getLifespan() {
 		return service.getBounds();
 	}
-	
+
 	public void setLifespan(Lifespan bounds) {
 		service.setBounds(bounds);
 	}
 
 	@Override
-	public void setProgram(Program program, AddressIndexMap map) {
+	public void screenDataChanged(Program program, AddressIndexMap map) {
 		// Ignored	
 	}
 

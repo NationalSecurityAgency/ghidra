@@ -965,7 +965,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * A library that has not been processed by the loader yet
 	 * 
 	 * @param name The name of the library
-	 * @param depth The recursive load depth of the library (based on the original binary being
+	 * @param column The recursive load depth of the library (based on the original binary being
 	 *   loaded)
 	 * @param temporary True if the library is temporary and should be discarded prior to returning
 	 *   from the load

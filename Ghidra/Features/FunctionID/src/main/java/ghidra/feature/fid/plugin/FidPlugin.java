@@ -83,9 +83,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	}
 
 	@Override
-	protected void cleanup() {
+	protected void dispose() {
 		fidFileManager.removeChangeListener(this);
-		super.cleanup();
+		super.dispose();
 	}
 
 	/**

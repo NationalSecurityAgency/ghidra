@@ -20,7 +20,6 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -112,7 +111,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		liveSelection = selection;
 		updateSubTitle();
 	};
-	private FocusingMouseListener focusingMouseListener;
 
 	private CodeBrowserClipboardProvider codeViewerClipboardProvider;
 	private ClipboardService clipboardService;
@@ -151,6 +149,11 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 
 		listingPanel = new ListingPanel(formatMgr);
+		if (!isConnected) {
+			// update the marker set names to be unique so that each listing can have its own 
+			listingPanel.setUseMarkerNameSuffix(true);
+		}
+
 		listingPanel.enablePropertyBasedColorModel(true);
 
 		decorationPanel = new ListingPanelContainer(listingPanel, isConnected);
@@ -253,6 +256,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	public void dispose() {
 		super.dispose();
 
+		clearMarkers(program);
+
 		tool.removePopupActionProvider(this);
 
 		if (clipboardService != null) {
@@ -324,8 +329,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private Object getContextForMarginPanels(ListingPanel lp, MouseEvent event) {
 		Object source = event.getSource();
-		List<MarginProvider> marginProviders = lp.getMarginProviders();
-		for (MarginProvider marginProvider : marginProviders) {
+		List<ListingMarginProvider> marginProviders = lp.getMarginProviders();
+		for (ListingMarginProvider marginProvider : marginProviders) {
 			JComponent c = marginProvider.getComponent();
 			if (c == source) {
 				MarkerLocation loc = marginProvider.getMarkerLocation(event.getX(), event.getY());
@@ -337,8 +342,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 				}
 			}
 		}
-		List<OverviewProvider> overviewProviders = lp.getOverviewProviders();
-		for (OverviewProvider overviewProvider : overviewProviders) {
+		List<ListingOverviewProvider> overviewProviders = lp.getOverviewProviders();
+		for (ListingOverviewProvider overviewProvider : overviewProviders) {
 			JComponent c = overviewProvider.getComponent();
 			if (c == source) {
 				return source;
@@ -442,6 +447,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			coordinatedListingPanelListener.activeProgramChanged(newProgram);
 		}
 		contextChanged();
+	}
+
+	void clearMarkers(Program p) {
+		listingPanel.clearMarkers(p);
 	}
 
 	protected void updateTitle() {
@@ -657,6 +666,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
+	// events coming from the ListingPanel
 	@Override
 	public void programLocationChanged(ProgramLocation loc, EventTrigger trigger) {
 		if (plugin.isDisposed()) {
@@ -665,7 +675,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		if (!loc.equals(currentLocation)) {
 			codeViewerClipboardProvider.setLocation(loc);
 			currentLocation = loc;
-			plugin.locationChanged(this, loc);
+			plugin.broadcastLocationChanged(this, loc);
 			contextChanged();
 		}
 	}
@@ -696,7 +706,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		currentSelection = selection;
 		codeViewerClipboardProvider.setSelection(currentSelection);
 		listingPanel.setSelection(currentSelection);
-		plugin.selectionChanged(this, currentSelection);
+		plugin.broadcastSelectionChanged(this, currentSelection);
 		contextChanged();
 		updateSubTitle();
 	}
@@ -792,7 +802,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private void doSetHighlight(ProgramSelection highlight) {
 		listingPanel.setHighlight(highlight);
 		currentHighlight = highlight;
-		plugin.highlightChanged(this, highlight);
+		plugin.broadcastHighlightChanged(this, highlight);
 		contextChanged();
 	}
 
@@ -1161,43 +1171,49 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		listingPanel.removeDisplayListener(listener);
 	}
 
-	private synchronized void createFocusingMouseListener() {
-		if (focusingMouseListener == null) {
-			focusingMouseListener = new FocusingMouseListener();
-		}
-	}
-
-	public void addOverviewProvider(OverviewProvider overviewProvider) {
-		createFocusingMouseListener();
-		JComponent component = overviewProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
+	public void addOverviewProvider(ListingOverviewProvider overviewProvider) {
 		overviewProvider.setNavigatable(this);
 		getListingPanel().addOverviewProvider(overviewProvider);
 	}
 
-	public void addMarginProvider(MarginProvider marginProvider) {
-		createFocusingMouseListener();
-		JComponent component = marginProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		getListingPanel().addMarginProvider(marginProvider);
-	}
-
-	public void removeOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
+	public void removeOverviewProvider(ListingOverviewProvider overviewProvider) {
 		getListingPanel().removeOverviewProvider(overviewProvider);
 	}
 
-	public void removeMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
+	public void addMarginProvider(ListingMarginProvider marginProvider) {
+		getListingPanel().addMarginProvider(marginProvider);
+	}
+
+	public void removeMarginProvider(ListingMarginProvider marginProvider) {
 		getListingPanel().removeMarginProvider(marginProvider);
+	}
+
+	public void addMarginService(ListingMarginProviderService service) {
+		getListingPanel().addMarginService(service, isConnected());
+	}
+
+	public void addOverviewService(ListingOverviewProviderService service) {
+		getListingPanel().addOverviewService(service, this, isConnected());
+	}
+
+	public void removeOverviewService(ListingOverviewProviderService service) {
+		getListingPanel().removeOverviewService(service);
+	}
+
+	public void removeMarginService(ListingMarginProviderService service) {
+		getListingPanel().removeMarginService(service);
+	}
+
+	public void addHoverService(ListingHoverService hoverService) {
+		getListingPanel().addHoverService(hoverService);
+	}
+
+	public void removeHoverService(ListingHoverService hoverService) {
+		getListingPanel().removeHoverService(hoverService);
+
+		if (otherPanel != null) {
+			otherPanel.removeHoverService(hoverService);
+		}
 	}
 
 //==================================================================================================
@@ -1278,13 +1294,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			}
 
 			return list.toArray(new Highlight[list.size()]);
-		}
-	}
-
-	private class FocusingMouseListener extends MouseAdapter {
-		@Override
-		public void mousePressed(MouseEvent e) {
-			getListingPanel().getFieldPanel().requestFocus();
 		}
 	}
 }

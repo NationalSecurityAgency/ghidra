@@ -669,6 +669,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		addReference(0x1001020, 0x1008294, RefType.DATA);
 		addReference(0x1001030, 0x1008394, RefType.DATA);
 
+		waitForProgram(program);
+
 		Address srcAddr = addr(0x01006990);
 		CodeUnit cu = program.getListing().getCodeUnitAt(srcAddr);
 

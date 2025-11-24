@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -762,7 +762,8 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	}
 
 	private boolean isCursorOnScreen(CodeViewerService service) {
-		FieldPanel fieldPanel = service.getFieldPanel();
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
 		int cursorOffset = fieldPanel.getCursorOffset();
 		return cursorOffset >= 0; // negative offset means offscreen
 	}
@@ -779,7 +780,10 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		if (service == null) {
 			return null;
 		}
-		FieldSelection selection = service.getFieldPanel().getSelection();
+
+		ListingPanel listingPanel = service.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+		FieldSelection selection = fieldPanel.getSelection();
 		AddressIndexMap addressIndexMap = service.getListingPanel().getAddressIndexMap();
 		AddressSet addressSet = addressIndexMap.getAddressSet(selection);
 		return addressSet;
@@ -788,13 +792,11 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	/**
 	 * Sets the address set to be the selection in the tool.
 	 * 
-	 * @param tool
-	 *            the tool
-	 * @param set
-	 *            the addressSet to use for the selection
+	 * @param tool the tool
+	 * @param addresses the addressSet to use for the selection
 	 */
-	private void setSelectionInTool(PluginTool tool, AddressSetView addressSet) {
-		ProgramSelection programSelection = new ProgramSelection(addressSet);
+	private void setSelectionInTool(PluginTool tool, AddressSetView addresses) {
+		ProgramSelection programSelection = new ProgramSelection(addresses);
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		if (service == null) {
 			return;
