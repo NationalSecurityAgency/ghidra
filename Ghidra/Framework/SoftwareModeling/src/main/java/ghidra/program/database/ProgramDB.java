@@ -2148,7 +2148,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				}
 
 				// apply pspec default markup as defined by translator and pspec
-				LanguageFixupUtil.applyPSpecFixups(this);
+				LanguageFixupUtil.applyPSpecFixups(this, monitor);
 
 				dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
 				dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());
