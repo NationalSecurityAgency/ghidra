@@ -3168,6 +3168,10 @@ void PrintC::emitLabel(const FlowBlock *bl)
   if (bl == (FlowBlock *)0) return;
   BlockBasic *bb = (BlockBasic *)bl->subBlock(0);
   Address addr = bb->getEntryAddr();
+  if (addr.isInvalid()) {
+    emit->print("INVALID_ADDRESS");
+    return;
+  }
   const AddrSpace *spc = addr.getSpace();
   uintb off = addr.getOffset();
   if (!bb->hasSpecialLabel()) {
