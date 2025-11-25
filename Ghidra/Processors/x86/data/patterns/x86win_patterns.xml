@@ -10,6 +10,7 @@
     </prepatterns>
     <postpatterns>
       <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x5589e5</data>  <!-- PUSH EBP : MOV EBP,ESP -->
       <data>0x83ec 0.....00 </data> <!-- SUBESP#small -->
       <data>0x6aff68........64a100000000 </data> <!-- PUSH-1 PUSHFUNC MOVEAXFS[0] -->
       <data>0x568bf1 </data> <!-- PUSHESI MOVESIECX -->
