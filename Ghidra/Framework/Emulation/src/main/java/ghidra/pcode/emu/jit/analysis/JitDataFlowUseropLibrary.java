@@ -102,7 +102,7 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 
 		@Override
 		public void execute(PcodeExecutor<JitVal> executor, PcodeUseropLibrary<JitVal> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			throw new AssertionError();
 		}
 

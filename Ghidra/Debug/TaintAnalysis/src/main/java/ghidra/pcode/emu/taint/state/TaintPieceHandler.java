@@ -78,6 +78,10 @@ public class TaintPieceHandler extends AbstractPropertyBasedPieceHandler<byte[],
 	@Override
 	protected void decodeFrom(PcodeExecutorStatePiece<byte[], TaintVec> piece, AddressSetView limit,
 			AddressRange range, String propertyValue) {
+		if (propertyValue.contains("@")) {
+			// FIXME: WOuld be nice to actually decode the p-code op
+			propertyValue = propertyValue.substring(0, propertyValue.indexOf("@"));
+		}
 		TaintVec vec = TaintVec.copies(TaintSet.parse(propertyValue), (int) range.getLength());
 		if (limit.contains(range.getMaxAddress(), range.getMaxAddress())) {
 			piece.setVarInternal(range.getAddressSpace(), range.getMinAddress().getOffset(),
@@ -115,7 +119,11 @@ public class TaintPieceHandler extends AbstractPropertyBasedPieceHandler<byte[],
 				property.clear(new AddressRangeImpl(address, address));
 			}
 			else {
-				property.put(address, s.toString());
+				String desc = s.toString();
+				if (value.getOriginatingOp() != null) {
+					desc += "@" + value.getOriginatingOp().getSeqnum().toString();
+				}
+				property.put(address, desc);
 			}
 		}
 	}
