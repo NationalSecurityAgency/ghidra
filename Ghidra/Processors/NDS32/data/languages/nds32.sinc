@@ -17,10 +17,24 @@ define register offset=0x100 size=8
 define register offset=0x100 size=4
 [d0.hi d0.lo d1.hi d1.lo];
 
-define register offset=0x1000 size=4
-[ itb ];
+define register offset=0x200 size=4
+[ itb lb lc le ifc_lp];
 
-define register offset=0x1000 size=8   contextreg;
+define register offset=0x1000 size=4
+[ fs0 fs1 fs2 fs3 fs4 fs5 fs6 fs7
+  fs8 fs9 fs10 fs11 fs12 fs13 fs14 fs15
+  fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
+  fs24 fs25 fs26 fs27 fs28 fs29 fs30 fs31
+];
+
+define register offset=0x1000 size=8
+[ fd0 fd1 fd2 fd3 fd4 fd5 fd6 fd7
+  fd8 fd9 fd10 fd11 fd12 fd13 fd14 fd15
+  fd16 fd17 fd18 fd19 fd20 fd21 fd22 fd23
+  fd24 fd25 fd26 fd27 fd28 fd29 fd30 fd31
+];
+
+define register offset=0x300 size=8   contextreg;
 define context contextreg
 	counter		= (22,26)
 	regNum		= (27,31)	# register for load/store multiple instructions
@@ -30,10 +44,16 @@ define token instr32(32)
     OpSz        = (31, 31)
     Opc         = (25, 30)
     Rt          = (20, 24)
+    Fst         = (20, 24)
+    Fdt         = (20, 24)
     Rth         = (21, 24)
     Rtl         = (21, 24)
     Ra          = (15, 19)
+    Fsa         = (15, 19)
+    Fda         = (15, 19)
     Rb          = (10, 14)
+    Fsb         = (10, 14)
+    Fdb         = (10, 14)
     Rd          = (5, 9)
     Rs          = (5, 9)
     Sub5        = (0, 4)
@@ -41,6 +61,14 @@ define token instr32(32)
     Sub7        = (0, 6)
     Sub8        = (0, 7)
     Sub3        = (7, 9)
+    fop4        = (6, 9)
+    cop4        = (0, 3)
+    f2op        = (10, 14)
+    fcnd        = (7, 9)
+    cmpe        = (6, 6)
+    fbi         = (7, 7)
+    cpn         = (13, 14)
+    fsbi        = (12, 12)
     Imm8u       = (7,14)
     Imm5u       = (10, 14)
     Imm5s       = (10, 14) signed
@@ -63,8 +91,9 @@ define token instr32(32)
     Imm20u      = (0, 19)
     Imm20s      = (0, 19) signed
     Imm24s      = (0, 23) signed
-    Imm11s		= (8, 18) signed
-    Imm8s		= (0, 7) signed
+    Imm12s      = (0, 11) signed
+    Imm11s      = (8, 18) signed
+    Imm8s       = (0, 7) signed
     sv          = (8, 9)
     SrIdx       = (10, 19)
     Swid        = (5, 19)
@@ -143,25 +172,43 @@ attach variables [Dthigh] [
     d0.hi d1.hi
 ];
 
+attach variables [ Fst Fsa Fsb ]
+[ fs0 fs1 fs2 fs3 fs4 fs5 fs6 fs7
+  fs8 fs9 fs10 fs11 fs12 fs13 fs14 fs15
+  fs16 fs17 fs18 fs19 fs20 fs21 fs22 fs23
+  fs24 fs25 fs26 fs27 fs28 fs29 fs30 fs31
+];
+
+attach variables [ Fdt Fda Fdb ]
+[ fd0 fd1 fd2 fd3 fd4 fd5 fd6 fd7
+  fd8 fd9 fd10 fd11 fd12 fd13 fd14 fd15
+  fd16 fd17 fd18 fd19 fd20 fd21 fd22 fd23
+  fd24 fd25 fd26 fd27 fd28 fd29 fd30 fd31
+];
 
 @define I32     "(OpSz=0)"
+@define LBGP    "(Opc=0b010111)"
+@define LWC     "(Opc=0b011000)"
+@define SWC     "(Opc=0b011001)"
+@define LDC     "(Opc=0b011010)"
+@define SDC     "(Opc=0b011011)"
+@define LSMW    "(Opc=0b011101)"
+@define MEM     "(Opc=0b011100)"
+@define HWGP    "(Opc=0b011110)"
+@define SBGP    "(Opc=0b011111)"
 @define ALU_1   "(Opc=0b100000)"
 @define ALU_2   "(Opc=0b100001)"
-@define ALU2Z   "(Alu2Mod=0b0000)"
-@define GPR     "(Alu2Mod=0b0001)"
+@define JI      "(Opc=0b100100)"
+@define JREG    "(Opc=0b100101)"
 @define BR1     "(Opc=0b100110)"
 @define BR2     "(Opc=0b100111)"
 @define BR3     "(Opc=0b101101)"
-@define LSMW    "(Opc=0b011101)"
-@define JI      "(Opc=0b100100)"
-@define MEM     "(Opc=0b011100)"
 @define MISC    "(Opc=0b110010)"
-@define JREG    "(Opc=0b100101)"
-@define SBGP    "(Opc=0b011111)"
-@define LBGP    "(Opc=0b010111)"
-@define HWGP    "(Opc=0b011110)"
+@define COP     "(Opc=0b110101)"
 @define SIMD    "(Opc=0b111000)"
 
+@define ALU2Z   "(Alu2Mod=0b0000)"
+@define GPR     "(Alu2Mod=0b0001)"
 
 
 ### ALU Instruction with Immediate ###
@@ -234,9 +281,18 @@ UsrName: d0.lo is Group=0 & Usr=0 & d0.lo { export d0.lo; }
 UsrName: d0.hi is Group=0 & Usr=1 & d0.hi { export d0.hi; }
 UsrName: d1.lo is Group=0 & Usr=2 & d1.lo { export d1.lo; }
 UsrName: d1.hi is Group=0 & Usr=3 & d1.hi { export d1.hi; }
+UsrName: le   is Group=0 & Usr=0b11010 & le { export le; }
+UsrName: itb   is Group=0 & Usr=0b11100 & itb { export itb; }
+UsrName: lb   is Group=0 & Usr=0b11001 & lb { export lb; }
+UsrName: lc   is Group=0 & Usr=0b11011 & lc { export lc; }
+UsrName: ifc_lp   is Group=0 & Usr=0b11101 & ifc_lp { export ifc_lp; }
+#UsrName: pc   is Group=0 & Usr=0b11111 & pc { export pc; }
+
 
 :mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { UsrName = Rt; }
+:mfusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100000  & pc { pc = Rt; goto[pc]; } # Not sure this works correctly
 :mtusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100001 { Rt = UsrName; }
+:mtusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100001 & pc { Rt = inst_next; }
 
 
 ### Divide Instructions ###
@@ -1171,3 +1227,352 @@ define pcodeop ex9;
 :ex9.it imm5u is $(I16) & opc10=0b1011101010 & imm5u {
 	ex9(imm5u:4);
 }
+
+# Floating Point
+
+# FPU_FS1
+define pcodeop fadds;
+:fadds Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x0 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fadds(Fsa, Fsb);
+}
+
+define pcodeop fsubs;
+:fsubs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x1 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fsubs(Fsa, Fsb);
+}
+
+define pcodeop fcpynss;
+:fcpynss Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x2 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fcpynss(Fsa, Fsb);
+}
+
+define pcodeop fcpyss;
+:fcpyss Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x3 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fcpyss(Fsa, Fsb);
+}
+
+define pcodeop fmadds;
+:fmadds Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x4 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fmadds(Fsa, Fsb);
+}
+
+define pcodeop fmsubs;
+:fmsubs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x5 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fmsubs(Fsa, Fsb);
+}
+
+define pcodeop fcmovns;
+:fcmovns Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x6 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fcmovns(Fsa, Fsb);
+}
+
+define pcodeop fcmovzs;
+:fcmovzs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x7 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fcmovzs(Fsa, Fsb);
+}
+
+define pcodeop fnmadds;
+:fnmadds Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x8 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fnmadds(Fsa, Fsb);
+}
+
+define pcodeop fnmsubs;
+:fnmsubs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x9 & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fnmsubs(Fsa, Fsb);
+}
+
+define pcodeop fmuls;
+:fmuls Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xa & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fmuls(Fsa, Fsb);
+}
+
+define pcodeop fdivs;
+:fdivs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xb & Fst & Fsa & Fsb  & cop4=0x0 {
+	Fst = fdivs(Fsa, Fsb);
+}
+
+# FPU_FS1_F2OP
+
+define pcodeop fs2d;
+:fs2d Fdt, Fsa is $(I32) & $(COP) & fop4=0xf & Fdt & Fsa & f2op=0 & cop4=0x0 {
+	Fdt = fs2d(Fsa);
+}
+
+define pcodeop fsqrts;
+:fsqrts Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=1 & cop4=0x0 {
+	Fst = fsqrts(Fsa);
+}
+
+define pcodeop fabss;
+:fabss Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x5 & cop4=0x0 {
+	Fst = fabss(Fsa);
+}
+
+define pcodeop fui2s;
+:fui2s Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x8 & cop4=0x0 {
+	Fst = fui2s(Fsa);
+}
+
+define pcodeop fsi2s;
+:fsi2s Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0xc & cop4=0x0 {
+	Fst = fsi2s(Fsa);
+}
+
+define pcodeop fs2ui;
+:fs2ui Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x10 & cop4=0x0 {
+	Fst = fs2ui(Fsa);
+}
+
+define pcodeop fs2ui.z;
+:fs2ui.z Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x14 & cop4=0x0 {
+	Fst = fs2ui.z(Fsa);
+}
+
+define pcodeop fs2si;
+:fs2si Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x18 & cop4=0x0 {
+	Fst = fs2si(Fsa);
+}
+
+define pcodeop fs2si.z;
+:fs2si.z Fst, Fsa is $(I32) & $(COP) & fop4=0xf & Fst & Fsa & f2op=0x1c & cop4=0x0 {
+	Fst = fs2si.z(Fsa);
+}
+
+# FPU_FS2
+fcond: "eq" is fcnd=0 { local tmp:1 = 0; export *[const]:1 tmp; }
+fcond: "lt" is fcnd=1 { local tmp:1 = 1; export *[const]:1 tmp; }
+fcond: "le" is fcnd=2 { local tmp:1 = 2; export *[const]:1 tmp; }
+fcond: "un" is fcnd=3 { local tmp:1 = 3; export *[const]:1 tmp; }
+
+fcmpe: "" is cmpe=0 { local tmp:1 = 0; export *[const]:1 tmp; }
+fcmpe: ".e" is cmpe=1 { local tmp:1 = 1; export *[const]:1 tmp; }
+define pcodeop fcmps;
+:fcmp^fcond^"s"^fcmpe Fst, Fsa, Fsb is $(I32) & $(COP) & Fst & Fsa & Fsb & cop4=0x4 & fcond & fcmpe {
+	Fst = fcmps(Fsa, Fsb, fcond, fcmpe);
+}
+
+# FPU_FD1
+
+define pcodeop faddd;
+:faddd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x0 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = faddd(Fda, Fdb);
+}
+
+define pcodeop fsubd;
+:fsubd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x1 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fsubd(Fda, Fdb);
+}
+
+define pcodeop fcpynsd;
+:fcpynsd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x2 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fcpynsd(Fda, Fdb);
+}
+
+define pcodeop fcpysd;
+:fcpysd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x3 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fcpysd(Fda, Fdb);
+}
+
+define pcodeop fmaddd;
+:fmaddd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x4 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fmaddd(Fda, Fdb);
+}
+
+define pcodeop fmsubd;
+:fmsubd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x5 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fmsubd(Fda, Fdb);
+}
+
+define pcodeop fcmovnd;
+:fcmovnd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x6 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fcmovnd(Fda, Fdb);
+}
+
+define pcodeop fcmovzd;
+:fcmovzd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x7 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fcmovzd(Fda, Fdb);
+}
+
+define pcodeop fnmaddd;
+:fnmaddd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x8 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fnmaddd(Fda, Fdb);
+}
+
+define pcodeop fnmsubd;
+:fnmsubd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x9 & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fnmsubd(Fda, Fdb);
+}
+
+define pcodeop fmuld;
+:fmuld Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xa & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fmuld(Fda, Fdb);
+}
+
+define pcodeop fdivd;
+:fdivd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xb & Fdt & Fda & Fdb  & cop4=0x8 {
+	Fdt = fdivd(Fda, Fdb);
+}
+
+# FPU_FD1_F2OP
+define pcodeop fd2s;
+:fd2s Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0 & cop4=0x8 {
+	Fst = fd2s(Fda);
+}
+
+define pcodeop fsqrtd;
+:fsqrtd Fdt, Fda is $(I32) & $(COP) & fop4=0xf & Fdt & Fda & f2op=1 & cop4=0x8 {
+	Fdt = fsqrtd(Fda);
+}
+
+define pcodeop fabsd;
+:fabsd Fdt, Fda is $(I32) & $(COP) & fop4=0xf & Fdt & Fda & f2op=0x5 & cop4=0x8 {
+	Fdt = fabsd(Fda);
+}
+
+define pcodeop fui2d;
+:fui2d Fdt, Fsa is $(I32) & $(COP) & fop4=0xf & Fdt & Fsa & f2op=0x8 & cop4=0x8 {
+	Fdt = fui2d(Fsa);
+}
+
+define pcodeop fsi2d;
+:fsi2d Fdt, Fsa is $(I32) & $(COP) & fop4=0xf & Fdt & Fsa & f2op=0xc & cop4=0x8 {
+	Fdt = fsi2d(Fsa);
+}
+
+define pcodeop fd2ui;
+:fd2ui Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x10 & cop4=0x8 {
+	Fst = fd2ui(Fda);
+}
+
+define pcodeop fd2ui.z;
+:fd2ui.z Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x14 & cop4=0x8 {
+	Fst = fs2ui.z(Fda);
+}
+
+define pcodeop fd2si;
+:fd2si Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x18 & cop4=0x8 {
+	Fst = fd2si(Fda);
+}
+
+define pcodeop fd2si.z;
+:fd2si.z Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x1c & cop4=0x8 {
+	Fst = fs2si.z(Fda);
+}
+
+# FPU_FS2
+define pcodeop fcmpd;
+:fcmp^fcond^"d"^fcmpe Fst, Fda, Fdb is $(I32) & $(COP) & Fst & Fda & Fdb & cop4=0xc & fcond & fcmpe {
+	Fst = fcmpd(Fda, Fdb, fcond, fcmpe);
+}
+
+# FPU_MFCP
+define pcodeop fmfsr;
+:fmfsr Rt, Fsa is $(I32) & $(COP) & fop4=0x0 & Rt & Fsa & f2op=0x0 & cop4=0x1 {
+	Rt = fmfsr(Fsa);
+}
+
+define pcodeop fmfdr;
+:fmfdr Rt, Fda is $(I32) & $(COP) & fop4=0x1 & Rt & Fda & f2op=0x0 & cop4=0x1 {
+	Rt = fmfdr(Fda);
+}
+
+# FPU_MTCP
+define pcodeop ftmsr;
+:ftmsr Rt, Fsa is $(I32) & $(COP) & fop4=0x0 & Rt & Fsa & f2op=0x0 & cop4=0x9 {
+	Fsa = ftmsr(Rt);
+}
+
+define pcodeop ftmdr;
+:ftmdr Rt, Fda is $(I32) & $(COP) & fop4=0x1 & Rt & Fda & f2op=0x0 & cop4=0x9 {
+	Fda = ftmdr(Rt);
+}
+
+# FPU_FLS
+
+:fls Fst, AddrRaRbsv is $(I32) & $(COP) & Fst & AddrRaRbsv & fbi=0 & cop4=0x2 {
+	Fst = *AddrRaRbsv;
+}
+
+:fls.bi Fst [Ra], OffsetRbsv is $(I32) & $(COP) & Fst & Ra & OffsetRbsv & fbi=1 & cop4=2 {
+	Fst = *Ra;
+	Ra = Ra + OffsetRbsv;
+}
+
+# FPU_FLD
+
+:fld Fdt, AddrRaRbsv is $(I32) & $(COP) & Fdt & AddrRaRbsv & fbi=0 & cop4=0x3 {
+	Fdt = *AddrRaRbsv;
+}
+
+:fld.bi Fdt [Ra], OffsetRbsv is $(I32) & $(COP) & Fdt & Ra & OffsetRbsv & fbi=1 & cop4=3 {
+	Fdt = *Ra;
+	Ra = Ra + OffsetRbsv;
+}
+
+# FPU_FSS
+
+:fss Fst, AddrRaRbsv is $(I32) & $(COP) & Fst & AddrRaRbsv & fbi=0 & cop4=0xa {
+	*AddrRaRbsv = Fst;
+}
+
+:fss.bi Fst [Ra], OffsetRbsv is $(I32) & $(COP) & Fst & Ra & OffsetRbsv & fbi=1 & cop4=0xa {
+	*Ra = Fst;
+	Ra = Ra + OffsetRbsv;
+}
+
+# FPU_FSD
+:fsd Fdt, AddrRaRbsv is $(I32) & $(COP) & Fdt & AddrRaRbsv & fbi=0 & cop4=0xb {
+	*AddrRaRbsv = Fdt;
+}
+
+:fsd.bi Fdt [Ra], OffsetRbsv is $(I32) & $(COP) & Fdt & Ra & OffsetRbsv & fbi=1 & cop4=0xb {
+	*Ra = Fdt;
+	Ra = Ra + OffsetRbsv;
+}
+
+
+# LWC0
+AddrRaImm12s: [Ra + offs] is Ra & Imm12s [ offs = Imm12s << 2; ] { addr:4 = Ra + offs; export addr; }
+OffImm12s: (offs) is Imm12s [ offs = Imm12s << 2; ] { export *[const]:4 offs; }
+
+:flsi Fst, AddrRaImm12s is $(I32) & $(LWC) & Fst & cpn=0 & fsbi=0 & AddrRaImm12s {
+	Fst = *AddrRaImm12s;
+}
+
+:flsi.bi Fst [Ra], OffImm12s is $(I32) & $(LWC) & Fst & Ra & cpn=0 & fsbi=1 & OffImm12s  {
+	Fst = *Ra;
+	Ra = Ra + OffImm12s;
+}
+
+# LDC0
+
+:fldi Fdt, AddrRaImm12s is $(I32) & $(LDC) & Fdt & cpn=0 & fsbi=0 & AddrRaImm12s {
+	Fdt = *AddrRaImm12s;
+}
+
+:fldi.bi Fdt [Ra], OffImm12s is $(I32) & $(LDC) & Fdt & Ra & cpn=0 & fsbi=1 & OffImm12s {
+	Fdt = *Ra;
+	Ra = Ra + OffImm12s;
+}
+
+# SWC0
+
+:fssi Fst, AddrRaImm12s is $(I32) & $(SWC) & Fst & cpn=0 & fsbi=0 & AddrRaImm12s {
+	*AddrRaImm12s = Fst;
+}
+
+:fssi.bi Fst [Ra], OffImm12s is $(I32) & $(SWC) & Fst & Ra & cpn=0 & fsbi=1 & OffImm12s {
+	*Ra = Fst;
+	Ra = Ra + OffImm12s;
+}
+
+# SDC0
+:fsdi Fdt, AddrRaImm12s is $(I32) & $(SDC) & Fdt & cpn=0 & fsbi=0 & AddrRaImm12s {
+	*AddrRaImm12s = Fdt;
+}
+
+:fsdi.bi Fdt [Ra], OffImm12s is $(I32) & $(SDC) & Fdt & Ra & cpn=0 & fsbi=1 & OffImm12s {
+	*Ra = Fdt;
+	Ra = Ra + OffImm12s;
+}
+
