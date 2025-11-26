@@ -134,15 +134,22 @@ public class DtFilterState {
 			return true;
 		}
 
-		DataType baseDt = DataTypeUtils.getBaseDataType(dt);
-
 		if (dt instanceof Array) {
 			return passes(arraysFilter, dt);
 		}
 
-		if (dt instanceof Pointer) {
+		if (dt instanceof Pointer ptrDt) {
+			if (ptrDt.getDataType() == null) {
+				// special check for a pointer data type that is equivalent to the 
+				// built-in base "pointer" data type ("pointer" does not have a target type).
+				// Returning 'true' here allows this data type to bypass the filter just like
+				// builtin int/float types will at the bottom of this method.
+				return true;
+			}
 			return passes(pointersFilter, dt);
 		}
+
+		DataType baseDt = DataTypeUtils.getBaseDataType(dt);
 
 		if (baseDt instanceof Enum) {
 			return passes(enumsFilter, dt);

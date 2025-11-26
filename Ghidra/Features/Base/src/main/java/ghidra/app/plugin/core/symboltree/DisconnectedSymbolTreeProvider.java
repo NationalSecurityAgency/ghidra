@@ -43,9 +43,10 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 
 		createActions();
 
-		// Snapshots do not usually track events.  Turn this off now, but leave the action so 
-		// clients can turn the action on as desired.
-		goToToggleAction.setEnabled(false);
+		// Snapshots do not usually respond to incoming location events.  But, it seems to make 
+		// sense that users would like to use the snapshot to navigate the tool.
+		tool.removeLocalAction(this, navigateIncomingAction);
+		navigateIncomingAction.setSelected(false);
 
 		setHelpLocation(new HelpLocation("SymbolTreePlugin", "Disconnected_Symbol_Tree"));
 

@@ -130,6 +130,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
+		Msg.info(this, "Go version %s".formatted(goBinary.getGoVer()));
+
 		goTypes = goBinary.getGoTypes();
 		markupSession = goBinary.createMarkupSession(monitor);
 
@@ -695,7 +697,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					memBlk = memory.getBlock(afterFlag);
 					memBlk.setName(memBlk.getName().replaceFirst("(\\.split)+$", ".part2"));
 				}
-				catch (MemoryBlockException | LockException | NotFoundException e) {
+				catch (MemoryBlockException | LockException e) {
 					Msg.error(this, "Failed to fixup runtime.writeBarrier flag", e);
 				}
 			}

@@ -1067,12 +1067,7 @@ public class ElfHeader implements StructConverter {
 	 * @return true if provider contains specified byte offset range
 	 */
 	private boolean providerContainsRegion(long offset, int length) {
-		try {
-			return offset >= 0 && (offset + length) <= provider.length();
-		}
-		catch (IOException e) {
-			return false;
-		}
+		return offset >= 0 && (offset + length) <= provider.length();
 	}
 
 	protected void parseSectionHeaders() throws IOException {

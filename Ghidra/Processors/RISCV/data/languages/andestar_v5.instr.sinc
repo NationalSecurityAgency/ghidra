@@ -1,0 +1,607 @@
+#
+# AndeStar V5 extensions to base RISC-V architecture
+#
+
+#
+# ExecTable is loaded/overlayed on the memory segment
+# That is indexed by the E
+define space ExecTable type=ram_space size=2;
+
+@define CUSTOM0 "op0006=0b0001011"
+@define CUSTOM1 "op0006=0b0101011"
+@define CUSTOM2 "op0006=0b1011011"
+@define CUSTOM4 "op0006=0b1010111"
+
+simm18_lb: val is sop3131 & op1516 & op1719 & op2020 & op2130 & op1414 [ val = (sop3131<<17) | (op1516<<15) | (op1719<<12) | (op2020<<11) | (op2130<<1) | op1414; ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_lh: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<17) | (op1516<<15) | (op1719<<12) | (op2020<<11) | (op2130<<1); ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_lw: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<18) | (op1516<<16) | (op1719<<13) | (op2020<<12) | (op2130<<2); ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_ld: val is sop3131 & op1516 & op1719 & op2020 & op2122 & op2330 [ val = (sop3131<<19) | (op2122<<17) | (op1516<<15) | (op1719<<12) | (op2330<<3); ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_sb: val is sop3131 & op1516 & op1719 & op0707 & op2530 & op0811 & op1414 [ val = (sop3131<<17) | (op1516<<15) | (op1719<<12) | (op0707<<11) | (op2530<<5) | (op0811<<1) | op1414; ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_sh: val is sop3131 & op1516 & op1719 & op0707 & op2530 & op0811  [ val = (sop3131<<17) | (op1516<<15) | (op1719<<12) | (op0707<<11) | (op2530<<5) | (op0811<<1); ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_sw: val is sop3131 & op1516 & op1719 & op0707 & op2530 & op0808 & op0911 [ val = (sop3131<<18) | (op0808<<17) | (op1516<<15) | (op1719<<12) | (op0707<<11) | (op2530<<5) | (op0911<<2); ] {
+	export *[const]:$(XLEN) val;
+}
+
+simm18_sd: val is sop3131 & op1516 & op1719 & op0707 & op2530 & op0809 & op1011  [ val = (sop3131<<19) | (op0809<<17) | (op1516<<15) | (op1719<<12) | (op0707<<11) | (op2530<<5) | (op1011<<3); ] {
+	export *[const]:$(XLEN) val;
+}
+
+cimm: "#"^val is op2024 & op0707 [ val = op0707<<5 | op2024; ] {
+	# Note on 32-bit op0707 must be 0
+	export *[const]:$(XLEN) val;
+}
+
+cimm7: "#"^val is op3030 & op2024 & op0707 [ val = op3030<<6 | op0707<<5 | op2024; ] {
+	export *[const]:$(XLEN) val;
+}
+
+ra_imm10: dest is sop3131 & op2529 & op0811 [ dest = inst_start + (sop3131 << 10 | op2529<<5 | op0811<<1); ] {
+	export *[ram]:$(XLEN) dest;
+}
+
+
+:addigp rd,simm18_lb is simm18_lb & rd & op1213=1 & $(CUSTOM0)
+{
+	rd =  gp + simm18_lb;
+}
+
+:bbc rs1,cimm,ra_imm10 is rs1 & cimm & ra_imm10 & op3030=0 & op1214=0b111 & op0707=0 & $(CUSTOM2)
+{
+	tst:1 = (rs1 & (1 << cimm)) == 0;
+	if (tst) goto ra_imm10;
+}
+
+:bbs rs1,cimm,ra_imm10 is rs1 & cimm & ra_imm10 & op3030=1 & op1214=0b111 & op0707=0 & $(CUSTOM2)
+{
+	tst:1 = (rs1 & (1 << cimm)) == 1;
+	if (tst) goto ra_imm10;
+}
+
+:beqc rs1,cimm7,ra_imm10 is rs1 & cimm7 & ra_imm10 & op1214=0b101 & $(CUSTOM2)
+{
+	tst:1 = rs1 == cimm7;
+	if (tst) goto ra_imm10;
+}
+
+:bnec rs1,cimm7,ra_imm10 is rs1 & cimm7 & ra_imm10 & op1214=0b110 & $(CUSTOM2)
+{
+	tst:1 = rs1 != cimm7;
+	if (tst) goto ra_imm10;
+}
+
+msb: "#"^op2631 is op2631 { export *[const]:$(XLEN) op2631; }
+lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
+
+:bfos rd,rs1,msb,lsb is rd & rs1 & op2631=0 & msb & lsb & op1214=0b011 & $(CUSTOM2)
+{
+	# msb==0  Rd[LSB] = sext(Rs1[0])
+	shift:$(XLEN) = ($(XLEN)*8-1);
+	val:$(XLEN) = (rs1 & 1 << shift) s>> (shift);
+	val = val << lsb;
+	rd = val;
+}
+
+:bfos rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 > op2631) & (op2631 != 0) & op1214=0b011 & $(CUSTOM2)
+{
+	# msb < lsb  Rd[LSB:MSB] = sext(Rs1[len-1:0])
+	len:$(XLEN) = lsb-msb+1;
+	shift:$(XLEN) = ($(XLEN)*8 - len);
+	val:$(XLEN) = (rs1 << shift) s>> shift;
+	val = val << msb;
+	rd = val;
+}
+
+:bfos rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 <= op2631) & (op2631 != 0) & op1214=0b011 & $(CUSTOM2)
+{
+	# msb >= lsb  Rd[len-1:0] = sext(Rs1[MSB:LSB])
+	len:$(XLEN) = msb-lsb+1;
+	shift:$(XLEN) = ($(XLEN)*8 - msb - 1);
+	val:$(XLEN) = (rs1 << shift) s>> ($(XLEN)*8 - len);
+	rd = val;
+}
+
+:bfoz rd,rs1,msb,lsb is rd & rs1 & op2631=0 & msb & lsb & op1214=0b010 & $(CUSTOM2)
+{
+	# msb==0  Rd[LSB] = zext(Rs1[0])
+	val:$(XLEN) = rs1 & 1;
+	val = val << lsb;
+	rd = val;
+}
+
+:bfoz rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 > op2631) & (op2631 != 0) & op1214=0b010 & $(CUSTOM2)
+{
+	# msb < lsb  Rd[LSB:MSB] = zext(Rs1[len-1:0])
+	len:$(XLEN) = lsb-msb+1;
+	mask:$(XLEN) = ((-1) >> ($(XLEN)*8 -len));
+	val:$(XLEN) = rs1 & mask;
+	val = val << msb;
+	rd = val;
+}
+
+:bfoz rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 <= op2631) & op1214=0b010 & $(CUSTOM2)
+{
+	# msb >= lsb  Rd[len-1:0] = zext(Rs1[MSB:LSB])
+	len:$(XLEN) = msb-lsb+1;
+	mask:$(XLEN) = ((-1) >> ($(XLEN)*8 -len)) << lsb;
+	val:$(XLEN) = rs1 & mask;
+	val = val >> lsb;
+	rd = val;
+}
+
+
+
+:lea.h rd,rs1,rs2 is op2531=0b0000101 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + rs2 * 2;
+	rd = ea;
+}
+
+:lea.w rd,rs1,rs2 is op2531=0b0000110 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + rs2 * 4;
+	rd = ea;
+}
+
+:lea.d rd,rs1,rs2 is op2531=0b0000111 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + rs2 * 8;
+	rd = ea;
+}
+
+:lea.b.ze rd,rs1,rs2 is op2531=0b0001000 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + zext(rs2:4);
+	rd = ea;
+}
+
+:lea.h.ze rd,rs1,rs2 is op2531=0b0001001 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + zext(rs2:4) * 2;
+	rd = ea;
+}
+
+:lea.w.ze rd,rs1,rs2 is op2531=0b0001010 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + zext(rs2:4) * 4;
+	rd = ea;
+}
+
+:lea.d.ze rd,rs1,rs2 is op2531=0b0001011 & rs2 & rs1 & op1214=0 & rd & $(CUSTOM2)
+{
+	local ea:$(XLEN) = rs1 + zext(rs2:4) * 8;
+	rd = ea;
+}
+
+:lbgp rd,"["^simm18_lb^"]" is simm18_lb & rd & op1213=0 & $(CUSTOM0)
+{
+	local ea:$(XLEN) = gp + simm18_lb;
+	rd = sext(*[ram]:1 ea);
+}
+
+:lbugp rd,"["^simm18_lb^"]" is simm18_lb & rd & op1213=2 & $(CUSTOM0)
+{
+	local ea:$(XLEN) = gp + simm18_lb;
+	rd = zext(*[ram]:1 ea);
+}
+
+:lhgp rd,"["^simm18_lh^"]" is simm18_lh & rd & op1214=1 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_lh;
+	rd = sext(*[ram]:2 ea);
+}
+
+:lhugp rd,"["^simm18_lh^"]" is simm18_lh & rd & op1214=5 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_lh;
+	rd = zext(*[ram]:2 ea);
+}
+
+:lwgp rd,"["^simm18_lw^"]" is simm18_lw & rd & op1214=2 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_lw;
+	rd = sext(*[ram]:4 ea);
+}
+
+:lwugp rd,"["^simm18_lw^"]" is simm18_lw & rd & op1214=6 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_lw;
+	rd = zext(*[ram]:4 ea);
+}
+
+:ldgp rd,"["^simm18_ld^"]" is simm18_ld & rd & op1214=3 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_ld;
+	rd = *[ram]:8 ea;
+}
+
+:sbgp rs2,"["^simm18_sb^"]" is simm18_sb & rs2 & op1213=3 & $(CUSTOM0)
+{
+	local ea:$(XLEN) = gp + simm18_sb;
+	*[ram]:1 ea = rs2[0,8];
+}
+
+:shgp rs2,"["^simm18_sh^"]" is simm18_sh & rs2 & op1214=0 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_sh;
+	*[ram]:2 ea = rs2[0,16];
+}
+
+:swgp rs2,"["^simm18_sw^"]" is simm18_sw & rs2 & op1214=4 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_sw;
+	*[ram]:4 ea = rs2[0,32];
+}
+
+:sdgp rs2,"["^simm18_sd^"]" is simm18_sd & rs2 & op1214=7 & $(CUSTOM1)
+{
+	local ea:$(XLEN) = gp + simm18_sd;
+	*[ram]:8 ea = rs2;
+}
+
+
+:ffb rd,rs1,rs2 is rd & rs1 & rs2 & op2531=0b0010000 & op1214=0 & $(CUSTOM2) {
+@if XLEN == "4"
+	m1:1 = (rs1[0,8]  == rs2[0,8]);
+	m2:1 = (rs1[8,8]  == rs2[0,8]);
+	m3:1 = (rs1[16,8] == rs2[0,8]);
+	m4:1 = (rs1[24,8] == rs2[0,8]);
+	rd = -4;
+	if (m1) goto inst_next;
+	rd = -3;
+	if (m2) goto inst_next;
+	rd = -2;
+	if (m3) goto inst_next;
+	rd = -1;
+	if (m4) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+   	m1:1 = (rs1[0,8]  == rs2[0,8]);
+	m2:1 = (rs1[8,8]  == rs2[0,8]);
+	m3:1 = (rs1[16,8] == rs2[0,8]);
+	m4:1 = (rs1[24,8] == rs2[0,8]);
+	m5:1 = (rs1[32,8] == rs2[0,8]);
+	m6:1 = (rs1[40,8] == rs2[0,8]);
+	m7:1 = (rs1[48,8] == rs2[0,8]);
+	m8:1 = (rs1[56,8] == rs2[0,8]);
+	rd = -8;
+	if (m1) goto inst_next;
+	rd = -7;
+	if (m2) goto inst_next;
+	rd = -6;
+	if (m3) goto inst_next;
+	rd = -5;
+	if (m4) goto inst_next;
+	rd = -4;
+	if (m5) goto inst_next;
+	rd = -3;
+	if (m6) goto inst_next;
+	rd = -2;
+	if (m7) goto inst_next;
+	rd = -1;
+	if (m8) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-8) + (zext(m2)*-7) + (zext(m3)*-6) + (zext(m4)*-5) + (zext(m5)*-4) + (zext(m6)*-3) + (zext(m7)*-2) + (zext(m8)*-1);
+@endif
+}
+
+:ffzmism rd,rs1,rs2 is rd & rs1 & rs2 & op2531=0b0010001 & op1214=0 & $(CUSTOM2) {
+@if XLEN == "4"
+	m1:1 = (rs1[0,8]==0)  | (rs1[0,8] == rs2[0,8]);
+	m2:1 = (rs1[8,8]==0)  | (rs1[8,8] == rs2[8,8]);
+	m3:1 = (rs1[16,8]==0) | (rs1[16,8] == rs2[16,8]);
+	m4:1 = (rs1[24,8]==0) | (rs1[24,8] == rs2[24,8]);
+	rd = -4;
+	if (m1) goto inst_next;
+	rd = -3;
+	if (m2) goto inst_next;
+	rd = -2;
+	if (m3) goto inst_next;
+	rd = -1;
+	if (m4) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+   	m1:1 = (rs1[0,8]==0)  | (rs1[0,8]  == rs2[0,8]);
+	m2:1 = (rs1[8,8]==0)  | (rs1[8,8]  == rs2[8,8]);
+	m3:1 = (rs1[16,8]==0) | (rs1[16,8] == rs2[16,8]);
+	m4:1 = (rs1[24,8]==0) | (rs1[24,8] == rs2[24,8]);
+	m5:1 = (rs1[32,8]==0) | (rs1[32,8] == rs2[32,8]);
+	m6:1 = (rs1[40,8]==0) | (rs1[40,8] == rs2[40,8]);
+	m7:1 = (rs1[48,8]==0) | (rs1[48,8] == rs2[48,8]);
+	m8:1 = (rs1[56,8]==0) | (rs1[56,8] == rs2[56,8]);
+	rd = -8;
+	if (m1) goto inst_next;
+	rd = -7;
+	if (m2) goto inst_next;
+	rd = -6;
+	if (m3) goto inst_next;
+	rd = -5;
+	if (m4) goto inst_next;
+	rd = -4;
+	if (m5) goto inst_next;
+	rd = -3;
+	if (m6) goto inst_next;
+	rd = -2;
+	if (m7) goto inst_next;
+	rd = -1;
+	if (m8) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-8) + (zext(m2)*-7) + (zext(m3)*-6) + (zext(m4)*-5) + (zext(m5)*-4) + (zext(m6)*-3) + (zext(m7)*-2) + (zext(m8)*-1);
+@endif
+}
+
+:ffmism rd,rs1,rs2 is rd & rs1 & rs2 & op2531=0b0010010 & op1214=0 & $(CUSTOM2) {
+@if XLEN == "4"
+	m1:1 = (rs1[0,8]  != rs2[0,8]);
+	m2:1 = (rs1[8,8]  != rs2[8,8]);
+	m3:1 = (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8] != rs2[24,8]);
+	rd = -4;
+	if (m1) goto inst_next;
+	rd = -3;
+	if (m2) goto inst_next;
+	rd = -2;
+	if (m3) goto inst_next;
+	rd = -1;
+	if (m4) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+   	m1:1 = (rs1[0,8]  != rs2[0,8]);
+	m2:1 = (rs1[8,8]  != rs2[8,8]);
+	m3:1 = (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8] != rs2[24,8]);
+	m5:1 = (rs1[32,8] != rs2[32,8]);
+	m6:1 = (rs1[40,8] != rs2[40,8]);
+	m7:1 = (rs1[48,8] != rs2[48,8]);
+	m8:1 = (rs1[56,8] != rs2[56,8]);
+	rd = -8;
+	if (m1) goto inst_next;
+	rd = -7;
+	if (m2) goto inst_next;
+	rd = -6;
+	if (m3) goto inst_next;
+	rd = -5;
+	if (m4) goto inst_next;
+	rd = -4;
+	if (m5) goto inst_next;
+	rd = -3;
+	if (m6) goto inst_next;
+	rd = -2;
+	if (m7) goto inst_next;
+	rd = -1;
+	if (m8) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-8) + (zext(m2)*-7) + (zext(m3)*-6) + (zext(m4)*-5) + (zext(m5)*-4) + (zext(m6)*-3) + (zext(m7)*-2) + (zext(m8)*-1);
+@endif
+}
+
+:flmism rd,rs1,rs2 is rd & rs1 & rs2 & op2531=0b0010011 & op1214=0 & $(CUSTOM2) {
+@if XLEN == "4"
+	m1:1 = (rs1[0,8]  != rs2[0,8]);
+	m2:1 = (rs1[8,8]  != rs2[8,8]);
+	m3:1 = (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8] != rs2[24,8]);
+	rd = -1;
+	if (m4) goto inst_next;
+	rd = -2;
+	if (m3) goto inst_next;
+	rd = -3;
+	if (m2) goto inst_next;
+	rd = -4;
+	if (m1) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
+@else
+   	m1:1 = (rs1[0,8]  != rs2[0,8]);
+	m2:1 = (rs1[8,8]  != rs2[8,8]);
+	m3:1 = (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8] != rs2[24,8]);
+	m5:1 = (rs1[32,8] != rs2[32,8]);
+	m6:1 = (rs1[40,8] != rs2[40,8]);
+	m7:1 = (rs1[48,8] != rs2[48,8]);
+	m8:1 = (rs1[56,8] != rs2[56,8]);
+	rd = -1;
+	if (m8) goto inst_next;
+	rd = -2;
+	if (m7) goto inst_next;
+	rd = -3;
+	if (m6) goto inst_next;
+	rd = -4;
+	if (m5) goto inst_next;
+	rd = -5;
+	if (m4) goto inst_next;
+	rd = -6;
+	if (m3) goto inst_next;
+	rd = -7;
+	if (m2) goto inst_next;
+	rd = -8;
+	if (m1) goto inst_next;
+	rd = 0;
+	# choosery method
+	# rd = 0 + (zext(m1)*-8) + (zext(m2)*-7) + (zext(m3)*-6) + (zext(m4)*-5) + (zext(m5)*-4) + (zext(m6)*-3) + (zext(m7)*-2) + (zext(m8)*-1);
+@endif
+}
+
+imm11_exec: val is cop1212 & cop1011 & cop0909 & cop0808 & cop0506 & cop0404 & cop0303 & cop0202
+  [ val = (cop0808<<11)|(cop1212<<10)|(cop0303<<9)|(cop0909<<8)|(cop0506<<6)|(cop0202<<5)|(cop1011<<3)|(cop0404<<2); ] {
+  	export *[ExecTable]:2 val;
+}
+
+#
+# Code Dense (CoDense) extension
+
+
+#100 imm[10|4:3|8] imm[11] 0 imm[7:6|2|9|5] 00
+:exec.it imm11_exec is ecdv=0 & cop1315=4 & imm11_exec & cop0707=0 & cop0001=0 {
+	ExecRetAddr = inst_next;
+	goto imm11_exec;
+}
+
+:ex9.it imm11_exec is ecdv=0 & cop1315=4 & imm11_exec & cop0708=0 & cop0001=0 {
+	ExecRetAddr = inst_next;
+	goto imm11_exec;
+}
+
+#
+# alternate version of EXEC.IT when mmsc_cfb.ECDV=1
+#
+imm11_nexec: val is cop1011 & cop0909 & cop0808 & cop0707 & cop0506 & cop0404 & cop0303 & cop0202
+  [ val = (cop0808<<11)|(cop0707<<10)|(cop0303<<9)|(cop0909<<8)|(cop0506<<6)|(cop0202<<5)|(cop1011<<3)|(cop0404<<2); ] {
+  	export *[ExecTable]:2 val;
+}
+
+# 100 1 imm[4:3|8] imm[11] imm[10] imm[7:6|2|9|5] 00
+:nexec.it imm11_nexec is ecdv=1 & cop1315=4 & cop1212=1 & imm11_nexec & cop0001=0 {
+	ExecRetAddr = inst_next;
+	goto imm11_nexec;
+}
+
+#
+# INT4 vector load extension
+#
+define pcodeop vln8;
+
+:vln8.v vd,(rs1)^vm is vd & rs1 & op2631=0b000001 & vm & op2024=0b00010 & op1214=0b100 & $(CUSTOM2) {
+	# TODO load 32 4bit values, possibly sext by vm into 32 8-bit vector registers
+	val:$(VLEN) = *[ram]:$(VLEN) rs1;
+	vd = vln8(val);
+	build vm;
+}
+
+:vlnu8.v vd,(rs1)^vm is vd & rs1 & op2631=0b000001 & vm & op2024=0b00011 & op1214=0b100 & $(CUSTOM2) {
+	# TODO load 32 4bit values, possibly zext by vm into 32 8-bit vector registers
+	val:$(VLEN) = *[ram]:$(VLEN) rs1;
+	vd = vln8(val);
+	build vm;
+}
+
+
+#
+# bfloat16 conversion extension
+#
+define pcodeop fcvt.s.bf16;
+
+:fcvt.s.bf16   frd,frs2  is frd & frs2 & op2531=0 & op1519=0b00010 & op1214=0b100 & $(CUSTOM2) {
+	frd = fcvt.s.bf16(frs2);
+}
+
+define pcodeop fcvt.bf16.s;
+
+:fcvt.bf16.s   frd,frs2  is frd & frs2 & op2531=0 & op1519=0b00011 & op1214=0b100 & $(CUSTOM2) {
+	frd = fcvt.bf16.s(frs2);
+}
+
+#
+# Vector BFloat16 conversion extension
+#
+
+define pcodeop vfwcvt.s.bf16;
+
+:vfwcvt.s.bf16 vd,vs2 is vd & vs2 & op2631=0b000000 & op1519=0b00000 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfwcvt.s.bf16(vs2);
+}
+
+define pcodeop vfncvt.bf16.s;
+
+:vfncvt.bf16.s vd,vs2 is vd & vs2 & op2631=0b000000 & op1519=0b00001 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfncvt.bf16.s(vs2);
+}
+
+define pcodeop vfpmadt.vf;
+
+:vfpmadt.vf vd,rs1,vs2^vm is vd & rs1 & vs2 & vm & op2631=0b000010 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfpmadt.vf(rs1,vs2);
+	build vm;
+}
+
+define pcodeop vfpmadb.vf;
+
+:vfpmadb.vf vd,rs1,vs2^vm is vd & rs1 & vs2 & vm & op2631=0b000011 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfpmadb.vf(rs1,vs2);
+	build vm;
+}
+
+define pcodeop vd4dots.vv;
+
+:vd4dots.vv vd,vs1,vs2^vm is vd & vs1 & vs2 & vm & op2631=0b000100 & op1214=0b100 & $(CUSTOM2) {
+	vd = vd4dots.vv(vs1,vs2);
+	build vm;
+}
+
+define pcodeop vd4dotu.vv;
+
+:vd4dotu.vv vd,vs1,vs2^vm is vd & vs1 & vs2 & vm & op2631=0b000111 & op1214=0b100 & $(CUSTOM2) {
+	vd = vd4dotu.vv(vs1,vs2);
+	build vm;
+}
+
+define pcodeop vd4dotsu.vv;
+
+:vd4dotsu.vv vd,vs1,vs2^vm is vd & vs1 & vs2 & vm & op2631=0b000101 & op1214=0b100 & $(CUSTOM2) {
+	vd = vd4dotsu.vv(vs1,vs2);
+	build vm;
+}
+
+define pcodeop vle4.v;
+
+:vle4.v vd,(rs1) is vd & rs1 & op2631=0b000001 & op2525=1 & op2024=0b00000 & op1214=0b100 & $(CUSTOM2) {
+	val:$(VLEN) = *[ram]:$(VLEN) rs1;
+	vd = vle4.v(val);
+}
+
+define pcodeop vfwcvt.f.n.v;
+
+:vfwcvt.f.n.v vd,vs2^vm is vd & vs2 & op2631=0b000000 & vm & op1519=0b00100 & op1214=0b100 & $(CUSTOM2) {
+    vd = vfwcvt.f.n.v(vs2);
+    build vm;
+}
+
+define pcodeop vfwcvt.f.nu.v;
+
+:vfwcvt.f.nu.v vd,vs2^vm is vd & vs2 & op2631=0b000000 & vm & op1519=0b00101 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfwcvt.f.nu.v(vs2);
+	build vm;
+}
+
+define pcodeop vfwcvt.f.b.v;
+
+:vfwcvt.f.b.v vd,vs2^vm is vd & vs2 & op2631=0b000000 & vm & op1519=0b00110 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfwcvt.f.b.v(vs2);
+	build vm;
+}
+
+define pcodeop vfwcvt.f.bu.v;
+
+:vfwcvt.f.bu.v vd,vs2^vm is vd & vs2 & op2631=0b000000 & vm & op1519=0b00111 & op1214=0b100 & $(CUSTOM2) {
+	vd = vfwcvt.f.bu.v(vs2);
+	build vm;
+}
+
+

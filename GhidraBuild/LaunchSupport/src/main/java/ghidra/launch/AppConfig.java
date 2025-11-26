@@ -396,7 +396,10 @@ public class AppConfig {
 		String userSettingsDirName = appName + "_" + applicationVersion + "_" +
 			applicationReleaseName.replaceAll("\\s", "").toUpperCase();
 		if (isDev) {
-			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+			String dirName = new File(installDir, "ghidra.repos.config").isFile()
+					? installDir.getParentFile().getName()
+					: installDir.getName();
+			userSettingsDirName += "_location_" + dirName;
 		}
 		
 		// Ensure there is a user home directory (there definitely should be)

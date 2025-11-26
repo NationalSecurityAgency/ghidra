@@ -193,10 +193,10 @@ public class LaunchProperties {
 				text = text.replaceAll("\\$\\{" + key + "\\}", value.replace("\\", "\\\\"));
 			}
 			catch (IllegalArgumentException e) {
-				throw new ParseException(
-					"Error expanding environment variable in %s (env %s=%s) -- %s".formatted(text,
-						key, value, e.getMessage()),
-					0);
+				String msg =
+					String.format("Error expanding environment variable in %s (env %s=%s) -- %s",
+						text, key, value, e.getMessage());
+				throw new ParseException(msg, 0);
 			}
 		}
 		return text;

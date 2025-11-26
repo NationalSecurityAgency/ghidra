@@ -15,10 +15,11 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import static ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext.*;
+import static docking.widgets.search.SearchLocationContext.*;
 
 import java.util.Objects;
 
+import docking.widgets.search.SearchLocationContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.DynamicReference;
 import ghidra.program.model.symbol.Reference;
@@ -34,7 +35,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	private final boolean isOffcutReference;
 	private final Address locationOfUseAddress;
 	private final String refType;
-	private final LocationReferenceContext context;
+	private final SearchLocationContext context;
 	private final ProgramLocation location;
 
 	/**
@@ -52,7 +53,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	//       represents the 'from' address for a reference; for parameters and variables of a
 	//       function, this represents the address of that variable.
 	private LocationReference(Address address, ProgramLocation location, String refType,
-			LocationReferenceContext context, boolean isOffcut) {
+			SearchLocationContext context, boolean isOffcut) {
 		this.locationOfUseAddress = Objects.requireNonNull(address);
 		this.location = location;
 		this.refType = refType == null ? "" : refType;
@@ -75,15 +76,15 @@ public class LocationReference implements Comparable<LocationReference> {
 	}
 
 	LocationReference(Address locationOfUseAddress, String context) {
-		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
+		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
 	}
 
-	LocationReference(Address locationOfUseAddress, LocationReferenceContext context) {
-		this(locationOfUseAddress, null, null, LocationReferenceContext.get(context), false);
+	LocationReference(Address locationOfUseAddress, SearchLocationContext context) {
+		this(locationOfUseAddress, null, null, SearchLocationContext.get(context), false);
 	}
 
 	LocationReference(Address locationOfUseAddress, String context, ProgramLocation location) {
-		this(locationOfUseAddress, location, null, LocationReferenceContext.get(context), false);
+		this(locationOfUseAddress, location, null, SearchLocationContext.get(context), false);
 	}
 
 	/**
@@ -128,7 +129,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	 *
 	 * @return the context
 	 */
-	public LocationReferenceContext getContext() {
+	public SearchLocationContext getContext() {
 		return context;
 	}
 

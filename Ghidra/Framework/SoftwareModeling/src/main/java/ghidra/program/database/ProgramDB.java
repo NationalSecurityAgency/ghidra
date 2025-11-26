@@ -22,6 +22,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import db.DBHandle;
+import ghidra.app.plugin.processors.generic.LanguageFixupUtil;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
@@ -2071,8 +2072,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 						newCompilerSpecID = translator.getNewCompilerSpecID(compilerSpecID);
 					}
 					Msg.info(this, "Setting language for Program " + getName() + ": " + translator);
-					Msg.info(this, "Setting compiler spec for Program " + getName() + ": " +
-						compilerSpecID + " -> " + newCompilerSpecID);
+					if (!compilerSpecID.equals(newCompilerSpecID)) {
+						Msg.info(this, "Setting compiler spec for Program " + getName() + ": " +
+							compilerSpecID + " -> " + newCompilerSpecID);
+					}
 				}
 				else if (!forceRedisassembly && language.getVersion() == languageVersion &&
 					language.getMinorVersion() == languageMinorVersion) {
@@ -2143,6 +2146,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					// allow complex language upgrades to transform instructions/context
 					translator.fixupInstructions(this, translator.getOldLanguage(), monitor);
 				}
+
+				// apply pspec default markup as defined by translator and pspec
+				LanguageFixupUtil.applyPSpecFixups(this);
 
 				dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
 				dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());

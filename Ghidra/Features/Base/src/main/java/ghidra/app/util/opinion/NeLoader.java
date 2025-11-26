@@ -269,7 +269,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 						try {
 							block = program.getMemory().join(block, zeroBlock); // expand
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							throw new IOException(e);
 						}
 					}

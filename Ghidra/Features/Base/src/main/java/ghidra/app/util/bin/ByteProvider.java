@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public interface ByteProvider extends Closeable {
 	/**
 	 * A static re-usable empty {@link ByteProvider} instance. 
 	 */
-	public static final ByteProvider EMPTY_BYTEPROVIDER = new EmptyByteProvider();
+	ByteProvider EMPTY_BYTEPROVIDER = new EmptyByteProvider();
 
 	/**
 	 * Returns the {@link FSRL} of the underlying file for this byte provider,
@@ -37,7 +37,7 @@ public interface ByteProvider extends Closeable {
 	 * @return The {@link FSRL} of the underlying {@link File}, or null if no associated 
 	 *   {@link File}.
 	 */
-	default public FSRL getFSRL() {
+	default FSRL getFSRL() {
 		File f = getFile();
 		return (f != null) ? FileSystemService.getInstance().getLocalFSRL(f) : null;
 	}
@@ -48,14 +48,14 @@ public interface ByteProvider extends Closeable {
 	 * 
 	 * @return the underlying file for this byte provider
 	 */
-	public File getFile();
+	File getFile();
 
 	/**
 	 * Returns the name of the {@link ByteProvider}. For example, the underlying file name.
 	 * 
 	 * @return the name of the {@link ByteProvider} or null if there is no name
 	 */
-	public String getName();
+	String getName();
 
 	/**
 	 * Returns the absolute path (similar to, but not a, URI) to the {@link ByteProvider}.
@@ -64,28 +64,22 @@ public interface ByteProvider extends Closeable {
 	 * @return the absolute path to the {@link ByteProvider} or null if not associated with a 
 	 *   {@link File}.
 	 */
-	public String getAbsolutePath();
+	String getAbsolutePath();
 
 	/**
 	 * Returns the length of the {@link ByteProvider}
 	 * 
 	 * @return the length of the {@link ByteProvider}
-	 * @throws IOException if an I/O error occurs
 	 */
-	public long length() throws IOException;
+	long length();
 
 	/**
 	 * Returns true if this ByteProvider does not contain any bytes.
 	 * 
 	 * @return boolean true if this provider is empty, false if contains bytes
 	 */
-	default public boolean isEmpty() {
-		try {
-			return length() == 0;
-		}
-		catch (IOException e) {
-			return true;
-		}
+	default boolean isEmpty() {
+		return length() == 0;
 	}
 
 	/**
@@ -94,7 +88,7 @@ public interface ByteProvider extends Closeable {
 	 * @param index the index in the byte provider to check
 	 * @return true if the specified index is valid
 	 */
-	public boolean isValidIndex(long index);
+	boolean isValidIndex(long index);
 
 	/**
 	 * Releases any resources the {@link ByteProvider} may have occupied
@@ -102,7 +96,7 @@ public interface ByteProvider extends Closeable {
 	 * @throws IOException if an I/O error occurs
 	 */
 	@Override
-	public void close() throws IOException;
+	void close() throws IOException;
 
 	/**
 	 * Reads a byte at the specified index
@@ -111,7 +105,7 @@ public interface ByteProvider extends Closeable {
 	 * @return the byte read from the specified index
 	 * @throws IOException if an I/O error occurs
 	 */
-	public byte readByte(long index) throws IOException;
+	byte readByte(long index) throws IOException;
 
 	/**
 	 * Reads a byte array at the specified index
@@ -121,7 +115,7 @@ public interface ByteProvider extends Closeable {
 	 * @return the byte array read from the specified index
 	 * @throws IOException if an I/O error occurs
 	 */
-	public byte[] readBytes(long index, long length) throws IOException;
+	byte[] readBytes(long index, long length) throws IOException;
 
 	/**
 	 * Returns an input stream to the underlying byte provider starting at the specified index.
@@ -135,7 +129,7 @@ public interface ByteProvider extends Closeable {
 	 * @return the {@link InputStream}
 	 * @throws IOException  if an I/O error occurs
 	 */
-	default public InputStream getInputStream(long index) throws IOException {
+	default InputStream getInputStream(long index) throws IOException {
 		if (index < 0 || index > length()) {
 			throw new IOException("Invalid start position: " + index);
 		}

@@ -28,6 +28,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -48,7 +49,6 @@ public class DebuggerCoordinates {
 
 	/**
 	 * Coordinates that indicate no trace is active in the Debugger UI.
-	 * 
 	 * <p>
 	 * Typically, that only happens when no trace is open. Telling the trace manager to activate
 	 * {@code NOWHERE} will cause it to instead activate the most recently active trace, which may
@@ -607,6 +607,10 @@ public class DebuggerCoordinates {
 
 	public TracePlatform getPlatform() {
 		return platform;
+	}
+
+	public Language getLanguage() {
+		return platform == null ? null : platform.getLanguage();
 	}
 
 	public Target getTarget() {

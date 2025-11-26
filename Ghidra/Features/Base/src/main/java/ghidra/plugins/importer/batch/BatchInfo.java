@@ -26,6 +26,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.crypto.CryptoSession;
+import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -337,6 +338,9 @@ public class BatchInfo {
 
 		for (GFile file : fs.files(startDir)) {
 			taskMonitor.checkCancelled();
+			if (fs.getFileType(file, taskMonitor) != FileType.FILE) {
+				continue;
+			}
 			FSRL fqFSRL;
 			try {
 				fqFSRL = fsService.getFullyQualifiedFSRL(file.getFSRL(), taskMonitor);

@@ -26,7 +26,7 @@ import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.FindDialog;
-import docking.widgets.TextComponentSearcher;
+import docking.widgets.search.TextComponentSearcher;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.script.DecoratingPrintWriter;
@@ -69,7 +69,6 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	private Address currentAddress;
 
 	private FindDialog findDialog;
-	private TextComponentSearcher searcher;
 
 	public ConsoleComponentProvider(PluginTool tool, String owner) {
 		super(tool, "Console", owner);
@@ -192,8 +191,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 
 	private void showFindDialog() {
 		if (findDialog == null) {
-			searcher = new TextComponentSearcher(textPane);
-			findDialog = new FindDialog("Find", searcher);
+			TextComponentSearcher searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Console Find", searcher);
 		}
 		getTool().showDialog(findDialog);
 	}
@@ -220,8 +219,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		checkVisible();
 		textPane.setText("");
 
-		if (searcher != null) {
-			searcher.clearHighlights();
+		if (findDialog != null) {
+			findDialog.close(); // this will also dispose of any search highlights
 		}
 	}
 

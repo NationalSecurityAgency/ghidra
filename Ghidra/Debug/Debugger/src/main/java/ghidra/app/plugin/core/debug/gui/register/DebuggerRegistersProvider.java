@@ -332,7 +332,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			 * It's possible an "undo" or other transaction rollback will cause the current thread
 			 * to be replaced by another object. If that's the case, we need to adjust our
 			 * coordinates.
-			 * 
+			 * <p>
 			 * If that adjustment does not otherwise cause the table to update, we have to fire that
 			 * event, since the register values may have changed, esp., if this "restored" event is
 			 * the result of many events being coalesced.
@@ -499,7 +499,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	final RegistersTableModel regsTableModel;
 	GhidraTable regsTable;
 	GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
-	Map<Register, RegisterRow> regMap = new HashMap<>();
+	Map<Register, RegisterRow> regMap = new IdentityHashMap<>();
 
 	private final DebuggerAvailableRegistersDialog availableRegsDialog;
 
@@ -826,7 +826,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		prepareRegisterSpace();
 		recomputeViewKnown();
-		loadRegistersAndValues();
+		loadRegistersAndValues(previous.getLanguage() != current.getLanguage());
 		contextChanged();
 		return true;
 	}
@@ -984,7 +984,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	/**
 	 * Ensure the register space exists and has been populated from register object values.
-	 * 
 	 * <p>
 	 * TODO: I wish this were not necessary. Maybe I should create the space when register object
 	 * values are populated.
@@ -1080,10 +1079,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	/**
 	 * Gather general registers, the program counter, and the stack pointer
-	 * 
 	 * <p>
 	 * This excludes the context register
-	 * 
 	 * <p>
 	 * TODO: Several pspec files need adjustment to clean up "common registers"
 	 * 
@@ -1234,7 +1231,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		Set<Register> selection = getSelectionFor(current.getPlatform());
 		selection.clear();
 		selection.addAll(new TreeSet<>(selectedRegisters));
-		return loadRegistersAndValues();
+		return loadRegistersAndValues(false);
 	}
 
 	public RegisterRow getRegisterRow(Register register) {
@@ -1275,11 +1272,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		regsTableModel.addAll(toAdd);
 	}
 
-	protected CompletableFuture<Void> loadRegistersAndValues() {
+	protected CompletableFuture<Void> loadRegistersAndValues(boolean changeLanguage) {
 		if (current.getThread() == null) {
 			regsTableModel.clear();
 			regMap.clear();
 			return AsyncUtils.nil();
+		}
+		if (changeLanguage) {
+			regsTableModel.clear();
+			regMap.clear();
 		}
 		Set<Register> selected = getSelectionFor(current.getPlatform());
 		displaySelectedRegisters(selected);

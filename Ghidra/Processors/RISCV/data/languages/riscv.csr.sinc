@@ -2,15 +2,30 @@
 
 
 # csrrc d,E,s 00003073 0000707f SIMPLE (0, 0) 
-:csrrc rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op1519
+:csrc csr,rs1 is rs1 & csr & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op0711=0
 {
 	local tmprs1:$(XLEN) = rs1;
 	local oldcsr:$(XLEN) = csr:$(XLEN);
-	rdDst = oldcsr;
-	local tmp:$(XLEN) = op1519;
-	if (tmp == 0) goto inst_next;
 	local newcsr:$(XLEN) = oldcsr & ~tmprs1;
 	csr = newcsr;
+}
+
+# csrrc d,E,s 00003073 0000707f SIMPLE (0, 0) 
+:csrrc rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op0711
+{
+	local tmprs1:$(XLEN) = rs1;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	local newcsr:$(XLEN) = oldcsr & ~tmprs1;
+	csr = newcsr;
+	rdDst = oldcsr;
+}
+
+# csrrci d,E,Z 00007073 0000707f SIMPLE (0, 0) 
+:csrci csr,op1519 is op1519 & op0711=0 & csr & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
+{
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	local tmp:$(XLEN) = op1519;
+	csr = oldcsr & ~tmp;
 }
 
 
@@ -18,55 +33,78 @@
 :csrrci rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
-	rdDst = oldcsr;
 	local tmp:$(XLEN) = op1519;
-	if (tmp == 0) goto inst_next;
-	csr = csr & ~tmp;
+	csr = oldcsr & ~tmp;
+	rdDst = oldcsr;
 }
 
 
 # csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
-:csrrs rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519
+:csrr rdDst,csr is csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519=0 & op0711
 {
-	local tmprs1 = rs1;
-	local oldcsr:$(XLEN) = csr:$(XLEN);
-	rdDst = oldcsr;
-	local tmp:$(XLEN) = op1519;
-	if (tmp == 0) goto inst_next;
-	csr = csr | tmprs1;
+	rdDst = csr:$(XLEN);
 }
 
+# csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
+:csrs csr,rs1 is rs1 & csr & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519 & op0711=0
+{
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	csr = oldcsr | rs1;
+}
+
+# csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
+:csrrs rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519 & op0711
+{
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	csr = oldcsr | rs1;
+	rdDst  = oldcsr;
+}
 
 # csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
-:csrrsi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6
+:csrsi csr,op1519 is op1519 & csr & op0711=0 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
-	rdDst = oldcsr;
 	local tmp:$(XLEN) = op1519;
-	if (tmp == 0) goto inst_next;
-	csr = csr | tmp;
+	csr = oldcsr | tmp;
 }
 
+# csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
+:csrrsi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6 & op0711
+{
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	local tmp:$(XLEN) = op1519;
+	csr = oldcsr | tmp;
+	rdDst = oldcsr;
+}
+
+# csrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
+:csrw csr,rs1 is rs1 & csr & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & r0711=0
+{
+	csr = rs1;
+}
 
 # csrrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
-:csrrw rdDst,csr,rs1 is rs1 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op1519
+:csrrw rdDst,csr,rs1 is rs1 & csr & rdDst & r0711 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1
 {
 	local tmprs1:$(XLEN) = rs1;
 	local oldcsr:$(XLEN) = csr:$(XLEN);
-	local tmp:$(XLEN) = op1519;
 	csr = tmprs1;
-	if (tmp == 0) goto inst_next;
 	rdDst = oldcsr;
 }
 
+# csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
+:csrwi csr,op1519 is op1519 & csr & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & r0711=0
+{
+	local val:$(XLEN) = op1519;
+	csr = val;
+}
 
 # csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
-:csrrwi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5
+:csrrwi rdDst,csr,op1519 is op1519 & csr & rdDst & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & r0711
 {
 	local oldcsr:$(XLEN) = csr:$(XLEN);
-	local tmp:$(XLEN) = op1519;
-	csr = tmp;
-	if (tmp == 0) goto inst_next;
+	local val:$(XLEN) = op1519;
+	csr = val;
 	rdDst = oldcsr;
 }
 

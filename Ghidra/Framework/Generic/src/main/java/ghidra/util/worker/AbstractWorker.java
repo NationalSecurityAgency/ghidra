@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import generic.concurrent.*;
 import ghidra.util.Msg;
@@ -187,9 +188,8 @@ public abstract class AbstractWorker<T extends Job> {
 	}
 
 	/**
-	 * Schedules the job for execution.  Jobs will be processed in priority order.  The
-	 * highest priority jobs are those with the lowest value return by the job's getPriority()
-	 * method. (i.e. the job with priority 0 will be processed before the job with priority 1)
+	 * Schedules the job for execution.  Jobs will be processed according to the queue supplied at
+	 * construction time (e.g., in priority order or 1 at a time).
 	 * @param job the job to be executed.
 	 */
 	public void schedule(T job) {
@@ -206,7 +206,22 @@ public abstract class AbstractWorker<T extends Job> {
 	 * Clears any pending jobs and cancels any currently executing job.
 	 */
 	public void clearAllJobs() {
-		clearAllJobs(false);
+		clearAllJobs(t -> true);
+	}
+
+	/**
+	 * Clears any pending jobs and currently executing jobs that match the given predicate.
+	 * @param p the predicate
+	 */
+	public void clearAllJobs(Predicate<T> p) {
+		doClearAllJobs(p, false);
+	}
+
+	private void doClearAllJobs(Predicate<T> p, boolean interruptRunninJob) {
+		List<T> pendingJobs = concurrentQ.cancelAllTasks(p, interruptRunninJob);
+		for (T job : pendingJobs) {
+			job.cancel();
+		}
 	}
 
 	/**
@@ -222,14 +237,7 @@ public abstract class AbstractWorker<T extends Job> {
 	 * </b>
 	 */
 	public void clearAllJobsWithInterrupt_IKnowTheRisks() {
-		clearAllJobs(true);
-	}
-
-	private void clearAllJobs(boolean interruptRuningJob) {
-		List<T> pendingJobs = concurrentQ.cancelAllTasks(interruptRuningJob);
-		for (T job : pendingJobs) {
-			job.cancel();
-		}
+		doClearAllJobs(t -> true, true);
 	}
 
 	/**

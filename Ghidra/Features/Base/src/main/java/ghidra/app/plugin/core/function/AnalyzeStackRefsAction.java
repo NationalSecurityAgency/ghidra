@@ -104,13 +104,8 @@ class AnalyzeStackRefsAction extends ListingContextAction {
 		doParameterAnalysis = options.getBoolean("Create Param Variables", doParameterAnalysis);
 
 		BackgroundCommand<Program> cmd = null;
-		if (doNewStackAnalysis) {
-			cmd = new NewFunctionStackAnalysisCmd(funcSet, doParameterAnalysis, doLocalAnalysis,
+		cmd = new NewFunctionStackAnalysisCmd(funcSet, doParameterAnalysis, doLocalAnalysis,
 				true);
-		}
-		else {
-			cmd = new FunctionStackAnalysisCmd(funcSet, doParameterAnalysis, doLocalAnalysis, true);
-		}
 		funcPlugin.execute(program, cmd);
 	}
 

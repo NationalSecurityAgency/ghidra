@@ -15,106 +15,33 @@
  */
 package ghidra.file.formats.lzfse;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 
 /**
  * A {@link GFileSystem} implementation LZFSE compressed files
+ * <p>
+ * This implementation depends on a cmd line native binary lzfse (see 
+ * {@link LzfseFileSystemFactory#ensureTool})
  * 
  * @see <a href="https://github.com/lzfse/lzfse">lzfse reference implementation</a> 
  */
 @FileSystemInfo(type = "lzfse", description = "LZFSE", factory = LzfseFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_HIGH)
-public class LzfseFileSystem implements GFileSystem {
-
-	private FSRLRoot fsFSRL;
-	private SingleFileSystemIndexHelper fsIndex;
-	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
-	private ByteProvider decompressedProvider;
+public class LzfseFileSystem extends AbstractSinglePayloadFileSystem {
 
 	/**
 	 * Creates a new {@link LzfseFileSystem}.
-	 * <p>
-	 * NOTE: Successful completion of this constructor will result in {@code decompressedFile}
-	 * being deleted.
 	 * 
-	 * @param fsrlRoot This filesystem's {@link FSRLRoot}
-	 * @param decompressedFile The decompressed lzfse {@link File file} (will be deleted after use)
-	 * @param fsService The {@link FileSystemService}
-	 * @param monitor {@link TaskMonitor}
-	 * @throws IOException If there was an IO-related error
-	 * @throws CancelledException If the user cancelled the operation
+	 * @param fsFSRL This filesystem's {@link FSRLRoot}
+	 * @param payloadProvider {@link ByteProvider}
+	 * @param payloadFilename name of the single payload file
+	 * @param payloadAttrs attributes of the payload file
 	 */
-	public LzfseFileSystem(FSRLRoot fsrlRoot, File decompressedFile, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
-		monitor.setMessage("Decompressing LZFSE...");
-
-		this.fsFSRL = fsrlRoot;
-		String name = "lzfse_decompressed";
-		decompressedProvider =
-			fsService.pushFileToCache(decompressedFile, fsFSRL.appendPath(name), monitor);
-		fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, name,
-			decompressedProvider.length(), decompressedProvider.getFSRL().getMD5());
+	public LzfseFileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider, String payloadFilename,
+			FileAttributes payloadAttrs) {
+		super(fsFSRL, payloadProvider, payloadFilename, payloadAttrs);
 	}
 
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return fsRefManager;
-	}
-
-	@Override
-	public boolean isClosed() {
-		return decompressedProvider == null;
-	}
-
-	@Override
-	public void close() throws IOException {
-		fsRefManager.onClose();
-		if (decompressedProvider != null) {
-			decompressedProvider.close();
-			decompressedProvider = null;
-		}
-		fsIndex.clear();
-	}
-
-	@Override
-	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
-		return fsIndex.isPayloadFile(file)
-				? new ByteProviderWrapper(decompressedProvider, file.getFSRL())
-				: null;
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndex.getListing(directory);
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndex.lookup(path);
-	}
-
-	@Override
-	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
-		return fsIndex.lookup(null, path, nameComp);
-	}
 }

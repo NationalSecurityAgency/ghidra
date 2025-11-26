@@ -20,7 +20,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.program.util.ProgramTask;
 import ghidra.util.Msg;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.exception.RollbackException;
 import ghidra.util.task.TaskMonitor;
 
@@ -78,10 +77,6 @@ public class MoveBlockTask extends ProgramTask {
 		}
 		catch (OutOfMemoryError e) {
 			statusMessage = "Insufficient memory to complete operation";
-			cause = e;
-		}
-		catch (NotFoundException e) {
-			statusMessage = "Memory block not found";
 			cause = e;
 		}
 		catch (MemoryConflictException | MemoryBlockException | IllegalArgumentException e) {

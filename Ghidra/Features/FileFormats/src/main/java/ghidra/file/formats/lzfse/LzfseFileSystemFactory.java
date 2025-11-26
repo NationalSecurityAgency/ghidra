@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,18 @@
  */
 package ghidra.file.formats.lzfse;
 
-import java.io.File;
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
-import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
-import ghidra.framework.Application;
-import ghidra.framework.OperatingSystem;
+import ghidra.formats.gfilesystem.factory.*;
+import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -41,15 +39,14 @@ public class LzfseFileSystemFactory
 		implements GFileSystemFactoryByteProvider<LzfseFileSystem>, GFileSystemProbeBytesOnly {
 
 	private static final int START_BYTES_REQUIRED = 4;
-	private static final String LZFSE_NATIVE_BINARY_NAME = "lzfse";
-	private static final String LZFSE_TEMP_PREFIX = "lzfse";
-	private static final int LZFSE_NATIVE_TIMEOUT_SECONDS = 10;
 
 	private static final int LZFSE_ENDOFSTREAM_BLOCK_MAGIC = 0x24787662;    // bvx$ (end of stream)
 	private static final int LZFSE_UNCOMPRESSED_BLOCK_MAGIC = 0x2d787662;   // bvx- (raw data)
 	private static final int LZFSE_COMPRESSEDV1_BLOCK_MAGIC = 0x31787662;   // bvx1 (lzfse compressed, uncompressed tables)
 	private static final int LZFSE_COMPRESSEDV2_BLOCK_MAGIC = 0x32787662;   // bvx2 (lzfse compressed, compressed tables)
 	private static final int LZFSE_COMPRESSEDLZVN_BLOCK_MAGIC = 0x6e787662; // bvxn (lzvn compressed)
+
+	private LzfseCliToolWrapper cliTool;
 
 	@Override
 	public int getBytesRequired() {
@@ -75,71 +72,34 @@ public class LzfseFileSystemFactory
 	public GFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		
-		File compressedFile = null;
-		File decompressedFile = null;
 		try {
-			compressedFile =
-				fsService.createPlaintextTempFile(byteProvider, LZFSE_TEMP_PREFIX, monitor);
-			decompressedFile = lzfseDecompress(compressedFile);
-			return new LzfseFileSystem(targetFSRL, decompressedFile, fsService, monitor);
+			ensureTool(monitor);
+			ByteProvider payloadProvider = fsService.getDerivedByteProviderPush(
+				byteProvider.getFSRL(), null, "lzfse_decompressed", -1, os -> {
+					try (InputStream is = byteProvider.getInputStream(0)) {
+						cliTool.decompressStream(is, os, monitor);
+					}
+				}, monitor);
+
+			FileAttributes fileAttrs = FileAttributes.of( // attrs
+				FileAttribute.create(COMPRESSED_SIZE_ATTR, byteProvider.length()),
+				FileAttribute.create(SIZE_ATTR, payloadProvider.length()));
+
+			LzfseFileSystem fs =
+				new LzfseFileSystem(targetFSRL, payloadProvider, "lzfse_decompressed", fileAttrs);
+			return fs;
 		}
 		finally {
-			byteProvider.close();
-			if (compressedFile != null && compressedFile.exists()) {
-				compressedFile.delete();
-			}
-			if (decompressedFile != null && decompressedFile.exists()) {
-				decompressedFile.delete();
-			}
+			FSUtilities.uncheckedClose(byteProvider, null);
 		}
 	}
 
-	/**
-	 * Uses the native lzfse decompressor to decompress the given compressed file
-	 * 
-	 * @param compressedFile The lzfse-compressed {@link File file} to decompress
-	 * @return The lzfse-decompressed {@link File}
-	 * @throws IOException If there was an IO-related error
-	 */
-	private File lzfseDecompress(File compressedFile) throws IOException {
-		String lzfseName = LZFSE_NATIVE_BINARY_NAME;
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM.equals(OperatingSystem.WINDOWS)) {
-			lzfseName += ".exe";
+	private void ensureTool(TaskMonitor monitor) throws IOException {
+		if (cliTool == null) {
+			cliTool = LzfseCliToolWrapper.findTool(monitor);
 		}
-		File lzfseNativeBinary = Application.getOSFile(lzfseName);
-
-		File decompressedFile = Application.createTempFile(LZFSE_TEMP_PREFIX,
-			Long.toString(System.currentTimeMillis()));
-
-		List<String> command = new ArrayList<>();
-		command.add(lzfseNativeBinary.getPath());
-		command.add("-decode");
-		command.add("-i");
-		command.add(compressedFile.getPath());
-		command.add("-o");
-		command.add(decompressedFile.getPath());
-		Process p = new ProcessBuilder(command).start();
-		boolean success = false;
-		try {
-			if (!p.waitFor(LZFSE_NATIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-				p.destroyForcibly();
-				throw new IOException("lzfse native decompressor timed out");
-			}
-			if (p.exitValue() != 0) {
-				throw new IOException(
-					"lzfse native decompressor failed with exit code: " + p.exitValue());
-			}
-			success = true;
-			return decompressedFile;
-		}
-		catch (InterruptedException e) {
-			throw new IOException(e);
-		}
-		finally {
-			if (!success) {
-				decompressedFile.delete();
-			}
+		if (cliTool == null) {
+			throw new FileSystemFactoryDependencyException("lzfse native decompressor not present");
 		}
 	}
 }

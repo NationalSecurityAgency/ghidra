@@ -260,6 +260,9 @@
 	</schema>
 	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="VOID" />
+		<attribute schema="Register" />
+	</schema>
+	<schema name="Register">
+		<interface name="Register" />
 	</schema>
 </context>

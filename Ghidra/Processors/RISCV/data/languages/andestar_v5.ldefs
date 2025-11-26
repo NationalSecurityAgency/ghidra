@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+  <language processor="RISCV"
+            endian="little"
+            size="32"
+            variant="AndeStar_v5"
+            version="1.4"
+            slafile="andestar_v5.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:AndeStar_v5">
+    <description>AndeStar v5 RISC-V based 32 little default</description>
+    <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+  </language>
+  
+</language_definitions>

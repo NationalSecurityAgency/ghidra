@@ -139,18 +139,16 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 			}
 			StringBuilder sb = new StringBuilder(HTMLUtilities.HTML);
 			sb.append("<TABLE>");
-			if (parent != null) {
-				DataType parentType = parent.getDataType();
-				sb.append(row("Parent: ", parentType.getDataTypePath()));
-				int offset = (int) data.getAddress().subtract(parent.getAddress());
-				sb.append(row("Offset: ", NumericUtilities.toHexString(offset)));
-				sb.append(row("Field Name: ", nameLoc.getFieldName()));
-				if (parentType instanceof Structure pst) {
-					DataTypeComponent dtc = pst.getComponentAt(offset);
-					String comment = dtc == null ? null : dtc.getComment();
-					if (comment != null) {
-						sb.append(row("Comment: ", comment));
-					}
+			DataType parentType = parent.getDataType();
+			sb.append(row("Parent: ", parentType.getDataTypePath()));
+			int offset = (int) data.getAddress().subtract(parent.getAddress());
+			sb.append(row("Offset: ", NumericUtilities.toHexString(offset)));
+			sb.append(row("Field Name: ", nameLoc.getFieldName()));
+			if (parentType instanceof Structure pst) {
+				DataTypeComponent dtc = pst.getComponentAt(offset);
+				String comment = dtc == null ? null : dtc.getComment();
+				if (comment != null) {
+					sb.append(row("Comment: ", comment));
 				}
 			}
 			sb.append("</TABLE>");

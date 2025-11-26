@@ -443,6 +443,7 @@ public class DecompileOptions {
 
 	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
 	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.find");
+	private static final GColor SEARCH_HIGHLIGHT_ACTIVE_COLOR = new GColor("color.bg.decompiler.highlights.find.active");
 	
 	private static final String HIGHLIGHT_MIDDLE_MOUSE_MSG = "Display.Color for Middle Mouse";
 	private static final GColor HIGHLIGHT_MIDDLE_MOUSE_COLOR = new GColor("color.bg.decompiler.highlights.middle.mouse");
@@ -1132,6 +1133,13 @@ public class DecompileOptions {
 	 */
 	public Color getMiddleMouseHighlightColor() {
 		return HIGHLIGHT_MIDDLE_MOUSE_COLOR;
+	}
+
+	/**
+	 * @return color used to highlight the active search result
+	 */
+	public Color getActiveSearchHighlightColor() {
+		return SEARCH_HIGHLIGHT_ACTIVE_COLOR;
 	}
 
 	/**

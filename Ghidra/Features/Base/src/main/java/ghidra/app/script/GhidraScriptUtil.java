@@ -63,11 +63,11 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * set the bundle host and start the framework
+	 * Initialize state of GhidraScriptUtil with user and system paths
 	 * 
-	 * @param aBundleHost the bundle host
+	 * @param aBundleHost the host to use
 	 */
-	private static void setBundleHost(BundleHost aBundleHost) {
+	private static void initialize(BundleHost aBundleHost) {
 		if (bundleHost != null) {
 			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
 		}
@@ -79,22 +79,6 @@ public class GhidraScriptUtil {
 		catch (OSGiException | IOException e) {
 			Msg.error(GhidraScriptUtil.class, "Failed to initialize BundleHost", e);
 		}
-	}
-
-	/**
-	 * Initialize state of GhidraScriptUtil with user, system, and optional extra system paths.
-	 * 
-	 * @param aBundleHost the host to use 
-	 * @param extraSystemPaths additional system paths for this run, can be null 
-	 * 
-	 */
-	public static void initialize(BundleHost aBundleHost, List<String> extraSystemPaths) {
-		setBundleHost(aBundleHost);
-		if (extraSystemPaths != null) {
-			for (String path : extraSystemPaths) {
-				bundleHost.add(new ResourceFile(path), true, true);
-			}
-		}
 
 		bundleHost.add(getUserScriptDirectory(), true, false);
 		bundleHost.add(getSystemScriptDirectories(), true, true);
@@ -103,7 +87,7 @@ public class GhidraScriptUtil {
 	/**
 	 * dispose of the bundle host and providers list
 	 */
-	public static void dispose() {
+	private static void dispose() {
 		if (bundleHost != null) {
 			bundleHost.stopFramework();
 			bundleHost = null;
@@ -455,7 +439,7 @@ public class GhidraScriptUtil {
 	 */
 	public static BundleHost acquireBundleHostReference() {
 		if (referenceCount.getAndIncrement() == 0) {
-			initialize(new BundleHost(), null);
+			initialize(new BundleHost());
 		}
 		return bundleHost;
 	}

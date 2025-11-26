@@ -281,6 +281,8 @@ public class GhidraTable extends GTable {
 	 * <p>
 	 * This method differs from {@link #navigate(int, int)} in that this method will not navigate if
 	 * {@link #navigateOnSelection} is <code>false</code>.
+	 * @param row the row
+	 * @param column the column
 	 */
 	protected void navigateOnCurrentSelection(int row, int column) {
 		if (!navigateOnSelection) {

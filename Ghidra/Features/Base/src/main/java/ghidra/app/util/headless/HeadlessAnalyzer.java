@@ -303,8 +303,8 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		List<String> parsedScriptPaths = parseScriptPaths(options.scriptPaths);
-		GhidraScriptUtil.initialize(new BundleHost(), parsedScriptPaths);
+		BundleHost bundleHost = GhidraScriptUtil.acquireBundleHostReference();
+		bundleHost.add(parseScriptPaths(options.scriptPaths), true, true);
 		try {
 			showConfiguredScriptPaths();
 			compileScripts();
@@ -365,7 +365,7 @@ public class HeadlessAnalyzer {
 			throw new IOException(e); // unexpected
 		}
 		finally {
-			GhidraScriptUtil.dispose();
+			GhidraScriptUtil.releaseBundleHostReference();
 		}
 	}
 
@@ -418,8 +418,8 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		List<String> parsedScriptPaths = parseScriptPaths(options.scriptPaths);
-		GhidraScriptUtil.initialize(new BundleHost(), parsedScriptPaths);
+		BundleHost bundleHost = GhidraScriptUtil.acquireBundleHostReference();
+		bundleHost.add(parseScriptPaths(options.scriptPaths), true, true);
 		try {
 			showConfiguredScriptPaths();
 			compileScripts();
@@ -471,7 +471,7 @@ public class HeadlessAnalyzer {
 			}
 		}
 		finally {
-			GhidraScriptUtil.dispose();
+			GhidraScriptUtil.releaseBundleHostReference();
 		}
 	}
 
@@ -693,20 +693,18 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private List<String> parseScriptPaths(List<String> scriptPaths) {
+	private List<ResourceFile> parseScriptPaths(List<String> scriptPaths) {
 		if (scriptPaths == null) {
-			return null;
+			return List.of();
 		}
-		List<String> parsedScriptPaths = new ArrayList<>();
+		List<ResourceFile> parsedScriptPaths = new ArrayList<>();
 		for (String path : scriptPaths) {
 			ResourceFile pathFile = Path.fromPathString(path);
-			String absPath = pathFile.getAbsolutePath();
 			if (pathFile.exists()) {
-				parsedScriptPaths.add(absPath);
+				parsedScriptPaths.add(pathFile);
 			}
 			else {
-
-				Msg.warn(this, "REPORT: Could not find -scriptPath entry, skipping: " + absPath);
+				Msg.warn(this, "REPORT: Could not find -scriptPath entry, skipping: " + pathFile);
 			}
 		}
 		return parsedScriptPaths;

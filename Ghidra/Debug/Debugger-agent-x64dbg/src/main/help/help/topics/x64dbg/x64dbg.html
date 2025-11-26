@@ -1,0 +1,102 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Launchers: x64dbg Debugger</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger Launchers: x64dbg Debugger</H1>
+
+    <P>Integration with <B><TT>x64dbg</TT></B> is achieved using the Python 3 
+    API <B><TT>x64dbg-automate-pyclient</TT></B> and underlying plugin <B><TT>x64dbg-automate</TT></B>, kindly provided by Darius Houle
+	(see https://github.com/dariushoule/x64dbg-automate & x64dbg-automate-pyclient).  The console
+	debugger launches a full <B><TT>x64dbg</TT></B> session by default, synchronized with the
+	Ghidra debugger UI.</P>
+
+    <P>Two launchers are included out of the box, one for a local process and one for a local pid:</P>
+
+    <H2><A name="local"></A>Local</H2>
+
+    <P>The plain "<TT>local-x64dbg</TT>" launches the current program as a user-mode process
+    on the local system. If there is no current program, the user may specify the <B>Image</B> option 
+	explicitly or launch x64dbg without a target.</P>
+
+    <H3><A name="setup"></A>Setup</H3>
+
+	<P>Make sure you have installed the executables for <B><TT>x64dbg-automate</TT></B> (typically the contents
+	of x64dbg/build[32|64]/Release) in the plugins directory for <B><TT>x64dbg</TT></B> (release/x[32|64]/plugins).</P>
+	
+    <P>If you have access to PyPI, setting up your Python 3 environment is done using Pip. (Please
+    note the version specifier for Protobuf.)</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install x64bag_automate protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd C:\path\to\ghidra_<EM>
+version</EM>\Ghidra\Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-agent-x64dbg\pypkg\dist x64dbg_automate protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B><TT>python</TT> command</B>: This is the command or path to the Python interpreter. It
+      must be version 3. Python 2 is not supported.</LI>
+
+      <LI><B>Image</B>: This is the path to the target binary image (EXE file). Ghidra will try to
+      fill this in based on information gathered when the current program was imported. If the file
+      exists and is executable on the local machine, it will be filled in automatically. Otherwise,
+      it is up to you to locate it. <B>NOTE:</B> If you have patched the current program database,
+      these changes are <EM>not</EM> applied to the target. You can either 1) apply the same
+      patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+	  <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.</LI>
+
+	  <LI><B>Dir</B>: The initial directory for the target process.</LI>
+
+      <LI><B>Path to <TT>x64dbg.exe</TT></B>: where the x64dbg executable resides (or the x32dbg executable
+		for 32-bit programs).</LI>
+    </UL>
+
+    <P>Once running, you are presented with a command-line interface in Ghidra's Terminal. This CLI
+    accepts your usual x64dbg native commands. You can escape from this CLI and enter a Python 3 REPL
+    by entering "<TT>.exit</TT>". This is not an actual x64dbg command, but our implementation
+    understands this to mean exit the x64dbg REPL. From the Python 3 REPL, you can access the
+    underlying Python-based API <TT>x64dbg_automate</TT>. This is an uncommon need, but may be useful for
+    diagnostics and/or workarounds. To re-enter the x64dbg REPL, enter "<TT>repl()</TT>".
+    Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
+    "<TT>quit()</TT>" to terminate the session.</P>
+
+
+    <H2><A name="attach"></A>Attach</H2>
+
+    <P>This launcher allows the user to attach to a local running process. Options are the same as
+    those for the base x64dbg, except <B>Process Id</B> replaces <B>Image</B>.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>ProcessId</B>: The pid of the process you wish to attach to.</LI>
+
+  </BODY>
+</HTML>

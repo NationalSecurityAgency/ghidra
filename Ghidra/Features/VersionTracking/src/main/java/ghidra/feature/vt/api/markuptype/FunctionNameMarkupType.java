@@ -279,7 +279,8 @@ public class FunctionNameMarkupType extends FunctionEntryPointBasedAbstractMarku
 		}
 
 		Function srcFunction = getSourceFunction(markupItem.getAssociation());
-		boolean replaceNamespace = markupOptions.getBoolean(USE_NAMESPACE_FUNCTIONS, false);
+		boolean replaceNamespace = markupOptions.getBoolean(USE_NAMESPACE_FUNCTIONS,
+			DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS);
 		if (!hasAnythingToApply(srcStringable, srcFunction, replaceNamespace)) {
 			return false;
 		}

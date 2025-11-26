@@ -255,7 +255,9 @@ public class LibreTranslateStringTranslationServiceTest extends AbstractProgramB
 			LibreTranslateStringTranslationService sts = new LibreTranslateStringTranslationService(
 				getURI(server.getAddress()), null, AUTO, "en", 100, 1500, 1);
 
+			setErrorsExpected(true);
 			Swing.runNow(() -> sts.translate(program, List.of(progLoc(0)), TranslateOptions.NONE));
+			setErrorsExpected(false);
 			assertTrue(translateRequestCount.get() > 1);
 			waitForTasks();
 		}

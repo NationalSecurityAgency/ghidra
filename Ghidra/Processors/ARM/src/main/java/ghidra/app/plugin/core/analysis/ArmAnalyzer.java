@@ -30,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -199,6 +200,11 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 								return false;
 							}
 							return true;
+						}
+						else if (pcodeop == PcodeOp.STORE && instr.getMinAddress().add(8).equals(address)) {
+							// Most likely a store of the PC to the stack
+							// ARM PC is curInst+8
+							return false;
 						}
 					}
 					else if (refType.isCall() && refType.isComputed() && !address.isExternalAddress()) {

@@ -188,6 +188,7 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 			throw new VersionTrackingApplyException(
 				"Couldn't find destination function to apply a name.");
 		}
+
 		if (sourceStringable.applyFunctionSignature(destinationFunction, markupOptions, false)) {
 			return true;
 		}

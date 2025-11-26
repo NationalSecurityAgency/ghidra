@@ -106,6 +106,10 @@ def find_proc_by_modules_obj(object: TraceObject) -> lldb.SBProcess:
     return find_proc_by_pattern(object, MODULES_PATTERN, "a ModuleContainer")
 
 
+def find_proc_by_frame(object: TraceObject) -> lldb.SBProcess:
+    return find_proc_by_pattern(object, FRAME_PATTERN, "a StaclFrame")
+
+
 def find_thread_by_num(proc: lldb.SBThread, tnum: int) -> lldb.SBThread:
     for t in proc.threads:
         if t.GetThreadID() == tnum:
@@ -731,11 +735,22 @@ def write_mem(process: Process, address: Address, data: bytes) -> None:
 @REGISTRY.method()
 def write_reg(frame: StackFrame, name: str, value: bytes) -> None:
     """Write a register."""
+    proc = find_proc_by_frame(frame)
+    util.get_debugger().SetSelectedTarget(proc.target)
     f = find_frame_by_obj(frame)
-    f.select()
-    proc = lldb.selected_process()
-    mname, mval = frame.trace.extra.require_rm().map_value_back(proc, name, value)
-    size = int(lldb.parse_and_eval(f'sizeof(${mname})'))
-    arr = '{' + ','.join(str(b) for b in mval) + '}'
-    exec_convert_errors(
-        f'expr ((unsigned char[{size}])${mname}) = {arr};')
+    exec_convert_errors(f'frame select {f.idx}')
+    rv = frame.trace.extra.require_rm().map_value_back(proc, name, value)
+    reg = f.registers[0].GetChildMemberWithName(name)
+    error = lldb.SBError()
+    data = lldb.SBData()
+    tgt = util.get_target()
+    for b in rv.value:
+        bv = tgt.EvaluateExpression(f"(char){b}")
+        if bv.error.fail:
+            raise Exception(bv.error.description)
+        if not data.Append(bv.GetData()):
+            raise Exception(f"Could not build data for register value {rv.value}")
+    if not reg.SetData(data, error):
+        raise Exception(error.description)
+    with commands.open_tracked_tx(f'Write Register {name}'):
+        exec_convert_errors('ghidra trace putreg')

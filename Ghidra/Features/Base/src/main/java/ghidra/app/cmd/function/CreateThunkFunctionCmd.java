@@ -635,6 +635,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 
 			// keep going if flow target is right below, allow only a simple branch.
 			if (isLocalBranch(listing, instr, flowType)) {
+				Address[] flows = instr.getFlows();
+				instr = listing.getInstructionAt(flows[0]);
 				continue;
 			}
 

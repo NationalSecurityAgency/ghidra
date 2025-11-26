@@ -247,6 +247,7 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 		}
 
 		table.getSelectionModel().setSelectionInterval(row, row);
+		showSelectedRow();
 	}
 
 	private int findRowForFieldName(String fieldName) {
@@ -578,7 +579,6 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 			}
 
 			model.setSelection(table.getSelectedRows());
-			showSelectedRow();
 		});
 
 		table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {

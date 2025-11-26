@@ -26,6 +26,7 @@ import docking.*;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -35,7 +36,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import help.HelpService;
 

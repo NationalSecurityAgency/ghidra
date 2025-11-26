@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import docking.widgets.search.FindDialogSearcher;
+import docking.widgets.search.SearchResults;
 import ghidra.util.Swing;
 
 public class FindDialogTest {
@@ -44,11 +46,6 @@ public class FindDialogTest {
 		}
 
 		@Override
-		public void setCursorPosition(CursorPosition position) {
-			// stub
-		}
-
-		@Override
 		public CursorPosition getStart() {
 			return new CursorPosition(0);
 		}
@@ -59,20 +56,19 @@ public class FindDialogTest {
 		}
 
 		@Override
-		public void highlightSearchResults(SearchLocation location) {
-			// stub
-		}
-
-		@Override
-		public void clearHighlights() {
-			// stub
-		}
-
-		@Override
-		public SearchLocation search(String text, CursorPosition cursorPosition,
+		public SearchResults search(String text, CursorPosition cursorPosition,
 				boolean searchForward, boolean useRegex) {
 			return null;
 		}
 
+		@Override
+		public SearchResults searchAll(String text, boolean useRegex) {
+			return null;
+		}
+
+		@Override
+		public void dispose() {
+			// stub
+		}
 	}
 }

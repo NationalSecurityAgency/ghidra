@@ -941,7 +941,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws MemoryBlockException, MemoryConflictException, AddressOverflowException,
-			NotFoundException, LockException {
+			LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();
@@ -986,8 +986,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	}
 
 	@Override
-	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, NotFoundException, LockException {
+	public void split(MemoryBlock block, Address addr) throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();
@@ -1037,7 +1036,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			// swap if second block is before first block
@@ -1111,7 +1110,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			checkBlock(uninitializedBlock);
@@ -1149,7 +1148,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock initializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		lock.acquire();
 		try {
 			program.checkExclusiveAccess();

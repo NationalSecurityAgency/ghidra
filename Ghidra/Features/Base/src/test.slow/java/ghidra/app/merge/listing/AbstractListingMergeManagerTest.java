@@ -35,7 +35,7 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.dialogs.ReadTextDialog;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
-import ghidra.app.cmd.function.FunctionStackAnalysisCmd;
+import ghidra.app.cmd.function.NewFunctionStackAnalysisCmd;
 import ghidra.app.merge.AbstractMergeTest;
 import ghidra.app.merge.ProgramMultiUserMergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
@@ -364,7 +364,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 				// TODO For thunk functions need to call thunk analyzer here before
 				// stack analysis occurs
 			}
-			FunctionStackAnalysisCmd analyzeCmd = new FunctionStackAnalysisCmd(addr, true);
+			NewFunctionStackAnalysisCmd analyzeCmd = new NewFunctionStackAnalysisCmd(addr, true);
 			assertTrue("Failed to analyze stack for " + name + " @ " + addr,
 				analyzeCmd.applyTo(program));
 		}

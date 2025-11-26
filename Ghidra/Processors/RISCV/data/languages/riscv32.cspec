@@ -20,6 +20,7 @@
   </data_organization>
   <global>
     <range space="ram"/>
+    <range space="csreg"/>
     <register name="gp"/>
     <register name="tp"/>
   </global>

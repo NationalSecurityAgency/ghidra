@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,15 @@
 package ghidra.file.formats.complzss;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.file.formats.lzss.LzssCompressionHeader;
+import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.file.formats.lzss.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -29,16 +32,23 @@ public class CompLzssFileSystemFactory
 		implements GFileSystemFactoryByteProvider<CompLzssFileSystem>, GFileSystemProbeBytesOnly {
 
 	@Override
-	public CompLzssFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+	public CompLzssFileSystem create(FSRLRoot targetFSRL, ByteProvider provider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		try {
-			CompLzssFileSystem fs =
-				new CompLzssFileSystem(targetFSRL, byteProvider, fsService, monitor);
+
+		try (ByteProvider tmpBP = new ByteProviderWrapper(provider, LzssConstants.HEADER_LENGTH,
+			provider.length() - LzssConstants.HEADER_LENGTH);
+				InputStream tmpIS = tmpBP.getInputStream(0)) {
+
+			ByteProvider payloadProvider = fsService.getDerivedByteProviderPush(provider.getFSRL(),
+				null, "decompressed lzss", -1, (os) -> LzssCodec.decompress(os, tmpIS), monitor);
+
+			CompLzssFileSystem fs = new CompLzssFileSystem(targetFSRL, payloadProvider,
+				"lzss_decompressed", FileAttributes.EMPTY);
 			return fs;
 		}
 		finally {
-			byteProvider.close();
+			FSUtilities.uncheckedClose(provider, null);
 		}
 	}
 

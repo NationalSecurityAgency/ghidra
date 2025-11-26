@@ -27,9 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import generic.timer.ExpiringSwingTimer;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
-import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Class to hold information about a dockable component with respect to its position within the
@@ -118,16 +116,6 @@ public class ComponentPlaceholder {
 	 * @param node the component node containing this placeholder.
 	 */
 	void setNode(ComponentNode node) {
-
-		if (node != null && disposed) {
-			//
-			// TODO Hack Alert!  (When this is removed, also update ComponentNode)
-			//
-			// This should not happen!  We have seen this bug recently
-			Msg.debug(this, "Found disposed component that was not removed from the hierarchy " +
-				"list: " + this, ReflectionUtilities.createJavaFilteredThrowable());
-		}
-
 		compNode = node;
 	}
 
@@ -277,11 +265,18 @@ public class ComponentPlaceholder {
 		comp = null;
 	}
 
+	/**
+	 * {@return true if this placeholder has a component that can take focus.  This placeholder 
+	 * cannot take focus if it does not yet have a DockableComponent.}
+	 */
+	boolean canTakeFocus() {
+		return comp != null;
+	}
+
 	void toFront() {
 		if (comp != null) {
 			compNode.makeSelectedTab(this);
 		}
-
 	}
 
 	/**
@@ -448,6 +443,7 @@ public class ComponentPlaceholder {
 	 * @param newProvider the new provider
 	 */
 	void setProvider(ComponentProvider newProvider) {
+
 		this.componentProvider = newProvider;
 		actions.clear();
 		if (newProvider != null) {

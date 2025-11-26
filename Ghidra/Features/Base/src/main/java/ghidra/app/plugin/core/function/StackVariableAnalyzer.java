@@ -17,14 +17,12 @@ package ghidra.app.plugin.core.function;
 
 import java.util.*;
 
-import ghidra.app.cmd.function.FunctionStackAnalysisCmd;
 import ghidra.app.cmd.function.NewFunctionStackAnalysisCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -41,7 +39,6 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 	protected static final int MAX_THREAD_COUNT_OPTION_DEFAULT_VALUE = 2;
 	
 	protected int maxThreadCount = MAX_THREAD_COUNT_OPTION_DEFAULT_VALUE;
-	private boolean doNewStackAnalysis = true;
 	private boolean doCreateLocalStackVars = true;
 	private boolean doCreateStackParams = false;
 
@@ -80,14 +77,8 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 			final TaskMonitor monitor) throws CancelledException {
 		BackgroundCommand<Program> cmd;
 		
-		if (doNewStackAnalysis) {
-			cmd = new NewFunctionStackAnalysisCmd(new AddressSet(start, start), doCreateStackParams, doCreateLocalStackVars,
+		cmd = new NewFunctionStackAnalysisCmd(new AddressSet(start, start), doCreateStackParams, doCreateLocalStackVars,
 				false);
-		}
-		else {
-			cmd = new FunctionStackAnalysisCmd(new AddressSet(start, start), doCreateStackParams, doCreateLocalStackVars,
-				false);
-		}	
 		cmd.applyTo(program, monitor);
 		
 		return EMPTY_ADDRESS_SET;
@@ -120,23 +111,8 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-//	private boolean useOldStackAnalysisByDefault(Program program) {
-//		Language language = program.getLanguage();
-//		if (language.getProcessor().equals(Processor.findOrPossiblyCreateProcessor("x86"))) {
-//			if (language.getLanguageDescription().getSize() == 16) {
-//				// Prefer using old stack analysis for x86 16-bit with segmented addresses
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
-
 	@Override
 	public void registerOptions(Options options, Program program) {
-		options.registerOption(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,
-			true, null,
-			"Use General Stack Reference Propogator (This works best on most processors)");
-
 		options.registerOption("Create Local Variables", doCreateLocalStackVars, null,
 			"Create Function Local stack variables and references");
 
@@ -149,10 +125,6 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		doNewStackAnalysis =
-			options.getBoolean(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,
-				true);
-
 		doCreateLocalStackVars =
 			options.getBoolean("Create Local Variables", doCreateLocalStackVars);
 

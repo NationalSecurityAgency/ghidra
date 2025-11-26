@@ -879,12 +879,24 @@ public class SymbolicPropogator {
 			try {
 				switch (ptype) {
 					case PcodeOp.COPY:
-						if (in[0].isAddress() &&
-							!in[0].getAddress().getAddressSpace().hasMappedRegisters()) {
-							makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
-								null, RefType.READ, ptype, true, monitor);
+						if (in[0].isAddress()) {
+							AddressSpace addressSpace = in[0].getAddress().getAddressSpace();
+							// if not address mapped, or no register defined there
+							if (!addressSpace.hasMappedRegisters() || program.getRegister(in[0]) == null) {
+							    makeReference(vContext, instruction,  Reference.MNEMONIC, in[0],
+								    null, RefType.READ, ptype, true, monitor);
+							}
 						}
 						vContext.copy(out, in[0], mustClearAll, evaluator);
+						break;
+						
+					case PcodeOp.SEGMENTOP:
+						// treat like a copy for now, and extend the size as if segment had been applied
+						Varnode vval = context.getValue(in[2], evaluator);
+						if (context.isSymbolicSpace(vval.getSpace())) { 
+							vval = vContext.createVarnode(vval.getOffset(), vval.getSpace(), out.getSize());
+						}
+						vContext.putValue(out, vval, mustClearAll);
 						break;
 
 					case PcodeOp.LOAD:
@@ -1843,7 +1855,7 @@ public class SymbolicPropogator {
 		for (int i = 1; i < ins.length; i++) {
 			Varnode vval = context.getValue(ins[i], evaluator);
 			if (vval == null || !context.isConstant(vval)) {
-				return null;
+				return checkSegmentCallOther(payload, instr, ins, out);
 			}
 			inputs.add(vval);
 		}
@@ -1865,6 +1877,29 @@ public class SymbolicPropogator {
 			Msg.warn(this, e.getMessage());
 		}
 		return null;
+	}
+
+	private PcodeOp[] checkSegmentCallOther(InjectPayload payload, Instruction instr, Varnode[] ins, Varnode out) {
+		if (!payload.getName().equals("segment_pcode")) {
+			return null;
+		}
+		if (ins.length != 3) {
+			return null;
+		}
+		Varnode vval = context.getValue(ins[2], evaluator);
+		if (vval == null) {
+			return null;
+		}
+		if (!context.isSymbolicSpace(vval.getSpace())) { 
+			return null;
+		}
+		if (!context.isRegister(ins[1])) {
+			return null;
+		}
+		// morph segment into COPY as long as still symbolic
+		PcodeOp[] newop = new PcodeOp[1];
+		newop[0] = new PcodeOp(instr.getAddress(), 1, PcodeOp.SEGMENTOP, ins, out);
+		return newop;
 	}
 
 	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary,

@@ -17,7 +17,9 @@ package ghidra.program.model.lang;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.model.util.ProcessorSymbolType;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * <CODE>AddressLabelInfo</CODE> is a utility class for storing
@@ -35,7 +37,7 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	private ProcessorSymbolType processorSymbolType;
 	private int sizeInBytes;
 	private Boolean isVolatile;
-	
+
 	/**
 	 * Constructor for class AddressLabelInfo
 	 * 
@@ -47,17 +49,22 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	 * @param	isEntry			boolean describes if this object is an entry label for the Address 'addr'
 	 * @param	type			ProcessorSymbolType the type of symbol
 	 * @param	isVolatile		Boolean describes if the memory at this address is volatile
+	 * @throws AddressOverflowException if sizeInBytes cause an overflow relative to address
+	 * @throws InvalidInputException if an invalid label name is specified
 	 */
-	public AddressLabelInfo(Address addr, Integer sizeInBytes, String label, String description, boolean isPrimary, 
-			boolean isEntry, ProcessorSymbolType type, Boolean isVolatile) throws AddressOverflowException {
+	public AddressLabelInfo(Address addr, Integer sizeInBytes, String label, String description,
+			boolean isPrimary, boolean isEntry, ProcessorSymbolType type, Boolean isVolatile)
+			throws AddressOverflowException, InvalidInputException {
+		SymbolUtilities.validateName(label);
 		this.addr = addr;
-		if ( sizeInBytes == null || sizeInBytes <= 0 ) {
+		if (sizeInBytes == null || sizeInBytes <= 0) {
 			// Default size in addressable units
 			this.sizeInBytes = addr.getAddressSpace().getAddressableUnitSize();
-		} else {
+		}
+		else {
 			this.sizeInBytes = sizeInBytes;
 		}
-		this.endAddr = this.addr.addNoWrap(this.sizeInBytes-1);
+		this.endAddr = this.addr.addNoWrap(this.sizeInBytes - 1);
 		this.label = label;
 		this.description = description;
 		this.isPrimary = isPrimary;
@@ -72,21 +79,21 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	public final Address getAddress() {
 		return addr;
 	}
-	
+
 	/**
 	 * @return the object's end address.
 	 */
 	public final Address getEndAddress() {
 		return endAddr;
 	}
-	
+
 	/**
 	 * @return the object's label or alias.
 	 */
 	public final String getLabel() {
 		return label;
 	}
-	
+
 	/**
 	 * @return the object's description if it has one, null otherwise
 	 */
@@ -101,14 +108,14 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	public final int getByteSize() {
 		return sizeInBytes;
 	}
-	
+
 	/**
 	 * @return whether the object is the primary label at the address.
 	 */
 	public final boolean isPrimary() {
 		return isPrimary;
 	}
-	
+
 	/**
 	 * @return whether the object is volatile.
 	 * Boolean.False when the address is explicitly not volatile.

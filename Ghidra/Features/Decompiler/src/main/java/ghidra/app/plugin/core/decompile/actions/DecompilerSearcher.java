@@ -15,27 +15,31 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.*;
 
-import docking.widgets.*;
+import docking.widgets.CursorPosition;
+import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.search.*;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.util.Msg;
 import ghidra.util.UserSearchUtils;
+import ghidra.util.worker.Worker;
 
 /**
  * A {@link FindDialogSearcher} for searching the text of the decompiler window.
  */
 public class DecompilerSearcher implements FindDialogSearcher {
 
+	private Worker worker = Worker.createGuiWorker();
 	private DecompilerPanel decompilerPanel;
+	private DecompilerSearchResults searchResults;
 
 	/**
 	 * Constructor
@@ -77,97 +81,38 @@ public class DecompilerSearcher implements FindDialogSearcher {
 	}
 
 	@Override
-	public void setCursorPosition(CursorPosition position) {
-		decompilerPanel.setCursorPosition(((DecompilerCursorPosition) position).getFieldLocation());
-	}
-
-	@Override
-	public void highlightSearchResults(SearchLocation location) {
-		decompilerPanel.setSearchResults(location);
-	}
-
-	@Override
-	public void clearHighlights() {
-		decompilerPanel.setSearchResults(null);
-	}
-
-	@Override
 	public void dispose() {
-		clearHighlights();
+		decompilerPanel.setSearchResults(null);
+
+		if (searchResults != null) {
+			searchResults.dispose();
+		}
 	}
 
-	@Override
-	public SearchLocation search(String text, CursorPosition position, boolean searchForward,
-			boolean useRegex) {
-		DecompilerCursorPosition decompilerCursorPosition = (DecompilerCursorPosition) position;
-		FieldLocation startLocation =
-			getNextSearchStartLocation(decompilerCursorPosition, searchForward);
-		return doFind(text, startLocation, searchForward, useRegex);
-	}
+	private void updateSearchResults(String text, boolean useRegex) {
+		if (searchResults != null) {
+			if (!searchResults.isInvalid(text)) {
 
-	private FieldLocation getNextSearchStartLocation(
-			DecompilerCursorPosition decompilerCursorPosition, boolean searchForward) {
+				// the current results are still valid; ensure the highlights are still active
+				searchResults.activate();
+				return;
+			}
 
-		FieldLocation startLocation = decompilerCursorPosition.getFieldLocation();
-		DecompilerSearchLocation currentSearchLocation = decompilerPanel.getSearchResults();
-		if (currentSearchLocation == null) {
-			return startLocation; // nothing to do; no prior search hit
+			searchResults.dispose();
+			searchResults = null;
 		}
 
-		//
-		// Special Case Handling:  Start the search at the cursor location by default.
-		// However, if the cursor location is at the beginning of previous search hit, then
-		// move the cursor forward by one character to ensure the previous search hit is not
-		// found.
-		//
-		// Note: for a forward or backward search the cursor is placed at the beginning of the
-		// match.
-		//
-		if (Objects.equals(startLocation, currentSearchLocation.getFieldLocation())) {
-
-			if (searchForward) {
-				// Given:
-				// -search text: 'fox'
-				// -search domain: 'What the |fox say'
-				// -a previous search hit just before 'fox'
-				//
-				// Move the cursor just past the 'f' so the next forward search will not
-				// find the current 'fox' hit.  Thus the new search domain for this line
-				// will be: "ox say"
-				//
-				startLocation.col += 1;
-			}
-			else {
-				// Given:
-				// -search text: 'fox'
-				// -search domain: 'What the |fox say'
-				// -a previous search hit just before 'fox'
-				//
-				// Move the cursor just past the 'o' so the next backward search will not
-				// find the current 'fox' hit.  Thus the new search domain for this line
-				// will be: "What the fo"
-				//
-				int length = currentSearchLocation.getMatchLength();
-				startLocation.col += length - 1;
-			}
-		}
-
-		return startLocation;
+		searchResults = doSearch(text, useRegex);
 	}
 
-//=================================================================================================
-// Search Methods
-//=================================================================================================	
+	private DecompilerSearchResults doSearch(String searchText, boolean isRegex) {
 
-	@Override
-	public List<SearchLocation> searchAll(String searchString, boolean isRegex) {
-
-		Pattern pattern = createPattern(searchString, isRegex);
-		Function<String, SearchMatch> function = createForwardMatchFunction(pattern);
+		Pattern pattern = createPattern(searchText, isRegex);
+		Function<String, SearchMatch> forwardMatcher = createForwardMatchFunction(pattern);
 		FieldLocation start = new FieldLocation();
 
 		List<SearchLocation> results = new ArrayList<>();
-		DecompilerSearchLocation searchLocation = findNext(function, searchString, start);
+		DecompilerSearchLocation searchLocation = findNext(forwardMatcher, searchText, start);
 		while (searchLocation != null) {
 			results.add(searchLocation);
 
@@ -177,24 +122,62 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			int row = 0; // there is only 1 row 
 			int col = last.getCol() + 1; // move over one char to handle sub-matches
 			start = new FieldLocation(line, field, row, col);
-			searchLocation = findNext(function, searchString, start);
+			searchLocation = findNext(forwardMatcher, searchText, start);
 		}
 
-		return results;
+		DecompilerSearchResults newResults =
+			new DecompilerSearchResults(worker, decompilerPanel, searchText, results);
+		newResults.activate();
+		return newResults;
 	}
 
-	private DecompilerSearchLocation doFind(String searchString, FieldLocation currentLocation,
-			boolean forwardSearch, boolean isRegex) {
+//=================================================================================================
+// Search Methods
+//=================================================================================================	
 
-		Pattern pattern = createPattern(searchString, isRegex);
+	@Override
+	public SearchResults search(String text, CursorPosition position, boolean searchForward,
+			boolean useRegex) {
 
-		if (forwardSearch) {
-			Function<String, SearchMatch> function = createForwardMatchFunction(pattern);
-			return findNext(function, searchString, currentLocation);
+		updateSearchResults(text, useRegex);
+
+		DecompilerCursorPosition cursorPosition = (DecompilerCursorPosition) position;
+		FieldLocation startLocation = getNextSearchStartLocation(cursorPosition, searchForward);
+		DecompilerSearchLocation location =
+			searchResults.getNextLocation(startLocation, searchForward);
+		if (location == null) {
+			return null;
 		}
 
-		Function<String, SearchMatch> reverse = createReverseMatchFunction(pattern);
-		return findPrevious(reverse, searchString, currentLocation);
+		searchResults.setActiveLocation(location);
+		return searchResults;
+	}
+
+	private FieldLocation getNextSearchStartLocation(
+			DecompilerCursorPosition decompilerCursorPosition, boolean searchForward) {
+
+		FieldLocation cursor = decompilerCursorPosition.getFieldLocation();
+		DecompilerSearchLocation containingLocation =
+			searchResults.getContainingLocation(cursor, searchForward);
+
+		if (containingLocation == null) {
+			return cursor; // nothing to do; not on a search hit
+		}
+
+		// the given cursor position is inside of an existing match
+		if (searchForward) {
+			cursor.col += 1;
+		}
+		else {
+			cursor.col = containingLocation.getStartIndexInclusive() - 1;
+		}
+
+		return cursor;
+	}
+
+	@Override
+	public SearchResults searchAll(String searchString, boolean isRegex) {
+		return doSearch(searchString, isRegex);
 	}
 
 	private Pattern createPattern(String searchString, boolean isRegex) {
@@ -230,35 +213,6 @@ public class DecompilerSearcher implements FindDialogSearcher {
 
 	}
 
-	private Function<String, SearchMatch> createReverseMatchFunction(Pattern pattern) {
-
-		return textLine -> {
-
-			Matcher matcher = pattern.matcher(textLine);
-			if (!matcher.find()) {
-				return SearchMatch.NO_MATCH;
-			}
-
-			int start = matcher.start();
-			int end = matcher.end();
-
-			// Since the matcher can only match from the start to end of line, we need to find all 
-			// matches and then take the last match
-
-			// Setting the region to one character past the previous match allows repeated matches
-			// within a match.  The default behavior of the matcher is to start the match after 
-			// the previous match found by find().  
-			matcher.region(start + 1, textLine.length());
-			while (matcher.find()) {
-				start = matcher.start();
-				end = matcher.end();
-				matcher.region(start + 1, textLine.length());
-			}
-
-			return new SearchMatch(start, end, textLine);
-		};
-	}
-
 	private DecompilerSearchLocation findNext(Function<String, SearchMatch> matcher,
 			String searchString, FieldLocation currentLocation) {
 
@@ -288,15 +242,16 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
 			FieldLocation fieldLocation =
 				new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
-			LocationReferenceContext context = createContext(fullLine, match);
+			int lineNumber = lineInfo.lineNumber();
+			SearchLocationContext context = createContext(fullLine, match);
 			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
-				searchString, true, field.getText(), context);
+				searchString, true, field.getText(), lineNumber, context);
 		}
 		return null;
 	}
 
-	private LocationReferenceContext createContext(String line, SearchMatch match) {
-		LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+	private SearchLocationContext createContext(String line, SearchMatch match) {
+		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 		int start = match.start;
 		int end = match.end;
 		builder.append(line.substring(0, start));
@@ -306,29 +261,6 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		}
 
 		return builder.build();
-	}
-
-	private DecompilerSearchLocation findPrevious(Function<String, SearchMatch> matcher,
-			String searchString, FieldLocation currentLocation) {
-
-		List<Field> fields = decompilerPanel.getFields();
-		int line = currentLocation.getIndex().intValue();
-		for (int i = line; i >= 0; i--) {
-			ClangTextField field = (ClangTextField) fields.get(i);
-			String textLine = substring(field, (i == line) ? currentLocation : null, false);
-			SearchMatch match = matcher.apply(textLine);
-			if (match == SearchMatch.NO_MATCH) {
-				continue;
-			}
-
-			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
-			FieldLocation fieldLocation =
-				new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
-			LocationReferenceContext context = createContext(field.getText(), match);
-			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
-				searchString, false, field.getText(), context);
-		}
-		return null;
 	}
 
 	private String substring(ClangTextField textField, FieldLocation location,
@@ -364,9 +296,10 @@ public class DecompilerSearcher implements FindDialogSearcher {
 	private FieldLineLocation getFieldIndexFromOffset(int screenOffset, ClangTextField textField) {
 
 		RowColLocation rowColLocation = textField.textOffsetToScreenLocation(screenOffset);
+		int lineNumber = textField.getLineNumber();
 
 		// we use 0 here because currently there is only one field, which is the entire line
-		return new FieldLineLocation(0, rowColLocation.col());
+		return new FieldLineLocation(0, lineNumber, rowColLocation.col());
 	}
 
 	private static class SearchMatch {
@@ -390,5 +323,5 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		}
 	}
 
-	private record FieldLineLocation(int fieldNumber, int column) {}
+	private record FieldLineLocation(int fieldNumber, int lineNumber, int column) {}
 }

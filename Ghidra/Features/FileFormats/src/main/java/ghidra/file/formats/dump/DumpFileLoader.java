@@ -44,7 +44,8 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -177,8 +178,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 				DumpAddressObject d = daos.get(address);
 				try {
 					MemoryBlockUtils.createInitializedBlock(program, false, d.getRangeName(),
-						address, fileBytes,
-						d.getRVA(), // offset into filebytes
+						address, fileBytes, d.getRVA(), // offset into filebytes
 						d.getLength(), // size
 						d.getComment(), // comment
 						null, // source
@@ -215,7 +215,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 						try {
 							m = memory.join(m, next);
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							break;
 						}
 						deleted.add(next.getStart());
@@ -281,9 +281,8 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 						symbolTable.createLabel(address, dd.getName(), SourceType.IMPORTED);
 					}
 					catch (InvalidInputException e) {
-						Msg.error(this,
-							"Error creating label " + dd.getName() + " at address " + address +
-								": " + e.getMessage());
+						Msg.error(this, "Error creating label " + dd.getName() + " at address " +
+							address + ": " + e.getMessage());
 					}
 					continue;
 				}

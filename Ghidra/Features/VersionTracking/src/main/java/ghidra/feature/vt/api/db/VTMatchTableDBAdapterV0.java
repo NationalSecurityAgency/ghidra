@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,30 +16,25 @@
 package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTMatchTableDBAdapter.ColumnDescription.*;
-import ghidra.feature.vt.api.main.VTMatchInfo;
-import ghidra.framework.data.OpenMode;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 import java.io.IOException;
 
 import db.*;
+import ghidra.feature.vt.api.main.VTMatchInfo;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.exception.VersionException;
 
 public class VTMatchTableDBAdapterV0 extends VTMatchTableDBAdapter {
 
 	private Table table;
-	private final DBHandle dbHandle;
 
 	public VTMatchTableDBAdapterV0(DBHandle dbHandle, long tableID) throws IOException {
-		this.dbHandle = dbHandle;
-		table =
-			dbHandle.createTable(TABLE_NAME + tableID, TABLE_SCHEMA,
-				new int[] { ASSOCIATION_COL.column() });
+		table = dbHandle.createTable(TABLE_NAME + tableID, TABLE_SCHEMA,
+			new int[] { ASSOCIATION_COL.column() });
 	}
 
-	public VTMatchTableDBAdapterV0(DBHandle dbHandle, long tableID, OpenMode openMode,
-			TaskMonitor monitor) throws VersionException {
-		this.dbHandle = dbHandle;
+	public VTMatchTableDBAdapterV0(DBHandle dbHandle, long tableID, OpenMode openMode)
+			throws VersionException {
 		table = dbHandle.getTable(TABLE_NAME + tableID);
 		if (table == null) {
 			throw new VersionException("Missing Table: " + TABLE_NAME);
@@ -57,8 +52,10 @@ public class VTMatchTableDBAdapterV0 extends VTMatchTableDBAdapter {
 		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
 
 		record.setLongValue(TAG_KEY_COL.column(), (tag == null) ? -1 : tag.getKey());
-		record.setString(SIMILARITY_SCORE_COL.column(), info.getSimilarityScore().toStorageString());
-		record.setString(CONFIDENCE_SCORE_COL.column(), info.getConfidenceScore().toStorageString());
+		record.setString(SIMILARITY_SCORE_COL.column(),
+			info.getSimilarityScore().toStorageString());
+		record.setString(CONFIDENCE_SCORE_COL.column(),
+			info.getConfidenceScore().toStorageString());
 		record.setLongValue(ASSOCIATION_COL.column(), association.getKey());
 		record.setIntValue(SOURCE_LENGTH_COL.column(), info.getSourceLength());
 		record.setIntValue(DESTINATION_LENGTH_COL.column(), info.getDestinationLength());

@@ -583,6 +583,9 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 				if (local_offset == offset) {
 					return opIndex;
 				}
+				if ((local_offset & 0xffff) == offset) {
+					return opIndex;
+				}
 			}
 		}
 		return -1;

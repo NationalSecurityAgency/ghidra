@@ -929,7 +929,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
-
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			showComponent(placeholder, visibleState, true, shouldEmphasize);
@@ -993,7 +992,15 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private void movePlaceholderToFront(ComponentPlaceholder placeholder, boolean emphasisze) {
-		placeholder.toFront();
+
+		if (!placeholder.canTakeFocus()) {
+			// If we move the parent window to the front when the placeholder is not ready, then
+			// some other placeholder will get focus when the window is activated, which we do not
+			// want to happen.  Later, when the placeholder is fully constructed, the window will 
+			// brought to the front.
+			return;
+		}
+
 		toFront(root.getWindow(placeholder));
 		if (emphasisze) {
 			placeholder.emphasize();
@@ -1519,6 +1526,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (root == null) {
 			return;
 		}
+
 		actionToGuiMapper.setActive(active);
 		if (active) {
 			setActiveManager(this);
@@ -1540,6 +1548,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			pendingRequestFocusComponent = null; // only do it once so that we don't get stuck in this state
 			return;
 		}
+
 		pendingRequestFocusComponent = component;
 		pendingRequestFocusComponent.requestFocus();
 	}

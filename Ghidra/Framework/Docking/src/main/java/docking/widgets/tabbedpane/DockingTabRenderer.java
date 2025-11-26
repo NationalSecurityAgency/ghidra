@@ -41,7 +41,7 @@ public class DockingTabRenderer extends JPanel {
 	private TabContainerForwardingMouseListener forwardingListener;
 	private MouseListener renameListener;
 
-	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabTitle,
+	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabText,
 			ActionListener closeListener) {
 
 		final ForwardingMouseListener eventForwardingListener =
@@ -51,8 +51,8 @@ public class DockingTabRenderer extends JPanel {
 		iconLabel = new GDLabel();
 		closeButton = new EmptyBorderButton();
 
-		setTitle(tabTitle, fullTitle);
-		closeButton.setToolTipText("Close " + tabTitle);
+		setTitle(tabText, fullTitle);
+		closeButton.setToolTipText("Close " + tabText);
 		closeButton.setFocusable(false);
 		closeButton.addActionListener(closeListener);
 		closeButton.setIcon(CLOSE_ICON);
@@ -134,13 +134,13 @@ public class DockingTabRenderer extends JPanel {
 		iconLabel.setIcon(icon);
 	}
 
-	public void setTitle(String tabTitle, String fullTitle) {
-		titleLabel.setText(getShortenedTitle(tabTitle));
-		String trimmedTabText = tabTitle.trim();
+	public void setTitle(String tabText, String fullTitle) {
+		titleLabel.setText(getShortenedTitle(tabText));
+		String trimmedTabText = tabText.trim();
 		String trimmedTitleText = fullTitle.trim();
 		if (trimmedTabText.equals(trimmedTitleText)) {
 			// don't include the same text on twice
-			titleLabel.setToolTipText(tabTitle);
+			titleLabel.setToolTipText(tabText);
 		}
 		else if (trimmedTitleText.contains(trimmedTabText)) {
 			// don't include both when the tab text is a subset of the title
@@ -148,7 +148,7 @@ public class DockingTabRenderer extends JPanel {
 		}
 		else {
 			// both are different, include both			
-			titleLabel.setToolTipText("<html><b>" + tabTitle + "</b> - [" + fullTitle + "]");
+			titleLabel.setToolTipText("<html><b>" + tabText + "</b> - [" + fullTitle + "]");
 		}
 	}
 

@@ -18,7 +18,6 @@ package ghidra.pyghidra;
 import org.junit.After;
 import org.junit.Before;
 
-import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -35,14 +34,14 @@ public class PyGhidraPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		PluginTool tool = env.getTool();
-		GhidraScriptUtil.initialize(new BundleHost(), null);
+		GhidraScriptUtil.acquireBundleHostReference();
 		tool.addPlugin(PyGhidraPlugin.class.getName());
 		env.getPlugin(PyGhidraPlugin.class);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		GhidraScriptUtil.dispose();
+		GhidraScriptUtil.releaseBundleHostReference();
 		env.dispose();
 	}
 }
