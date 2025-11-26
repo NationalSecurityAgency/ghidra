@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import resources.ResourceManager;
 import resources.icons.CenterTranslateIcon;
 import resources.icons.TranslateIcon;
 
-public class ToggleNavigationAid extends AbstractAction {
+public class NavigationAidToggleAction extends AbstractAction {
 
 	private static final Icon ENABLED_ICON = new GIcon("icon.help.navigation.aid.enabled");
 	private static final Icon DISABLED_OVERLAY_ICON =
@@ -37,7 +37,7 @@ public class ToggleNavigationAid extends AbstractAction {
 
 	private boolean showingNavigationAid = true;
 
-	public ToggleNavigationAid() {
+	public NavigationAidToggleAction() {
 
 		putValue(Action.SMALL_ICON, new SelfPaintingIcon());
 		putValue(Action.SHORT_DESCRIPTION,
