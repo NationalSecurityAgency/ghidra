@@ -89,14 +89,17 @@ public class AttributedSaveState extends SaveState {
 	}
 
 	@Override
-	protected SaveState createSaveState() {
-		return new AttributedSaveState();
+	protected SaveState createSaveState(String name) {
+		if (name == null) {
+			return new AttributedSaveState();
+		}
+		return new AttributedSaveState(name);
 	}
 
 	@Override
 	protected void initializeElement(Element e) {
 
-		String name = e.getAttributeValue(NAME);
+		String name = e.getAttributeValue(ATTRIBUTE_NAME);
 		if (name == null) {
 			return; // sub-element; properties not supported
 		}
@@ -119,7 +122,7 @@ public class AttributedSaveState extends SaveState {
 	protected void processElement(Element element) {
 		super.processElement(element);
 
-		String name = element.getAttributeValue(NAME);
+		String name = element.getAttributeValue(ATTRIBUTE_NAME);
 		if (name == null) {
 			return; // sub-element; properties not supported
 		}
@@ -138,7 +141,7 @@ public class AttributedSaveState extends SaveState {
 			String attrName = attr.getName();
 			String attrValue = switch (attrName) {
 				// ignore standard attributes, as they are managed by the parent class
-				case NAME, TYPE, VALUE -> null;
+				case ATTRIBUTE_NAME, ATTRIBUTE_TYPE, ATTRIBUTE_VALUE -> null;
 				default -> attr.getValue();
 			};
 

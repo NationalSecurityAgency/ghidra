@@ -75,12 +75,23 @@ public class GProperties {
 	private static final String GPROPERTIES_TAG = "GPROPERTIES";
 	private static final String PROPERTIES_NAME = "GPROPERTIES_NAME";
 	private static final String LEGACY_PROPERTIES_NAME = "SAVE_STATE_NAME";
-	private static final String STATE = "STATE";
-	protected static final String TYPE = "TYPE";
-	protected static final String NAME = "NAME";
-	protected static final String VALUE = "VALUE";
+	protected static final String STATE = "STATE";
+
+	/** The xml attribute for the type of the property (e.g., int, String, etc)*/
+	protected static final String ATTRIBUTE_TYPE = "TYPE";
+
+	/** The xml attribute for the 'key' in the key/value mapping */
+	protected static final String ATTRIBUTE_KEY = "KEY";
+
+	/** The xml attribute for the optional save state 'name' */
+	protected static final String ATTRIBUTE_NAME = "NAME";
+
+	/** The xml attribute for the 'value' in the key/value mapping */
+	protected static final String ATTRIBUTE_VALUE = "VALUE";
+
 	public static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	private static final String ARRAY_ELEMENT_NAME = "A";
+
 	protected TreeMap<String, Object> map; // use ordered map for deterministic serialization
 	private String propertiesName;
 
@@ -129,11 +140,15 @@ public class GProperties {
 		}
 	}
 
+	/**
+	 * Called to restore this class' properties when restoring from xml.
+	 * @param elem the element
+	 */
 	protected void processElement(Element elem) {
 		String tag = elem.getName();
-		String name = elem.getAttributeValue(NAME);
-		String type = elem.getAttributeValue(TYPE);
-		String value = elem.getAttributeValue(VALUE);
+		String name = elem.getAttributeValue(ATTRIBUTE_NAME);
+		String type = elem.getAttributeValue(ATTRIBUTE_TYPE);
+		String value = elem.getAttributeValue(ATTRIBUTE_VALUE);
 		if (tag.equals("XML")) {
 			map.put(name, elem.getChildren().get(0));
 		}
@@ -209,7 +224,7 @@ public class GProperties {
 					short[] vals = new short[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Short.parseShort(e.getAttributeValue(VALUE));
+						vals[i++] = Short.parseShort(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -217,7 +232,7 @@ public class GProperties {
 					int[] vals = new int[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Integer.parseInt(e.getAttributeValue(VALUE));
+						vals[i++] = Integer.parseInt(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -225,7 +240,7 @@ public class GProperties {
 					long[] vals = new long[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Long.parseLong(e.getAttributeValue(VALUE));
+						vals[i++] = Long.parseLong(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -233,7 +248,7 @@ public class GProperties {
 					float[] vals = new float[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Float.parseFloat(e.getAttributeValue(VALUE));
+						vals[i++] = Float.parseFloat(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -241,7 +256,7 @@ public class GProperties {
 					double[] vals = new double[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Double.parseDouble(e.getAttributeValue(VALUE));
+						vals[i++] = Double.parseDouble(e.getAttributeValue(ATTRIBUTE_VALUE));
 					}
 					map.put(name, vals);
 				}
@@ -249,7 +264,8 @@ public class GProperties {
 					boolean[] vals = new boolean[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
+						vals[i++] =
+							Boolean.valueOf(e.getAttributeValue(ATTRIBUTE_VALUE)).booleanValue();
 					}
 					map.put(name, vals);
 				}
@@ -257,7 +273,7 @@ public class GProperties {
 					String[] vals = new String[list.size()];
 					while (it.hasNext()) {
 						Element e = (Element) it.next();
-						vals[i++] = e.getAttributeValue(VALUE);
+						vals[i++] = e.getAttributeValue(ATTRIBUTE_VALUE);
 					}
 					map.put(name, vals);
 				}
@@ -505,6 +521,13 @@ public class GProperties {
 		return root;
 	}
 
+	/**
+	 * Called to save this class' properties to xml.
+	 * 
+	 * @param propertyName the property name to save
+	 * @param value the property value
+	 * @return the xml element
+	 */
 	protected Element createElement(String propertyName, Object value) {
 		Element elem = null;
 		if (value instanceof Element) {
@@ -533,13 +556,13 @@ public class GProperties {
 		}
 		else if (value instanceof String) {
 			elem = createElement(STATE, propertyName);
-			elem.setAttribute(TYPE, "string");
+			elem.setAttribute(ATTRIBUTE_TYPE, "string");
 			if (XmlUtilities.hasInvalidXMLCharacters((String) value)) {
 				elem.setAttribute("ENCODED_VALUE", NumericUtilities
 						.convertBytesToString(((String) value).getBytes(StandardCharsets.UTF_8)));
 			}
 			else {
-				elem.setAttribute(VALUE, (String) value);
+				elem.setAttribute(ATTRIBUTE_VALUE, (String) value);
 			}
 		}
 		else if (value instanceof Color) {
@@ -559,7 +582,8 @@ public class GProperties {
 		}
 		else if (value instanceof byte[]) {
 			elem = createElement("BYTES", propertyName);
-			elem.setAttribute(VALUE, NumericUtilities.convertBytesToString((byte[]) value));
+			elem.setAttribute(ATTRIBUTE_VALUE,
+				NumericUtilities.convertBytesToString((byte[]) value));
 		}
 		else if (value instanceof short[]) {
 			elem = setArrayAttributes(propertyName, "short", value);
@@ -585,14 +609,14 @@ public class GProperties {
 		else if (value instanceof Enum) {
 			Enum<?> e = (Enum<?>) value;
 			elem = createElement("ENUM", propertyName);
-			elem.setAttribute(TYPE, "enum");
+			elem.setAttribute(ATTRIBUTE_TYPE, "enum");
 			elem.setAttribute("CLASS", e.getClass().getName());
-			elem.setAttribute(VALUE, e.name());
+			elem.setAttribute(ATTRIBUTE_VALUE, e.name());
 		}
 		else if (value instanceof GProperties) {
 			Element savedElement = ((GProperties) value).saveToXml();
 			elem = createElement(GPROPERTIES_TAG, propertyName);
-			elem.setAttribute(TYPE, G_PROPERTIES_TYPE);
+			elem.setAttribute(ATTRIBUTE_TYPE, G_PROPERTIES_TYPE);
 			elem.addContent(savedElement);
 		}
 		else {
@@ -603,12 +627,12 @@ public class GProperties {
 
 	private <T> Element setArrayAttributes(String propertyName, String type, Object values) {
 		Element elem = createElement("ARRAY", propertyName);
-		elem.setAttribute(TYPE, type);
+		elem.setAttribute(ATTRIBUTE_TYPE, type);
 		for (int i = 0; i < Array.getLength(values); i++) {
 			Object value = Array.get(values, i);
 			if (value != null) {
 				Element arrElem = new Element(ARRAY_ELEMENT_NAME);
-				arrElem.setAttribute(VALUE, value.toString());
+				arrElem.setAttribute(ATTRIBUTE_VALUE, value.toString());
 				elem.addContent(arrElem);
 			}
 		}
@@ -617,7 +641,7 @@ public class GProperties {
 
 	protected Element createElement(String tag, String name) {
 		Element e = new Element(tag);
-		e.setAttribute(NAME, name);
+		e.setAttribute(ATTRIBUTE_NAME, name);
 		initializeElement(e);
 		return e;
 	}
@@ -628,8 +652,8 @@ public class GProperties {
 
 	private Element setAttributes(String propertyName, String type, String value) {
 		Element elem = createElement(STATE, propertyName);
-		elem.setAttribute(TYPE, type);
-		elem.setAttribute(VALUE, value);
+		elem.setAttribute(ATTRIBUTE_TYPE, type);
+		elem.setAttribute(ATTRIBUTE_VALUE, value);
 		return elem;
 	}
 
