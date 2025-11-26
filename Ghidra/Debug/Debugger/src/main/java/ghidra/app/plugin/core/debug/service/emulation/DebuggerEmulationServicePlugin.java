@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
@@ -48,7 +49,9 @@ import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.pcode.emu.PcodeMachine;
@@ -97,6 +100,9 @@ import ghidra.util.task.TaskMonitor;
 	})
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final int MAX_CACHE_SIZE = 5;
+
+	private static final AutoConfigState.ClassHandler<DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
+		AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class, MethodHandles.lookup());
 
 	public interface EmulateProgramAction {
 		String NAME = "Emulate Program in new Trace";
@@ -292,6 +298,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	@AutoConfigStateField
+	private String defaultEmulator;
 	protected EmulatorFactory emulatorFactory =
 		new DefaultEmulatorFactory();
 
@@ -588,6 +596,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	@Override
 	public synchronized void setEmulatorFactory(EmulatorFactory factory) {
 		emulatorFactory = Objects.requireNonNull(factory);
+		defaultEmulator = emulatorFactory.getTitle();
 		for (ToggleDockingAction toggle : actionsChooseEmulatorFactory.values()) {
 			toggle.setSelected(false);
 		}
@@ -927,4 +936,19 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			}
 		}
 	}
+
+	@Override
+	public void readConfigState(SaveState saveState) {
+		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
+		for (ToggleDockingAction toggle : actionsChooseEmulatorFactory.values()) {
+			toggle.setSelected(toggle.getMenuBarData().getMenuItemName().equals(defaultEmulator));
+		}
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+	}
+
 }
