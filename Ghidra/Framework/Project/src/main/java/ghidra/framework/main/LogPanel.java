@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,16 @@ public class LogPanel extends JPanel implements LogListener {
 		super(new BorderLayout());
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 2));
+
 		button = new EmptyBorderButton(new GIcon("icon.console"));
+		button.setPreferredSize(new Dimension(24, 24));
+		button.setFocusable(false);
+		button.setToolTipText("Show Console (Refresh Open Console)");
+		button.addActionListener(e -> {
+			FrontEndTool tool = (FrontEndTool) plugin.getTool();
+			tool.showGhidraUserLogFile();
+		});
+
 		label = new GDLabel();
 		label.setName("Details");
 		panel.add(label, BorderLayout.CENTER);
@@ -68,14 +77,6 @@ public class LogPanel extends JPanel implements LogListener {
 		Border b = BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5),
 			BorderFactory.createLoweredBevelBorder());
 		label.setBorder(b);
-
-		button.setPreferredSize(new Dimension(24, 24));
-		button.setFocusable(false);
-		button.setToolTipText("Show Console (Refresh Open Console)");
-		button.addActionListener(e -> {
-			FrontEndTool tool = (FrontEndTool) plugin.getTool();
-			tool.showGhidraUserLogFile();
-		});
 
 		addLogAppender();
 		add(panel, BorderLayout.NORTH);
