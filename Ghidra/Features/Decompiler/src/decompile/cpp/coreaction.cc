@@ -3698,6 +3698,8 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
       if (sz > sizeof(uintb)) {	// If there exists bits beyond the precision of the consume field
 	if (sa >= 8*sizeof(uintb))
 	  a = ~((uintb)0);	// Make sure we assume one bits where we shift in unrepresented bits
+	else if (!sa)		// Special case to avoid undefined behavior caused by shifting too many bits
+	  a = outc;
 	else
 	  a = (outc >> sa) ^ ( (~((uintb)0)) << (8*sizeof(uintb)-sa));
 	sz = 8*sz -sa;
