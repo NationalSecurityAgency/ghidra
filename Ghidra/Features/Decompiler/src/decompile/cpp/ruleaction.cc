@@ -7230,6 +7230,13 @@ int4 Rule2Comp2Sub::applyOp(PcodeOp *op,Funcdata &data)
     // Case 2: It's an INT_2COMP
     // just wire the input of the INT_2COMP directly into the INT_SUB-to-be
     positive = var_to_negate->getDef()->getIn(0);
+
+    // Since the result of the INT_2COMP might not be used elsewhere, check if
+    // we can remove it
+    bool multiple_use = var_to_negate->loneDescend() == (PcodeOp*)0;
+    if (!multiple_use) {
+      data.opDestroy(var_to_negate->getDef());
+    }
   }
 
   // The negated value is always the second input
