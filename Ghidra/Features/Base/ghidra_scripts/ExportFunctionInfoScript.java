@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,24 +77,6 @@ public class ExportFunctionInfoScript extends GhidraScript {
 		ExportFormat selectedFormat = askChoice("Choose Export Format",
 				"Select the format for exporting function information:", formats, ExportFormat.JSON_SIMPLE);
 
-		// Determine file extension based on format
-		String extension;
-		switch (selectedFormat) {
-			case JSON_SIMPLE:
-			case JSON_METRICS:
-				extension = ".json";
-				break;
-			case CSV_METRICS:
-				extension = ".csv";
-				break;
-			case DOT_CALLGRAPH:
-				extension = ".dot";
-				break;
-			default:
-				extension = ".txt";
-				break;
-		}
-
 		File outputFile = askFile("Please Select Output File", "Choose");
 		if (outputFile == null) {
 			printerr("No output file selected.");
@@ -129,34 +110,35 @@ public class ExportFunctionInfoScript extends GhidraScript {
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 		try (JsonWriter jsonWriter = new JsonWriter(new FileWriter(outputFile))) {
-		jsonWriter.beginArray();
+			jsonWriter.beginArray();
 
-		Listing listing = currentProgram.getListing();
-		FunctionIterator iter = listing.getFunctions(true);
-		while (iter.hasNext() && !monitor.isCancelled()) {
-			Function f = iter.next();
+			Listing listing = currentProgram.getListing();
+			FunctionIterator iter = listing.getFunctions(true);
+			while (iter.hasNext() && !monitor.isCancelled()) {
+				Function f = iter.next();
 
 				// Apply scope filtering if present
 				if (scope != null && !scope.intersects(f.getBody())) {
 					continue;
 				}
 
-			String name = f.getName();
-			Address entry = f.getEntryPoint();
+				String name = f.getName();
+				Address entry = f.getEntryPoint();
 
-			JsonObject json = new JsonObject();
-			json.addProperty(NAME, name);
-			json.addProperty(ENTRY, entry.toString());
+				JsonObject json = new JsonObject();
+				json.addProperty(NAME, name);
+				json.addProperty(ENTRY, entry.toString());
 
-			gson.toJson(json, jsonWriter);
-		}
+				gson.toJson(json, jsonWriter);
+			}
 
-		jsonWriter.endArray();
+			jsonWriter.endArray();
 		}
 	}
 
 	// ========== DETAILED JSON METRICS EXPORT ==========
-	private void exportMetricsJson(File outputFile, AddressSetView scope) throws IOException {
+	private void exportMetricsJson(File outputFile, AddressSetView scope)
+			throws IOException, CancelledException {
 		FunctionManager fm = currentProgram.getFunctionManager();
 		Listing listing = currentProgram.getListing();
 		CyclomaticComplexity complexityCalc = new CyclomaticComplexity();
@@ -166,7 +148,8 @@ public class ExportFunctionInfoScript extends GhidraScript {
 			// Basic program info
 			w.write("  \"program\": {\n");
 			w.write("    \"name\": \"" + escape(currentProgram.getName()) + "\",\n");
-			w.write("    \"language\": \"" + escape(currentProgram.getLanguageID().getIdAsString()) + "\"\n");
+			w.write("    \"language\": \"" +
+				escape(currentProgram.getLanguageID().getIdAsString()) + "\"\n");
 			w.write("  },\n");
 			w.write("  \"functions\": [\n");
 
@@ -192,10 +175,9 @@ public class ExportFunctionInfoScript extends GhidraScript {
 				String entry = f.getEntryPoint().toString();
 				long size = body.getNumAddresses();
 
-				// Instruction count
+				// Instruction count - use for-each style loop
 				int instCount = 0;
-				for (Iterator<Instruction> insIt = listing.getInstructions(body, true); insIt.hasNext();) {
-					insIt.next();
+				for (Instruction inst : listing.getInstructions(body, true)) {
 					instCount++;
 				}
 
@@ -214,16 +196,11 @@ public class ExportFunctionInfoScript extends GhidraScript {
 
 				// Basic blocks
 				int basicBlocks = 0;
-				try {
-					SimpleBlockModel model = new SimpleBlockModel(currentProgram);
-					CodeBlockIterator blocks = model.getCodeBlocksContaining(body, monitor);
-					while (blocks.hasNext() && !monitor.isCancelled()) {
-						blocks.next();
-						basicBlocks++;
-					}
-				}
-				catch (CancelledException ce) {
-					// Respect cancellation; leave count as is
+				SimpleBlockModel model = new SimpleBlockModel(currentProgram);
+				CodeBlockIterator blocks = model.getCodeBlocksContaining(body, monitor);
+				while (blocks.hasNext() && !monitor.isCancelled()) {
+					blocks.next();
+					basicBlocks++;
 				}
 
 				// Locals count
@@ -272,7 +249,8 @@ public class ExportFunctionInfoScript extends GhidraScript {
 				w.write("      \"basic_blocks\": " + basicBlocks + ",\n");
 				w.write("      \"external\": " + isExternal + ",\n");
 				w.write("      \"thunk\": " + isThunk + ",\n");
-				w.write("      \"thunk_target\": " + (thunkTarget == null ? "null" : ("\"" + escape(thunkTarget) + "\"")) + ",\n");
+				w.write("      \"thunk_target\": " +
+					(thunkTarget == null ? "null" : ("\"" + escape(thunkTarget) + "\"")) + ",\n");
 				w.write("      \"variadic\": " + hasVarArgs + ",\n");
 				w.write("      \"inline\": " + isInline + ",\n");
 				w.write("      \"no_return\": " + noReturn + ",\n");
@@ -300,19 +278,19 @@ public class ExportFunctionInfoScript extends GhidraScript {
 	}
 
 	// ========== CSV METRICS EXPORT ==========
-	private void exportMetricsCsv(File outputFile, AddressSetView scope) throws IOException {
+	private void exportMetricsCsv(File outputFile, AddressSetView scope)
+			throws IOException, CancelledException {
 		FunctionManager fm = currentProgram.getFunctionManager();
 		Listing listing = currentProgram.getListing();
 		CyclomaticComplexity complexityCalc = new CyclomaticComplexity();
 
 		try (BufferedWriter w = new BufferedWriter(new FileWriter(outputFile))) {
 			// Header
-			w.write(String.join(",",
-				"name","entry","address_ranges","instruction_count","cyclomatic_complexity",
-				"parameters","locals","basic_blocks","external","thunk","thunk_target",
-				"variadic","inline","no_return","custom_storage","stack_purge_size",
-				"calling_convention","namespace","return_type","prototype","prototype_with_cc",
-				"callers","callees"));
+			w.write(String.join(",", "name", "entry", "address_ranges", "instruction_count",
+				"cyclomatic_complexity", "parameters", "locals", "basic_blocks", "external",
+				"thunk", "thunk_target", "variadic", "inline", "no_return", "custom_storage",
+				"stack_purge_size", "calling_convention", "namespace", "return_type",
+				"prototype", "prototype_with_cc", "callers", "callees"));
 			w.write("\n");
 
 			FunctionIterator it = fm.getFunctions(true);
@@ -330,10 +308,9 @@ public class ExportFunctionInfoScript extends GhidraScript {
 
 				String entry = f.getEntryPoint().toString();
 
-				// Instruction count
+				// Instruction count - use for-each style loop
 				int instCount = 0;
-				for (Iterator<Instruction> insIt = listing.getInstructions(body, true); insIt.hasNext();) {
-					insIt.next();
+				for (Instruction inst : listing.getInstructions(body, true)) {
 					instCount++;
 				}
 
@@ -352,16 +329,11 @@ public class ExportFunctionInfoScript extends GhidraScript {
 
 				// Basic blocks
 				int basicBlocks = 0;
-				try {
-					SimpleBlockModel model = new SimpleBlockModel(currentProgram);
-					CodeBlockIterator blocks = model.getCodeBlocksContaining(body, monitor);
-					while (blocks.hasNext() && !monitor.isCancelled()) {
-						blocks.next();
-						basicBlocks++;
-					}
-				}
-				catch (CancelledException ce) {
-					// Respect cancellation
+				SimpleBlockModel model = new SimpleBlockModel(currentProgram);
+				CodeBlockIterator blocks = model.getCodeBlocksContaining(body, monitor);
+				while (blocks.hasNext() && !monitor.isCancelled()) {
+					blocks.next();
+					basicBlocks++;
 				}
 
 				int localsCount = 0;
@@ -395,18 +367,16 @@ public class ExportFunctionInfoScript extends GhidraScript {
 					}
 				}
 
-				w.write(String.join(",",
-					csv(f.getName()), csv(entry),
-					Integer.toString(body.getNumAddressRanges()),
-					Integer.toString(instCount), Integer.toString(cplx),
-					Integer.toString(params), Integer.toString(localsCount),
-					Integer.toString(basicBlocks), Boolean.toString(isExternal),
-					Boolean.toString(isThunk), csvOrEmpty(thunkTarget),
-					Boolean.toString(hasVarArgs), Boolean.toString(isInline),
-					Boolean.toString(noReturn), Boolean.toString(customStorage),
-					Integer.toString(stackPurgeSize), csv(callConv), csv(namespace),
-					csv(returnType), csv(proto), csv(protoWithCc),
-					Integer.toString(callers), Integer.toString(callees)));
+				w.write(String.join(",", csv(f.getName()), csv(entry),
+					Integer.toString(body.getNumAddressRanges()), Integer.toString(instCount),
+					Integer.toString(cplx), Integer.toString(params),
+					Integer.toString(localsCount), Integer.toString(basicBlocks),
+					Boolean.toString(isExternal), Boolean.toString(isThunk),
+					csvOrEmpty(thunkTarget), Boolean.toString(hasVarArgs),
+					Boolean.toString(isInline), Boolean.toString(noReturn),
+					Boolean.toString(customStorage), Integer.toString(stackPurgeSize),
+					csv(callConv), csv(namespace), csv(returnType), csv(proto),
+					csv(protoWithCc), Integer.toString(callers), Integer.toString(callees)));
 				w.write("\n");
 			}
 		}
@@ -419,7 +389,6 @@ public class ExportFunctionInfoScript extends GhidraScript {
 
 		Map<String, Integer> idByEntry = new HashMap<>();
 		Set<String> edges = new HashSet<>();
-		int nextId = 1;
 
 		monitor.initialize(fm.getFunctionCount());
 
@@ -432,7 +401,9 @@ public class ExportFunctionInfoScript extends GhidraScript {
 			monitor.incrementProgress(1);
 
 			String fEntry = f.getEntryPoint().toString();
-			idByEntry.computeIfAbsent(fEntry, k -> nextId++);
+			if (!idByEntry.containsKey(fEntry)) {
+				idByEntry.put(fEntry, idByEntry.size() + 1);
+			}
 
 			for (Function callee : f.getCalledFunctions(monitor)) {
 				if (scope != null && !scope.intersects(callee.getBody())) {
@@ -440,7 +411,9 @@ public class ExportFunctionInfoScript extends GhidraScript {
 					continue;
 				}
 				String cEntry = callee.getEntryPoint().toString();
-				idByEntry.computeIfAbsent(cEntry, k -> nextId++);
+				if (!idByEntry.containsKey(cEntry)) {
+					idByEntry.put(cEntry, idByEntry.size() + 1);
+				}
 				edges.add(fEntry + "->" + cEntry);
 			}
 		}
@@ -453,7 +426,8 @@ public class ExportFunctionInfoScript extends GhidraScript {
 				String entry = e.getKey();
 				int id = e.getValue();
 				// Label: function name + entry
-				Function f = fm.getFunctionAt(currentProgram.getAddressFactory().getAddress(entry));
+				Function f =
+					fm.getFunctionAt(currentProgram.getAddressFactory().getAddress(entry));
 				String label = (f != null ? f.getName() : entry) + "\\n" + entry;
 				w.write("  n" + id + " [label=\"" + escape(label) + "\"];\n");
 			}
