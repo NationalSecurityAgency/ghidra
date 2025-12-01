@@ -365,6 +365,8 @@ src/main/help/help/topics/DataWindowPlugin/images/DataWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataWindowPlugin/images/DataWindowFilter.png||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/DbViewer.htm||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/images/DatabaseViewer.png||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/DefinedStringsPlugin.htm||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/DisassembledViewPlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/images/DisassembledViewPluginMain.png||GHIDRA||||END|
 src/main/help/help/topics/DisassemblerPlugin/Disassembly.htm||GHIDRA||||END|
@@ -758,8 +760,6 @@ src/main/help/help/topics/VersionControl/images/UndoHijack.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/VersionHistory.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/ViewCheckouts.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/project_repository.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/ViewStringsPlugin.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/comments/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/cmd/data/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/disassemble/package.html||GHIDRA||||END|

@@ -96,7 +96,7 @@ public class DefinedStringsPlugin extends ProgramPlugin implements DomainObjectL
 					refreshAction.getToolBarData().setIcon(REFRESH_NOT_NEEDED_ICON);
 					reload();
 				})
-				.helpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"))
+				.helpLocation(new HelpLocation(getName(), "Refresh"))
 				.buildAndInstallLocal(provider);
 
 		tool.addLocalAction(provider, new MakeProgramSelectionAction(this, provider.getTable()));
