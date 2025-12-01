@@ -135,6 +135,7 @@ public class FrontEndPlugin extends Plugin
 	private ProjectDataCutAction cutAction;
 	private ClearCutAction clearCutAction;
 	private ProjectDataCopyAction copyAction;
+	private ProjectDataCopyGhidraURLAction copyGhidraURLAction;
 	private ProjectDataPasteAction pasteAction;
 	private ProjectDataPasteLinkAction pasteLinkAction;
 	private ProjectDataPasteLinkAction pasteRelativeLinkAction;
@@ -240,6 +241,7 @@ public class FrontEndPlugin extends Plugin
 		cutAction = new ProjectDataCutAction(owner, groupName);
 		clearCutAction = new ClearCutAction(owner);
 		copyAction = new ProjectDataCopyAction(owner, groupName);
+		copyGhidraURLAction = new ProjectDataCopyGhidraURLAction(owner, groupName);
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
 		pasteLinkAction = new ProjectDataPasteLinkAction(owner, groupName, false);
 		pasteRelativeLinkAction = new ProjectDataPasteLinkAction(owner, groupName, true);
@@ -264,6 +266,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addAction(cutAction);
 		tool.addAction(clearCutAction);
 		tool.addAction(copyAction);
+		tool.addAction(copyGhidraURLAction);
 		tool.addAction(pasteAction);
 		tool.addAction(pasteLinkAction);
 		tool.addAction(pasteRelativeLinkAction);
