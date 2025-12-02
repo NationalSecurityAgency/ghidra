@@ -4951,8 +4951,7 @@ int4 RuleShiftAnd::applyOp(PcodeOp *op,Funcdata &data)
     mask &= fullmask;
   }
   if ((mask & nzm) != nzm) return 0;
-  data.opSetOpcode(andop,CPUI_COPY); // AND effectively does nothing, so we change it to a copy
-  data.opRemoveInput(andop,1);
+  data.opSetInput(op, invn, 0);	// Bypass the INT_AND
   return 1;
 }
 
