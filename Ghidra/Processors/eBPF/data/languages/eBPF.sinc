@@ -369,18 +369,19 @@ DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
 
 :ACMP32 [dst + off], src  is imm=0xf1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 {
     local tmp:4 = *:4 (dst + off);
-    if (R0:4 == tmp) goto <equal>;
-    R0 = zext(tmp);
-<equal>
+    if (R0:4 != tmp) goto <notEqual>;
     *:4 (dst + off) = src:4;
+<notEqual>
+    R0 = zext(tmp);
 }
 
 :ACMP [dst + off], src  is imm=0xf1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 {
     local tmp:8 = *:8 (dst + off);
-    if (R0 == tmp) goto <equal>;
+    if (R0 != tmp) goto <notEqual>;
+    *:8 (dst + off) = src;
+    goto inst_next;
+<notEqual>
     R0 = tmp;
-<equal>
-    *:8 (dst + off) = src; 
 }
 
 #Jump instructions (BPF_JMP, BPF_JMP32)
