@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@title lldb Android
+#@title lldb Android (Attach)
 #@image-opt arg:1
 #@desc <html><body width="300px">
-#@desc   <h3>Launch with local <tt>lldb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
+#@desc   <h3>Launch with local <tt>lldb</tt> and attach to an Android target.</h3>
 #@desc   <p>
 #@desc     This will start <tt>lldb</tt> on the local system and then use it to connect to the remote system.
 #@desc     For setup instructions, press <b>F1</b>.
@@ -24,16 +24,14 @@
 #@desc </body></html>
 #@menu-group lldb
 #@icon icon.debugger
-#@help lldb#android
+#@help lldb#android-attach
 #@depends Debugger-rmi-trace
-#@enum StartCmd:str "process launch" "process launch --stop-at-entry"
-#@arg :file "Image" "The target binary executable image"
-#@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
+#@env OPT_TARGET_PID:int=0 "Process id" "The target process id"
 #@env OPT_DEVICE:str="" "Device" "The device name (e.g. from 'adb devices')"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
 #@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
-#@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
+#@env OPT_EXTRA_CMDS:str="" "Additional commands" "Follow-up lldb commands."
 
 . ..\support\lldbsetuputils.ps1
 
@@ -41,8 +39,8 @@ $pypathTrace = Ghidra-Module-PyPath "Debugger-rmi-trace"
 $pypathLldb = Ghidra-Module-PyPath
 $Env:PYTHONPATH = "$pypathLldb;$pypathTrace;$Env:PYTHONPATH"
 
-$arglist = Compute-Lldb-Platform-Args `
-    -TargetImage $args[0] `
+$arglist = Compute-Lldb-Platform-Args-Attach `
+    -TargetPid "$Env:OPT_TARGET_PID" `
     -TargetType "remote-android" `
     -TargetUrl "connect://$Env:OPT_DEVICE`:$Env:OPT_PORT" `
     -RmiAddress "$Env:GHIDRA_TRACE_RMI_ADDR"

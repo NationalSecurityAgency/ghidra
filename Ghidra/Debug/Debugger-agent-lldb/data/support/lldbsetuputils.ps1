@@ -44,6 +44,19 @@ function Add-Lldb-Image-And-Args {
 	}
 }
 
+function Add-Lldb-Pid {
+	param([ref]$ArgList, $TargetPid)
+
+	if ("$TargetPid" -ne "") {
+		$ArgList.Value+=("-o", "`"process attach --pid '$TargetPid'`"")
+	}
+	if ("$TargetArgs" -ne "") {
+		$tgtargs = $TargetArgs -replace "`"", "\`""
+		# Escaping parentheses in the arguments is no longer necessary in powershell vs cmd
+		$ArgList.Value+=("-o", "`"settings set target.run-args $tgtargs`"")
+	}
+}
+
 function Add-Lldb-Connect-And-Sync {
 	param([ref]$ArgList, $Address)
 
@@ -57,6 +70,14 @@ function Add-Lldb-Start-If-Image {
 
 	if ("$TargetImage" -ne "") {
 		$ArgList.Value+=("-o", "`"$Env:OPT_START_CMD`"")
+	}
+}
+
+function Add-Lldb-Extra-Cmds {
+	param([ref]$ArgList)
+
+	if ("$Env:OPT_EXTRA_CMDS" -ne "") {
+		$ArgList.Value+=("-o", "`"$Env:OPT_EXTRA_CMDS`"")
 	}
 }
 
@@ -93,15 +114,45 @@ function Compute-Lldb-Platform-Args {
 	return $arglist
 }
 
+function Compute-Lldb-Platform-Args-Attach {
+	param($TargetPid, $TargetType, $TargetUrl, $RmiAddress)
+
+	$arglist = @("`"$Env:OPT_LLDB_PATH`"")
+	Add-Lldb-Init-Args -ArgList ([ref]$arglist)
+	$arglist+=("-o", "`"platform select '$TargetType'`"")
+	$arglist+=("-o", "`"platform connect '$TargetUrl'`"")
+	Add-Lldb-Pid -ArgList ([ref]$arglist) -TargetPid $TargetPid -TargetArgs $Env:OPT_TARGET_ARGS
+	Add-Lldb-Connect-And-Sync -ArgList ([ref]$arglist) -Address $RmiAddress
+	Add-Lldb-Extra-Cmds -ArgList ([ref]$arglist)
+	Add-Lldb-Tail-Args -ArgList ([ref]$arglist)
+
+	return $arglist
+}
+
 function Compute-Lldb-Remote-Args {
 	param($TargetImage, $TargetCx, $RmiAddress)
 
 	$arglist = @("`"$Env:OPT_LLDB_PATH`"")
 	Add-Lldb-Init-Args -ArgList ([ref]$arglist)
-	Add-Lldb-Image-And-Args -ArgList ([ref]$arglist) -TargetImge $TargetImage -TargetArgs ""
+	Add-Lldb-Image-And-Args -ArgList ([ref]$arglist) -TargetImage $TargetImage -TargetArgs ""
 	$arglist+=("-o", "`"$TargetCx`"")
 	Add-Lldb-Connect-And-Sync -ArgList ([ref]$arglist) -Address $RmiAddress
 	$arglist+=("-o", "`"ghidra trace sync-synth-stopped`"")
+	Add-Lldb-Tail-Args -ArgList ([ref]$arglist)
+
+	return $arglist
+}
+
+function Compute-Lldb-Remote-Args-Attach {
+	param($TargetPid, $TargetCx, $RmiAddress)
+
+	$arglist = @("`"$Env:OPT_LLDB_PATH`"")
+	Add-Lldb-Init-Args -ArgList ([ref]$arglist)
+	Add-Lldb-Pid -ArgList ([ref]$arglist) -TargetPid $TargetPid 
+	$arglist+=("-o", "`"$TargetCx`"")
+	Add-Lldb-Connect-And-Sync -ArgList ([ref]$arglist) -Address $RmiAddress
+	$arglist+=("-o", "`"ghidra trace sync-synth-stopped`"")
+	Add-Lldb-Extra-Cmds -ArgList ([ref]$arglist)
 	Add-Lldb-Tail-Args -ArgList ([ref]$arglist)
 
 	return $arglist

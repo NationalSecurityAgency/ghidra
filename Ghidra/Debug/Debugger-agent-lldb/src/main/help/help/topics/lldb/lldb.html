@@ -206,8 +206,8 @@ perl -i -pe 's/(?&lt;=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
     <H2><A name="android"></A>Android</H2>
 
     <P>This has the same options as the <A href="#ssh">LLDB via SSH</A> launcher, which are
-    necessary for connecting to the Android debugger, but executes via the normal lldb
-    mechanism.</P>
+    necessary for connecting to the Android debugger, but uses <B>Device</B> in place of <B>Host</B>
+    (typically retrieved using 'adb devices').</P>
 
     <H3><A name="setup_ndk"></A>Setup for Android NDK</H3>
 
@@ -266,5 +266,13 @@ PS&gt; C:\path\to\android-ndk\...\python -m pip install ...
         ...</TT>.
       </LI>
     </OL>
+    
+    <H2><A name="android-attach"></A>Android (Attach)</H2>
+
+    <P>This has the same options as the <A href="#android">Andoid</A> launcher, but uses the 
+    target's <B>Process Id</B> instead of the executable <B>Image</B>.  <B>Additional commands</B> has been added 
+    to allow commands like 'process handle --pass true --stop false --notify false SIGSEGV'
+    to be saved and executed for each run.</P>
+
   </BODY>
 </HTML>
