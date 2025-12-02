@@ -499,6 +499,10 @@ class FlowArrowMarginProvider implements ListingMarginProvider {
 			return;
 		}
 
+		if (layoutToPixel == null) {
+			return; // this can happen if the tool is in a bad state
+		}
+
 		int n = layoutToPixel.getNumLayouts();
 		if (n == 0) {
 			return;
