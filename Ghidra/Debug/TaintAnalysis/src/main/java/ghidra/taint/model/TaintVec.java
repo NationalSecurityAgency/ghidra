@@ -605,9 +605,8 @@ public class TaintVec {
 	/**
 	 * Supply the originating op
 	 * 
-	 * @param the originating op
+	 * @param op originating op
 	 * @return the tagged TaintVec
-	 *
 	 */
 	public TaintVec withOp(PcodeOp op) {
 		return new TaintVec(sets, op);

@@ -221,7 +221,7 @@ public final class ObjcUtils {
 	}
 
 	/**
-	 * {@return a newly created primary {@link Symbol}
+	 * {@return a newly created primary {@link Symbol}}
 	 *
 	 * @param program The {@link Program}
 	 * @param parentNamespace The parent namespace
