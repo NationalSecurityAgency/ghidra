@@ -36,7 +36,7 @@ with future releases.
     * [macOS](#macos)
 
 ## Platforms Supported
-* Windows 10 or later
+* Windows 10 (build 1809 or later)
 * Linux
 * macOS 10.13 or later
 
@@ -60,7 +60,7 @@ a specific need.
   * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
-    to install a suitable version of Python.
+    to install a suitable version of Python with pip support.
 
 ## Installing Ghidra
 To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem destination
