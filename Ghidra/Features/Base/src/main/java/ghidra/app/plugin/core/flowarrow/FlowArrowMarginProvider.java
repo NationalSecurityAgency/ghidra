@@ -301,9 +301,6 @@ class FlowArrowMarginProvider implements ListingMarginProvider {
 
 	private List<ArrowGroup> groupArrowsBySharedEndpoints() {
 
-		// not sure this is still needed; keeping for posterity
-		Collections.sort(flowArrows, (a1, a2) -> (a1).end.compareTo((a2).end));
-
 		Map<Address, List<FlowArrow>> arrowsByStart = new HashMap<>();
 		Map<Address, List<FlowArrow>> arrowsByEnd = new HashMap<>();
 		mapArrowsByEndpoints(arrowsByStart, arrowsByEnd);
@@ -354,16 +351,24 @@ class FlowArrowMarginProvider implements ListingMarginProvider {
 	 */
 	private void assignArrowColumns() {
 
-		Collections.sort(flowArrows, (a1, a2) -> (a1).end.compareTo((a2).end));
-
 		// assign groups and then assign columns to the groups
-		int count = 0;
 		List<ArrowGroup> groups = groupArrowsBySharedEndpoints();
+		Map<Integer, ArrowGroup> groupsByColumn = new HashMap<>();
 		for (ArrowGroup group : groups) {
-			// assignGroupColumn(group, groups);
-			int column = Math.min(MAX_DEPTH, count++);
-			group.setColumn(column);
-			maxColumn = column;
+
+			for (int nextCol = 0; nextCol < groups.size(); nextCol++) {
+
+				ArrowGroup existingGroup = groupsByColumn.get(nextCol);
+				if (existingGroup == null || !existingGroup.overlaps(group)) {
+
+					int column = Math.min(MAX_DEPTH, nextCol);
+					group.setColumn(column);
+					groupsByColumn.put(column, group);
+					maxColumn = Math.max(maxColumn, column);
+					break;
+				}
+
+			}
 		}
 	}
 
@@ -399,7 +404,11 @@ class FlowArrowMarginProvider implements ListingMarginProvider {
 			}
 		}
 
-		return new ArrayList<>(results);
+		// not sure this is still needed; keeping for posterity
+		ArrayList<FlowArrow> newArrows = new ArrayList<>(results);
+		Collections.sort(newArrows, (a1, a2) -> (a1).end.compareTo((a2).end));
+
+		return newArrows;
 	}
 
 	private void createFlowArrow(Set<FlowArrow> results, OffscreenArrowsFlow offscreenArrows,
@@ -655,6 +664,10 @@ class FlowArrowMarginProvider implements ListingMarginProvider {
 
 			arrows.add(f);
 			addrs.add(f.addresses);
+		}
+
+		boolean overlaps(ArrowGroup other) {
+			return addrs.intersects(other.addrs);
 		}
 	}
 
