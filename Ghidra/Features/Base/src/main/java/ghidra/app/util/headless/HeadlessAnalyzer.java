@@ -883,6 +883,14 @@ public class HeadlessAnalyzer {
 				scriptName = scriptPair.first;
 				String[] scriptArgs = scriptPair.second;
 
+				StringBuilder buf = new StringBuilder();
+				for (String arg : scriptArgs) {
+					buf.append("'");
+					buf.append(arg);
+					buf.append("' ");
+				}
+				Msg.info(this, "REPORT: Execute script: " + scriptName + " " + buf.toString());
+
 				// For .class files, there is no ResourceFile mapping. Need to load from the
 				// stored 'classLoaderForDotClassScripts'
 				if (scriptName.endsWith(".class")) {
@@ -1601,8 +1609,8 @@ public class HeadlessAnalyzer {
 				if (!loaded.check(Program::isTemporary)) {
 					try {
 						DomainFile domainFile = loaded.save(TaskMonitor.DUMMY);
-						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)",
-							loaded, domainFile));
+						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)", loaded,
+							domainFile));
 					}
 					catch (IOException e) {
 						Msg.info(this, "REPORT: Save failed for: " + loaded);
