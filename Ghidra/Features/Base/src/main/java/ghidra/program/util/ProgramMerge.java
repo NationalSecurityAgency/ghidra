@@ -2159,6 +2159,10 @@ public class ProgramMerge {
 				monitor.setMessage("Replacing Function " + (count + 1) + " of " + totalAddresses +
 					"." + " Address = " + address.toString(true));
 			}
+
+			// Only use origin memory address
+			address = DiffUtility.getCompatibleMemoryAddress(address, originProgram);
+
 			if (isThunkFunction(address)) {
 				// Skip the thunk, but save it for processing during a second pass.
 				thunkSet.addRange(address, address);
@@ -2171,13 +2175,14 @@ public class ProgramMerge {
 		replaceThunks(thunkSet, monitor);
 	}
 
-	private void replaceThunks(AddressSet thunkSet, TaskMonitor monitor) throws CancelledException {
+	private void replaceThunks(AddressSet originThunkSet, TaskMonitor monitor)
+			throws CancelledException {
 		long granularity;
 		// Now that all the non-thunk functions have been processed, process the saved thunks.
-		long totalThunks = thunkSet.getNumAddresses();
+		long totalThunks = originThunkSet.getNumAddresses();
 		granularity = (totalThunks / PROGRESS_COUNTER_GRANULARITY) + 1;
 		monitor.initialize(totalThunks);
-		AddressIterator thunkIter = thunkSet.getAddresses(true);
+		AddressIterator thunkIter = originThunkSet.getAddresses(true);
 		for (int count = 0; thunkIter.hasNext(); count++) {
 			monitor.checkCancelled();
 			Address address = thunkIter.next();

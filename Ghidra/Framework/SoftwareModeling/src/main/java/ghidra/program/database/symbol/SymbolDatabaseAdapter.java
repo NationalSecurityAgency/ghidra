@@ -16,8 +16,7 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -185,13 +184,13 @@ abstract class SymbolDatabaseAdapter {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
-		long nextKey = 1; // only used for V0 upgrade if a record with key 0 is encountered	
+		long zeroIdRemap = -1; // only used for V0 upgrade if a record with key 0 is encountered	
 		if (oldAdapter instanceof SymbolDatabaseAdapterV0) {
 			// V0 is so old that there is not enough info in the current record to create new
 			// records. So store the current info in a temp database table and complete the upgrade
 			// when SymbolManager.programReady() is called. The missing info can be retrieved from
 			// other managers in the program at that point.
-			nextKey =
+			zeroIdRemap =
 				((SymbolDatabaseAdapterV0) oldAdapter).extractLocalSymbols(tmpHandle, monitor);
 		}
 
@@ -205,8 +204,9 @@ abstract class SymbolDatabaseAdapter {
 
 			// We don't allow 0 keys starting with V1, set its key to next available
 			// which we got from the call to extractLocalSymbols() above
-			if (rec.getKey() == 0) {
-				rec.setKey(Math.max(1, nextKey));
+			if (zeroIdRemap > 0 && rec.getKey() == 0) {
+				// NOTE: V0 did not have concept of parent relationship
+				rec.setKey(zeroIdRemap);
 			}
 
 			tmpAdapter.updateSymbolRecord(rec);
