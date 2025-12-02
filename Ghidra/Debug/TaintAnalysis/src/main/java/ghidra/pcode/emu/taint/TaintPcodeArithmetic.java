@@ -129,24 +129,28 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 */
 	@Override
 	public TaintVec binaryOp(PcodeOp op, TaintVec in1, TaintVec in2) {
+		return PcodeArithmetic.super.binaryOp(op, in1, in2).withOp(op);
+	}
+
+	@Override
+	public TaintVec binaryOp(int opcode, int sizeout, int sizein1, TaintVec in1,
+			int sizein2, TaintVec in2) {
 		// TODO: Detect immediate operands and be more precise
-		switch (op.getOpcode()) {
+		switch (opcode) {
 			case PcodeOp.INT_XOR, PcodeOp.INT_SUB, PcodeOp.BOOL_XOR -> {
-				if (Objects.equals(op.getInput(0), op.getInput(1))) {
-					return fromConst(0, op.getOutput().getSize());  // NB: withOp unneeded, as this essentially removes taint
+				if (Objects.equals(in1, in2)) {
+					return fromConst(0, sizeout);  // NB: withOp unneeded, as this essentially removes taint
 				}
 			}
 		}
-		int sizein2 = op.getInput(1).getSize();
-		int sizeout = op.getOutput().getSize();
-		return switch (op.getOpcode()) {
+		return switch (opcode) {
 			case PcodeOp.BOOL_AND, PcodeOp.BOOL_OR, PcodeOp.BOOL_XOR, PcodeOp.INT_AND, //
 					PcodeOp.INT_OR, PcodeOp.INT_XOR -> {
-				yield in1.zipUnion(in2).withOp(op);
+				yield in1.zipUnion(in2);
 			}
 			case PcodeOp.INT_ADD, PcodeOp.INT_SUB -> {
 				TaintVec temp = in1.zipUnion(in2);
-				yield temp.setCascade(endian.isBigEndian()).withOp(op);
+				yield temp.setCascade(endian.isBigEndian());
 			}
 			case PcodeOp.INT_SLESS, PcodeOp.INT_SLESSEQUAL, //
 					PcodeOp.INT_LESS, PcodeOp.INT_LESSEQUAL, //
@@ -154,24 +158,18 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 					PcodeOp.FLOAT_LESS, PcodeOp.FLOAT_LESSEQUAL, //
 					PcodeOp.FLOAT_EQUAL, PcodeOp.FLOAT_NOTEQUAL -> {
 				TaintSet temp = in1.union().union(in2.union());
-				yield TaintVec.copies(temp, sizeout).withOp(op);
+				yield TaintVec.copies(temp, sizeout);
 			}
 			case PcodeOp.PIECE -> {
 				TaintVec temp = in1.extended(sizeout, endian.isBigEndian(), false);
 				temp.setShifted(endian.isBigEndian() ? -sizein2 : sizein2, ShiftMode.UNBOUNDED);
-				yield temp.set(endian.isBigEndian() ? sizeout - sizein2 : 0, in2).withOp(op);
+				yield temp.set(endian.isBigEndian() ? sizeout - sizein2 : 0, in2);
 			}
 			default -> {
 				TaintVec temp = in1.zipUnion(in2).truncated(sizeout, endian.isBigEndian());
-				yield temp.setCopies(temp.union()).withOp(op);
+				yield temp.setCopies(temp.union());
 			}
 		};
-	}
-
-	@Override
-	public TaintVec binaryOp(int opcode, int sizeout, int sizein1, TaintVec in1,
-			int sizein2, TaintVec in2) {
-		throw new RuntimeException("Not supported");
 	}
 
 	/**
