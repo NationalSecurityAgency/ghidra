@@ -6,6 +6,7 @@ define space ram type=ram_space size=4 wordsize=1 default;
 define space register type=register_space size=4;
 
 define space csreg type=ram_space size=2 wordsize=4;
+
 @define CSR_REG_START "0x0000"
 
 define register offset=0 size=4
@@ -21,7 +22,9 @@ define register offset=0x100 size=4
 [d0.hi d0.lo d1.hi d1.lo];
 
 define register offset=0x200 size=4
-[ itb lb lc le ifc_lp];
+[ itb lb lc le ifc_lp
+  fpcsr  fpcfg
+];
 
 define register offset=0x1000 size=4
 [ fs0 fs1 fs2 fs3 fs4 fs5 fs6 fs7
@@ -37,109 +40,9 @@ define register offset=0x1000 size=8
   fd24 fd25 fd26 fd27 fd28 fd29 fd30 fd31
 ];
 
-#define SRIDX(major, minor, ext) \
-#    (((major) << 7) | ((minor) << 3) | (ext))
-
-define csreg offset=$(CSR_REG_START) size=4
+define csreg offset=0x0a9 size=4
 [
-  cpu_ver  core_id   _        _        _        _        _        _  # SRIDX(0,0,n)
-  icm_cfg  _         _        _        _        _        _        _  # SRIDX(0,1,n)
-  dcm_cfg  _         _        _        _        _        _        _
-  mmu_cfg  _         _        _        _        _        _        _
-  msc_cfg  msc_cfg2  _        _        _        _        _        _
-  fucop_exist  _     _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _  # SRIDX(0,7,n)
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _  # SRIDX(0,15,n)
-  psw      ipsw      p_ipsw   _        _        _        _        _  # SRIDX(1,0,n)
-  _        ivb       int_ctrl  int_gpr_push_dis    _    _    _    _
-  _        eva       p_eva    _        _        _        _        _
-  _        itype     p_itype  _        _        _        _        _
-  _        merr      _        _        _        _        _        _
-  _        ipc       p_ipc    oipc     _        _        _        _
-  _        _         p_p0     _        _        _        _        _
-  _        _         p_p1     _        _        _        _        _ # SRIDX(1,7,n)
-  int_mask int_mask2 int_mask3  _      _        _        _        _
-  int_pend int_pend2 int_pend3  _  int_trigger int_trigger2  _    _
-  sp_usr   sp_priv   sp_usr1  sp_priv1 sp_usr2  sp_priv2 sp_usr3  sp_priv3
-  int_pri  int_pri2  int_pri3 int_pri4 _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _  # SRIDX(1,15,n)
-  mmu_ctl  bg_region _        _        _        _        _        _  # SRIDX(2,0,n)
-  l1_pptb  _         _        _        _        _        _        _
-  tlb_vpn  _         _        _        _        _        _        _
-  tlb_data _         _        _        _        _        _        _
-  tlb_misc _         _        _        _        _        _        _
-  vlpt_idx _         _        _        _        _        _        _
-  ilmb     _         _        _        _        _        _        _
-  dlmb     _         _        _        _        _        _        _  # SRIDX(2,7,n)
-  cache_ctl  _       _        _        _        _        _        _
-  hsmp_saddr hsmp_eaddr  _    _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  sdz_ctl  misc_ctl  ecc_misc _        _        _        _        _  # SRIDX(2,15,n)
-  bpc0     bpc1      bpc2     bpc3    bpc4     bpc5      bpc6     bpc7 # SRIDX(3,0,n)
-  bpa0     bpa1      bpa2     bpa3    bpa4     bpa5      bpa6     bpa7
-  bpam0    bpam1     bpam2    bpam3   bpam4    bpam5     bpam6    bpam7
-  bpv0     bpv1      bpv2     bpv3    bpv4     bpv5      bpv6     bpv7
-  bpcid0   bpcid1    bpcid2   bpcid3  bpcid4   bpcid5    bpcid6   bpcid7
-  edm_cfg  _         _        _        _        _        _        _
-  edmsw    _         _        _        _        _        _        _
-  edm_ctl  _         _        _        _        _        _        _ # SRIDX(3,7,n)
-  edm_dtr  _         _        _        _        _        _        _
-  bpmtc    _         _        _        _        _        _        _
-  dimbr    _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  tecr0    tecr1     _        _        _        _        _        _
-  _        _         _        _        _        _        _        _ # SRIDX(3,15,n)
-  pfmc0    pfmc1     pfmc2    _        _        _        _        _ # SRIDX(4,0,n)
-  pfm_ctl  _         _        _        _        _        _        _
-  pft_ctl  _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _ 
-  prusr_acc_ctl  _   _        _        _        _        _        _
-  fucpr    _         _        _        _        _        _        _
-  hsp_ctl  sp_bound sp_bound_priv sp_base sp_base_priv  _    _    _
-  _        _         _        _        _        _        _        _ # SRIDX(4,7,n)
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _  # SRIDX(4,15,n)
-  dma_cfg  _         _        _        _        _        _        _  # SRIDX(5,0,n)
-  dma_gcsw _         _        _        _        _        _        _
-  dma_chnsel _       _        _        _        _        _        _
-  dma_act  _         _        _        _        _        _        _
-  dma_setup  _       _        _        _        _        _        _
-  dma_isaddr _       _        _        _        _        _        _
-  dma_esaddr _       _        _        _        _        _        _
-  dma_tcnt dma_rcnt  _        _        _        _        _        _ # SRIDX(5,7,n)
-  dma_status  dma_hstatus _   _        _        _        _        _
-  dma_2dset  dma_2dsctl _     _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _
-  _        _         _        _        _        _        _        _  # SRIDX(5,15,n)
-  secur0   _         _        _        _        _        _        _  # SRIDX(6,0,n)
-  secur1   secur2    secur3   _        _        _        _        _
+	ipc
 ];
 
 define register offset=0x300 size=8   contextreg;
@@ -396,25 +299,25 @@ UsrName: ifc_lp is Group=0 & Usr=29 & ifc_lp { export ifc_lp; }
 #UsrName: pc   is Group=0 & Usr=31 & pc { export pc; } # handled separately
 
 # Group 1
-UsrName: dma_cfg     is Group=1 & Usr=0 & dma_cfg { export dma_cfg; }
-UsrName: dma_gcsw    is Group=1 & Usr=1 & dma_gcsw { export dma_gcsw; }
-UsrName: dma_chnsel  is Group=1 & Usr=2 & dma_chnsel { export dma_chnsel; }
-UsrName: dma_act     is Group=1 & Usr=3 & dma_act { export dma_act; }
-UsrName: dma_setup   is Group=1 & Usr=4 & dma_setup { export dma_setup; }
-UsrName: dma_isaddr  is Group=1 & Usr=5 & dma_isaddr { export dma_isaddr; }
-UsrName: dma_esaddr  is Group=1 & Usr=6 & dma_esaddr { export dma_esaddr; }
-UsrName: dma_tcnt    is Group=1 & Usr=7 & dma_tcnt { export dma_tcnt; }
-UsrName: dma_status  is Group=1 & Usr=8 & dma_status { export dma_status; }
-UsrName: dma_2dset   is Group=1 & Usr=9 & dma_2dset { export dma_2dset; }
-UsrName: dma_rcnt    is Group=1 & Usr=23 & dma_rcnt { export dma_rcnt; }
-UsrName: dma_hstatus is Group=1 & Usr=24 & dma_hstatus { export dma_hstatus; }
-UsrName: dma_2dsctl  is Group=1 & Usr=25 & dma_2dsctl { export dma_2dsctl; }
+UsrName: "dma_cfg"     is Group=1 & Usr=0 { tmp:2 = 0x280; export *[csreg]:4 tmp; }
+UsrName: "dma_gcsw"    is Group=1 & Usr=1 { tmp:2 = 0x288; export *[csreg]:4 tmp; }
+UsrName: "dma_chnsel"  is Group=1 & Usr=2 { tmp:2 = 0x290; export *[csreg]:4 tmp; }
+UsrName: "dma_act"     is Group=1 & Usr=3 { tmp:2 = 0x298; export *[csreg]:4 tmp; }
+UsrName: "dma_setup"   is Group=1 & Usr=4 { tmp:2 = 0x2a0; export *[csreg]:4 tmp; }
+UsrName: "dma_isaddr"  is Group=1 & Usr=5 { tmp:2 = 0x2a8; export *[csreg]:4 tmp; }
+UsrName: "dma_esaddr"  is Group=1 & Usr=6 { tmp:2 = 0x2b0; export *[csreg]:4 tmp; }
+UsrName: "dma_tcnt"    is Group=1 & Usr=7 { tmp:2 = 0x2b8; export *[csreg]:4 tmp; }
+UsrName: "dma_status"  is Group=1 & Usr=8 { tmp:2 = 0x2c0; export *[csreg]:4 tmp; }
+UsrName: "dma_2dset"   is Group=1 & Usr=9 { tmp:2 = 0x2c8; export *[csreg]:4 tmp; }
+UsrName: "dma_rcnt"    is Group=1 & Usr=23 { tmp:2 = 0x2b9; export *[csreg]:4 tmp; }
+UsrName: "dma_hstatus" is Group=1 & Usr=24 { tmp:2 = 0x2c1; export *[csreg]:4 tmp; }
+UsrName: "dma_2dsctl"  is Group=1 & Usr=25 { tmp:2 = 0x2c9; export *[csreg]:4 tmp; }
 
 # Group 2
-UsrName: pfmc0       is Group=2 & Usr=0 & pfmc0 { export pfmc0; }
-UsrName: pfmc1       is Group=2 & Usr=1 & pfmc1 { export pfmc1; }
-UsrName: pfmc2       is Group=2 & Usr=2 & pfmc2 { export pfmc2; }
-UsrName: pfm_ctl     is Group=2 & Usr=4 & pfm_ctl { export pfm_ctl; }
+UsrName: "pfmc0"       is Group=2 & Usr=0 { tmp:2 = 0x200; export *[csreg]:4 tmp; }
+UsrName: "pfmc1"       is Group=2 & Usr=1 { tmp:2 = 0x201; export *[csreg]:4 tmp; }
+UsrName: "pfmc2"       is Group=2 & Usr=2 { tmp:2 = 0x202; export *[csreg]:4 tmp; }
+UsrName: "pfm_ctl"     is Group=2 & Usr=4 { tmp:2 = 0x208; export *[csreg]:4 tmp; }
 
 
 :mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { UsrName = Rt; }
@@ -1609,14 +1512,14 @@ define pcodeop fmfdr;
 }
 
 # FPU_MTCP
-define pcodeop ftmsr;
-:ftmsr Rt, Fsa is $(I32) & $(COP) & fop4=0x0 & Rt & Fsa & f2op=0x0 & cop4=0x9 {
-	Fsa = ftmsr(Rt);
+define pcodeop fmtsr;
+:fmtsr Rt, Fsa is $(I32) & $(COP) & fop4=0x0 & Rt & Fsa & f2op=0x0 & cop4=0x9 {
+	Fsa = fmtsr(Rt);
 }
 
-define pcodeop ftmdr;
-:ftmdr Rt, Fda is $(I32) & $(COP) & fop4=0x1 & Rt & Fda & f2op=0x0 & cop4=0x9 {
-	Fda = ftmdr(Rt);
+define pcodeop fmtdr;
+:fmtdr Rt, Fda is $(I32) & $(COP) & fop4=0x1 & Rt & Fda & f2op=0x0 & cop4=0x9 {
+	Fda = fmtdr(Rt);
 }
 
 # FPU_FLS
@@ -1706,5 +1609,17 @@ OffImm12s: (offs) is Imm12s [ offs = Imm12s << 2; ] { export *[const]:4 offs; }
 :fsdi.bi Fdt [Ra], OffImm12s is $(I32) & $(SDC) & Fdt & Ra & cpn=0 & fsbi=1 & OffImm12s {
 	*Ra = Fdt;
 	Ra = Ra + OffImm12s;
+}
+
+:fmfcfg Rt is $(I32) & $(COP) & fop4=0xc & Rt & f2op=0x0 & cop4=0x1 {
+	Rt = fpcfg;
+}
+
+:fmfcsr Rt is $(I32) & $(COP) & fop4=0xc & Rt & f2op=0x1 & cop4=0x1 {
+	Rt = fpcsr;
+}
+
+:fmtcsr Rt is $(I32) & $(COP) & fop4=0xc & Rt & Fsa & f2op=0x1 & cop4=0x9 {
+	fpcsr = Rt;
 }
 
