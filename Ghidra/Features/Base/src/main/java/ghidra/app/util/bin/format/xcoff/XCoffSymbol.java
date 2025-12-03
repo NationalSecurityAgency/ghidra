@@ -72,15 +72,17 @@ public class XCoffSymbol {
 	public boolean isFunction() {
 		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) && 
 				n_scnum == _optionalHeader.getSectionNumberForText() &&
-				!n_name.equals(XCoffSectionHeaderNames._TEXT));
+				!this.getName().trim().equalsIgnoreCase(XCoffSectionHeaderNames._TEXT.trim()));
 	}
 
 	public boolean isVariable() {
+		String trimmedName = this.getName().trim();
+
 		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
 				(n_scnum == _optionalHeader.getSectionNumberForBss() || n_scnum == _optionalHeader.getSectionNumberForData()) &&
 				x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC0 && x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC && x_smclas != XCoffSymbolStorageClassCSECT.XMC_DS &&
-				!n_name.equals(XCoffSectionHeaderNames._BSS) &&
-				!n_name.equals(XCoffSectionHeaderNames._DATA));
+				!trimmedName.equalsIgnoreCase(XCoffSectionHeaderNames._BSS.trim()) &&
+				!trimmedName.equals(XCoffSectionHeaderNames._DATA));
 	}
 
 	@Override
