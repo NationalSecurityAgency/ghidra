@@ -60,7 +60,10 @@ public class GdtExporter extends Exporter {
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) {
 		try {
-			file.delete();
+			if (!file.delete()){
+				log.appendMsg("Could not delete file: " + file.getAbsolutePath());
+				return false;
+			}
 			domainObj.saveToPackedFile(file, monitor);
 		}
 		catch (UnsupportedOperationException e) {
