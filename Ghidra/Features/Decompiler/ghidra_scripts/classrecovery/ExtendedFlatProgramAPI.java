@@ -324,6 +324,12 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			functionAddress = functionAddress.getNewAddress(longValue);
 		}
 
+		// skip anything that is data - this could get passed in if it is an external ptr to a function 
+		Data data = getDataAt(functionAddress);
+		if (data != null) {
+			return null;
+		}
+
 		Function function = getFunctionAt(functionAddress);
 		if (function == null) {
 			// try to create function
@@ -1002,6 +1008,9 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * @return the referenced function or null if no function is referenced
 	 * @throws CancelledException if cancelled
 	 */
+	//TODO: this is same as getReferencedFunction at line 313 except for the thunked function 
+	// argument but is missing the lowBit code stuff - combine both and replace uses to use the
+	// one merged version - this one has loop and the other just works if one ref 
 	public Function getReferencedFunction(Address address, boolean getThunkedFunction)
 			throws CancelledException {
 
@@ -1017,6 +1026,19 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 			Address referencedAddress = referenceFrom.getToAddress();
 			if (referencedAddress == null) {
+				continue;
+			}
+
+			Register lowBitCodeMode = currentProgram.getRegister("LowBitCodeMode");
+			if (lowBitCodeMode != null) {
+				long longValue = referencedAddress.getOffset();
+				longValue = longValue & ~0x1;
+				referencedAddress = referencedAddress.getNewAddress(longValue);
+			}
+
+			// skip anything that is data - this could get passed in if it is an external ptr to a function 
+			Data data = getDataAt(referencedAddress);
+			if (data != null) {
 				continue;
 			}
 
@@ -1197,7 +1219,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to generate unique shorted names for classes with templates
+	 * Method to generate unique shortened names for classes with templates
 	 * @param recoveredClasses the list of classes in the program
 	 * @throws CancelledException if cancelled
 	 */

@@ -116,7 +116,8 @@ public class DecompilerScriptUtils {
 
 		if (decompRes == null || decompRes.getHighFunction() == null ||
 			decompRes.getHighFunction().getFunctionPrototype() == null) {
-			Msg.debug(this, "Couldn't commit params - null high function");
+			Msg.debug(this, "Couldn't commit params - null high function " +
+				function.getEntryPoint().toString());
 			return;
 		}
 
@@ -125,11 +126,13 @@ public class DecompilerScriptUtils {
 				ReturnCommitOption.COMMIT, SourceType.ANALYSIS);
 		}
 		catch (DuplicateNameException e) {
-			Msg.debug(this, "Couldn't commit params " + e);
+			Msg.debug(this,
+				"Couldn't commit params for " + function.getEntryPoint().toString() + " " + e);
 			return;
 		}
 		catch (InvalidInputException e) {
-			Msg.debug(this, "Couldn't commit params " + e);
+			Msg.debug(this,
+				"Couldn't commit params for " + function.getEntryPoint().toString() + " " + e);
 			return;
 		}
 	}

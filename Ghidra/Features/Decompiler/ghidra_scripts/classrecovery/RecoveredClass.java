@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,6 @@ public class RecoveredClass {
 	private static final int NONE = -1;
 
 	TaskMonitor monitor = TaskMonitor.DUMMY;
-
 
 	RecoveredClass(String name, CategoryPath classPath, Namespace classNamespace,
 			DataTypeManager dataTypeManager) {
@@ -519,19 +518,19 @@ public class RecoveredClass {
 			// if the new component is a non-empty structure, check to see if the current
 			// structure has undefined or equivalent components and replace with new struct if so
 			if (newComponentDataType instanceof Structure) {
-			
+
 				// if new component is any empty placeholder structure AND if the existing component
 				// is undefined then replace with undefined1 dt
 				if (newComponentDataType.isNotYetDefined()) {
 					if (Undefined.isUndefined(currentComponentDataType)) {
 						computedClassStructure.replaceAtOffset(offset, new Undefined1DataType(), 1,
-						fieldName, comment);
+							fieldName, comment);
 					}
 					continue;
 				}
 				if (EditStructureUtils.hasReplaceableComponentsAtOffset(computedClassStructure,
-					offset, (Structure)newComponentDataType, monitor)) {
-					
+					offset, (Structure) newComponentDataType, monitor)) {
+
 					boolean successfulClear =
 						EditStructureUtils.clearLengthAtOffset(computedClassStructure, offset,
 							length, monitor);
@@ -675,4 +674,3 @@ public class RecoveredClass {
 		return shortenedTemplateName;
 	}
 }
-
