@@ -564,6 +564,8 @@ __3.0.0:__
   via the `support/launch.properties` file), it will restore `sys.modules` to its prior state after
   a PyGhidra script is run so the next time the script is run, it freshly loads all of its imported
   modules again. This is experimental and should only be enabled if necessary.
+* Changed JPype dependency to be fixed at version 1.5.2 to avoid 
+  [a possible Windows crash on 1.6.0](https://github.com/jpype-project/jpype/issues/1316)
 
 __2.2.1:__
 * PyGhidra now launches with the current working directory removed from `sys.path` to prevent
