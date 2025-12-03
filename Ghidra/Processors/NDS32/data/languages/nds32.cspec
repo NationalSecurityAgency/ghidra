@@ -24,6 +24,7 @@
     </data_organization>
     <global>
         <range space="ram"/>
+        <range space="csreg"/>
     </global>
     <stackpointer register="sp" space="ram"/>
     <returnaddress>

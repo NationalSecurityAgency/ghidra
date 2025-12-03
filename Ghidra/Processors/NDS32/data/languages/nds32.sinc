@@ -320,10 +320,10 @@ UsrName: "pfmc2"       is Group=2 & Usr=2 { tmp:2 = 0x202; export *[csreg]:4 tmp
 UsrName: "pfm_ctl"     is Group=2 & Usr=4 { tmp:2 = 0x208; export *[csreg]:4 tmp; }
 
 
-:mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { UsrName = Rt; }
-:mfusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100000  & pc { pc = Rt; goto[pc]; } # Not sure this works correctly
-:mtusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100001 { Rt = UsrName; }
-:mtusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100001 & pc { Rt = inst_next; }
+:mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { Rt = UsrName; }
+:mfusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100000  & pc { Rt = inst_next; } 
+:mtusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100001 { UsrName = Rt; }
+:mtusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100001 & pc { pc = Rt; goto[pc]; } # Not sure this works correctly
 
 
 ### Divide Instructions ###
