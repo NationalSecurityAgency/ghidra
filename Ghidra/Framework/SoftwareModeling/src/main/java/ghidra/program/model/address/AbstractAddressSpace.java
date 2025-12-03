@@ -637,7 +637,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	@Override
 	public boolean isMemorySpace() {
-		return type == TYPE_RAM || type == TYPE_CODE || type == TYPE_OTHER;
+		return type == TYPE_RAM || type == TYPE_CODE || type == TYPE_OTHER || type == TYPE_DELETED;
 	}
 
 	@Override

@@ -339,7 +339,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 		// verify we cannot unapply before we have applied
 		//
 		List<VTMarkupItem> markupItems = new ArrayList<>();
-		Address destinationAddress = addr();
+		Address destinationAddress = addr(session.getDestinationProgram());
 		markupItem.setDefaultDestinationAddress(destinationAddress, TEST_ADDRESS_SOURCE);
 		markupItems.add(markupItem);
 
