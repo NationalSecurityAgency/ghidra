@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.datamgr.actions;
 
 import java.awt.datatransfer.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +23,7 @@ import java.util.List;
 import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
-import docking.KeyBindingPrecedence;
+import docking.*;
 import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -44,7 +42,7 @@ public class CutAction extends DockingAction {
 		clipboard = plugin.getClipboard();
 		setPopupMenuData(new MenuData(new String[] { "Cut" }, "Edit"));
 		setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_X,
-			InputEvent.CTRL_DOWN_MASK), KeyBindingPrecedence.ActionMapLevel));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK), KeyBindingPrecedence.ActionMapLevel));
 		setEnabled(true);
 
 		clipboardOwner = new ClipboardOwner() {

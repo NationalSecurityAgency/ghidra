@@ -15,16 +15,16 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
-import java.awt.event.InputEvent;
-
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import generic.theme.GIcon;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.datatree.*;
+import ghidra.framework.main.datatree.DataTreeClipboardUtils;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
 import ghidra.framework.model.Project;
 import ghidra.util.HelpLocation;
 
@@ -34,7 +34,7 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 	public ProjectDataCopyAction(String owner, String group) {
 		super("Copy", owner);
 		setPopupMenuData(new MenuData(new String[] { "Copy" }, icon, group));
-		setKeyBindingData(new KeyBindingData('C', InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(new KeyBindingData('C', DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHelpLocation(new HelpLocation("FrontEndPlugin", "Copy"));
 	}
 

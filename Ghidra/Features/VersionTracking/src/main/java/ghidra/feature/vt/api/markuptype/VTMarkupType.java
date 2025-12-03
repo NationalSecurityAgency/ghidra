@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
  */
 package ghidra.feature.vt.api.markuptype;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -24,8 +22,6 @@ import ghidra.feature.vt.api.impl.MarkupItemImpl;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
@@ -35,33 +31,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class VTMarkupType {
-
-	static final ToolOptions VT_UNAPPLY_MARKUP_OPTIONS =
-		new ToolOptions(VTController.VERSION_TRACKING_OPTIONS_NAME);
-	static {
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(CALLING_CONVENTION, CallingConventionChoices.NAME_MATCH);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(INLINE, ReplaceChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(NO_RETURN, ReplaceChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(VAR_ARGS, ReplaceChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(CALL_FIXUP, ReplaceChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(PARAMETER_COMMENTS, CommentChoices.OVERWRITE_EXISTING);
-
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(LABELS, LabelChoices.REPLACE_ALL);
-
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(PLATE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(PRE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(END_OF_LINE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(REPEATABLE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(POST_COMMENT, CommentChoices.OVERWRITE_EXISTING);
-
-		VT_UNAPPLY_MARKUP_OPTIONS.setEnum(DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_ALL_DATA);
-	}
 
 	private final String name;
 

@@ -224,6 +224,12 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 		return result;
 	}
 
+	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		Ext4File ext4File = fsIndex.getMetadata(f);
+		return ext4File != null ? inodeToFileType(ext4File.getInode()) : FileType.UNKNOWN;
+	}
+
 	FileType inodeToFileType(Ext4Inode inode) {
 		if (inode.isDir()) {
 			return FileType.DIRECTORY;

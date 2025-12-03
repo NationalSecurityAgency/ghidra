@@ -33,6 +33,7 @@ import docking.action.builder.ToggleActionBuilder;
 import docking.util.GGlassPaneMessage;
 import docking.widgets.OptionDialog;
 import docking.widgets.OptionDialogBuilder;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
@@ -57,7 +58,6 @@ import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import resources.Icons;
 

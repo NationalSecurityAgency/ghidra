@@ -68,18 +68,6 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		positionListingTop(0x40D3B8);
 		DropDownSelectionTextField<?> textField = showTypeChooserDialog();
 
-		triggerText(textField, "undefined");
-
-		DialogComponentProvider dialog = getDialog();
-		JComponent component = dialog.getComponent();
-		Window dataTypeDialog = windowForComponent(component);
-		Window[] popUpWindows = dataTypeDialog.getOwnedWindows();
-
-		List<Component> dataTypeWindows = new ArrayList<>(Arrays.asList(popUpWindows));
-		dataTypeWindows.add(dataTypeDialog);
-
-		captureComponents(dataTypeWindows);
-		closeAllWindows();
 	}
 
 	private DropDownSelectionTextField<?> showTypeChooserDialog() throws Exception {

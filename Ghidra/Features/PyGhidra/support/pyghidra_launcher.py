@@ -21,7 +21,8 @@ import subprocess
 import sysconfig
 from pathlib import Path
 from itertools import chain
-from typing import List, Dict, Tuple
+from importlib import metadata
+from typing import List, Dict, Tuple, Optional  
 
 def get_application_properties(install_dir: Path) -> Dict[str, str]:
     app_properties_path: Path = install_dir / 'Ghidra' / 'application.properties'
@@ -57,7 +58,9 @@ def get_user_settings_dir(install_dir: Path, dev: bool) -> Path:
     app_release_name: str = app_props['application.release.name']
     versioned_name: str = f'{app_name}_{app_version}_{app_release_name}'
     if dev:
-        versioned_name += f'_location_{install_dir.parent.name}'
+        ghidra_repos_config = install_dir / 'ghidra.repos.config'
+        dir_name = install_dir.parent.name if ghidra_repos_config.is_file() else install_dir.name
+        versioned_name += f'_location_{dir_name}'
 
     # Check for application.settingsdir in launch.properties
     for launch_prop in get_launch_properties(install_dir, dev):
@@ -137,16 +140,14 @@ def version_tuple(v: str) -> Tuple[str, ...]:
         filled.append(point.zfill(8))
     return tuple(filled)
 
-def get_package_version(python_cmd: List[str], package: str) -> str:
-    version = None
-    result = subprocess.run(python_cmd + ['-m', 'pip', 'show', package], capture_output=True, text=True)
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        print(line)
-        key, value = line.split(':', 1)
-        if key == 'Version':
-            version = value.strip()
-    return version
+def get_package_version(package: str) -> Optional[str]:
+    """
+    Checks for an installed package version.
+    """
+    try:
+        return metadata.version(package)
+    except metadata.PackageNotFoundError:
+        return None
 
 def get_saved_python_cmd(install_dir: Path, dev: bool) -> List[str]:
     user_settings_dir: Path = get_user_settings_dir(install_dir, dev)
@@ -223,7 +224,7 @@ def main() -> None:
     dist_dir: Path = pyghidra_dir / 'pypkg' / 'dist'
     venv_dir = get_ghidra_venv(install_dir, args.dev)
     python_cmd: List[str] = find_supported_python_exe(install_dir, args.dev)
-    
+      
     if python_cmd is not None:
         print(f'Using Python command: "{" ".join(python_cmd)}"')
     else:
@@ -269,7 +270,7 @@ def main() -> None:
 
         # If PyGhidra is not installed in the execution environment, offer to install it
         # If it's already installed, offer to upgrade (if applicable)
-        current_pyghidra_version = get_package_version(python_cmd, 'pyghidra')
+        current_pyghidra_version = get_package_version('pyghidra')
         if current_pyghidra_version is None:
             python_cmd = install(install_dir, python_cmd, pip_args, offer_venv)
             if not python_cmd:
@@ -289,6 +290,6 @@ def main() -> None:
     else:
         creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
         subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
- 
+
 if __name__ == "__main__":
     main()

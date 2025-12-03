@@ -28,6 +28,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellEditor;
@@ -51,6 +52,7 @@ import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
+import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
@@ -61,8 +63,9 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Program;
+import ghidra.test.*;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -73,7 +76,6 @@ import utilities.util.FileUtilities;
 
 public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String BUILTIN_NAME = "BuiltInTypes";
-	private static final String PROGRAM_FILENAME = "sample";
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -104,7 +106,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		jTree = (JTree) invokeInstanceMethod("getJTree", tree);
 		waitForTree();
 		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
+		programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
@@ -125,7 +127,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		builder = new ProgramBuilder("sample", ProgramBuilder._TOY, this);
+		builder = new ProgramBuilder("Program1", ProgramBuilder._TOY, this);
 
 		builder.createMemory(".text", "0x1001000", 0x100);
 		CategoryPath miscPath = new CategoryPath("/MISC");
@@ -668,7 +670,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		toggleDetailedSearch(true);
 		assertSingleFilterMatch(
-			new String[] { "Data Types", "sample", "Category1", "Category2", "MyStruct" });
+			new String[] { "Data Types", "Program1", "Category1", "Category2", "MyStruct" });
 	}
 
 	@Test
@@ -682,6 +684,82 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		//verify all nodes are collapsed
 		checkNodesCollapsed(rootNode);
+	}
+
+	@Test
+	public void testTreeRemembersSelectionWhenSwitchingPrograms() throws Exception {
+
+		env.open(new ClassicSampleX86ProgramBuilder().getProgram());
+
+		String p1 = "Program1";
+		String p2 = "sample";
+
+		// Open and select a path in the current program, 
+		selectPath(p2, "CoolUnion");
+
+		// Now select a path in the first program
+		switchTo(p1);
+		selectPath(p1, "MISC", "ArrayStruct");
+
+		// Switch back and forth and the selected paths should be restored
+		switchTo(p2);
+		assertSelectedPath(p2, "CoolUnion");
+
+		switchTo(p1);
+		assertSelectedPath(p1, "MISC", "ArrayStruct");
+
+		switchTo(p2);
+		assertSelectedPath(p2, "CoolUnion");
+	}
+
+	private void assertSelectedPath(String... expectedPath) {
+
+		String[] fullExpectedPath = new String[expectedPath.length + 1];
+		fullExpectedPath[0] = "Data Types";
+		System.arraycopy(expectedPath, 0, fullExpectedPath, 1, expectedPath.length);
+
+		waitForTree();
+		TreePath treePath = runSwing(() -> tree.getSelectionPath());
+		assertNotNull("No tree path selected", treePath);
+		Object[] treePathElements = treePath.getPath();
+		List<String> actualNamesList =
+			Arrays.stream(treePathElements).map(o -> o.toString()).collect(Collectors.toList());
+		String[] actualPath = actualNamesList.toArray(String[]::new);
+		assertArraysEqualOrdered("Tree path not seleced", fullExpectedPath, actualPath);
+	}
+
+	private void switchTo(String programName) {
+
+		ProgramManagerPlugin pm = getPlugin(tool, ProgramManagerPlugin.class);
+		Program[] programs = pm.getAllOpenPrograms();
+		for (Program p : programs) {
+			String name = p.getName();
+			if (name.equals(programName)) {
+				pm.setCurrentProgram(p);
+				waitForBusyTool(tool);
+				return;
+			}
+		}
+		fail("Could not switch to program '%s'".formatted(programName));
+	}
+
+	private void selectPath(String... names) {
+
+		GTreeNode root = tree.getModelRoot();
+		GTreeNode node = root;
+		for (String name : names) {
+			GTreeNode child = node.getChild(name);
+			String message = "Could not find '%s' in '%s'".formatted(name, Arrays.toString(names));
+			assertNotNull(message, child);
+
+			tree.expandPath(node);
+			waitForTree();
+
+			node = child;
+		}
+
+		tree.setSelectedNode(node);
+		waitForTree();
 	}
 
 	@Test
@@ -771,6 +849,26 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
+	public void testAction_FindEnumByValue_Range() {
+
+		createEnumWithValues_2_4_8();
+		createEnumWithValues_100_200();
+		createEnumWithValues_1_300_1000();
+
+		DockingActionIf action = getAction(plugin, FindEnumsByValueAction.NAME);
+		performAction(action, false);
+
+		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
+		setText(dialog, "0x8:0x10, 300");
+
+		pressButtonByText(dialog, "OK");
+
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindEnumsByValueAction.NAME);
+		assertMatchingEnums(resultsProvider, "Enum_2_4_8", "Enum_1_300_1000");
+	}
+
+	@Test
 	public void testAction_FindStructureByOffset() {
 
 		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
@@ -824,7 +922,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		createStructureWithOffset_0x4(); // 0x4
 		createStructureWithOffset_0x8(); // 0x4, 0x8
 		createStructureWithOffset_0x10(); // 0x4, 0x8, 0x10
-		createStructureWithOffset_0x20(); // 0x8, 0x16, 0x20
+		createStructureWithOffset_0x20(); // 0x8, 0x10, 0x18, 0x32
 
 		DockingActionIf action = getAction(plugin, FindStructuresByOffsetAction.NAME);
 		performAction(action, false);
@@ -845,8 +943,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		createStructureWithOffset_0x4(); // 6
 		createStructureWithOffset_0x8(); // 10
-		createStructureWithOffset_0x10(); // 12
-		createStructureWithOffset_0x20(); // 22
+		createStructureWithOffset_0x10(); // 18
+		createStructureWithOffset_0x20(); // 40
 
 		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
 		performAction(action, false);
@@ -885,14 +983,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		createStructureWithOffset_0x4(); // 6
 		createStructureWithOffset_0x8(); // 10
-		createStructureWithOffset_0x10(); // 12
-		createStructureWithOffset_0x20(); // 22
+		createStructureWithOffset_0x10(); // 18
+		createStructureWithOffset_0x20(); // 40
 
 		DockingActionIf action = getAction(plugin, FindStructuresBySizeAction.NAME);
 		performAction(action, false);
 
 		NumberRangeInputDialog dialog = waitForDialogComponent(NumberRangeInputDialog.class);
-		setText(dialog, "12:22");
+		setText(dialog, "12:42");
 
 		pressButtonByText(dialog, "OK");
 
@@ -1053,8 +1151,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		Collection<DataTypeNode> values = nodesByName.values();
 		for (DataTypeNode node : values) {
 			DataType dt = node.getDataType();
-			assertTrue("Found an array in '%s'".formatted(dtm.getName()),
-				!(dt instanceof Array));
+			assertTrue("Found an array in '%s'".formatted(dtm.getName()), !(dt instanceof Array));
 		}
 	}
 
@@ -1183,6 +1280,32 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree(tree);
 	}
 
+	private void createEnumWithValues_2_4_8() {
+
+		EnumDataType enuum = new EnumDataType("Enum_2_4_8", 3);
+		enuum.add("Two", 2);
+		enuum.add("Four", 4);
+		enuum.add("Eight", 8);
+		builder.addDataType(enuum);
+	}
+
+	private void createEnumWithValues_100_200() {
+
+		EnumDataType enuum = new EnumDataType("Enum_100_200", 2);
+		enuum.add("One Hundred", 100);
+		enuum.add("Two Hundred", 200);
+		builder.addDataType(enuum);
+	}
+
+	private void createEnumWithValues_1_300_1000() {
+
+		EnumDataType enuum = new EnumDataType("Enum_1_300_1000", 3);
+		enuum.add("One", 1);
+		enuum.add("Three Hundred", 300);
+		enuum.add("One Thousand", 1000);
+		builder.addDataType(enuum);
+	}
+
 	private void createStructureWithOffset_0x4() {
 
 		StructureDataType stuct = new StructureDataType("Structure_0x4", 0);
@@ -1203,10 +1326,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private void createStructureWithOffset_0x10() {
 
 		StructureDataType stuct = new StructureDataType("Structure_0x10", 0);
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
 		stuct.add(new DWordDataType());
-		stuct.add(new DWordDataType());
-		stuct.add(new WordDataType());
-		stuct.add(new WordDataType());
 		builder.addDataType(stuct);
 	}
 
@@ -1215,8 +1337,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		StructureDataType stuct = new StructureDataType("Structure_0x20", 0);
 		stuct.add(new QWordDataType());
 		stuct.add(new QWordDataType());
-		stuct.add(new DWordDataType());
-		stuct.add(new WordDataType());
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
+		stuct.add(new QWordDataType());
 		builder.addDataType(stuct);
 	}
 
@@ -1323,7 +1446,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		GTreeNode node = rootNode;
 		for (int i = 0; i < path.length; i++) {
 			String nodeName = path[i];
-			assertEquals(node.getName(), nodeName);
+			assertEquals(nodeName, node.getName());
 
 			final GTreeNode finalNode = node;
 			final GTreeNode[] childBox = new GTreeNode[1];
@@ -1343,6 +1466,21 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
+	private void assertMatchingEnums(DataTypesProvider resultsProvider, String... names) {
+
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		waitForTree(gTree);
+		Map<String, Enum> enums = getEnums(resultsProvider);
+		assertEquals("Incorrect number of matches.\n\tExpected: " + Arrays.toString(names) +
+			"\n\tFound: " + enums.keySet(), names.length, enums.size());
+		assertEquals(names.length, enums.size());
+		for (String name : names) {
+			if (!enums.containsKey(name)) {
+				fail("Enum not found in results: '" + name + "'.\nFound: " + enums.keySet());
+			}
+		}
+	}
+
 	private void assertMatchingStructures(DataTypesProvider resultsProvider, String... names) {
 
 		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
@@ -1356,6 +1494,26 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 					structures.keySet());
 			}
 		}
+	}
+
+	private Map<String, Enum> getEnums(DataTypesProvider resultsProvider) {
+
+		Map<String, Enum> map = new HashMap<>();
+		DataTypeArchiveGTree gTree = resultsProvider.getGTree();
+		GTreeNode rootNode = gTree.getViewRoot();
+		Iterator<GTreeNode> it = rootNode.iterator(true);
+		for (GTreeNode node : CollectionUtils.asIterable(it)) {
+			if (!(node instanceof DataTypeNode)) {
+				continue;
+			}
+			DataTypeNode dtNode = (DataTypeNode) node;
+			DataType dt = dtNode.getDataType();
+			if (dt instanceof Enum) {
+				map.put(dt.getName(), (Enum) dt);
+			}
+		}
+
+		return map;
 	}
 
 	private Map<String, Structure> getStructures(DataTypesProvider resultsProvider) {

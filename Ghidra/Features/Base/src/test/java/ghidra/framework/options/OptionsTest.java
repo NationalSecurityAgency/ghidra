@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
@@ -34,6 +33,7 @@ import javax.swing.KeyStroke;
 import org.jdom.Element;
 import org.junit.*;
 
+import docking.DockingUtils;
 import generic.test.AbstractGuiTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.*;
@@ -182,7 +182,7 @@ public class OptionsTest extends AbstractGuiTest {
 
 	@Test
 	public void testSaveActionTrigger_MouseBinding() {
-		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		MouseBinding mb = new MouseBinding(1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		ActionTrigger trigger = new ActionTrigger(mb);
 		options.setActionTrigger("Foo", trigger);
 		saveAndRestoreOptions();
@@ -192,7 +192,7 @@ public class OptionsTest extends AbstractGuiTest {
 	@Test
 	public void testSaveActionTrigger_KeyStrokeAndMouseBinding() {
 		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
-		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		MouseBinding mb = new MouseBinding(1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		ActionTrigger trigger = new ActionTrigger(ks, mb);
 		options.setActionTrigger("Foo", trigger);
 		saveAndRestoreOptions();

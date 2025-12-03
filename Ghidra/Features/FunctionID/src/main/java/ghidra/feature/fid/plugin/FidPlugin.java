@@ -83,9 +83,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	}
 
 	@Override
-	protected void cleanup() {
+	protected void dispose() {
 		fidFileManager.removeChangeListener(this);
-		super.cleanup();
+		super.dispose();
 	}
 
 	/**
@@ -94,7 +94,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 */
 	private void createStandardActions() {
 		new ActionBuilder("Choose Active FidDbs", getName())
-				.enabledWhen(ac -> fidFileManager.hasFidFiles())
+				.enabledWhen(ac -> enabledForAnyFidFiles())
 				.onAction(ac -> chooseActiveFidDbs())
 				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Choose active FidDbs...")
 				.menuGroup(MENU_GROUP_1, "1")
@@ -121,7 +121,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Detach attached FidDb", getName())
-				.enabledWhen(ac -> fidFileManager.hasUserFidFiles())
+				.enabledWhen(ac -> enabledForUserFidFiles())
 				.onAction(ac -> removeFidFile())
 				.menuPath(ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Detach attached FidDb...")
 				.menuGroup(MENU_GROUP_1, "4")
@@ -130,8 +130,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Populate FidDb from programs", getName())
-				.enabledWhen(ac -> fidFileManager.hasUserFidFiles())
+				.enabledWhen(ac -> enabledForUserFidFiles())
 				.onAction(ac -> {
+					fidFileManager.load();
 					PopulateFidDialog populateFidDialog = new PopulateFidDialog(tool, service);
 					tool.showDialog(populateFidDialog);
 				})
@@ -143,11 +144,30 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				.buildAndInstall(tool);
 	}
 
+	private boolean enabledForAnyFidFiles() {
+		if (!fidFileManager.hasLoadedFidFiles()) {
+			// We haven't loaded Fid files yet.  Since we don't know if we can enable, return true
+			// so users can at least try to perform the action.
+			return true;
+		}
+		return fidFileManager.hasFidFiles();
+	}
+
+	private boolean enabledForUserFidFiles() {
+		if (!fidFileManager.hasLoadedFidFiles()) {
+			// We haven't loaded Fid files yet.  Since we don't know if we can enable, return true
+			// so users can at least try to perform the action.
+			return true;
+		}
+		return fidFileManager.hasUserFidFiles();
+	}
+
 	/**
 	 * Method to select which known FID databases are currently active
 	 * during search.
 	 */
 	private synchronized void chooseActiveFidDbs() {
+		fidFileManager.load();
 		ActiveFidConfigureDialog dialog =
 			new ActiveFidConfigureDialog(fidFileManager.getFidFiles());
 		tool.showDialog(dialog);
@@ -159,6 +179,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * extension (.fidb).  If they don't, we will add it for them.
 	 */
 	private void createFidDb() {
+		fidFileManager.load();
 		File dbFile = askFile("Create new FidDb file", "Create");
 		if (dbFile == null) {
 			return;
@@ -186,6 +207,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * Method to attach an already-created (but heretofore unknown) database.
 	 */
 	private void attachFidDb() {
+		fidFileManager.load();
 		File dbFile = askFile("Attach existing FidDb file", "Attach");
 		if (dbFile != null) {
 			fidFileManager.addUserFidFile(dbFile);
@@ -196,6 +218,8 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * Method to "forget" about (close and stop trying to re-open next session) a FID database.
 	 */
 	private void removeFidFile() {
+		fidFileManager.load();
+
 		FidFile fidFile = askChoice("Choose FidDb to detach", "Please choose the FidDb to detach",
 			fidFileManager.getUserAddedFiles(), null);
 		if (fidFile != null) {

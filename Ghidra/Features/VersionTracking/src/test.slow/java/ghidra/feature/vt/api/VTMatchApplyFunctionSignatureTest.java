@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -124,6 +125,38 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		return struct;
 	}
 
+	//Create Gadget structure - slightly different than usual in last field to simplify test
+	private Structure createGadgetStruct() {
+
+		Structure gadgetStruct = new StructureDataType("Gadget", 0);
+		PointerDataType charPtr = new PointerDataType(new CharDataType());
+		gadgetStruct.add(charPtr, "name", "");
+		gadgetStruct.add(new IntegerDataType(), "type", "");
+		gadgetStruct.add(new BooleanDataType(), "deployed", "");
+		gadgetStruct.add(new DWordDataType(), "workingOn", "");
+
+		return gadgetStruct;
+
+	}
+
+	private Structure createDifferentGadgetStruct() {
+
+		Structure gadgetStruct = new StructureDataType("Gadget", 0);
+		PointerDataType charPtr = new PointerDataType(new CharDataType());
+		gadgetStruct.add(charPtr, "name", "");
+		gadgetStruct.add(new IntegerDataType(), "type", "");
+		gadgetStruct.add(new BooleanDataType(), "deployed", "");
+		gadgetStruct.add(new PointerDataType(), "workingOn", "");
+
+		return gadgetStruct;
+
+	}
+
+	private Structure createEmptyGadgetStruct() {
+		Structure gadgetStruct = new StructureDataType("Gadget", 0);
+		return gadgetStruct;
+	}
+
 	private Program createSourceProgram() throws Exception {
 
 		ProgramBuilder builder = new ProgramBuilder("Wallace", ProgramBuilder._X86, this);
@@ -133,6 +166,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			builder.createClassNamespace("Gadget", null, SourceType.IMPORTED);
 
 			StructureDataType struct = getPersonStruct(p);
+			builder.addDataType(struct);
 			Pointer ptr1 = PointerDataType.getPointer(struct, p.getDataTypeManager());
 			Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
 
@@ -291,6 +325,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 	@Test
 	public void testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis() throws Exception {
+
 		useMatch("0x00401040", "0x00401040");
 
 		// Check initial values
@@ -314,6 +349,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(testMatch);
 
+		checkClassDataType(false, false);
+
 		// Test Apply
 		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
 		runTask(session, task);
@@ -324,6 +361,10 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
+		// since no option to apply function name there will be no class namespace applied to
+		// the destination so no Gadget class data type should exist
+		checkClassDataType(false, false);
+
 		// Test unapply
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
 		runTask(session, unapplyTask);
@@ -333,6 +374,464 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+	}
+
+	// use case: test replace undefined for return and params when they are undefined ptrs
+	@Test
+	public void testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis_ReplaceUndefinedPointers()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		// update the source function to have a Gadget * type
+
+		Function srcFunction = sourceProgram.getFunctionManager()
+				.getFunctionAt(addr("0x00401040", sourceProgram));
+
+		DataType existingEmptyGadgetStruct =
+			sourceProgram.getDataTypeManager().getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		Pointer ptr1 =
+			PointerDataType.getPointer(existingEmptyGadgetStruct,
+				sourceProgram.getDataTypeManager());
+
+		assertNotNull(ptr1);
+
+		int id = sourceProgram.startTransaction("Test");
+
+		srcFunction.setReturnType(ptr1, SourceType.USER_DEFINED);
+
+		sourceProgram.endTransaction(id, true);
+
+		// update the destination function to have undefined4 * return type and to have param_1 
+		// also be a undefined4 *
+
+		id = destinationProgram.startTransaction("Test");
+
+		Function destFunction = destinationProgram.getFunctionManager()
+				.getFunctionAt(addr("0x00401040", destinationProgram));
+		ptr1 =
+			PointerDataType.getPointer(Undefined4DataType.dataType,
+				destinationProgram.getDataTypeManager());
+		destFunction.setReturnType(ptr1, SourceType.DEFAULT);
+
+		Parameter[] parameters = destFunction.getParameters();
+		parameters[1].setDataType(ptr1, parameters[1].getSource());
+
+		destFunction.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
+			SourceType.USER_DEFINED, parameters);
+
+		destinationProgram.endTransaction(id, true);
+
+		// Check initial values
+		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+			"undefined4 * FUN_00401040(void * this, undefined4 * param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_ALWAYS);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES,
+			ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE,
+			ParameterDataTypeChoices.REPLACE_UNDEFINED_DATA_TYPES_ONLY);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		checkClassDataType(false, false);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply.
+		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+			"Gadget * use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since no option to apply function name there will be no class namespace applied to
+		// the destination so no Gadget class data type should exist
+		checkClassDataType(true, false);
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("Gadget * use(Gadget * this, Person * person)",
+			"undefined4 * FUN_00401040(void * this, undefined4 * param_1)");
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+	}
+
+	// Use case: Source has empty Gadget struct, dest has no Gadget struct
+	@Test
+	public void testApplyMatch_ReplaceSignature_AndName_SameNumParams_ThisToThis_NoDestGadgetStruct()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+
+		// function name choices - note the only difference between this and the 
+		// testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis test
+		// is that the option to apply the function name was added which then put the
+		// destination function in the Gadget namespace which then causes the this param to be 
+		// a Gadget *
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		checkClassDataType(false, false);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is an empty structure in the source so should be empty in dest
+		checkClassDataType(true, false);
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+	}
+
+	// Use case: Source has populated Gadget struct, dest has empty Gadget struct
+	@Test
+	public void testApplyMatch_ReplaceSignature_AndName_SameNumParams_ThisToThis_EmptyDestGadgetStruct()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createGadgetStruct();
+
+		int id = sourceDtm.startTransaction("Test");
+		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		sourceDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
+
+		// add empty gadget to the destination program
+		Structure emptyGadgetStruct = createEmptyGadgetStruct();
+
+		id = destDtm.startTransaction("Test");
+		destDtm.addDataType(emptyGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		destDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isNotYetDefined());
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+
+		// function name choices - note the only difference between this and the 
+		// testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis test
+		// is that the option to apply the function name was added which then put the
+		// destination function in the Gadget namespace which then causes the this param to be 
+		// a Gadget *
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace	
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is a populated structure in the source replacing an empty
+		// one in the dest so the resulting one in dest should be same populated on from source
+		destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(gadgetStruct));
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+	}
+
+	// Use case: Source has populated Gadget struct, dest has same Gadget struct
+	// make sure no .conflict created
+	@Test
+	public void testApplyMatch_ReplaceSignature_AndName_SameNumParams_ThisToThis_SameDestGadgetStruct()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createGadgetStruct();
+
+		int id = sourceDtm.startTransaction("Test");
+		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		sourceDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
+
+		// add same Gadget to the destination program
+
+		id = destDtm.startTransaction("Test");
+		destDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		destDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(gadgetStruct));
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+
+		// function name choices - note the only difference between this and the 
+		// testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis test
+		// is that the option to apply the function name was added which then put the
+		// destination function in the Gadget namespace which then causes the this param to be 
+		// a Gadget *
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is a populated structure in the source and the same one in
+		// one in the dest so the resulting one in dest should be same populated on from source
+		destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(gadgetStruct));
+
+		DataType gadgetConflict = destDtm.getDataType(CategoryPath.ROOT, "Gadget.conflict");
+		assertNull(gadgetConflict);
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+	}
+
+	// Use case: Source has populated Gadget struct, dest has different non-empty Gadget struct
+	// make sure .conflict IS created
+	@Test
+	public void testApplyMatch_ReplaceSignature_AndName_SameNumParams_ThisToThis_DiffDestGadgetStruct()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		ProgramBasedDataTypeManager sourceDtm = sourceProgram.getDataTypeManager();
+		ProgramBasedDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+
+		DataType existingEmptyGadgetStruct = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertNotNull(existingEmptyGadgetStruct);
+
+		// replace the source empty gadget with a populated one
+		Structure gadgetStruct = createGadgetStruct();
+
+		int id = sourceDtm.startTransaction("Test");
+		sourceDtm.addDataType(gadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		sourceDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType updatedSourceGadget = sourceDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(updatedSourceGadget.isEquivalent(gadgetStruct));
+
+		// add different Gadget to the destination program
+		Structure differentGadgetStruct = createDifferentGadgetStruct();
+		id = destDtm.startTransaction("Test");
+		destDtm.addDataType(differentGadgetStruct, DataTypeConflictHandler.REPLACE_HANDLER);
+		destDtm.endTransaction(id, true);
+
+		// verify it took
+		DataType destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(differentGadgetStruct));
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+
+		// function name choices - note the only difference between this and the 
+		// testApplyMatch_ReplaceSignature_SameNumParams_ThisToThis test
+		// is that the option to apply the function name was added which then put the
+		// destination function in the Gadget namespace which then causes the this param to be 
+		// a Gadget *
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE,
+			FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setBoolean(VTOptionDefines.USE_NAMESPACE_FUNCTIONS, true);	//replace namespace
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined use(Gadget * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		// In this test Gadget is a populated structure in the source replacing a different non-empty
+		// one in the dest so the resulting one in dest should be the source one with the previous
+		// source one named .conflict
+		destGadget = destDtm.getDataType(CategoryPath.ROOT, "Gadget");
+		assertTrue(destGadget.isEquivalent(differentGadgetStruct));
+
+		DataType gadgetConflict = destDtm.getDataType(CategoryPath.ROOT, "Gadget.conflict");
+		assertTrue(gadgetConflict.isEquivalent(gadgetStruct));
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
 	}
 
 	@Test
@@ -379,6 +878,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(testMatch);
 
+		checkClassDataType(false, false);
+
 		// Test Apply
 		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
 		runTask(session, task);
@@ -389,7 +890,88 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
+		// since there is custom storage in this case the this param will be copied over even 
+		// though the function isn't in the class namespace so the class data type should exist
+		checkClassDataType(true, true);
+
 		assertTrue(destinationFunction.hasCustomVariableStorage());
+
+		// Test unapply
+		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
+		runTask(session, unapplyTask);
+
+		// Verify unapply.
+		checkSignatures("undefined use(Person * this, Person * person)",
+			"Person * FUN_00401040(void * this, Person * __return_storage_ptr__, undefined4 param_1)");
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		assertFalse(destinationFunction.hasCustomVariableStorage());
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_AndName_CustomSourceNormalDest_SameNumParams_ThisToThis()
+			throws Exception {
+		useMatch("0x00401040", "0x00401040");
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		tx(sourceProgram, () -> {
+			sourceFunction.setCustomVariableStorage(true);
+
+			sourceFunction.getParameter(0)
+					.setDataType(sourceFunction.getParameter(1).getDataType(),
+						SourceType.USER_DEFINED);
+		});
+
+		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
+		assertNotNull(personType);
+
+		tx(destinationProgram, () -> {
+			destinationFunction.setReturnType(personType, SourceType.USER_DEFINED);
+		});
+
+		// Check modified values
+		checkSignatures("undefined use(Person * this, Person * person)",
+			"Person * FUN_00401040(void * this, Person * __return_storage_ptr__, undefined4 param_1)");
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(VTOptionDefines.FUNCTION_NAME,
+			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		applyOptions.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+		checkClassDataType(false, false);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		// Verify apply. (return type not replaced with undefined due to lower priority)
+		checkSignatures("undefined use(Person * this, Person * person)",
+			"Person * use(Person * this, Person * person)");
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		assertTrue(destinationFunction.hasCustomVariableStorage());
+
+		// since there is option to apply function name there should be a class namespace applied to
+		// the destination so the Gadget class data type should exist
+		checkClassDataType(true, true);
 
 		// Test unapply
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
@@ -1696,6 +2278,39 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			vtMarkupItem.getMarkupType().getDisplayName() + " with source of " +
 				vtMarkupItem.getSourceAddress().toString() + " has wrong status ",
 			expectedStatus, vtMarkupItem.getStatus());
+	}
+
+	private void checkClassDataType(boolean shouldExist, boolean shouldBeNonEmpty) {
+
+		Parameter srcParam = sourceFunction.getParameter(0);
+		DataTypePath dataTypePath = srcParam.getDataType().getDataTypePath();
+
+		ProgramBasedDataTypeManager dstDtman = destinationProgram.getDataTypeManager();
+		DataType dstDataType = dstDtman.getDataType(dataTypePath);
+
+		if (shouldExist) {
+			assertTrue(dstDataType instanceof Pointer);
+
+			Pointer dstDataTypePtr = (Pointer) dstDataType;
+
+			DataType pointedToDataType = dstDataTypePtr.getDataType();
+
+			assertTrue(pointedToDataType instanceof Structure);
+
+			Structure struct = (Structure) pointedToDataType;
+
+			assertNotNull(struct);
+			if (shouldBeNonEmpty) {
+				assertFalse(struct.isNotYetDefined());
+			}
+			else {
+				assertTrue(struct.isNotYetDefined());
+			}
+		}
+		else {
+			assertNull(dstDataType);
+		}
+
 	}
 
 	private VTMarkupItem getFunctionSignatureMarkup(VTMatch match) {

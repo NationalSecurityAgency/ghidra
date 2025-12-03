@@ -480,7 +480,8 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 			return;
 		}
 
-		if ((modifiers & InputEvent.CTRL_DOWN_MASK) == InputEvent.CTRL_DOWN_MASK) {
+		if ((modifiers &
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK) == DockingUtils.CONTROL_KEY_MODIFIER_MASK) {
 			okCallback(); // Control-Enter allows closes the dialog
 			e.consume();
 			return;

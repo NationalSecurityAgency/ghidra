@@ -85,6 +85,10 @@ public class GTreeFilterTask extends GTreeTask {
 	private void restoreInSameTask(TaskMonitor monitor) {
 
 		GTreeState state = tree.getFilterRestoreState();
+		if (state == null) {
+			return; // can happen in testing
+		}
+
 		if (isOnlyRootSelected(state)) {
 			// This is a special case that allows the user to signal to not restore the tree state
 			// when the filter is cleared.   The tree will normally restore the state to either 1)

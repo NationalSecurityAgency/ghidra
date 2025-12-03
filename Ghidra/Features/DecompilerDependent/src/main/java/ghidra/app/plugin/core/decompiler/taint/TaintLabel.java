@@ -29,6 +29,7 @@ public class TaintLabel {
 	private HighFunction hfun;
 	private HighVariable hvar;
 	private Varnode vnode;
+	private Address vnAddr;
 	private boolean active;
 	private String label;
 	private boolean isGlobal = false;
@@ -40,7 +41,7 @@ public class TaintLabel {
 	private int size = 0;
 
 	public TaintLabel(MarkType mtype, ClangToken token) throws PcodeException {
-	
+
 		HighVariable highVar = token.getHighVariable();
 		if (highVar == null) {
 			hfun = token.getClangFunction().getHighFunction();
@@ -54,22 +55,24 @@ public class TaintLabel {
 		}
 
 		this.vnode = token.getVarnode();
-		if (vnode != null) { // The user pointed at a particular usage, not just the vardecl			
+
+		String fn = token instanceof ClangFuncNameToken ftoken ? ftoken.getText()
+				: hfun.getFunction().getName();
+		PcodeOp pcodeOp = token.getPcodeOp();
+		Address target =
+			pcodeOp == null ? hfun.getFunction().getEntryPoint() : pcodeOp.getSeqnum().getTarget();
+		if (vnode == null && pcodeOp != null) {
+			vnode = pcodeOp.getOutput();
+		}
+
+		if (vnode != null) {
+			vnAddr = vnode.getAddress();
 			HighVariable high = vnode.getHigh();
 			if (high instanceof HighLocal) {
 				highVar = hfun.splitOutMergeGroup(high, vnode);
 			}
 		}
 
-		String fn = token instanceof ClangFuncNameToken ftoken ? ftoken.getText()
-				: hfun.getFunction().getName();
-		PcodeOp pcodeOp = token.getPcodeOp();
-		Address target = pcodeOp == null ? hfun.getFunction().getEntryPoint() : pcodeOp.getSeqnum().getTarget();
-		if (vnode == null && pcodeOp != null) {
-			vnode = pcodeOp.getOutput();
-			highVar = vnode.getHigh();
-		}
-		
 		this.mtype = mtype;
 		this.token = token;
 		this.fname = fn;
@@ -83,6 +86,41 @@ public class TaintLabel {
 
 		// Initial label is one of SOURCE, SINK, or GATE
 		this.label = mtype.toString();
+	}
+
+	public TaintLabel(MarkType mtype, ClangToken token, HighVariable hvar,
+			String fn, Address target) {
+
+		this.mtype = mtype;
+		this.token = token;
+		if (token != null) {
+			this.clangLine = token.getLineParent();
+		}
+		this.hvar = hvar;
+		if (hvar == null) {
+			if (token != null) {
+				hfun = token.getClangFunction().getHighFunction();
+			}
+		}
+		else {
+			size = hvar.getSize();
+			hfun = hvar.getHighFunction();
+			HighSymbol symbol = hvar.getSymbol();
+			if (symbol != null) {
+				isGlobal = symbol.isGlobal();
+			}
+		}
+		this.fname = fn;
+		this.addr = target;
+		active = true;
+
+		// Initial label is one of SOURCE, SINK, or GATE
+		label = mtype.toString();
+	}
+
+	public TaintLabel(MarkType mtype, String fn, Address target, Address refAddress) {
+		this(mtype, null, null, fn, target);
+		vnAddr = refAddress;
 	}
 
 	public ClangLine getClangLine() {
@@ -155,7 +193,7 @@ public class TaintLabel {
 	public void activate() {
 		active = true;
 	}
-	
+
 	public int getSize() {
 		return size;
 	}
@@ -231,12 +269,12 @@ public class TaintLabel {
 		}
 		return true;
 	}
-	
+
 	public Address getVarnodeAddress() {
-		if (vnode != null) {
-			return vnode.getAddress();
-		}
-		return null;
+		return vnAddr;
 	}
 
+	public Varnode getVnode() {
+		return vnode;
+	}
 }

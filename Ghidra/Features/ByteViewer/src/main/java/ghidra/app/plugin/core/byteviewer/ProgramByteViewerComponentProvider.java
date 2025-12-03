@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GIcon;
@@ -773,7 +774,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			setDescription("Create a snapshot (disconnected) copy of this Bytes window ");
 			setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
-				InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK));
 		}
 
 		@Override

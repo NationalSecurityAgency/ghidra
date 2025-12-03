@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -127,13 +127,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					.description(DESCRIPTION)
 					.menuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	protected class MarkerSetChangeListener implements ChangeListener {
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			getListingPanel().getFieldPanel().repaint();
 		}
 	}
 
@@ -335,7 +328,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final JLabel trackingLabel = new JLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
-	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
 	protected MarkerServiceBackgroundColorModel markerServiceColorModel;
 	protected MarkerMarginProvider markerMarginProvider;
 	protected MarkerOverviewProvider markerOverviewProvider;
@@ -573,28 +565,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@AutoServiceConsumed
 	private void setMarkerService(MarkerService markerService) {
-		if (this.markerService != null) {
-			this.markerService.removeChangeListener(markerChangeListener);
-			removeMarginProvider(markerMarginProvider);
-			markerMarginProvider = null;
-			removeOverviewProvider(markerOverviewProvider);
-			markerOverviewProvider = null;
-		}
+		ListingPanel listingPanel = getListingPanel();
+		listingPanel.setMarkerService(markerService);
+
 		removeOldStaticTrackingMarker();
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
 		updateMarkerServiceColorModel();
-
-		if (this.markerService != null && !isMainListing()) {
-			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
-			this.markerService.addChangeListener(markerChangeListener);
-		}
-		if (this.markerService != null) {
-			markerMarginProvider = markerService.createMarginProvider();
-			addMarginProvider(markerMarginProvider);
-			markerOverviewProvider = markerService.createOverviewProvider();
-			addOverviewProvider(markerOverviewProvider);
-		}
 	}
 
 	@AutoServiceConsumed

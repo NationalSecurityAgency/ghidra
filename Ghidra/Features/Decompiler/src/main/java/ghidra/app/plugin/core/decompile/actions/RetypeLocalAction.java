@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.decompiler.*;
@@ -57,7 +57,8 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		super("Retype Variable");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeVariable"));
 		setPopupMenuData(new MenuData(new String[] { "Retype Variable" }, "Decompile"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_L, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
 	protected RetypeLocalAction(String name) {

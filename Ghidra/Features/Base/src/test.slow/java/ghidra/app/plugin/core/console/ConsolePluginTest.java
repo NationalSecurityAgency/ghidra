@@ -31,8 +31,9 @@ import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.util.AnimationUtils;
-import docking.widgets.FindDialog;
-import docking.widgets.TextComponentSearcher;
+import docking.widgets.*;
+import docking.widgets.search.TextComponentSearcher;
+import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
 import ghidra.app.script.GhidraScript;
@@ -78,8 +79,6 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		placeCursorAtBeginning();
 		findDialog = showFindDialog();
-		String searchText = "Hello";
-		find(searchText);
 	}
 
 	@After
@@ -89,11 +88,46 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+
+		String searchText = "Hello";
+		findAll(searchText);
+		assertFalse(findDialog.isShowing());
+		List<TestTextMatch> matches = getExpectedMatches(searchText);
+		assertEquals(3, matches.size());
+
+		verfiyHighlightColor(matches);
+
+		FindDialogResultsProvider resultsProvider =
+			waitForComponentProvider(FindDialogResultsProvider.class);
+		List<SearchLocation> results = resultsProvider.getResults();
+		assertEquals(matches.size(), results.size());
+
+		int row = 0;
+		selectRow(resultsProvider, row);
+		assertActiveHighlight(matches.get(row));
+		assertCursorInMatch(matches.get(row));
+
+		row = 1;
+		selectRow(resultsProvider, row);
+		assertActiveHighlight(matches.get(row));
+		assertCursorInMatch(matches.get(row));
+
+		row = 2;
+		selectRow(resultsProvider, row);
+		assertActiveHighlight(matches.get(row));
+		assertCursorInMatch(matches.get(row));
+	}
+
+	@Test
 	public void testFindHighlights() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
-		verfyHighlightColor(matches);
+		verfiyHighlightColor(matches);
 
 		close(findDialog);
 		verifyDefaultBackgroundColorForAllText();
@@ -102,18 +136,22 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindHighlights_ChangeSearchText() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
-		verfyHighlightColor(matches);
+		verfiyHighlightColor(matches);
 
 		// Change the search text after the first search and make sure the new text is found and 
 		// highlighted correctly.
 		String newSearchText = "java";
 		runSwing(() -> findDialog.setSearchText(newSearchText));
-		pressButtonByText(findDialog, "Next");
-		matches = getMatches();
+		next();
+		matches = getExpectedMatches();
 		assertEquals(2, matches.size());
-		verfyHighlightColor(matches);
+
+		verfiyHighlightColor(matches);
 
 		close(findDialog);
 		verifyDefaultBackgroundColorForAllText();
@@ -122,9 +160,12 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindHighlights_ChangeDocumentText() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
-		verfyHighlightColor(matches);
+		verfiyHighlightColor(matches);
 
 		runSwing(() -> textPane.setText("This is some\nnew text."));
 
@@ -135,7 +176,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testMovingCursorUpdatesActiveHighlight() {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -154,7 +198,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindNext_ChangeDocumentText() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -177,11 +224,11 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// worth worrying about.)
 		next();
 
-		matches = getMatches();
+		matches = getExpectedMatches();
 		assertEquals(5, matches.size()); // 3 old matches plus 2 new matches
-		second = matches.get(1);
-		assertCursorInMatch(second);
-		assertActiveHighlight(second);
+		TestTextMatch third = matches.get(1);
+		assertCursorInMatch(third);
+		assertActiveHighlight(third);
 
 		next(); // third
 		next(); // fourth
@@ -194,9 +241,27 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testFindNext_NoMatches() throws Exception {
+
+		String searchText = "Goodbye";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
+		assertEquals(0, matches.size());
+
+		String status = runSwing(() -> findDialog.getStatusText());
+		assertEquals("Not found", status);
+
+		runSwing(() -> findDialog.dispose());
+	}
+
+	@Test
 	public void testFindNext() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -224,7 +289,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindNext_MoveCaret() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -247,7 +315,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindPrevious() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -277,7 +348,10 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFindPrevious_MoveCaret() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
 		TestTextMatch first = matches.get(0);
 		TestTextMatch second = matches.get(1);
@@ -300,9 +374,12 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testClear() throws Exception {
 
-		List<TestTextMatch> matches = getMatches();
+		String searchText = "Hello";
+		find(searchText);
+
+		List<TestTextMatch> matches = getExpectedMatches();
 		assertEquals(3, matches.size());
-		verfyHighlightColor(matches);
+		verfiyHighlightColor(matches);
 
 		clear();
 
@@ -331,17 +408,33 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void next() {
 		pressButtonByText(findDialog, "Next");
-		waitForSwing();
+		waitForNotBusy();
 	}
 
 	private void previous() {
 		pressButtonByText(findDialog, "Previous");
+		waitForNotBusy();
+	}
+
+	private void findAll(String text) {
+		runSwing(() -> findDialog.setSearchText(text));
+		pressButtonByText(findDialog, "Find All");
+		waitForNotBusy();
+	}
+
+	private void waitForNotBusy() {
+		TextComponentSearcher searcher = (TextComponentSearcher) findDialog.getSearcher();
+		waitForSwing();
+		waitFor(() -> !searcher.isBusy());
 		waitForSwing();
 	}
 
 	private void assertSearchModelHasNoSearchResults() {
 		TextComponentSearcher searcher =
 			(TextComponentSearcher) findDialog.getSearcher();
+		if (searcher == null) {
+			return; // assume the searcher was disposed
+		}
 		assertFalse(searcher.hasSearchResults());
 	}
 
@@ -361,10 +454,11 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void assertActiveHighlight(TestTextMatch match) {
 
 		GColor expectedHlColor = new GColor("color.bg.find.highlight.active");
-		assertActiveHighlight(match, expectedHlColor);
+		assertActiveHighlight(match, expectedHlColor, true);
 	}
 
-	private void assertActiveHighlight(TestTextMatch match, Color expectedHlColor) {
+	private void assertActiveHighlight(TestTextMatch match, Color expectedHlColor,
+			boolean isActive) {
 		Highlight matchHighlight = runSwing(() -> {
 
 			Highlighter highlighter = textPane.getHighlighter();
@@ -379,10 +473,14 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			return null;
 		});
 
-		assertNotNull(matchHighlight);
+		assertNotNull("No highlight found for " + match, matchHighlight);
 		DefaultHighlightPainter painter = (DefaultHighlightPainter) matchHighlight.getPainter();
 		Color actualHlColor = painter.getColor();
-		assertEquals(expectedHlColor, actualHlColor);
+
+		String msg = "Expected %s highlight color for match %s".formatted(
+			isActive ? "active" : "inactive", match);
+
+		assertEquals(msg, expectedHlColor, actualHlColor);
 	}
 
 	private void placeCursorAtBeginning() {
@@ -396,7 +494,13 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	private void verfyHighlightColor(List<TestTextMatch> matches)
+	private void selectRow(FindDialogResultsProvider resultsProvider, int row) {
+		GTable table = resultsProvider.getTable();
+		runSwing(() -> table.selectRow(row));
+		waitForSwing();
+	}
+
+	private void verfiyHighlightColor(List<TestTextMatch> matches)
 			throws Exception {
 
 		GColor nonActiveHlColor = new GColor("color.bg.find.highlight");
@@ -405,10 +509,11 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int caret = textPane.getCaretPosition();
 		for (TestTextMatch match : matches) {
 			Color expectedColor = nonActiveHlColor;
-			if (match.contains(caret)) {
+			boolean isActive = match.contains(caret);
+			if (isActive) {
 				expectedColor = activeHlColor;
 			}
-			assertActiveHighlight(match, expectedColor);
+			assertActiveHighlight(match, expectedColor, isActive);
 		}
 	}
 
@@ -426,9 +531,13 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private List<TestTextMatch> getMatches() {
-
+	private List<TestTextMatch> getExpectedMatches() {
 		String searchText = findDialog.getSearchText();
+		assertFalse(searchText.isEmpty());
+		return getExpectedMatches(searchText);
+	}
+
+	private List<TestTextMatch> getExpectedMatches(String searchText) {
 		List<TestTextMatch> results = new ArrayList<>();
 		String text = runSwing(() -> textPane.getText());
 
@@ -440,7 +549,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int index = text.indexOf(searchText);
 		while (index != -1) {
-			results.add(new TestTextMatch(index, index + searchText.length()));
+			results.add(new TestTextMatch(searchText, index, index + searchText.length()));
 			index = text.indexOf(searchText, index + 1);
 		}
 
@@ -449,8 +558,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void find(String text) {
 		runSwing(() -> findDialog.setSearchText(text));
-		pressButtonByText(findDialog, "Next");
-		waitForTasks();
+		next();
 	}
 
 	private FindDialog showFindDialog() {
@@ -459,7 +567,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return waitForDialogComponent(FindDialog.class);
 	}
 
-	private record TestTextMatch(int start, int end) {
+	private record TestTextMatch(String searchText, int start, int end) {
 
 		boolean contains(int caret) {
 			return start <= caret && caret <= end;
@@ -467,7 +575,7 @@ public class ConsolePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public String toString() {
-			return "[" + start + ',' + end + ']';
+			return searchText + ": [" + start + ',' + end + ']';
 		}
 	}
 }

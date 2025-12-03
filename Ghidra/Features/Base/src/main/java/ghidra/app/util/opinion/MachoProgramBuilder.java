@@ -40,7 +40,7 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
-import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
+import ghidra.app.util.bin.format.objc.objc1.Objc1Constants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -1837,14 +1837,14 @@ public class MachoProgramBuilder {
 
 	protected void renameObjMsgSendRtpSymbol()
 			throws DuplicateNameException, InvalidInputException {
-		Address address = space.getAddress(ObjectiveC1_Constants.OBJ_MSGSEND_RTP);
+		Address address = space.getAddress(Objc1Constants.OBJ_MSGSEND_RTP);
 		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
 		if (symbol != null && symbol.isDynamic()) {
-			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
+			symbol.setName(Objc1Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
 		}
 		else {
 			program.getSymbolTable()
-					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
+					.createLabel(address, Objc1Constants.OBJC_MSG_SEND_RTP_NAME,
 						SourceType.IMPORTED);
 		}
 	}

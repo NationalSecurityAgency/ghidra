@@ -289,7 +289,8 @@ class OldLanguage implements Language {
 			throw new SAXException("Missing required 'spaces' element");
 		}
 		if (!registersFound) {
-			throw new SAXException("Missing required 'registers' element");
+			// register mapping will not be performed
+			registerMgr = (new RegisterBuilder()).getRegisterManager();
 		}
 	}
 

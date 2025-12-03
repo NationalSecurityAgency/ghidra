@@ -67,7 +67,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	protected SymbolGTree tree;
 	protected JComponent component;
 
-	protected GoToToggleAction goToToggleAction;
+	protected NavigateOnIncomingAction navigateIncomingAction;
+	protected NavigateOnOutgoingActon navigateOutgoingAction;
 
 	/**
 	 * A list into which tasks to be run will accumulated until we put them into the GTree's
@@ -162,6 +163,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		newTree.addGTreeSelectionListener(e -> {
 
+			if (!navigateOutgoingAction.isSelected()) {
+				return;
+			}
+
 			EventOrigin origin = e.getEventOrigin();
 			if (origin != EventOrigin.USER_GENERATED) {
 				contextChanged();
@@ -176,6 +181,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		newTree.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
+
+				if (!navigateOutgoingAction.isSelected()) {
+					return;
+				}
 
 				// This code serves to perform navigation in the case that the selection handler
 				// above does not, as is the case when the clicked node is already selected.  This
@@ -275,7 +284,9 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		DockingAction selectionAction = new SelectionAction(plugin);
 		selectionAction.setEnabled(false);
 
-		goToToggleAction = new GoToToggleAction(plugin);
+		navigateIncomingAction = new NavigateOnIncomingAction(plugin);
+		navigateOutgoingAction = new NavigateOnOutgoingActon(plugin);
+
 		DockingAction goToExternalAction = new GoToExternalLocationAction(plugin);
 		goToExternalAction.setEnabled(false);
 
@@ -294,7 +305,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, pasteAction);
 		tool.addLocalAction(this, deleteAction);
 		tool.addLocalAction(this, referencesAction);
-		tool.addLocalAction(this, goToToggleAction);
+		tool.addLocalAction(this, navigateIncomingAction);
+		tool.addLocalAction(this, navigateOutgoingAction);
 		tool.addLocalAction(this, selectionAction);
 		tool.addLocalAction(this, goToExternalAction);
 		tool.addLocalAction(this, cloneAction);
@@ -528,8 +540,9 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		domainChangeUpdateManager.update();
 	}
 
+	// incoming tool location changes
 	public void locationChanged(ProgramLocation loc) {
-		if (!goToToggleAction.isSelected()) {
+		if (!navigateIncomingAction.isSelected()) {
 			return;
 		}
 
@@ -591,11 +604,13 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	void readConfigState(SaveState saveState) {
-		goToToggleAction.setSelected(saveState.getBoolean("GO_TO_TOGGLE_STATE", false));
+		navigateIncomingAction.setSelected(saveState.getBoolean("NAVIGATE_INCOMING", false));
+		navigateOutgoingAction.setSelected(saveState.getBoolean("NAVIGATE_OUTGOING", true));
 	}
 
 	void writeConfigState(SaveState saveState) {
-		saveState.putBoolean("GO_TO_TOGGLE_STATE", goToToggleAction.isSelected());
+		saveState.putBoolean("NAVIGATE_INCOMING", navigateIncomingAction.isSelected());
+		saveState.putBoolean("NAVIGATE_OUTGOING", navigateOutgoingAction.isSelected());
 	}
 
 	void dispose() {

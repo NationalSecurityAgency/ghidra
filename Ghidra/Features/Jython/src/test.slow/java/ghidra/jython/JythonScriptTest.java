@@ -46,14 +46,14 @@ public class JythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		tool = env.getTool();
-		GhidraScriptUtil.initialize(new BundleHost(), null);
+		GhidraScriptUtil.acquireBundleHostReference();
 		tool.addPlugin(ConsolePlugin.class.getName());
 		console = tool.getService(ConsoleService.class);
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		GhidraScriptUtil.dispose();
+		GhidraScriptUtil.releaseBundleHostReference();
 		env.dispose();
 	}
 

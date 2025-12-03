@@ -30,6 +30,9 @@ public class GenericAddress implements Address {
 
 	protected static final String zeros = "0000000000000000";
 
+	public final static String STACK_ADDRESS_PREFIX = "Stack[";
+	public final static String STACK_ADDRESS_SUFFIX = "]"; // parse code assumes length == 1
+
 	protected AddressSpace addrSpace;
 	protected long offset;
 
@@ -245,7 +248,7 @@ public class GenericAddress implements Address {
 		StringBuilder buf = new StringBuilder();
 		if (addrSpace.isStackSpace()) {
 			stackFormat = true;
-			buf.append("Stack[");
+			buf.append(STACK_ADDRESS_PREFIX);
 			minNumDigits = 1;
 		}
 		else if (showAddressSpace) {
@@ -287,7 +290,7 @@ public class GenericAddress implements Address {
 			buf.append(mod);
 		}
 		if (stackFormat) {
-			buf.append("]");
+			buf.append(STACK_ADDRESS_SUFFIX);
 		}
 		return buf.toString();
 	}

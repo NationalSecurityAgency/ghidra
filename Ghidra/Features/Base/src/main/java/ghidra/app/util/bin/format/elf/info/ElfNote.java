@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.info;
 
-import static ghidra.app.util.bin.StructConverter.BYTE;
-import static ghidra.app.util.bin.StructConverter.DWORD;
+import static ghidra.app.util.bin.StructConverter.*;
 
 import java.io.IOException;
 
@@ -38,8 +37,8 @@ import ghidra.util.NumericUtilities;
  * stored in a ELF section with a specific name.
  */
 public class ElfNote implements ElfInfoItem {
-	private static final int MAX_SANE_NAME_LEN = 1024;
-	private static final int MAX_SANE_DESC_LEN = 1024 * 1024;
+	static final int MAX_SANE_NAME_LEN = 1024;
+	static final int MAX_SANE_DESC_LEN = 1024 * 1024;
 
 	@FunctionalInterface
 	public interface NoteReaderFunc<T extends ElfNote> {

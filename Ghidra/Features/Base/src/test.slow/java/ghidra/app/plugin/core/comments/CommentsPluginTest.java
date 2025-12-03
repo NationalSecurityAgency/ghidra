@@ -669,6 +669,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		addReference(0x1001020, 0x1008294, RefType.DATA);
 		addReference(0x1001030, 0x1008394, RefType.DATA);
 
+		waitForProgram(program);
+
 		Address srcAddr = addr(0x01006990);
 		CodeUnit cu = program.getListing().getCodeUnitAt(srcAddr);
 
@@ -944,21 +946,19 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private GhidraProgramTableModel<?> waitForModel() throws Exception {
-		int i = 0;
-		while (i++ < 50) {
+
+		GTable table = waitFor(() -> {
 			TableComponentProvider<?>[] providers = getProviders();
-			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
-						.getInstanceField("threadedPanel", providers[0]);
-				GTable table = panel.getTable();
-				while (panel.isBusy()) {
-					Thread.sleep(50);
-				}
-				return (GhidraProgramTableModel<?>) table.getModel();
+			if (providers.length == 0) {
+				return null;
 			}
-			Thread.sleep(50);
-		}
-		throw new Exception("Unable to get threaded table model");
+
+			return providers[0].getTable();
+		});
+
+		GhidraProgramTableModel<?> gModel = (GhidraProgramTableModel<?>) table.getModel();
+		waitForTableModel(gModel);
+		return gModel;
 	}
 
 	private TableComponentProvider<?>[] getProviders() {

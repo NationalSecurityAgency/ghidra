@@ -325,9 +325,8 @@ public abstract class AbstractProgramLoader implements Loader {
 			prog.setExecutableFormat(executableFormatName);
 		}
 		FSRL fsrl = provider.getFSRL();
-		String md5 = (fsrl != null && fsrl.getMD5() != null)
-				? fsrl.getMD5()
-				: computeBinaryMD5(provider);
+		String md5 =
+			(fsrl != null && fsrl.getMD5() != null) ? fsrl.getMD5() : computeBinaryMD5(provider);
 		if (fsrl != null) {
 			if (fsrl.getMD5() == null) {
 				fsrl = fsrl.withMD5(md5);
@@ -361,11 +360,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		try {
 			LanguageCompilerSpecPair pair = settings.loadSpec().getLanguageCompilerSpec();
 			Language language = getLanguageService().getLanguage(pair.languageID);
-			MemoryBlockDefinition[] defaultMemoryBlocks = language.getDefaultMemoryBlocks();
-			if (defaultMemoryBlocks == null) {
-				return;
-			}
-			for (MemoryBlockDefinition blockDef : defaultMemoryBlocks) {
+			for (MemoryBlockDefinition blockDef : language.getDefaultMemoryBlocks()) {
 				try {
 					blockDef.createBlock(program);
 				}
@@ -470,6 +465,19 @@ public abstract class AbstractProgramLoader implements Loader {
 		return DefaultLanguageService.getLanguageService();
 	}
 
+	private AddressSetView getProcessorDefinedMemoryBlockAddresses(Program program) {
+		AddressSet blockAddrSet = new AddressSet();
+		Memory memory = program.getMemory();
+		Language language = program.getLanguage();
+		for (MemoryBlockDefinition defaultMemoryBlockDef : language.getDefaultMemoryBlocks()) {
+			MemoryBlock block = memory.getBlock(defaultMemoryBlockDef.getBlockName());
+			if (block != null) {
+				blockAddrSet.add(block.getAddressRange());
+			}
+		}
+		return blockAddrSet;
+	}
+
 	private void applyProcessorLabels(List<Option> options, Program program) {
 		int id = program.startTransaction("Finalize load");
 		try {
@@ -482,15 +490,25 @@ public abstract class AbstractProgramLoader implements Loader {
 					createSymbol(program, reg.getName(), addr, null, false, true, true);
 				}
 			}
-			// optionally create default symbols defined by pspec
-			if (shouldApplyProcessorLabels(options)) {
-				boolean anchorSymbols = shouldAnchorSymbols(options);
-				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
-				for (AddressLabelInfo info : labels) {
-					createSymbol(program, info.getLabel(), info.getAddress(), info.getDescription(), info.isEntry(),
-						info.isPrimary(), anchorSymbols);
+
+			// NOTE: pspec defined labels should always be defined if they correspond to a memory
+			// block defined by the pspec.
+			boolean applyAllProcessorLabels = shouldApplyProcessorLabels(options);
+			AddressSetView pspecDefinedBlockSet = getProcessorDefinedMemoryBlockAddresses(program);
+			boolean anchorSymbols = shouldAnchorSymbols(options);
+			List<AddressLabelInfo> labels = lang.getDefaultSymbols();
+			for (AddressLabelInfo info : labels) {
+				Address addr = info.getAddress();
+				boolean isRequiredLabel = pspecDefinedBlockSet.contains(addr);
+				if (isRequiredLabel || applyAllProcessorLabels) {
+					// NOTE: Required labels contained within a pspec-defined memory block do not 
+					// need to be pinned/anchored
+					boolean anchor = !isRequiredLabel && anchorSymbols;
+					createSymbol(program, info.getLabel(), info.getAddress(), info.getDescription(),
+						info.isEntry(), info.isPrimary(), anchor);
 				}
 			}
+
 			GhidraProgramUtilities.resetAnalysisFlags(program);
 		}
 		finally {

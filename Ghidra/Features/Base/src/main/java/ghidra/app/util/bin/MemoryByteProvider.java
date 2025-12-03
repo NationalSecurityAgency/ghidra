@@ -159,6 +159,10 @@ public class MemoryByteProvider implements ByteProvider {
 		this.isEmtpy = maxAddress == null;
 	}
 
+	public Memory getMemory() {
+		return memory;
+	}
+
 	private Address getAddress(long index) throws IOException {
 		if (index == 0) {
 			return baseAddress;
@@ -219,7 +223,7 @@ public class MemoryByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		if (isEmtpy) {
 			return 0;
 		}

@@ -889,6 +889,6 @@ Since string-based serialization may be a common case, we may eventually provide
 For now, we refer you to the implementations for the Taint-augmented emulator:
 
 * For memory state: [TaintFieldFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintFieldFactory.java)
-* For regsiter state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
+* For register state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
 
 Anything more than that would require completely custom providers, plugins, etc.

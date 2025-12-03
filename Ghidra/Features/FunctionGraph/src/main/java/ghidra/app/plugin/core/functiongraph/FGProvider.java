@@ -170,7 +170,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		cloneAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));
 		cloneAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK));
 
 		DockingAction optionsAction =
 			new DockingAction("Function Graph Options", owner) {

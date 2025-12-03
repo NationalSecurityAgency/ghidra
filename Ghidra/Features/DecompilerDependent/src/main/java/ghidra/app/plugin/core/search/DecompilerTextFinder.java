@@ -20,12 +20,12 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextBuilder;
 import generic.json.Json;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.parallel.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
@@ -246,15 +246,15 @@ public class DecompilerTextFinder {
 			TextLine firstLine = lineMatches.get(0);
 			int lineNumber = firstLine.getLineNumber();
 			AddressSet addresses = getAddresses(function, firstLine.getCLine());
-			LocationReferenceContext context = createMatchContext(lineMatches);
+			SearchLocationContext context = createMatchContext(lineMatches);
 			TextMatch match =
 				new TextMatch(function, addresses, lineNumber, searchText, context, true);
 			callback.accept(match);
 		}
 
-		private LocationReferenceContext createMatchContext(List<TextLine> matches) {
+		private SearchLocationContext createMatchContext(List<TextLine> matches) {
 
-			LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 			for (TextLine line : matches) {
 				if (!builder.isEmpty()) {
 					builder.newline();
@@ -279,7 +279,7 @@ public class DecompilerTextFinder {
 				return;
 			}
 
-			LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+			SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
 
 			int start = matcher.start();
 			int end = matcher.end();
@@ -291,7 +291,7 @@ public class DecompilerTextFinder {
 
 			int lineNumber = line.getLineNumber();
 			AddressSet addresses = getAddresses(function, line);
-			LocationReferenceContext context = builder.build();
+			SearchLocationContext context = builder.build();
 			TextMatch match =
 				new TextMatch(function, addresses, lineNumber, searchText, context, false);
 			callback.accept(match);

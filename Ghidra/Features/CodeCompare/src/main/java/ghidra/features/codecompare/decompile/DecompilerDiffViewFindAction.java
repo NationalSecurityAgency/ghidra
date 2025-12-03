@@ -87,7 +87,7 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 
 	private FindDialog createFindDialog(DecompilerPanel decompilerPanel, Side side) {
 		String title = (side == LEFT ? "Left" : "Right");
-		title += " Decompiler Find Text";
+		title += " Decompiler Find";
 
 		FindDialog dialog = new FindDialog(title, new DecompilerSearcher(decompilerPanel)) {
 			@Override
@@ -97,6 +97,15 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 			}
 		};
 		dialog.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
+
+		/*
+		 	Find All will keep the results around in a separate window.  When those results are 
+		 	clicked, the Decompiler will update the current function.  This can cause the function
+		 	comparison window to become out of sync with the available functions being compared. We
+		 	could update the function comparison to handle this case, but that doesn't seem worth it
+		 	at this time.  For now, just disable the Find All.
+		 */
+		dialog.setFindAllEnabled(false);
 
 		return dialog;
 	}

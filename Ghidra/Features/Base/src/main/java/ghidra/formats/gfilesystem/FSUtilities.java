@@ -33,10 +33,12 @@ import org.apache.commons.io.FilenameUtils;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.factory.FileSystemFactoryDependencyException;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
+import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
@@ -301,7 +303,12 @@ public class FSUtilities {
 			displayCryptoException(originator, parent, title, message, (CryptoException) throwable);
 		}
 		else {
-			Msg.showError(originator, parent, title, message, throwable);
+			if (throwable instanceof FileSystemFactoryDependencyException) {
+				Msg.showError(originator, parent, title, message + "\n\n" + throwable.getMessage());
+			}
+			else {
+				Msg.showError(originator, parent, title, message, throwable);
+			}
 		}
 	}
 
@@ -367,14 +374,21 @@ public class FSUtilities {
 		byte buffer[] = new byte[FileUtilities.IO_BUFFER_SIZE];
 		int bytesRead;
 		long totalBytesCopied = 0;
-		while ((bytesRead = is.read(buffer)) > 0) {
-			os.write(buffer, 0, bytesRead);
-			totalBytesCopied += bytesRead;
-			monitor.setProgress(totalBytesCopied);
-			monitor.checkCancelled();
+		CancelledListener l = () -> FSUtilities.uncheckedClose(is, null);
+		monitor.addCancelledListener(l);
+		try {
+			while ((bytesRead = is.read(buffer)) > 0) {
+				os.write(buffer, 0, bytesRead);
+				totalBytesCopied += bytesRead;
+				monitor.setProgress(totalBytesCopied);
+				monitor.checkCancelled();
+			}
+			os.flush();
+			return totalBytesCopied;
 		}
-		os.flush();
-		return totalBytesCopied;
+		finally {
+			monitor.removeCancelledListener(l);
+		}
 	}
 
 	/**

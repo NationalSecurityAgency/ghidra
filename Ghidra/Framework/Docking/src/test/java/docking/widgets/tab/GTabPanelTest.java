@@ -42,6 +42,9 @@ public class GTabPanelTest extends AbstractDockingTest {
 			gTabPanel.addTab("Two");
 			gTabPanel.addTab("Three Three Three");
 
+			// prevent inconsistent behavior when testing by disabling focus change responses
+			gTabPanel.setIgnoreFocus(true);
+
 			JPanel panel = new JPanel();
 			panel.setLayout(new BorderLayout());
 			panel.add(gTabPanel, BorderLayout.NORTH);
