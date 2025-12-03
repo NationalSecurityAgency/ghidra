@@ -1,3 +1,18 @@
+# Ghidra 11.4.3 Change History (December 2025)
+
+### Improvements
+* _Analysis_. Added the ability to restrict function start pattern matches per named section and added a pattern for thunks in the `.plt` so that they are marked up very early. (GP-5526)
+* _Analysis_. Added several known PE-related, non-returning, named functions. (GP-5985)
+* _Decompiler_. Restored the Decompiler's middle-mouse highlight functionality for if/else keywords. (GP-5951, Issue #8419)
+* _Multi-User_. Updated `ghidraSvr` script and `server.conf` with improvements to restrict service wrapper memory consumption. (GP-6067)
+* _Processors_. Added support for x86 SSE4a instructions. (GP-5906, Issue #8335)
+
+### Bugs
+* _Exporter_. Fixed missing reference type in the ASCII and HTML exporters. (GP-5957, Issue #8468)
+* _PDB_. Fixed a `NullPointerException` that occurred during PDB load/analysis that was caused by a function null container class. (GP-6100, Issue #8596)
+* _ProgramDB_. Corrected dynamic label bug which produced a stack overflow exception when a pointer reference loop existed. (GP-5995, Issue #8510)
+* _Scripting_. Fixed OSGi-related errors that occurred when script-related directories were not readable. (GP-5965, Issue #8466)
+
 # Ghidra 11.4.2 Change History (August 2025)
 
 ### Improvements
