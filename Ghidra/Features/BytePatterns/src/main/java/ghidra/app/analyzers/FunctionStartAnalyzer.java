@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.analyzers;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -207,9 +208,10 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		private int validCodeMin = NO_VALID_INSTRUCTIONS_REQUIRED;
 		private int validCodeMax = VALID_INSTRUCTIONS_NO_MAX;
 		private String label = null;
-		private boolean isThunk = false;  // true if this function should be turned into a thunk
-		private boolean noreturn = false; // true to set function non-returning
-		boolean validFunction = false;    // must be defined at a function
+		private boolean isThunk = false;    // true if this function should be turned into a thunk
+		private boolean noreturn = false;   // true to set function non-returning
+		private java.util.regex.Pattern sectionNamePattern = null;  // required section name as a regex pattern
+		boolean validFunction = false;      // must be defined at a function
 		private boolean contiguous = true;  // require validcode instructions be contiguous
 
 		@Override
@@ -225,6 +227,18 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		protected boolean checkPreRequisites(Program program, Address addr) {
+			// check required section name
+			if (sectionNamePattern != null) {
+				MemoryBlock block = program.getMemory().getBlock(addr);
+				if (block == null) {
+					return false;
+				}
+		        Matcher m = sectionNamePattern.matcher(block.getName());
+			    if (!m.matches()) {
+					return false;
+				}
+			}
+			
 			/**
 			 * If the match's mark point occurs in undefined data, schedule disassembly
 			 * and a function start at that address. If the match's mark point occurs at an instruction, but that
@@ -641,6 +655,10 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 						isThunk = true;
 						break;
 						
+					case "section":
+						sectionNamePattern = java.util.regex.Pattern.compile(attrValue);
+						break;
+						
 					case "noreturn":
 						noreturn = true;
 						break;
@@ -816,7 +834,14 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
 		if (!disassemResult.isEmpty()) {
-			analysisManager.disassemble(disassemResult, AnalysisPriority.DISASSEMBLY);
+			// disassemble known function starts now
+			AddressSet doNowDisassembly = disassemResult.intersect(funcResult);
+			// this will disassemble at this analyzers priority
+			analysisManager.disassemble(doNowDisassembly);
+			
+			// delay disassemble of possible function starts
+			AddressSet delayedDisassembly = disassemResult.subtract(funcResult);
+			analysisManager.disassemble(delayedDisassembly, AnalysisPriority.DISASSEMBLY);
 		}
 		analysisManager.setProtectedLocations(codeLocations);
 

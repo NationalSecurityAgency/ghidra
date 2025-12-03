@@ -185,7 +185,10 @@ set "java=%LS_JAVA_HOME%\bin\java.exe"
 :: execute command OPTION
 :lab3
 
-set VMARGS=-Djava.io.tmpdir="%WRAPPER_TMPDIR%"
+:: Specify JVM arguments for direct invocations of YAJSW wrapper, including specification
+:: of maximum heap size (-Xmx) option.
+set VMARGS=-Xmx512M
+set VMARGS=%VMARGS% -Djava.io.tmpdir="%WRAPPER_TMPDIR%"
 set VMARGS=%VMARGS% -Djna_tmpdir="%WRAPPER_TMPDIR%"
 
 :: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888

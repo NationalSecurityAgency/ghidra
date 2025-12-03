@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -38,7 +39,7 @@ class DtrfDbg {
 
 	private static List<String> clientFilters = new ArrayList<>();
 
-	private static Map<Function, List<String>> linesByFunction = new HashMap<>();
+	private static Map<Function, List<String>> linesByFunction = new ConcurrentHashMap<>();
 
 	DtrfDbg() {
 		// static class
