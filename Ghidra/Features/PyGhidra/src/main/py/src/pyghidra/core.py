@@ -15,7 +15,7 @@
 ##
 import contextlib
 import warnings
-from typing import Union, TYPE_CHECKING, Tuple, ContextManager, List, Optional
+from typing import Union, TYPE_CHECKING, Tuple, Generator, List, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
@@ -179,7 +179,7 @@ def open_program(
         loader: Union[str, JClass] = None,
         program_name: str = None,
         nested_project_location = True
-) -> ContextManager["FlatProgramAPI"]: # type: ignore
+) -> Generator["FlatProgramAPI", None, None]:
     """
     Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 
