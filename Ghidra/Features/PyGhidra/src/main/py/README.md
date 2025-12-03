@@ -69,7 +69,7 @@ def open_project(
         path: Union[str, Path],
         name: str,
         create: bool = False
-) -> "Project": # type: ignore
+) -> "Project":
     """
     Opens the Ghidra project at the given location, optionally creating it if it doesn't exist.
 
@@ -126,7 +126,7 @@ def consume_program(
 def program_context(
         project: "Project", 
         path: Union[str, Path],
-    ) -> "Program":
+    ) -> Generator["Program", None, None]:
     """
     Gets the Ghidra program from the given project with the given project path. The returned
     program's resource cleanup is performed by a context manager.
@@ -180,7 +180,7 @@ def ghidra_script(
 def transaction(
         program: "Program",
         description: str = "Unnamed Transaction"
-    ):
+    ) -> Generator[int, None, None]:
     """
     Creates a context for running a Ghidra transaction.
 
@@ -339,7 +339,7 @@ def open_program(
         loader: Union[str, JClass] = None,
         program_name: str = None,
         nested_project_location = True
-) -> ContextManager["FlatProgramAPI"]: # type: ignore
+) -> Generator["FlatProgramAPI", None, None]:
     """
     Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 

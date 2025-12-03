@@ -61,7 +61,7 @@ def open_project(
         path: Union[str, Path],
         name: str,
         create: bool = False
-) -> "Project": # type: ignore
+) -> "Project":
     """
     Opens the Ghidra project at the given location, optionally creating it if it doesn't exist.
 
