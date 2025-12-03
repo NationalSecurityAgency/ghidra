@@ -29,7 +29,7 @@ import tempfile
 import threading
 from importlib.machinery import ModuleSpec
 from pathlib import Path
-from typing import List, NoReturn, Tuple, Union
+from typing import Generator, List, NoReturn, Tuple, Union
 
 import jpype
 from jpype import imports, _jpype
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
-def _silence_java_output(stdout=True, stderr=True):
+def _silence_java_output(stdout=True, stderr=True) -> Generator[None, None, None]:
     from java.io import OutputStream, PrintStream # type:ignore @UnresolvedImport
     from java.lang import System # type:ignore @UnresolvedImport
     out = System.out

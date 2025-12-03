@@ -22,6 +22,7 @@ import sys
 import threading
 import types
 from code import InteractiveConsole
+from typing import Generator
 
 from ghidra.app.script import ScriptControls
 from ghidra.framework import Application
@@ -276,7 +277,7 @@ class PyConsole(InteractiveConsole):
                 self.reset()
 
     @contextlib.contextmanager
-    def redirect_writer(self):
+    def redirect_writer(self) -> Generator[None, None, None]:
         self._writer = self._err
         try:
             yield
@@ -292,7 +293,7 @@ class PyConsole(InteractiveConsole):
             super().showtraceback()
 
     @contextlib.contextmanager
-    def _run_context(self):
+    def _run_context(self) -> Generator[None, None, None]:
         self._script.start()
         success = False
         try:

@@ -15,7 +15,7 @@
 ##
 import sys
 import contextlib
-from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Any, Optional
+from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Generator, Any, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
@@ -142,7 +142,7 @@ def consume_program(
 def program_context(
         project: "Project", 
         path: Union[str, Path],
-    ) -> "Program":
+    ) -> Generator["Program", None, None]:
     """
     Gets the Ghidra program from the given project with the given project path. The returned
     program's resource cleanup is performed by a context manager.
@@ -256,7 +256,7 @@ def ghidra_script(
 def transaction(
         program: "Program",
         description: str = "Unnamed Transaction"
-    ):
+    ) -> Generator[int, None, None]:
     """
     Creates a context for running a Ghidra transaction.
 
