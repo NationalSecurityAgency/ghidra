@@ -220,9 +220,9 @@ def program_loader() -> "ProgramLoader.Builder":
     """
 ```
 
-### pyghidra.monitor()
+### pyghidra.task_monitor()
 ```python
-def monitor(
+def task_monitor(
         timeout: Optional[int] = None
     ) -> "PyGhidraTaskMonitor":
     """
@@ -288,22 +288,22 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
         for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
             loader = loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
             with loader.load() as load_results:
-                load_results.save(pyghidra.monitor())
+                load_results.save(pyghidra.task_monitor())
 
     # Analyze the windows decompiler program for a maximum of 10 seconds
     with pyghidra.program_context(project, "/win_x86_64/decompile.exe") as program:
         analysis_props = pyghidra.analysis_properties(program)
         with pyghidra.transaction(program):
             analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
-        analysis_log = pyghidra.analyze(program, pyghidra.monitor(10))
-        program.save("Analyzed", pyghidra.monitor())
+        analysis_log = pyghidra.analyze(program, pyghidra.task_monitor(10))
+        program.save("Analyzed", pyghidra.task_monitor())
     
     # Walk the project and set a property in each decompiler program
     def set_property(domain_file, program):
         with pyghidra.transaction(program):
             program_info = pyghidra.program_info(program)
             program_info.setString("PyGhidra Property", "Set by PyGhidra!")
-        program.save("Setting property", pyghidra.monitor())
+        program.save("Setting property", pyghidra.task_monitor())
     pyghidra.walk_programs(project, set_property, program_filter=lambda f, p: p.name.startswith("decompile"))
 
     # Load some bytes as a new program
@@ -312,7 +312,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
     loader = loader.loaders("BinaryLoader").language("DATA:LE:64:default")
     with loader.load() as load_results:
-        load_results.save(pyghidra.monitor())
+        load_results.save(pyghidra.task_monitor())
 
     # Run a GhidraScript
     pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
