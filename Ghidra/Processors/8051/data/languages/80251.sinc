@@ -15,6 +15,7 @@ define token srcDestByte (8)
    drk03 =  (0,3)
    # constraint bits
    d7   =   (7,7)
+   d67  =   (6,7)
    d57  =   (5,7)
    d47  =   (4,7)
    s3   =   (3,3)
@@ -36,6 +37,7 @@ define token srcDestByte2 (8)
    drk03_ =  (0,3)
    # constraint bits
    d7_   =   (7,7)
+   d67_  =   (6,7)
    d57_  =   (5,7)
    s3_   =   (3,3)
    s13_  =   (1,3)
@@ -85,13 +87,13 @@ attach variables  [ wrj47_d2 ] [
 # NOTE: must use constraints DRK, DRKD and DRKS
 attach variables  [ drk47 drk03 drk47_ drk03_ ] [
 	DR0  DR4  DR8  DR12 DR16 DR20 DR24 DR28
-	DPX  SPX  _    _    _    _    _    _
+	_    _    _    _    _    _     DPX  SPX
 ];
 
-@define DRK47 "drk47 & (d7=0 | d57=4)" # constraint for using drk47
-@define DRK03 "drk03 & (s3=0 | s13=4)" # constraint for using drk03
-@define DRK47_ "drk47_ & (d7_=0 | d57_=4)" # constraint for using drk47_
-  
+@define DRK47 "drk47 & (d7=0 | d67=3)" # constraint for using drk47
+@define DRK03 "drk03 & (s3=0 | s23=3)" # constraint for using drk03
+@define DRK47_ "drk47_ & (d7_=0 | d67_=3)" # constraint for using drk47_
+
 AtWRjb: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:1 ptr; }
 AtWRjw: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:2 ptr; }
 
@@ -497,7 +499,7 @@ macro pop24(val) {
 
 
 # MOVH DRk,#data16
-:MOVH drk47,Data16x0	is $(GROUP3) & ophi=7 & oplo=14; $(DRK47) & s03=12; Data16x0  { drk47 = (drk47 & 0xffff0000) | (Data16x0 << 16); }
+:MOVH drk47,Data16x0	is $(GROUP3) & ophi=7 & oplo=0xa; $(DRK47) & s03=0xc; Data16x0  { drk47 = (drk47 & 0xffff) | (Data16x0 << 16); }
 
 # MOVS WRj,Rm
 :MOVZ wrj47,rm03  is $(GROUP3) & ophi=1 & oplo=10; wrj47 & rm03  { wrj47 = sext(rm03); }
