@@ -143,6 +143,25 @@ the Code Browser Listing just below the function signature. The Variables displa
 on/off globally via the popup menu toggle action (**Function -> Show/Hide All Variables**) or for
 individual functions via an adjacent expand/collapse(+/-) icon.
 
+## GhidraGo URL
+Did you know Ghidra supports embedding URL links in web pages?  After setting up GhidraGo in
+your preferred web browser and adding the GhidraGo plugin into Ghidra, clicking on a Ghidra URL link
+will start Ghidra, open the program either locally or in a multi-user project, and then navigate
+to the specified address in the specified program.  A Ghidra remote URL looks something like
+(**ghidra://myrepo.org:13100/perf/9305e1d039/busybox_aarch64_fc0bdbc**).  You can provide
+just the project path or include a path all the way to an address/symbol in a program within the
+project.  See the Ghidra Help under GhidraGo for setup and more information.
+
+## Processors
+The NDS32, and RISCV variant AndeStar v5 processors have been added.  In addition the RISCV processor
+has been re-factored to better handle RISCV custom extensions and the csreg register definitions have been
+moved into a separate memory space.  The benefit of having an actual memory space for special function
+registers is they can be seen, named, references created to them, data types applied at the location,
+as well as default values supplied for a given binary sample.  We plan to do the same for other processors
+such as the PowerPC.  There have also been numerous extensions and fixes added to the
+aarch64, 8051, LoongArch, SuperH,  rm, Xtensa, x86, 68k, and many other processors.  Thanks for all
+the community contributions!
+
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
 [Change History](ChangeHistory.md) file.
