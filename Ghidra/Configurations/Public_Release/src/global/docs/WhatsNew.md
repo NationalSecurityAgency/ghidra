@@ -137,6 +137,13 @@ that merely integrate with emulation should consider the compositional/callback-
 Extensions that incorporate new domains (e.g. Z3) or novel behaviors (e.g. JIT) should continue 
 using inheritance.
 
+## Data Graph
+Added a new data graph showing data relationships defined by references from one in memory defined data item
+to another. The data graph can be displayed by clicking on a data item in the listing and
+invoking the data graph action (**ctrl-g** or from the popup menu **data -> display data graph**). This action
+will create a new data graph displaying the selected data item and its contents. From
+that node, the graph can be expanded by following from or to references to that data item.
+
 ## Hide Function Variables
 Added the ability to toggle the display of function variables (parameters and locals) within
 the Code Browser Listing just below the function signature. The Variables display can be turned 
