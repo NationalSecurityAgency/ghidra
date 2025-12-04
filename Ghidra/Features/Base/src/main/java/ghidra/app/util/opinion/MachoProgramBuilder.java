@@ -151,7 +151,8 @@ public class MachoProgramBuilder {
 		processCorruptLoadCommands();
 
 		// Markup structures
-		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
+		markupHeaders(machoHeader,
+			setupHeaderAddr(machoHeader.getAllSegments(), provider.getName()));
 		markupSections();
 		markupLoadCommandData(machoHeader, provider.getName());
 		markupChainedFixups(machoHeader, chainedFixups);
@@ -1100,10 +1101,11 @@ public class MachoProgramBuilder {
 	 * area in the "OTHER" address space for the header to live in.
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
+	 * @param source A name that represents where the header came from
 	 * @return The {@link Address} of {@link MachHeader} in memory
 	 * @throws AddressOverflowException if the address lies outside the address space
 	 */
-	protected Address setupHeaderAddr(Collection<SegmentCommand> segments)
+	protected Address setupHeaderAddr(Collection<SegmentCommand> segments, String source)
 			throws AddressOverflowException {
 		Address headerAddr = null;
 		long lowestFileOffset = Long.MAX_VALUE;
@@ -1125,7 +1127,7 @@ public class MachoProgramBuilder {
 		// and copy the header there.
 		headerAddr = AddressSpace.OTHER_SPACE.getAddress(0);
 		MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true, "HEADER",
-			headerAddr, fileBytes, 0, lowestFileOffset, "Header", "", false, false, false, log);
+			headerAddr, fileBytes, 0, lowestFileOffset, "Header", source, false, false, false, log);
 		return headerBlock.getStart();
 	}
 
