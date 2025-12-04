@@ -27,6 +27,4 @@ sleighCompileOptions = [
 
 dependencies {
 	api project(':Base')
-	// Temporary dependency so that pcodeTests can use the Decompiler switch recovery
-	api project(':Decompiler')
 }
