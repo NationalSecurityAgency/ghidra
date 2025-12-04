@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Omf166DepList extends OmfRecord {
 
-	private record Info(byte type, Byte mark, Integer time, OmfString name) {}
+	private record Info(byte type, Byte mark, Integer time, OmfString name, OmfString bigName) {}
 
 	private List<Info> infoList = new ArrayList<>();
 
@@ -47,11 +47,16 @@ public class Omf166DepList extends OmfRecord {
 					byte mark = dataReader.readNextByte();
 					int time = dataReader.readNextInt();
 					OmfString name = OmfUtils.readString(dataReader);
-					infoList.add(new Info(iTyp, mark, time, name));
+					infoList.add(new Info(iTyp, mark, time, name, null));
 					break;
 				case (byte) 0xff:
 					OmfString invocation = OmfUtils.readString(dataReader);
-					infoList.add(new Info(iTyp, null, null, invocation));
+					OmfString bigName = null;
+					if (invocation.length() == 0) {
+						// We assume that a "big string" follows
+						bigName = OmfUtils.readBigString(dataReader);
+					}
+					infoList.add(new Info(iTyp, null, null, invocation, bigName));
 					break;
 				default:
 					throw new OmfException("Unexpected DEPLST iTyp: 0x%x".formatted(iTyp));
@@ -73,6 +78,10 @@ public class Omf166DepList extends OmfRecord {
 				struct.add(DWORD, "time32", null);
 			}
 			struct.add(info.name.toDataType(), info.name.getDataTypeSize(), "name", null);
+			if (info.bigName != null) {
+				struct.add(info.bigName.toDataType(), info.bigName.getDataTypeSize(), "bigName",
+					null);
+			}
 		}
 		struct.add(BYTE, "checksum", null);
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));

@@ -62,7 +62,19 @@ public class OmfUtils {
 	 */
 	public static OmfString readString(BinaryReader reader) throws IOException {
 		int count = reader.readNextUnsignedByte();
-		return new OmfString(count, reader.readNextAsciiString(count));
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "");
+	}
+
+	/**
+	 * Read the OMF big string format: 2-byte length, followed by that many ascii characters
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the string
+	 * @return the read OMF big string
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public static OmfString readBigString(BinaryReader reader) throws IOException {
+		int count = reader.readNextUnsignedShort();
+		return new OmfString(count, count != 0 ? reader.readNextAsciiString(count) : "", true);
 	}
 
 	/**
