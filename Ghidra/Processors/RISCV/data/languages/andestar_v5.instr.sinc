@@ -20,7 +20,8 @@ simm18_lh: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<
 	export *[const]:$(XLEN) val;
 }
 
-simm18_lw: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<18) | (op1516<<16) | (op1719<<13) | (op2020<<12) | (op2130<<2); ] {
+#simm18_lw: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<18) | (op1516<<16) | (op1719<<13) | (op2020<<12) | (op2130<<2); ] {
+simm18_lw: val is sop3131 & op2121 & op1516 & op1719 & op2020 & op2230 [ val = (sop3131<<18) | (op2121 << 17) | (op1516<<15) | (op1719<<12) | (op2020<<11) | (op2230<<2); ] {
 	export *[const]:$(XLEN) val;
 }
 

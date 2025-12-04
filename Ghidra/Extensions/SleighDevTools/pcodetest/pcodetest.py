@@ -88,7 +88,13 @@ class PCodeTestBuild(BuildUtil):
     def main(self):
 
         # make sure compiler exists and runnable
-
+        self.config.compile_exe = self.config.exec_dir + self.config.exec_prefix + self.config.compile_exe
+        self.config.build_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.build_exe)
+        self.config.strip_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.strip_exe)
+        self.config.objdump_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.objdump_exe)
+        self.config.readelf_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.readelf_exe)
+        self.config.nm_exe = self.config.exec_dir + str(self.config.exec_prefix) + str(self.config.nm_exe)
+        
         if not self.is_executable_file(self.which('compile_exe')):
             self.log_err(self.config.format('build the Toolchain before compilation'))
             return
@@ -427,6 +433,7 @@ class PCodeBuildGCC(PCodeTestBuild):
         self.set_library_path(self.config.ld_library_path)
 
         # Construct the compile/link command line and execute it
+            
         cmp = self.which('compile_exe')
         cmd = [cmp] + input_files + self.cflags(output_file)  + [opt_cflag, '-B', self.dirname(cmp), '-o', output_file]
         out, err = self.run(cmd)
