@@ -131,6 +131,7 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			if (demangled instanceof DemangledFunction defunc) {
 				defunc.applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
 					mangledContext.getOptions(), monitor);
+				return;
 			}
 		}
 		catch (Exception e) {

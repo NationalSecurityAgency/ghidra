@@ -21,10 +21,10 @@ apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Processors NDS32'
 
+sleighCompileOptions = [
+	'-l'
+]
 
 dependencies {
 	api project(':Base')
-	// Temporary dependency so that pcodeTests can use the Decompiler switch recovery
-	api project(':Decompiler')
 }
-
