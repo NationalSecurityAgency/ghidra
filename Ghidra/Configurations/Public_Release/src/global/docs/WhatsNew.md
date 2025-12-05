@@ -166,7 +166,7 @@ moved into a separate memory space.  The benefit of having an actual memory spac
 registers is they can be seen, named, references created to them, data types applied at the location,
 as well as default values supplied for a given binary sample.  We plan to do the same for other processors
 such as the PowerPC.  There have also been numerous extensions and fixes added to the
-aarch64, 8051, LoongArch, SuperH,  rm, Xtensa, x86, 68k, and many other processors.  Thanks for all
+AArch64, 8051, LoongArch, SuperH, Arm, Xtensa, x86, 68k, and many other processors.  Thanks for all
 the community contributions!
 
 ## Additional Bug Fixes and Enhancements
