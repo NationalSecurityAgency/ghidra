@@ -22,6 +22,7 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
+import ghidra.formats.gfilesystem.LocalFileSystem;
 import ghidra.framework.store.*;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
@@ -163,8 +164,8 @@ class CheckoutManager {
 	 */
 	synchronized boolean isCheckedOut(int version) throws IOException {
 		validate();
-		for (long id : checkouts.keySet()) {
-			ItemCheckoutStatus coStatus = checkouts.get(id);
+		for (Map.Entry<Long, ItemCheckoutStatus> entry : checkouts.entrySet()) {
+			ItemCheckoutStatus coStatus = entry.getValue();
 			if (coStatus.getCheckoutVersion() == version) {
 				return true;
 			}
