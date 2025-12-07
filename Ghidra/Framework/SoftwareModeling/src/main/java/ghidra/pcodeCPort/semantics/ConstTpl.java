@@ -43,6 +43,7 @@ public class ConstTpl {
 		j_start,
 		j_next,
 		j_next2,
+		j_seg,
 		j_curspace,
 		j_curspace_size,
 		spaceid,
@@ -275,6 +276,10 @@ public class ConstTpl {
 			case j_next2:
 				encoder.openElement(ELEM_CONST_NEXT2);
 				encoder.closeElement(ELEM_CONST_NEXT2);
+				break;
+			case j_seg:
+				encoder.openElement(ELEM_CONST_SEG);
+				encoder.closeElement(ELEM_CONST_SEG);
 				break;
 			case j_curspace:
 				encoder.openElement(ELEM_CONST_CURSPACE);
