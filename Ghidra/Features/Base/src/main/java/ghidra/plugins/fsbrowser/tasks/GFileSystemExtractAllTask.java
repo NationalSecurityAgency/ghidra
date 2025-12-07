@@ -69,9 +69,12 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		catch (UnsupportedOperationException | IOException e) {
 			Msg.showError(this, parentComponent, "Error extracting file", e.getMessage());
 		}
-		Msg.info(this,
-			"Exported " + getTotalFilesExportedCount() + " files, " + getTotalDirsExportedCount() +
-				" directories, " + getTotalBytesExportedCount() + " bytes");
+		long files = getTotalFilesExportedCount();
+		long dirs = getTotalDirsExportedCount();
+		long bytes = getTotalBytesExportedCount();
+		Msg.info(this, "Exported " + files + " file" + (files == 1 ? "" : "s") + ", " + dirs +
+			" director" + (dirs == 1 ? "y" : "ies") + ", " + bytes + " byte" +
+			(bytes == 1 ? "" : "s"));
 
 		long elapsed = System.currentTimeMillis() - start_ts;
 

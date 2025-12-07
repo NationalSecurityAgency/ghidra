@@ -253,7 +253,9 @@ public class DWARFImporter {
 		}
 
 		monitor.setIndeterminate(true);
-		monitor.setMessage("Sorting " + sourceInfo.size() + " entries");
+		int sourceInfoSize = sourceInfo.size();
+		monitor.setMessage("Sorting " + sourceInfoSize + " entr" +
+			(sourceInfoSize == 1 ? "y" : "ies"));
 		sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
 		monitor.setIndeterminate(false);
 		monitor.initialize(sourceInfo.size(), "DWARF: Applying Source Map Info");
