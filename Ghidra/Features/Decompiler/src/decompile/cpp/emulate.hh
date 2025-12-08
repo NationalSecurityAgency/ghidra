@@ -278,13 +278,13 @@ inline MemoryState *EmulateMemory::getMemoryState(void) const
 ///
 /// This is used for emulation when full Varnode and PcodeOp objects aren't needed
 class PcodeEmitCache : public PcodeEmit {
-  vector<PcodeOpRaw *> &opcache;	///< The cache of current p-code ops
-  vector<VarnodeData *> &varcache;	///< The cache of current varnodes
+  vector<PcodeOpRaw> &opcache;	///< The cache of current p-code ops
+  vector<VarnodeData> &varcache;	///< The cache of current varnodes
   const vector<OpBehavior *> &inst;	///< Array of behaviors for translating OpCode
   uintm uniq;				///< Starting offset for defining temporaries in \e unique space
   VarnodeData *createVarnode(const VarnodeData *var);	///< Clone and cache a raw VarnodeData
 public:
-  PcodeEmitCache(vector<PcodeOpRaw *> &ocache,vector<VarnodeData *> &vcache,
+  PcodeEmitCache(vector<PcodeOpRaw> &ocache, vector<VarnodeData> &vcache,
 		 const vector<OpBehavior *> &in,uintb uniqReserve);	///< Constructor
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize);
 };
@@ -297,8 +297,8 @@ public:
 /// are additional methods for inspecting the pcode ops in the current instruction as a sequence.
 class EmulatePcodeCache : public EmulateMemory {
   Translate *trans;		///< The SLEIGH translator
-  vector<PcodeOpRaw *> opcache;	///< The cache of current p-code ops
-  vector<VarnodeData *> varcache;	///< The cache of current varnodes
+  vector<PcodeOpRaw> opcache;	///< The cache of current p-code ops
+  vector<VarnodeData> varcache;	///< The cache of current varnodes
   vector<OpBehavior *> inst;	///< Map from OpCode to OpBehavior
   BreakTable *breaktable;	///< The table of breakpoints
   Address current_address;	///< Address of current instruction being executed
@@ -318,7 +318,8 @@ public:
   bool isInstructionStart(void) const; ///< Return \b true if we are at an instruction start
   int4 numCurrentOps(void) const; ///< Return number of pcode ops in translation of current instruction
   int4 getCurrentOpIndex(void) const; ///< Get the index of current pcode op within current instruction
-  PcodeOpRaw *getOpByIndex(int4 i) const; ///< Get pcode op in current instruction translation by index
+  const PcodeOpRaw *getOpByIndex(int4 i) const; ///< Get pcode op in current instruction translation by index
+  PcodeOpRaw* getOpByIndex(int4 i); ///< Get pcode op in current instruction translation by index
   virtual void setExecuteAddress(const Address &addr); ///< Set current execution address
   virtual Address getExecuteAddress(void) const; ///< Get current execution address
   void executeInstruction(void); ///< Execute (the rest of) a single machine instruction
@@ -356,10 +357,20 @@ inline int4 EmulatePcodeCache::getCurrentOpIndex(void) const
 /// machine instruction's translation sequence.
 /// \param i is the desired op index
 /// \return the pcode op at the indicated index
-inline PcodeOpRaw *EmulatePcodeCache::getOpByIndex(int4 i) const
+inline const PcodeOpRaw *EmulatePcodeCache::getOpByIndex(int4 i) const
 
 {
-  return opcache[i];
+  return &opcache[i];
+}
+
+/// This routine can be used to examine ops other than the currently executing op in the
+/// machine instruction's translation sequence.
+/// \param i is the desired op index
+/// \return the pcode op at the indicated index
+inline PcodeOpRaw* EmulatePcodeCache::getOpByIndex(int4 i)
+
+{
+    return &opcache[i];
 }
 
 /// \return the currently executing machine address
