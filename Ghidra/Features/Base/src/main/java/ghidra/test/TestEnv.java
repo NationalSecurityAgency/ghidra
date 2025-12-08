@@ -31,6 +31,7 @@ import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
+import generic.theme.ThemeManager;
 import ghidra.app.events.CloseProgramPluginEvent;
 import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -253,6 +254,7 @@ public class TestEnv {
 	private void dipsoseTestTools() {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
+			tool = null;
 
 			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
@@ -438,6 +440,7 @@ public class TestEnv {
 	}
 
 	private PluginTool lazyTool() {
+
 		if (tool != null) {
 			return tool;
 		}
@@ -1095,6 +1098,13 @@ public class TestEnv {
 		disposeAllSwingUpdateManagers();
 
 		deleteTestProject(projectName);
+
+		resetTheme();
+	}
+
+	private void resetTheme() {
+		ThemeManager themeManager = ThemeManager.getInstance();
+		themeManager.restoreThemeValues();
 	}
 
 	private void deleteTestProject(String projectName) {
