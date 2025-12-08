@@ -1248,3 +1248,5 @@ struct statcheck {
 typedef int test_before;
 static_assert(1 + 1 == 2, "That's true!");
 typedef int test_after;
+
+enum typedenum : unsigned char {};
