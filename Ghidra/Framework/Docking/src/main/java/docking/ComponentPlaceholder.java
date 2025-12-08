@@ -297,7 +297,7 @@ public class ComponentPlaceholder {
 		activateWindow();
 
 		// make sure the tab has time to become active before trying to request focus
-		ExpiringSwingTimer.runWhen(this::isShowing, 750, () -> {
+		ExpiringSwingTimer.runWhen(this::isShowing, () -> {
 			doRequestFocus(tmp);
 		});
 	}

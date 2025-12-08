@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.net.URL;
 import java.util.Collection;
 
 import ghidra.docking.settings.Settings;

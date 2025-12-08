@@ -558,7 +558,7 @@ inline intb zero_extend(intb val,int4 bit)
 
 {
   int4 sa = sizeof(intb)*8 - (bit+1);
-  return (intb)((uintb)(val << sa) >> sa);
+  return (intb)(((uintb)val << sa) >> sa);
 }
 
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set

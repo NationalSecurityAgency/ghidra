@@ -15,7 +15,8 @@
  */
 package ghidra.dbg.target.schema;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
@@ -23,12 +24,12 @@ import org.jdom.JDOMException;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.DefaultTraceObjectSchema.DefaultAttributeSchema;
 import ghidra.trace.model.target.schema.TraceObjectSchema.*;
-import ghidra.trace.model.thread.TraceObjectProcess;
+import ghidra.trace.model.thread.TraceProcess;
 
 public class XmlTargetObjectSchemaTest {
 	protected static final String SCHEMA_XML =
@@ -52,7 +53,7 @@ public class XmlTargetObjectSchemaTest {
 	protected static final SchemaName NAME_ROOT = new SchemaName("root");
 	protected static final SchemaName NAME_DOWN1 = new SchemaName("down1");
 	protected static final TraceObjectSchema SCHEMA_ROOT = CTX.builder(NAME_ROOT)
-			.addInterface(TraceObjectProcess.class)
+			.addInterface(TraceProcess.class)
 			.setCanonicalContainer(true)
 			.addElementSchema("reserved", PrimitiveTraceObjectSchema.VOID.getName(), null)
 			.addElementSchema("", NAME_DOWN1, null)
@@ -107,7 +108,7 @@ public class XmlTargetObjectSchemaTest {
 				""");
 
 		KeyPath found = ctx.getSchema(new SchemaName("root"))
-				.searchForSuitable(TraceObjectBreakpointLocation.class, KeyPath.ROOT);
+				.searchForSuitable(TraceBreakpointLocation.class, KeyPath.ROOT);
 		assertNotNull(found);
 	}
 }

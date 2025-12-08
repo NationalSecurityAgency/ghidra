@@ -25,9 +25,6 @@ public class DeleteExitCommentsScript extends GhidraScript {
 
 	private static String EXIT_COMMENT = " Exit **********\r\n ";
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.script.GhidraScript#run()
-	 */
 	@Override
 	public void run() throws Exception {
 		Listing listing = currentProgram.getListing();
@@ -35,6 +32,7 @@ public class DeleteExitCommentsScript extends GhidraScript {
 		if (currentSelection != null && !currentSelection.isEmpty()) {
 			set = currentSelection;
 		}
+
 		int updateCount = 0;
 		AddressIterator iter = listing.getCommentAddressIterator(CommentType.POST, set, true);
 		while (iter.hasNext()) {

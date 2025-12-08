@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.Msg;
  * X.509 form (*.pem, *.crt, *.cer, *.der) or Java JKS (*.jks) form, while keystores 
  * for client/server may be in a PKCS12 form (*.p12, *.pks, *.pfx) or Java JKS (*.jks) form.
  */
-class ApplicationKeyStore {
+public class ApplicationKeyStore {
 
 	private ApplicationKeyStore() {
 		// no instantiation - static methods only
@@ -48,7 +48,7 @@ class ApplicationKeyStore {
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException
 	 */
-	static KeyStore getCertificateStoreInstance(String cacertsPath)
+	public static KeyStore getCertificateStoreInstance(String cacertsPath)
 			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
 
 		int certCount = 0;
@@ -95,7 +95,6 @@ class ApplicationKeyStore {
 	/**
 	 * Attempt to load a client/server keystore in a PKCS12 form (*.p12, *.pks, *.pfx) or 
 	 * Java JKS (*.jks) form.
-	 * @param path keystore file path
 	 * @param pwd keystore password
 	 * @return keystore instance
 	 * @throws IOException
@@ -103,7 +102,7 @@ class ApplicationKeyStore {
 	 * @throws NoSuchAlgorithmException
 	 * @throws CertificateException
 	 */
-	static KeyStore getKeyStoreInstance(String keystorePath, char[] pwd)
+	public static KeyStore getKeyStoreInstance(String keystorePath, char[] pwd)
 			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
 
 		File keystoreFile = new File(keystorePath);
@@ -120,6 +119,35 @@ class ApplicationKeyStore {
 			bis.close();
 		}
 		return ks;
+	}
+
+	/**
+	 * Attempt to detect PKI KeyStore type ("JKS" or "PKCS12") for the specified file.
+	 * @param keystorePath key store file path
+	 * @return "JKS", "PKCS12" or null
+	 * @throws IOException if file read error occurs
+	 */
+	public static String detectKeyStoreType(String keystorePath) throws IOException {
+		try (FileInputStream fis = new FileInputStream(keystorePath)) {
+			byte[] header = new byte[4];
+			int read = fis.read(header);
+			if (read < 4) {
+				return null;
+			}
+
+			// Check for JKS magic number: FEEDFEED
+			if ((header[0] & 0xFF) == 0xFE && (header[1] & 0xFF) == 0xED &&
+				(header[2] & 0xFF) == 0xFE && (header[3] & 0xFF) == 0xED) {
+				return "JKS";
+			}
+
+			// Check for PKCS12: starts with 0x30 0x82
+			if ((header[0] & 0xFF) == 0x30 && (header[1] & 0xFF) == 0x82) {
+				return "PKCS12";
+			}
+
+			return null;
+		}
 	}
 
 	/**
@@ -180,7 +208,7 @@ class ApplicationKeyStore {
 	 * Log all X509 certificates contained within array
 	 * @param x509Certs array of certificates
 	 */
-	static void logCerts(X509Certificate[] x509Certs) {
+	public static void logCerts(X509Certificate[] x509Certs) {
 		for (X509Certificate x509Cert : x509Certs) {
 			logCert(null, x509Cert);
 		}

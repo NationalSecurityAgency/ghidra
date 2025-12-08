@@ -76,7 +76,7 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			throw new IllegalArgumentException("Platform is not part of this trace");
 		}
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			DBTraceMemorySpace memSpace = space.trace.getMemoryManager().get(space, true);
+			DBTraceMemorySpace memSpace = space.trace.getMemoryManager().get(space.space, true);
 			// NOTE: User-given length could be ignored....
 			// Check start address first. After I know length, I can check for other existing units
 			long startSnap = lifespan.lmin();
@@ -134,8 +134,8 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 
 			// Truncate, then check that against existing code units.
 			long endSnap = computeTruncatedMax(lifespan, null, createdRange);
-			TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(createdRange,
-				Lifespan.span(startSnap, endSnap));
+			TraceAddressSnapRange tasr =
+				new ImmutableTraceAddressSnapRange(createdRange, Lifespan.span(startSnap, endSnap));
 			if (!space.undefinedData.coversRange(tasr)) {
 				// TODO: Figure out the conflicting unit?
 				throw new CodeUnitInsertionException("Code units cannot overlap");
@@ -158,11 +158,11 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 				dataType instanceof Dynamic) {
 				// TODO: Track composites?
 				space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_ADDED,
-					space, tasr, created));
+					space.space, tasr, created));
 			}
 
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space, tasr, created));
+				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space.space, tasr, created));
 			return created;
 		}
 		catch (AddressOverflowException e) {
@@ -170,26 +170,4 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 		}
 	}
 
-	@Override
-	protected void unitRemoved(DBTraceData unit) {
-		super.unitRemoved(unit);
-		DataType dataType = unit.getBaseDataType();
-		if (dataType instanceof Composite || dataType instanceof Array ||
-			dataType instanceof Dynamic) {
-			space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_REMOVED,
-				space, unit.getBounds(), unit, null));
-		}
-	}
-
-	@Override
-	protected void unitSpanChanged(Lifespan oldSpan, DBTraceData unit) {
-		super.unitSpanChanged(oldSpan, unit);
-		DataType dataType = unit.getBaseDataType();
-		if (dataType instanceof Composite || dataType instanceof Array ||
-			dataType instanceof Dynamic) {
-			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_LIFESPAN_CHANGED,
-					space, unit, oldSpan, unit.getLifespan()));
-		}
-	}
 }

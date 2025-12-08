@@ -80,8 +80,8 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -888,7 +888,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		TraceBreakpoint bptUnwind;
+		TraceBreakpointLocation bptUnwind;
 		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
@@ -976,7 +976,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		long spAtSetup = regs.getValue(0, sp).getUnsignedValue().longValueExact();
 
-		TraceBreakpoint bptUnwind;
+		TraceBreakpointLocation bptUnwind;
 		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), entry, Set.of(),

@@ -21,8 +21,8 @@ import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.*;
-import ghidra.util.Conv;
+import ghidra.program.model.listing.CommentType;
+import ghidra.program.model.listing.Program;
 
 final class PdbUtil {
 
@@ -33,7 +33,7 @@ final class PdbUtil {
 	 * @return the calculated {@link Address}
 	 */
 	final static Address reladdr(Program program, int relativeOffset) {
-		return reladdr(program, relativeOffset & Conv.INT_MASK);
+		return reladdr(program, Integer.toUnsignedLong(relativeOffset));
 	}
 
 	/**
@@ -51,7 +51,7 @@ final class PdbUtil {
 	 * @param program program
 	 * @param address listing address
 	 * @param text comment text
-	 * @param commentType comment type ({@link CodeUnit}
+	 * @param commentType comment type
 	 */
 	final static void appendComment(Program program, Address address, String text,
 			CommentType commentType) {

@@ -22,8 +22,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.ByteProvider;
@@ -31,17 +31,18 @@ import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Contains function definitions and type information found in a specific Golang runtime toolchain
+ * Contains function definitions and type information found in a specific Go runtime toolchain
  * version.
  * <p>
- * Useful to apply function parameter information to functions found in a go binary.
+ * Useful to apply function parameter information to functions found in a Go binary.
  * <p>
  * Snapshot json files contain function / type information about functions and types extracted from
- * the golang toolchain itself, for each arch and OSes that the golang toolchain supports,
+ * the Go toolchain itself, for each arch and OSes that the Go toolchain supports,
  * via cross-compiling against each GOARCH and GOOS.
  * <p>
  * Function and type info that is incompatible or not present in other arch / os targets will be
@@ -86,10 +87,10 @@ import ghidra.util.task.TaskMonitor;
 public class GoApiSnapshot {
 
 	/**
-	 * Returns a matching {@link GoApiSnapshot} for the specified golang version.  If an exact
+	 * Returns a matching {@link GoApiSnapshot} for the specified Go version.  If an exact
 	 * match isn't found, earlier patch revs will be tried until all patch levels are exhausted.   
 	 * 
-	 * @param goVer go version (controls which .json file is opened)
+	 * @param goVer Go version (controls which .json file is opened)
 	 * @param goArch GOARCH string
 	 * @param goOS GOOS string
 	 * @param monitor {@link TaskMonitor}
@@ -124,30 +125,44 @@ public class GoApiSnapshot {
 			return null;
 		}
 
-		ByteProvider bp = null;
-		if (goVer.getPatch() == 0) {
-			// doesn't need diffpatching
-			bp = fsService.getByteProvider(fsService.getLocalFSRL(jsonFile), false, monitor);
+		File patchDiffFile = getPatchVerDiffFile(goVer);
+		if (patchDiffFile == null) {
+			return fsService.getByteProvider(fsService.getLocalFSRL(jsonFile), false, monitor);
+		}
+
+		FSRL fsrl = fsService.getFullyQualifiedFSRL(fsService.getLocalFSRL(jsonFile), monitor);
+		ByteProvider bp = fsService.getDerivedByteProviderPush(fsrl, null,
+			"go%s.json".formatted(goVer), -1, os -> {
+				JsonPatch jsonPatch = JsonPatch.read(patchDiffFile);
+				JsonPatchApplier jpa = new JsonPatchApplier(jsonFile);
+				monitor.initialize(jsonPatch.getSectionCount(),
+					"Patching Go API snapshot %s -> %s".formatted(baseVer, goVer));
+				jpa.apply(jsonPatch, monitor);
+				OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+				new Gson().toJson(jpa.getJson(), osw);
+				osw.flush(); // don't close outputstream, handled by caller
+			}, monitor);
+		return bp;
+	}
+
+	static File getPatchVerDiffFile(GoVer goVer) {
+		// returns the closest patch file that is present, or null if patch-ver-num is already 0
+		// or no patch diff files are found for the specified major.minor version.
+		GoVer patchVer = goVer;
+		File patchDiffFile = null;
+		while (patchVer.getPatch() > 0 &&
+			(patchDiffFile = getApiSnapshotFile(patchVer, "patchverdiffs/", ".diff")) == null) {
+			patchVer = patchVer.prevPatch();
+		}
+
+		if (patchVer.getPatch() != goVer.getPatch()) {
+			Msg.warn(GoApiSnapshot.class,
+				"Falling back from %s to %s for Go API snapshot".formatted(goVer, patchVer));
 		}
 		else {
-			File patchDiffFile = getApiSnapshotFile(goVer, "patchverdiffs/", ".diff");
-			if (patchDiffFile != null) {
-				FSRL fsrl =
-					fsService.getFullyQualifiedFSRL(fsService.getLocalFSRL(jsonFile), monitor);
-				bp = fsService.getDerivedByteProviderPush(fsrl, null,
-					"go%s.json".formatted(goVer), -1, os -> {
-						JsonPatch jsonPatch = JsonPatch.read(patchDiffFile);
-						JsonPatchApplier jpa = new JsonPatchApplier(jsonFile);
-						monitor.initialize(jsonPatch.getSectionCount(),
-							"Patching golang api snapshot %s -> %s".formatted(baseVer, goVer));
-						jpa.apply(jsonPatch, monitor);
-						OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-						new Gson().toJson(jpa.getJson(), osw);
-						osw.flush(); // don't close outputstream, handled by caller
-					}, monitor);
-			}
+			Msg.info(GoApiSnapshot.class, "Using Go API snapshot for %s".formatted(goVer));
 		}
-		return bp;
+		return patchDiffFile;
 	}
 
 	static File getApiSnapshotFile(GoVer goVer, String subdir, String suffix) {
@@ -189,9 +204,10 @@ public class GoApiSnapshot {
 	 */
 	private static GoApiSnapshot read(InputStream is, List<String> archNames, GoVer ver)
 			throws IOException {
-		Gson gson =
-			new GsonBuilder().registerTypeAdapter(GoTypeDef.class, new GoTypeDefDeserializer())
-					.create();
+		Gson gson = new GsonBuilder() // register postfix handler
+				.registerTypeAdapter(GoTypeDef.class, new GoTypeDefDeserializer())
+				.registerTypeAdapterFactory(new GsonPostFixupAdapter())
+				.create();
 		Map<String, GoArch> arches = new HashMap<>();
 		Set<String> archNamesToKeep = new HashSet<>(archNames);
 
@@ -252,8 +268,11 @@ public class GoApiSnapshot {
 		}
 	}
 
+	/**
+	 * Ordinals need to be kept in sync with go-api-parser's FuncFlags_* values.
+	 */
 	public enum FuncFlags {
-		VarArg(1), Generic(2), Method(4), NoReturn(8);
+		VarArg(1), Generic(2), Method(4), NoReturn(8), InterfaceFunc(16);
 
 		private int flagVal;
 
@@ -274,11 +293,28 @@ public class GoApiSnapshot {
 		}
 	}
 
-	public static class GoFuncDef {
+	interface GsonPostFixup {
+		void fixupAfterDeserialization();
+	}
+
+	public static class GoFuncDef implements GsonPostFixup {
 		List<GoNameTypePair> Params;
 		List<GoNameTypePair> Results;
 		List<String> TypeParams;
 		int Flags;
+
+		@Override
+		public void fixupAfterDeserialization() {
+			if (Params == null) {
+				Params = List.of();
+			}
+			if (Results == null) {
+				Results = List.of();
+			}
+			if (TypeParams == null) {
+				TypeParams = List.of();
+			}
+		}
 
 		EnumSet<FuncFlags> getFuncFlags() {
 			return FuncFlags.parse(Flags);
@@ -295,7 +331,8 @@ public class GoApiSnapshot {
 			if (Results.size() == 0) {
 				resultsStr = "";
 			}
-			else if (Results.size() == 1 && Results.get(0).Name.isEmpty()) {
+			else if (Results.size() == 1 &&
+				(Results.get(0).Name == null || Results.get(0).Name.isEmpty())) {
 				resultsStr = " " + Results.get(0).DataType;
 			}
 			else {
@@ -313,17 +350,36 @@ public class GoApiSnapshot {
 
 	}
 
-	public static class GoTypeDef {
+	public static class GoTypeDef implements GsonPostFixup {
 
 		@Override
 		public String toString() {
 			return "GoTypeDef []";
+		}
+
+		@Override
+		public void fixupAfterDeserialization() {
+			// empty
+		}
+
+		public int getDataTypeSize(GoApiSnapshot snapshot) throws IOException {
+			throw new IOException();
 		}
 	}
 
 	public static class GoStructDef extends GoTypeDef {
 		List<GoNameTypePair> Fields;
 		List<String> TypeParams;
+
+		@Override
+		public void fixupAfterDeserialization() {
+			if (Fields == null) {
+				Fields = List.of();
+			}
+			if (TypeParams == null) {
+				TypeParams = List.of();
+			}
+		}
 
 		@Override
 		public String toString() {
@@ -337,7 +393,6 @@ public class GoApiSnapshot {
 		public String toString() {
 			return "GoInterfaceDef []";
 		}
-
 	}
 
 	public static class GoAliasDef extends GoTypeDef {
@@ -357,13 +412,27 @@ public class GoApiSnapshot {
 		public String toString() {
 			return "GoBasicDef [DataType=" + DataType + ", EnumValues=" + EnumValues + "]";
 		}
+
 	}
 
 	public static class GoFuncTypeDef extends GoTypeDef {
 		List<GoNameTypePair> Params;
 		List<GoNameTypePair> Results;
 		List<String> TypeParams;
-		int Flags;
+		int Flags; // unused, probably should remove
+
+		@Override
+		public void fixupAfterDeserialization() {
+			if (Params == null) {
+				Params = List.of();
+			}
+			if (Results == null) {
+				Results = List.of();
+			}
+			if (TypeParams == null) {
+				TypeParams = List.of();
+			}
+		}
 
 		@Override
 		public String toString() {
@@ -385,21 +454,38 @@ public class GoApiSnapshot {
 				JsonDeserializationContext context) throws JsonParseException {
 			JsonObject obj = json.getAsJsonObject();
 			String Kind = obj.get("Kind").getAsString();
-			switch (Kind) {
-				case "struct":
-					return context.deserialize(obj, GoStructDef.class);
-				case "iface":
-					return context.deserialize(obj, GoInterfaceDef.class);
-				case "basic":
-					return context.deserialize(obj, GoBasicDef.class);
-				case "alias":
-					return context.deserialize(obj, GoAliasDef.class);
-				case "funcdef":
-					return context.deserialize(obj, GoFuncTypeDef.class);
-			}
-			return null;
+			return switch (Kind) {
+				case "struct" -> context.deserialize(obj, GoStructDef.class);
+				case "iface" -> context.deserialize(obj, GoInterfaceDef.class);
+				case "basic" -> context.deserialize(obj, GoBasicDef.class);
+				case "alias" -> context.deserialize(obj, GoAliasDef.class);
+				case "funcdef" -> context.deserialize(obj, GoFuncTypeDef.class);
+				default -> null;
+			};
 		}
+	}
 
+	static class GsonPostFixupAdapter implements TypeAdapterFactory {
+
+		@Override
+		public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+			TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
+			return new TypeAdapter<T>() {
+				@Override
+				public T read(JsonReader reader) throws IOException {
+					T obj = delegate.read(reader);
+					if (obj instanceof GsonPostFixup postFixup) {
+						postFixup.fixupAfterDeserialization();
+					}
+					return obj;
+				}
+
+				@Override
+				public void write(JsonWriter writer, T value) throws IOException {
+					delegate.write(writer, value);
+				}
+			};
+		}
 	}
 
 	private final Map<String, GoArch> arches;
@@ -412,6 +498,10 @@ public class GoApiSnapshot {
 
 	public GoVer getVer() {
 		return ver;
+	}
+
+	public boolean isInvalid() {
+		return arches.isEmpty();
 	}
 
 	/**

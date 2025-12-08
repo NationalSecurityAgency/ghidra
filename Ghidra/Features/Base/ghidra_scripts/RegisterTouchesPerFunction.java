@@ -25,6 +25,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 
 public class RegisterTouchesPerFunction extends GhidraScript {
+
 	private final static String DIVIDER =
 		"*************************************************************\r\n";
 
@@ -58,7 +59,6 @@ public class RegisterTouchesPerFunction extends GhidraScript {
 		monitor.setMessage("Analyzing registers in " + func.getName());
 
 		String comment = list.getComment(CommentType.PLATE, func.getBody().getMinAddress());
-
 		if (comment != null && comment.indexOf("TOUCHED REGISTER SUMMARY") > -1)
 			return;
 
@@ -133,7 +133,6 @@ public class RegisterTouchesPerFunction extends GhidraScript {
 		buffer.append(DIVIDER);
 
 		if (pushPops.size() > 0) {
-
 			buffer.append("Registers Remaining on Stack:\r\n");
 			buffer.append("   " + getString(pushPops, 8));
 		}

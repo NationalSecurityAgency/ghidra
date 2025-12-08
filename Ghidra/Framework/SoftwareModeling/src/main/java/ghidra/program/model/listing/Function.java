@@ -81,6 +81,11 @@ public interface Function extends Namespace {
 	public final static int UNKNOWN_STACK_DEPTH_CHANGE = Integer.MAX_VALUE;
 	public final static int INVALID_STACK_DEPTH_CHANGE = Integer.MAX_VALUE - 1;
 
+	@Override
+	default Type getType() {
+		return Type.FUNCTION;
+	}
+
 	/**
 	 * Get the name of this function.
 	 *
@@ -697,6 +702,7 @@ public interface Function extends Namespace {
 	 * @throws IllegalArgumentException if an attempt is made to thunk a function or another
 	 * thunk which would result in a loop back to this function or if this function is an external
 	 * function, or specified function is from a different program instance.
+	 * @throws UnsupportedOperationException if this method is invoked on an external function.
 	 */
 	public void setThunkedFunction(Function thunkedFunction) throws IllegalArgumentException;
 

@@ -26,7 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Golang type information about a specific structure type.
+ * Go type information about a specific structure type.
  */
 @StructureMapping(structureName = {"runtime.structtype", "internal/abi.StructType"})
 public class GoStructType extends GoType {
@@ -43,9 +43,7 @@ public class GoStructType extends GoType {
 	}
 
 	/**
-	 * Returns the package path of this structure type.
-	 * 
-	 * @return package path of this structure type
+	 * {@return the package path of this structure type}
 	 * @throws IOException if error reading
 	 */
 	@Markup
@@ -76,9 +74,7 @@ public class GoStructType extends GoType {
 	}
 
 	/**
-	 * Returns the fields defined by this struct type.
-	 * 
-	 * @return list of fields defined by this struct type
+	 * {@return the fields defined by this struct type}
 	 * @throws IOException if error reading
 	 */
 	public List<GoStructField> getFields() throws IOException {
@@ -124,11 +120,12 @@ public class GoStructType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		StructureDataType struct = new StructureDataType(goTypes.getCP(this),
 			goTypes.getTypeName(this), (int) typ.getSize(), goTypes.getDTM());
 
-		// pre-push an empty struct into the cache to prevent endless recursive loops
+		// pre-push an empty (but sized) struct into the cache to prevent endless recursive loops
 		goTypes.cacheRecoveredDataType(this, struct);
 
 		List<GoStructField> skippedFields = new ArrayList<>();
@@ -149,13 +146,13 @@ public class GoStructType extends GoType {
 			}
 
 			try {
-				DataType fieldDT = goTypes.getGhidraDataType(fieldType);
+				DataType fieldDT = goTypes.getDataType(fieldType);
 				struct.replaceAtOffset((int) field.getOffset(), fieldDT, (int) fieldSize,
 					field.getName(), null);
 			}
 			catch (IllegalArgumentException e) {
 				Msg.warn(this,
-					"Failed to add field to go recovered struct: %s".formatted(getDebugId()), e);
+					"Failed to add field to Go recovered struct: %s".formatted(getDebugId()), e);
 			}
 		}
 		for (GoStructField skippedField : skippedFields) {

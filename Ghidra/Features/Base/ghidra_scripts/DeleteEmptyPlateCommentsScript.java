@@ -25,9 +25,6 @@ public class DeleteEmptyPlateCommentsScript extends GhidraScript {
 
 	private static String EMPTY_PLATE = "";
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.script.GhidraScript#run()
-	 */
 	@Override
 	public void run() throws Exception {
 		Listing listing = currentProgram.getListing();
@@ -35,6 +32,7 @@ public class DeleteEmptyPlateCommentsScript extends GhidraScript {
 		if (currentSelection != null && !currentSelection.isEmpty()) {
 			set = currentSelection;
 		}
+
 		int updateCount = 0;
 		AddressIterator iter = listing.getCommentAddressIterator(CommentType.PLATE, set, true);
 		while (iter.hasNext()) {

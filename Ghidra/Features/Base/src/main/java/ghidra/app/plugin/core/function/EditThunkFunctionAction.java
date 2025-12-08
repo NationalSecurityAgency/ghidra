@@ -74,15 +74,17 @@ class EditThunkFunctionAction extends ProgramContextAction {
 		}
 		Address funcEntry = func.getEntryPoint();
 
-		Function refFunc = func.getThunkedFunction(false);		
+		Function refFunc = func.getThunkedFunction(false);
+		Symbol refSymbol = null;
 		if (refFunc == null) {
 			// if not already thunked, fill in a possible value from functions instructions
 			Address thunkAddr = CreateThunkFunctionCmd.getThunkedAddr(program, funcEntry, false);
 			if (thunkAddr != null) {
-				refFunc = functionMgr.getFunctionAt(thunkAddr);
+				refSymbol = program.getSymbolTable().getPrimarySymbol(thunkAddr);
 			}
-		}		
-		Symbol refSymbol = (refFunc == null ? null : refFunc.getSymbol());
+		} else {
+			refSymbol = refFunc.getSymbol();
+		}
 
 		// Prompt for function referenced by thunk
 		ThunkReferenceAddressDialog dialog = new ThunkReferenceAddressDialog(funcPlugin.getTool());

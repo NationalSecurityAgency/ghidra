@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,6 +36,7 @@ import generic.util.WindowUtilities;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
+import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.layout.PairLayout;
 import resources.Icons;
@@ -111,12 +112,15 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 					.build();
 		addAction(eventAction);
 
-		toggleFollowFocusAction = new ToggleActionBuilder("Follow Focus", ACTION_OWNER)
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.description("On causes component table to constant repopulate as focus changes")
-				.onAction(c -> toggleFollowFocus())
-				.selected(true)
-				.build();
+		toggleFollowFocusAction =
+			new ToggleActionBuilder("Navigate on Incoming Location Changes", ACTION_OWNER)
+					.sharedKeyBinding()
+					.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+					.description(
+						"On causes component table to constant repopulate as focus changes")
+					.onAction(c -> toggleFollowFocus())
+					.selected(true)
+					.build();
 		addAction(toggleFollowFocusAction);
 	}
 
@@ -339,7 +343,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		if (!component.isFocusable()) {
 			return false;
 		}
-		if (component instanceof JPanel jPanel) {
+		if (component instanceof JPanel) {
 			if (info.getCycleRootIndex() == null) {
 				return false;
 			}
@@ -723,6 +727,16 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		}
 
 		private List<Component> computeTraversalComps() {
+			try {
+				return doComputeTraversalComps();
+			}
+			catch (IllegalArgumentException e) {
+				Msg.error(this, "Unable to determine focus traversal components for " + component);
+			}
+			return List.of();
+		}
+
+		private List<Component> doComputeTraversalComps() {
 			List<Component> traversals = new ArrayList<>();
 			Container container = (Container) component;
 			FocusTraversalPolicy policy = container.getFocusTraversalPolicy();

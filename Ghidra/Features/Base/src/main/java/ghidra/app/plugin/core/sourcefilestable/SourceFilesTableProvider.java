@@ -232,6 +232,16 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 				.onAction(this::showSourceMapEntries)
 				.buildAndInstallLocal(this);
 
+		new ActionBuilder("View Source File", getName())
+				.popupMenuPath("View Source File")
+				.description("View the Source File")
+				.helpLocation(
+					new HelpLocation(sourceFilesTablePlugin.getName(), "View_Source_File"))
+				.withContext(SourceFilesTableActionContext.class)
+				.enabledWhen(c -> c.getSelectedRowCount() == 1)
+				.onAction(this::viewSourceFile)
+				.buildAndInstallLocal(this);
+
 		new ActionBuilder("Transform File", getName()).popupMenuPath("Tranform File")
 				.description("Enter a file transform for a SourceFile")
 				.helpLocation(new HelpLocation(sourceFilesTablePlugin.getName(), "Transform_File"))
@@ -464,6 +474,17 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 		provider.setTabText(sourceFile.getFilename());
 		provider.setHelpLocation(
 			new HelpLocation(sourceFilesTablePlugin.getName(), "Show_Source_Map_Entries"));
+	}
+
+	private void viewSourceFile(SourceFilesTableActionContext actionContext) {
+		TableService tableService = sourceFilesTablePlugin.getTool().getService(TableService.class);
+		if (tableService == null) {
+			Msg.showWarn(this, null, "No Table Service", "Please add the TableServicePlugin.");
+			return;
+		}
+		SourceFileRowObject sourceFileRow = sourceFilesTable.getSelectedRowObject();
+		SourceFile sourceFile = sourceFileRow.getSourceFile();
+		sourceFilesTablePlugin.openInViewer(sourceFile, 1);
 	}
 
 	private class SourceFilesTableActionContext extends DefaultActionContext {

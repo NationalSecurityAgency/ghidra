@@ -87,7 +87,7 @@ import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
-	private static final String SCREENSHOT_USER_NAME = "User-1";
+	protected static final String SCREENSHOT_USER_NAME = "User-1";
 
 	static {
 		System.setProperty("user.name", "User-1");
@@ -1001,7 +1001,10 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public void selectRow(final JTable table, final int rowIndex) {
 		waitForTable(table);
 
-		runSwing(() -> table.setRowSelectionInterval(rowIndex, rowIndex));
+		runSwing(() -> {
+			table.setRowSelectionInterval(rowIndex, rowIndex);
+			table.requestFocus();
+		});
 		waitForTable(table);
 	}
 

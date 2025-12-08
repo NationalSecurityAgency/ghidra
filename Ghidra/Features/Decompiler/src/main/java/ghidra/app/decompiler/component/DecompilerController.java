@@ -30,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.UndefinedFunction;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import utility.function.Callback;
 
@@ -107,7 +108,8 @@ public class DecompilerController {
 	 * @param viewerPosition the viewer position
 	 */
 	public void display(Program program, ProgramLocation location, ViewerPosition viewerPosition) {
-		if (!decompilerMgr.isBusy() && decompilerPanel.containsLocation(location)) {
+
+		if (isAlreadyDecompiled(location)) {
 			decompilerPanel.setLocation(location, viewerPosition);
 			return;
 		}
@@ -117,6 +119,35 @@ public class DecompilerController {
 			return;
 		}
 		decompilerMgr.decompile(program, location, viewerPosition, null, false);
+	}
+
+	private boolean isAlreadyDecompiled(ProgramLocation location) {
+		if (decompilerMgr.isBusy()) {
+			return false;
+		}
+
+		if (!decompilerPanel.containsLocation(location)) {
+			return false;
+		}
+
+		Function currentFunction = currentDecompileData.getFunction();
+		if (currentFunction instanceof UndefinedFunction) {
+			//
+			// There is an oddness with some Undefined functions where their body overlaps a normal
+			// function body.  If the current function is Undefined, check to see if the location is
+			// also in a defined function.  If so, the return false so the new location will get 
+			// decompiled.
+			// 
+			Program program = location.getProgram();
+			FunctionManager manager = program.getFunctionManager();
+			Address address = location.getAddress();
+			Function function = manager.getFunctionContaining(address);
+			if (!currentFunction.equals(function)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private boolean loadFromCache(Program program, ProgramLocation location,

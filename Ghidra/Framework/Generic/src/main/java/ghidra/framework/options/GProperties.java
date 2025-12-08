@@ -428,7 +428,10 @@ public class GProperties {
 			}
 		}
 		catch (Exception e) {
-			Msg.warn(this, "Can't find field " + value + " in enum class " + enumClassName, e);
+			// This implies we have a saved enum value that no longer exists or we are in a branch
+			// that does not have the enum class that has been saved.  Just emit a debug message to 
+			// help the developer in the case that there may be a real issue.
+			Msg.debug(this, "Can't find field " + value + " in enum class " + enumClassName);
 		}
 		return null;
 	}

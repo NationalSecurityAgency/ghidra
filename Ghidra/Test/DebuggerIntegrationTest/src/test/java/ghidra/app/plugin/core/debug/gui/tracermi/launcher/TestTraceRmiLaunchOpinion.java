@@ -67,8 +67,10 @@ public class TestTraceRmiLaunchOpinion implements TraceRmiLaunchOpinion {
 		}
 
 		@Override
-		protected void launchBackEnd(TaskMonitor monitor, Map<String, TerminalSession> sessions,
+		protected TraceRmiBackEnd launchBackEnd(TaskMonitor monitor,
+				Map<String, TerminalSession> sessions,
 				Map<String, ValStr<?>> args, SocketAddress address) throws Exception {
+			return null;
 		}
 
 		@Override

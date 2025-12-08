@@ -36,6 +36,7 @@ public class SetCommentCmd implements Command<Program> {
 	 * @param addr address of code unit where comment will be placed
 	 * @param commentType valid comment type (see CodeUnit)
 	 * @param comment comment for code unit
+	 * @deprecated Use {@link #SetCommentCmd(Address, CommentType, String)} instead
 	 */
 	@Deprecated(forRemoval = true, since = "11.4")
 	public SetCommentCmd(Address addr, int commentType, String comment) {

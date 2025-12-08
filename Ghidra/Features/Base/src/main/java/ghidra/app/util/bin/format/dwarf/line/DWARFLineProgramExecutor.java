@@ -166,7 +166,7 @@ public final class DWARFLineProgramExecutor implements Closeable {
 			case DW_LNE_define_file: {
 				// this instruction is deprecated in v5+, and not fully supported in this
 				// impl
-				String sourceFilename = reader.readNextUtf8String();
+				String sourceFilename = reader.readNextUtf8String(); // TODO: this is not used, but to be 100% should use dwarfprog's charset 
 				int dirIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				long lastMod = reader.readNext(LEB128::unsigned);
 				long fileLen = reader.readNext(LEB128::unsigned);

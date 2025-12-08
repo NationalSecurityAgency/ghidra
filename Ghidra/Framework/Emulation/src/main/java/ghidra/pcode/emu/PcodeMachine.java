@@ -72,7 +72,6 @@ public interface PcodeMachine<T> {
 		private AccessKind(boolean trapsRead, boolean trapsWrite) {
 			this.trapsRead = trapsRead;
 			this.trapsWrite = trapsWrite;
-			;
 		}
 
 		/**

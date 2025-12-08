@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -158,7 +157,7 @@ public class DebugCOFFSymbol implements StructConverter {
         numberOfAuxSymbols = reader.readByte (index); index += BinaryReader.SIZEOF_BYTE;
 
         // process auxiliary symbols...
-        auxSymbols = new DebugCOFFSymbolAux[Conv.byteToInt(numberOfAuxSymbols)];
+		auxSymbols = new DebugCOFFSymbolAux[Byte.toUnsignedInt(numberOfAuxSymbols)];
 
         for (int i = 0 ; i < numberOfAuxSymbols ; ++i) {
 

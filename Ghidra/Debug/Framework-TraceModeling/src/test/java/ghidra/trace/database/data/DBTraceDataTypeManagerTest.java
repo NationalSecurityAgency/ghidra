@@ -132,7 +132,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		assertEquals(mine.toString(), got.toString()); // TODO: Eww
 
 		try (Transaction tx = trace.openTransaction("To Undo")) {
-			dtm.remove(got, new ConsoleTaskMonitor());
+			dtm.remove(got);
 		}
 
 		assertNull(got = dtm.getDataType(minePath));

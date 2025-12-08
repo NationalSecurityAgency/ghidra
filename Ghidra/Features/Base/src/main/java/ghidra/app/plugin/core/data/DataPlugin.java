@@ -158,8 +158,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Data instance settings action based upon data selection in listing
-		new ActionBuilder("Data Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Data Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATA_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -168,8 +167,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action based upon data selection in listing
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DEFAULT_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -178,8 +176,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for selected datatypes from datatype manager
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(DataTypesActionContext.class)
@@ -197,8 +194,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for composite editor components (stand-alone archive)
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ComponentStandAloneActionContext.class)
@@ -207,8 +203,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		editDataTypeAction =
-			new ActionBuilder("Edit Data Type", getName())
-					.popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
+			new ActionBuilder("Edit Data Type", getName()).popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
 					.popupMenuGroup("BasicData")
 					.withContext(ListingActionContext.class)
 					.enabledWhen(c -> {
@@ -717,7 +712,14 @@ public class DataPlugin extends Plugin implements DataService {
 		if (data == null) {
 			return false;
 		}
-		return data.getDataType().getSettingsDefinitions().length != 0;
+		DataType dt = data.getDataType();
+		if (dt.getSettingsDefinitions().length == 0) {
+			return false;
+		}
+		if (editDefaults) {
+			return !dt.getDefaultSettings().isImmutableSettings();
+		}
+		return true;
 	}
 
 	private void editDefaultDataSettings(ListingActionContext context) {

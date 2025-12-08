@@ -24,13 +24,14 @@ import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 public class BreakpointLocationRow {
 	private final DebuggerBreakpointsProvider provider;
-	private final TraceBreakpoint loc;
+	private final TraceBreakpointLocation loc;
 
-	public BreakpointLocationRow(DebuggerBreakpointsProvider provider, TraceBreakpoint loc) {
+	public BreakpointLocationRow(DebuggerBreakpointsProvider provider,
+			TraceBreakpointLocation loc) {
 		this.provider = provider;
 		this.loc = loc;
 	}
@@ -116,7 +117,7 @@ public class BreakpointLocationRow {
 		return !SleighUtils.UNCONDITIONAL_BREAK.equals(loc.getEmuSleigh(getSnap()));
 	}
 
-	public TraceBreakpoint getTraceBreakpoint() {
+	public TraceBreakpointLocation getTraceBreakpoint() {
 		return loc;
 	}
 }

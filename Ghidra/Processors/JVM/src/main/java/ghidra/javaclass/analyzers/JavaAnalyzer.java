@@ -433,7 +433,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			Data referredData = constantPoolData.getComponent(indexMap.get(index));
 			instruction.addOperandReference(0, referredData.getAddress(), RefType.DATA,
 				SourceType.ANALYSIS);
-			CompoundCmd cmd = new CompoundCmd("Add constant pool reference");
+			CompoundCmd<Program> cmd = new CompoundCmd<>("Add constant pool reference");
 			String constantPoolLabel = "CPOOL[" + index + "]";
 			cmd.add(
 				new AddLabelCmd(referredData.getAddress(), constantPoolLabel, SourceType.ANALYSIS));

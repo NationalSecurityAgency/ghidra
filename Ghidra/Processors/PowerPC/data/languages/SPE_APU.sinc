@@ -2038,9 +2038,9 @@ define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2;
 # RT.h        = temp.l;
 
     lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
-    lo      = lo:4;
+    lo      = zext(lo:4);
     hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
-    hi      = hi:4;
+    hi      = zext(hi:4);
     D       = (( zext(hi) << 32) | zext(lo)  );
 }
 
@@ -2056,9 +2056,9 @@ define pcodeop VectorMultiplyWordHighSignedSaturateFractionalToAccumulator2;
 # ACC        = RT;
 
     lo:$(REGISTER_SIZE)      = (( A & (0x0000000000000000) ) >> 32) * (( B & (0x0000000000000000) ) >> 32);
-    lo      = lo:4;
+    lo      = zext(lo:4);
     hi:$(REGISTER_SIZE)      = (( A & (0xFFFFFFFF00000000) ) >> 32) * (( B & (0xFFFFFFFF00000000) ) >> 32);
-    hi      = hi:4;
+    hi      = zext(hi:4);
     D       = (( zext(hi) << 32) | zext(lo)  );
     ACC     = D;
 }

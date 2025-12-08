@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
@@ -62,9 +61,9 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -77,7 +76,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
 	protected static final Map<State, Color> COLOR_FOR_STATE =
-		Stream.of(State.values()).collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
+		State.VALUES.stream().collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSetBreakpointAction.NAME,
 		AbstractToggleBreakpointAction.NAME, AbstractEnableBreakpointAction.NAME,
@@ -109,7 +108,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	 */
 	protected void hackMarkerBackgroundColors(Program p) throws Exception {
 		SwingUtilities.invokeAndWait(() -> {
-			for (State state : State.values()) {
+			for (State state : State.VALUES) {
 				if (state == State.NONE) {
 					continue;
 				}
@@ -153,11 +152,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	protected abstract void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
 			long dynOffset) throws Throwable;
 
-	protected abstract void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
-			boolean expectedEn) throws Throwable;
+	protected abstract void handleToggleBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint, boolean expectedEn) throws Throwable;
 
-	protected abstract void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
-			throws Throwable;
+	protected abstract void handleDeleteBreakpointInvocation(
+			TraceBreakpointLocation expectedBreakpoint) throws Throwable;
 
 	@Before
 	public void setUpBreakpointMarkerPluginTest() throws Exception {
@@ -484,7 +483,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -523,7 +522,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
-			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
 			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
 			waitOn(delete);
@@ -806,7 +805,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = staticCtx(addr(program, 0x00400123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 
@@ -821,7 +820,7 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 
 		ProgramLocationActionContext ctx = dynamicCtx(trace, addr(trace, 0x55550123));
 		assertTrue(breakpointMarkerPlugin.actionClearBreakpoint.isAddToPopup(ctx));
-		TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(trace));
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint, ctx, true);
 		handleDeleteBreakpointInvocation(brk);
 

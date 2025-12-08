@@ -17,16 +17,17 @@ package ghidra.pcode.emu.jit.gen.type;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.BinOpGen;
-import ghidra.pcode.emu.jit.gen.op.IntSExtOpGen;
 import ghidra.pcode.emu.jit.op.JitBinOp;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -61,6 +62,21 @@ import ghidra.program.model.pcode.PcodeOp;
  * </ul>
  */
 public interface TypeConversions extends Opcodes {
+
+	/**
+	 * Kinds of extension
+	 */
+	enum Ext {
+		/** Zero extension */
+		ZERO,
+		/** Sign extension */
+		SIGN;
+
+		public static Ext forSigned(boolean signed) {
+			return signed ? SIGN : ZERO;
+		}
+	}
+
 	/**
 	 * Emit an {@link Opcodes#IAND} to reduce the number of bits to those permitted in an int of the
 	 * given size.
@@ -72,12 +88,24 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 */
-	static void checkGenIntMask(JitType from, IntJitType to, MethodVisitor mv) {
+	static void checkGenIntExt(JitType from, IntJitType to, Ext ext, MethodVisitor mv) {
 		if (to.size() < from.size() && to.size() < Integer.BYTES) {
-			mv.visitLdcInsn(-1 >>> (Integer.SIZE - to.size() * Byte.SIZE));
-			mv.visitInsn(IAND);
+			int shamt = Integer.SIZE - to.size() * Byte.SIZE;
+			switch (ext) {
+				case ZERO -> {
+					mv.visitLdcInsn(-1 >>> shamt);
+					mv.visitInsn(IAND);
+				}
+				case SIGN -> {
+					mv.visitLdcInsn(shamt);
+					mv.visitInsn(ISHL);
+					mv.visitLdcInsn(shamt);
+					mv.visitInsn(ISHR);
+				}
+			}
 		}
 	}
 
@@ -86,11 +114,12 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static IntJitType generateIntToInt(IntJitType from, IntJitType to, MethodVisitor mv) {
-		checkGenIntMask(from, to, mv);
+	static IntJitType generateIntToInt(IntJitType from, IntJitType to, Ext ext, MethodVisitor mv) {
+		checkGenIntExt(from, to, ext, mv);
 		return to;
 	}
 
@@ -99,12 +128,14 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static IntJitType generateLongToInt(LongJitType from, IntJitType to, MethodVisitor mv) {
+	static IntJitType generateLongToInt(LongJitType from, IntJitType to, Ext ext,
+			MethodVisitor mv) {
 		mv.visitInsn(L2I);
-		checkGenIntMask(from, to, mv);
+		checkGenIntExt(from, to, ext, mv);
 		return to;
 	}
 
@@ -130,10 +161,12 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static IntJitType generateMpIntToInt(MpIntJitType from, IntJitType to, MethodVisitor mv) {
+	static IntJitType generateMpIntToInt(MpIntJitType from, IntJitType to, Ext ext,
+			MethodVisitor mv) {
 		if (to.size() == from.size()) {
 			// We're done. The one leg on the stack becomes the int
 			return to;
@@ -146,7 +179,7 @@ public interface TypeConversions extends Opcodes {
 			mv.visitInsn(POP);
 			// [...,legN]
 		}
-		checkGenIntMask(from, to, mv);
+		checkGenIntExt(from, to, ext, mv);
 		return to;
 	}
 
@@ -158,16 +191,17 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static IntJitType generateToInt(JitType from, IntJitType to, MethodVisitor mv) {
+	static IntJitType generateToInt(JitType from, IntJitType to, Ext ext, MethodVisitor mv) {
 		return switch (from) {
-			case IntJitType iFrom -> generateIntToInt(iFrom, to, mv); // in case of mask
-			case LongJitType lFrom -> generateLongToInt(lFrom, to, mv);
+			case IntJitType iFrom -> generateIntToInt(iFrom, to, ext, mv); // in case of ext
+			case LongJitType lFrom -> generateLongToInt(lFrom, to, ext, mv);
 			case FloatJitType fFrom -> generateFloatToInt(fFrom, to, mv);
 			case DoubleJitType dFrom -> throw new AssertionError("Size mismatch");
-			case MpIntJitType mpFrom -> generateMpIntToInt(mpFrom, to, mv);
+			case MpIntJitType mpFrom -> generateMpIntToInt(mpFrom, to, ext, mv);
 			default -> throw new AssertionError();
 		};
 	}
@@ -183,12 +217,24 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 */
-	static void checkGenLongMask(JitType from, LongJitType to, MethodVisitor mv) {
+	static void checkGenLongExt(JitType from, LongJitType to, Ext ext, MethodVisitor mv) {
 		if (to.size() < from.size()) {
-			mv.visitLdcInsn(-1L >>> (Long.SIZE - to.size() * Byte.SIZE));
-			mv.visitInsn(LAND);
+			int shamt = Long.SIZE - to.size() * Byte.SIZE;
+			switch (ext) {
+				case ZERO -> {
+					mv.visitLdcInsn(-1L >>> shamt);
+					mv.visitInsn(LAND);
+				}
+				case SIGN -> {
+					mv.visitLdcInsn(shamt);
+					mv.visitInsn(DUP);
+					mv.visitInsn(LSHL);
+					mv.visitInsn(LSHR);
+				}
+			}
 		}
 	}
 
@@ -200,27 +246,37 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static LongJitType generateIntToLong(IntJitType from, LongJitType to, MethodVisitor mv) {
-		mv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "toUnsignedLong",
-			MDESC_INTEGER__TO_UNSIGNED_LONG, false);
+	static LongJitType generateIntToLong(IntJitType from, LongJitType to, Ext ext,
+			MethodVisitor mv) {
+		switch (ext) {
+			case ZERO -> mv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "toUnsignedLong",
+				MDESC_INTEGER__TO_UNSIGNED_LONG, false);
+			case SIGN -> {
+				generateSExt(from, mv);
+				mv.visitInsn(I2L);
+			}
+		}
 		// In theory, never necessary, unless long is used temporarily with size 1-4.
-		checkGenLongMask(from, to, mv);
+		checkGenLongExt(from, to, ext, mv);
 		return to;
 	}
 
 	/**
-	 * Emit bytecode to convert one p-code in (in a JVM long) to another
+	 * Emit bytecode to convert one p-code int (in a JVM long) to another
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static LongJitType generateLongToLong(LongJitType from, LongJitType to, MethodVisitor mv) {
-		checkGenLongMask(from, to, mv);
+	static LongJitType generateLongToLong(LongJitType from, LongJitType to, Ext ext,
+			MethodVisitor mv) {
+		checkGenLongExt(from, to, ext, mv);
 		return to;
 	}
 
@@ -246,12 +302,14 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static LongJitType generateMpIntToLong(MpIntJitType from, LongJitType to, MethodVisitor mv) {
+	static LongJitType generateMpIntToLong(MpIntJitType from, LongJitType to, Ext ext,
+			MethodVisitor mv) {
 		if (from.legsAlloc() == 1) {
-			generateIntToLong(IntJitType.forSize(from.size()), to, mv);
+			generateIntToLong(IntJitType.forSize(from.size()), to, ext, mv);
 			return to;
 		}
 		// Remove all but the 2 least-significant legs
@@ -265,7 +323,7 @@ public interface TypeConversions extends Opcodes {
 			// [...,legN-1,legN]
 		}
 		mv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "conv2IntToLong",
-			MDESC_JIT_COMPILED_PASSAGE__CONV_OFFSET2_TO_LONG, false);
+			MDESC_JIT_COMPILED_PASSAGE__CONV_OFFSET2_TO_LONG, true);
 		return to;
 	}
 
@@ -277,16 +335,17 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static LongJitType generateToLong(JitType from, LongJitType to, MethodVisitor mv) {
+	static LongJitType generateToLong(JitType from, LongJitType to, Ext ext, MethodVisitor mv) {
 		return switch (from) {
-			case IntJitType iFrom -> generateIntToLong(iFrom, to, mv);
-			case LongJitType lFrom -> generateLongToLong(lFrom, to, mv); // in case of mask
+			case IntJitType iFrom -> generateIntToLong(iFrom, to, ext, mv);
+			case LongJitType lFrom -> generateLongToLong(lFrom, to, ext, mv); // in case of mask
 			case FloatJitType fFrom -> throw new AssertionError("Size mismatch");
 			case DoubleJitType dFrom -> generateDoubleToLong(dFrom, to, mv);
-			case MpIntJitType mpFrom -> generateMpIntToLong(mpFrom, to, mv);
+			case MpIntJitType mpFrom -> generateMpIntToLong(mpFrom, to, ext, mv);
 			default -> throw new AssertionError();
 		};
 	}
@@ -369,39 +428,63 @@ public interface TypeConversions extends Opcodes {
 	 * 
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static MpIntJitType generateIntToMpInt(IntJitType from, MpIntJitType to, MethodVisitor mv) {
+	static MpIntJitType generateIntToMpInt(IntJitType from, MpIntJitType to, Ext ext,
+			MethodVisitor mv) {
 		if (to.legsAlloc() == 1) {
-			checkGenIntMask(from, IntJitType.forSize(to.size()), mv);
+			checkGenIntExt(from, IntJitType.forSize(to.size()), ext, mv);
 			return to;
 		}
 		// Insert as many more significant legs as needed
-		for (int i = 1; i < to.legsAlloc(); i++) {
-			mv.visitLdcInsn(0);
-			mv.visitInsn(SWAP);
+		// First, figure out what those additional legs should be
+		// [lsl:INT]
+		switch (ext) {
+			case ZERO -> mv.visitLdcInsn(0); // [0:I,lsl:I]
+			case SIGN -> {
+				mv.visitInsn(DUP);
+				// [lsl:INT,lsl:INT]
+				mv.visitLdcInsn(Integer.SIZE - 1);
+				// [31:INT,lsl:INT,lsl:INT]
+				mv.visitInsn(ISHR);
+				// [sign:INT,lsl:INT]
+			}
 		}
+		// NB. Because "from" is the least-significant leg, I can just do this repeatedly.
+		// Do two! less:
+		//  Start at 1, because the lsl is already present.
+		//  End 1 before total, because last op will be SWAP instead.
+		for (int i = 1; i < to.legsAlloc() - 1; i++) {
+			mv.visitInsn(DUP_X1);
+			// [sign:INT,lsl:INT,sign:INT,...]
+		}
+		mv.visitInsn(SWAP);
+		// [lsl:INT,sign:INT,sign:INT,...]
 		return to;
 	}
 
 	/**
-	 * Emit bytecode to convert a p-code int that its int a JVM long to multi-precision int.
+	 * Emit bytecode to convert a p-code int that is in a JVM long to multi-precision int.
 	 * 
+	 * @param gen the code generator
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
-	static MpIntJitType generateLongToMpInt(LongJitType from, MpIntJitType to, MethodVisitor mv) {
+	static MpIntJitType generateLongToMpInt(JitCodeGenerator gen, LongJitType from, MpIntJitType to,
+			Ext ext, MethodVisitor mv) {
 		if (to.legsAlloc() == 1) {
 			mv.visitInsn(L2I);
-			checkGenIntMask(from, IntJitType.forSize(to.size()), mv);
+			checkGenIntExt(from, IntJitType.forSize(to.size()), ext, mv);
 			return to;
 		}
 		if (from.size() <= Integer.BYTES) {
 			mv.visitInsn(L2I);
-			generateIntToMpInt(IntJitType.forSize(from.size()), to, mv);
+			generateIntToMpInt(IntJitType.forSize(from.size()), to, ext, mv);
 			return to;
 		}
 		// Convert, then insert as many more significant legs as needed
@@ -413,29 +496,53 @@ public interface TypeConversions extends Opcodes {
 		mv.visitLdcInsn(Integer.SIZE);
 		mv.visitInsn(LUSHR);
 		mv.visitInsn(L2I);
-		/** This is the upper leg, which may need masking */
-		checkGenIntMask(IntJitType.forSize(from.size() - Integer.BYTES),
-			IntJitType.forSize(to.partialSize()), mv);
-		// [val:LONG,msl:INT]
-		mv.visitInsn(DUP_X2);
-		// [msl:INT,val:LONG,msl:INT]
-		mv.visitInsn(POP);
-		// [msl:INT,val:LONG]
-		mv.visitInsn(L2I);
-		// [msl:INT,lsl:INT]
 
-		// Now add legs
-		if (to.legsAlloc() > 2) {
-			mv.visitLdcInsn(0);
-			// [msl:INT,lsl:INT,0]
-			for (int i = 2; i < to.legsAlloc(); i++) {
-				// [msl:INT,lsl:INT,0]
-				mv.visitInsn(DUP_X2);
-				// [0,msl:INT,lsl:INT,0]
+		/** This is the upper leg, which may need extending */
+		if (to.size() < Long.BYTES) {
+			checkGenIntExt(IntJitType.forSize(from.size() - Integer.BYTES),
+				IntJitType.forSize(to.size() - Integer.BYTES), ext, mv);
+		}
+
+		int tempCount = switch (ext) {
+			case ZERO -> 0;
+			case SIGN -> 1;
+		};
+		try (JvmTempAlloc sign = gen.getAllocationModel().allocateTemp(mv, "sign", tempCount)) {
+			switch (ext) {
+				case ZERO -> {
+				}
+				case SIGN -> {
+					mv.visitInsn(DUP);
+					mv.visitLdcInsn(Integer.SIZE - 1);
+					mv.visitInsn(ISHR);
+					mv.visitVarInsn(ISTORE, sign.idx(0));
+				}
 			}
-			// [...,0,msl:INT,lsl:INT,0]
+
+			// [val:LONG,msl:INT]
+			mv.visitInsn(DUP_X2);
+			// [msl:INT,val:LONG,msl:INT]
 			mv.visitInsn(POP);
-			// [...,0,msl:INT,lsl:INT]
+			// [msl:INT,val:LONG]
+			mv.visitInsn(L2I);
+			// [msl:INT,lsl:INT]
+
+			// Now add legs
+			if (to.legsAlloc() > 2) {
+				switch (ext) {
+					case ZERO -> mv.visitLdcInsn(0);
+					case SIGN -> mv.visitVarInsn(ILOAD, sign.idx(0));
+				}
+				// [msl:INT,lsl:INT,sign:INT]
+				for (int i = 2; i < to.legsAlloc(); i++) {
+					// [msl:INT,lsl:INT,sign:INT]
+					mv.visitInsn(DUP_X2);
+					// [sign:INT,msl:INT,lsl:INT,sign:INT]
+				}
+				// [...,sign:INT,msl:INT,lsl:INT,sign:INT]
+				mv.visitInsn(POP);
+				// [...,sign:INT,msl:INT,lsl:INT]
+			}
 		}
 		return to;
 	}
@@ -446,22 +553,23 @@ public interface TypeConversions extends Opcodes {
 	 * @param gen the code generator
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
 	static MpIntJitType generateMpIntToMpInt(JitCodeGenerator gen, MpIntJitType from,
-			MpIntJitType to, MethodVisitor mv) {
+			MpIntJitType to, Ext ext, MethodVisitor mv) {
 		if (to.size() == from.size()) {
 			// Nothing to convert
 			return to;
 		}
 		// Some special cases to avoid use of local variables:
 		if (to.legsAlloc() == 1) {
-			generateMpIntToInt(from, IntJitType.forSize(to.size()), mv);
+			generateMpIntToInt(from, IntJitType.forSize(to.size()), ext, mv);
 			return to;
 		}
 		if (from.legsAlloc() == 1) {
-			generateIntToMpInt(IntJitType.forSize(from.size()), to, mv);
+			generateIntToMpInt(IntJitType.forSize(from.size()), to, ext, mv);
 			return to;
 		}
 
@@ -469,42 +577,44 @@ public interface TypeConversions extends Opcodes {
 		int legsIn = from.legsAlloc();
 		int legsOut = to.legsAlloc();
 		int localsCount = Integer.min(legsIn, legsOut);
-		int firstIndex = gen.getAllocationModel().nextFreeLocal();
-		Label localsStart = new Label();
-		Label localsEnd = new Label();
-		mv.visitLabel(localsStart);
-		for (int i = 0; i < localsCount; i++) {
-			mv.visitLocalVariable("temp" + i, Type.getDescriptor(int.class), null, localsStart,
-				localsEnd, firstIndex + i);
-			mv.visitVarInsn(ISTORE, firstIndex + i);
-		}
 
-		// Add or remove legs
-		int toAdd = legsOut - legsIn;
-		for (int i = 0; i < toAdd; i++) {
-			mv.visitLdcInsn(0);
-		}
-		int toRemove = legsIn - legsOut;
-		for (int i = 0; i < toRemove; i++) {
-			mv.visitInsn(POP);
-		}
+		try (JvmTempAlloc temp = gen.getAllocationModel().allocateTemp(mv, "temp", localsCount)) {
+			for (int i = 0; i < localsCount; i++) {
+				mv.visitVarInsn(ISTORE, temp.idx(i));
+			}
 
-		// Start pushing them back, but the most significant may need masking
-		int idx = firstIndex + localsCount;
-		idx--;
-		mv.visitVarInsn(ILOAD, idx);
-		if (to.size() < from.size()) {
-			checkGenIntMask(
-				from, // already checked size, so anything greater 
-				IntJitType.forSize(to.partialSize()), mv);
-		}
-		// push the rest back
-		for (int i = 0; i < localsCount; i++) {
-			idx--;
-			mv.visitVarInsn(ILOAD, idx);
-		}
+			// Add or remove legs
+			int toAdd = legsOut - legsIn;
+			if (toAdd >= 1) {
+				switch (ext) {
+					case ZERO -> mv.visitLdcInsn(0);
+					case SIGN -> {
+						mv.visitVarInsn(ILOAD, temp.idx(localsCount - 1));
+						mv.visitLdcInsn(Integer.SIZE - 1);
+						mv.visitInsn(ISHR);
+					}
+				}
+			}
+			for (int i = 1; i < toAdd; i++) {
+				mv.visitInsn(DUP);
+			}
+			int toRemove = -toAdd;
+			for (int i = 0; i < toRemove; i++) {
+				mv.visitInsn(POP);
+			}
 
-		mv.visitLabel(localsEnd);
+			// Start pushing them back, but the most significant may need extending
+			mv.visitVarInsn(ILOAD, temp.idx(localsCount - 1));
+			if (to.size() < from.size()) {
+				checkGenIntExt(
+					from, // already checked size, so anything greater 
+					IntJitType.forSize(to.partialSize()), ext, mv);
+			}
+			// push the rest back
+			for (int i = 1; i < localsCount; i++) {
+				mv.visitVarInsn(ILOAD, temp.idx(localsCount - i - 1));
+			}
+		}
 		return to;
 	}
 
@@ -518,17 +628,18 @@ public interface TypeConversions extends Opcodes {
 	 * @param gen the code generator
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the destination type
 	 */
 	static MpIntJitType generateToMpInt(JitCodeGenerator gen, JitType from, MpIntJitType to,
-			MethodVisitor mv) {
+			Ext ext, MethodVisitor mv) {
 		return switch (from) {
-			case IntJitType iFrom -> generateIntToMpInt(iFrom, to, mv);
-			case LongJitType lFrom -> generateLongToMpInt(lFrom, to, mv);
+			case IntJitType iFrom -> generateIntToMpInt(iFrom, to, ext, mv);
+			case LongJitType lFrom -> generateLongToMpInt(gen, lFrom, to, ext, mv);
 			case FloatJitType fFrom -> throw new AssertionError("Size mismatch");
 			case DoubleJitType dFrom -> throw new AssertionError("Size mismatch");
-			case MpIntJitType mpFrom -> generateMpIntToMpInt(gen, mpFrom, to, mv);
+			case MpIntJitType mpFrom -> generateMpIntToMpInt(gen, mpFrom, to, ext, mv);
 			default -> throw new AssertionError();
 		};
 	}
@@ -543,16 +654,18 @@ public interface TypeConversions extends Opcodes {
 	 * @param gen the code generator
 	 * @param from the source type
 	 * @param to the destination type
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the resulting (destination) type
 	 */
-	static JitType generate(JitCodeGenerator gen, JitType from, JitType to, MethodVisitor mv) {
+	static JitType generate(JitCodeGenerator gen, JitType from, JitType to, Ext ext,
+			MethodVisitor mv) {
 		return switch (to) {
-			case IntJitType iTo -> generateToInt(from, iTo, mv);
-			case LongJitType lTo -> generateToLong(from, lTo, mv);
+			case IntJitType iTo -> generateToInt(from, iTo, ext, mv);
+			case LongJitType lTo -> generateToLong(from, lTo, ext, mv);
 			case FloatJitType fTo -> generateToFloat(from, fTo, mv);
 			case DoubleJitType dTo -> generateToDouble(from, dTo, mv);
-			case MpIntJitType mpTo -> generateToMpInt(gen, from, mpTo, mv);
+			case MpIntJitType mpTo -> generateToMpInt(gen, from, mpTo, ext, mv);
 			default -> throw new AssertionError();
 		};
 	}
@@ -695,9 +808,6 @@ public interface TypeConversions extends Opcodes {
 	/**
 	 * Emit code to extend a signed value of the given type to fill its host JVM type.
 	 * 
-	 * <p>
-	 * This is implemented in the same manner as {@link IntSExtOpGen int_sext}.
-	 * 
 	 * @param type the p-code type
 	 * @param mv the method visitor
 	 * @return the p-code type that exactly fits the host JVM type, i.e., the resulting p-code type.
@@ -728,21 +838,6 @@ public interface TypeConversions extends Opcodes {
 	}
 
 	/**
-	 * Convert a signed {@link IntJitType#I4 int4} to {@link LongJitType#I8 int8}.
-	 * 
-	 * <p>
-	 * Note that if conversion from a smaller int type is needed, the generator must first call
-	 * {@link #generateSExt(JitType, MethodVisitor)}.
-	 * 
-	 * @param mv the method visitor
-	 * @return the resulting type ({@link LongJitType#I8 int8})
-	 */
-	static LongJitType generateSExtIntToLong(MethodVisitor mv) {
-		mv.visitInsn(I2L);
-		return LongJitType.I8;
-	}
-
-	/**
 	 * Select the larger of two types and emit code to convert an unsigned value of the first type
 	 * to the host JVM type of the selected type.
 	 * 
@@ -769,59 +864,38 @@ public interface TypeConversions extends Opcodes {
 	 * generateBinOpRunCode} if we're using it. The two resulting types should now be equal, and we
 	 * can examine them and emit the correct bytecodes.
 	 * 
+	 * @param gen the code generator
 	 * @param myType the type of an operand, probably in a binary operator
 	 * @param otherType the type of the other operand of a binary operator
+	 * @param ext whether the extension is signed or not
 	 * @param mv the method visitor
 	 * @return the new type of the operand
 	 */
-	static JitType forceUniformZExt(JitType myType, JitType otherType, MethodVisitor mv) {
-		return switch (myType.ext()) {
-			case IntJitType mt -> switch (otherType.ext()) {
+	static JitType forceUniform(JitCodeGenerator gen, JitType myType, JitType otherType,
+			Ext ext, MethodVisitor mv) {
+		// TODO: Why was .ext() being used here (inconsistently, too)
+		return switch (myType) {
+			case IntJitType mt -> switch (otherType) {
 				case IntJitType ot -> mt;
-				case LongJitType ot -> generateIntToLong(mt, ot, mv);
-				case MpIntJitType ot -> generateIntToMpInt(mt, MpIntJitType.forSize(mt.size()),
-					mv);
+				case LongJitType ot -> generateIntToLong(mt, ot, ext, mv);
+				// FIXME: Would be nice to allow non-uniform mp-int sizes
+				case MpIntJitType ot -> generateIntToMpInt(mt, ot, ext, mv);
 				default -> throw new AssertionError();
 			};
 			case LongJitType mt -> switch (otherType) {
 				case IntJitType ot -> mt; // Other operand needs up-conversion
 				case LongJitType ot -> mt;
-				case MpIntJitType ot -> generateLongToMpInt(mt, MpIntJitType.forSize(mt.size()),
-					mv);
+				// FIXME: Would be nice to allow non-uniform mp-int sizes
+				case MpIntJitType ot -> generateLongToMpInt(gen, mt, ot, ext, mv);
 				default -> throw new AssertionError();
 			};
-			case MpIntJitType mt -> mt; // Other may need up-conversion
-			default -> throw new AssertionError();
-		};
-	}
-
-	/**
-	 * Do the same as {@link #forceUniformZExt(JitType, JitType, MethodVisitor)}, but with signed
-	 * values.
-	 * 
-	 * @param myType the type of an operand, probably in a binary operator
-	 * @param otherType the type of the other operand of a binary operator
-	 * @param mv the method visitor
-	 * @return the new type of the operand
-	 */
-	static JitType forceUniformSExt(JitType myType, JitType otherType, MethodVisitor mv) {
-		JitType myExtType = generateSExt(myType, mv);
-		return switch (myExtType) {
-			case IntJitType mt -> switch (otherType.ext()) { // Don't extend other, yet
-				case IntJitType ot -> mt;
-				case LongJitType ot -> generateSExtIntToLong(mv);
-				case MpIntJitType ot -> generateIntToMpInt(mt, MpIntJitType.forSize(mt.size()),
-					mv);
-				default -> throw new AssertionError();
-			};
-			case LongJitType mt -> switch (otherType.ext()) {
+			// FIXME: Would be nice to allow non-uniform mp-int sizes
+			case MpIntJitType mt -> switch (otherType) {
 				case IntJitType ot -> mt; // Other operand needs up-conversion
-				case LongJitType ot -> mt;
-				case MpIntJitType ot -> generateLongToMpInt(mt, MpIntJitType.forSize(mt.size()),
-					mv);
+				case LongJitType ot -> mt; // Other operand needs up-conversion
+				case MpIntJitType ot -> generateMpIntToMpInt(gen, mt, ot, ext, mv);
 				default -> throw new AssertionError();
 			};
-			case MpIntJitType mt -> mt; // Other may need up-conversion
 			default -> throw new AssertionError();
 		};
 	}

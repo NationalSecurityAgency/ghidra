@@ -701,8 +701,8 @@ public class DataTypeUtilities {
 	 * @param namespace namespace constraint or null for no namespace.
 	 * @param dtName datatype name
 	 * @param classConstraint type of datatype by its interface class (e.g., {@link Structure}).
-	 * @param parentNamespacePreferred if true matching on parent namespace is
-	 * enabled and preferred over match on actual namespace.  This is relavent for
+	 * @param parentNamespacePreferred if true matching on parent namespace is 
+	 * enabled and preferred over match on actual namespace.  This is relevant for
 	 * class structure searching.
 	 * @return preferred datatype match if found
 	 */
@@ -734,7 +734,7 @@ public class DataTypeUtilities {
 	 * Compare datatype category path lengths for sorting shortest path first.
 	 * Tie-breaker based on path name sort.
 	 * Rationale is to provide some deterministic datatype selection behavior and
-	 * to allow duplicates within a hierarchical orgainzation to prefer the short
+	 * to allow duplicates within a hierarchical organization to prefer the short
 	 * path to reduce bad namespace matches.
 	 */
 	private static final Comparator<DataType> DATATYPE_CATEGORY_PATH_LENGTH_COMPARATOR =

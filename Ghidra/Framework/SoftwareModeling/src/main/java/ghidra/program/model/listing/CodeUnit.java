@@ -136,7 +136,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @return the comment string of the appropriate type or null if no comment of
-	 * that type exists for this codeunit
+	 * that type exists for this code unit
 	 * @throws IllegalArgumentException if type is not one of the
 	 * three types of comments supported
 	 * @deprecated use {@link #getComment(CommentType)} instead
@@ -253,7 +253,8 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public byte[] getBytes() throws MemoryAccessException;
 
 	/**
-	 * Copies max(buffer.length, code unit length) bytes into buffer starting at location offset in buffer.
+	 * Copies max(buffer.length, code unit length) bytes into buffer starting at the given offset in 
+	 * {@code buffer}.
 	 * @param buffer byte array to copy into
 	 * @param bufferOffset offset in byte array the copy will start
 	 * @throws MemoryAccessException if the full number of bytes could not be read.
@@ -343,7 +344,6 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 */
 	public Program getProgram();
 
-	//////////////////////////////////////////////////////////////////////////
 	/**
 	 * Gets the external reference (if any) at the opIndex
 	 * @param opIndex the operand index to look for external references
@@ -407,7 +407,7 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	 * Get the Address for the given operand index if one exists.  Data
 	 * objects have one operand (the value).
 	 * @param opIndex index of the operand.
-	 * @return An addres if the operand represents a fully qualified
+	 * @return An address if the operand represents a fully qualified
 	 * address (given the context), or if the operand is a Scalar treated
 	 * as an address. Null is returned if no address or scalar exists on that 
 	 * operand.

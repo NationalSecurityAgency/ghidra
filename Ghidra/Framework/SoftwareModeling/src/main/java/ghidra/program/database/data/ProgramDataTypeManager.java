@@ -266,6 +266,10 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 		// use could be an issue.
 		try {
 			// TODO: Should use replacement type instead of clearing
+
+			// Note: use of DUMMY here is intentional, since we do not want to interrupt the 
+			// deleting of these types, as they may have a relationship that we wish to preserve.
+			// All need to be deleted to remain in a consistent state.
 			program.getCodeManager().clearData(deletedIds, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {

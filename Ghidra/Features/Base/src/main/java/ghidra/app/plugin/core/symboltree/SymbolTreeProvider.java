@@ -19,6 +19,7 @@ import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.BorderLayout;
+import java.awt.Point;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.event.MouseAdapter;
@@ -167,7 +168,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				return;
 			}
 
-			maybeGoToSymbol();
+			SymbolNode symbolNode = getSelectedSymbolNode();
+			maybeGoToSymbol(symbolNode);
 			contextChanged();
 		});
 
@@ -175,14 +177,24 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 
-				// This code serves to perform navigation in  the case that the selection handler
-				// above does not, as is the case when the node is already selected.  This code
-				// will get called on the mouse release, whereas the selection handler gets called
-				// on the mouse pressed.
+				// This code serves to perform navigation in the case that the selection handler
+				// above does not, as is the case when the clicked node is already selected.  This
+				// code will get called on the mouse clicked, whereas the selection handler gets 
+				// called on the mouse pressed.
 				// For now, just attempt to perform the goto.  It may get called twice, but this
 				// should have no real impact on performance.
+				Point p = e.getPoint();
+				GTreeNode clickedNode = newTree.getNodeForLocation(p.x, p.y);
+				if (clickedNode == null) {
+					return;
+				}
 
-				maybeGoToSymbol();
+				SymbolNode symbolNode = getSelectedSymbolNode();
+				if (!clickedNode.equals(symbolNode)) {
+					return;
+				}
+
+				maybeGoToSymbol(symbolNode);
 			}
 		});
 
@@ -211,19 +223,24 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private void maybeGoToSymbol() {
-
+	private SymbolNode getSelectedSymbolNode() {
 		TreePath[] paths = tree.getSelectionPaths();
 		if (paths == null || paths.length != 1) {
-			return;
+			return null;
 		}
 
 		Object object = paths[0].getLastPathComponent();
-		if (!(object instanceof SymbolNode)) {
-			return;
+		if (object instanceof SymbolNode symbolNode) {
+			return symbolNode;
 		}
 
-		SymbolNode node = (SymbolNode) object;
+		return null;
+	}
+
+	private void maybeGoToSymbol(SymbolNode node) {
+		if (node == null) {
+			return;
+		}
 		Symbol symbol = node.getSymbol();
 		SymbolType type = symbol.getSymbolType();
 		if (!type.isNamespace() || type == SymbolType.FUNCTION) {
@@ -605,15 +622,22 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	// @formatter:off
 		return new DomainObjectListenerBuilder(this)
 			.ignoreWhen(this::ignoreEvents)
-			.any(RESTORED).terminate(this::reloadTree)
+			.any(RESTORED).terminate(this::reloadTree)			
 			.with(ProgramChangeRecord.class)
 				.each(SYMBOL_RENAMED).call(this::processSymbolRenamed)
 				.each(SYMBOL_DATA_CHANGED, SYMBOL_SCOPE_CHANGED).call(this::processSymbolChanged)
-				.each(FUNCTION_CHANGED).call(this::processFunctionChanged)
 				.each(SYMBOL_ADDED).call(this::processSymbolAdded)
 				.each(SYMBOL_REMOVED).call(this::processSymbolRemoved)
 				.each(EXTERNAL_ENTRY_ADDED, EXTERNAL_ENTRY_REMOVED)
 					.call(this::processExternalEntryChanged)
+				.any(EXTERNAL_PATH_CHANGED, EXTERNAL_NAME_ADDED, 
+					  EXTERNAL_NAME_REMOVED, EXTERNAL_NAME_CHANGED)
+						// Rather than try to find each affected symbol, it is easier to just reload
+						// the tree.  This is infrequent enough that it should not be disruptive.
+						.call(this::reloadTree) 
+					
+				// handle function changes specially so that we can perform coalesce changes
+				.any(FUNCTION_CHANGED).call(this::processAllFunction)
 			.build();
 		// @formatter:on
 	}
@@ -626,10 +650,24 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		symbolRemoved((Symbol) pcr.getObject());
 	}
 
-	private void processFunctionChanged(ProgramChangeRecord pcr) {
-		Function function = (Function) pcr.getObject();
-		Symbol symbol = function.getSymbol();
-		symbolChanged(symbol);
+	private void processAllFunction(DomainObjectChangedEvent e) {
+
+		// grab all function records and remove duplicates so that we can make 1 task for all 
+		// changes to a given function
+		Set<Symbol> symbols = new HashSet<>();
+		int n = e.numRecords();
+		for (int i = 0; i < n; i++) {
+			DomainObjectChangeRecord r = e.getChangeRecord(i);
+			if (r instanceof FunctionChangeRecord fcr) {
+				Function f = fcr.getFunction();
+				Symbol s = f.getSymbol();
+				symbols.add(s);
+			}
+		}
+
+		for (Symbol s : symbols) {
+			symbolChanged(s);
+		}
 	}
 
 	private void processSymbolChanged(ProgramChangeRecord pcr) {
@@ -851,5 +889,4 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			task.run(monitor);
 		}
 	}
-
 }

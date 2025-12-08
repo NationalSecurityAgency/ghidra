@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,6 +165,17 @@ public class ApplicationTrustManagerFactory {
 		}
 		return wrappedTrustManagers.clone();
 	}
+	
+	/**
+     * Get trust manager after performing any necessary initialization.
+     * @return trust managers
+     */
+    public static synchronized X509TrustManager getTrustManager() {
+        if (trustManager == null) {
+            init();
+        }
+        return trustManager;
+    }
 
 	/**
 	 * Invalidate the active keystore and key manager 
@@ -235,7 +246,7 @@ public class ApplicationTrustManagerFactory {
 		 */
 		@Override
 		public X509Certificate[] getAcceptedIssuers() {
-			return null; // no CA's have been stipulated
+			return NO_CERTS; // no CA's have been stipulated
 		}
 
 	}

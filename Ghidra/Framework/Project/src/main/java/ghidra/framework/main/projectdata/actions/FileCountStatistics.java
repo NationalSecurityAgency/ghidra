@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,8 @@ class FileCountStatistics {
 	private int deleted;
 
 	FileCountStatistics(int fileCount) {
+		// NOTE: Do the possibility of file duplication through the selection of linked-folder
+		// content, this count is an estimate only
 		this.fileCount = fileCount;
 	}
 
@@ -72,9 +74,10 @@ class FileCountStatistics {
 
 	public void showReport(Component parent) {
 		// don't show results if only one file processed.
-		if (getTotalProcessed() == 1) {
+		if (fileCount == 1 && getTotalProcessed() == 1) {
 			return;
 		}
+
 		// don't show results if all selected files deleted
 		if (deleted == fileCount) {
 			return;
@@ -97,20 +100,24 @@ class FileCountStatistics {
 				builder.append("<tr><td>In Use: </td><td>").append(fileInUse).append("</td></tr>");
 			}
 			if (versionedDeclined > 0) {
-				builder.append("<tr><td>   Versioned: </td><td>").append(versionedDeclined).append(
-					"</td></tr>");
+				builder.append("<tr><td>   Versioned: </td><td>")
+						.append(versionedDeclined)
+						.append("</td></tr>");
 			}
 			if (checkedOutVersioned > 0) {
-				builder.append("<tr><td>Checked-out: </td><td>").append(checkedOutVersioned).append(
-					"</td></tr>");
+				builder.append("<tr><td>Checked-out: </td><td>")
+						.append(checkedOutVersioned)
+						.append("</td></tr>");
 			}
 			if (readOnlySkipped > 0) {
-				builder.append("<tr><td>Read only: </td><td>").append(readOnlySkipped).append(
-					"</td></tr>");
+				builder.append("<tr><td>Read only: </td><td>")
+						.append(readOnlySkipped)
+						.append("</td></tr>");
 			}
 			if (generalFailure > 0) {
-				builder.append("<tr><td>Other: </td><td>").append(generalFailure).append(
-					"</td></tr>");
+				builder.append("<tr><td>Other: </td><td>")
+						.append(generalFailure)
+						.append("</td></tr>");
 			}
 			builder.append("</table>");
 		}

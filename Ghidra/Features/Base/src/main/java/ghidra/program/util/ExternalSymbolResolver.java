@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import db.Transaction;
+import ghidra.app.util.opinion.Loaded;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.*;
@@ -108,37 +109,30 @@ public class ExternalSymbolResolver implements Closeable {
 	 * is called.
 	 * <p>
 	 * The program should be fully persisted to the project if using this method, otherwise use
-	 * {@link #addProgramToFixup(String, Program)} and specify the pathname the program will 
-	 * be saved to.
+	 * {@link #addProgramToFixup(Loaded)}.
 	 *  
 	 * @param program {@link Program} to fix
 	 */
 	public void addProgramToFixup(Program program) {
-		addProgramToFixup(program.getDomainFile().getPathname(), program);
-	}
-
-	/**
-	 * Queues a program into this session that will be fixed when {@link #fixUnresolvedExternalSymbols()}
-	 * is called.
-	 *  
-	 * @param programPath string project path to the program
-	 * @param program {@link Program} to fix
-	 */
-	public void addProgramToFixup(String programPath, Program program) {
+		String programPath = program.getDomainFile().getPathname();
 		programsToFix.add(new ProgramSymbolResolver(program, programPath));
-		addLoadedProgram(programPath, program);
-	}
-
-	/**
-	 * Adds an already opened program to this session, allowing it to be used as an external
-	 * library without needing to look it up in the current project.
-	 * 
-	 * @param programPath project path to already opened program
-	 * @param program {@link Program}
-	 */
-	public void addLoadedProgram(String programPath, Program program) {
 		if (loadedPrograms.put(programPath, program) == null) {
 			program.addConsumer(this);
+		}
+	}
+
+	/**
+	 * Queues a {@link Loaded} {@link Program} into this session that will be fixed when 
+	 * {@link #fixUnresolvedExternalSymbols()} is called.
+	 *  
+	 * @param loaded The {@link Loaded} {@link Program} to fix
+	 */
+	public void addProgramToFixup(Loaded<Program> loaded) {
+		Program program = loaded.getDomainObject(this);
+		String programPath = loaded.getProjectFolderPath() + loaded.getName();
+		programsToFix.add(new ProgramSymbolResolver(program, programPath));
+		if (loadedPrograms.put(programPath, program) != null) {
+			program.release(this);
 		}
 	}
 
@@ -162,7 +156,7 @@ public class ExternalSymbolResolver implements Closeable {
 
 	/**
 	 * Resolves any unresolved external symbols in each program that has been queued up via
-	 * {@link #addProgramToFixup(String, Program)}.
+	 * {@link #addProgramToFixup(Loaded)} or {@link #addProgramToFixup(Program)}.
 	 * 
 	 * @throws CancelledException if cancelled
 	 */
@@ -192,7 +186,7 @@ public class ExternalSymbolResolver implements Closeable {
 	 * released during {@link #close()} of this ExternalSymbolServer instance.
 	 * <p>
 	 * This cache is shared between all ProgramSymbolResolver instances (that were created
-	 * by calling {@link #addProgramToFixup(String, Program)}).
+	 * by calling {@link #addProgramToFixup(Loaded)} or {@link #addProgramToFixup(Program)}).
 	 * 
 	 * @param libPath project path to a library program
 	 * @return {@link Program}, or null if not found or other error during opening

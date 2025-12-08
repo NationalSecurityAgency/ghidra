@@ -28,6 +28,7 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -68,11 +69,11 @@ public class RustUtilities {
 		// can later query and use as a return value for this method.
 		GenericMatchAction<AtomicBoolean> action =
 			new GenericMatchAction<AtomicBoolean>(new AtomicBoolean()) {
-			@Override
-			public void apply(Program prog, Address addr, Match match) {
-				getMatchValue().set(true);
-			}
-		};
+				@Override
+				public void apply(Program prog, Address addr, Match match) {
+					getMatchValue().set(true);
+				}
+			};
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Rust signatures");
 		for (byte[] sig : RustConstants.RUST_SIGNATURES) {
 			searcher.addPattern(new GenericByteSequencePattern<AtomicBoolean>(sig, action));
@@ -97,9 +98,11 @@ public class RustUtilities {
 
 	public static int addExtensions(Program program, TaskMonitor monitor, String subPath)
 			throws IOException {
-		Processor processor = program.getLanguageCompilerSpecPair().getLanguage().getProcessor();
-		ResourceFile module = Application.getModuleDataSubDirectory(processor.toString(),
-			RustConstants.RUST_EXTENSIONS_PATH + subPath);
+		Language language = program.getLanguageCompilerSpecPair().getLanguage();
+		Processor processor = language.getProcessor();
+		int bitSize = language.getLanguageDescription().getSize();
+		String spath = RustConstants.RUST_EXTENSIONS_PATH + subPath + bitSize;
+		ResourceFile module = Application.getModuleDataSubDirectory(processor.toString(), spath);
 
 		int extensionCount = 0;
 

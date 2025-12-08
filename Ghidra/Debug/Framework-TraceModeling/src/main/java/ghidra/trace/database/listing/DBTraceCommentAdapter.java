@@ -34,7 +34,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
 import ghidra.trace.util.TraceChangeRecord;
@@ -103,9 +102,6 @@ public class DBTraceCommentAdapter
 		}
 	}
 
-	/**
-	 * Construct the adapter
-	 */
 	public DBTraceCommentAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
@@ -131,7 +127,8 @@ public class DBTraceCommentAdapter
 	 * 
 	 * @param lifespan the lifespan
 	 * @param address the address
-	 * @param commentType the type of comment as in {@link Listing#setComment(Address, int, String)}
+	 * @param commentType the type of comment as in
+	 *            {@link Listing#setComment(Address, CommentType, String)}
 	 * @param comment the comment
 	 */
 	public void setComment(Lifespan lifespan, Address address, CommentType commentType,
@@ -155,10 +152,9 @@ public class DBTraceCommentAdapter
 				entry.set((byte) commentType.ordinal(), comment);
 			}
 		}
-		trace.setChanged(new TraceChangeRecord<TraceAddressSnapRange, String>(
-			TraceEvents.byCommentType(commentType),
-			DBTraceSpaceKey.create(address.getAddressSpace(), null, 0),
-			new ImmutableTraceAddressSnapRange(address, lifespan), oldValue, comment));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.byCommentType(commentType),
+			address.getAddressSpace(), new ImmutableTraceAddressSnapRange(address, lifespan),
+			oldValue, comment));
 	}
 
 	/**

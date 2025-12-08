@@ -291,16 +291,28 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		else {
 			domainFile = treePanel.getSelectedDomainFile();
 			if (domainFile != null) {
-				folderNameLabel.setText(domainFile.getParent().getPathname());
-				nameField.setText(domainFile.getName());
-				domainFolder = domainFile.getParent();
-			}
-			else {
-				domainFolder = treePanel.getSelectedDomainFolder();
-				if (domainFolder == null) {
-					domainFolder = project.getProjectData().getRootFolder();
+				LinkFileInfo linkInfo = domainFile.getLinkInfo();
+				if (linkInfo != null && linkInfo.isFolderLink()) {
+					// Ensure we don't have a folder name conflict
+					if (domainFile.getParent().getFolder(domainFile.getName()) == null) {
+						domainFolder = linkInfo.getLinkedFolder();
+						domainFile = null;
+					}
 				}
+				else {
+					folderNameLabel.setText(domainFile.getParent().getPathname());
+					nameField.setText(domainFile.getName());
+					domainFolder = domainFile.getParent();
+				}
+			}
 
+			if (domainFile == null) {
+				if (domainFolder == null) {
+					domainFolder = treePanel.getSelectedDomainFolder();
+					if (domainFolder == null) {
+						domainFolder = project.getProjectData().getRootFolder();
+					}
+				}
 				folderNameLabel.setText(domainFolder.getPathname());
 				if (nameField.isEditable()) {
 					if (nameField.getText().length() > 0) {
@@ -349,7 +361,9 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	 * @param file the file
 	 */
 	public void selectDomainFile(DomainFile file) {
-		Swing.runLater(() -> treePanel.selectDomainFile(file));
+		if (file != null) {
+			Swing.runLater(() -> treePanel.selectDomainFile(file));
+		}
 	}
 
 	@Override
@@ -582,20 +596,6 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		if (s != null) {
 			treePanel.findAndSelect(s);
 		}
-	}
-
-	protected static DomainFileFilter getDefaultFilter(DataTreeDialogType type) {
-		if (type == CHOOSE_FOLDER || type == OPEN) {
-			// return filter which forces folder selection and allow navigation into linked-folders
-			return new DomainFileFilter() {
-
-				@Override
-				public boolean accept(DomainFile df) {
-					return true; // show all files (legacy behavior)
-				}
-			};
-		}
-		return null;
 	}
 
 	private class FieldKeyListener extends KeyAdapter {

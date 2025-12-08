@@ -25,6 +25,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.DiffUtility;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -47,6 +48,7 @@ public class ExternalDebugFileSymbolImporter {
 	private int funcSymbolsCopied;
 	private int dataSymbolsCopied;
 	private int symbolsSkipped;
+	private int symbolCopyFailCount;
 	private int totalSymbolCount;
 
 	public ExternalDebugFileSymbolImporter(Program program, Program externalDebugProgram,
@@ -85,37 +87,48 @@ public class ExternalDebugFileSymbolImporter {
 			log.appendException(e);
 		}
 		finally {
-
-			Msg.info(this, "Copied %d/%d of %d func/data/total symbols from external debug file"
-					.formatted(funcSymbolsCopied, dataSymbolsCopied, totalSymbolCount));
+			Msg.info(this,
+				"Copied %d/%d/%d/%d func/data/fail/total symbols from external debug file"
+						.formatted(funcSymbolsCopied, dataSymbolsCopied, symbolCopyFailCount,
+							totalSymbolCount));
 		}
 	}
 
 	private void copyExtSymbol(Symbol extSym)
 			throws InvalidInputException, OverlappingFunctionException, CodeUnitInsertionException {
+		Address extAddr = extSym.getAddress();
+		Address localAddr = DiffUtility.getCompatibleMemoryAddress(extAddr, program);
+		if (localAddr == null) {
+			Msg.info(this, "Unable to copy external debug file symbol %s@%s"
+					.formatted(extSym.getName(), extAddr));
+			symbolCopyFailCount++;
+			return;
+		}
+
 		SymbolType symType = extSym.getSymbolType();
 		String name = extSym.getName();
-		Address addr = extSym.getAddress();
 		if (symType == SymbolType.FUNCTION && extSym.getObject() instanceof Function extFunc &&
 			!extFunc.isThunk()) {
-			Function existingFunction = funcMgr.getFunctionAt(addr);
+			Function existingFunction = funcMgr.getFunctionAt(localAddr);
 			if (existingFunction == null) {
 				existingFunction =
-					funcMgr.createFunction(name, addr, new AddressSet(addr), SourceType.IMPORTED);
+					funcMgr.createFunction(name, localAddr, new AddressSet(localAddr),
+						SourceType.IMPORTED);
 			}
 			else if (!name.equals(existingFunction.getName())) {
-				addLabelIfNeeded(name, addr);
+				addLabelIfNeeded(name, localAddr);
 			}
 			funcSymbolsCopied++;
 		}
 		else if (symType == SymbolType.LABEL && extSym.getObject() instanceof Data extData) {
 			if (Undefined.isUndefined(extData.getDataType()) &&
-				DataUtilities.isUndefinedRange(program, addr, addr.add(extData.getLength()))) {
+				DataUtilities.isUndefinedRange(program, localAddr,
+					localAddr.add(extData.getLength()))) {
 				DataType undefined = Undefined.getUndefinedDataType(extData.getLength());
-				DataUtilities.createData(program, addr, undefined, -1,
+				DataUtilities.createData(program, localAddr, undefined, -1,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
-			addLabelIfNeeded(name, addr);
+			addLabelIfNeeded(name, localAddr);
 			dataSymbolsCopied++;
 		}
 		else {

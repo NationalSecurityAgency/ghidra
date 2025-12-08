@@ -17,15 +17,17 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 
 import javax.swing.Icon;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
@@ -59,12 +61,14 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	public static final String PREFIX_PARAM_EXTTOOL = "env:GHIDRA_LANG_EXTTOOL_";
 
 	public static final int DEFAULT_TIMEOUT_MILLIS = 10000;
+	public static final int DEFAULT_CONNECTION_TIMEOUT_MILLIS =
+		(int) Duration.ofMinutes(10).toMillis();
 
 	protected record PtyTerminalSession(Terminal terminal, Pty pty, PtySession session,
 			Thread waiter) implements TerminalSession {
 		@Override
 		public void terminate() throws IOException {
-			terminal.terminated();
+			terminal.terminated(-1);
 			session.destroyForcibly();
 			pty.close();
 			waiter.interrupt();
@@ -80,7 +84,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			implements TerminalSession {
 		@Override
 		public void terminate() throws IOException {
-			terminal.terminated();
+			terminal.terminated(-1);
 			pty.close();
 		}
 
@@ -135,7 +139,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected int getConnectionTimeoutMillis() {
-		return getTimeoutMillis();
+		return DEFAULT_CONNECTION_TIMEOUT_MILLIS;
 	}
 
 	@Override
@@ -415,8 +419,9 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 					param.display()));
 			}
 			catch (Exception e) {
-				Msg.warn(this, "Could not load saved launcher arg '%s' (%s) - %s".formatted(param.name(),
-					param.display(), e.getMessage()));
+				Msg.warn(this,
+					"Could not load saved launcher arg '%s' (%s) - %s".formatted(param.name(),
+						param.display(), e.getMessage()));
 			}
 		}
 		return args;
@@ -490,8 +495,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 		Thread waiter = new Thread(() -> {
 			try {
-				session.waitExited();
-				terminal.terminated();
+				int exitcode = session.waitExited();
+				terminal.terminated(exitcode);
 				pty.close();
 
 				for (TerminalSession ss : subordinates) {
@@ -538,12 +543,56 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		return terminalSession;
 	}
 
-	protected abstract void launchBackEnd(TaskMonitor monitor,
+	protected abstract TraceRmiBackEnd launchBackEnd(TaskMonitor monitor,
 			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
 			SocketAddress address) throws Exception;
 
+	protected TraceRmiHandler acceptOrSessionEnds(DefaultTraceRmiAcceptor acceptor,
+			TraceRmiBackEnd backEnd)
+			throws SocketException, CancelledException, EarlyTerminationException {
+		acceptor.setTimeout(getConnectionTimeoutMillis());
+		CompletableFuture<TraceRmiHandler> futureConnection = CompletableFuture.supplyAsync(() -> {
+			try {
+				return acceptor.accept();
+			}
+			catch (CancelledException | IOException e) {
+				return ExceptionUtils.rethrow(e);
+			}
+		});
+		// Because of accept timeout, should be a finite wait
+		try {
+			CompletableFuture.anyOf(backEnd, futureConnection).get();
+			if (backEnd.isDone()) {
+				throw new EarlyTerminationException(
+					"The back-end exited (code=%s) before receiving a connection"
+							.formatted(backEnd.getNow(null)));
+			}
+			return futureConnection.get();
+		}
+		catch (ExecutionException e) {
+			switch (e.getCause()) {
+				case CancelledException ce -> throw ce;
+				default -> throw new AssertionError(e);
+			}
+		}
+		catch (InterruptedException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 	public static class NoStaticMappingException extends Exception {
 		public NoStaticMappingException(String message) {
+			super(message);
+		}
+
+		@Override
+		public String toString() {
+			return getMessage();
+		}
+	}
+
+	public static class EarlyTerminationException extends Exception {
+		public EarlyTerminationException(String message) {
 			super(message);
 		}
 
@@ -660,12 +709,16 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				monitor.increment();
 
 				monitor.setMessage("Launching back-end");
-				launchBackEnd(monitor, sessions, args, acceptor.getAddress());
+				TraceRmiBackEnd backEnd =
+					launchBackEnd(monitor, sessions, args, acceptor.getAddress());
 				monitor.increment();
 
+				/**
+				 * LATER: We might be able to disable timeouts, now that we know if the back-end
+				 * terminates early
+				 */
 				monitor.setMessage("Waiting for connection");
-				acceptor.setTimeout(getConnectionTimeoutMillis());
-				connection = acceptor.accept();
+				connection = acceptOrSessionEnds(acceptor, backEnd);
 				connection.registerTerminals(sessions.values());
 				monitor.increment();
 

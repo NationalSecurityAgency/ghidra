@@ -16,10 +16,12 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
@@ -37,6 +39,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.LabelString.LabelType;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
@@ -180,8 +183,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 		this.maxDisplayLines = maxLines;
 	}
 
-	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField field,
-			int opIndex, int column) {
+	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField field, int opIndex,
+			int column) {
 		if (field instanceof ListingTextField listingField) {
 			RowColLocation rcl = listingField.dataToScreenLocation(opIndex, column);
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
@@ -211,7 +214,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 		if (lf instanceof ImageFactoryField) {
 			Data data = (Data) obj;
-			if (data.getValue() instanceof DataImage) {
+			Object value = data.getValue();
+			if (value instanceof DataImage || value instanceof Icon) {
 				return new ResourceFieldLocation(data.getProgram(), data.getMinAddress(),
 					data.getComponentPath(), codeUnitFormat.getDataValueRepresentationString(data),
 					0, col, data);
@@ -234,79 +238,91 @@ abstract class OperandFieldHelper extends FieldFactory {
 		int subOpIndex = element.getOperandSubIndex();
 		RowColLocation translatedLocation = btf.screenToDataLocation(row, col);
 
+		int dataCol = translatedLocation.col();
 		if (obj instanceof Instruction) {
-			Instruction inst = (Instruction) obj;
-			OperandRepresentationList operandRepresentationList =
-				codeUnitFormat.getOperandRepresentationList(inst, opIndex);
-			String repStr = "<UNSUPPORTED>";
-			Address refAddr = null;
-			VariableOffset variableOffset = null;
-			Program program = inst.getProgram();
-			if (operandRepresentationList == null) {
-				return new OperandFieldLocation(program, inst.getMinAddress(), variableOffset,
-					refAddr, repStr, opIndex, subOpIndex, translatedLocation.col());
-			}
-
-			repStr = operandRepresentationList.toString();
-			if (subOpIndex >= 0 && operandRepresentationList.size() > subOpIndex) {
-				Object rep = operandRepresentationList.get(subOpIndex);
-				if (rep instanceof Address) {
-					refAddr = (Address) rep;
-				}
-				else {
-					int extendedRefIndex = repStr.indexOf("=>");
-					if (extendedRefIndex < 0 || translatedLocation.col() <= extendedRefIndex) {
-						// only get variable offset if extended reference was not clicked on
-						variableOffset = getVariableOffset(rep);
-					}
-					refAddr = inst.getAddress(opIndex);
-					if (refAddr == null) {
-						// Check for inferred variable reference
-						refAddr = getVariableStorageAddress(inst, operandRepresentationList,
-							element.getText());
-					}
-
-					if (rep instanceof Equate) {
-						Equate equate = (Equate) rep;
-						return new EquateOperandFieldLocation(program, inst.getMinAddress(),
-							refAddr, repStr, equate, opIndex, subOpIndex, translatedLocation.col());
-					}
-				}
-			}
-			return new OperandFieldLocation(program, inst.getMinAddress(), variableOffset, refAddr,
-				repStr, opIndex, subOpIndex, translatedLocation.col());
+			return createInstructionLocation(obj, element, opIndex, subOpIndex, dataCol);
 		}
 		else if (obj instanceof Data) {
-			Data data = (Data) obj;
-			Address refAddr = null;
-			Program program = data.getProgram();
-			ReferenceManager referenceManager = program.getReferenceManager();
-			Address minAddress = data.getMinAddress();
-			Reference primaryReference = referenceManager.getPrimaryReferenceFrom(minAddress, 0);
-			Object value = data.getValue();
-			if (primaryReference != null) {
-				refAddr = primaryReference.getToAddress();
-			}
-			else {
-				if (value instanceof Address) {
-					refAddr = (Address) value;
-				}
-			}
-
-			if (value instanceof Scalar) {
-				Scalar scalar = (Scalar) value;
-				EquateTable equateTable = program.getEquateTable();
-				Equate equate = equateTable.getEquate(minAddress, opIndex, scalar.getValue());
-				if (equate != null) {
-					return new EquateOperandFieldLocation(program, minAddress, refAddr,
-						equate.getDisplayName(), equate, opIndex, subOpIndex,
-						translatedLocation.col());
-				}
-			}
-			return new OperandFieldLocation(program, minAddress, data.getComponentPath(), refAddr,
-				codeUnitFormat.getDataValueRepresentationString(data), 0, col);
+			return createDataLocation(obj, opIndex, subOpIndex, dataCol, col);
 		}
 		return null;
+	}
+
+	private ProgramLocation createDataLocation(Object obj, int opIndex, int subOpIndex,
+			int dataCol, int screenCol) {
+
+		Data data = (Data) obj;
+		Address refAddr = null;
+		Program program = data.getProgram();
+		ReferenceManager referenceManager = program.getReferenceManager();
+		Address minAddress = data.getMinAddress();
+		Reference primaryReference = referenceManager.getPrimaryReferenceFrom(minAddress, 0);
+		Object value = data.getValue();
+		if (primaryReference != null) {
+			refAddr = primaryReference.getToAddress();
+		}
+		else {
+			if (value instanceof Address) {
+				refAddr = (Address) value;
+			}
+		}
+
+		if (value instanceof Scalar) {
+			Scalar scalar = (Scalar) value;
+			EquateTable equateTable = program.getEquateTable();
+			Equate equate = equateTable.getEquate(minAddress, opIndex, scalar.getValue());
+			if (equate != null) {
+				return new EquateOperandFieldLocation(program, minAddress, refAddr,
+					equate.getDisplayName(), equate, opIndex, subOpIndex, dataCol);
+			}
+		}
+		return new OperandFieldLocation(program, minAddress, data.getComponentPath(), refAddr,
+			codeUnitFormat.getDataValueRepresentationString(data), 0, screenCol);
+	}
+
+	private ProgramLocation createInstructionLocation(Object obj, OperandFieldElement element,
+			int opIndex, int subOpIndex, int dataCol) {
+
+		Instruction inst = (Instruction) obj;
+		OperandRepresentationList opRepList =
+			codeUnitFormat.getOperandRepresentationList(inst, opIndex);
+		Address minAddress = inst.getMinAddress();
+		Address refAddr = null;
+		VariableOffset variableOffset = null;
+		Program program = inst.getProgram();
+		if (opRepList == null) {
+			return new OperandFieldLocation(program, minAddress, variableOffset,
+				refAddr, "<UNSUPPORTED>", opIndex, subOpIndex, dataCol);
+		}
+
+		String repStr = opRepList.toString();
+		if (subOpIndex >= 0 && opRepList.size() > subOpIndex) {
+			Object rep = opRepList.get(subOpIndex);
+			if (rep instanceof Address) {
+				refAddr = (Address) rep;
+			}
+			else {
+				int extendedRefIndex = repStr.indexOf("=>");
+				if (extendedRefIndex < 0 || dataCol <= extendedRefIndex) {
+					// only get variable offset if extended reference was not clicked on
+					variableOffset = getVariableOffset(rep);
+				}
+				refAddr = inst.getAddress(opIndex);
+				if (refAddr == null) {
+					// Check for inferred variable reference
+					refAddr = getVariableStorageAddress(inst, opRepList, element.getText());
+				}
+
+				if (rep instanceof Equate) {
+					Equate equate = (Equate) rep;
+					return new EquateOperandFieldLocation(program, minAddress,
+						refAddr, repStr, equate, opIndex, subOpIndex, dataCol);
+				}
+			}
+		}
+
+		return new OperandFieldLocation(program, minAddress, variableOffset, refAddr,
+			repStr, opIndex, subOpIndex, dataCol);
 	}
 
 	private VariableOffset getVariableOffset(Object representation) {
@@ -361,6 +377,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 		if (value instanceof DataImage) {
 			return new ImageFactoryField(this, ((DataImage) value).getImageIcon(), proxy,
 				getMetrics(), startX + varWidth, width);
+		}
+		if (value instanceof Icon) {
+			return new ImageFactoryField(this, (Icon) value, proxy, getMetrics(), startX + varWidth,
+				width);
 		}
 		else if (value instanceof Playable) {
 			return new ImageFactoryField(this, ((Playable) value).getImageIcon(), proxy,
@@ -433,33 +453,23 @@ abstract class OperandFieldHelper extends FieldFactory {
 			return null;
 		}
 
-		List<OperandFieldElement> elements = new ArrayList<>();
-		int characterOffset = createSeparatorFieldElement(inst, 0, 0, 0, 0, elements);
+		OpFieldResults results = new OpFieldResults(proxy);
+		OperandFieldElement separator = createLeadingSeparatorElement(inst);
+		if (separator != null) {
+			results.add(separator);
+		}
 
 		for (int opIndex = 0; opIndex < numOperands; opIndex++) {
-			OperandRepresentationList operandRepresentationList =
-				codeUnitFormat.getOperandRepresentationList(inst, opIndex);
-			characterOffset = addElementsForOperand(inst, elements, opIndex,
-				operandRepresentationList, characterOffset);
-			characterOffset = 0;
+			OpInfo opInfo = new OpInfo(inst, opIndex);
+			addOperandElements(opInfo, results);
+			results.resetCharacterOffset();
 		}
 
-		// There may be operands with no representation objects, so we don't want to create a 
-		// composite field element.
-		if (elements.isEmpty()) {
+		// If this is an operand with no representation objects, don't create a visual element
+		if (results.isEmpty()) {
 			return null;
 		}
-		if (wrapOnSemicolon) {
-			List<FieldElement> lines = breakIntoLines(elements);
-			if (lines.size() == 1) {
-				return ListingTextField.createSingleLineTextField(this, proxy,
-					lines.get(0), startX + varWidth, width, hlProvider);
-			}
-			return ListingTextField.createMultilineTextField(this, proxy, lines, startX, width,
-				hlProvider);
-		}
-		return ListingTextField.createSingleLineTextField(this, proxy,
-			new CompositeFieldElement(elements), startX + varWidth, width, hlProvider);
+		return results.createListingTextField(varWidth);
 	}
 
 	private List<FieldElement> breakIntoLines(List<OperandFieldElement> elements) {
@@ -488,80 +498,208 @@ abstract class OperandFieldHelper extends FieldFactory {
 		return fieldElements;
 	}
 
-	private int addElementsForOperand(Instruction inst, List<OperandFieldElement> elements,
-			int opIndex, OperandRepresentationList opRepList, int characterOffset) {
+	private void addOperandElements(OpInfo opInfo, OpFieldResults results) {
+
 		int subOpIndex = 0;
-		if (opRepList == null || opRepList.hasError()) {
-			AttributedString as =
-				new AttributedString(opRepList != null ? opRepList.toString() : "<UNSUPPORTED>",
-					badRefAttributes.colorAttribute, getMetrics(badRefAttributes.styleAttribute),
-					false, ListingColors.UNDERLINE);
-			elements.add(new OperandFieldElement(as, opIndex, subOpIndex, characterOffset));
-			characterOffset += as.length();
+		if (opInfo.isInvalid()) {
+			addOperandErrorElement(opInfo, results);
+			return;
 		}
-		else {
-			boolean underline = isUnderlined(inst, opIndex, opRepList.isPrimaryReferenceHidden());
-			for (; subOpIndex < opRepList.size(); subOpIndex++) {
-				characterOffset = addElement(inst, elements, opRepList.get(subOpIndex), underline,
-					opIndex, subOpIndex, characterOffset);
-			}
+
+		for (; subOpIndex < opInfo.getRepCount(); subOpIndex++) {
+			Object opElement = opInfo.getRepElement(subOpIndex);
+			addOperandElement(opInfo, results, opElement, subOpIndex);
 		}
+
 		//  add in any separator after this operand
-		return createSeparatorFieldElement(inst, opIndex + 1, opIndex, subOpIndex - 1,
-			characterOffset, elements);
+		int separatorIndex = opInfo.opIndex + 1;
+		OperandFieldElement separator =
+			createSeparatorElement(opInfo, results, subOpIndex - 1, separatorIndex);
+		if (separator != null) {
+			results.add(separator);
+		}
 	}
 
-	private int addElements(Instruction inst, List<OperandFieldElement> elements, List<?> objList,
-			int opIndex, int subOpIndex, boolean underline, int characterOffset) {
-		for (Object element : objList) {
-			characterOffset = addElement(inst, elements, element, underline, opIndex, subOpIndex,
-				characterOffset);
+	private void addOperandErrorElement(OpInfo opInfo, OpFieldResults results) {
+
+		FontMetrics metrics = getMetrics(badRefAttributes.styleAttribute);
+		String text = opInfo.getRepText();
+		AttributedString as =
+			new AttributedString(text, badRefAttributes.colorAttribute, metrics,
+				false, ListingColors.UNDERLINE);
+		results.add(new OperandFieldElement(as, opInfo.opIndex, 0, results.characterOffset));
+
+		//  add in any separator after this operand
+		int separatorIndex = opInfo.opIndex + 1;
+		OperandFieldElement separator = createSeparatorElement(opInfo, results, -1, separatorIndex);
+		if (separator != null) {
+			results.add(separator);
 		}
-		return characterOffset;
 	}
 
-	private int addElement(Instruction inst, List<OperandFieldElement> elements, Object opElem,
-			boolean underline, int opIndex, int subOpIndex, int characterOffset) {
+	private void addOperandSubElements(OpInfo opInfo, OpFieldResults results,
+			List<?> elements, int subOpIndex) {
 
-		if (opElem instanceof VariableOffset) {
-			List<Object> objList = ((VariableOffset) opElem).getObjects();
-			return addElements(inst, elements, objList, opIndex, subOpIndex, underline,
-				characterOffset);
+		// Special case: '[->Lib::Foo]' 
+		// Most references will paint the label color, typically blue.  For external function calls,
+		// the color will change depending on whether the external function is linked.  Handle this 
+		// case specially so that the arrow text will be the same color as the library name.
+		if (isIndirectReference(elements)) {
+			addIndirectReference(opInfo, results, elements, subOpIndex);
+			return;
 		}
 
-		if (opElem instanceof List) {
-			return addElements(inst, elements, (List<?>) opElem, opIndex, subOpIndex, underline,
-				characterOffset);
+		for (Object element : elements) {
+			addOperandElement(opInfo, results, element, subOpIndex);
 		}
-
-		ColorStyleAttributes attributes = getOpAttributes(opElem, inst, opIndex);
-
-		AttributedString as = new AttributedString(opElem.toString(), attributes.colorAttribute,
-			getMetrics(attributes.styleAttribute), underline, ListingColors.UNDERLINE);
-
-		elements.add(new OperandFieldElement(as, opIndex, subOpIndex, characterOffset));
-		if (wrapOnSemicolon && opElem instanceof Character c && c == ';') {
-			elements.add(LINE_BREAK);
-		}
-		return characterOffset + as.length();
 	}
 
-	private int createSeparatorFieldElement(Instruction instruction, int separatorIndex,
-			int opIndex, int subOpIndex, int characterOffset, List<OperandFieldElement> elements) {
-		String separator = instruction.getSeparator(separatorIndex);
+	private boolean isIndirectReference(List<?> elements) {
+		if (elements.size() != 2) {
+			return false;
+		}
+
+		Object object = elements.get(0);
+		String text = object.toString();
+		if (!text.equals(CodeUnitFormat.EXTENDED_INDIRECT_REFERENCE_DELIMITER)) {
+			return false;
+		}
+
+		Object element = elements.get(1);
+		return element instanceof LabelString;
+	}
+
+	private void addIndirectReference(OpInfo opInfo, OpFieldResults results,
+			List<?> elements, int subOpIndex) {
+
+		Object opElement = elements.get(1);
+		ColorStyleAttributes attributes = getOpAttributes(opInfo, opElement);
+
+		boolean underline = opInfo.isUnderline();
+		Object pointer = elements.get(0).toString();
+		String text = pointer + opElement.toString();
+		FontMetrics metrics = getMetrics(attributes.styleAttribute);
+		AttributedString as = new AttributedString(text, attributes.colorAttribute,
+			metrics, underline, ListingColors.UNDERLINE);
+		results.add(
+			new OperandFieldElement(as, opInfo.opIndex, subOpIndex, results.characterOffset));
+	}
+
+	private void addOperandElement(OpInfo opInfo, OpFieldResults results, Object opElement,
+			int subOpIndex) {
+
+		if (opElement instanceof VariableOffset variableOffset) {
+			addVariableElement(opInfo, results, variableOffset, subOpIndex);
+			return;
+		}
+
+		if (opElement instanceof List list) {
+			addOperandSubElements(opInfo, results, list, subOpIndex);
+			return;
+		}
+
+		ColorStyleAttributes attributes = getOpAttributes(opInfo, opElement);
+		addOperandElementWithAttributes(opInfo, results, opElement, subOpIndex, attributes);
+	}
+
+	private void addOperandElementWithAttributes(OpInfo opInfo, OpFieldResults results,
+			Object opElement, int subOpIndex, ColorStyleAttributes attributes) {
+
+		boolean underline = opInfo.isUnderline();
+		FontMetrics metrics = getMetrics(attributes.styleAttribute);
+		AttributedString as = new AttributedString(opElement.toString(), attributes.colorAttribute,
+			metrics, underline, ListingColors.UNDERLINE);
+		results.add(
+			new OperandFieldElement(as, opInfo.opIndex, subOpIndex, results.characterOffset));
+		if (wrapOnSemicolon && opElement instanceof Character c && c == ';') {
+			results.addLineBreak();
+		}
+	}
+
+	private void addVariableElement(OpInfo opInfo, OpFieldResults results,
+			VariableOffset variableOffset, int subOpIndex) {
+
+		Color color = FunctionColors.VARIABLE;
+		Variable variable = variableOffset.getVariable();
+		if (variable instanceof Parameter param) {
+			if (param.isAutoParameter()) {
+
+				Object opElement = opInfo.getRepElement(subOpIndex);
+				addAutoParameterElement(opInfo, results, param, opElement, subOpIndex);
+				return;
+			}
+
+			Function f = variable.getFunction();
+			color = f.hasCustomVariableStorage() ? FunctionColors.PARAM_CUSTOM
+					: FunctionColors.PARAM_DYNAMIC;
+		}
+
+		List<Object> objects = variableOffset.getObjects();
+		addVariableOffsetElements(opInfo, results, objects, subOpIndex, color);
+	}
+
+	private void addVariableOffsetElements(OpInfo opInfo, OpFieldResults results,
+			List<?> elements, int subOpIndex, Color color) {
+
+		ColorStyleAttributes attributes = variableRefAttributes.with(color);
+
+		boolean underline = opInfo.isUnderline();
+		for (Object element : elements) {
+
+			FontMetrics metrics = getMetrics(attributes.styleAttribute);
+			AttributedString as =
+				new AttributedString(element.toString(), attributes.colorAttribute,
+					metrics, underline, ListingColors.UNDERLINE);
+			results.add(
+				new OperandFieldElement(as, opInfo.opIndex, subOpIndex, results.characterOffset));
+		}
+	}
+
+	private void addAutoParameterElement(OpInfo opInfo, OpFieldResults results, Parameter parameter,
+			Object opElement, int subOpIndex) {
+
+		Color color = FunctionColors.PARAM_AUTO;
+		int variableStyle = variableRefAttributes.styleAttribute;
+
+		boolean underline = opInfo.isUnderline();
+		FontMetrics metrics = getMetrics(variableStyle);
+		AttributedString as = new AttributedString(opElement.toString(), color, metrics, underline,
+			ListingColors.UNDERLINE);
+		results.add(
+			new OperandFieldElement(as, opInfo.opIndex, subOpIndex, results.characterOffset));
+	}
+
+	private OperandFieldElement createSeparatorElement(OpInfo opInfo, OpFieldResults results,
+			int subOpIndex, int separatorIndex) {
+
+		String separator = opInfo.getSeparator(separatorIndex);
 		if (separator == null) {
-			return characterOffset;
+			return null;
 		}
+
 		if (spaceAfterSeparator) {
 			separator += " ";
 		}
 
 		AttributedString as = new AttributedString(separator, separatorAttributes.colorAttribute,
 			getMetrics(separatorAttributes.styleAttribute));
-		OperandFieldElement fieldElement =
-			new OperandFieldElement(as, opIndex, subOpIndex, characterOffset);
-		elements.add(fieldElement);
-		return characterOffset + fieldElement.length();
+		return new OperandFieldElement(as, opInfo.opIndex, subOpIndex, results.characterOffset);
+	}
+
+	private OperandFieldElement createLeadingSeparatorElement(Instruction instruction) {
+
+		String separator = instruction.getSeparator(0);
+		if (separator == null) {
+			return null;
+		}
+
+		if (spaceAfterSeparator) {
+			separator += " ";
+		}
+
+		AttributedString as = new AttributedString(separator, separatorAttributes.colorAttribute,
+			getMetrics(separatorAttributes.styleAttribute));
+		return new OperandFieldElement(as, 0, 0, 0);
 	}
 
 	private boolean isUnderlined(CodeUnit codeUnit, int opIndex, boolean primaryReferenceHidden) {
@@ -606,10 +744,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 		return attributes;
 	}
 
-	private ColorStyleAttributes getOpAttributes(Object opObject, Instruction inst, int opIndex) {
+	private ColorStyleAttributes getOpAttributes(OpInfo opInfo, Object opObject) {
 
 		if (opObject instanceof String) {
-			return getOpAttributes(inst, opIndex, inst.getProgram());
+			return getOpAttributes(opInfo.inst, opInfo.opIndex, opInfo.getProgram());
 		}
 		if (opObject instanceof Register) {
 			return registerAttributes;
@@ -630,15 +768,40 @@ abstract class OperandFieldHelper extends FieldFactory {
 			}
 			return badRefAttributes;
 		}
-		if (opObject instanceof LabelString) {
-			LabelString label = (LabelString) opObject;
-			LabelString.LabelType labelType = label.getLabelType();
-			if (labelType == LabelString.LabelType.VARIABLE) {
-				return variableRefAttributes;
-			}
-			return getOpAttributes(inst, opIndex, inst.getProgram());
+		if (opObject instanceof LabelString labelString) {
+			return getLabelStringAttributes(labelString, opInfo.inst, opInfo.opIndex);
 		}
 		return separatorAttributes;
+	}
+
+	private ColorStyleAttributes getLabelStringAttributes(LabelString opObject, Instruction inst,
+			int opIndex) {
+
+		LabelString label = opObject;
+		LabelType labelType = label.getLabelType();
+		if (labelType == LabelType.VARIABLE) {
+			return variableRefAttributes;
+		}
+		if (labelType == LabelType.EXTERNAL) {
+
+			Symbol symbol = label.getSymbol();
+			ColorStyleAttributes attributes = getExternalSymbolAttributes(symbol);
+			if (attributes != null) {
+				return attributes;
+			}
+		}
+		return getOpAttributes(inst, opIndex, inst.getProgram());
+	}
+
+	private ColorStyleAttributes getExternalSymbolAttributes(Symbol symbol) {
+		ColorAndStyle c = inspector.getColorAndStyle(symbol);
+		if (c != null) {
+			ColorStyleAttributes newAttributes = new ColorStyleAttributes();
+			newAttributes.colorAttribute = c.getColor();
+			newAttributes.styleAttribute = c.getStyle();
+			return newAttributes;
+		}
+		return null;
 	}
 
 	private ColorStyleAttributes getRefAttributes(CodeUnit cu, int opIndex, Program p) {
@@ -709,10 +872,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 		return addressAttributes;
 	}
 
-	/**
-	 * Called when the fonts are first initialized or when one of the options
-	 * changes.  It looks up all the color settings and resets the its values.
-	 */
+	// Called when the fonts are first initialized or when one of the options
 	private void setOptions(Options options) {
 
 		separatorAttributes.colorAttribute = ListingColors.SEPARATOR;
@@ -727,7 +887,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 		scalarAttributes.styleAttribute =
 			options.getInt(OptionsGui.CONSTANT.getStyleOptionName(), -1);
 		variableRefAttributes.styleAttribute =
-			options.getInt(OptionsGui.VARIABLE.getStyleOptionName(), -1);
+			options.getInt(OptionsGui.FUN_VARIABLE.getStyleOptionName(), -1);
 		addressAttributes.styleAttribute =
 			options.getInt(OptionsGui.ADDRESS.getStyleOptionName(), -1);
 		badRefAttributes.styleAttribute =
@@ -741,6 +901,13 @@ abstract class OperandFieldHelper extends FieldFactory {
 	private class ColorStyleAttributes {
 		private Color colorAttribute;
 		private int styleAttribute;
+
+		public ColorStyleAttributes with(Color color) {
+			ColorStyleAttributes attrs = new ColorStyleAttributes();
+			attrs.styleAttribute = styleAttribute;
+			attrs.colorAttribute = color;
+			return attrs;
+		}
 	}
 
 	static class OperandFieldElement extends AbstractTextFieldElement {
@@ -761,9 +928,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 			return row;
 		}
 
-		/**
-		 * @see docking.widgets.fieldpanel.field.FieldElement#substring(int, int)
-		 */
 		@Override
 		public FieldElement substring(int start, int end) {
 			AttributedString as = attributedString.substring(start, end);
@@ -773,13 +937,106 @@ abstract class OperandFieldHelper extends FieldFactory {
 			return new OperandFieldElement(as, row, operandSubIndex, column + start);
 		}
 
-		/**
-		 * @see docking.widgets.fieldpanel.field.FieldElement#replaceAll(char[], char)
-		 */
 		@Override
 		public FieldElement replaceAll(char[] targets, char replacement) {
 			return new OperandFieldElement(attributedString.replaceAll(targets, replacement), row,
 				operandSubIndex, column);
+		}
+	}
+
+	/**
+	 * Simple object to pass between methods for accumulating results and tracking character offset.
+	 */
+	private class OpFieldResults {
+
+		private int characterOffset;
+		private List<OperandFieldElement> elements = new ArrayList<>();
+		private ProxyObj<?> proxy;
+
+		OpFieldResults(ProxyObj<?> proxy) {
+			this.proxy = proxy;
+		}
+
+		void add(OperandFieldElement element) {
+			elements.add(element);
+			characterOffset += element.length();
+		}
+
+		void addLineBreak() {
+			elements.add(LINE_BREAK);
+		}
+
+		boolean isEmpty() {
+			return elements.isEmpty();
+		}
+
+		void resetCharacterOffset() {
+			characterOffset = 0;
+		}
+
+		ListingTextField createListingTextField(int varWidth) {
+
+			FieldFactory factory = OperandFieldHelper.this;
+			if (wrapOnSemicolon) {
+				List<FieldElement> lines = breakIntoLines(elements);
+				if (lines.size() == 1) {
+					return ListingTextField.createSingleLineTextField(factory, proxy,
+						lines.get(0), startX + varWidth, width, hlProvider);
+				}
+				return ListingTextField.createMultilineTextField(factory, proxy, lines, startX,
+					width,
+					hlProvider);
+			}
+
+			return ListingTextField.createSingleLineTextField(factory, proxy,
+				new CompositeFieldElement(elements), startX + varWidth, width, hlProvider);
+
+		}
+	}
+
+	/**
+	 * Simple object to contain data and methods related to the instruction being processed and its
+	 * operand representations.
+	 */
+	private class OpInfo {
+
+		private Instruction inst;
+		private int opIndex;
+
+		private OperandRepresentationList opRepList;
+
+		OpInfo(Instruction inst, int opIndex) {
+			this.inst = inst;
+			this.opIndex = opIndex;
+			this.opRepList = codeUnitFormat.getOperandRepresentationList(inst, opIndex);
+		}
+
+		boolean isInvalid() {
+			return opRepList == null || opRepList.hasError();
+		}
+
+		boolean isUnderline() {
+			return isUnderlined(inst, opIndex, opRepList.isPrimaryReferenceHidden());
+		}
+
+		int getRepCount() {
+			return opRepList.size();
+		}
+
+		Object getRepElement(int subOpIndex) {
+			return opRepList.get(subOpIndex);
+		}
+
+		String getRepText() {
+			return opRepList != null ? opRepList.toString() : "<UNSUPPORTED>";
+		}
+
+		String getSeparator(int separatorIndex) {
+			return inst.getSeparator(separatorIndex);
+		}
+
+		Program getProgram() {
+			return inst.getProgram();
 		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -979,38 +979,31 @@ public class FunctionSignatureStringable extends Stringable {
 
 	private boolean isFirstHigherPriorityWhenUserPriority(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
-		if (first == second && first != SourceType.DEFAULT) {
+		if (first == SourceType.DEFAULT) {
+			return false;
+		}
+		if (first == second) {
 			return replaceSamePriorityNames;
 		}
-		if (first == SourceType.USER_DEFINED) {
-			return (second == SourceType.IMPORTED || second == SourceType.ANALYSIS ||
-				second == SourceType.DEFAULT);
-		}
-		if (first == SourceType.IMPORTED) {
-			return (second == SourceType.ANALYSIS || second == SourceType.DEFAULT);
-		}
-		if (first == SourceType.ANALYSIS) {
-			return (second == SourceType.DEFAULT);
-		}
-		return false;
+		return first.isHigherPriorityThan(second);
 	}
 
 	private boolean isFirstHigherPriorityWhenImportedPriority(SourceType first, SourceType second,
 			boolean replaceSamePriorityNames) {
-		if (first == second && first != SourceType.DEFAULT) {
+		if (first == SourceType.DEFAULT) {
+			return false;
+		}
+		if (first == second) {
 			return replaceSamePriorityNames;
 		}
+		// Force IMPORTED to have highest priority
 		if (first == SourceType.IMPORTED) {
-			return (second == SourceType.USER_DEFINED || second == SourceType.ANALYSIS ||
-				second == SourceType.DEFAULT);
+			return true;
 		}
-		if (first == SourceType.USER_DEFINED) {
-			return (second == SourceType.ANALYSIS || second == SourceType.DEFAULT);
+		else if (second == SourceType.IMPORTED) {
+			return false;
 		}
-		if (first == SourceType.ANALYSIS) {
-			return (second == SourceType.DEFAULT);
-		}
-		return false;
+		return first.isHigherPriorityThan(second);
 	}
 
 	private void replaceParameterComments(Function toFunction, CommentChoices commentChoice) {

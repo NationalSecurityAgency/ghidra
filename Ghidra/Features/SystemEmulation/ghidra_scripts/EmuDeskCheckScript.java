@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
@@ -29,8 +29,10 @@ import ghidra.debug.api.watch.WatchRow;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.docking.settings.*;
 import ghidra.pcode.emu.BytesPcodeThread;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
@@ -113,14 +115,17 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 			}
 		}
 
-		BytesDebuggerPcodeEmulator emu = new BytesDebuggerPcodeEmulator(
-			new DefaultPcodeDebuggerAccess(state.getTool(), null, platform, snap)) {
+		DefaultPcodeDebuggerAccess access =
+			new DefaultPcodeDebuggerAccess(state.getTool(), null, platform, snap);
+		Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(access);
+		PcodeEmulator emu = new PcodeEmulator(access.getLanguage(), writer.callbacks()) {
 			TraceSchedule position = TraceSchedule.snap(snap);
 
 			@Override
 			protected BytesPcodeThread createThread(String name) {
 				return new BytesPcodeThread(name, this) {
-					TraceThread thread = trace.getThreadManager().getLiveThreadByPath(snap, name);
+					TraceThread thread =
+						trace.getThreadManager().getLiveThreadByPath(snap, name);
 					PcodeExecutor<Pair<byte[], ValueLocation>> inspector =
 						new PcodeExecutor<>(language,
 							new PairedPcodeArithmetic<>(arithmetic,
@@ -189,8 +194,7 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 	// Configuration and support kruft below //
 	///////////////////////////////////////////
 
-	public record Watch(String expression, TypeRec type, Settings settings) {
-	}
+	public record Watch(String expression, TypeRec type, Settings settings) {}
 
 	interface Setting {
 		void set(Settings settings);

@@ -31,7 +31,7 @@ import ghidra.pcode.emu.jit.op.JitFloatNegOp;
  * <p>
  * This uses the unary operator generator and emits {@link #FNEG} or {@link #DNEG}.
  */
-public enum FloatNegOpGen implements UnOpGen<JitFloatNegOp> {
+public enum FloatNegOpGen implements FloatUnOpGen<JitFloatNegOp> {
 	/** The generator singleton */
 	GEN;
 

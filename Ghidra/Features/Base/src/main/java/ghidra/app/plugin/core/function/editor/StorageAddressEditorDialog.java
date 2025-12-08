@@ -192,20 +192,10 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			}
 		});
 
-		final Component dataTypeEditComponent = dataTypeEditor.getTableCellEditorComponent(null,
+		Component dataTypeEditComponent = dataTypeEditor.getTableCellEditorComponent(null,
 			variableData.getFormalDataType(), false, 0, 0);
 
-		final DropDownSelectionTextField<DataType> textField = dataTypeEditor.getTextField();
-		textField.setBorder((new JTextField()).getBorder()); // restore default border
-		textField.getAccessibleContext().setAccessibleName("Data Type Editor");
-
-		JButton chooserButton = dataTypeEditor.getChooserButton();
-		chooserButton.getAccessibleContext().setAccessibleName("Choose");
-		JButton defaultButton = new JButton(); // restore default border/background
-		defaultButton.getAccessibleContext().setAccessibleName("Default");
-		chooserButton.setBorder(defaultButton.getBorder());
-		chooserButton.setBackground(defaultButton.getBackground());
-
+		DropDownSelectionTextField<DataType> textField = dataTypeEditor.getTextField();
 		textField.addFocusListener(new FocusListener() {
 
 			@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@ package ghidra.program.database.external;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
-import ghidra.program.database.symbol.SymbolDB;
+import ghidra.program.database.symbol.FunctionSymbol;
+import ghidra.program.database.symbol.MemorySymbol;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -28,19 +28,18 @@ import ghidra.util.exception.*;
 
 public class ExternalLocationDB implements ExternalLocation {
 
-	private static final char ORIGINAL_IMPORTED_DELIMITER = ',';
 	private ExternalManagerDB extMgr;
-	private SymbolDB symbol;
+	private MemorySymbol symbol;
 
 	/**
 	 * Creates an externalLocationDB using a symbol
 	 * at the same external space address.
 	 * @param extMgr the ExternalManager.
-	 * @param symbol the symbol for this external location.
+	 * @param symbol the memory (label or function) symbol for this external location.
 	 * Typically, this will store the original mangled name when and if the original name
-	 * is demangled.
+	 * is demangled, as well as the external program's memory address for the location if known.
 	 */
-	ExternalLocationDB(ExternalManagerDB extMgr, SymbolDB symbol) {
+	ExternalLocationDB(ExternalManagerDB extMgr, MemorySymbol symbol) {
 		this.extMgr = extMgr;
 		this.symbol = symbol;
 	}
@@ -50,9 +49,6 @@ public class ExternalLocationDB implements ExternalLocation {
 		return symbol;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getLibraryName()
-	 */
 	@Override
 	public String getLibraryName() {
 		Library library = getLibrary();
@@ -68,17 +64,11 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getParentNameSpace()
-	 */
 	@Override
 	public Namespace getParentNameSpace() {
 		return symbol.getParentNamespace();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getParentName()
-	 */
 	@Override
 	public String getParentName() {
 		return symbol.getParentNamespace().getName();
@@ -88,9 +78,6 @@ public class ExternalLocationDB implements ExternalLocation {
 		return symbol.getParentNamespace().getID();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getLabel()
-	 */
 	@Override
 	public String getLabel() {
 		return symbol.getName();
@@ -98,7 +85,7 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	@Override
 	public String getOriginalImportedName() {
-		return getExternalData(symbol).getOriginalImportedName();
+		return symbol.getExternalOriginalImportedName();
 	}
 
 	@Override
@@ -106,17 +93,11 @@ public class ExternalLocationDB implements ExternalLocation {
 		return symbol.getSource();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getAddress()
-	 */
 	@Override
 	public Address getAddress() {
-		return getExternalData(symbol).getAddress(extMgr.getAddressMap().getAddressFactory());
+		return symbol.getExternalProgramAddress();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getExternalSpaceAddress()
-	 */
 	@Override
 	public Address getExternalSpaceAddress() {
 		return symbol.getAddress();
@@ -136,9 +117,6 @@ public class ExternalLocationDB implements ExternalLocation {
 		return symbol.getSymbolType() == SymbolType.FUNCTION;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#getDataType()
-	 */
 	@Override
 	public DataType getDataType() {
 		long dataTypeID = symbol.getDataTypeId();
@@ -148,15 +126,10 @@ public class ExternalLocationDB implements ExternalLocation {
 		return extMgr.getProgram().getDataTypeManager().getDataType(dataTypeID);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalLocation#setDataType(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void setDataType(DataType dt) {
 		long dataTypeID = extMgr.getProgram().getDataTypeManager().getResolvedID(dt);
 		symbol.setDataTypeId(dataTypeID);
-
-// TODO: change notification may be required
 	}
 
 	@Override
@@ -173,7 +146,7 @@ public class ExternalLocationDB implements ExternalLocation {
 			return getFunction();
 		}
 		Function function = extMgr.createFunction(this);
-		symbol = (SymbolDB) function.getSymbol();
+		symbol = (FunctionSymbol) function.getSymbol();
 		return function;
 	}
 
@@ -186,8 +159,7 @@ public class ExternalLocationDB implements ExternalLocation {
 	 * If a namespace is not included within label, the current namespace will be preserved.
 	 * @param source the source of this external symbol:
 	 * Symbol.DEFAULT, Symbol.ANALYSIS, Symbol.IMPORTED, or Symbol.USER_DEFINED
-	 * @throws InvalidInputException
-	 * @see ghidra.program.model.symbol.ExternalLocation#setLabel(java.lang.String)
+	 * @throws InvalidInputException if the name contains illegal characters (space for example)
 	 */
 	void setLabel(String label, SourceType source) throws InvalidInputException {
 		if (label == null) {
@@ -223,12 +195,10 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	@Override
 	public void setAddress(Address address) throws InvalidInputException {
-		String addressString = address != null ? address.toString() : null;
-		if (addressString == null && getSource() == SourceType.DEFAULT) {
+		if (address == null && getSource() == SourceType.DEFAULT) {
 			throw new InvalidInputException("Either an external label or address is required");
 		}
-		updateSymbolData(symbol, getExternalData(symbol).getOriginalImportedName(),
-			addressString);
+		symbol.setExternalProgramAddress(address, true);
 	}
 
 	public void saveOriginalNameIfNeeded(Namespace oldNamespace, String oldName,
@@ -239,11 +209,11 @@ public class ExternalLocationDB implements ExternalLocation {
 		// if we don't have an original already set and it is an imported symbol, save it
 		String originalImportedName = getOriginalImportedName();
 		if (getLabel().equals(originalImportedName)) {
-			setOriginalImportedName(symbol, null);
+			symbol.setExternalOriginalImportedName(null, false);
 		}
 		else if (wasInLibrary && getSource() != SourceType.DEFAULT &&
 			oldSource == SourceType.IMPORTED && originalImportedName == null) {
-			setOriginalImportedName(symbol, oldName);
+			symbol.setExternalOriginalImportedName(oldName, false);
 		}
 	}
 
@@ -288,8 +258,8 @@ public class ExternalLocationDB implements ExternalLocation {
 		}
 		try {
 			Library library = NamespaceUtils.getLibrary(symbol.getParentNamespace());
+			symbol.setExternalOriginalImportedName(null, false); // clear orig imported name
 			symbol.setNameAndNamespace(originalName, library, SourceType.IMPORTED);
-			setOriginalImportedName(symbol, null);
 		}
 		catch (CircularDependencyException | DuplicateNameException | InvalidInputException e) {
 			throw new AssertException("Can't happen here", e);
@@ -362,59 +332,6 @@ public class ExternalLocationDB implements ExternalLocation {
 		}
 
 		return SystemUtilities.isEqual(getAddress(), other.getAddress());
-
-	}
-
-	static ExternalData getExternalData(SymbolDB extSymbol) {
-		return new ExternalData(extSymbol.getSymbolStringData());
-	}
-
-	static void setOriginalImportedName(SymbolDB extSymbol, String name) {
-		updateSymbolData(extSymbol, name, getExternalData(extSymbol).getAddressString());
-	}
-
-	static void updateSymbolData(SymbolDB extSymbol, String originalImportedName,
-			String addressString) {
-		if (addressString == null && originalImportedName == null) {
-			extSymbol.setSymbolStringData(null);
-		}
-		StringBuilder buf = new StringBuilder();
-		if (addressString != null) {
-			buf.append(addressString);
-		}
-		if (originalImportedName != null) {
-			buf.append(ORIGINAL_IMPORTED_DELIMITER);
-			buf.append(originalImportedName);
-		}
-		extSymbol.setSymbolStringData(buf.toString());
-	}
-
-	static class ExternalData {
-		private String originalImportedName;
-		private String addressString;
-
-		ExternalData(String stringData) {
-			if (stringData != null) {
-				int indexOf = stringData.indexOf(ORIGINAL_IMPORTED_DELIMITER);
-				originalImportedName = indexOf >= 0 ? stringData.substring(indexOf + 1) : null;
-				addressString = indexOf >= 0 ? stringData.substring(0, indexOf) : stringData;
-			}
-		}
-
-		public String getAddressString() {
-			return addressString;
-		}
-
-		String getOriginalImportedName() {
-			return originalImportedName;
-		}
-
-		Address getAddress(AddressFactory addrFactory) {
-			if (addressString == null) {
-				return null;
-			}
-			return addrFactory.getAddress(addressString);
-		}
 
 	}
 

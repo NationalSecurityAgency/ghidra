@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -256,6 +256,52 @@ TEST(paramstore_x64) {
   ASSERT(theEnviron.test(model, "intintintintint func(void);", "RAX,RDI"));
   theEnviron.parseType(model, "struct doubleintintint { float8 a; int4 b; int4 c; int4 d; };");
   ASSERT(theEnviron.test(model, "doubleintintint func(void);", "RAX,RDI"));
+}
+
+TEST(paramstore_ppc64be_stdcall) {
+  ProtoModel *model = theEnviron.getModel("PowerPC:BE:64:default:default","__stdcall");
+  ASSERT(theEnviron.test(model,"void func(int4 a,float4 b,float8 c);","void,r3:4,join f1,f2"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,int8 b,float8 c);","void,f1,r4,f2"));
+  theEnviron.parseType(model,"struct sparm { int4 a; float8 dd; };");
+
+  string proto= "void func(int4 c,float8 ff,int4 d,float16 ld,sparm s,float8 gg,sparm t,int4 e,float8 hh);";
+  string res="void,r3:4,f1,r5:4,join f2 f3,join r8 r9,f4,stack70:16,stack84:4,f5";
+  ASSERT(theEnviron.test(model,proto,res));
+}
+
+TEST(paramstore_mips32be_stdcall) {
+  ProtoModel *model = theEnviron.getModel("MIPS:BE:32:default:default","__stdcall");
+  ASSERT(theEnviron.test(model,"void func(int2 a,int4 b,char c);","void,a0:2,a1,a2:1"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,float8 b);","void,f12_13,f14_15"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,float4 b);","void,f12,f14"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,float8 b);","void,f12,f14_15"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,float4 b);","void,f12_13,f14"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b,int4 c,int4 d);","void,a0,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,int4 b,float8 c);","void,f12_13,a2,stack10:8"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,int4 b,int4 c);","void,f12_13,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,int4 b,int4 c);","void,f12,a1,a2"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b,int4 c,float8 d);","void,a0,a1,a2,stack10:8"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b,int4 c,float4 d);","void,a0,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b,float8 c);","void,a0,a1,join a2 a3"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,float8 b);","void,a0,join a2 a3"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,float4 b,float4 c,float4 d);","void,f12,f14,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,int4 b,float4 c,int4 d);","void,f12,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(float8 a,float4 b,float4 c);","void,f12_13,f14,a3"));
+  ASSERT(theEnviron.test(model,"void func(float4 a,float4 b,float8 c);","void,f12,f14,join a2 a3"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,float4 b,int4 c,float4 d);","void,a0,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,float4 b,int4 c,int4 d);","void,a0,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b,float4 c,int4 d);","void,a0,a1,a2,a3"));
+  ASSERT(theEnviron.test(model,"int4 func(void);","v0"));
+  ASSERT(theEnviron.test(model, "float4 func(void);", "f0"));
+  ASSERT(theEnviron.test(model, "float8 func(void);", "f0_1"));
+  theEnviron.parseType(model,"struct onefieldstruct { int4 a; };");
+  theEnviron.parseType(model,"struct twofieldstruct { int4 a; int4 b; };");
+  ASSERT(theEnviron.test(model, "onefieldstruct func(int4 a);", "v0,a0,a1"));
+  ASSERT(theEnviron.test(model, "twofieldstruct func(int4 a);", "v0,a0,a1"));
+  ASSERT(theEnviron.test(model, "void func(twofieldstruct a);", "void,join a0 a1"));
+
+  theEnviron.parseType(model,"struct intdouble { int4 a; float8 b; };");
+  ASSERT(theEnviron.test(model, "void func(intdouble a);", "void,join a0 a1 a2 a3"));
 }
 
 TEST(paramstore_aarch64_cdecl) {

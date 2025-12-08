@@ -87,7 +87,7 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws IOException if there was a problem getting a user directory.
 	 */
-	public GenericApplicationLayout(Collection<ResourceFile> applicationRootDirs,
+	public GenericApplicationLayout(SequencedCollection<ResourceFile> applicationRootDirs,
 			ApplicationProperties applicationProperties) throws IOException {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
@@ -179,9 +179,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * first entry will be the primary root in both cases.
 	 * @return root directories
 	 */
-	public static Collection<ResourceFile> getDefaultApplicationRootDirs() {
+	public static SequencedCollection<ResourceFile> getDefaultApplicationRootDirs() {
 
-		Set<ResourceFile> results = new HashSet<>();
+		List<ResourceFile> results = new ArrayList<>();
 		String additionalRootsProperty = System.getProperty(ADDITIONAL_APPLICATION_ROOT_DIRS);
 		if (!StringUtils.isBlank(additionalRootsProperty)) {
 			String[] paths = additionalRootsProperty.split(File.pathSeparator);

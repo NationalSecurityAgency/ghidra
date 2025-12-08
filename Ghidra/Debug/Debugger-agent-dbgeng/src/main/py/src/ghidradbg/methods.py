@@ -26,7 +26,7 @@ from ghidratrace.client import (MethodRegistry, ParamDesc, Address,
 from pybag import pydbg  # type: ignore
 from pybag.dbgeng import core as DbgEng, exception  # type: ignore
 
-from . import util, commands
+from . import arch, util, commands
 
 
 REGISTRY = MethodRegistry(ThreadPoolExecutor(
@@ -828,7 +828,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
             display_result=False)
         if result['count'] == 0:
             commands.putmem_state(
-                offset_start, offset_start + range.length() - 1, 'error')
+                offset_start, range.length() - 1, 'error')
 
 
 @REGISTRY.method()
@@ -836,7 +836,7 @@ def read_mem(process: Process, range: AddressRange) -> None:
 def write_mem(process: Process, address: Address, data: bytes) -> None:
     """Write memory."""
     nproc = find_proc_by_obj(process)
-    offset = process.trace.extra.required_mm().map_back(nproc, address)
+    offset = process.trace.extra.require_mm().map_back(nproc, address)
     dbg().write(offset, data)
 
 
@@ -845,9 +845,14 @@ def write_mem(process: Process, address: Address, data: bytes) -> None:
 def write_reg(frame: StackFrame, name: str, value: bytes) -> None:
     """Write a register."""
     f = find_frame_by_obj(frame)
-    util.select_frame(f.FrameNumber)
-    nproc = pydbg.selected_process()
-    dbg().reg._set_register(name, value)
+    current = util.selected_frame()
+    if f.FrameNumber != current:
+        raise Exception("Mismatch on frame")
+    nproc = util.selected_process()
+    trace: Trace[commands.Extra] = frame.trace
+    rv = trace.extra.require_rm().map_value_back(nproc, name, value)
+    rval = int.from_bytes(rv.value, signed=False)
+    dbg().reg._set_register(name, rval)
 
 
 @REGISTRY.method(display='Refresh Events (custom)', condition=util.dbg.IS_TRACE)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,10 +45,6 @@ public class ProjectPathChooserEditor extends PropertyEditorSupport {
 	private MouseListener otherMouseListener;
 	private String title;
 	private DomainFileFilter filter;
-
-	public ProjectPathChooserEditor() {
-		this(null, null);
-	}
 
 	public ProjectPathChooserEditor(String title, DomainFileFilter filter) {
 		this.title = title;
@@ -127,8 +123,7 @@ public class ProjectPathChooserEditor extends PropertyEditorSupport {
 
 		private void displayFileChooser() {
 			AtomicReference<String> result = new AtomicReference<>();
-			DataTreeDialog dataTreeDialog =
-				new DataTreeDialog(this, title, OPEN, filter);
+			DataTreeDialog dataTreeDialog = new DataTreeDialog(this, title, OPEN, filter);
 			dataTreeDialog.addOkActionListener(e -> {
 				dataTreeDialog.close();
 				DomainFile df = dataTreeDialog.getDomainFile();

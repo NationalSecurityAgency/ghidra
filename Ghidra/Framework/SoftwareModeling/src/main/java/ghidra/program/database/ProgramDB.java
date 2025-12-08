@@ -22,6 +22,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import db.DBHandle;
+import ghidra.app.plugin.processors.generic.LanguageFixupUtil;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
@@ -113,9 +114,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            unused flag bits.
 	 * 19-Oct-2023 - version 28   Revised overlay address space table and eliminated min/max.
 	 *                            Multiple blocks are permitted within a single overlay space.
-	 * 13-Dec-2024 - version 29   Added source file manager.                          
+	 * 13-Dec-2024 - version 29   Added source file manager. 
+	 *  3-Jun-2025 - version 30   Symbol Table schema V4 with external symbol data indexing
+	 * 15-Sep-2025 - version 31   Code Mananger dropped Composites property map use
+	 * 19-Sep-2025 - version 32   Expanded number of SourceType values and record storage affecting
+	 *                            SymbolDB, FunctionDB and RefListFlagsV0
 	 */
-	static final int DB_VERSION = 29;
+	static final int DB_VERSION = 32;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -2061,8 +2066,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 						newCompilerSpecID = translator.getNewCompilerSpecID(compilerSpecID);
 					}
 					Msg.info(this, "Setting language for Program " + getName() + ": " + translator);
-					Msg.info(this, "Setting compiler spec for Program " + getName() + ": " +
-						compilerSpecID + " -> " + newCompilerSpecID);
+					if (!compilerSpecID.equals(newCompilerSpecID)) {
+						Msg.info(this, "Setting compiler spec for Program " + getName() + ": " +
+							compilerSpecID + " -> " + newCompilerSpecID);
+					}
 				}
 				else if (!forceRedisassembly && language.getVersion() == languageVersion &&
 					language.getMinorVersion() == languageMinorVersion) {
@@ -2103,7 +2110,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 					monitor.setMessage("Updating symbols...");
 					getSymbolTable().setLanguage(translator, monitor);
-					getExternalManager().setLanguage(translator, monitor);
 					getFunctionManager().setLanguage(translator, monitor);
 				}
 
@@ -2134,6 +2140,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					// allow complex language upgrades to transform instructions/context
 					translator.fixupInstructions(this, translator.getOldLanguage(), monitor);
 				}
+
+				// apply pspec default markup as defined by translator and pspec
+				LanguageFixupUtil.applyPSpecFixups(this, monitor);
 
 				dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
 				dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());

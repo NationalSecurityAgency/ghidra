@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a golang moduledata structure, which contains a lot of valuable bootstrapping
+ * Represents a Go moduledata structure, which contains a lot of valuable bootstrapping
  * data for RTTI and function data. 
  */
 @StructureMapping(structureName = "runtime.moduledata")
@@ -147,9 +147,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns the address of the beginning of the text section.
-	 * 
-	 * @return address of the beginning of the text section
+	 * {@return the address of the beginning of the text section}
 	 */
 	public Address getText() {
 		return programContext.getCodeAddress(text);
@@ -186,26 +184,21 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns the starting offset of type info
-	 * 
-	 * @return starting offset of type info
+	 * {@return the starting offset of type info}
 	 */
 	public long getTypesOffset() {
 		return typesOffset;
 	}
 
 	/**
-	 * Returns the ending offset of type info
-	 * 
-	 * @return ending offset of type info
+	 * {@return the ending offset of type info}
 	 */
 	public long getTypesEndOffset() {
 		return typesEndOffset;
 	}
 
 	/**
-	 * Return the offset of the gofunc location
-	 * @return offset of the gofunc location
+	 * {@return the offset of the gofunc location}
 	 */
 	public long getGofunc() {
 		return gofunc;
@@ -235,9 +228,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns an artificial slice of the functab entries that are valid.
-	 * 
-	 * @return artificial slice of the functab entries that are valid
+	 * {@return an artificial slice of the functab entries that are valid}
 	 */
 	public GoSlice getFunctabEntriesSlice() {
 		// chop off the last entry as it is not a full entry (it just points to the address
@@ -250,9 +241,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns true if this module data structure contains sane values.
-	 * 
-	 * @return true if this module data structure contains sane values
+	 * {@return true if this module data structure contains sane values}
 	 */
 	public boolean isValid() {
 		MemoryBlock txtBlock = programContext.getGoSection("text");
@@ -276,18 +265,14 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns a slice that contains all the function names.
-	 * 
-	 * @return slice that contains all the function names
+	 * {@return a slice that contains all the function names}
 	 */
 	public GoSlice getFuncnametab() {
 		return funcnametab;
 	}
 
 	/**
-	 * Returns a list of all functions contained in this module.
-	 * 
-	 * @return list of all functions contained in this module
+	 * {@return a list of all functions contained in this module}
 	 * @throws IOException if error reading data
 	 */
 	public List<GoFuncData> getAllFunctionData() throws IOException {
@@ -301,31 +286,28 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns the cutab slice.
-	 * 
-	 * @return cutab slice
+	 * {@return the cutab slice}
 	 */
 	public GoSlice getCutab() {
 		return cutab;
 	}
 
 	/**
-	 * Returns the filetab slice.
-	 * 
-	 * @return filetab slice
+	 * {@return the filetab slice}
 	 */
 	public GoSlice getFiletab() {
 		return filetab;
 	}
 
+	/**
+	 * {@return the pclntable slice}
+	 */
 	public GoSlice getPclntable() {
 		return pclntable;
 	}
 
 	/**
-	 * Returns the pctab slice.
-	 * 
-	 * @return pctab slice
+	 * {@return the pctab slice}
 	 */
 	public GoSlice getPctab() {
 		return pctab;
@@ -336,9 +318,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns a reference to the controlling {@link GoRttiMapper go binary} context.
-	 * 
-	 * @return reference to the controlling {@link GoRttiMapper go binary} context
+	 * {@return a reference to the controlling {@link GoRttiMapper Go binary} context}
 	 */
 	public GoRttiMapper getGoBinary() {
 		return programContext;
@@ -351,8 +331,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
-		typeLinks.markupArray("moduledata.typeLinks", null,
-			programContext.getGoTypes().getInt32DT(), false, session);
+		GoTypeManager goTypes = programContext.getGoTypes();
+		typeLinks.markupArray("moduledata.typeLinks", null, goTypes.getDataType("int32"), false,
+			session);
 		typeLinks.markupElementReferences(4, getTypeList(), session);
 
 		itablinks.markupArray("moduledata.itablinks", null, GoItab.class, true, session);
@@ -366,17 +347,14 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		subSlice.markupArray("moduledata.ftab", null, GoFunctabEntry.class, false, session);
 		subSlice.markupArrayElements(GoFunctabEntry.class, session);
 
-		Structure textsectDT =
-			programContext.getGoTypes().getGhidraDataType("runtime.textsect", Structure.class);
+		Structure textsectDT = goTypes.findDataType("runtime.textsect", Structure.class);
 		if (textsectDT != null) {
 			textsectmap.markupArray("runtime.textsectionmap", null, textsectDT, false, session);
 		}
 	}
 
 	/**
-	 * Returns a list of the GoItabs present in this module.
-	 * 
-	 * @return list of the GoItabs present in this module
+	 * {@return list of the GoItabs present in this module}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -414,9 +392,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Returns a list of locations of the types contained in this module.
-	 * 
-	 * @return list of addresses of GoType structures
+	 * {@return list of locations of the types contained in this module}
 	 * @throws IOException if error reading data 
 	 */
 	public List<Address> getTypeList() throws IOException {

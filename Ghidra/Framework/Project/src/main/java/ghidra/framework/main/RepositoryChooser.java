@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,13 @@ package ghidra.framework.main;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
 
 import docking.ReusableDialogComponentProvider;
@@ -173,26 +173,22 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		radioButtonPanel.getAccessibleContext().setAccessibleName("Radio Buttons");
 		radioButtonPanel.setBorder(BorderFactory.createTitledBorder("Repository Specification"));
 
-		ChangeListener choiceListener = e -> {
-			Object src = e.getSource();
-			if (src instanceof JRadioButton) {
-				JRadioButton choiceButton = (JRadioButton) src;
-				choiceButton.getAccessibleContext().setAccessibleName("Choice");
-				if (choiceButton.isSelected()) {
-					choiceActivated(choiceButton);
-				}
+		ItemListener choiceListener = e -> {
+			JRadioButton choiceButton = (JRadioButton) e.getSource();
+			if (choiceButton.isSelected()) {
+				choiceActivated(choiceButton);
 			}
 		};
 
 		serverInfoChoice = new GRadioButton("Ghidra Server");
 		serverInfoChoice.getAccessibleContext().setAccessibleName("Ghidra Server");
 		serverInfoChoice.setSelected(true);
-		serverInfoChoice.addChangeListener(choiceListener);
+		serverInfoChoice.addItemListener(choiceListener);
 		radioButtonPanel.add(serverInfoChoice);
 
 		urlChoice = new GRadioButton("Ghidra URL");
-		urlChoice.addChangeListener(choiceListener);
 		urlChoice.getAccessibleContext().setAccessibleName("Ghidra URL");
+		urlChoice.addItemListener(choiceListener);
 		radioButtonPanel.add(urlChoice);
 
 		ButtonGroup panelChoices = new ButtonGroup();

@@ -126,7 +126,7 @@ public class GTable extends JTable {
 	private Integer visibleRowCount;
 
 	private int userDefinedRowHeight;
-	private TableModelListener rowHeightListener = e -> adjustRowHeight();
+	private TableModelListener rowHeightListener;
 
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
@@ -521,6 +521,14 @@ public class GTable extends JTable {
 	}
 
 	private void initializeRowHeight() {
+
+		// Note: this method gets called indirectly from the parent constructor, so we cannot 
+		// initialize this field at declaration time or in our constructor, as this call will have
+		// happened at that point.
+		if (rowHeightListener == null) {
+			rowHeightListener = e -> adjustRowHeight();
+		}
+
 		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
 		if (configurableModel != null) {
 			configurableModel.removeTableModelListener(rowHeightListener);
@@ -1004,20 +1012,32 @@ public class GTable extends JTable {
 	}
 
 	public void scrollToSelectedRow() {
+		Container parent = getParent();
+		if (!(parent instanceof JViewport viewport)) {
+			return;
+		}
+
 		int[] selectedRows = getSelectedRows();
 		if (selectedRows == null || selectedRows.length == 0) {
 			return;
 		}
 
-		// just make sure that the first row is visible
+		// Update the cell rectangle to be the entire row so that if the user is horizontally
+		// scrolled, then we do not change that.
 		int row = selectedRows[0];
-
-		// update the cell rectangle to be the entire row so that if the user is horizontally
-		// scrolled, then we do not change that
-		Rectangle visibleRect = getVisibleRect();
 		Rectangle cellRect = getCellRect(row, 0, true);
-		cellRect.x = visibleRect.x;
+		Rectangle visibleRect = getVisibleRect();
+		cellRect.x = visibleRect.x; // use the view x to prevent side scrolling
 		cellRect.width = visibleRect.width;
+
+		// Swing will scroll the view such that the given cell rectangle is at the bottom of the 
+		// scroll pane.  It looks nicer if the row is centered.
+		int halfViewport = viewport.getHeight() / 2;
+		int halfCell = cellRect.height / 2;
+		int center = halfViewport - halfCell;
+		int middleY = visibleRect.y + center;
+		boolean below = cellRect.y > middleY;
+		cellRect.y += below ? center : -center;
 
 		scrollRectToVisible(cellRect);
 	}
@@ -1091,16 +1111,17 @@ public class GTable extends JTable {
 				return;
 			}
 
-			SettingsDefinition[] settings =
+			SettingsDefinition[] settingDefs =
 				configurableModel.getColumnSettingsDefinitions(lastPopupColumnIndex);
-			if (settings.length == 0) {
+			if (settingDefs.length == 0) {
 				return;
 			}
 
 			SettingsDialog dialog = new SettingsDialog(null);
-			dialog.show(GTable.this,
-				configurableModel.getColumnName(lastPopupColumnIndex) + " Settings", settings,
-				configurableModel.getColumnSettings(lastPopupColumnIndex));
+			String title = configurableModel.getColumnName(lastPopupColumnIndex) + " Settings";
+			Settings settings = configurableModel.getColumnSettings(lastPopupColumnIndex);
+			dialog.show(GTable.this, title, settingDefs, settings);
+
 			((GTableColumnModel) getColumnModel()).saveState();
 		});
 		DockingWindowManager.getHelpService().registerHelp(item, helpLocation);

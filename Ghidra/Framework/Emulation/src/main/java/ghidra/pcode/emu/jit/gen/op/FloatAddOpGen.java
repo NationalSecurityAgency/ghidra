@@ -32,7 +32,7 @@ import ghidra.pcode.emu.jit.op.JitFloatAddOp;
  * This uses the binary operator generator and simply emits {@link #FADD} or {@link #DADD} depending
  * on the type.
  */
-public enum FloatAddOpGen implements BinOpGen<JitFloatAddOp> {
+public enum FloatAddOpGen implements FloatBinOpGen<JitFloatAddOp> {
 	/** The generator singleton */
 	GEN;
 

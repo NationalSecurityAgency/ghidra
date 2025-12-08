@@ -39,6 +39,7 @@ import utilities.util.reflection.ReflectionUtilities;
 class ComponentNode extends Node {
 
 	private ComponentPlaceholder top;
+	private int lastActiveTabIndex;
 	private List<ComponentPlaceholder> windowPlaceholders;
 	private JComponent comp;
 	private boolean isDisposed;
@@ -167,6 +168,7 @@ class ComponentNode extends Node {
 	void add(ComponentPlaceholder placeholder) {
 		windowPlaceholders.add(placeholder);
 		placeholder.setNode(this);
+
 		if (placeholder.isActive()) {
 			top = placeholder;
 			invalidate();
@@ -238,9 +240,7 @@ class ComponentNode extends Node {
 	@Override
 	void close() {
 		List<ComponentPlaceholder> list = new ArrayList<>(windowPlaceholders);
-		Iterator<ComponentPlaceholder> it = list.iterator();
-		while (it.hasNext()) {
-			ComponentPlaceholder placeholder = it.next();
+		for (ComponentPlaceholder placeholder : list) {
 			placeholder.close();
 		}
 	}
@@ -293,6 +293,7 @@ class ComponentNode extends Node {
 
 			DockableComponent activeComp =
 				(DockableComponent) tabbedPane.getComponentAt(activeIndex);
+
 			top = activeComp.getComponentWindowingPlaceholder();
 			tabbedPane.setSelectedComponent(activeComp);
 		}
@@ -302,8 +303,17 @@ class ComponentNode extends Node {
 
 	private int addComponentsToTabbedPane(List<ComponentPlaceholder> activeComponents,
 			JTabbedPane tabbedPane) {
+
+		// When rebuilding tabs, we wish to restore the tab location for users so the UI doesn't 
+		// jump around.  How we do this depends on if the user has closed or opened a new view.
+		// We will use the last active tab index to restore the active tab after the user has closed
+		// a tab.  We use the 'top' variable to find the active tab when the user opens a new tab.
 		int count = activeComponents.size();
-		int activeIndex = 0;
+		int activeIndex = lastActiveTabIndex;
+		if (activeIndex >= count) {
+			activeIndex = count - 1;
+		}
+
 		for (int i = 0; i < count; i++) {
 			ComponentPlaceholder placeholder = activeComponents.get(i);
 			DockableComponent c = placeholder.getComponent();
@@ -329,6 +339,7 @@ class ComponentNode extends Node {
 				activeIndex = i;
 			}
 		}
+
 		return activeIndex;
 	}
 
@@ -475,11 +486,15 @@ class ComponentNode extends Node {
 		}
 
 		DockableComponent dc = placeholder.getComponent();
-		if (dc != null) {
-			JTabbedPane tab = (JTabbedPane) comp;
-			if (tab.getSelectedComponent() != dc) {
-				tab.setSelectedComponent(dc);
-			}
+		if (dc == null) {
+			return;
+		}
+
+		top = placeholder;
+		JTabbedPane tab = (JTabbedPane) comp;
+		if (tab.getSelectedComponent() != dc) {
+			tab.setSelectedComponent(dc);
+			lastActiveTabIndex = tab.getSelectedIndex();
 		}
 	}
 
@@ -497,10 +512,7 @@ class ComponentNode extends Node {
 			}
 		}
 		root.setAttribute("TOP_INFO", "" + topIndex);
-		Iterator<ComponentPlaceholder> it = windowPlaceholders.iterator();
-		while (it.hasNext()) {
-
-			ComponentPlaceholder placeholder = it.next();
+		for (ComponentPlaceholder placeholder : windowPlaceholders) {
 
 			Element elem = new Element("COMPONENT_INFO");
 			elem.setAttribute("NAME", placeholder.getName());

@@ -274,12 +274,14 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
 		formatMgr.saveState(saveState);
 		connectedProvider.saveState(saveState);
 	}
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
 		formatMgr.readState(saveState);
 		connectedProvider.readState(saveState);
 	}

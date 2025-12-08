@@ -87,10 +87,8 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		showFiltered("tN");
 
 		JTree tree = getJTree();
-		List<String> expectedFilteredNames = names.stream()
-				.filter(s -> s.startsWith("tN"))
-				.sorted()
-				.collect(Collectors.toList());
+		List<String> expectedFilteredNames =
+			names.stream().filter(s -> s.startsWith("tN")).sorted().collect(Collectors.toList());
 
 		TreeModel model = tree.getModel();
 		GTreeNode root = (GTreeNode) model.getRoot();
@@ -424,8 +422,8 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void showFiltered(final String startsWith) {
 		Swing.runLater(() -> {
-			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog",
-				OPEN, f -> f.getName().startsWith(startsWith));
+			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", OPEN,
+				f -> f.getName().startsWith(startsWith));
 			dialog.showComponent();
 		});
 		waitForSwing();

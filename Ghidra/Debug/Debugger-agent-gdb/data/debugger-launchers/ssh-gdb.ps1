@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@timeout 60000
 #@title gdb via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -26,6 +25,7 @@
 #@menu-group gdb
 #@icon icon.debugger
 #@help gdb#ssh
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
@@ -76,7 +76,7 @@ finished, try launching again.
 
 if ($answer) {
 	Write-Host "Copying Wheels to $Env:OPT_HOST"
-	Mitigate-Scp-PyModules "Debug/Debugger-rmi-trace" "Debug/Debugger-agent-gdb"
+	Mitigate-Scp-PyModules "Debugger-rmi-trace" "<SELF>"
 
 	Write-Host "Installing Wheels into GDB's embedded Python"
 	$arglist = Compute-Gdb-PipInstall-Args "'-f'" "os.environ['HOME']" "'ghidragdb>=$version'"

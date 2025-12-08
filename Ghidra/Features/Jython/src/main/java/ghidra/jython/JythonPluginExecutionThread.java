@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,15 @@
 package ghidra.jython;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.python.core.PyException;
 
 import db.Transaction;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.app.script.GhidraState;
+import ghidra.app.script.ScriptControls;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
@@ -59,6 +60,7 @@ class JythonPluginExecutionThread extends Thread {
 		TaskMonitor interactiveTaskMonitor = plugin.getInteractiveTaskMonitor();
 		JythonScript interactiveScript = plugin.getInteractiveScript();
 		Program program = plugin.getCurrentProgram();
+		InterpreterConsole console = plugin.getConsole();
 
 		// Setup transaction for the execution.
 		try (Transaction tx = program != null ? program.openTransaction("Jython command") : null) {
@@ -69,7 +71,7 @@ class JythonPluginExecutionThread extends Thread {
 			interactiveScript.set(
 				new GhidraState(tool, tool.getProject(), program, plugin.getProgramLocation(),
 					plugin.getProgramSelection(), plugin.getProgramHighlight()),
-				interactiveTaskMonitor, new PrintWriter(plugin.getConsole().getStdOut()));
+				new ScriptControls(console, interactiveTaskMonitor));
 
 			// Execute the command
 			moreInputWanted.set(false);
@@ -81,14 +83,13 @@ class JythonPluginExecutionThread extends Thread {
 				plugin.reset();
 			}
 			else {
-				plugin.getConsole()
-						.getErrWriter()
+				console.getErrWriter()
 						.println(
 							"Suppressing exception: " + PyException.exceptionClassName(pye.type));
 			}
 		}
 		catch (StackOverflowError soe) {
-			plugin.getConsole().getErrWriter().println("Stack overflow!");
+			console.getErrWriter().println("Stack overflow!");
 		}
 		finally {
 			interactiveScript.end(false); // end any transactions the script may have started

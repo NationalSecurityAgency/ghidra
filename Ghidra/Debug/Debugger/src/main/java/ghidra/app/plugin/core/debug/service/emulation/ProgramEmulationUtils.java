@@ -28,6 +28,7 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.framework.model.DomainFile;
+import ghidra.pcode.emu.EmulatorUtilities;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -45,7 +46,8 @@ import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
-import ghidra.trace.model.thread.*;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -141,7 +143,7 @@ public class ProgramEmulationUtils {
 		EMU_SESSION_SCHEMA = EMU_CTX.getSchema(new SchemaName("EmuSession"));
 	}
 
-	public static final String BLOCK_NAME_STACK = "STACK";
+	public static final String BLOCK_NAME_STACK = EmulatorUtilities.BLOCK_NAME_STACK;
 
 	/**
 	 * Conventional prefix for first snapshot to identify "pure emulation" traces.
@@ -290,19 +292,13 @@ public class ProgramEmulationUtils {
 	}
 
 	public static PathPattern computePatternRegion(Trace trace) {
-		TraceObjectSchema root = trace.getObjectManager().getRootSchema();
-		if (root == null) {
-			return PathFilter.parse("Memory[]");
-		}
-		return computePattern(root, trace, TraceObjectMemoryRegion.class);
+		TraceObjectSchema root = trace.getObjectManager().requireRootSchema();
+		return computePattern(root, trace, TraceMemoryRegion.class);
 	}
 
 	public static PathPattern computePatternThread(Trace trace) {
-		TraceObjectSchema root = trace.getObjectManager().getRootSchema();
-		if (root == null) {
-			return PathFilter.parse("Threads[]");
-		}
-		return computePattern(root, trace, TraceObjectThread.class);
+		TraceObjectSchema root = trace.getObjectManager().requireRootSchema();
+		return computePattern(root, trace, TraceThread.class);
 	}
 
 	/**
@@ -347,18 +343,16 @@ public class ProgramEmulationUtils {
 	public static void initializeRegisters(Trace trace, long snap, TraceThread thread,
 			Program program, Address tracePc, Address programPc, AddressRange stack) {
 		TraceMemoryManager memory = trace.getMemoryManager();
-		if (thread instanceof TraceObjectThread ot) {
-			TraceObject object = ot.getObject();
-			PathFilter regsFilter = object.getRoot()
-					.getSchema()
-					.searchForRegisterContainer(0, object.getCanonicalPath());
-			if (regsFilter.isNone()) {
-				throw new IllegalArgumentException("Cannot create register container");
-			}
-			for (PathPattern regsPattern : regsFilter.getPatterns()) {
-				trace.getObjectManager().createObject(regsPattern.getSingletonPath());
-				break;
-			}
+		TraceObject object = thread.getObject();
+		PathFilter regsFilter = object.getRoot()
+				.getSchema()
+				.searchForRegisterContainer(0, object.getCanonicalPath());
+		if (regsFilter.isNone()) {
+			throw new IllegalArgumentException("Cannot create register container");
+		}
+		for (PathPattern regsPattern : regsFilter.getPatterns()) {
+			trace.getObjectManager().createObject(regsPattern.getSingletonPath());
+			break;
 		}
 		TraceMemorySpace regSpace = memory.getMemoryRegisterSpace(thread, true);
 		if (program != null) {
@@ -435,7 +429,7 @@ public class ProgramEmulationUtils {
 		final AddressRange alloc;
 		if (cSpec.stackGrowsNegative()) {
 			Address max = spAddr.subtractWrap(1);
-			Address min = spAddr.subtractWrapSpace(size);
+			Address min = spAddr.subtractWrap(size);
 			if (min.compareTo(max) > 0) {
 				alloc = new AddressRangeImpl(max.getAddressSpace().getMinAddress(), max);
 			}
@@ -606,7 +600,12 @@ public class ProgramEmulationUtils {
 		throw new EmulatorOutOfMemoryException();
 	}
 
-	protected static void createObjects(Trace trace) {
+	/**
+	 * Initialize a given emulation trace with some required/expected objects
+	 * 
+	 * @param trace the trace
+	 */
+	public static void createObjects(Trace trace) {
 		TraceObjectManager om = trace.getObjectManager();
 		om.createRootObject(EMU_SESSION_SCHEMA);
 

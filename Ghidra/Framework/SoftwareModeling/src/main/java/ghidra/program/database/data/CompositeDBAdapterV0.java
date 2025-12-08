@@ -61,6 +61,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 		}
 	}
 
+	@Override
 	int getVersion() {
 		return compositeTable.getSchema().getVersion();
 	}

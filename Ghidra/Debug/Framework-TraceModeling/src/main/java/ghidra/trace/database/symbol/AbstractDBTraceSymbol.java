@@ -39,7 +39,8 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceSymbol;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.DBAnnotatedColumn;
@@ -51,7 +52,7 @@ import ghidra.util.task.TaskMonitor;
 public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		implements TraceSymbol, DecodesAddresses {
 
-	private static final byte SOURCE_MASK = 0x0F;
+	private static final byte SOURCE_MASK = 0x0F; // see SourceType
 	private static final int SOURCE_SHIFT = 0;
 	private static final byte SOURCE_CLEAR = ~(SOURCE_MASK << SOURCE_SHIFT);
 
@@ -172,8 +173,8 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		return null;
 	}
 
-	protected TraceAddressSpace getSpace() {
-		return null;
+	protected AddressSpace getAddressSpace() {
+		return getAddress().getAddressSpace();
 	}
 
 	@Override
@@ -287,12 +288,6 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	@Override
-	public boolean hasMultipleReferences() {
-		// TODO: Could be slightly more efficient by just iterating twice?
-		return getReferenceCount() > 1;
-	}
-
-	@Override
 	public boolean hasReferences() {
 		return !getReferenceCollection().isEmpty();
 	}
@@ -340,7 +335,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 			return null;
 		}
 		this.name = newName;
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_RENAMED, getSpace(), this, oldName,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_RENAMED, getAddressSpace(), this, oldName,
 			newName);
 	}
 
@@ -365,13 +360,13 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		DBTraceNamespaceSymbol checkedParent = checkCircular(newParent);
 		this.parent = checkedParent;
 		this.parentID = parent.getID();
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_PARENT_CHANGED, getSpace(), this,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_PARENT_CHANGED, getAddressSpace(), this,
 			oldParent, checkedParent);
 	}
 
 	protected void doSetSource(SourceType newSource) {
-		flags =
-			(byte) ((flags & SOURCE_CLEAR) | (newSource.ordinal() & SOURCE_MASK) << SOURCE_SHIFT);
+		flags = (byte) ((flags & SOURCE_CLEAR) |
+			(newSource.getStorageId() & SOURCE_MASK) << SOURCE_SHIFT);
 	}
 
 	/**
@@ -389,7 +384,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 			return null;
 		}
 		doSetSource(newSource);
-		return new TraceChangeRecord<>(TraceEvents.SYMBOL_SOURCE_CHANGED, getSpace(), this,
+		return new TraceChangeRecord<>(TraceEvents.SYMBOL_SOURCE_CHANGED, getAddressSpace(), this,
 			oldSource, newSource);
 	}
 
@@ -507,7 +502,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	@Override
 	public SourceType getSource() {
 		assertNotGlobal();
-		return SourceType.values()[(flags >> SOURCE_SHIFT) & SOURCE_MASK];
+		return SourceType.getSourceType((flags >> SOURCE_SHIFT) & SOURCE_MASK);
 	}
 
 	@Override
@@ -564,8 +559,4 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		return false;
 	}
 
-	@Override
-	public boolean isExternalEntryPoint() {
-		return false;
-	}
 }

@@ -63,7 +63,7 @@ public class GoRegisterInfoManager {
 	/**
 	 * Returns a {@link GoRegisterInfo} instance for the specified {@link Language}.
 	 * <p>
-	 * If the language didn't define golang register info, a generic/empty instance will be
+	 * If the language didn't define Go register info, a generic/empty instance will be
 	 * returned that forces all parameters to be stack allocated.
 	 * 
 	 * @param lang {@link Language}
@@ -79,7 +79,7 @@ public class GoRegisterInfoManager {
 		}
 		
 		int goSize = lang.getInstructionAlignment();
-		Msg.warn(this, "Missing Golang register info for: %s, defaulting to abi0, size=%d"
+		Msg.warn(this, "Missing Go register info for: %s, defaulting to abi0, size=%d"
 				.formatted(lang.getLanguageID(), goSize));
 		return getDefault(lang);
 	}
@@ -91,11 +91,10 @@ public class GoRegisterInfoManager {
 				return read(f, lang);
 			}
 			Msg.warn(GoRegisterInfoManager.class,
-				"Missing Golang register info file for: %s".formatted(lang.getLanguageID()));
+				"Missing Go register info file for: %s".formatted(lang.getLanguageID()));
 		}
 		catch (IOException e) {
-			Msg.warn(GoRegisterInfoManager.class, "Failed to read Golang register info file",
-				e);
+			Msg.warn(GoRegisterInfoManager.class, "Failed to read Go register info file", e);
 		}
 		return List.of();
 	}
@@ -110,8 +109,8 @@ public class GoRegisterInfoManager {
 			return readFrom(rootElem, lang);
 		}
 		catch (JDOMException | IOException e) {
-			Msg.error(GoRegisterInfo.class, "Bad Golang register info file " + f, e);
-			throw new IOException("Failed to read Golang register info file " + f, e);
+			Msg.error(GoRegisterInfo.class, "Bad Go register info file " + f, e);
+			throw new IOException("Failed to read Go register info file " + f, e);
 		}
 
 	}

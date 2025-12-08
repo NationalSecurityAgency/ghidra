@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 	 * @param leftFunction the first function
 	 * @param rightFunction the second function
 	 * @param monitor the task monitor that indicates progress and allows the user to cancel.
-	 * @throws CancelledException if the user cancels
+	 * @throws CancelledException if the user cancels1
 	 * @throws MemoryAccessException if either functions memory can't be accessed.
 	 */
 	public HashedFunctionAddressCorrelation(Function leftFunction, Function rightFunction,
@@ -186,8 +186,9 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 			destStore.removeHash(destEntry);		// Remove this HashEntry
 			cancelMatch = true;						// Cancel the match
 		}
-		if (cancelMatch)
+		if (cancelMatch) {
 			return;
+		}
 		ArrayList<Instruction> srcInstructVec = new ArrayList<Instruction>();
 		ArrayList<Instruction> destInstructVec = new ArrayList<Instruction>();
 		ArrayList<CodeBlock> srcBlockVec = new ArrayList<CodeBlock>();
@@ -197,8 +198,9 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 		HashStore.extendMatch(matchSize, srcInstruct, srcMatch, destInstruct, destMatch, hashCalc);
 		srcStore.matchHash(srcMatch, srcInstructVec, srcBlockVec);
 		destStore.matchHash(destMatch, destInstructVec, destBlockVec);
-		for (int i = 0; i < srcInstructVec.size(); ++i)
+		for (int i = 0; i < srcInstructVec.size(); ++i) {
 			srcToDest.put(srcInstructVec.get(i).getAddress(), destInstructVec.get(i).getAddress());
+		}
 	}
 
 	/**
@@ -218,16 +220,15 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 		int matchSize = entry.hash.size;
 		for (InstructHash curInstruct : entry.instList) {
 			ArrayList<Hash> hashList = strategy.calcHashes(curInstruct, matchSize, store);
-			Iterator<Hash> iter = hashList.iterator();
-			while (iter.hasNext()) {
-				Hash curHash = iter.next();
+			for (Hash curHash : hashList) {
 				DisambiguatorEntry curEntry = entryMap.get(curHash);
 				if (curEntry == null) {
 					curEntry = new DisambiguatorEntry(curHash, curInstruct);
 					entryMap.put(curHash, curEntry);
 				}
-				else
+				else {
 					curEntry.count += 1;
+				}
 			}
 		}
 		return entryMap;
@@ -249,21 +250,24 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 		TreeMap<Hash, DisambiguatorEntry> destDisambig =
 			constructDisambiguatorTree(destEntry, destStore, strategy);
 		int count = 0;
-		Iterator<DisambiguatorEntry> iter = srcDisambig.values().iterator();
-		while (iter.hasNext()) {
-			DisambiguatorEntry srcDisEntry = iter.next();
-			if (srcDisEntry.count != 1)
+		for (DisambiguatorEntry srcDisEntry : srcDisambig.values()) {
+			if (srcDisEntry.count != 1) {
 				continue;
+			}
 			// Its possible for this InstructHash to have been matched by an earlier DisambiguatorEntry
-			if (srcDisEntry.instruct.isMatched)
+			if (srcDisEntry.instruct.isMatched) {
 				continue;
+			}
 			DisambiguatorEntry destDisEntry = destDisambig.get(srcDisEntry.hash);
-			if (destDisEntry == null)
+			if (destDisEntry == null) {
 				continue;
-			if (destDisEntry.count != 1)
+			}
+			if (destDisEntry.count != 1) {
 				continue;
-			if (destDisEntry.instruct.isMatched)
+			}
+			if (destDisEntry.instruct.isMatched) {
 				continue;
+			}
 			// If both sides have exactly one matching InstructHash, call it a match
 			declareMatch(srcEntry, srcDisEntry.instruct, destEntry, destDisEntry.instruct);
 			count += 1;
@@ -281,25 +285,32 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 	 */
 	private boolean disambiguateMatchingNgrams(HashEntry srcEntry, HashEntry destEntry)
 			throws CancelledException, MemoryAccessException {
-		if (srcEntry.hasDuplicateBlocks())
+		if (srcEntry.hasDuplicateBlocks()) {
 			return false;
-		if (destEntry.hasDuplicateBlocks())
+		}
+		if (destEntry.hasDuplicateBlocks()) {
 			return false;
-		if (srcEntry.hash.size != destEntry.hash.size)
+		}
+		if (srcEntry.hash.size != destEntry.hash.size) {
 			return false;		// This likely never happens, because we know the hash values are equal
+		}
 		int count = disambiguateNgramsWithStrategy(new DisambiguateByParent(), srcEntry, destEntry);
-		if (count != 0)
+		if (count != 0) {
 			return true;
+		}
 		count = disambiguateNgramsWithStrategy(new DisambiguateByChild(), srcEntry, destEntry);
-		if (count != 0)
+		if (count != 0) {
 			return true;
+		}
 		count = disambiguateNgramsWithStrategy(new DisambiguateByBytes(), srcEntry, destEntry);
-		if (count != 0)
+		if (count != 0) {
 			return true;
+		}
 		count = disambiguateNgramsWithStrategy(new DisambiguateByParentWithOrder(), srcEntry,
 			destEntry);
-		if (count != 0)
+		if (count != 0) {
 			return true;
+		}
 		return false;
 	}
 
@@ -333,8 +344,9 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 						destEntry2.instList.getFirst());
 				}
 				else {
-					if (!disambiguateMatchingNgrams(srcEntry, destEntry))
+					if (!disambiguateMatchingNgrams(srcEntry, destEntry)) {
 						srcStore.removeHash(srcEntry);
+					}
 				}
 			}
 		}
@@ -359,8 +371,9 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 		destStore.calcHashes(minLength, maxLength, wholeBlock, matchBlock, hashCalc);
 		for (int pass = 0; pass < maxPasses; ++pass) {
 			int curMatch = srcStore.numMatchedInstructions();
-			if (curMatch == srcStore.getTotalInstructions())
+			if (curMatch == srcStore.getTotalInstructions()) {
 				break;			// quit if there are no unmatched instructions
+			}
 			srcStore.clearSort();
 			destStore.clearSort();
 
@@ -368,8 +381,9 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 			destStore.insertHashes();
 
 			findMatches();
-			if (curMatch == srcStore.numMatchedInstructions())
+			if (curMatch == srcStore.numMatchedInstructions()) {
 				break;		// quit if no new matched instructions
+			}
 		}
 	}
 
@@ -389,30 +403,37 @@ public class HashedFunctionAddressCorrelation implements ListingAddressCorrelati
 
 		findMatches();
 
-		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions())
+		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions()) {
 			return;
-		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions())
+		}
+		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions()) {
 			return;
+		}
 
 		// Now try multiple passes of 3 and 4 long n-grams hopefully filling in a lot of small holes in our match
 		// given a scaffolding of previously matched basic blocks
 		runPasses(3, 4, true, true, 10);
 
-		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions())
+		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions()) {
 			return;
-		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions())
+		}
+		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions()) {
 			return;
+		}
 
 		// Repeat with big n-grams
 		int curMatch = srcStore.numMatchedInstructions();
 		runPasses(5, 10, false, false, 3);
 
-		if (srcStore.numMatchedInstructions() == curMatch)
+		if (srcStore.numMatchedInstructions() == curMatch) {
 			return;		// No progress
-		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions())
+		}
+		if (srcStore.numMatchedInstructions() == srcStore.getTotalInstructions()) {
 			return;
-		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions())
+		}
+		if (destStore.numMatchedInstructions() == destStore.getTotalInstructions()) {
 			return;
+		}
 
 		// Repeat with small n-grams
 		runPasses(3, 4, true, true, 10);

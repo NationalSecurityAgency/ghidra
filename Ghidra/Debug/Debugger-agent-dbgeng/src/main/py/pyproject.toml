@@ -4,20 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidradbg"
-version = "11.4"
+version = "11.5"
 authors = [
   { name="Ghidra Development Team" },
 ]
 description = "Ghidra's Plugin for dbgeng"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==11.4",
+    "ghidratrace==11.5",
     "pybag>=2.2.12"
 ]
 

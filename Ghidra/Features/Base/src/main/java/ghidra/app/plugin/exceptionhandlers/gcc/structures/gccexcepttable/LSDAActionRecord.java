@@ -20,7 +20,8 @@ import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.SignedLeb128DataType;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CommentType;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.task.TaskMonitor;
 

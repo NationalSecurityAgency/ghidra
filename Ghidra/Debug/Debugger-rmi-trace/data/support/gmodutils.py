@@ -28,19 +28,17 @@ This file CANNOT be assumed to be available on a remote target. For
 that, consider ghidratrace.setuputils.
 """
 import os
+from typing import Optional
 
-home = os.getenv('GHIDRA_HOME')
 
-
-def ghidra_module_pypath(name: str) -> str:
-    installed = f'{home}/Ghidra/{name}/pypkg/src'
+def ghidra_module_pypath(name: Optional[str]=None) -> str:
+    mod_home_name = 'MODULE_HOME' if name is None else f'MODULE_{name.replace("-","_")}_HOME'
+    mod_home = os.getenv(mod_home_name)
+    installed = f'{mod_home}/pypkg/src'
     if os.path.isdir(installed):
         return installed
-    dev1 = f'{home}/Ghidra/{name}/build/pypkg/src'
-    if os.path.isdir(dev1):
-        return dev1
-    dev2 = f'{home}/ghidra/Ghidra/{name}/build/pypkg/src'
-    if os.path.isdir(dev2):
-        return dev2
+    dev = f'{mod_home}/build/pypkg/src'
+    if os.path.isdir(dev):
+        return dev
     raise Exception(
         f"Cannot find Python source for {name}. Try gradle assemblePyPackage?")

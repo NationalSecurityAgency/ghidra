@@ -1,125 +1,173 @@
+@ ["all","Funcs","go/types.Unalias","Position"]
+- "$GOROOT/go/types/alias.go:39:6"
++ "$GOROOT/go/types/alias.go:42:6"
+@ ["all","Funcs","go/types.asNamed","Position"]
+- "$GOROOT/go/types/alias.go:61:6"
++ "$GOROOT/go/types/alias.go:66:6"
+@ ["all","Funcs","html/template.isJSIdentPart","Position"]
+- "$GOROOT/html/template/js.go:413:6"
++ "$GOROOT/html/template/js.go:431:6"
+@ ["all","Funcs","html/template.isJSType","Position"]
+- "$GOROOT/html/template/js.go:432:6"
++ "$GOROOT/html/template/js.go:450:6"
+@ ["all","Funcs","html/template.jsRegexpEscaper","Position"]
+- "$GOROOT/html/template/js.go:250:6"
++ "$GOROOT/html/template/js.go:268:6"
+@ ["all","Funcs","html/template.jsStrEscaper","Position"]
+- "$GOROOT/html/template/js.go:233:6"
++ "$GOROOT/html/template/js.go:251:6"
+@ ["all","Funcs","html/template.jsTmplLitEscaper","Position"]
+- "$GOROOT/html/template/js.go:241:6"
++ "$GOROOT/html/template/js.go:259:6"
+@ ["all","Funcs","html/template.replace","Position"]
+- "$GOROOT/html/template/js.go:265:6"
++ "$GOROOT/html/template/js.go:283:6"
+@ ["all","Funcs","internal/trace.RelatedGoroutinesV2","Position"]
+- "$GOROOT/internal/trace/summary.go:613:6"
++ "$GOROOT/internal/trace/summary.go:618:6"
+@ ["all","Funcs","net/http.canonicalAddr","Position"]
+- "$GOROOT/net/http/transport.go:2791:6"
++ "$GOROOT/net/http/transport.go:2792:6"
+@ ["all","Funcs","net/http.cloneTLSConfig","Position"]
+- "$GOROOT/net/http/transport.go:2920:6"
++ "$GOROOT/net/http/transport.go:2921:6"
+@ ["all","Funcs","net/http.idnaASCIIFromURL","Position"]
+- "$GOROOT/net/http/transport.go:2782:6"
++ "$GOROOT/net/http/transport.go:2783:6"
+@ ["all","Funcs","net/http.is408Message","Position"]
+- "$GOROOT/net/http/transport.go:2309:6"
++ "$GOROOT/net/http/transport.go:2310:6"
+@ ["all","Funcs","net/http.newReadWriteCloserBody","Position"]
+- "$GOROOT/net/http/transport.go:2398:6"
++ "$GOROOT/net/http/transport.go:2399:6"
+@ ["all","Funcs","net/http.nop","Position"]
+- "$GOROOT/net/http/transport.go:2574:6"
++ "$GOROOT/net/http/transport.go:2575:6"
+@ ["all","Funcs","net/http.stripPassword","Position"]
+- "$GOROOT/net/http/client.go:1026:6"
++ "$GOROOT/net/http/client.go:1032:6"
+@ ["all","Funcs","net/http/cookiejar.defaultPath","Position"]
+- "$GOROOT/net/http/cookiejar/jar.go:370:6"
++ "$GOROOT/net/http/cookiejar/jar.go:377:6"
 @ ["all","Funcs","net/mail.isAtext","Params",2]
   {"DataType":"bool","Name":"dot"}
 - {"DataType":"bool","Name":"permissive"}
 ]
-@ ["all","Funcs","net/textproto.(*Reader).readContinuedLineSlice","Params",1]
+@ ["all","Funcs","net/mail.isAtext","Position"]
+- "$GOROOT/net/mail/message.go:855:6"
++ "$GOROOT/net/mail/message.go:862:6"
+@ ["all","Funcs","net/mail.isMultibyte","Position"]
+- "$GOROOT/net/mail/message.go:903:6"
++ "$GOROOT/net/mail/message.go:907:6"
+@ ["all","Funcs","net/mail.isQtext","Position"]
+- "$GOROOT/net/mail/message.go:871:6"
++ "$GOROOT/net/mail/message.go:875:6"
+@ ["all","Funcs","net/mail.isVchar","Position"]
+- "$GOROOT/net/mail/message.go:896:6"
++ "$GOROOT/net/mail/message.go:900:6"
+@ ["all","Funcs","net/mail.isWSP","Position"]
+- "$GOROOT/net/mail/message.go:909:6"
++ "$GOROOT/net/mail/message.go:913:6"
+@ ["all","Funcs","net/mail.quoteString","Position"]
+- "$GOROOT/net/mail/message.go:880:6"
++ "$GOROOT/net/mail/message.go:884:6"
+@ ["all","Funcs","net/textproto.(*net/textproto.Reader).readContinuedLineSlice","Params",1]
   {"DataType":"*net/textproto.Reader","Name":"r"}
 + {"DataType":"int64","Name":"lim"}
   {"DataType":"func([]byte) error","Name":"validateFirstLine"}
-@ ["all","Funcs","net/textproto.(*Reader).readLineSlice","Params",1]
+@ ["all","Funcs","net/textproto.(*net/textproto.Reader).readLineSlice","Params",1]
   {"DataType":"*net/textproto.Reader","Name":"r"}
 + {"DataType":"int64","Name":"lim"}
 ]
+@ ["all","Funcs","net/textproto.CanonicalMIMEHeaderKey","Position"]
+- "$GOROOT/net/textproto/reader.go:632:6"
++ "$GOROOT/net/textproto/reader.go:650:6"
+@ ["all","Funcs","net/textproto.NewReader","Position"]
+- "$GOROOT/net/textproto/reader.go:32:6"
++ "$GOROOT/net/textproto/reader.go:36:6"
+@ ["all","Funcs","net/textproto.canonicalMIMEHeaderKey","Position"]
+- "$GOROOT/net/textproto/reader.go:727:6"
++ "$GOROOT/net/textproto/reader.go:745:6"
+@ ["all","Funcs","net/textproto.initCommonHeader","Position"]
+- "$GOROOT/net/textproto/reader.go:777:6"
++ "$GOROOT/net/textproto/reader.go:795:6"
+@ ["all","Funcs","net/textproto.mustHaveFieldNameColon","Position"]
+- "$GOROOT/net/textproto/reader.go:589:6"
++ "$GOROOT/net/textproto/reader.go:607:6"
+@ ["all","Funcs","net/textproto.noValidation","Position"]
+- "$GOROOT/net/textproto/reader.go:584:6"
++ "$GOROOT/net/textproto/reader.go:602:6"
+@ ["all","Funcs","net/textproto.parseCodeLine","Position"]
+- "$GOROOT/net/textproto/reader.go:195:6"
++ "$GOROOT/net/textproto/reader.go:214:6"
+@ ["all","Funcs","net/textproto.readMIMEHeader","Position"]
+- "$GOROOT/net/textproto/reader.go:487:6"
++ "$GOROOT/net/textproto/reader.go:506:6"
+@ ["all","Funcs","net/textproto.trim","Position"]
+- "$GOROOT/net/textproto/reader.go:97:6"
++ "$GOROOT/net/textproto/reader.go:107:6"
+@ ["all","Funcs","net/textproto.validHeaderFieldByte","Position"]
+- "$GOROOT/net/textproto/reader.go:663:6"
++ "$GOROOT/net/textproto/reader.go:681:6"
+@ ["all","Funcs","net/textproto.validHeaderValueByte","Position"]
+- "$GOROOT/net/textproto/reader.go:703:6"
++ "$GOROOT/net/textproto/reader.go:721:6"
 @ ["all","Funcs","go/types.unalias"]
-+ {"Flags":0,"Params":[{"DataType":"*go/types.Alias","Name":"a0"}],"Results":[{"DataType":"go/types.Type","Name":""}],"TypeParams":[]}
-@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["darwin-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-386-cgo","Types","func(string, string) bool","Params",0,"Name"]
-- "key"
-+ "recv"
-@ ["linux-386-cgo","Types","func(string, string) bool","Params",1,"Name"]
-- "value"
-+ "name"
-@ ["linux-386-cgo","Types","func(string, string) bool","Results",0,"Name"]
-- ""
-+ "ok"
-@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-amd64","Types","func(string, string) bool","Params",0,"Name"]
-- "key"
-+ "recv"
-@ ["linux-amd64","Types","func(string, string) bool","Params",1,"Name"]
-- "value"
-+ "name"
-@ ["linux-amd64","Types","func(string, string) bool","Results",0,"Name"]
-- ""
-+ "ok"
-@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- ""
-+ "r"
-@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- ""
-+ "path"
-@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
-- "recv"
-+ "key"
-@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
-- "name"
-+ "value"
-@ ["linux-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
-- "ok"
-+ ""
-@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-arm","Types","func(string, string) bool","Params",0,"Name"]
-- "key"
-+ "recv"
-@ ["linux-arm","Types","func(string, string) bool","Params",1,"Name"]
-- "value"
-+ "name"
-@ ["linux-arm","Types","func(string, string) bool","Results",0,"Name"]
-- ""
-+ "ok"
-@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
-@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["linux-arm64","Types","func(string, string) bool","Params",0,"Name"]
-- "key"
-+ "recv"
-@ ["linux-arm64","Types","func(string, string) bool","Params",1,"Name"]
-- "value"
-+ "name"
-@ ["linux-arm64","Types","func(string, string) bool","Results",0,"Name"]
-- ""
-+ "ok"
-@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
-- "key"
-+ "recv"
-@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
-- "value"
-+ "name"
-@ ["linux-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
-- ""
-+ "ok"
-@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["windows-386-cgo","Types","func(string, string) bool","Params",0,"Name"]
-- "recv"
-+ "key"
-@ ["windows-386-cgo","Types","func(string, string) bool","Params",1,"Name"]
-- "name"
-+ "value"
-@ ["windows-386-cgo","Types","func(string, string) bool","Results",0,"Name"]
-- "ok"
-+ ""
-@ ["windows-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
-- "path"
-+ ""
-@ ["windows-amd64","Types","func(string, string) bool","Params",0,"Name"]
-- "recv"
-+ "key"
-@ ["windows-amd64","Types","func(string, string) bool","Params",1,"Name"]
-- "name"
-+ "value"
-@ ["windows-amd64","Types","func(string, string) bool","Results",0,"Name"]
-- "ok"
-+ ""
-@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
-- "r"
-+ ""
++ {"Params":[{"DataType":"*go/types.Alias","Name":"a0"}],"Position":"$GOROOT/go/types/alias.go:49:6","Results":[{"DataType":"go/types.Type"}]}
+@ ["all","Types","net/http.bodyEOFSignal","Position"]
+- "$GOROOT/net/http/transport.go:2810:6"
++ "$GOROOT/net/http/transport.go:2811:6"
+@ ["all","Types","net/http.connLRU","Position"]
+- "$GOROOT/net/http/transport.go:2927:6"
++ "$GOROOT/net/http/transport.go:2928:6"
+@ ["all","Types","net/http.connectMethod","Position"]
+- "$GOROOT/net/http/transport.go:1846:6"
++ "$GOROOT/net/http/transport.go:1847:6"
+@ ["all","Types","net/http.connectMethodKey","Position"]
+- "$GOROOT/net/http/transport.go:1903:6"
++ "$GOROOT/net/http/transport.go:1904:6"
+@ ["all","Types","net/http.fakeLocker","Position"]
+- "$GOROOT/net/http/transport.go:2912:6"
++ "$GOROOT/net/http/transport.go:2913:6"
+@ ["all","Types","net/http.gzipReader","Position"]
+- "$GOROOT/net/http/transport.go:2870:6"
++ "$GOROOT/net/http/transport.go:2871:6"
+@ ["all","Types","net/http.httpError","Position"]
+- "$GOROOT/net/http/transport.go:2558:6"
++ "$GOROOT/net/http/transport.go:2559:6"
+@ ["all","Types","net/http.nothingWrittenError","Position"]
+- "$GOROOT/net/http/transport.go:2432:6"
++ "$GOROOT/net/http/transport.go:2433:6"
+@ ["all","Types","net/http.persistConn","Position"]
+- "$GOROOT/net/http/transport.go:1919:6"
++ "$GOROOT/net/http/transport.go:1920:6"
+@ ["all","Types","net/http.persistConnWriter","Position"]
+- "$GOROOT/net/http/transport.go:1809:6"
++ "$GOROOT/net/http/transport.go:1810:6"
+@ ["all","Types","net/http.readWriteCloserBody","Position"]
+- "$GOROOT/net/http/transport.go:2411:6"
++ "$GOROOT/net/http/transport.go:2412:6"
+@ ["all","Types","net/http.requestAndChan","Position"]
+- "$GOROOT/net/http/transport.go:2524:6"
++ "$GOROOT/net/http/transport.go:2525:6"
+@ ["all","Types","net/http.responseAndError","Position"]
+- "$GOROOT/net/http/transport.go:2518:6"
++ "$GOROOT/net/http/transport.go:2519:6"
+@ ["all","Types","net/http.tLogKey","Position"]
+- "$GOROOT/net/http/transport.go:2729:6"
++ "$GOROOT/net/http/transport.go:2730:6"
+@ ["all","Types","net/http.tlsHandshakeTimeoutError","Position"]
+- "$GOROOT/net/http/transport.go:2903:6"
++ "$GOROOT/net/http/transport.go:2904:6"
+@ ["all","Types","net/http.writeRequest","Position"]
+- "$GOROOT/net/http/transport.go:2548:6"
++ "$GOROOT/net/http/transport.go:2549:6"
+@ ["all","Types","net/mail.charsetError","Position"]
+- "$GOROOT/net/mail/message.go:845:6"
++ "$GOROOT/net/mail/message.go:854:6"
+@ ["all","Types","net/textproto.Reader","Position"]
+- "$GOROOT/net/textproto/reader.go:21:6"
++ "$GOROOT/net/textproto/reader.go:25:6"
+@ ["all","Types","net/textproto.dotReader","Position"]
+- "$GOROOT/net/textproto/reader.go:314:6"
++ "$GOROOT/net/textproto/reader.go:333:6"

@@ -110,6 +110,11 @@
    this to ensure that the value in <A href="#MaximumNumberOfStarts">Maximum Number
    of Starts</A> field doesn't cause all starts to be used for training (leaving
    none for testing).</P>
+   
+   <H4><A name="MinimumUndefRangeSize"></A> Minimum Undefined Range Size </H4>
+   <P> This value is the minimum size of an undefined address range that will be considered when
+   applying the model to a program. Defaults to the value stored in the plugin options, see 
+   <A href="#MinLengthUndefinedRange">Minimum Length of Undefined Ranges to Search</A>. </P>
 
    <H4><A name="RestrictSearchToAlignedAddresses"></A> Restrict Search to Aligned Addresses </H4>
    <P> If this is checked, only addresses which are zero modulo the value in the 
@@ -139,11 +144,15 @@
    options).  The results are displayed in a 
    <A href="#FunctionStartTable"> Function Start Table</A>. </P>
 
-   <H4><A name="ApplyModelTo"></A> Apply Model To... Action </H4>
+   <H4><A name="ApplyModelToOtherProgram"></A> Apply Model To Other Program... Action </H4>
    <P> This action will open a dialog to select another program in the current project and
    then apply the model to it.  Note that the only check that the model is compatible with
    the selected program is that any context registers specified when training must be
    present in the selected program. </P> 
+   
+   <H4><A name="ApplyModelToSelection"></A> Apply Model To Selection Action </H4>
+   <P> This action will apply the model to the current selection in the program used to train it. 
+   </P> 
 
    <H4><A name="DebugModel"></A> Debug Model Action </H4>
    <P> This action will display a <A href="#DebugModelTable"> Debug Model Table</A>, which shows 

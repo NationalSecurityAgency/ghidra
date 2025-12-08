@@ -48,6 +48,33 @@ public class ProjectDataTreePanel extends JPanel {
 	private static final String EXPANDED_PATHS_SEPARATOR = ":";
 	private static final int MAX_PROJECT_SIZE_TO_SEARCH = 1000;
 
+	private static final DomainFileFilter ALL_FILES_NO_EXTERNAL_FOLLOW = new DomainFileFilter() {
+		@Override
+		public boolean accept(DomainFile df) {
+			// Show all files
+			return true;
+		}
+
+		@Override
+		public boolean ignoreBrokenLinks() {
+			// Always show broken links in the main data tree
+			// A link file's status can change based on other changes to project data
+			return false;
+		}
+
+		@Override
+		public boolean ignoreExternalLinks() {
+			// Always show external links, but we do not allow expanding them.
+			return false;
+		}
+
+		@Override
+		public boolean followExternallyLinkedFolders() {
+			// Do not allow expanding external linked-folders.
+			return false;
+		}
+	};
+
 	private DataTree tree;
 	private ProjectData projectData;
 	private GTreeNode root;
@@ -60,21 +87,24 @@ public class ProjectDataTreePanel extends JPanel {
 	private FrontEndPlugin plugin;
 
 	/**
-	 * Construct an empty panel that is going to be used as the active panel
+	 * Construct an empty data tree panel that is going to be used for the active project tree 
+	 * within the frontend tool.
+	 * 
 	 * @param plugin front end plugin
 	 */
 	public ProjectDataTreePanel(FrontEndPlugin plugin) {
-		this(null, true, plugin, null);
+		this(null, true, plugin, ALL_FILES_NO_EXTERNAL_FOLLOW);
 	}
 
 	/**
-	 * Constructor
+	 * Constructor 
 	 * 
 	 * @param projectName name of project
 	 * @param isActiveProject true if the project is active, and the
 	 * data tree may be modified
 	 * @param plugin front end plugin; will be null if the panel is used in a dialog
-	 * @param filter optional filter that is used to hide programs from view
+	 * @param filter optional filter that is used to hide programs from view.  If null is specified 
+	 * a default filter is employed which shows all domain files and link-files.
 	 */
 	public ProjectDataTreePanel(String projectName, boolean isActiveProject, FrontEndPlugin plugin,
 			DomainFileFilter filter) {
@@ -84,7 +114,8 @@ public class ProjectDataTreePanel extends JPanel {
 			this.tool = (FrontEndTool) plugin.getTool();
 			this.plugin = plugin;
 		}
-		this.filter = filter;
+		this.filter =
+			filter != null ? filter : DomainFileFilter.ALL_FILES_NO_EXTERNAL_FOLDERS_FILTER;
 
 		create(projectName);
 
@@ -105,9 +136,8 @@ public class ProjectDataTreePanel extends JPanel {
 		if (this.projectData == projectData) {
 			return; // this can happen during setup if listeners get activated
 		}
-
-		if (this.projectData != null) {
-			this.projectData.removeDomainFolderChangeListener(changeMgr);
+		if (changeMgr != null) {
+			changeMgr.dispose();
 		}
 		this.projectData = projectData;
 
@@ -117,7 +147,7 @@ public class ProjectDataTreePanel extends JPanel {
 		oldRoot.dispose();
 
 		changeMgr = new ChangeManager(this);
-		projectData.addDomainFolderChangeListener(changeMgr);
+
 		isActiveProject = projectData.getRootFolder().isInWritableProject();
 		tree.setProjectActive(isActiveProject);
 	}
@@ -144,6 +174,16 @@ public class ProjectDataTreePanel extends JPanel {
 		oldRoot.removeAll();
 	}
 
+	/**
+	 * Generate a list of TreePaths which correspond to a set of {@link DomainFile domain files}.
+	 * <P>
+	 * NOTE: The {@link DomainFileNode} included in the paths as the last component is not the same 
+	 * instance as may, or may not, be contained within the tree.  This path is intended for 
+	 * generating a selection only and is not a reflection of the actual tree state.
+	 * 
+	 * @param files set of domain files
+	 * @return generated list of file tree paths
+	 */
 	private List<TreePath> getTreePaths(Set<DomainFile> files) {
 		List<TreePath> results = new ArrayList<>();
 		for (DomainFile file : files) {
@@ -152,8 +192,18 @@ public class ProjectDataTreePanel extends JPanel {
 		return results;
 	}
 
+	/**
+	 * Generate a TreePath which corresponds to the specified {@link DomainFile}.
+	 * <br>
+	 * NOTE: The {@link DomainFileNode} included in the path as the last component is not the same 
+	 * instance as may, or may not, be contained within the tree.  This path is intended for 
+	 * generating a selection only and is not a reflection of the actual tree state.
+	 * 
+	 * @param domainFile domain file
+	 * @return generated file tree path
+	 */
 	private TreePath getTreePath(DomainFile domainFile) {
-		DomainFileNode node = new DomainFileNode(domainFile);
+		DomainFileNode node = new DomainFileNode(domainFile, filter);
 		DomainFolder parent = domainFile.getParent();
 		if (parent != null) {
 			return getTreePath(parent).pathByAddingChild(node);
@@ -161,13 +211,37 @@ public class ProjectDataTreePanel extends JPanel {
 		return new TreePath(node);
 	}
 
+	/**
+	 * Generate a TreePath which corresponds to the specified {@link DomainFolder}.
+	 * <P>
+	 * NOTE: The node included in the path as the last component is not the same instance as
+	 * may, or may not, be contained within the tree.  This path is intended for generating a
+	 * selection only and is not a reflection of the actual tree state.
+	 * <P> 
+	 * NOTE: If the specified folder is a linked-folder which corresponds to a link-file
+	 * (see {@link DomainFolder#isLinked()}) the returned path will correspond to a 
+	 * {@link DomainFileNode}, otherwise it will be a {@link DomainFolderNode}.
+	 * 
+	 * @param domainFolder domain folder (may be a linked-folder)
+	 * @return generated tree path
+	 */
 	private TreePath getTreePath(DomainFolder domainFolder) {
 		DomainFolder parent = domainFolder.getParent();
 		if (parent != null) {
-			return getTreePath(parent).pathByAddingChild(new DomainFolderNode(domainFolder, null));
+			if (domainFolder.isLinked()) {
+				// linked-folder: must handle as link-file node
+				DomainFile linkFile = parent.getFile(domainFolder.getName());
+				if (linkFile != null) {
+					return getTreePath(parent)
+							.pathByAddingChild(new DomainFileNode(linkFile, filter));
+				}
+			}
+			else {
+				return getTreePath(parent)
+						.pathByAddingChild(new DomainFolderNode(domainFolder, filter));
+			}
 		}
 		return new TreePath(root);
-
 	}
 
 	/**
@@ -187,6 +261,13 @@ public class ProjectDataTreePanel extends JPanel {
 		tree.expandAndSelectPaths(treePaths);
 	}
 
+	/**
+	 * Select the specified domainFile if it exists in the tree.
+	 * <P>
+	 * NOTE: The selection is performed in a delayed non-blocking fashion.
+	 * 
+	 * @param domainFile domain file
+	 */
 	public void selectDomainFile(DomainFile domainFile) {
 		if (domainFile != null) {
 			selectDomainFiles(Set.of(domainFile));
@@ -221,10 +302,7 @@ public class ProjectDataTreePanel extends JPanel {
 	 */
 	public DomainFolder getSelectedDomainFolder() {
 		GTreeNode node = tree.getLastSelectedPathComponent();
-		if (node instanceof DomainFolderNode) {
-			return ((DomainFolderNode) node).getDomainFolder();
-		}
-		return null;
+		return DataTree.getRealInternalFolderForNode(node);
 	}
 
 	/**
@@ -285,8 +363,9 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	public void dispose() {
-		if (projectData != null) {
-			projectData.removeDomainFolderChangeListener(changeMgr);
+		if (changeMgr != null) {
+			changeMgr.dispose();
+			changeMgr = null;
 		}
 		tree.dispose();
 	}
@@ -318,11 +397,12 @@ public class ProjectDataTreePanel extends JPanel {
 
 		for (TreePath treePath : selectionPaths) {
 			GTreeNode node = (GTreeNode) treePath.getLastPathComponent();
-			if (node instanceof DomainFolderNode) {
-				domainFolderList.add(((DomainFolderNode) node).getDomainFolder());
+			if (node instanceof DomainFolderNode folderNode) {
+				domainFolderList.add(folderNode.getDomainFolder());
 			}
-			else if (node instanceof DomainFileNode) {
-				domainFileList.add(((DomainFileNode) node).getDomainFile());
+			else if (node instanceof DomainFileNode fileNode) {
+				// NOTE: File may be a linked-folder.  Treatment as folder or file depends on action
+				domainFileList.add(fileNode.getDomainFile());
 			}
 		}
 
@@ -406,6 +486,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	private GTreeNode findFolderNodeChild(GTreeNode node, String text) {
 		List<GTreeNode> children = node.getChildren();
+		// NOTE: Does not traverse link-files which may have children
 		for (GTreeNode child : children) {
 			if ((child instanceof DomainFolderNode) && child.getName().equals(text)) {
 				return child;
@@ -435,7 +516,7 @@ public class ProjectDataTreePanel extends JPanel {
 		tree.setProjectActive(isActiveProject);
 	}
 
-	void domainChange() {
+	void contextChanged() {
 		if (plugin == null) {
 			return;
 		}

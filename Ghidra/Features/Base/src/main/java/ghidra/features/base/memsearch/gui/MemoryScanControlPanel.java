@@ -15,7 +15,6 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 
 import javax.swing.*;
@@ -38,20 +37,30 @@ public class MemoryScanControlPanel extends JPanel {
 	private JButton scanButton;
 
 	MemoryScanControlPanel(MemorySearchProvider provider) {
-		super(new BorderLayout());
+		super();
+
+		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+
 		setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-		add(buildButtonPanel(), BorderLayout.CENTER);
+
 		scanButton = new JButton("Scan Values");
+		scanButton.setMnemonic('V');
+		scanButton.setEnabled(false);
 		scanButton.setToolTipText("Refreshes byte values of current results and eliminates " +
 			"those that don't meet the selected change criteria");
+
+		add(scanButton);
+		add(Box.createHorizontalStrut(20));
+		add(buildButtonPanel());
+
 		HelpService helpService = Help.getHelpService();
 		helpService.registerHelp(this, new HelpLocation(HelpTopics.SEARCH, "Scan_Controls"));
-		add(scanButton, BorderLayout.WEST);
+
 		scanButton.addActionListener(e -> provider.scan(selectedScanner));
 	}
 
 	private JComponent buildButtonPanel() {
-		JPanel panel = new JPanel(new FlowLayout());
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		ButtonGroup buttonGroup = new ButtonGroup();
 		for (Scanner scanner : Scanner.values()) {
 			GRadioButton button = new GRadioButton(scanner.getName());

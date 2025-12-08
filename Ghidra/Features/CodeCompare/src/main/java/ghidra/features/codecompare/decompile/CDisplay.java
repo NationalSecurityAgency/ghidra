@@ -39,7 +39,6 @@ import ghidra.program.util.ProgramLocation;
 public class CDisplay {
 	private final static String OPTIONS_TITLE = "Decompiler";
 
-	private ServiceProvider serviceProvider;
 	private DecompilerController controller;
 	private DecompileOptions decompileOptions;
 	private FieldLocation lastCursorPosition;
@@ -53,7 +52,6 @@ public class CDisplay {
 			DecompileResultsListener decompileListener,
 			Consumer<ProgramLocation> locationConsumer) {
 
-		this.serviceProvider = serviceProvider;
 		highlightController = new DiffClangHighlightController(comparisonOptions);
 
 		decompileOptions = new DecompileOptions();
@@ -138,10 +136,6 @@ public class CDisplay {
 		controller.dispose();
 	}
 
-	public DecompilerController getController() {
-		return controller;
-	}
-
 	public void refresh() {
 		saveCursorPosition();
 		DecompileData data = getDecompileData();
@@ -176,8 +170,8 @@ public class CDisplay {
 		}
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions options = tool.getOptions(OPTIONS_TITLE);
-		Program program = function == null ? null : function.getProgram();
-		decompileOptions.grabFromToolAndProgram(fieldOptions, options, program);
+		Program p = function == null ? null : function.getProgram();
+		decompileOptions.grabFromToolAndProgram(fieldOptions, options, p);
 	}
 
 	DiffClangHighlightController getHighlightController() {

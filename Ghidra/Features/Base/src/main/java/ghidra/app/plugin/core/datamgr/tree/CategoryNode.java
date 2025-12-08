@@ -51,6 +51,7 @@ public class CategoryNode extends DataTypeTreeNode {
 		if (category == null) {
 			return Collections.emptyList();
 		}
+
 		Category[] subCategories = category.getCategories();
 		DataType[] dataTypes = category.getDataTypes();
 		List<GTreeNode> list = new ArrayList<>(subCategories.length + dataTypes.length);

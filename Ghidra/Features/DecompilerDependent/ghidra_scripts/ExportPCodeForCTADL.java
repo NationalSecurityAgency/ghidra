@@ -60,10 +60,12 @@ class PcodeBlockBasicEdge implements GEdge<PcodeBlockBasicVertex> {
 		this.end = end;
 	}
 
+	@Override
 	public PcodeBlockBasicVertex getStart() {
 		return start;
 	}
 
+	@Override
 	public PcodeBlockBasicVertex getEnd() {
 		return end;
 	}

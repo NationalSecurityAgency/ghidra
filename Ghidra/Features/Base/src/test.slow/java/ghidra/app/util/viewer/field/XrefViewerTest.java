@@ -17,6 +17,9 @@ package ghidra.app.util.viewer.field;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.JTextField;
 
 import org.junit.*;
@@ -43,6 +46,7 @@ import ghidra.program.util.XRefHeaderFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.table.GhidraProgramTableModel;
+import ghidra.util.table.GhidraTable;
 
 /**
  * Tests that references are displayed correctly when selecting the XRef field in
@@ -163,6 +167,30 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testDeleteReferencesFromTable() {
+
+		doubleClickXRef("1001005", "XREF[1]: ");
+		ComponentProvider comp = waitForComponentProvider(TableComponentProvider.class);
+		TableComponentProvider<?> table = (TableComponentProvider<?>) comp;
+		assertEquals(1, table.getModel().getRowCount());
+		assertReference("01001009", "01001005", true);
+
+		DockingActionIf deleteAction = getAction(tool, "TableServicePlugin", "Delete Reference");
+		assertFalse(runSwing(() -> deleteAction.isEnabled()));
+
+		selectRow(table, 0);
+		assertTrue(runSwing(() -> deleteAction.isEnabled()));
+
+		performAction(deleteAction, table, false);
+		DialogComponentProvider dialog = waitForDialogComponent("Delete Xrefs?");
+		pressButtonByText(dialog, "Delete");
+		waitForTableModel(table.getModel());
+
+		assertEquals(0, table.getModel().getRowCount());
+		assertReference("01001009", "01001005", false);
+	}
+
+	@Test
 	public void testViewReferencesShowThunkXrefs_FromThunk() {
 
 		//
@@ -217,6 +245,42 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void assertReference(String fromString, String toString, boolean exists) {
+
+		Address from = addr(fromString);
+		Address to = addr(toString);
+		List<Reference> refs = getReferences(to);
+		if (exists) {
+			assertEquals(1, refs.size());
+			Reference ref = refs.get(0);
+			Address refFrom = ref.getFromAddress();
+			Address refTo = ref.getToAddress();
+			assertEquals(from, refFrom);
+			assertEquals(to, refTo);
+		}
+		else {
+			assertEquals(0, refs.size());
+		}
+	}
+
+	private List<Reference> getReferences(Address to) {
+		List<Reference> refs = new ArrayList<>();
+		ReferenceManager rm = program.getReferenceManager();
+		ReferenceIterator it = rm.getReferencesTo(to);
+		while (it.hasNext()) {
+			refs.add(it.next());
+		}
+		return refs;
+	}
+
+	private void selectRow(TableComponentProvider<?> provider, int row) {
+		runSwing(() -> {
+			GhidraTable gTable = provider.getTable();
+			gTable.selectRow(row);
+		});
+		waitForSwing();
+	}
 
 	private void createThunkFunction(String thunkAddressString, String thunkedAddressString) {
 

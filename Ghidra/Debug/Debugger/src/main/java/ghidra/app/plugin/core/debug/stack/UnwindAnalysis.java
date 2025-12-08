@@ -419,16 +419,16 @@ public class UnwindAnalysis {
 		 * function return.</li>
 		 * <li>Examine the symbol in the program counter register. This gives the location (register
 		 * or stack offset) of the return address. This strategy should work whether or not a link
-		 * register is involved. See {@link SymPcodeExecutorState#computeAddressOfReturn()}.
+		 * register is involved. See {@link SymPcodeExecutorState#computeAddressOfReturn()}.</li>
 		 * <li>Examine the symbol in the stack pointer register, again. It should be a stack offset.
 		 * That offset is the "stack adjustment." See {@link UnwindInfo#adjust()},
 		 * {@link UnwindInfo#computeNextSp(Address)}, and
-		 * {@link SymPcodeExecutorState#computeStackDepth()}.
+		 * {@link SymPcodeExecutorState#computeStackDepth()}.</li>
 		 * <li>Search the registers for stack dereference symbols, creating an offset-register map.
 		 * This intersected with the same from entry to program counter is the saved registers map.
 		 * See {@link UnwindInfo#saved()},
 		 * {@link UnwindInfo#mapSavedRegisters(Address, SavedRegisterMap)}, and
-		 * {@link SymPcodeExecutorState#computeMapUsingRegisters()}.
+		 * {@link SymPcodeExecutorState#computeMapUsingRegisters()}.</li>
 		 * </ol>
 		 * 
 		 * <p>

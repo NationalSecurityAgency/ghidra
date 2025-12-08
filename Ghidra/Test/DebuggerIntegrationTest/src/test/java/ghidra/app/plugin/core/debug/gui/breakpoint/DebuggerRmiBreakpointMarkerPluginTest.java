@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,9 @@ import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 @Category(NightlyCategory.class)
 public class DebuggerRmiBreakpointMarkerPluginTest
@@ -135,33 +136,27 @@ public class DebuggerRmiBreakpointMarkerPluginTest
 	}
 
 	@Override
-	protected void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
+	protected void handleToggleBreakpointInvocation(TraceBreakpointLocation expectedLoc,
 			boolean expectedEn) throws Throwable {
-		if (!(expectedBreakpoint instanceof TraceObjectBreakpointLocation loc)) {
-			throw new AssertionError("Unexpected trace breakpoint type: " + expectedBreakpoint);
-		}
 		Map<String, Object> args = rmiMethodToggleBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.setEnabled(Lifespan.nowOn(0), expectedEn);
+			expectedLoc.setEnabled(Lifespan.nowOn(0), expectedEn);
 		}
 		rmiMethodToggleBreak.result(null);
 		assertEquals(Map.ofEntries(
-			Map.entry("breakpoint", loc.getSpecification().getObject()),
+			Map.entry("breakpoint", expectedLoc.getSpecification().getObject()),
 			Map.entry("enabled", expectedEn)), args);
 	}
 
 	@Override
-	protected void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
+	protected void handleDeleteBreakpointInvocation(TraceBreakpointLocation expectedLoc)
 			throws Throwable {
-		if (!(expectedBreakpoint instanceof TraceObjectBreakpointLocation loc)) {
-			throw new AssertionError("Unexpected trace breakpoint type: " + expectedBreakpoint);
-		}
 		Map<String, Object> args = rmiMethodDeleteBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.getObject().remove(Lifespan.nowOn(0));
+			expectedLoc.getObject().remove(Lifespan.nowOn(0));
 		}
 		rmiMethodDeleteBreak.result(null);
 		assertEquals(Map.ofEntries(
-			Map.entry("breakpoint", loc.getSpecification().getObject())), args);
+			Map.entry("breakpoint", expectedLoc.getSpecification().getObject())), args);
 	}
 }

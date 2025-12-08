@@ -72,6 +72,7 @@ public class HelpManager implements HelpService {
 
 	private HashMap<URL, HelpSet> urlToHelpSets = new HashMap<>();
 	private Map<Object, HelpLocation> helpLocations = new WeakHashMap<>();
+	private Map<Object, DynamicHelpLocation> dynamicHelp = new WeakHashMap<>();
 
 	private List<HelpSet> helpSetsPendingMerge = new ArrayList<>();
 	private boolean hasMergedHelpSets;
@@ -137,6 +138,14 @@ public class HelpManager implements HelpService {
 		return HOME_ID;
 	}
 
+	/**
+	 * Returns the master help set (the one into which all other help sets are merged).
+	 * @return the help set
+	 */
+	public GHelpSet getMasterHelpSet() {
+		return mainHS;
+	}
+
 	@Override
 	public void excludeFromHelp(Object helpObject) {
 		excludedFromHelp.add(helpObject);
@@ -151,6 +160,11 @@ public class HelpManager implements HelpService {
 	@Override
 	public void clearHelp(Object helpObject) {
 		helpLocations.remove(helpObject);
+	}
+
+	@Override
+	public void registerDynamicHelp(Object helpObject, DynamicHelpLocation helpLocation) {
+		dynamicHelp.put(helpObject, helpLocation);
 	}
 
 	@Override
@@ -197,15 +211,29 @@ public class HelpManager implements HelpService {
 
 	@Override
 	public HelpLocation getHelpLocation(Object helpObj) {
+		return doGetHelpLocation(helpObj);
+	}
+
+	private HelpLocation doGetHelpLocation(Object helpObj) {
+
+		DynamicHelpLocation dynamicLocation = dynamicHelp.get(helpObj);
+		if (dynamicLocation != null) {
+			HelpLocation hl = dynamicLocation.getActiveHelpLocation();
+			if (hl != null) {
+				return hl;
+			}
+		}
+
 		return helpLocations.get(helpObj);
 	}
 
-	/**
-	 * Returns the master help set (the one into which all other help sets are merged).
-	 * @return the help set
-	 */
-	public GHelpSet getMasterHelpSet() {
-		return mainHS;
+	private HelpLocation findHelpLocation(Object helpObj) {
+		if (helpObj instanceof HelpDescriptor) {
+			HelpDescriptor helpDescriptor = (HelpDescriptor) helpObj;
+			Object descriptorHelpObj = helpDescriptor.getHelpObject();
+			return doGetHelpLocation(descriptorHelpObj);
+		}
+		return doGetHelpLocation(helpObj);
 	}
 
 	@Override
@@ -345,15 +373,6 @@ public class HelpManager implements HelpService {
 		}
 
 		throw helpException;
-	}
-
-	private HelpLocation findHelpLocation(Object helpObj) {
-		if (helpObj instanceof HelpDescriptor) {
-			HelpDescriptor helpDescriptor = (HelpDescriptor) helpObj;
-			Object helpObject = helpDescriptor.getHelpObject();
-			return helpLocations.get(helpObject);
-		}
-		return helpLocations.get(helpObj);
 	}
 
 	private String getFilenameForHelpLocation(HelpLocation helpLocation) {
@@ -523,20 +542,28 @@ public class HelpManager implements HelpService {
 	public Map<Object, HelpLocation> getInvalidHelpLocations(TaskMonitor monitor)
 			throws CancelledException {
 
+		Set<String> alreadySeen = new HashSet<>();
 		Map<Object, HelpLocation> map = new WeakHashMap<>();
 		Map<Object, HelpLocation> helpLocationsCopy = copyHelpLocations();
 		monitor.initialize(helpLocationsCopy.size());
 		Set<Entry<Object, HelpLocation>> entries = helpLocationsCopy.entrySet();
 		for (Entry<Object, HelpLocation> entry : entries) {
-			monitor.checkCancelled();
+			monitor.increment();
 
 			Object helpee = entry.getKey();
 			HelpLocation location = entry.getValue();
 			monitor.setMessage("Checking " + helpee);
-			if (!hasValidHelp(helpee, location)) {
-				map.put(helpee, location);
+			if (hasValidHelp(helpee, location)) {
+				continue;
 			}
-			monitor.incrementProgress(1);
+
+			String inception = location.getInceptionInformation();
+			if (alreadySeen.contains(inception)) {
+				continue; // don't show repeated errors for same line of code
+			}
+
+			alreadySeen.add(inception);
+			map.put(helpee, location);
 		}
 		return map;
 	}

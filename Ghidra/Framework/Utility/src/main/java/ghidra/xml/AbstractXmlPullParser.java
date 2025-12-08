@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +17,7 @@ package ghidra.xml;
 
 public abstract class AbstractXmlPullParser implements XmlPullParser {
 
+	@Override
 	public XmlElement end() {
 		if (!hasNext()) {
 			throw new XmlException("at EOF but expected end element");
@@ -30,6 +30,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return next;
 	}
 
+	@Override
 	public XmlElement end(XmlElement element) {
 		String name = element.getName();
 		if (!hasNext()) {
@@ -47,6 +48,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return next;
 	}
 
+	@Override
 	public int getColumnNumber() {
 		if (hasNext()) {
 			return peek().getColumnNumber();
@@ -54,6 +56,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return -1;
 	}
 
+	@Override
 	public int getCurrentLevel() {
 		if (hasNext()) {
 			return peek().getLevel();
@@ -61,6 +64,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return -1;
 	}
 
+	@Override
 	public int getLineNumber() {
 		if (hasNext()) {
 			return peek().getLineNumber();
@@ -86,6 +90,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return sb.toString();
 	}
 
+	@Override
 	public XmlElement start(String... names) {
 		if (!hasNext()) {
 			throw new XmlException("at EOF but expected start element " + collapse(names));
@@ -109,6 +114,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return next;
 	}
 
+	@Override
 	public XmlElement softStart(String... names) {
 		if (!hasNext()) {
 			throw new XmlException("at EOF but expected soft start element " + collapse(names));
@@ -130,10 +136,12 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		return next();
 	}
 
+	@Override
 	public int discardSubTree() {
 		return discardSubTree(peek());
 	}
 
+	@Override
 	public int discardSubTree(XmlElement element) {
 		if (element == peek()) {
 			// we're being asked to skip the entire subtree starting from the front of the queue
@@ -193,6 +201,7 @@ public abstract class AbstractXmlPullParser implements XmlPullParser {
 		}
 	}
 
+	@Override
 	public int discardSubTree(String elementName) {
 		XmlElement start = start(elementName);
 		return discardSubTree(start) + 1;

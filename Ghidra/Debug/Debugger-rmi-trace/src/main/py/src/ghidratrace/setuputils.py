@@ -23,22 +23,18 @@ whether remote or local, the PYTHONPATH should already include this
 module, and so we place the setup logic here.
 """
 import os
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 
-home = os.getenv('GHIDRA_HOME')
-
-
-def ghidra_module_src(name: str) -> str:
-    installed = f'{home}/Ghidra/{name}/pypkg'
+def ghidra_module_src(name: Optional[str]=None) -> str:
+    mod_home_name = 'MODULE_HOME' if name is None else f'MODULE_{name.replace("-","_")}_HOME'
+    mod_home = os.getenv(mod_home_name)
+    installed = f'{mod_home}/pypkg'
     if os.path.isdir(installed):
         return installed
-    dev1 = f'{home}/Ghidra/{name}/src/main/py'
-    if os.path.isdir(dev1):
-        return dev1
-    dev2 = f'{home}/ghidra/Ghidra/{name}/src/main/py'
-    if os.path.isdir(dev2):
-        return dev2
+    dev = f'{mod_home}/src/main/py'
+    if os.path.isdir(dev):
+        return dev
     raise Exception(f"""
 Cannot find Python source for {name}.
 If this is a remote system, we shouldn't even be here. Chances are,
@@ -63,9 +59,9 @@ def get_module_dependencies(name: str) -> List[str]:
             elif seen_deps and l == ']':
                 return [r for r in result if not 'ghidra' in r]
             elif seen_deps:
-                if l.endswith(','): # Last one may not have ,
+                if l.endswith(','):  # Last one may not have ,
                     l = l[:-1].strip()
-                result.append(l[1:-1]) # Remove 's or "s
+                result.append(l[1:-1])  # Remove 's or "s
         raise Exception("Could not parse pyproject.toml")
 
 
@@ -93,14 +89,28 @@ def mitigate_by_pip_install(*args: str) -> None:
     runpy.run_module("pip", run_name="__main__")
 
 
+def compute_suggestion(*args: str) -> None:
+    def maybe_quote(a):
+        if '>' in a or '<' in a or ' ' in a:
+            return f"'{a}'"
+        return a
+    wquotes = ' '.join(maybe_quote(a) for a in args)
+    return f"python -m pip install --force-reinstall {wquotes}"
+
+
 def prompt_and_mitigate_dependencies(name: str) -> None:
     deps = get_module_dependencies(name)
     deps_str = ' '.join(f"'{d}'" for d in deps)
-    answer = prompt_mitigation("""
+    suggestion = compute_suggestion(*deps)
+    answer = prompt_mitigation(f"""
 It appears dependencies are missing or have the wrong version. This can happen
 if you forgot to install the required packages. This can also happen if you
 installed the packages to a different Python environment than is being used
 right now.
+
+The following command should resolve the issue:
+
+   {suggestion}
 
 This script is about to offer automatic resolution. If you'd like to resolve
 this manually, answer no to the next question and then see Ghidra's help by
@@ -121,4 +131,3 @@ finished, close this terminal, and try launching again.
 
     if answer:
         mitigate_by_pip_install('-f', '../../pypkg/dist', *deps)
-

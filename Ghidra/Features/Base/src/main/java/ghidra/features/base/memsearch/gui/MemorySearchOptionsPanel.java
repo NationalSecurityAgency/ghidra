@@ -29,6 +29,7 @@ import javax.swing.text.*;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
+import docking.widgets.label.GLabel;
 import ghidra.app.util.HelpTopics;
 import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.features.base.memsearch.bytesource.SearchRegion;
@@ -57,7 +58,7 @@ class MemorySearchOptionsPanel extends JPanel {
 		super(new BorderLayout());
 		this.model = model;
 
-		// if the look and feel is Nimbus, the spaceing it too big, so we use less spacing
+		// if the look and feel is Nimbus, the spacing it too big, so we use less spacing
 		// between elements.
 		isNimbus = LookAndFeelUtils.isUsingNimbusUI();
 
@@ -93,9 +94,22 @@ class MemorySearchOptionsPanel extends JPanel {
 		JPanel panel = new JPanel(new VerticalLayout(3));
 		panel.setBorder(createBorder("Search Region Filter"));
 
+		boolean accelerator = true;
 		List<SearchRegion> choices = model.getMemoryRegionChoices();
 		for (SearchRegion region : choices) {
 			GCheckBox checkbox = new GCheckBox(region.getName());
+
+			if (accelerator) {
+				// The text for the checkbox is dynamic.  If the first letter is taken by a menu, 
+				// then the accelerator may not work.  At the time of writing, the first letter of
+				// the first option seems not to conflict with the other accelerators in the parent 
+				// dialog.
+				String name = region.getName();
+				char c = name.charAt(0);
+				checkbox.setMnemonic(c);
+				accelerator = false;
+			}
+
 			checkbox.setToolTipText(region.getDescription());
 			checkbox.setSelected(model.isSelectedRegion(region));
 			checkbox.addItemListener(e -> model.selectRegion(region, checkbox.isSelected()));
@@ -109,23 +123,28 @@ class MemorySearchOptionsPanel extends JPanel {
 		panel.setBorder(createBorder("Decimal Options"));
 
 		JPanel innerPanel = new JPanel(new PairLayout(5, 5));
-		JLabel label = new JLabel("Size:");
+		GLabel label = new GLabel("Size:");
+		label.setDisplayedMnemonic('z');
 		label.setToolTipText("Size of decimal values in bytes");
 		innerPanel.add(label);
 
 		Integer[] decimalSizes = new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 16 };
+		int decimalByteSize = model.getDecimalByteSize();
 		decimalByteSizeCombo = new GComboBox<>(decimalSizes);
-		decimalByteSizeCombo.setSelectedItem(4);
+		label.setLabelFor(decimalByteSizeCombo);
+		decimalByteSizeCombo.setSelectedItem(decimalByteSize);
 		decimalByteSizeCombo.addItemListener(this::byteSizeComboChanged);
 		decimalByteSizeCombo.setToolTipText("Size of decimal values in bytes");
 		innerPanel.add(decimalByteSizeCombo);
 		panel.add(innerPanel);
 
 		decimalUnsignedCheckbox = new GCheckBox("Unsigned");
+		decimalUnsignedCheckbox.setMnemonic('U');
 		decimalUnsignedCheckbox.setToolTipText(
 			"Sets whether decimal values should be interpreted as unsigned values");
 		decimalUnsignedCheckbox.addActionListener(
 			e -> model.setDecimalUnsigned(decimalUnsignedCheckbox.isSelected()));
+		decimalUnsignedCheckbox.setSelected(model.isDecimalUnsigned());
 
 		panel.add(decimalUnsignedCheckbox);
 		return panel;
@@ -143,8 +162,11 @@ class MemorySearchOptionsPanel extends JPanel {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(createBorder("Code Type Filter"));
 		GCheckBox instructionsCheckBox = new GCheckBox("Instructions");
+		instructionsCheckBox.setMnemonic('I');
 		GCheckBox definedDataCheckBox = new GCheckBox("Defined Data");
+		definedDataCheckBox.setMnemonic('D');
 		GCheckBox undefinedDataCheckBox = new GCheckBox("Undefined Data");
+		undefinedDataCheckBox.setMnemonic('U');
 		instructionsCheckBox.setToolTipText(
 			"If selected, include matches found in instructions");
 		definedDataCheckBox.setToolTipText(
@@ -183,9 +205,15 @@ class MemorySearchOptionsPanel extends JPanel {
 		alignField.setToolTipText(
 			"Filters out matches whose address is not divisible by the alignment value");
 
-		panel.add(new JLabel("Endianess:"));
+		GLabel endianessLabel = new GLabel("Endianess:");
+		endianessLabel.setLabelFor(endianessCombo);
+		endianessLabel.setDisplayedMnemonic('n');
+		GLabel alignmentLabel = new GLabel("Alignment:");
+		alignmentLabel.setDisplayedMnemonic('A');
+		alignmentLabel.setLabelFor(alignField);
+		panel.add(endianessLabel);
 		panel.add(endianessCombo);
-		panel.add(new JLabel("Alignment:"));
+		panel.add(alignmentLabel);
 		panel.add(alignField);
 
 		return panel;
@@ -205,26 +233,31 @@ class MemorySearchOptionsPanel extends JPanel {
 		Charset[] supportedCharsets =
 			{ StandardCharsets.US_ASCII, StandardCharsets.UTF_8, StandardCharsets.UTF_16 };
 
+		Charset charSet = model.getStringCharset();
 		charsetCombo = new GComboBox<>(supportedCharsets);
 		charsetCombo.setName("Encoding Options");
-		charsetCombo.setSelectedIndex(0);
+		charsetCombo.setSelectedItem(charSet);
 		charsetCombo.addItemListener(this::encodingComboChanged);
 		charsetCombo.setToolTipText("Character encoding for translating strings to bytes");
 
 		JPanel innerPanel = new JPanel(new PairLayout(5, 5));
-		JLabel label = new JLabel("Encoding:");
+		GLabel label = new GLabel("Encoding:");
+		label.setDisplayedMnemonic('c');
+		label.setLabelFor(charsetCombo);
 		label.setToolTipText("Character encoding for translating strings to bytes");
 		innerPanel.add(label);
 		innerPanel.add(charsetCombo);
 		panel.add(innerPanel);
 
 		caseSensitiveCheckbox = new GCheckBox("Case Sensitive");
+		caseSensitiveCheckbox.setMnemonic('n');
 		caseSensitiveCheckbox.setSelected(model.isCaseSensitive());
 		caseSensitiveCheckbox.setToolTipText("Allows for case sensitive searching.");
 		caseSensitiveCheckbox.addActionListener(
 			e -> model.setCaseSensitive(caseSensitiveCheckbox.isSelected()));
 
 		escapeSequencesCheckbox = new GCheckBox("Escape Sequences");
+		escapeSequencesCheckbox.setMnemonic('c');
 		escapeSequencesCheckbox.setSelected(model.useEscapeSequences());
 		escapeSequencesCheckbox.setToolTipText(
 			"Allows specifying control characters using escape sequences " +

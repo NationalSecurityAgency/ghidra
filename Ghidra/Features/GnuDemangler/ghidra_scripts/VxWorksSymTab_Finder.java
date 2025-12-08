@@ -43,21 +43,21 @@
 
 import java.util.List;
 
+import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.util.demangler.DemangledException;
-import ghidra.app.util.demangler.MangledContext;
+import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
 
 public class VxWorksSymTab_Finder extends GhidraScript {
 
@@ -87,7 +87,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 		private int getFieldOffset(StructureDataType dataType, String name) {
 			for (DataTypeComponent comp : dataType.getComponents()) {
-				if (comp.getFieldName().equals(name)) {
+				String fieldName = comp.getFieldName();
+				if (name.equals(fieldName)) {
 					return comp.getOffset();
 				}
 			}
@@ -305,14 +306,14 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	}
 
 	//------------------------------------------------------------------------
-	// isString
+	// isValidSymbolString
 	//
-	// Are the bytes starting at addr a C string?
+	// Are the bytes starting at addr a C string that is a valid symbol?
 	//
 	// Algorithm:  Scan bytes until finding either an invalid char or null.
 	//             If scan stops at null, return true -- else false.
 	//------------------------------------------------------------------------
-	private boolean isString(Address addr) {
+	private boolean isValidSymbolString(Address addr) {
 		byte _byte;
 
 		try {
@@ -322,9 +323,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return false;
 		}
 
-		while (	// May need to add valid character examples here.
-		(_byte == 0x09 || _byte == 0x0a || _byte == 0x0d || (_byte > 0x19 && _byte < 0x80)) &&
-			_byte != 0x00) {
+		while (!SymbolUtilities.isInvalidChar((char) _byte) && _byte != 0x00) {
 
 			if (monitor.isCancelled()) {
 				return false;
@@ -416,7 +415,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return false;
 		}
 		Address symNameAddr = toAddr(value);
-		if (!isString(symNameAddr)) {
+		if (!isValidSymbolString(symNameAddr)) {
 			if (debug) {
 				println("3: " + entry + " --> " + Long.toHexString(value));
 			}
@@ -433,9 +432,14 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 		//	return false;
 		//}
 
-		// symType field must be recognized type code (this test is weak)
+		// symType field must be recognized type code
 		byte symType = getByte(entry.add(vxSymbol.typeOffset()));
-		if (!isValidSymType(symType)) {
+		byte zeroByte = 0;
+		if (vxSymbol.typeOffset+1 <= vxSymbol.length()) {
+			// type is always at end of symbol entry, if padded make sure is zero
+			zeroByte = getByte(entry.add(vxSymbol.typeOffset()+1));
+		}
+		if (!isValidSymType(symType) || zeroByte != 0) {
 			if (debug) {
 				println("5: " + entry + " --> " + symType);
 			}
@@ -457,7 +461,14 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			case 9:    // Global BSS
 			case 4:    // Local .text
 			case 5:    // Global .text
-			case 0x11: // External ref
+			case 0x10: // Local BSS  6.8
+			case 0x11: // Global BSS  6.8
+			case 0x12: // Local Common
+			case 0x13: // Global Common
+			case 0x20: // Local Common 6.8
+			case 0x21: // Global Common 6.8
+			case 0x40: // Local Symbols 6.8
+			case 0x41: // Global Symbols 6.8
 				return true;
 			default:
 				return false;
@@ -517,7 +528,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 				// Determine whether cursor now points to a symbol table
 				int i = 0;
 				for (Address entry = cursor; isSymTblEntry(entry, vxSymbol) &&
-					(i < testLen); entry = entry.add(vxSymbol.length()), i++) {
+					(i < testLen); entry = entry.add(vxSymbol.length())) {
+					i++;
 				}
 				if (i == testLen) {
 					// May have symbol table -- verify length
@@ -588,10 +600,10 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	/**
 	 * Look before/after the table to see if there is a size value there and mark it if it agrees with TableLen
 	 *
-	 * @param symTbl
-	 * @param vxSymbol
-	 * @param tableLen
-	 * @throws Exception
+	 * @param symTbl The symbol table address
+	 * @param vxSymbol The symbol
+	 * @param symTblLen The symbol table length
+	 * @throws Exception if a problem occurred
 	 */
 	private void markSymbolTableLen(Address symTbl, VxSymbol vxSymbol, int symTblLen)
 			throws Exception {
@@ -612,7 +624,12 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 		if (symTblLenPtr != null) {
 			removeConflictingSymbols("vxSymTblLen", symTblLenPtr);
 			createLabel(symTblLenPtr, "vxSymTblLen", true);
-			createDWord(symTblLenPtr);
+			
+			CreateDataCmd dtCmd = new CreateDataCmd(symTblLenPtr, false, DWordDataType.dataType);
+			boolean created = dtCmd.applyTo(currentProgram);
+			if (!created) {
+				println("Warning: Symbol Table size could not be created");
+			}
 		}
 		else {
 			println("Warning: Symbol Table Size not found before of after table");
@@ -648,12 +665,11 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	private void applyDemangled(Address addr, String mangled, String demangled) {
 
 		if (demangled != null) {
-			new DemanglerCmd(addr, mangled).applyTo(currentProgram, monitor);
-			List<Symbol> symbols =
-				getSymbols(mangled, currentProgram.getGlobalNamespace());
-			if (!symbols.isEmpty()) {
-				currentProgram.getSymbolTable().removeSymbolSpecial(symbols.get(0));
-			}
+			DemanglerOptions options = new DemanglerOptions();
+			options.setApplySignature(true);
+			options.setApplyCallingConvention(true);
+			options.setDemangleOnlyKnownPatterns(false);
+			new DemanglerCmd(addr, mangled, options).applyTo(currentProgram, monitor);
 		}
 
 		return;
@@ -667,11 +683,22 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	// allows auto-analysis to operate with more information (and code/data
 	// that isn't rapidly changing).
 	//------------------------------------------------------------------------
-	private void doLocalDisassemble(Address addr) {
+	private boolean doLocalDisassemble(Address addr) {
 
 		// Only disassemble in memory blocks marked executable
 		if (!isExecute(addr)) {
-			return;
+			return false;
+		}
+		
+		PseudoDisassembler pdis = new PseudoDisassembler(currentProgram);
+		pdis.setMaxInstructions(20);
+		if (!pdis.checkValidSubroutine(addr, true, false, true)) {
+			return false;
+		}
+		
+		// must be at least 2 contiguous instructions
+		if (pdis.getLastCheckValidInstructionCount()<2) {
+			return false;
 		}
 
 		DisassembleCommand cmd = new DisassembleCommand(addr, null, true);
@@ -681,7 +708,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 		AddressSet set = cmd.getDisassembledAddressSet();
 		AutoAnalysisManager.getAnalysisManager(currentProgram).codeDefined(set);
 
-		return;
+		return true;
 	}
 
 	//------------------------------------------------------------------------
@@ -717,6 +744,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 		int symTblLen = getSymTblLen(symTbl, vxSymbol);
 		println("Symbol table at " + symTbl + " (" + symTblLen + " entries)");
 
+		currentProgram.getOptions(Program.PROGRAM_INFO).setString("Framework", "vxWorks");
+		
 		// Name the VxWorks symbol table
 		removeConflictingSymbols("vxSymTbl", symTbl);
 		createLabel(symTbl, "vxSymTbl", true);
@@ -789,9 +818,6 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					symType + ", name: " + symName);
 			}
 
-			// Clear any conflicting symbols from the Ghidra symbol table
-			removeConflictingSymbols(symName, symLoc);
-
 			// If entry type is data, simply create a Ghidra symbol for it.
 			// If entry type is code, disassemble it and create function.
 			switch (symType) {
@@ -808,27 +834,26 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 				case 9:    // Global BSS
 				case 0x11: // External ref
 
-					createLabel(symLoc, symName, true);
+					createLabel(symLoc, symName, true, SourceType.IMPORTED);
 					applyDemangled(symLoc, symName, symDemangledName);
 					break;
 
 				case 4: // Local .text
 				case 5: // Global .text  
 
-					doLocalDisassemble(symLoc);
-					createFunction(symLoc, symName);
-					if (getFunctionAt(symLoc) != null) {
-						getFunctionAt(symLoc).setName(symName, SourceType.USER_DEFINED);
-						applyDemangled(symLoc, symName, symDemangledName);
+					createLabel(symLoc, symName, true, SourceType.IMPORTED);
+					boolean isCode = doLocalDisassemble(symLoc);
+					if (isCode) {
+						Function function = createFunction(symLoc, symName);
+						if (function == null) {
+							println("createFunction: Failed to create function " + symLoc);
+						}
 					}
-					else {
-						println("createFunction: Failed to create function");
-						createLabel(symLoc, symName, true);
-						applyDemangled(symLoc, symName, symDemangledName);
-					}
+					applyDemangled(symLoc, symName, symDemangledName);
 					break;
 
 				default:
+					createLabel(symLoc, symName, true, SourceType.IMPORTED);
 					println("Invalid symType " + symType + " !");
 					break;
 			}

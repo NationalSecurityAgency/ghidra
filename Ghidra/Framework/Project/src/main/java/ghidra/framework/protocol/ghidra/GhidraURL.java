@@ -250,14 +250,14 @@ public class GhidraURL {
 				path = "/" + path;
 			}
 			else {
-				throw new IllegalArgumentException("absolute path required");
+				throw new IllegalArgumentException("Absolute project path required");
 			}
 			scanIndex = 3;
 		}
 		else if (len >= 3 && hasDriveLetter(path, 1)) {
 			if (len < 4 || path.charAt(3) != '/') {
 				// path such as "/c:" not permitted
-				throw new IllegalArgumentException("absolute path required");
+				throw new IllegalArgumentException("Absolute project path required");
 			}
 			scanIndex = 4;
 		}
@@ -439,7 +439,7 @@ public class GhidraURL {
 			return "/";
 		}
 
-		throw new IllegalArgumentException("not project/repository URL");
+		throw new IllegalArgumentException("Not a project/repository URL");
 	}
 
 	/**
@@ -569,11 +569,13 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Create a URL which refers to a local Ghidra project with optional project file and ref
+	 * Create a URL which refers to a local Ghidra project with optional project folder/file path
+	 * and optional reference
 	 * @param projectLocation absolute path of project location directory 
 	 * @param projectName name of project
-	 * @param projectFilePath file path (e.g., /a/b/c, may be null)
-	 * @param ref location reference (may be null)
+	 * @param projectFilePath an absolute folder or file path within the project (e.g., /a/b/c, may be null)
+	 * @param ref optional location reference (may be null) which is appended to URL with a '#' 
+	 * delimiter.
 	 * @return local Ghidra project URL
 	 * @throws IllegalArgumentException if an absolute projectLocation path is not specified
 	 */
@@ -593,7 +595,7 @@ public class GhidraURL {
 
 		if (!StringUtils.isBlank(projectFilePath)) {
 			if (!projectFilePath.startsWith("/") || projectFilePath.contains("\\")) {
-				throw new IllegalArgumentException("Invalid project file path");
+				throw new IllegalArgumentException("Absolute path required using '/' delimiter");
 			}
 			buf.append("?");
 			buf.append(projectFilePath);
@@ -611,8 +613,9 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Create a URL which refers to a local Ghidra project with optional project file and ref
-	 * @param projectLocator local project locator
+	 * Create a URL which refers to a Ghidra project with optional project file and ref.
+	 * If project locator corresponds to a transient project a server URL form will be returned.
+	 * @param projectLocator project locator (local or transient)
 	 * @param projectFilePath file path (e.g., /a/b/c, may be null)
 	 * @param ref location reference (may be null)
 	 * @return local Ghidra project URL
@@ -620,6 +623,31 @@ public class GhidraURL {
 	 * instantion fails.
 	 */
 	public static URL makeURL(ProjectLocator projectLocator, String projectFilePath, String ref) {
+
+		if (projectLocator.isTransient()) {
+
+			// Transient project corresponds to server-based repository
+			String serverUrl = projectLocator.getURL().toExternalForm();
+			if (projectFilePath != null) {
+				if (!projectFilePath.startsWith("/")) {
+					throw new IllegalArgumentException(
+						"Absolute path required using '/' delimiter");
+				}
+				serverUrl += projectFilePath;
+			}
+			if (ref != null) {
+				serverUrl += "#";
+				serverUrl += ref;
+			}
+			try {
+				return new URL(serverUrl);
+			}
+			catch (MalformedURLException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
+		// Handle local project case
 		return makeURL(projectLocator.getLocation(), projectLocator.getName(), projectFilePath,
 			ref);
 	}

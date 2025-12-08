@@ -29,8 +29,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceExecutionState;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -520,8 +519,10 @@ public interface Target {
 	 * be recorded into the trace <em>before</em> this method returns. If the request is
 	 * unsuccessful, this method throw an exception.
 	 * 
-	 * @param address the starting address
-	 * @param data the bytes to write
+	 * @param platform the platform whose language defines the registers
+	 * @param thread the thread whose register to write
+	 * @param frame the frame level, usually 0.
+	 * @param value the register and value to write
 	 */
 	void writeRegister(TracePlatform platform, TraceThread thread, int frame, RegisterValue value);
 
@@ -549,7 +550,7 @@ public interface Target {
 	 * @param thread if a register, the thread whose registers to examine
 	 * @param frame the frame level, usually 0.
 	 * @param address the address of the variable
-	 * @param size the size of the variable. Ignored for memory
+	 * @param length the size of the variable. Ignored for memory
 	 * @return true if the variable can be mapped to the target
 	 */
 	boolean isVariableExists(TracePlatform platform, TraceThread thread, int frame, Address address,
@@ -559,8 +560,7 @@ public interface Target {
 	 * @see #writeVariable(TracePlatform, TraceThread, int, Address, byte[])
 	 */
 	CompletableFuture<Void> writeVariableAsync(TracePlatform platform, TraceThread thread,
-			int frame,
-			Address address, byte[] data);
+			int frame, Address address, byte[] data);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -572,7 +572,7 @@ public interface Target {
 	 * {@link #writeMemory(Address, byte[])}.
 	 * 
 	 * @param thread the thread. Ignored (may be null) if address is in memory
-	 * @param frameLevel the frame, usually 0. Ignored if address is in memory
+	 * @param frame the frame, usually 0. Ignored if address is in memory
 	 * @param address the starting address
 	 * @param data the value to write
 	 */
@@ -617,12 +617,12 @@ public interface Target {
 	 * @param breakpoint the breakpoint
 	 * @return true if valid
 	 */
-	boolean isBreakpointValid(TraceBreakpoint breakpoint);
+	boolean isBreakpointValid(TraceBreakpointLocation breakpoint);
 
 	/**
-	 * @see #deleteBreakpoint(TraceBreakpoint)
+	 * @see #deleteBreakpoint(TraceBreakpointCommon)
 	 */
-	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpoint breakpoint);
+	CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpointCommon breakpoint);
 
 	/**
 	 * Delete the given breakpoint from the target
@@ -633,12 +633,13 @@ public interface Target {
 	 * 
 	 * @param breakpoint the breakpoint to delete
 	 */
-	void deleteBreakpoint(TraceBreakpoint breakpoint);
+	void deleteBreakpoint(TraceBreakpointCommon breakpoint);
 
 	/**
-	 * @see #toggleBreakpoint(TraceBreakpoint, boolean)
+	 * @see #toggleBreakpoint(TraceBreakpointLocation, boolean)
 	 */
-	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpoint breakpoint, boolean enabled);
+	CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpointCommon breakpoint,
+			boolean enabled);
 
 	/**
 	 * Toggle the given breakpoint on the target
@@ -651,7 +652,7 @@ public interface Target {
 	 * @param breakpoint the breakpoint to toggle
 	 * @param enabled true to enable, false to disable
 	 */
-	void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled);
+	void toggleBreakpoint(TraceBreakpointCommon breakpoint, boolean enabled);
 
 	/**
 	 * @see #forceTerminate()
@@ -665,7 +666,8 @@ public interface Target {
 	 * This will first attempt to kill the target gracefully. In addition, and whether or not the
 	 * target is successfully terminated, the target will be dissociated from its trace, and the
 	 * target will be invalidated. To attempt only a graceful termination, check
-	 * {@link #collectActions(ActionName, ActionContext)} with {@link ActionName#KILL}.
+	 * {@link #collectActions(ActionName, ActionContext, ObjectArgumentPolicy)} with
+	 * {@link ActionName#KILL}.
 	 */
 	void forceTerminate();
 

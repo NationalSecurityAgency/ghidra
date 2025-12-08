@@ -33,43 +33,42 @@ import ghidra.framework.options.SaveState;
 public interface Project extends AutoCloseable, Iterable<DomainFile> {
 
 	/**
-	 * Convenience method to get the name of this project.
+	 * {@return the name of this project}
 	 */
 	public String getName();
 
 	/**
-	 * Get the project locator for this project.
+	 * {@return the project locator for this project}
 	 */
 	public ProjectLocator getProjectLocator();
 
 	/**
-	 * Returns the project manager of this project.
-	 * @return the project manager of this project.
+	 * {@return the project manager of this project}
 	 */
 	public ProjectManager getProjectManager();
 
 	/**
-	 * Return the tool manager for this project.
+	 * {@return the tool manager for this project}
 	 */
 	public ToolManager getToolManager();
 
 	/**
-	 * Return the tool services for this project.
+	 * {@return the tool services for this project}
 	 */
 	public ToolServices getToolServices();
 
 	/**
-	 * Return whether the project configuration has changed.
+	 * {@return whether the project configuration has changed}
 	 */
 	public boolean hasChanged();
 
 	/**
-	 * Returns whether this project instance has been closed
+	 * {@return whether this project instance has been closed}
 	 */
 	public boolean isClosed();
 
 	/**
-	 * Return the local tool chest for the user logged in.
+	 * {@return the local tool chest for the user logged in}
 	 */
 	public ToolChest getLocalToolChest();
 
@@ -83,13 +82,14 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 	/** 
 	 * Add the given project URL to this project's list project views.
 	 * The project view allows users to look at data files from another
-	 * project.
+	 * project.  If the URL corresponds to this project its ProjectData will be returned.
 	 * @param projectURL identifier for the project view (ghidra protocol only).
 	 * @param visible true if project may be made visible or false if hidden.  Hidden viewed
 	 * projects are used when only life-cycle management is required (e.g., close view project 
 	 * when this project is closed).
 	 * @return project data for this view
-	 * @throws IOException if I/O error occurs or if project/repository not found
+	 * @throws IOException if this project is closed, an invalid URL is specified, or failed to 
+	 * open/connect to project/repository.
 	 */
 	public ProjectData addProjectView(URL projectURL, boolean visible) throws IOException;
 
@@ -100,7 +100,7 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 	public void removeProjectView(URL projectURL);
 
 	/**
-	 * Return the list of visible project views in this project.
+	 * {@return the list of visible project views in this project}
 	 */
 	public ProjectLocator[] getProjectViews();
 
@@ -143,13 +143,16 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 
 	/**
 	 * Allows the user to store data related to the project.
-	 * @param key A value used to store and lookup saved data
+	 * See {@link #getSaveableData(String)} for future retieval of data.
+	 * @param key a value used to store and lookup saved data
 	 * @param saveState a container of data that will be written out when persisted
 	 */
 	public void setSaveableData(String key, SaveState saveState);
 
 	/**
-	 * The analog for {@link #setSaveableData(String, SaveState)}.
+	 * {@return the user data previously stored to the project}
+	 * See {@link #setSaveableData(String, SaveState)}.
+	 * @param key a value used to store and lookup saved data
 	 */
 	public SaveState getSaveableData(String key);
 
@@ -160,15 +163,27 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 	public List<DomainFile> getOpenData();
 
 	/**
-	 * Get the root domain data folder in the project.
+	 * {@return the root domain data folder in the project}
 	 */
 	public ProjectData getProjectData();
 
 	/**
 	 * Returns the Project Data for the given Project locator.  The Project locator must
 	 * be either the current active project or an currently open project view.
+	 * The returned view may not be visible.
+	 * @param projectLocator project locator object used to open project
+	 * @return requested project data
 	 */
 	public ProjectData getProjectData(ProjectLocator projectLocator);
+
+	/** 
+	 * Returns the Project Data for the given Project URL.  The Project URL must
+	 * be either the current active project or a currently open project view.
+	 * The returned view may not be visible.
+	 * @param projectURL identifier for the project view (ghidra protocol only).
+	 * @return project data for this view or null
+	 */
+	public ProjectData getProjectData(URL projectURL);
 
 	/**
 	 * Get the project data for visible viewed projects that are
@@ -195,9 +210,14 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 	 */
 	public void removeProjectViewListener(ProjectViewListener listener);
 
+	/**
+	 * Return a {@link DomainFile} iterator over all non-link files within this project's data store.
+	 * If links should be followed use an appropropriate static method from {@link ProjectDataUtils}.
+	 * @return domain file iterator
+	 */
 	@Override
 	public default Iterator<DomainFile> iterator() {
-		return new ProjectDataUtils.DomainFileIterator(this);
+		return getProjectData().iterator();
 	}
 
 }

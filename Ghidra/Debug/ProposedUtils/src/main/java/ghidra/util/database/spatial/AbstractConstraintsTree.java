@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import db.DBRecord;
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import generic.util.PeekableIterator;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -75,7 +75,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For non-leaf nodes, get the children.
-	 * 
+	 * <p>
 	 * For leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them. Filtering is performed by {@link TreeRecordVisitor}.
 	 * 
@@ -86,7 +86,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For non-leaf nodes, get the children.
-	 * 
+	 * <p>
 	 * For leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
@@ -101,7 +101,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For leaf nodes, get the children.
-	 * 
+	 * <p>
 	 * For non-leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
@@ -113,13 +113,12 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For leaf nodes, get the children.
-	 * 
+	 * <p>
 	 * For non-leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
 	 * 
 	 * @param parent the parent node
-	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
 	 */
 	protected Collection<DR> getDataChildrenOf(NR parent) {
@@ -129,7 +128,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Get the children.
-	 * 
+	 * <p>
 	 * Because the children may be either nodes or data, the exact type is not known. The only
 	 * guarantee is that it is a tree record, which permits access to its bounds and parent. Note
 	 * that the query should not filter the children, only order them, or else the collection will
@@ -137,7 +136,6 @@ public abstract class AbstractConstraintsTree< //
 	 * {@link TreeRecordVisitor}.
 	 * 
 	 * @param parent the parent node
-	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
 	 */
 	protected Collection<? extends DBTreeRecord<?, ? extends NS>> getChildrenOf(NR parent) {
@@ -192,12 +190,12 @@ public abstract class AbstractConstraintsTree< //
 
 		/**
 		 * Called when a node is finished being visited.
-		 * 
+		 * <p>
 		 * This only applies to nodes into which the visitor descends. The visitor will finish a
 		 * node in one of three ways: 1) The node's children have all been visited. 2) The visitor
 		 * returned {@link VisitResult#TERMINATE} while visiting a descendant. 3) The visitor
 		 * returned {@link VisitResult#ASCEND} while visiting a child.
-		 * 
+		 * <p>
 		 * This method may return any result except {@link VisitResult#DESCEND}. If the visitor is
 		 * terminating, the return value of this method is ignored.
 		 * 
@@ -289,7 +287,7 @@ public abstract class AbstractConstraintsTree< //
 			}
 			nodes.add(n);
 		}
-		return NestedIterator.start(nodes.iterator(), n -> iterator(n, query));
+		return FlattenedIterator.start(nodes.iterator(), n -> iterator(n, query));
 	}
 
 	protected Iterator<DR> orderedIterator(Q query) {
@@ -602,7 +600,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Remove a data record from the tree, but keep the orphaned record in the table
-	 * 
+	 * <p>
 	 * Note that at most one orphaned record should be in the table at any time, otherwise behavior
 	 * is undefined. It is up to the implementor to provide a means of inserting orphaned data
 	 * records back into the tree. This is useful for implementations which allow a data record's
@@ -758,7 +756,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Check the integrity of a single node entry.
-	 * 
+	 * <p>
 	 * This method is for tree developers and testers. Override this method if you have additional
 	 * integrity checks.
 	 * 
@@ -853,7 +851,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Check the integrity of a single data entry.
-	 * 
+	 * <p>
 	 * This method is for tree developers and testers. Override this method if you have additional
 	 * integrity checks.
 	 * 

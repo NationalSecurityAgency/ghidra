@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.google.common.primitives.Bytes;
 
 import ghidra.app.plugin.core.analysis.rust.RustConstants;
@@ -103,16 +105,18 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (monitor.isCancelled()) {
 			return;
 		}
 
-		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false,
-			shouldParseCliHeaders(options));
+		PortableExecutable pe = new PortableExecutable(settings.provider(), getSectionLayout(),
+			false, shouldParseCliHeaders(settings.options()));
 
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader == null) {
@@ -121,13 +125,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = createFileBytes(provider, program, monitor);
+		FileBytes fileBytes = createFileBytes(settings.provider(), program, monitor);
 		try {
 			Map<SectionHeader, Address> sectionToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
 
 			monitor.setCancelEnabled(false);
-			optionalHeader.processDataDirectories(monitor);
+			optionalHeader.processDataDirectories(log, monitor);
 			monitor.setCancelEnabled(true);
 			optionalHeader.validateDataDirectories(program);
 
@@ -146,14 +150,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, settings.options(),
+				monitor);
 			processProperties(optionalHeader, ntHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler =
-				CompilerOpinion.getOpinion(pe, provider, program, monitor, log).toString();
+				CompilerOpinion.getOpinion(pe, settings.provider(), program, monitor, log)
+						.toString();
 			program.setCompiler(compiler);
 		}
 		catch (AddressOverflowException e) {
@@ -183,9 +189,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
 			list.add(new Option(PARSE_CLI_HEADERS_OPTION_NAME, PARSE_CLI_HEADERS_OPTION_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-parseCliHeaders"));
@@ -210,8 +216,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return (s1, s2) -> String.CASE_INSENSITIVE_ORDER.compare(FilenameUtils.getName(s1),
+			FilenameUtils.getName(s2));
 	}
 
 	private boolean shouldParseCliHeaders(List<Option> options) {

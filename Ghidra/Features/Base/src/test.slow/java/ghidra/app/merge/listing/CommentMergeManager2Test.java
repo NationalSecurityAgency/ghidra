@@ -31,10 +31,6 @@ import ghidra.program.model.listing.*;
  */
 public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
-	/**
-	 * 
-	 * @param arg0
-	 */
 	public CommentMergeManager2Test() {
 		super();
 	}
@@ -426,6 +422,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
+				// do nothing
 			}
 
 			@Override
@@ -472,6 +469,7 @@ public class CommentMergeManager2Test extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
+				// do nothing
 			}
 		});
 

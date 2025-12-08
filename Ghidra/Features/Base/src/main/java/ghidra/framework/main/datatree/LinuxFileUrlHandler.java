@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,8 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 	 * Linux URL-based file list {@link DataFlavor} to be used during handler registration
 	 * using {@link DataTreeDragNDropHandler#addActiveDataFlavorHandler}.
 	 */
-	public static final DataFlavor linuxFileUrlFlavor =
-		new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
-			"String file URL");
+	public static final DataFlavor linuxFileUrlFlavor = new DataFlavor(
+		"application/x-java-serialized-object;class=java.lang.String", "String file URL");
 
 	@Override
 	// This is for the FileOpenDataFlavorHandler for handling file drops from Linux to a Tool
@@ -57,7 +56,7 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 		if (files.isEmpty()) {
 			return false;
 		}
-		doImport(getDomainFolder(destinationNode), files, tool, dataTree);
+		doImport(DataTree.getRealInternalFolderForNode(destinationNode), files, tool, dataTree);
 		return true;
 	}
 

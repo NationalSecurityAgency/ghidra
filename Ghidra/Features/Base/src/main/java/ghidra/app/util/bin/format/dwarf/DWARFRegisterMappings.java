@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import java.util.Collections;
 import java.util.Map;
 
 import ghidra.program.model.lang.Register;
@@ -75,37 +74,66 @@ import ghidra.program.model.lang.Register;
 public class DWARFRegisterMappings {
 
 	public static final DWARFRegisterMappings DUMMY =
-		new DWARFRegisterMappings(Collections.emptyMap(), 0, -1, false);
+		new DWARFRegisterMappings(Map.of(), null, -1, null, 0, false);
 
 	/*
 	 * Maps DWARF register number to Ghidra architecture registers.
 	 */
 	private final Map<Integer, Register> dwarfRegisterMap;
 
-	private final long callFrameCFA;
+	private final Integer callFrameCFA;
 
 	private final int stackPointerIndex;
 
 	private final boolean useFormalParameterStorage;
 
-	public DWARFRegisterMappings(Map<Integer, Register> regmap, long callFrameCFA,
-			int stackPointerIndex, boolean useFPS) {
+	private Register stackFrameRegister;
+
+	private int stackFrameRegisterOffset;
+
+	public DWARFRegisterMappings(Map<Integer, Register> regmap, Integer callFrameCFA,
+			int stackPointerIndex, Register stackFrameRegister, int stackFrameRegisterOffset,
+			boolean useFPS) {
 		this.dwarfRegisterMap = regmap;
 		this.callFrameCFA = callFrameCFA;
 		this.stackPointerIndex = stackPointerIndex;
+		this.stackFrameRegister = stackFrameRegister;
 		this.useFormalParameterStorage = useFPS;
+		this.stackFrameRegisterOffset = stackFrameRegisterOffset;
 	}
 
 	public Register getGhidraReg(int dwarfRegNum) {
 		return dwarfRegisterMap.get(dwarfRegNum);
 	}
 
-	public long getCallFrameCFA() {
+	/**
+	 * 'Static' value for a function's CFA value (instead of trying to extract it from the func's
+	 * CIE metadata).
+	 * 
+	 * @return cfa static stack offset
+	 */
+	public int getCallFrameCFA() {
 		return callFrameCFA;
+	}
+
+	public boolean hasStaticCFA() {
+		return callFrameCFA != null;
 	}
 
 	public int getDWARFStackPointerRegNum() {
 		return stackPointerIndex;
+	}
+
+	public Register getStackRegister() {
+		return stackPointerIndex != -1 ? getGhidraReg(stackPointerIndex) : null;
+	}
+
+	public Register getStackFrameRegister() {
+		return stackFrameRegister;
+	}
+
+	public int getStackFrameRegisterOffset() {
+		return stackFrameRegisterOffset;
 	}
 
 	public boolean isUseFormalParameterStorage() {

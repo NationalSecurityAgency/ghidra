@@ -36,7 +36,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		// Create overlapping trasnaction to handle all changes
+		// Create overlapping transaction to handle all changes
 		persistentTxId = program.startTransaction("Modify Program");
 	}
 
@@ -88,7 +88,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals("complexStructure *", dataType10.getDisplayName());
 		assertEquals(4, getLength(10));
 
-		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
+		programDTM.remove(complexStructure);
 		programDTM.getCategory(pgmRootCat.getCategoryPath())
 				.removeCategory("Temp", TaskMonitor.DUMMY);
 
@@ -505,7 +505,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(0x145, model.getLength());
 
 		runSwing(
-			() -> complexStructure.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
+			() -> complexStructure.getDataTypeManager().remove(simpleUnion));
 		waitForSwing();
 		assertEquals(23, model.getNumComponents());
 		assertTrue(dt3.isEquivalent(getDataType(3)));
@@ -536,7 +536,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
 		runSwing(
-			() -> simpleStructure.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
+			() -> simpleStructure.getDataTypeManager().remove(simpleStructure));
 		waitForSwing();
 
 		assertEquals(1, model.getNumComponents());// component becomes BadDataType

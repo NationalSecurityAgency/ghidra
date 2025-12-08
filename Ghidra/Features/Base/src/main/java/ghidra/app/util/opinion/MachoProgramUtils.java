@@ -15,10 +15,8 @@
  */
 package ghidra.app.util.opinion;
 
-import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 
 public class MachoProgramUtils {
@@ -45,38 +43,5 @@ public class MachoProgramUtils {
 		long maxAddr = maxAddress.getOffset();
 		long remainder = maxAddr % 0x1000;
 		return maxAddress.getNewAddress(maxAddr + 0x1000 - remainder);
-	}
-
-	/**
-	 * Adds the {@link MemoryBlock#EXTERNAL_BLOCK_NAME EXERNAL block} to memory, or adds to an
-	 * existing one
-	 * 
-	 * @param program The {@link Program}
-	 * @param size The desired size of the new EXTERNAL block
-	 * @param log The {@link MessageLog}
-	 * @return The {@link Address} of the new (or new piece) of EXTERNAL block
-	 * @throws Exception if there was an issue creating or adding to the EXTERNAL block
-	 */
-	public static Address addExternalBlock(Program program, long size, MessageLog log)
-			throws Exception {
-		Memory mem = program.getMemory();
-		MemoryBlock externalBlock = mem.getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
-		Address ret;
-		if (externalBlock != null) {
-			ret = externalBlock.getEnd().add(1);
-			MemoryBlock newBlock =
-				mem.createBlock(externalBlock, MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size);
-			mem.join(externalBlock, newBlock);
-		}
-		else {
-			ret = MachoProgramUtils.getNextAvailableAddress(program);
-			externalBlock =
-				mem.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME, ret, size, false);
-			externalBlock.setWrite(true);
-			externalBlock.setArtificial(true);
-			externalBlock.setComment(
-				"NOTE: This block is artificial and is used to make relocations work correctly");
-		}
-		return ret;
 	}
 }

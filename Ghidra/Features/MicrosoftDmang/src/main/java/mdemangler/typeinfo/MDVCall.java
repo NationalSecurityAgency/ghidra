@@ -59,19 +59,21 @@ public class MDVCall extends MDMemberFunctionInfo {
 
 	@Override
 	public String getModifier() {
-		// TODO: Future specialization on 16-bit or 32plus
+		if (dmang.getArchitectureSize() == 16) {
+			return getNameModifier_16BitModel();
+		}
 		return getNameModifier_32PlusBitModel();
 	}
 
 	@Override
 	public void insert(StringBuilder builder) {
-		// TODO: Future specialization on 16-bit or 32plus
-		// dmang.appendString(builder, getNameModifier_32PlusBitModel());
 		super.insert(builder);
 	}
 
 	public String getNameModifier_16BitModel() {
-		String modifier = "{" + callIndex + ",";
+		// 20250625: added brace after comma to somewhat match the 32-bit+ model, though both
+		// still have a mismatched number of braces.
+		String modifier = "{" + callIndex + ",{";
 		if (myThisModel == ThisModel.NEAR) {
 			modifier += NEAR_STRING;
 		}
@@ -93,7 +95,10 @@ public class MDVCall extends MDMemberFunctionInfo {
 			modifier += FAR_STRING;
 		}
 		else {
-			modifier += basedType; // TODO based value.
+			String baseStr = basedType.toString();
+			if (!baseStr.isEmpty()) {
+				modifier += baseStr + " ";
+			}
 		}
 		modifier += "vfptr}}' }'";
 		return modifier;
@@ -170,6 +175,7 @@ public class MDVCall extends MDMemberFunctionInfo {
 				myThisModel = ThisModel.NEAR;
 				myCallModel = CallModel.NEAR;
 				myVfptrModel = VfptrModel.BASED;
+				basedType = new MDBasedAttribute(dmang);
 				basedType.parse(); // TODO: check this
 				// nameModifier += "__near this, __near call, " + basedType + "
 				// vfptr}}' }'";
@@ -178,6 +184,7 @@ public class MDVCall extends MDMemberFunctionInfo {
 				myThisModel = ThisModel.NEAR;
 				myCallModel = CallModel.FAR;
 				myVfptrModel = VfptrModel.BASED;
+				basedType = new MDBasedAttribute(dmang);
 				basedType.parse(); // TODO: check this
 				// nameModifier += "__near this, __far call, " + basedType + "
 				// vfptr}}' }'";
@@ -186,6 +193,7 @@ public class MDVCall extends MDMemberFunctionInfo {
 				myThisModel = ThisModel.FAR;
 				myCallModel = CallModel.NEAR;
 				myVfptrModel = VfptrModel.BASED;
+				basedType = new MDBasedAttribute(dmang);
 				basedType.parse(); // TODO: check this
 				// nameModifier += "__far this, __near call, " + basedType + "
 				// vfptr}}' }'";
@@ -194,6 +202,7 @@ public class MDVCall extends MDMemberFunctionInfo {
 				myThisModel = ThisModel.FAR;
 				myCallModel = CallModel.FAR;
 				myVfptrModel = VfptrModel.BASED;
+				basedType = new MDBasedAttribute(dmang);
 				basedType.parse(); // TODO: check this
 				// nameModifier += "__far this, __far call, " + basedType + "
 				// vfptr}}' }'";

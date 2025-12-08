@@ -327,18 +327,17 @@ public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testClearNotRemoveComment() throws Exception {
 
-		SetCommentCmd cmd =
-			new SetCommentCmd(addr("0x1003698"), CodeUnit.EOL_COMMENT, "my comment");
+		SetCommentCmd cmd = new SetCommentCmd(addr("0x1003698"), CommentType.EOL, "my comment");
 		applyCmd(program, cmd);
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr("0x1003698"));
-		assertEquals("my comment", cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("my comment", cu.getComment(CommentType.EOL));
 
 		assertTrue(cb.goToField(addr("0x1003698"), "Bytes", 0, 4));
 		doClearAction(true);
 
 		cu = program.getListing().getCodeUnitAt(addr("0x1003698"));
-		assertEquals("my comment", cu.getComment(CodeUnit.EOL_COMMENT));
+		assertEquals("my comment", cu.getComment(CommentType.EOL));
 
 	}
 
@@ -579,11 +578,11 @@ public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr("0x10022cc"));
 
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(cu.getComment(CommentType.EOL));
 		undo(program);
-		assertNotNull(cu.getComment(CodeUnit.EOL_COMMENT));
+		assertNotNull(cu.getComment(CommentType.EOL));
 		redo(program);
-		assertNull(cu.getComment(CodeUnit.EOL_COMMENT));
+		assertNull(cu.getComment(CommentType.EOL));
 
 	}
 

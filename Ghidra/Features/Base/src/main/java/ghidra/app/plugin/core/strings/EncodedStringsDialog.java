@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.strings;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Character.UnicodeScript;
@@ -449,35 +450,6 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			EncodedStringsPlugin.CHARSET_DEFAULT_VALUE));
 		charsetComboBox.addItemListener(itemListener);
 		charsetComboBox.setToolTipText("Which character set to use to decode the raw bytes.");
-		charsetComboBox.addKeyListener(new KeyListener() {
-
-			@Override
-			public void keyTyped(KeyEvent e) {
-				// empty
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-				// empty
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				// Note: we override the [ENTER] key handling to allow the user to invoke the
-				// dialog and just hit enter to create the string without having to do any
-				// clicking (otherwise the charset combobox consumes the keystroke)
-				if (e.getKeyChar() == '\n') {
-					e.consume();
-					if (charsetComboBox.isPopupVisible()) {
-						charsetComboBox.setPopupVisible(false);
-					}
-					else {
-						EncodedStringsDialog.this.createButton.doClick();
-					}
-				}
-			}
-		});
-
 	}
 
 	private void buildOptionsButtonComponents() {

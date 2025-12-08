@@ -437,8 +437,14 @@ public class FlatProgramAPI {
 	}
 
 	/**
+	 * Creates a label at the specified address in the global namespace.
+	 * If makePrimary==true, then the new label is made primary.
+	 * @param address the address to create the symbol
+	 * @param name the name of the symbol
+	 * @param makePrimary true if the symbol should be made primary
+	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
 	 * @deprecated use {@link #createLabel(Address, String, boolean)} instead.
-	 * Deprecated in Ghidra 7.4
 	 */
 	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary)

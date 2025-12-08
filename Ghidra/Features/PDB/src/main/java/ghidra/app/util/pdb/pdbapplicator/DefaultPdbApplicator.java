@@ -1065,7 +1065,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Stores whether the structure referenced by the record number has been filled in such that
 	 * it can be used as a base class
 	 * @param recordNumber record number of type record
-	 * @param dataType the data type to store
 	 */
 	void markFilledInForBase(RecordNumber recordNumber) {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
@@ -2346,25 +2345,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	boolean shouldForcePrimarySymbol(Address address, boolean forceIfMangled) {
-		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (primarySymbol != null) {
-
-			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
-				applicatorOptions.allowDemotePrimaryMangledSymbols()) {
-				return true;
-			}
-
-			SourceType primarySymbolSource = primarySymbol.getSource();
-
-			if (!SourceType.ANALYSIS.isHigherPriorityThan(primarySymbolSource)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	//==============================================================================================
 	boolean addToPlateUnique(Address address, String comment) {
 		if (StringUtils.isBlank(comment)) {
 			return false;
@@ -2415,8 +2395,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		Function existingFunction = program.getListing().getFunctionAt(address);
 		if (existingFunction != null) { // Maybe I should care if there is a data type there too.
-			if (existingFunction.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-				// Existing is USER or IMPORTED
+			if (existingFunction.getSignatureSource()
+					.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				return doCreateSymbol(address, symbolPath, false, plateAddition);
 			}
 		}
@@ -2428,13 +2408,20 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 		}
 
+		boolean existingIsMangled = isMangled(existingSymbol.getName());
+		if (existingIsMangled && !isNewFunctionSignature) {
+			// we don't have a new signature, but the existing symbol is mangled, and thus can
+			// possibly provide it... so do not make new symbol primary
+			return doCreateSymbol(address, symbolPath, false, plateAddition);
+		}
+
 		if (symbolPath.getParent() != null) {
 			// new symbol has non-global namespace
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		// Both existing and new symbols are in global namespace at this point
-		if (isMangled(symbolPath.getName()) && !isMangled(existingSymbol.getName())) {
+		if (isMangled(symbolPath.getName()) && !existingIsMangled) {
 			// new symbol is mangled, but don't override existing one if it is mangled
 			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}

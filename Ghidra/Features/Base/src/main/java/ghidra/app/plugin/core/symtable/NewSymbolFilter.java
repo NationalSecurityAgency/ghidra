@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,11 +29,12 @@ public class NewSymbolFilter implements SymbolFilter {
 
 	private static final String XML_NAME = "SYMBOL_TABLE_FILTER";
 
-	private Filter userDefinedFilter;
-	private Filter analysisFilter;
-	private Filter defaultFunctionFilter;
-	private Filter defaultLabelFilter;
-	private Filter importedFilter;
+	private Filter defaultLabelSourceFilter;
+	private Filter defaultFunctionSourceFilter;
+	private Filter aiSourceFilter;
+	private Filter analysisSourceFilter;
+	private Filter importedSourceFilter;
+	private Filter userDefinedSourceFilter;
 
 	private Filter[] labelFilters;
 	private Filter[] nonLabelFilters;
@@ -67,19 +68,21 @@ public class NewSymbolFilter implements SymbolFilter {
 		for (Filter advancedFilter : advancedFilters) {
 			filterMap.put(advancedFilter.getName(), advancedFilter);
 		}
-		filterMap.put(userDefinedFilter.getName(), userDefinedFilter);
-		filterMap.put(importedFilter.getName(), importedFilter);
-		filterMap.put(analysisFilter.getName(), analysisFilter);
-		filterMap.put(defaultLabelFilter.getName(), defaultLabelFilter);
-		filterMap.put(defaultFunctionFilter.getName(), defaultFunctionFilter);
+		filterMap.put(defaultLabelSourceFilter.getName(), defaultLabelSourceFilter);
+		filterMap.put(defaultFunctionSourceFilter.getName(), defaultFunctionSourceFilter);
+		filterMap.put(aiSourceFilter.getName(), aiSourceFilter);
+		filterMap.put(analysisSourceFilter.getName(), analysisSourceFilter);
+		filterMap.put(importedSourceFilter.getName(), importedSourceFilter);
+		filterMap.put(userDefinedSourceFilter.getName(), userDefinedSourceFilter);
 
 		if (oldFilter instanceof NewSymbolFilter) {
 			NewSymbolFilter filter = (NewSymbolFilter) oldFilter;
-			userDefinedFilter.setActive(filter.userDefinedFilter.isActive());
-			importedFilter.setActive(filter.importedFilter.isActive());
-			analysisFilter.setActive(filter.analysisFilter.isActive());
-			defaultLabelFilter.setActive(filter.defaultLabelFilter.isActive());
-			defaultFunctionFilter.setActive(filter.defaultFunctionFilter.isActive());
+			defaultLabelSourceFilter.setActive(filter.defaultLabelSourceFilter.isActive());
+			defaultFunctionSourceFilter.setActive(filter.defaultFunctionSourceFilter.isActive());
+			aiSourceFilter.setActive(filter.aiSourceFilter.isActive());
+			analysisSourceFilter.setActive(filter.analysisSourceFilter.isActive());
+			importedSourceFilter.setActive(filter.importedSourceFilter.isActive());
+			userDefinedSourceFilter.setActive(filter.userDefinedSourceFilter.isActive());
 
 			for (int i = 0; i < labelFilters.length; i++) {
 				labelFilters[i].setActive(filter.labelFilters[i].isActive());
@@ -156,8 +159,8 @@ public class NewSymbolFilter implements SymbolFilter {
 
 	@Override
 	public boolean acceptsOnlyCodeSymbols() {
-		for (int i = 0; i < activeTypeFilters.length; i++) {
-			if (!activeTypeFilters[i].onlyCodeSymbols) {
+		for (Filter activeTypeFilter : activeTypeFilters) {
+			if (!activeTypeFilter.onlyCodeSymbols) {
 				return false;
 			}
 		}
@@ -166,7 +169,7 @@ public class NewSymbolFilter implements SymbolFilter {
 
 	@Override
 	public boolean acceptsDefaultLabelSymbols() {
-		if (!defaultLabelFilter.isActive()) {
+		if (!defaultLabelSourceFilter.isActive()) {
 			return false;
 		}
 		for (Filter activeTypeFilter : activeTypeFilters) {
@@ -183,10 +186,10 @@ public class NewSymbolFilter implements SymbolFilter {
 	}
 
 	String[] getSourceFilterNames() {
-		return new String[] { userDefinedFilter.getName(), defaultFunctionFilter.getName(),
-			importedFilter.getName(), defaultLabelFilter.getName(), analysisFilter.getName(),
-
-		};
+		return new String[] { defaultLabelSourceFilter.getName(),
+			defaultFunctionSourceFilter.getName(), aiSourceFilter.getName(),
+			analysisSourceFilter.getName(), userDefinedSourceFilter.getName(),
+			importedSourceFilter.getName() };
 	}
 
 	String[] getLabelTypeFilterNames() {
@@ -267,7 +270,9 @@ public class NewSymbolFilter implements SymbolFilter {
 		for (Element child : children) {
 			String childName = child.getAttributeValue(Filter.NAME_ATTRIBUTE);
 			Filter f = filterMap.get(childName);
-			f.restoreFromXml(child);
+			if (f != null) { // NOTE: filter definition may have been dropped and not found
+				f.restoreFromXml(child);
+			}
 		}
 
 		rebuildActiveFilters();
@@ -283,31 +288,38 @@ public class NewSymbolFilter implements SymbolFilter {
 		for (Filter advancedFilter : advancedFilters) {
 			advancedFilter.setActive(false);
 		}
-		userDefinedFilter.setActive(true);
-		importedFilter.setActive(true);
-		analysisFilter.setActive(true);
-		defaultFunctionFilter.setActive(true);
-		defaultLabelFilter.setActive(false);
+		defaultFunctionSourceFilter.setActive(true);
+		defaultLabelSourceFilter.setActive(false);
+		aiSourceFilter.setActive(true);
+		analysisSourceFilter.setActive(true);
+		importedSourceFilter.setActive(true);
+		userDefinedSourceFilter.setActive(true);
+
 		rebuildActiveFilters();
 	}
 
 	private void rebuildActiveFilters() {
 		ArrayList<Filter> originList = new ArrayList<>(3);
-		if (userDefinedFilter.isActive()) {
-			originList.add(userDefinedFilter);
+
+		if (defaultLabelSourceFilter.isActive()) {
+			originList.add(defaultLabelSourceFilter);
 		}
-		if (importedFilter.isActive()) {
-			originList.add(importedFilter);
+		if (defaultFunctionSourceFilter.isActive()) {
+			originList.add(defaultFunctionSourceFilter);
 		}
-		if (analysisFilter.isActive()) {
-			originList.add(analysisFilter);
+		if (aiSourceFilter.isActive()) {
+			originList.add(aiSourceFilter);
 		}
-		if (defaultLabelFilter.isActive()) {
-			originList.add(defaultLabelFilter);
+		if (analysisSourceFilter.isActive()) {
+			originList.add(analysisSourceFilter);
 		}
-		if (defaultFunctionFilter.isActive()) {
-			originList.add(defaultFunctionFilter);
+		if (importedSourceFilter.isActive()) {
+			originList.add(importedSourceFilter);
 		}
+		if (userDefinedSourceFilter.isActive()) {
+			originList.add(userDefinedSourceFilter);
+		}
+
 		activeOriginFilters = new Filter[originList.size()];
 		originList.toArray(activeOriginFilters);
 
@@ -339,49 +351,16 @@ public class NewSymbolFilter implements SymbolFilter {
 		advancedList.toArray(activeAdvancedFilters);
 
 		acceptsAllTypes = activeTypeFilters.length == labelFilters.length + nonLabelFilters.length;
-		acceptsAllSources = userDefinedFilter.isActive() && analysisFilter.isActive() &&
-			defaultLabelFilter.isActive() && defaultFunctionFilter.isActive() &&
-			importedFilter.isActive();
-
+		acceptsAllSources =
+			defaultLabelSourceFilter.isActive() && defaultFunctionSourceFilter.isActive() &&
+				importedSourceFilter.isActive() && aiSourceFilter.isActive() &&
+				analysisSourceFilter.isActive() && userDefinedSourceFilter.isActive();
 		acceptsAll = acceptsAllTypes && acceptsAllSources && activeAdvancedFilters.length == 0;
 
 	}
 
 	private void createFilters() {
-		userDefinedFilter = new Filter("User Defined", false, false) {
-			@Override
-			boolean matches(Program program, Symbol symbol) {
-				return symbol.getSource() == SourceType.USER_DEFINED;
-			}
-
-			@Override
-			String getDescription() {
-				return "Include Symbols named by the user.";
-			}
-		};
-		importedFilter = new Filter("Imported", false, false) {
-			@Override
-			boolean matches(Program program, Symbol symbol) {
-				return symbol.getSource() == SourceType.IMPORTED;
-			}
-
-			@Override
-			String getDescription() {
-				return "Include Symbols imported from external information.";
-			}
-		};
-		analysisFilter = new Filter("Analysis", false, false) {
-			@Override
-			boolean matches(Program program, Symbol symbol) {
-				return symbol.getSource() == SourceType.ANALYSIS;
-			}
-
-			@Override
-			String getDescription() {
-				return "Include Symbols named by auto-analysis.";
-			}
-		};
-		defaultLabelFilter = new Filter("Default (Labels)", true, false) {
+		defaultLabelSourceFilter = new Filter("Default (Labels)", true, false) {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
 				return symbol.getSymbolType() != SymbolType.FUNCTION &&
@@ -394,7 +373,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			}
 
 		};
-		defaultFunctionFilter = new Filter("Default (Functions)", true, false) {
+		defaultFunctionSourceFilter = new Filter("Default (Functions)", true, false) {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
 				return symbol.getSymbolType() == SymbolType.FUNCTION &&
@@ -405,8 +384,52 @@ public class NewSymbolFilter implements SymbolFilter {
 			String getDescription() {
 				return "Include Symbols that have default names.";
 			}
-
 		};
+		aiSourceFilter = new Filter(SourceType.AI.getDisplayString(), false, false) {
+			@Override
+			boolean matches(Program program, Symbol symbol) {
+				return symbol.getSource() == SourceType.AI;
+			}
+
+			@Override
+			String getDescription() {
+				return "Include Symbols named by auto-analysis.";
+			}
+		};
+		analysisSourceFilter = new Filter(SourceType.ANALYSIS.getDisplayString(), false, false) {
+			@Override
+			boolean matches(Program program, Symbol symbol) {
+				return symbol.getSource() == SourceType.ANALYSIS;
+			}
+
+			@Override
+			String getDescription() {
+				return "Include Symbols named by auto-analysis.";
+			}
+		};
+		importedSourceFilter = new Filter(SourceType.IMPORTED.getDisplayString(), false, false) {
+			@Override
+			boolean matches(Program program, Symbol symbol) {
+				return symbol.getSource() == SourceType.IMPORTED;
+			}
+
+			@Override
+			String getDescription() {
+				return "Include Symbols imported from external information.";
+			}
+		};
+		userDefinedSourceFilter =
+			new Filter(SourceType.USER_DEFINED.getDisplayString(), false, false) {
+				@Override
+				boolean matches(Program program, Symbol symbol) {
+					return symbol.getSource() == SourceType.USER_DEFINED;
+				}
+
+				@Override
+				String getDescription() {
+					return "Include Symbols named by the user.";
+				}
+			};
 
 		Filter instructionFilter = new Filter("Instruction Labels", true, true) {
 			@Override
@@ -902,9 +925,7 @@ public class NewSymbolFilter implements SymbolFilter {
 
 		@Override
 		boolean isEnabled() {
-			Iterator<Filter> it = applicableFilters.iterator();
-			while (it.hasNext()) {
-				Filter filter = it.next();
+			for (Filter filter : applicableFilters) {
 				if (filter.isActive()) {
 					return true;
 				}

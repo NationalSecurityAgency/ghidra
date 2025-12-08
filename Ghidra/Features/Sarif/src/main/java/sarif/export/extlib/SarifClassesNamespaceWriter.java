@@ -85,6 +85,7 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 		}
 	}
 
+	@Override
 	public JsonArray getResults() {
 		return objects;
 	}

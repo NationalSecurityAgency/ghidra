@@ -32,7 +32,7 @@ import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.util.layout.PairLayout;
@@ -161,8 +161,8 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 		if (rootSchema == null) {
 			return "";
 		}
-		KeyPath suitable = rootSchema.searchForSuitableContainer(TraceObjectMemoryRegion.class,
-			current.getPath());
+		KeyPath suitable =
+			rootSchema.searchForSuitableContainer(TraceMemoryRegion.class, current.getPath());
 		if (suitable == null) {
 			return "";
 		}

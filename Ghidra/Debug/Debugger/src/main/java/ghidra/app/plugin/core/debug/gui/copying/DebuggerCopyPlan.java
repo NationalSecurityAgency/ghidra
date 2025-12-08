@@ -28,7 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
@@ -220,7 +220,7 @@ public class DebuggerCopyPlan {
 			public void copy(TraceProgramView from, AddressRange fromRange, Program into,
 					Address intoAddress, TaskMonitor monitor) throws Exception {
 				long snap = from.getSnap();
-				for (TraceBreakpoint bpt : from.getTrace()
+				for (TraceBreakpointLocation bpt : from.getTrace()
 						.getBreakpointManager()
 						.getBreakpointsIntersecting(Lifespan.at(from.getSnap()), fromRange)) {
 					monitor.checkCancelled();

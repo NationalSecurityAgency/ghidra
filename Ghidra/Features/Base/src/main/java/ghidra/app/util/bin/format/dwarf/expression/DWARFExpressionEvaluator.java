@@ -15,25 +15,25 @@
  */
 package ghidra.app.util.bin.format.dwarf.expression;
 
-import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCodes.*;
+import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Objects;
+import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFForm;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.scalar.Scalar;
 
 /**
- * Evaluates a subset of DWARF expression opcodes.
+ * Evaluates a {@link DWARFExpression}.
  * <p>
- * Limitations:<p>
- * Can not access memory during evaluation of expressions.<br>
- * Some opcodes must be the last operation in the expression (deref, regX)<br>
- * Can only specify offset from register for framebase and stack relative<br>
- * <p>
- * Result can be a numeric value (ie. static address) or a register 'name' or a stack based offset.
+ * If an instruction needs a value in a register or memory location, the current {@link ValueReader}
+ * callback will be called to fetch the value.  The default implementation is to throw an exception,
+ * but future work may plug in a constant propagation callback. 
  */
 public class DWARFExpressionEvaluator {
 
@@ -42,8 +42,23 @@ public class DWARFExpressionEvaluator {
 	 */
 	private static final int DEFAULT_MAX_STEP_COUNT = 1000;
 
+	public interface ValueReader {
+		Object getValue(Varnode vn) throws DWARFExpressionValueException;
+
+		ValueReader DUMMY = new ValueReader() {
+			@Override
+			public Object getValue(Varnode vn) throws DWARFExpressionValueException {
+				throw new DWARFExpressionValueException(vn);
+			}
+		};
+
+	}
+
 	private final DWARFProgram dprog;
 	private final DWARFCompilationUnit cu;
+	private final Language lang;
+
+	private ValueReader valReader = ValueReader.DUMMY;
 
 	private int maxStepCount = DEFAULT_MAX_STEP_COUNT;
 
@@ -52,519 +67,69 @@ public class DWARFExpressionEvaluator {
 	/**
 	 * The subprogram's DW_AT_frame_base value
 	 */
-	private long frameOffset = -1;
-	private int lastRegister = -1;
-	/**
-	 * The value at the top of the stack is a framebase offset
-	 */
-	private boolean lastStackRelative;
+	private Varnode frameBaseVal;
 
-	/**
-	 * Indicates that the result of the expression is held in register {@link #lastRegister}
-	 */
-	private boolean registerLoc;
-
-	/**
-	 * Indicates that the result of the expression is pointed to by the value in
-	 * register {{@link #lastRegister} (ie. lastRegister is a pointer to the result)
-	*/
-	private boolean isDeref;
-
-	private boolean dwarfStackValue;// true if dwarf says that value does not exist in memory
-	private boolean useUnknownRegister;
-	private ArrayDeque<Long> stack = new ArrayDeque<Long>();
+	private List<Object> stack = new ArrayList<>();
 
 	private DWARFExpression expr;
-	private DWARFExpressionOperation currentOp;
-	private int currentOpIndex = -1;
+	private DWARFExpressionInstruction instr;
+	private int instrIndex = -1;
+	private int stepCount = 0;
 
 	public DWARFExpressionEvaluator(DWARFCompilationUnit cu) {
 		this.cu = cu;
 		this.dprog = cu.getProgram();
 		this.registerMappings =
 			Objects.requireNonNullElse(dprog.getRegisterMappings(), DWARFRegisterMappings.DUMMY);
+		this.lang = dprog.getGhidraProgram().getLanguage();
 	}
 
 	public DWARFCompilationUnit getDWARFCompilationUnit() {
 		return cu;
 	}
 
-	public void setFrameBase(long fb) {
-		this.frameOffset = fb;
+	public DWARFExpression getExpr() {
+		return expr;
 	}
 
-	public void push(long l) {
-		stack.push(l);
-		lastRegister = -1;
-		lastStackRelative = false;
-		registerLoc = false;
+	public boolean isEmpty() {
+		return stack.isEmpty();
 	}
 
-	public long peek() throws DWARFExpressionException {
-		if (stack.isEmpty()) {
-			throw new DWARFExpressionException("DWARF expression stack empty");
-		}
-		return stack.peek().longValue();
+	public int getPtrSize() {
+		return cu.getPointerSize();
 	}
 
-	public long pop() throws DWARFExpressionException {
-		if (stack.isEmpty()) {
-			throw new DWARFExpressionException("DWARF expression stack empty");
-		}
-		return stack.pop().longValue();
+	public void setFrameBaseStackLocation(int offset) {
+		this.frameBaseVal = newStackVarnode(offset, 0);
 	}
 
-	/**
-	 * Returns the {@link Register register} that holds the contents of the object that the
-	 * {@link DWARFExpression expression} points to.
-	 * <p>
-	 * Note, you should check {@link #isDeref()} to see if the register is just a pointer
-	 * to the object instead of the object itself.
-	 * 
-	 * @return
-	 */
-	public Register getTerminalRegister() {
-		return registerMappings.getGhidraReg(lastRegister);
+	public void setFrameBaseVal(Varnode frameBaseVal) {
+		this.frameBaseVal = frameBaseVal;
 	}
 
-	public boolean isDeref() {
-		return isDeref;
+	public void setValReader(ValueReader valReader) {
+		this.valReader = valReader;
 	}
 
-	public DWARFExpression readExpr(byte[] exprBytes) throws DWARFExpressionException {
-		DWARFExpression tmp = DWARFExpression.read(exprBytes, cu.getPointerSize(),
-			dprog.isLittleEndian(), cu.getIntSize());
-		return tmp;
-	}
-
-	public DWARFExpressionResult evaluate(byte[] exprBytes) throws DWARFExpressionException {
-		return evaluate(readExpr(exprBytes));
-	}
-
-	/**
-	 * @param _expr
-	 * @param stackArgs - pushed 0..N, so stackArgs[0] will be deepest, stackArgs[N] will be topmost.
-	 * @return
-	 * @throws DWARFExpressionException
-	 */
-	public DWARFExpressionResult evaluate(DWARFExpression _expr, long... stackArgs)
-			throws DWARFExpressionException {
-		for (long l : stackArgs) {
-			push(l);
-		}
-		return evaluate(_expr);
-	}
-
-	public DWARFExpressionResult evaluate(DWARFExpression _expr) throws DWARFExpressionException {
-		this.expr = _expr;
-		currentOp = null;
-		int stepCount = 0;
-		for (currentOpIndex =
-			0; currentOpIndex < expr.getOpCount(); currentOpIndex++, stepCount++) {
-			currentOp = expr.getOp(currentOpIndex);
-
-			try {
-				if (stepCount >= maxStepCount) {
-					throw new DWARFExpressionException(
-						"Excessive expression run length, terminating after " + stepCount +
-							" operations");
+	public ValueReader withStaticStackRegisterValues(Integer stackOffset,
+			Integer stackFrameOffset) {
+		return new ValueReader() {
+			@Override
+			public Varnode getValue(Varnode vn) throws DWARFExpressionValueException {
+				Register reg;
+				if (vn.isRegister() && (reg = lang.getRegister(vn.getAddress(), 0)) != null) {
+					if (reg == registerMappings.getStackFrameRegister() &&
+						stackFrameOffset != null) {
+						return newStackVarnode(stackFrameOffset, 0);
+					}
+					if (reg == registerMappings.getStackRegister() && stackOffset != null) {
+						return newStackVarnode(stackOffset, 0);
+					}
 				}
-				if (Thread.currentThread().isInterrupted()) {
-					throw new DWARFExpressionException(
-						"Thread interrupted while evaluating DWARF expression, terminating after " +
-							stepCount + " operations");
-				}
-
-				_preValidateCurrentOp();
-				_evaluateCurrentOp();
+				throw new DWARFExpressionValueException(vn);
 			}
-			catch (DWARFExpressionException dee) {
-				if (dee.getExpression() == null) {
-					dee.setExpression(expr);
-					dee.setStep(currentOpIndex);
-				}
-				throw dee;
-			}
-		}
-
-		return new DWARFExpressionResult(stack);
-	}
-
-	public String getStackAsString() {
-		StringBuilder sb = new StringBuilder();
-
-		int stackindex = 0;
-		for (Long stackElement : stack) {
-			sb.append(String.format("%3d: [%08x]  %d\n", stackindex, stackElement, stackElement));
-			stackindex++;
-		}
-		return sb.toString();
-	}
-
-	private void _preValidateCurrentOp() throws DWARFExpressionException {
-		// throw a DWARFExpressionException if op not valid in this context
-		int opcode = currentOp.getOpCode();
-		boolean isLastOperation = (currentOpIndex == expr.getLastActiveOpIndex());
-
-		switch (opcode) {
-			case DW_OP_fbreg:
-				if (frameOffset == -1) {
-					throw new DWARFExpressionException(
-						"Frame base has not been set, DW_OP_fbreg can not be evaluated");
-				}
-				break;
-			case DW_OP_deref:
-				if (!(registerLoc || lastStackRelative)) {
-					throw new DWARFExpressionException(
-						"Can not evaluate DW_OP_deref for non-register location");
-				}
-				if (!isLastOperation) {
-					throw new DWARFExpressionException(
-						"Non-terminal DW_OP_deref can't be evaluated");
-				}
-
-				break;
-			default:
-				if (((opcode >= DW_OP_reg0 && opcode <= DW_OP_reg31) || (opcode == DW_OP_regx)) &&
-					(!isLastOperation)) {
-					throw new DWARFExpressionException(
-						"Non-terminal DW_OP_reg? can't be evaluated");
-				}
-		}
-
-	}
-
-	private void _evaluateCurrentOp() throws DWARFExpressionException {
-		int opcode = currentOp.getOpCode();
-		if (DWARFExpressionOpCodes.UNSUPPORTED_OPCODES.contains(opcode)) {
-			throw new DWARFExpressionException(
-				"Can not evaluate unsupported opcode " + DWARFExpressionOpCodes.toString(opcode));
-		}
-
-		if (opcode >= DW_OP_lit0 && opcode <= DW_OP_lit31) {
-			push(currentOp.getRelativeOpCodeOffset(DW_OP_lit0));
-		}
-		else if (opcode >= DW_OP_breg0 && opcode <= DW_OP_breg31) {
-			// Retrieve value held in register X and add offset from operand and push result on stack.
-			// Fake it using zero as register value.
-			// Mainly only useful if offset is zero or if non-zero the register happens to
-			// be the stack pointer.
-			long offset = currentOp.getOperandValue(0);
-			push(0 /*fake register value */ + offset);
-			lastRegister = currentOp.getRelativeOpCodeOffset(DW_OP_breg0);
-
-			if (lastRegister == registerMappings.getDWARFStackPointerRegNum()) {
-				lastStackRelative = true;
-			}
-			else {
-				useUnknownRegister = true;
-				if (offset == 0) {
-					// if offset is 0, we can represent the location as a ghidra register location
-					// also implies a deref by the user of this location info
-					registerLoc = true;
-				}
-			}
-
-		}
-		else if (opcode >= DW_OP_reg0 && opcode <= DW_OP_reg31) {
-			push(0);// TODO: not sure why we are pushing a zero on stack, not part of DWARF std.
-			lastRegister = currentOp.getRelativeOpCodeOffset(DW_OP_reg0);
-			registerLoc = true;
-		}
-		else if (opcode == DW_OP_regx) {
-			push(0);// TODO: not sure why we are pushing a zero on stack, not part of DWARF std.
-			lastRegister = (int) currentOp.getOperandValue(0);
-			registerLoc = true;
-		}
-		else {
-			switch (opcode) {
-				case DW_OP_addr:
-				case DW_OP_const1u:
-				case DW_OP_const2u:
-				case DW_OP_const4u:
-				case DW_OP_const8u:
-				case DW_OP_const1s:
-				case DW_OP_const2s:
-				case DW_OP_const4s:
-				case DW_OP_const8s:
-				case DW_OP_constu:
-				case DW_OP_consts:
-					push(currentOp.getOperandValue(0));
-					break;
-				// Register Based Addressing
-				case DW_OP_fbreg:
-					push(frameOffset + currentOp.getOperandValue(0));
-					lastStackRelative = true;
-					break;
-				// Stack Operations
-				case DW_OP_dup:
-					push(peek());
-					break;
-				case DW_OP_drop:
-					pop();
-					break;
-				case DW_OP_pick: {
-					long index = currentOp.getOperandValue(0);
-					if (index >= stack.size()) {
-						throw new DWARFExpressionException(
-							"Invalid index for DW_OP_pick: " + index);
-					}
-					dw_op_pick((int) index);
-
-					break;
-				}
-				case DW_OP_over: {
-					if (stack.size() < 2) {
-						throw new DWARFExpressionException(
-							"Not enough items on stack[size=" + stack.size() + "] for DW_OP_over");
-					}
-					dw_op_pick(1);
-
-					break;
-				}
-				case DW_OP_swap: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue);
-					push(secondValue);
-					break;
-				}
-				case DW_OP_rot: {
-					long firstValue = pop();
-					long secondValue = pop();
-					long thirdValue = pop();
-					push(firstValue);
-					push(thirdValue);
-					push(secondValue);
-					break;
-				}
-				case DW_OP_deref: {
-					isDeref = true;
-					// Real deref should pop the top value from stack, deref it,
-					// and push value found at that address on stack.
-					// Since we can only handle the subset of deref usages that are
-					// register or framebased, leave the stack alone so that the
-					// register or framebase offset can be accessed.
-					break;
-				}
-
-				case DW_OP_call_frame_cfa: {
-					push(registerMappings.getCallFrameCFA());
-					lastStackRelative = true;
-					break;
-				}
-
-					// Arithmetic and Logical Operations
-				case DW_OP_abs: {
-					push(Math.abs(pop()));
-					break;
-				}
-				case DW_OP_and: {// bitwise and
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue & secondValue);
-					break;
-				}
-				case DW_OP_div: {
-					long firstValue = pop();
-					long secondValue = pop();
-					if (firstValue == 0) {
-						throw new DWARFExpressionException("Divide by zero");
-					}
-					push(secondValue / firstValue);
-					break;
-				}
-				case DW_OP_minus: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(secondValue - firstValue);
-					break;
-				}
-				case DW_OP_mod: {
-					long firstValue = pop();
-					long secondValue = pop();
-					if (firstValue == 0) {
-						throw new DWARFExpressionException("Divide by zero");
-					}
-					push(secondValue % firstValue);
-					break;
-				}
-				case DW_OP_mul: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue * secondValue);
-					break;
-				}
-				case DW_OP_neg: {
-					long firstValue = pop();
-					push(-firstValue);
-					break;
-				}
-				case DW_OP_not: {// bitwise neg
-					long firstValue = pop();
-					push(~firstValue);
-					break;
-				}
-				case DW_OP_or: {// bitwise or
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue | secondValue);
-					break;
-				}
-				case DW_OP_plus: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue + secondValue);
-					break;
-				}
-				case DW_OP_plus_uconst: {
-					long firstValue = pop();
-					long value = currentOp.getOperandValue(0);
-					push(firstValue + value);
-					break;
-				}
-				case DW_OP_shl: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(secondValue << firstValue);
-					break;
-				}
-				case DW_OP_shr: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(secondValue >>> firstValue);
-					break;
-				}
-				case DW_OP_shra: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(secondValue >> firstValue);
-					break;
-				}
-				case DW_OP_xor: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push(firstValue ^ secondValue);
-					break;
-				}
-					// Control Flow Operations, values treated as signed for comparison
-				case DW_OP_le: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue <= firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_ge: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue >= firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_eq: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue == firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_lt: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue < firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_gt: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue > firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_ne: {
-					long firstValue = pop();
-					long secondValue = pop();
-					push((secondValue != firstValue) ? 1L : 0L);
-					break;
-				}
-				case DW_OP_skip: {
-					long destOffset = currentOp.getOperandValue(0) + currentOp.getOffset();
-					int newStep = expr.findOpByOffset(destOffset);
-					if (newStep == -1) {
-						throw new DWARFExpressionException("Invalid skip offset " + destOffset);
-					}
-					currentOpIndex = newStep - 1;// 1 before the target op index because the for() loop will ++ the index value
-					break;
-				}
-				case DW_OP_bra: {
-					long destOffset = currentOp.getOperandValue(0) + currentOp.getOffset();
-					long firstValue = pop();
-					if (firstValue != 0) {
-						int newStep = expr.findOpByOffset(destOffset);
-						if (newStep == -1) {
-							throw new DWARFExpressionException("Invalid bra offset " + destOffset);
-						}
-						currentOpIndex = newStep - 1;// 1 before the target op index because the for() loop will ++ the index value
-					}
-					break;
-				}
-
-					// Special Operations
-				case DW_OP_nop: {
-					break;
-				}
-				case DW_OP_stack_value:
-					// This op is a flag to the debugger that the requested value does not exist in memory
-					// (on the host) but that the result of this expression gives you value
-					dwarfStackValue = true;
-					break;
-
-				case DW_OP_addrx:
-					try {
-						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
-							currentOp.getOperandValue(0), cu);
-						push(addr);
-						break;
-					}
-					catch (IOException e) {
-						throw new DWARFExpressionException(
-							"Invalid indirect address index: " + currentOp.getOperandValue(0));
-					}
-				case DW_OP_constx: // same as addrx, but different relocation-able specifications
-					try {
-						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
-							currentOp.getOperandValue(0), cu);
-						push(addr);
-						break;
-					}
-					catch (IOException e) {
-						throw new DWARFExpressionException(
-							"Invalid indirect address index: " + currentOp.getOperandValue(0));
-					}
-
-				default:
-					throw new DWARFExpressionException("Unimplemented DWARF expression opcode " +
-						DWARFExpressionOpCodes.toString(opcode));
-			}
-		}
-	}
-
-	private void dw_op_pick(int index) {
-		int stackindex = 0;
-		for (Long stackElement : stack) {
-			if (stackindex == index) {
-				push(stackElement);
-				break;
-			}
-			stackindex++;
-		}
-	}
-
-	@Override
-	public String toString() {
-		return "DWARFExpressionEvaluator [frameOffset=" + frameOffset + ", lastRegister=" +
-			lastRegister +
-			", lastStackRelative=" + lastStackRelative + ", registerLoc=" + registerLoc +
-			", isDeref=" + isDeref + ", dwarfStackValue=" + dwarfStackValue +
-			", useUnknownRegister=" + useUnknownRegister + "]\nStack:\n" + getStackAsString() +
-			"\n" + (expr != null ? expr.toString(currentOpIndex, true, true) : "no expr");
+		};
 	}
 
 	public int getMaxStepCount() {
@@ -575,28 +140,606 @@ public class DWARFExpressionEvaluator {
 		this.maxStepCount = maxStepCount;
 	}
 
-	public boolean isDwarfStackValue() {
-		return this.dwarfStackValue;
+	public void push(Address addr) {
+		push(new Varnode(addr, 0));
 	}
 
-	public boolean useUnknownRegister() {
-		return useUnknownRegister;
+	public void push(Register reg) {
+		push(new Varnode(reg.getAddress(), reg.getMinimumByteSize()));
 	}
 
-	public boolean isRegisterLocation() {
-		return registerLoc;
+	public void push(boolean b) {
+		push(b ? 1L : 0L);
 	}
 
-	public Register getLastRegister() {
-		return registerMappings.getGhidraReg(lastRegister);
+	public void push(long l) {
+		push(new Scalar(getPtrSize() * 8, l));
 	}
 
-	public int getRawLastRegister() {
-		return lastRegister;
+	public void push(Object val) {
+		stack.addLast(val);
 	}
 
-	public boolean isStackRelative() {
-		return lastStackRelative;
+	/**
+	 * Peek at the top value of the stack.
+	 * 
+	 * @return top value of the stack
+	 * @throws DWARFExpressionException if stack is empty
+	 */
+	public Object peek() throws DWARFExpressionException {
+		if (stack.isEmpty()) {
+			throw new DWARFExpressionException("DWARF expression stack empty");
+		}
+		return stack.getLast();
 	}
+
+	/**
+	 * Pop the top value off the stack.
+	 * 
+	 * @return top value of the stack
+	 * @throws DWARFExpressionException if stack is empty
+	 */
+	public Object pop() throws DWARFExpressionException {
+		if (stack.isEmpty()) {
+			throw new DWARFExpressionException("DWARF expression stack empty");
+		}
+		return stack.removeLast();
+	}
+
+	/**
+	 * Pop the top value off the stack, and coerce it into a scalar.
+	 * 
+	 * @return top value of the stack, as a scalar 
+	 * @throws DWARFExpressionException if stack is empty or value can not be used as a scalar
+	 */
+	public Scalar popScalar() throws DWARFExpressionException {
+		return stackValueToScalar(pop());
+	}
+
+	private Scalar stackValueToScalar(Object val) throws DWARFExpressionException {
+		switch (val) {
+			case Scalar s:
+				return s;
+			case Varnode varnode:
+				if (varnode.isRegister()) {
+					// try to deref the register and hopefully get a const varnode
+					return stackValueToScalar(valReader.getValue(varnode));
+				}
+				if (DWARFUtil.isConstVarnode(varnode)) {
+					return new Scalar(varnode.getSize() * 8, varnode.getOffset());
+				}
+				// fall thru, throw exception
+			default:
+		}
+		throw new DWARFExpressionException(
+			"Unable to convert stack value to scalar: %s".formatted(val));
+	}
+
+	/**
+	 * Pop the top value off the stack, and coerce it into a varnode.
+	 * 
+	 * @return top value of the stack, as a varnode
+	 * @throws DWARFExpressionException if stack is empty or value can not be used as a varnode
+	 */
+	public Varnode popVarnode() throws DWARFExpressionException {
+		Object tmp = pop();
+		return switch (tmp) {
+			case Scalar s when s.bitLength() == cu.getPointerSize() * 8 -> newAddrVarnode(
+				s.getUnsignedValue());
+			case Varnode varnode -> varnode;
+			default -> throw new DWARFExpressionException(
+				"Unable to convert DWARF expression stack value %s to address".formatted(tmp));
+		};
+	}
+
+	/**
+	 * Pop the top value off the stack, and coerce it into a scalar long.
+	 * 
+	 * @return top value of the stack, as a scalar long
+	 * @throws DWARFExpressionException if stack is empty or value can not be used as a long
+	 */
+	public long popLong() throws DWARFExpressionException {
+		Scalar s = popScalar();
+		return s.getValue();
+	}
+
+	/**
+	 * Executes the instructions found in the expression.
+	 * 
+	 * @param exprBytes raw bytes of the expression
+	 * @throws DWARFExpressionException if error
+	 */
+	public void evaluate(byte[] exprBytes) throws DWARFExpressionException {
+		evaluate(DWARFExpression.read(exprBytes, cu));
+	}
+
+	/**
+	 * Executes the instructions found in the expression.
+	 * 
+	 * @param exprBytes raw bytes of the expression
+	 * @param stackArgs any values to push onto the stack before execution
+	 * @throws DWARFExpressionException if error
+	 */
+	public void evaluate(byte[] exprBytes, long... stackArgs) throws DWARFExpressionException {
+		evaluate(DWARFExpression.read(exprBytes, cu), stackArgs);
+	}
+
+	/**
+	 * Sets the current expression.
+	 * 
+	 * @param expr {@link DWARFExpression}
+	 */
+	public void setExpression(DWARFExpression expr) {
+		this.expr = expr;
+		instr = null;
+		instrIndex = 0;
+		stepCount = 0;
+	}
+
+	/**
+	 * {@return true if there are instructions that can be evaluated}
+	 */
+	public boolean hasNext() {
+		return instrIndex < expr.getInstructionCount();
+	}
+
+	/**
+	 * Evaluates the next instruction in the expression.
+	 * 
+	 * @return true if there are more instructions
+	 * @throws DWARFExpressionException if error
+	 */
+	public boolean step() throws DWARFExpressionException {
+		if (hasNext()) {
+			try {
+				evaluateInstruction(expr.getInstruction(instrIndex));
+				instrIndex++;
+				stepCount++;
+			}
+			catch (DWARFExpressionException dee) {
+				if (dee.getExpression() == null) {
+					dee.setExpression(expr);
+					dee.setInstructionIndex(instrIndex);
+				}
+				throw dee;
+			}
+		}
+
+		return hasNext();
+	}
+
+	/**
+	 * Executes the instructions found in the expression.
+	 * 
+	 * @param expr {@link DWARFException} to evaluate
+	 * @param stackArgs - pushed 0..N, so stackArgs[0] will be deepest, stackArgs[N] will be topmost.
+	 * @throws DWARFExpressionException if error
+	 */
+	public void evaluate(DWARFExpression expr, long... stackArgs)
+			throws DWARFExpressionException {
+		for (long l : stackArgs) {
+			push(l);
+		}
+		evaluate(expr);
+	}
+
+	public void evaluate(DWARFExpression expr) throws DWARFExpressionException {
+		setExpression(expr);
+		while (hasNext()) {
+			if (stepCount >= maxStepCount) {
+				throw new DWARFExpressionException(
+					"Excessive expression run length, terminating after %d operations"
+							.formatted(stepCount));
+			}
+			if (Thread.currentThread().isInterrupted()) {
+				throw new DWARFExpressionException(
+					"Thread interrupted while evaluating DWARF expression, terminating after %d operations"
+							.formatted(stepCount));
+			}
+			step();
+		}
+	}
+
+	private Register getReg(int dwarfRegNum) throws DWARFExpressionException {
+		Register reg = registerMappings.getGhidraReg(dwarfRegNum);
+		if (reg == null) {
+			throw new DWARFExpressionException(
+				"Unknown/unmapped DWARF register: %d".formatted(dwarfRegNum));
+		}
+		return reg;
+	}
+
+	private void evaluateInstruction(DWARFExpressionInstruction _instr)
+			throws DWARFExpressionException {
+		this.instr = _instr;
+		if (DWARFExpressionOpCode.isInRange(instr.opcode, DW_OP_lit0, DW_OP_lit31)) {
+			push(instr.opcode.getRelativeOpCodeOffset(DW_OP_lit0));
+		}
+		else if (DWARFExpressionOpCode.isInRange(instr.opcode, DW_OP_breg0, DW_OP_breg31)) {
+			// Retrieve address held in register X and add offset from operand0 and push result on stack.
+			Register register = getReg(instr.opcode.getRelativeOpCodeOffset(DW_OP_breg0));
+			long offset = instr.getOperandValue(0);
+			Object regVal = valReader.getValue(newRegisterVarnode(register));
+			if (regVal instanceof Varnode regVN &&
+				(DWARFUtil.isStackVarnode(regVN) || regVN.isConstant())) {
+				push(new Varnode(regVN.getAddress().add(offset), 0));
+			}
+			else if (regVal instanceof Scalar s) {
+				push(s.getValue() + offset);
+			}
+			else {
+				throw new DWARFExpressionException("Unable to deref register value " + regVal);
+			}
+		}
+		else if (DWARFExpressionOpCode.isInRange(instr.opcode, DW_OP_reg0, DW_OP_reg31)) {
+			Register register = getReg(instr.opcode.getRelativeOpCodeOffset(DW_OP_reg0));
+			Object regVal = valReader.getValue(newRegisterVarnode(register));
+			push(regVal);
+		}
+		else {
+			switch (instr.opcode) {
+				case DW_OP_addr:
+					push(dprog.getDataAddress(instr.getOperandValue(0)));
+					break;
+
+				case DW_OP_const1u:
+				case DW_OP_const2u:
+				case DW_OP_const4u:
+				case DW_OP_const8u:
+				case DW_OP_const1s:
+				case DW_OP_const2s:
+				case DW_OP_const4s:
+				case DW_OP_const8s:
+				case DW_OP_constu:
+				case DW_OP_consts:
+					push(instr.getOperandValue(0));
+					break;
+
+				// Register Based Addressing
+				case DW_OP_regx:
+					Register register = getReg((int) instr.getOperandValue(0));
+					push(register);
+					break;
+				case DW_OP_fbreg: {
+					if (frameBaseVal == null) {
+						throw new DWARFExpressionException(
+							"Frame base has not been set, DW_OP_fbreg can not be evaluated");
+					}
+					long fbOffset = instr.getOperandValue(0);
+					push(new Varnode(frameBaseVal.getAddress().add(fbOffset), 0));
+				}
+				// Stack Operations
+				case DW_OP_dup:
+					push(peek());
+					break;
+				case DW_OP_drop:
+					pop();
+					break;
+				case DW_OP_pick: {
+					int index = (int) instr.getOperandValue(0);
+					if (index >= stack.size()) {
+						throw new DWARFExpressionException(
+							"Invalid index for DW_OP_pick: " + index);
+					}
+					Object elem = stack.get(stack.size() - index - 1);
+					push(elem);
+					break;
+				}
+				case DW_OP_over: {
+					if (stack.size() < 2) {
+						throw new DWARFExpressionException(
+							"Not enough items on stack[size=%d] for DW_OP_over"
+									.formatted(stack.size()));
+					}
+					push(stack.get(stack.size() - 2));
+					break;
+				}
+				case DW_OP_swap: {
+					Object firstValue = pop();
+					Object secondValue = pop();
+					push(firstValue);
+					push(secondValue);
+					break;
+				}
+				case DW_OP_rot: {
+					Object firstValue = pop();
+					Object secondValue = pop();
+					Object thirdValue = pop();
+					push(firstValue);
+					push(thirdValue);
+					push(secondValue);
+					break;
+				}
+				case DW_OP_deref: {
+					// Treat top stack value as a location, deref it and fetch a ptrSize'd value
+					// and push it on stack
+
+					if (instrIndex == expr.getInstructionCount() - 1) {
+						// If this was the last instruction, throw a special exception that lets
+						// the caller figure out what happened and accommodate this in some 
+						// situations.
+						// TODO: trailing NOPs were skipped when checking this condition previously... dunno if needed for real
+						Varnode location = popVarnode();
+						throw new DWARFExpressionTerminalDerefException(instr, location);
+					}
+					throw new DWARFExpressionUnsupportedOpException(instr);
+				}
+
+				case DW_OP_call_frame_cfa: {
+					if (!registerMappings.hasStaticCFA()) {
+						throw new DWARFExpressionException(
+							"CFA not specified in DWARF register mappings for this arch");
+					}
+					push(newStackVarnode(registerMappings.getCallFrameCFA(), 0));
+					break;
+				}
+
+				// Arithmetic and Logical Operations
+				case DW_OP_abs: {
+					Scalar val = popScalar();
+					Scalar absVal = new Scalar(val.bitLength(), Math.abs(val.getSignedValue()));
+					push(absVal);
+					break;
+				}
+				case DW_OP_and: {// bitwise and
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = firstValue.getUnsignedValue() & secondValue.getUnsignedValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				case DW_OP_div: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					if (firstValue.getValue() == 0) {
+						throw new DWARFExpressionException("Divide by zero");
+					}
+					long tmp = secondValue.getValue() / firstValue.getValue();
+					push(new Scalar(secondValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_minus: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() - firstValue.getValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				case DW_OP_mod: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					if (firstValue.getValue() == 0) {
+						throw new DWARFExpressionException("Divide by zero");
+					}
+					long tmp = secondValue.getValue() % firstValue.getValue();
+					push(new Scalar(secondValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_mul: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() * firstValue.getValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				case DW_OP_neg: {
+					Scalar firstValue = popScalar();
+					long tmp = -firstValue.getSignedValue();
+					push(new Scalar(firstValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_not: {// bitwise neg
+					Scalar firstValue = popScalar();
+					long tmp = ~firstValue.getValue();
+					push(new Scalar(firstValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_or: {// bitwise or
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() | firstValue.getValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				case DW_OP_plus: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() + firstValue.getValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				case DW_OP_plus_uconst: {
+					Scalar firstValue = popScalar();
+					long opValue = instr.getOperandValue(0);
+					long tmp = firstValue.getValue() + opValue;
+					push(new Scalar(firstValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_shl: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() << firstValue.getValue();
+					push(new Scalar(secondValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_shr: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() >>> firstValue.getValue();
+					push(new Scalar(secondValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_shra: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() >> firstValue.getValue();
+					push(new Scalar(secondValue.bitLength(), tmp));
+					break;
+				}
+				case DW_OP_xor: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					long tmp = secondValue.getValue() ^ firstValue.getValue();
+					int bitCount = Math.max(firstValue.bitLength(), secondValue.bitLength());
+					push(new Scalar(bitCount, tmp));
+					break;
+				}
+				// Control Flow Operations, values treated as signed for comparison
+				case DW_OP_le: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getSignedValue() <= firstValue.getSignedValue());
+					break;
+				}
+				case DW_OP_ge: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getSignedValue() >= firstValue.getSignedValue());
+					break;
+				}
+				case DW_OP_eq: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getValue() == firstValue.getValue());
+					break;
+				}
+				case DW_OP_lt: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getSignedValue() < firstValue.getSignedValue());
+					break;
+				}
+				case DW_OP_gt: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getSignedValue() > firstValue.getSignedValue());
+					break;
+				}
+				case DW_OP_ne: {
+					Scalar firstValue = popScalar();
+					Scalar secondValue = popScalar();
+					push(secondValue.getSignedValue() != firstValue.getSignedValue());
+					break;
+				}
+				case DW_OP_skip: {
+					long destOffset = instr.getOperandValue(0) + instr.getOffset();
+					int newInstrIndex = expr.findInstructionByOffset(destOffset);
+					if (newInstrIndex == -1) {
+						throw new DWARFExpressionException("Invalid skip offset " + destOffset);
+					}
+					instrIndex = newInstrIndex - 1;// 1 before the target op index because the for() loop will ++ the index value
+					break;
+				}
+				case DW_OP_bra: {
+					long destOffset = instr.getOperandValue(0) + instr.getOffset();
+					Scalar firstValue = popScalar();
+					if (firstValue.getValue() != 0) {
+						int newInstrIndex = expr.findInstructionByOffset(destOffset);
+						if (newInstrIndex == -1) {
+							throw new DWARFExpressionException("Invalid bra offset " + destOffset);
+						}
+						instrIndex = newInstrIndex - 1;// 1 before the target op index because the for() loop will ++ the index value
+					}
+					break;
+				}
+
+				// Special Operations
+				case DW_OP_nop: {
+					break;
+				}
+				case DW_OP_stack_value:
+					// This op is a flag to the debugger that the requested value does not exist in memory
+					// (on the host) but that the result of this expression gives you the value
+					throw new DWARFExpressionUnsupportedOpException(instr);
+				case DW_OP_addrx:
+					try {
+						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
+							instr.getOperandValue(0), cu);
+						push(addr);
+						break;
+					}
+					catch (IOException e) {
+						throw new DWARFExpressionException(
+							"Invalid indirect address index: " + instr.getOperandValue(0));
+					}
+				case DW_OP_constx: // same as addrx, but different relocation-able specifications
+					try {
+						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
+							instr.getOperandValue(0), cu);
+						push(addr);
+						break;
+					}
+					catch (IOException e) {
+						throw new DWARFExpressionException(
+							"Invalid indirect address index: " + instr.getOperandValue(0));
+					}
+
+				default:
+					throw new DWARFExpressionUnsupportedOpException(instr);
+
+			}
+		}
+	}
+
+	private Varnode newStackVarnode(long offset, int size) {
+		return new Varnode(dprog.getStackSpace().getAddress(offset), size);
+	}
+
+	private Varnode newRegisterVarnode(Register reg) {
+		return new Varnode(reg.getAddress(), reg.getMinimumByteSize());
+	}
+
+	private Varnode newAddrVarnode(long l) {
+		return new Varnode(dprog.getDataAddress(l), cu.getPointerSize());
+	}
+
+	@Override
+	public String toString() {
+		return """
+				DWARFExpressionEvaluator
+				  frameBaseVal = %s
+				  stepCount = %d
+				  status: %s
+
+				Stack:
+				%s
+				Instructions:
+				%s
+				""".formatted( //
+			frameBaseVal != null ? frameBaseVal.toString() : "not set",
+			stepCount,
+			getStatusString(),
+			getStackAsString().indent(2),
+			expr != null
+					? expr.toString(instrIndex, true, true, dprog.getRegisterMappings()).indent(2)
+					: "  no expr");
+	}
+
+	private String getStackAsString() {
+		StringBuilder sb = new StringBuilder();
+
+		int stackindex = 0;
+		for (Object stackVal : stack.reversed()) {
+			sb.append("%3d: %s\n".formatted(stackindex, stackVal));
+			stackindex++;
+		}
+		return sb.toString();
+	}
+
+	private String getStatusString() {
+		if (instrIndex == -1) {
+			return "Not started";
+		}
+		else if (expr != null && instrIndex == expr.getInstructionCount()) {
+			return "Finished";
+		}
+		return "Running";
+	}
+
 
 }

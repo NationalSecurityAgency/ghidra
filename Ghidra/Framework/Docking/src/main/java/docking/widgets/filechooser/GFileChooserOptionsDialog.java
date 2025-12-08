@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import javax.swing.*;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
-import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.layout.PairLayout;
 
@@ -47,17 +46,13 @@ class GFileChooserOptionsDialog extends ReusableDialogComponentProvider {
 	private JComponent buildComponent() {
 		JPanel panel = new JPanel(new PairLayout());
 
-		showDotFilesCheckBox = new GCheckBox();
+		showDotFilesCheckBox = new GCheckBox("Show '.' files");
+		showDotFilesCheckBox.setToolTipText("When toggled on the file chooser will show files " +
+			"with names that begin with a '.' character");
 		showDotFilesCheckBox.getAccessibleContext().setAccessibleName("Show Dot Files");
 		showDotFilesCheckBox.setSelected(true);
 
-		JLabel label = new GLabel("Show '.' files");
-		label.getAccessibleContext().setAccessibleName("Show Files");
-		label.setToolTipText("When toggled on the file chooser will show files " +
-			"with names that begin with a '.' character");
-
 		panel.add(showDotFilesCheckBox);
-		panel.add(label);
 		panel.getAccessibleContext().setAccessibleName("GFile Chooser Options");
 		return panel;
 	}

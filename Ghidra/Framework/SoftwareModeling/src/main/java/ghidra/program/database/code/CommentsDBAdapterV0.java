@@ -73,21 +73,22 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 
 	@Override
 	public DBRecord createRecord(long addr, int commentCol, String comment) throws IOException {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean deleteRecord(long addr) throws IOException {
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean deleteRecords(Address start, Address end) throws IOException {
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void updateRecord(DBRecord commentRec) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -133,6 +134,7 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 
 	@Override
 	public void putRecord(DBRecord record) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -188,7 +190,7 @@ class CommentsDBAdapterV0 extends CommentsDBAdapter {
 
 		@Override
 		public boolean delete() throws IOException {
-			return false;
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

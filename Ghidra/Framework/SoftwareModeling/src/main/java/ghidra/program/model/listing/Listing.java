@@ -605,39 +605,6 @@ public interface Listing {
 	public CodeUnit getDefinedCodeUnitBefore(Address addr);
 
 	/**
-	 * Get an iterator over all the composite data objects (Arrays, Structures,
-	 * and Union) in the program.
-	 *
-	 * @param forward true means get iterator that starts at the minimum address
-	 *            and iterates forward. Otherwise it starts at the maximum
-	 *            address and iterates backwards.
-	 * @return an iterator over all the composite data objects.
-	 */
-	public DataIterator getCompositeData(boolean forward);
-
-	/**
-	 * Get an iterator over all the composite data objects (Arrays, Structures,
-	 * and Union) in the program at or after the given Address.
-	 *
-	 * @param start start of the iterator
-	 * @param forward true means get iterator in forward direction
-	 * @return an iterator over all the composite data objects starting with the
-	 *         given address.
-	 */
-	public DataIterator getCompositeData(Address start, boolean forward);
-
-	/**
-	 * Get an iterator over all the composite data objects (Arrays, Structures,
-	 * and Union) within the specified address set in the program.
-	 *
-	 * @param addrSet the address set
-	 * @param forward true means get iterator in forward direction
-	 * @return an iterator over all the composite data objects in the given
-	 *         address set.
-	 */
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward);
-
-	/**
 	 * Returns an iterator over all user defined property names.
 	 *
 	 * @return an iterator over all user defined property names.

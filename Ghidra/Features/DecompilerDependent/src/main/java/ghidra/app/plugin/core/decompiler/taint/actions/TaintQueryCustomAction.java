@@ -20,7 +20,6 @@ import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryCustomAction extends TaintAbstractQueryAction {

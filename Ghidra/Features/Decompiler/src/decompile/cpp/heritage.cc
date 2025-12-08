@@ -1739,15 +1739,16 @@ void Heritage::splitByRefinement(Varnode *vn,const Address &addr,const vector<in
   uint4 diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
   int4 cutsz = refine[diff];
   if (sz <= cutsz) return;	// Already refined
+  split.push_back(fd->newVarnode(cutsz,curaddr));
+  sz -= cutsz;
   while(sz > 0) {
-    Varnode *vn2 = fd->newVarnode(cutsz,curaddr);
-    split.push_back(vn2);
     curaddr = curaddr + cutsz;
-    sz -= cutsz;
     diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
     cutsz = refine[diff];
     if (cutsz > sz)
       cutsz = sz;		// Final piece
+    split.push_back(fd->newVarnode(cutsz,curaddr));
+    sz -= cutsz;
   }
 }
 

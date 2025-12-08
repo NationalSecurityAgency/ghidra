@@ -24,8 +24,6 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;

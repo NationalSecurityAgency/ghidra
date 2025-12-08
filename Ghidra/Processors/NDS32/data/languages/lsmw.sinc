@@ -1,0 +1,125 @@
+Dreg: a0 is a0 & regNum=0 { export a0; }
+Dreg: a1 is a1 & regNum=1 { export a1; }
+Dreg: a2 is a2 & regNum=2 { export a2; }
+Dreg: a3 is a3 & regNum=3 { export a3; }
+Dreg: a4 is a4 & regNum=4 { export a4; }
+Dreg: a5 is a5 & regNum=5 { export a5; }
+Dreg: s0 is s0 & regNum=6 { export s0; }
+Dreg: s1 is s1 & regNum=7 { export s1; }
+Dreg: s2 is s2 & regNum=8 { export s2; }
+Dreg: s3 is s3 & regNum=9 { export s3; }
+Dreg: s4 is s4 & regNum=10 { export s4; }
+Dreg: s5 is s5 & regNum=11 { export s5; }
+Dreg: s6 is s6 & regNum=12 { export s6; }
+Dreg: s7 is s7 & regNum=13 { export s7; }
+Dreg: s8 is s8 & regNum=14 { export s8; }
+Dreg: ta is ta & regNum=15 { export ta; }
+Dreg: t0 is t0 & regNum=16 { export t0; }
+Dreg: t1 is t1 & regNum=17 { export t1; }
+Dreg: t2 is t2 & regNum=18 { export t2; }
+Dreg: t3 is t3 & regNum=19 { export t3; }
+Dreg: t4 is t4 & regNum=20 { export t4; }
+Dreg: t5 is t5 & regNum=21 { export t5; }
+Dreg: t6 is t6 & regNum=22 { export t6; }
+Dreg: t7 is t7 & regNum=23 { export t7; }
+Dreg: t8 is t8 & regNum=24 { export t8; }
+Dreg: t9 is t9 & regNum=25 { export t9; }
+Dreg: p0 is p0 & regNum=26 { export p0; }
+Dreg: p1 is p1 & regNum=27 { export p1; }
+Dreg: fp is fp & regNum=28 { export fp; }
+Dreg: gp is gp & regNum=29 { export gp; }
+Dreg: lp is lp & regNum=30 { export lp; }
+Dreg: sp is sp & regNum=31 { export sp; }
+
+macro Smwad(reg) {
+    mult_addr = mult_addr - 4;
+    *mult_addr = reg;
+}
+
+macro LmwOp(reg) {
+	reg = *mult_addr;
+}
+
+macro SmwOp(reg) {
+    *mult_addr = reg;
+}
+
+macro MwDec() { mult_addr = mult_addr - 4; }
+macro MwInc() { mult_addr = mult_addr + 4; }
+
+Lsmw_id: is LsmwId=0 { MwInc(); }
+Lsmw_id: is LsmwId=1 { MwDec(); }
+
+Lmw.fp: fp is Lsmw_id & LsmwBa=0 & Enable4_fp=1 & fp { LmwOp(fp); build Lsmw_id; }
+Lmw.fp: fp is Lsmw_id & LsmwBa=1 & Enable4_fp=1 & fp { build Lsmw_id; LmwOp(fp); }
+Lmw.fp: is Enable4_fp=0 { }
+Lmw.gp: gp is Lsmw_id & LsmwBa=0 & Enable4_gp=1 & gp { LmwOp(gp); build Lsmw_id; }
+Lmw.gp: gp is Lsmw_id & LsmwBa=1 & Enable4_gp=1 & gp { build Lsmw_id; LmwOp(gp); }
+Lmw.gp: is Enable4_gp=0 { }
+Lmw.lp: lp is Lsmw_id & LsmwBa=0 & Enable4_lp=1 & lp { LmwOp(lp); build Lsmw_id; }
+Lmw.lp: lp is Lsmw_id & LsmwBa=1 & Enable4_lp=1 & lp { build Lsmw_id; LmwOp(lp); }
+Lmw.lp: is Enable4_lp=0 { }
+Lmw.sp: sp is Lsmw_id & LsmwBa=0 & Enable4_sp=1 & sp { LmwOp(sp); build Lsmw_id; }
+Lmw.sp: sp is Lsmw_id & LsmwBa=1 & Enable4_sp=1 & sp { build Lsmw_id; LmwOp(sp); }
+Lmw.sp: is Enable4_sp=0 { }
+
+# Terminating condition
+LmwReg: Dreg is LsmwId=0 & LsmwBa=0 & Dreg & counter=1 [regNum=regNum+1;] { build Dreg; LmwOp(Dreg); MwInc(); }
+LmwReg: Dreg is LsmwId=1 & LsmwBa=0 & Dreg & counter=1 [regNum=regNum-1;] { build Dreg; LmwOp(Dreg); MwDec(); }
+
+LmwReg: Dreg is LsmwId=0 & LsmwBa=1 & Dreg & counter=1 [regNum=regNum+1;] { build Dreg; MwInc(); LmwOp(Dreg); }
+LmwReg: Dreg is LsmwId=1 & LsmwBa=1 & Dreg & counter=1 [regNum=regNum-1;] { build Dreg; MwDec(); LmwOp(Dreg); }
+
+LmwReg: Dreg, LmwReg is LsmwId=0 & LsmwBa=0 & Dreg & LmwReg [ counter = counter-1; regNum=regNum+1;] { LmwOp(Dreg); MwInc(); build LmwReg; }
+LmwReg: Dreg, LmwReg is LsmwId=1 & LsmwBa=0 & Dreg & LmwReg [ counter = counter-1; regNum=regNum-1;] { LmwOp(Dreg); MwDec(); build LmwReg; }
+
+LmwReg: Dreg, LmwReg is LsmwId=0 & LsmwBa=1 & Dreg & LmwReg [ counter = counter-1; regNum=regNum+1;] { MwInc(); LmwOp(Dreg); build LmwReg; }
+LmwReg: Dreg, LmwReg is LsmwId=1 & LsmwBa=1 & Dreg & LmwReg [ counter = counter-1; regNum=regNum-1;] { MwDec(); LmwOp(Dreg); build LmwReg; }
+
+# Initial conditions
+Lmw.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=0 & Lmw.fp & Lmw.gp & Lmw.lp & Lmw.sp) ... & LmwReg [ regNum=LsmwRb_-1; counter=LsmwRe_-LsmwRb_+1; ] { build LmwReg; build Lmw.fp; build Lmw.gp; build Lmw.lp; build Lmw.sp; }
+Lmw.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=1 & Lmw.sp & Lmw.lp & Lmw.gp & Lmw.fp) ... & LmwReg [ regNum=LsmwRe_+1; counter=LsmwRe_-LsmwRb_+1; ] { build Lmw.sp; build Lmw.lp; build Lmw.gp; build Lmw.fp; build LmwReg; }
+Lmw.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=0 & Lmw.fp & Lmw.gp & Lmw.lp & Lmw.sp { build Lmw.fp; build Lmw.gp; build Lmw.lp; build Lmw.sp; }
+Lmw.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=1 & Lmw.sp & Lmw.lp & Lmw.gp & Lmw.fp { build Lmw.sp; build Lmw.lp; build Lmw.gp; build Lmw.fp; }
+
+Lmwa.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=0 & Lmw.fp & Lmw.gp & Lmw.lp & Lmw.sp) ... & LmwReg [ regNum=LsmwRb_-1; counter=LsmwRe_-LsmwRb_+1; ] { build LmwReg; build Lmw.sp; build Lmw.lp; build Lmw.gp; build Lmw.fp; }
+Lmwa.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=1 & Lmw.sp & Lmw.lp & Lmw.gp & Lmw.fp) ... & LmwReg [ regNum=LsmwRe_+1; counter=LsmwRe_-LsmwRb_+1; ] { build Lmw.fp; build Lmw.gp; build Lmw.lp; build Lmw.sp; build LmwReg; }
+Lmwa.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=0 & Lmw.fp & Lmw.gp & Lmw.lp & Lmw.sp { build Lmw.sp; build Lmw.lp; build Lmw.gp; build Lmw.fp; }
+Lmwa.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=1 & Lmw.sp & Lmw.lp & Lmw.gp & Lmw.fp { build Lmw.fp; build Lmw.gp; build Lmw.lp; build Lmw.sp; }
+
+Smw.fp: fp is Lsmw_id & LsmwBa=0 & Enable4_fp=1 & fp { SmwOp(fp); build Lsmw_id; }
+Smw.fp: fp is Lsmw_id & LsmwBa=1 & Enable4_fp=1 & fp { build Lsmw_id; SmwOp(fp); }
+Smw.fp: is Enable4_fp=0 { }
+Smw.gp: gp is Lsmw_id & LsmwBa=0 & Enable4_gp=1 & gp { SmwOp(gp); build Lsmw_id; }
+Smw.gp: gp is Lsmw_id & LsmwBa=1 & Enable4_gp=1 & gp { build Lsmw_id; SmwOp(gp); }
+Smw.gp: is Enable4_gp=0 { }
+Smw.lp: lp is Lsmw_id & LsmwBa=0 & Enable4_lp=1 & lp { SmwOp(lp); build Lsmw_id; }
+Smw.lp: lp is Lsmw_id & LsmwBa=1 & Enable4_lp=1 & lp { build Lsmw_id; SmwOp(lp); }
+Smw.lp: is Enable4_lp=0 { }
+Smw.sp: sp is Lsmw_id & LsmwBa=0 & Enable4_sp=1 & sp { SmwOp(sp); build Lsmw_id; }
+Smw.sp: sp is Lsmw_id & LsmwBa=1 & Enable4_sp=1 & sp { build Lsmw_id; SmwOp(sp); }
+Smw.sp: is Enable4_sp=0 { }
+
+# Terminating condition
+SmwReg: Dreg is LsmwId=0 & LsmwBa=0 & Dreg & counter=1 [regNum=regNum+1;] { build Dreg; SmwOp(Dreg); MwInc(); }
+SmwReg: Dreg is LsmwId=1 & LsmwBa=0 & Dreg & counter=1 [regNum=regNum-1;] { build Dreg; SmwOp(Dreg); MwDec(); }
+
+SmwReg: Dreg is LsmwId=0 & LsmwBa=1 & Dreg & counter=1 [regNum=regNum+1;] { build Dreg; MwInc(); SmwOp(Dreg); }
+SmwReg: Dreg is LsmwId=1 & LsmwBa=1 & Dreg & counter=1 [regNum=regNum-1;] { build Dreg; MwDec(); SmwOp(Dreg); }
+
+SmwReg: Dreg, SmwReg is LsmwId=0 & LsmwBa=0 & Dreg & SmwReg [ counter = counter-1; regNum=regNum+1;] { build Dreg; SmwOp(Dreg); MwInc(); build SmwReg; }
+SmwReg: Dreg, SmwReg is LsmwId=1 & LsmwBa=0 & Dreg & SmwReg [ counter = counter-1; regNum=regNum-1;] { build Dreg; SmwOp(Dreg); MwDec(); build SmwReg; }
+
+SmwReg: Dreg, SmwReg is LsmwId=0 & LsmwBa=1 & Dreg & SmwReg [ counter = counter-1; regNum=regNum+1;] { build Dreg; MwInc(); SmwOp(Dreg); build SmwReg; }
+SmwReg: Dreg, SmwReg is LsmwId=1 & LsmwBa=1 & Dreg & SmwReg [ counter = counter-1; regNum=regNum-1;] { build Dreg; MwDec(); SmwOp(Dreg); build SmwReg; }
+
+# Initial conditions
+Smw.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=0 & Smw.fp & Smw.gp & Smw.lp & Smw.sp) ... & SmwReg [ regNum=LsmwRb_-1; counter=LsmwRe_-LsmwRb_+1; ] { build SmwReg; build Smw.fp; build Smw.gp; build Smw.lp; build Smw.sp; }
+Smw.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=1 & Smw.sp & Smw.lp & Smw.gp & Smw.fp) ... & SmwReg [ regNum=LsmwRe_+1; counter=LsmwRe_-LsmwRb_+1; ] { build Smw.sp; build Smw.lp; build Smw.gp; build Smw.fp; build SmwReg; }
+Smw.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=0 & Smw.fp & Smw.gp & Smw.lp & Smw.sp { build Smw.fp; build Smw.gp; build Smw.lp; build Smw.sp; }
+Smw.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=1 & Smw.sp & Smw.lp & Smw.gp & Smw.fp { build Smw.sp; build Smw.lp; build Smw.gp; build Smw.fp; }
+
+Smwa.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=0 & Smw.fp & Smw.gp & Smw.lp & Smw.sp) ... & SmwReg [ regNum=LsmwRb_-1; counter=LsmwRe_-LsmwRb_+1; ] { build SmwReg; build Smw.sp; build Smw.lp; build Smw.gp; build Smw.fp; }
+Smwa.regs: is (LsmwRe_ & LsmwRb_ & LsmwId=1 & Smw.sp & Smw.lp & Smw.gp & Smw.fp) ... & SmwReg [ regNum=LsmwRe_+1; counter=LsmwRe_-LsmwRb_+1; ] { build Smw.fp; build Smw.gp; build Smw.lp; build Smw.sp; build SmwReg; }
+Smwa.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=0 & Smw.fp & Smw.gp & Smw.lp & Smw.sp { build Smw.sp; build Smw.lp; build Smw.gp; build Smw.fp; }
+Smwa.regs: is LsmwRe_=0x1f & LsmwRb_=0x1f & LsmwId=1 & Smw.sp & Smw.lp & Smw.gp & Smw.fp { build Smw.fp; build Smw.gp; build Smw.lp; build Smw.sp; }

@@ -48,8 +48,6 @@ import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.AddressSourceInfo;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -132,9 +130,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private String stringContent;
 	private boolean includeQuotesForStringData;
 
-	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider codeViewerProvider) {
+	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider componentProvider) {
 		this.tool = tool;
-		this.componentProvider = codeViewerProvider;
+		this.componentProvider = componentProvider;
 
 		PAINT_CONTEXT.setTextCopying(true);
 
@@ -142,7 +140,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		includeQuotesForStringData =
 			!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		options.addOptionsChangeListener(this);
-
 	}
 
 	@Override
@@ -736,7 +733,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol symbol = symbolTable.getSymbol(reference);
-		if ((symbol instanceof CodeSymbol) || (symbol instanceof FunctionSymbol)) {
+		if (symbol == null) {
+			return false;
+		}
+		SymbolType type = symbol.getSymbolType();
+		if ((type == SymbolType.LABEL) || (type == SymbolType.FUNCTION)) {
 			RenameLabelCmd cmd = new RenameLabelCmd(symbol, labelName, SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}

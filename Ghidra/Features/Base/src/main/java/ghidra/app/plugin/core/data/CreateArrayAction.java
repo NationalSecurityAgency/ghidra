@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ class CreateArrayAction extends ListingContextAction {
 		int maxNoConflictElements = getMaxNoConflictElements(struct, comp.getComponentIndex(), dt);
 		int numElements = getNumElements(dt, maxNoConflictElements, maxElements);
 
-		Command cmd = new CreateArrayInStructureCmd(addr, numElements, dt, compPath);
+		Command<Program> cmd = new CreateArrayInStructureCmd(addr, numElements, dt, compPath);
 		if (!tool.execute(cmd, program)) {
 			tool.setStatusInfo(cmd.getStatusMsg());
 		}
@@ -144,7 +144,7 @@ class CreateArrayAction extends ListingContextAction {
 		// Arrays currently use aligned-length only
 		int numElements = length / dt.getAlignedLength();
 
-		Command cmd = new CreateArrayInStructureCmd(from.getAddress(), numElements, dt,
+		Command<Program> cmd = new CreateArrayInStructureCmd(from.getAddress(), numElements, dt,
 			from.getComponentPath());
 		if (!tool.execute(cmd, program)) {
 			tool.setStatusInfo(cmd.getStatusMsg());

@@ -22,8 +22,7 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -157,18 +156,18 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			if (root == null) {
 				return null;
 			}
-			if (!root.getSchema().getInterfaces().contains(TraceObjectEventScope.class)) {
+			if (!root.getSchema().getInterfaces().contains(TraceEventScope.class)) {
 				return null;
 			}
 			TraceObjectValue eventAttr =
-				root.getAttribute(getKey(), TraceObjectEventScope.KEY_EVENT_THREAD);
+				root.getAttribute(getKey(), TraceEventScope.KEY_EVENT_THREAD);
 			if (eventAttr == null) {
 				return null;
 			}
 			if (!(eventAttr.getValue() instanceof TraceObject eventObj)) {
 				return null;
 			}
-			return eventObj.queryInterface(TraceObjectThread.class);
+			return eventObj.queryInterface(TraceThread.class);
 		}
 	}
 

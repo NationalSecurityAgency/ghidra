@@ -228,7 +228,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public String getFieldName() {
 		if (record != null && !isZeroBitFieldComponent()) {
-			return record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
+			String fieldName = record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
+			// Blank check is required since we improperly allowed storage of blank names in the past
+			return StringUtils.isBlank(fieldName) ? null : fieldName;
 		}
 		return null;
 	}
@@ -236,7 +238,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
 		if (record != null) {
-			String fieldName = cleanupFieldName(name);
+			String fieldName = InternalDataTypeComponent.cleanupFieldName(name);
 			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
 			updateRecord(true);
 		}
@@ -415,7 +417,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			if (StringUtils.isBlank(comment)) {
 				comment = null;
 			}
-			String fieldName = cleanupFieldName(name);
+			String fieldName = InternalDataTypeComponent.cleanupFieldName(name);
 			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, fieldName);
 			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataMgr.getResolvedID(dt));
 			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
@@ -458,6 +460,11 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			// to TypeDefSettingsDefinition established by the base datatype
 			// and does not consider DataTypeComponent default settings changes or other setting types.
 			dataMgr.dataTypeChanged(getParent(), false);
+		}
+
+		@Override
+		public boolean isImmutableSettings() {
+			return false; // NOTE: We could check to see if any editable Settings are defined
 		}
 
 		@Override

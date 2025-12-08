@@ -29,12 +29,14 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.pyghidra.PythonFieldExposer.ExposedFields;
 import ghidra.util.SystemUtilities;
+import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * {@link GhidraScript} provider for native python3 scripts
  */
+@ExtensionPointProperties(priority = 1000) // Enforce high priority so PyGhidra is the default Python provider
 public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 
 	private static Consumer<GhidraScript> scriptRunner = null;
@@ -84,13 +86,13 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 			"currentAddress", "currentLocation", "currentSelection",
 			"currentHighlight", "currentProgram", "monitor",
 			"potentialPropertiesFileLocs", "propertiesFileParams",
-			"sourceFile", "state", "writer"
+			"sourceFile", "state", "writer", "errorWriter"
 		},
 		types = {
 			Address.class, ProgramLocation.class, ProgramSelection.class,
 			ProgramSelection.class, Program.class, TaskMonitor.class,
 			List.class, GhidraScriptProperties.class,
-			ResourceFile.class, GhidraState.class, PrintWriter.class
+			ResourceFile.class, GhidraState.class, PrintWriter.class, PrintWriter.class
 		}
 	)
 	final static class PyGhidraGhidraScript extends GhidraScript
@@ -102,7 +104,7 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 		}
 
 		/**
-		 * Helper inner class that can create a {@link MethodHandles.Lookup}
+		 * Helper inner class that can create a {@link java.lang.invoke.MethodHandles.Lookup}
 		 * that can access the protected fields of the {@link GhidraScript}
 		 */
 		private static class ExposedField extends PythonFieldExposer.ExposedField {
@@ -118,13 +120,13 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 			"currentAddress", "currentLocation", "currentSelection",
 			"currentHighlight", "currentProgram", "monitor",
 			"potentialPropertiesFileLocs", "propertiesFileParams",
-			"sourceFile", "state", "writer"
+			"sourceFile", "state", "writer", "errorWriter"
 		},
 		types = {
 			Address.class, ProgramLocation.class, ProgramSelection.class,
 			ProgramSelection.class, Program.class, TaskMonitor.class,
 			List.class, GhidraScriptProperties.class,
-			ResourceFile.class, GhidraState.class, PrintWriter.class
+			ResourceFile.class, GhidraState.class, PrintWriter.class, PrintWriter.class
 		}
 	)
 	final static class PyGhidraHeadlessScript extends HeadlessScript
@@ -136,7 +138,7 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 		}
 
 		/**
-		 * Helper inner class that can create a {@link MethodHandles.Lookup}
+		 * Helper inner class that can create a {@link java.lang.invoke.MethodHandles.Lookup}
 		 * that can access the protected fields of the {@link GhidraScript}
 		 */
 		private static class ExposedField extends PythonFieldExposer.ExposedField {

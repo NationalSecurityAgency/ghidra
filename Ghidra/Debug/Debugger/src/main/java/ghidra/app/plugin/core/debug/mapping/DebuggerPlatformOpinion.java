@@ -22,7 +22,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.iface.TraceObjectEnvironment;
+import ghidra.trace.model.target.iface.TraceEnvironment;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.util.Msg;
@@ -67,7 +67,7 @@ public interface DebuggerPlatformOpinion extends ExtensionPoint {
 		}
 		TraceObject root = object.getRoot();
 		KeyPath pathToEnv = root.getSchema()
-				.searchForSuitable(TraceObjectEnvironment.class, object.getCanonicalPath());
+				.searchForSuitable(TraceEnvironment.class, object.getCanonicalPath());
 		if (pathToEnv == null) {
 			return null;
 		}
@@ -86,15 +86,15 @@ public interface DebuggerPlatformOpinion extends ExtensionPoint {
 	}
 
 	static String getDebugggerFromEnv(TraceObject env, long snap) {
-		return getStringAttribute(env, snap, TraceObjectEnvironment.KEY_DEBUGGER);
+		return getStringAttribute(env, snap, TraceEnvironment.KEY_DEBUGGER);
 	}
 
 	static String getArchitectureFromEnv(TraceObject env, long snap) {
-		return getStringAttribute(env, snap, TraceObjectEnvironment.KEY_ARCH);
+		return getStringAttribute(env, snap, TraceEnvironment.KEY_ARCH);
 	}
 
 	static String getOperatingSystemFromEnv(TraceObject env, long snap) {
-		return getStringAttribute(env, snap, TraceObjectEnvironment.KEY_OS);
+		return getStringAttribute(env, snap, TraceEnvironment.KEY_OS);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public interface DebuggerPlatformOpinion extends ExtensionPoint {
 	 * @return the endianness, or null
 	 */
 	static Endian getEndianFromEnv(TraceObject env, long snap) {
-		String strEndian = getStringAttribute(env, snap, TraceObjectEnvironment.KEY_ENDIAN);
+		String strEndian = getStringAttribute(env, snap, TraceEnvironment.KEY_ENDIAN);
 		if (strEndian == null) {
 			return null;
 		}

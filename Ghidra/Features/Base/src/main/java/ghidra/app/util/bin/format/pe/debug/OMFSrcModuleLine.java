@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 /**
  * A class to represent the Object Module Format (OMF) Source Module Line data structure.
@@ -45,13 +44,13 @@ public class OMFSrcModuleLine {
 		seg   = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
 		cPair = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
 		
-		offsets = new int[Conv.shortToInt(cPair)];
-		for (int i = 0 ; i < Conv.shortToInt(cPair) ; ++i) {
+		offsets = new int[Short.toUnsignedInt(cPair)];
+		for (int i = 0 ; i < Short.toUnsignedInt(cPair) ; ++i) {
 			offsets[i] = reader.readInt(index); index+=BinaryReader.SIZEOF_INT;
 		}
 		
-		linenumbers = new short[Conv.shortToInt(cPair)];
-		for (int i = 0 ; i < Conv.shortToInt(cPair) ; ++i) {
+		linenumbers = new short[Short.toUnsignedInt(cPair)];
+		for (int i = 0 ; i < Short.toUnsignedInt(cPair) ; ++i) {
 			linenumbers[i] = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
 		}
 	}

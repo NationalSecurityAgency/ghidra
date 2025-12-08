@@ -138,6 +138,15 @@ public interface DataTypeManagerService extends DataTypeQueryService, DataTypeAr
 	public DataType getDataType(TreePath selectedPath);
 
 	/**
+	 * Shows the user a dialog that allows them to choose a category path from a tree of all 
+	 * available categories.
+	 * 
+	 * @param selectedPath An optional tree path to select in the tree
+	 * @return A category path chosen by the user
+	 */
+	public CategoryPath getCategoryPath(TreePath selectedPath);
+
+	/**
 	 * Examines all enum dataTypes for items that match the given value. Returns a list of Strings
 	 * that might make sense for the given value.
 	 * @param value the value to search for.

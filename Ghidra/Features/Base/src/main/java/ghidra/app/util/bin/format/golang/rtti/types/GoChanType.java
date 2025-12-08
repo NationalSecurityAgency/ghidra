@@ -24,7 +24,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 /**
- * A {@link GoType} structure that defines a go channel
+ * A {@link GoType} structure that defines a Go channel
  */
 @StructureMapping(structureName = {"runtime.chantype", "internal/abi.ChanType"})
 public class GoChanType extends GoType {
@@ -41,8 +41,7 @@ public class GoChanType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the {@link GoType} that defines the elements this channel uses
-	 * @return reference to the {@link GoType} that defines the elements this channel uses
+	 * {@return a reference to the {@link GoType} that defines the elements this channel uses}
 	 * @throws IOException if error reading type
 	 */
 	@Markup
@@ -51,15 +50,15 @@ public class GoChanType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		GoType chanGoType = goTypes.getChanGoType();
-		if (chanGoType == null) {
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType chanDT = goTypes.findDataType("runtime.hchan");
+		if (chanDT == null) {
 			// if we couldn't find the underlying/hidden runtime.hchan struct type, just return
 			// a void*
 			return goTypes.getVoidPtrDT();
 		}
 
-		DataType chanDT = goTypes.getGhidraDataType(chanGoType);
 		Pointer ptrChanDt = goTypes.getDTM().getPointer(chanDT);
 		if (typ.getSize() != ptrChanDt.getLength()) {
 			Msg.warn(this, "Size mismatch between chan type and recovered type");

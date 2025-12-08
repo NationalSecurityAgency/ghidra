@@ -23,6 +23,7 @@ import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
+import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -231,6 +232,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 
 	public DWARFLine getLine() {
 		return line;
+	}
+
+	public DWARFMacroHeader getMacros() {
+		long macrosOffset = diea.getUnsignedLong(DW_AT_macros, -1);
+		return macrosOffset != -1
+				? diea.getProgram().getMacroHeader(macrosOffset, this)
+				: DWARFMacroHeader.EMTPY;
 	}
 
 	/**

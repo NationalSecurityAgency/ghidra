@@ -152,17 +152,13 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		 * Get the type behavior from the userop's Java method
 		 * 
 		 * <p>
-		 * If the userop is not backed by a Java method, or its return type is not supported, this
+		 * If the userop is not backed by a Java method, or its output type is not supported, this
 		 * return {@link JitTypeBehavior#ANY}.
 		 * 
 		 * @return the type behavior
 		 */
-		private JitTypeBehavior getReturnType() {
-			Method method = decOp.getJavaMethod();
-			if (method == null) {
-				return JitTypeBehavior.ANY;
-			}
-			return JitTypeBehavior.forJavaType(method.getReturnType());
+		private JitTypeBehavior getOutputTypeBehavior() {
+			return JitTypeBehavior.forJavaType(getOutputType());
 		}
 
 		/**
@@ -210,8 +206,8 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 			}
 			else {
 				JitOutVar out = dfm.generateOutVar(outVn);
-				dfm.notifyOp(new JitCallOtherDefOp(op, out, getReturnType(), decOp, inVals, inTypes,
-					state.captureState()));
+				dfm.notifyOp(new JitCallOtherDefOp(op, out, getOutputTypeBehavior(), decOp, inVals,
+					inTypes, state.captureState()));
 				state.setVar(outVn, out);
 			}
 		}
@@ -234,6 +230,11 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		@Override
 		public boolean canInlinePcode() {
 			return decOp.canInlinePcode();
+		}
+
+		@Override
+		public Class<?> getOutputType() {
+			return decOp.getOutputType();
 		}
 
 		@Override

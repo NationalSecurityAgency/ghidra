@@ -32,7 +32,11 @@ public class RegExByteMatcher extends ByteMatcher {
 	private final Pattern pattern;
 
 	public RegExByteMatcher(String input, SearchSettings settings) {
-		super(input, settings);
+		this("Regex Matcher", input, settings);
+	}
+
+	public RegExByteMatcher(String name, String input, SearchSettings settings) {
+		super(name, input, settings);
 		// without DOTALL mode, bytes that match line terminator characters will cause 
 		// the regular expression pattern to not match.
 		this.pattern = Pattern.compile(input, Pattern.DOTALL);
@@ -133,7 +137,7 @@ public class RegExByteMatcher extends ByteMatcher {
 			if (start >= byteSequence.getLength()) {
 				return null;
 			}
-			return new ByteMatch(start, end - start);
+			return new ByteMatch(start, end - start, RegExByteMatcher.this);
 		}
 	}
 

@@ -167,15 +167,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// using all the information found above, create the class structures, add the constructor,
 		// destructor, vfunctions to class which finds the appropriate class structure and assigns 
 		// to "this" param
-		monitor.setMessage("Creating class data types and applying class structures");
+		monitor.setMessage("Figuring out class data members...");
 		figureOutClassDataMembers(recoveredClasses);
 
 		if (USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS) {
 			extendedFlatAPI.createShortenedTemplateNamesForClasses(recoveredClasses);
 		}
-
+		monitor.setMessage("Creating class data types and applying class structures...");
 		createAndApplyClassStructures(recoveredClasses);
 
+		monitor.setMessage("Finishing up...");
 		// fix purecall vfunction definitions
 		fixupPurecallFunctionDefs();
 
@@ -1299,12 +1300,15 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// lists to remove functions that are also on vfunction lists
 		trimConstructorDestructorLists(recoveredClasses, allVftables);
 
+		monitor.setMessage("... determining operator_delete and new functions");
 		determineOperatorDeleteAndNewFunctions(allVftables);
 
 		// find deleting destructors 
+		monitor.setMessage("... finding deleting destructors");
 		findDeletingDestructors(recoveredClasses, allVftables);
 
 		// use atexit param list to find more destructors
+		monitor.setMessage("... finding destructors using atexit calls");
 		findDestructorsUsingAtexitCalledFunctions(recoveredClasses);
 
 		// figure out which are inlined and put on separate list to be processed later
@@ -1312,33 +1316,43 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		// figure out which member functions are constructors and which are destructors
 		// using the order their parents are called		
+		monitor.setMessage("... processing constructors and destructors using call order");
 		processRegularConstructorsAndDestructorsUsingCallOrder(recoveredClasses);
 
 		// determine which of the inlines are constructors and which are destructors
+		monitor.setMessage("... processing inlineds");
 		processInlinedConstructorsAndDestructors(recoveredClasses);
 
+		monitor.setMessage("... finding more constructors and destructors");
 		findConstructorsAndDestructorsUsingAncestorClassFunctions(recoveredClasses);
 
+		monitor.setMessage("... finding more inlines");
 		findInlineConstructorsAndDestructorsUsingRelatedClassFunctions(recoveredClasses);
 
 		// use the load/store information from decompiler to figure out as many of the 
 		// ones that could not be determined in earlier stages
+		monitor.setMessage("... processing remaining indeterminate constructors and destructors");
 		processRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 
 		// use the known constructors and known vfunctions to figure out basic clone functions
+		monitor.setMessage("... finding basic clones");
 		findBasicCloneFunctions(recoveredClasses);
 
 		// This has to be here. It needs all the info from the previously run methods to do this.
 		// Finds the constructors that have multiple basic blocks, reference the vftable not in the 
 		// first block, and call non-parent constructors and non operator new before the vftable ref
+		monitor.setMessage("... finding more inlined constructors");
 		findMoreInlinedConstructors(recoveredClasses);
 
+		monitor.setMessage("... finding destructors with no params");
 		findDestructorsWithNoParamsOrReturn(recoveredClasses);
 
 		// use vftables with references to all the same function (except possibly one deleting 
 		// destructor)to find the purecall function
+		monitor.setMessage("... identifying pure virtual function");
 		identifyPureVirtualFunction(recoveredClasses);
 
+		monitor.setMessage("... finding real vbase functions");
 		findRealVBaseFunctions(recoveredClasses);
 
 		// make constructors and destructors _thiscalls 
@@ -1905,8 +1919,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			parentOrderMap = new HashMap<Integer, RecoveredClass>();
 
-			Map<Address, RecoveredClass> referenceToParentMap =
-				getReferenceToClassMap(recoveredClass, function);
+			Map<Address, ReferencedClassObject> referenceToParentMap =
+				getReferenceToReferencedObjectsMap(recoveredClass, function);
 
 			Map<Address, RecoveredClass> allowedReferncesToParentMap =
 				new HashMap<Address, RecoveredClass>();
@@ -1933,8 +1947,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					recoveredClass.getVftableAddresses().contains(possibleVftable)) {
 					continue;
 				}
-
-				RecoveredClass ancestorClass = referenceToParentMap.get(classReferenceAddress);
+				ReferencedClassObject referencedClassObject =
+					referenceToParentMap.get(classReferenceAddress);
+				RecoveredClass ancestorClass = referencedClassObject.getContainingClass();
 				if (allowedAncestors.contains(ancestorClass)) {
 					allowedReferncesToParentMap.put(classReferenceAddress, ancestorClass);
 				}
@@ -1955,7 +1970,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			// iterate over the ordered parents and add the order to the parent map
 			for (Address refAddress : parentReferences) {
 				monitor.checkCancelled();
-				RecoveredClass parentClass = referenceToParentMap.get(refAddress);
+				ReferencedClassObject referencedClassObject = referenceToParentMap.get(refAddress);
+				RecoveredClass parentClass = referencedClassObject.getContainingClass();
 				parentOrderMap.put(order, parentClass);
 				order++;
 			}
@@ -2077,15 +2093,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void createAndApplyClassStructures(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, Exception {
 
-		List<RecoveredClass> listOfClasses = new ArrayList<RecoveredClass>(recoveredClasses);
-
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
+		List<RecoveredClass> processedClasses = new ArrayList<>();
 
 		// first process all the classes with no parents
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCancelled();
-
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			if (recoveredClass.hasMultipleInheritance()) {
 				continue;
@@ -2097,20 +2109,19 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			if (!recoveredClass.hasVftable()) {
 				createClassStructureWhenNoParentOrVftable(recoveredClass);
-				listOfClasses.remove(recoveredClass);
+				processedClasses.add(recoveredClass);
 				continue;
 			}
 
 			processDataTypes(recoveredClass);
-			listOfClasses.remove(recoveredClass);
-
+			processedClasses.add(recoveredClass);
 		}
 
 		// now process the classes that have all parents processed
 		// continue looping until all classes are processed
 		int numLoops = 0;
 
-		while (!listOfClasses.isEmpty()) {
+		while (processedClasses.size() < recoveredClasses.size()) {
 			monitor.checkCancelled();
 
 			// put in stop gap measure in case some classes never get all
@@ -2120,13 +2131,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 			numLoops++;
 
-			recoveredClassIterator = recoveredClasses.iterator();
-			while (recoveredClassIterator.hasNext()) {
-
-				RecoveredClass recoveredClass = recoveredClassIterator.next();
-
+			for (RecoveredClass recoveredClass : recoveredClasses) {
 				monitor.checkCancelled();
-				if (!listOfClasses.contains(recoveredClass)) {
+
+				if (processedClasses.contains(recoveredClass)) {
 					continue;
 				}
 
@@ -2135,8 +2143,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 
 				processDataTypes(recoveredClass);
-				listOfClasses.remove(recoveredClass);
-
+				processedClasses.add(recoveredClass);
 			}
 		}
 	}
@@ -2673,11 +2680,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 				if (numAddressRanges == 2) {
-					// else fixup split dd function 
+					// else possible split dd function - try to split and created second function
+					// if it is one 
 					Function scalarDeletingDestructor = createSplitDeletingDestructorFunction(body);
 					if (scalarDeletingDestructor == null) {
-						Msg.debug(this, "Could not fixup split deleting destructor function: " +
-							function.getEntryPoint());
 						continue;
 					}
 					fixupSplitDeletingDestructorSymbols(function, scalarDeletingDestructor);

@@ -51,7 +51,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private KeyBindingsPanel panel;
 	private JTable table;
 	private TableModel model;
-	private JTextField keyField;
 	private JTextPane statusPane;
 	private JDialog dialog;
 
@@ -70,7 +69,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setUpDialog();
 
-		grabActionsWithoutKeybinding();
+		grabActionsWithoutKeyBinding();
 	}
 
 	@After
@@ -82,8 +81,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testKeyBindingsDisplay() throws Exception {
 
-		assertEquals(3, model.getColumnCount());
-		String[] ids = new String[] { "Action Name", "KeyBinding", "Plugin Name" };
+		assertEquals(3, table.getColumnCount());
+		String[] ids = new String[] { "Action Name", "Key Binding", "Owner" };
 		TableColumnModel m = table.getColumnModel();
 		for (int i = 0; i < ids.length; i++) {
 			TableColumn c = m.getColumn(i);
@@ -91,15 +90,9 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		assertTrue(model.getRowCount() > 0);
 
-		// look for the info panel
-		MultiLineLabel label = findComponent(panel, MultiLineLabel.class);
-		String str = "To add or change a key binding, select an action\n" +
-			"and type any key combination.";
-
-		assertEquals(str, label.getLabel());
+		assertMessage("Select an action to change a keybinding");
 
 		//  verify that the description is displayed for the selected action
-
 		selectRowForAction(action1);
 
 		String actualText = getText(statusPane);
@@ -130,6 +123,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull("Could not find edit key binding action.", action);
 
 		selectRowForAction(action);
+		JTextField keyField = getKeyField();
 		triggerText(keyField, "z");
 		assertKeyFieldText("Z");
 
@@ -148,14 +142,16 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 		}
 
-		triggerText(keyField, "z");
-		assertMessage("No action is selected.");
+		JTextField keyField = getKeyField();
+		assertNull(keyField);
+		assertMessage("Select an action to change a keybinding");
 	}
 
 	@Test
 	public void testSetKeyBinding() throws Exception {
 		// set a key binding on an action that does not have a key binding
 		selectRowForAction(action1);
+		JTextField keyField = getKeyField();
 		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_X);
 		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
 		assertKeyFieldText(KeyBindingUtils.parseKeyStroke(ks));
@@ -168,6 +164,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSetKeyBinding2() throws Exception {
 
 		selectRowForAction(action1);
+		JTextField keyField = getKeyField();
 		triggerText(keyField, "x");
 		assertKeyFieldText("X");
 
@@ -227,10 +224,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertKeyFieldText(ks);
 		apply();
 		assertEquals(ks, getKeyStroke(action1));
-
-		// verify the additional binding for 'Alt Graph'
-		action = (Action) TestUtils.invokeInstanceMethod("getActionForKeyStroke", dwm, keyStroke);
-		assertNotNull(action);
 	}
 
 	@Test
@@ -394,6 +387,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void assertNoKeyStrokeText() {
+		JTextField keyField = getKeyField();
 		assertEquals("", keyField.getText());
 	}
 
@@ -402,6 +396,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void assertKeyFieldText(String s) {
+		JTextField keyField = getKeyField();
 		assertEquals(s, runSwing(() -> keyField.getText()));
 	}
 
@@ -410,6 +405,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void typeKeyStroke(KeyStroke ks) {
+		JTextField keyField = getKeyField();
 		triggerKey(keyField, ks);
 		waitForSwing();
 	}
@@ -419,6 +415,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void typeKeyStroke(int modifiers, int keyCode) {
+		JTextField keyField = getKeyField();
 		triggerKey(keyField, modifiers, keyCode, KeyEvent.CHAR_UNDEFINED);
 		waitForSwing();
 	}
@@ -538,14 +535,18 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 			dialog.setVisible(true);
 		});
 		table = findComponent(panel, JTable.class);
-		keyField = (JTextField) findComponentByName(panel, "Key Entry Text Field");
 		statusPane = findComponent(panel, JTextPane.class);
 		model = table.getModel();
 		waitForSwing();
 	}
 
+	private JTextField getKeyField() {
+		JTextField keyField = (JTextField) findComponentByName(panel, "Key Entry Text Field");
+		return keyField;
+	}
+
 	// find 2 actions that do not have key bindings so that we can add and change the values
-	private void grabActionsWithoutKeybinding() {
+	private void grabActionsWithoutKeyBinding() {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			if (ignoreAction(action)) {

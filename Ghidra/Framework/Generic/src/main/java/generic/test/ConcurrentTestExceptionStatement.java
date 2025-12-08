@@ -92,7 +92,6 @@ public class ConcurrentTestExceptionStatement extends Statement {
 	}
 
 	private boolean isRunningFromEclipse() {
-		// TODO: this may need adjustment for other Eclipse platforms/versions
 		return System.getProperty("java.class.path").endsWith(".cp");
 	}
 
@@ -195,7 +194,6 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		}
 	}
 
-	@SuppressWarnings({ "removal" })  // Thread.stop()
 	private void checkForTestTimeout(TestThread testThread) {
 
 		if (timoutMonitor == null || !timoutMonitor.didRun()) {
@@ -216,9 +214,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 
 		StackTraceElement[] trace = testThread.getStackTrace();
 
-		// if we get here, we are one step away from System.exit(1), so do the 
-		// bad thing and kill the thread
-		testThread.stop();
+		testThread.interrupt();
 		lastTestThread = null; // don't try to join
 		AssertionFailedError error =
 			new AssertionFailedError("Test locked-up--aborting!  See log for details");
