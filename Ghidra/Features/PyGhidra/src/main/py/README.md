@@ -69,7 +69,7 @@ def open_project(
         path: Union[str, Path],
         name: str,
         create: bool = False
-) -> "Project": # type: ignore
+) -> "Project":
     """
     Opens the Ghidra project at the given location, optionally creating it if it doesn't exist.
 
@@ -126,7 +126,7 @@ def consume_program(
 def program_context(
         project: "Project", 
         path: Union[str, Path],
-    ) -> "Program":
+    ) -> Generator["Program", None, None]:
     """
     Gets the Ghidra program from the given project with the given project path. The returned
     program's resource cleanup is performed by a context manager.
@@ -180,7 +180,7 @@ def ghidra_script(
 def transaction(
         program: "Program",
         description: str = "Unnamed Transaction"
-    ):
+    ) -> Generator[int, None, None]:
     """
     Creates a context for running a Ghidra transaction.
 
@@ -220,9 +220,9 @@ def program_loader() -> "ProgramLoader.Builder":
     """
 ```
 
-### pyghidra.monitor()
+### pyghidra.task_monitor()
 ```python
-def monitor(
+def task_monitor(
         timeout: Optional[int] = None
     ) -> "PyGhidraTaskMonitor":
     """
@@ -288,22 +288,22 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
         for f in fs.files(lambda f: "os/" in f.path and f.name.startswith("decompile")):
             loader = loader.source(f.getFSRL()).projectFolderPath("/" + f.parentFile.name)
             with loader.load() as load_results:
-                load_results.save(pyghidra.monitor())
+                load_results.save(pyghidra.task_monitor())
 
     # Analyze the windows decompiler program for a maximum of 10 seconds
     with pyghidra.program_context(project, "/win_x86_64/decompile.exe") as program:
         analysis_props = pyghidra.analysis_properties(program)
         with pyghidra.transaction(program):
             analysis_props.setBoolean("Non-Returning Functions - Discovered", False)
-        analysis_log = pyghidra.analyze(program, pyghidra.monitor(10))
-        program.save("Analyzed", pyghidra.monitor())
+        analysis_log = pyghidra.analyze(program, pyghidra.task_monitor(10))
+        program.save("Analyzed", pyghidra.task_monitor())
     
     # Walk the project and set a property in each decompiler program
     def set_property(domain_file, program):
         with pyghidra.transaction(program):
             program_info = pyghidra.program_info(program)
             program_info.setString("PyGhidra Property", "Set by PyGhidra!")
-        program.save("Setting property", pyghidra.monitor())
+        program.save("Setting property", pyghidra.task_monitor())
     pyghidra.walk_programs(project, set_property, program_filter=lambda f, p: p.name.startswith("decompile"))
 
     # Load some bytes as a new program
@@ -312,7 +312,7 @@ with pyghidra.open_project(os.environ["GHIDRA_PROJECT_DIR"], "ExampleProject", c
     loader = pyghidra.program_loader().project(project).source(my_bytes).name("my_bytes")
     loader = loader.loaders("BinaryLoader").language("DATA:LE:64:default")
     with loader.load() as load_results:
-        load_results.save(pyghidra.monitor())
+        load_results.save(pyghidra.task_monitor())
 
     # Run a GhidraScript
     pyghidra.ghidra_script(f"{os.environ['GHIDRA_SCRIPTS_DIR']}/HelloWorldScript.java", project)
@@ -339,7 +339,7 @@ def open_program(
         loader: Union[str, JClass] = None,
         program_name: str = None,
         nested_project_location = True
-) -> ContextManager["FlatProgramAPI"]: # type: ignore
+) -> Generator["FlatProgramAPI", None, None]:
     """
     Opens given binary path (or optional program name) in Ghidra and returns FlatProgramAPI object.
 
@@ -564,6 +564,8 @@ __3.0.0:__
   via the `support/launch.properties` file), it will restore `sys.modules` to its prior state after
   a PyGhidra script is run so the next time the script is run, it freshly loads all of its imported
   modules again. This is experimental and should only be enabled if necessary.
+* Changed JPype dependency to be fixed at version 1.5.2 to avoid 
+  [a possible Windows crash on 1.6.0](https://github.com/jpype-project/jpype/issues/1316)
 
 __2.2.1:__
 * PyGhidra now launches with the current working directory removed from `sys.path` to prevent

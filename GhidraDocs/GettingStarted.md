@@ -36,7 +36,7 @@ with future releases.
     * [macOS](#macos)
 
 ## Platforms Supported
-* Windows 10 or later
+* Windows 10 (build 1809 or later)
 * Linux
 * macOS 10.13 or later
 
@@ -60,7 +60,7 @@ a specific need.
   * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
-    to install a suitable version of Python.
+    to install a suitable version of Python with pip support.
 
 ## Installing Ghidra
 To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem destination
@@ -318,7 +318,10 @@ can be found in the `<GhidraInstallDir>/Extensions` directory:
 * Ghidra extensions are designed to be installed and uninstalled from the Ghidra front-end GUI:
   1. Click `File -> Install Extensions`
   2. Check boxes to install extensions; uncheck boxes to uninstall extensions
-  3. Restart Ghidra for the changes to take effect
+  3. External extensions will generally not appear in the default location (Ghidra/Extensions) used for 
+  internal extensions included with the Ghidra distribution.  To add a new external extension from
+  this GUI, click the green plus toolbar button to locate and select an external extension zip file.
+  4. Restart Ghidra for the changes to take effect
 
 * Extensions installed from the Ghidra front-end GUI get installed at `<UserSettings>/Extensions`, 
   where `<UserSettings>` can be looked up in the Ghidra front-end GUI under 

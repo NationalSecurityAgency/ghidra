@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.clipboard;
 
 import java.awt.Window;
 import java.awt.datatransfer.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
@@ -402,7 +401,8 @@ public class ClipboardPlugin extends ProgramPlugin
 			setPopupMenuData(new MenuData(new String[] { "Copy" }, "Clipboard"));
 			setToolBarData(new ToolBarData(new GIcon("icon.plugin.clipboard.copy"),
 				"Clipboard"));
-			setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+			setKeyBindingData(
+				new KeyBindingData(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy"));
 			clipboardService.customizeClipboardAction(this);
 		}
@@ -436,7 +436,8 @@ public class ClipboardPlugin extends ProgramPlugin
 			setPopupMenuData(new MenuData(new String[] { "Paste" }, "Clipboard"));
 			setToolBarData(
 				new ToolBarData(new GIcon("icon.plugin.clipboard.paste"), "Clipboard"));
-			setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+			setKeyBindingData(
+				new KeyBindingData(KeyEvent.VK_V, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Paste"));
 			clipboardService.customizeClipboardAction(this);
 		}

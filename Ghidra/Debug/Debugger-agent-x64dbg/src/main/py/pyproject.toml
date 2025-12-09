@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghidraxdbg"
+version = "12.0"
+authors = [
+  { name="Ghidra Development Team" },
+]
+description = "Ghidra's Plugin for x64dbg"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "ghidratrace==12.0",
+    "x64dbg_automate>=0.5.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
+"Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"
+
+[tool.setuptools.package-data]
+ghidradbg = ["*.tlb", "py.typed"]
+
+[tool.setuptools]
+include-package-data = true

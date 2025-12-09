@@ -35,6 +35,7 @@ import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.memory.MemoryMapPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.NamespaceUtils;
@@ -79,7 +80,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 	protected DockingActionIf selectionAction;
 	protected DockingActionIf createNamespaceAction;
 	protected DockingActionIf createClassAction;
-	protected DockingActionIf goToToggleAction;
+	protected DockingActionIf navigateIncomingAction;
 	protected DockingActionIf goToExtLocAction;
 	protected DockingActionIf createLibraryAction;
 	protected DockingActionIf setExternalProgramAction;
@@ -493,8 +494,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		editExternalLocationAction = getAction(plugin, "Edit External Location");
 		assertNotNull(editExternalLocationAction);
 
-		goToToggleAction = getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 
 		goToExtLocAction = getAction(plugin, "Go To External Location");
 		assertNotNull(goToExtLocAction);

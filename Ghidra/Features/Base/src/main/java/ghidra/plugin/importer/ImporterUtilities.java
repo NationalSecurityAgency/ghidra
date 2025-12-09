@@ -439,8 +439,10 @@ public class ImporterUtilities {
 			// no need to show a message
 		}
 		catch (Exception e) {
+			Throwable cause = e.getCause() != null ? e.getCause() : e;
 			Msg.showError(ImporterUtilities.class, tool.getActiveWindow(), "Error Importing File",
-				"Error importing file: %s (%s)".formatted(fsrl.getName(), e.getMessage()));
+				"Error importing file: %s (%s)".formatted(fsrl.getName(), cause.getMessage()),
+				cause);
 		}
 	}
 

@@ -786,7 +786,7 @@ public interface TraceObjectSchema {
 		List<TraceObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = path.parent()) {
 			TraceObjectSchema check = schemas.get(path.size());
-			if (check == schema) {
+			if (schema.isAssignableFrom(check)) {
 				return path;
 			}
 			KeyPath inAgg = Private.searchForSuitableInAggregate(check, schema);

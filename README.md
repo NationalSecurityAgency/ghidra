@@ -77,7 +77,7 @@ gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer Guide][devguide].
+For more detailed information on building Ghidra, please read the [Developer's Guide][devguide].
 
 For issues building, please check the [Known Issues][known-issues] section for possible solutions.
 
@@ -118,11 +118,11 @@ gradle prepdev eclipse buildNatives
 When Eclipse finishes building the projects, Ghidra can be launched and debugged with the provided
 **Ghidra** Eclipse *run configuration*.
 
-For more detailed information on developing Ghidra, please read the [Developer Guide][devguide].
+For more detailed information on developing Ghidra, please read the [Developer's Guide][devguide].
 
 ## Contribute
 If you would like to contribute bug fixes, improvements, and new features back to Ghidra, please 
-take a look at our [Contributor Guide][contrib] to see how you can participate in this open 
+take a look at our [Contributor's Guide][contrib] to see how you can participate in this open 
 source project.
 
 

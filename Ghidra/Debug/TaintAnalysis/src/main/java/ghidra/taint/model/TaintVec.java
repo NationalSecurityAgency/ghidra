@@ -20,6 +20,8 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ghidra.program.model.pcode.PcodeOp;
+
 /**
  * A mutable, but fixed-size, buffer of taint sets
  * 
@@ -33,8 +35,15 @@ import java.util.stream.Stream;
  */
 public class TaintVec {
 
-	public static TaintVec of(TaintSet... taints) {
-		return new TaintVec(taints);
+	/**
+	 * Create a vector of taint sets
+	 * 
+	 * @param op the originating p-code op
+	 * @param taints the taint set
+	 * @return the new vector
+	 */
+	public static TaintVec of(PcodeOp op, TaintSet... taints) {
+		return new TaintVec(taints, op);
 	}
 
 	/**
@@ -79,11 +88,13 @@ public class TaintVec {
 	private TaintSet[] sets;
 	private List<TaintSet> setsView;
 	public final int length;
+	private final PcodeOp originatingOp;
 
-	private TaintVec(TaintSet[] sets) {
+	private TaintVec(TaintSet[] sets, PcodeOp op) {
 		this.sets = sets;
 		this.setsView = Collections.unmodifiableList(Arrays.asList(sets));
 		this.length = sets.length;
+		this.originatingOp = op;
 	}
 
 	/**
@@ -92,7 +103,17 @@ public class TaintVec {
 	 * @param length the length
 	 */
 	public TaintVec(int length) {
-		this(new TaintSet[length]);
+		this(new TaintSet[length], null);
+	}
+
+	/**
+	 * Create a new uninitialized taint vector of the given length
+	 * 
+	 * @param length the length
+	 * @param op the originating op
+	 */
+	public TaintVec(int length, PcodeOp op) {
+		this(new TaintSet[length], op);
 	}
 
 	@Override
@@ -572,5 +593,22 @@ public class TaintVec {
 			vec.sets[i] = this.sets[i + offset];
 		}
 		return vec;
+	}
+
+	/**
+	 * @return the originating op
+	 */
+	public PcodeOp getOriginatingOp() {
+		return originatingOp;
+	}
+
+	/**
+	 * Supply the originating op
+	 * 
+	 * @param op originating op
+	 * @return the tagged TaintVec
+	 */
+	public TaintVec withOp(PcodeOp op) {
+		return new TaintVec(sets, op);
 	}
 }

@@ -566,18 +566,13 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return characterOffset;
 		}
 
-		int column = fieldLoc.getCol() + characterOffset;
 		int fieldNum = fieldLoc.getFieldNum();
-		int fieldRow = fieldLoc.getRow();
-		ByteField field = (ByteField) layout.getField(fieldNum);
-		if (field != null) {
-			// not sure this can be null
-			int numCols = field.getNumCols(fieldRow);
-			if (column >= numCols) {
-				column = numCols - 1;
-			}
+		if (!(layout.getField(fieldNum) instanceof ByteField field)) {
+			return characterOffset;
 		}
 
+		int column = Math.clamp(fieldLoc.getCol() + characterOffset, 0,
+			field.getNumCols(fieldLoc.getRow()) - 1);
 		return column;
 	}
 

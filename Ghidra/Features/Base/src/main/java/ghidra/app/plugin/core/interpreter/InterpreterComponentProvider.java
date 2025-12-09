@@ -25,7 +25,9 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.action.builder.ActionBuilder;
-import docking.widgets.*;
+import docking.widgets.FindDialog;
+import docking.widgets.OptionDialog;
+import docking.widgets.search.TextComponentSearcher;
 import generic.theme.GIcon;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -41,7 +43,6 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	private List<Callback> firstActivationCallbacks;
 
 	private FindDialog findDialog;
-	private TextComponentSearcher searcher;
 
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
 			InterpreterConnection interpreter, boolean visible) {
@@ -95,8 +96,8 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	private void showFindDialog() {
 		if (findDialog == null) {
 			JTextPane textPane = panel.getOutputTextPane();
-			searcher = new TextComponentSearcher(textPane);
-			findDialog = new FindDialog("Find", searcher);
+			TextComponentSearcher searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Intepreter Find", searcher);
 		}
 		getTool().showDialog(findDialog);
 	}
@@ -154,8 +155,8 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	public void clear() {
 		panel.clear();
 
-		if (searcher != null) {
-			searcher.clearHighlights();
+		if (findDialog != null) {
+			findDialog.close(); // this will also dispose of any search highlights
 		}
 	}
 

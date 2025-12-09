@@ -27,14 +27,18 @@ import generic.util.Path;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.lang.Language;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Manages the set of FidFiles for the application. This uses the singleton pattern and
  * all users of Fid databases must use this to get open Fid databases.  This ensures that
- * there is only one updateable Fid database open for any given FidFile.
+ * there is only one updatable Fid database open for any given FidFile.
  */
 public class FidFileManager {
 
@@ -48,7 +52,7 @@ public class FidFileManager {
 	private WeakSet<ChangeListener> listeners;
 
 	/**
-	 * Returns the singleton instance of the FidFileManager.
+	 * {@return the singleton instance of the FidFileManager.}
 	 */
 	public static FidFileManager getInstance() {
 		if (THE_FID_FILE_MANAGER == null) {
@@ -59,14 +63,23 @@ public class FidFileManager {
 
 	private FidFileManager() {
 		listeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
-		// findDeliveredFidFiles(); - too slow
-		// restoreFromPreferences();
 	}
 
 	private Set<FidFile> loadFidFiles() {
 		if (fidFiles == null) {
-			findDeliveredFidFiles();
-			restoreFromPreferences();
+
+			TaskLauncher.launchModal("Loading Fid Files", monitor -> {
+
+				fidFiles = new CopyOnWriteArraySet<>();
+				try {
+					findDeliveredFidFiles(monitor);
+					restoreFromPreferences(monitor);
+				}
+				catch (CancelledException ce) {
+					Msg.showWarn(this, null, "Fid Loading Cancelled", "User cancelled Fid Db " +
+						"loading.  To load all Fid Db files, the tool must be restarted.");
+				}
+			});
 		}
 
 		return fidFiles;
@@ -74,7 +87,7 @@ public class FidFileManager {
 
 	/**
 	 * Add user FidDb file
-	 * @param file
+	 * @param file the file
 	 * @return FidFile or null if invalid
 	 */
 	public FidFile addUserFidFile(File file) {
@@ -105,7 +118,7 @@ public class FidFileManager {
 	}
 
 	/**
-	 * Returns a list of all the FidFiles know to the application.
+	 * {@return a list of all the FidFiles know to the application.}
 	 */
 	public List<FidFile> getFidFiles() {
 		loadFidFiles();
@@ -114,13 +127,30 @@ public class FidFileManager {
 		return files;
 	}
 
-	public boolean hasFidFiles() {
-		loadFidFiles();
-		return !fidFiles.isEmpty();
+	/**
+	 * Triggers a load of the Fid db files, if not already loaded.
+	 */
+	public void load() {
+		if (fidFiles == null) {
+			loadFidFiles();
+		}
 	}
 
+	/**
+	 * {@return true if Fid db files have been loaded and files have been found.}
+	 */
+	public boolean hasFidFiles() {
+		return fidFiles != null && !fidFiles.isEmpty();
+	}
+
+	/**
+	 * {@return true if Fid db files have been loaded and user Fid files have been found.}
+	 */
 	public boolean hasUserFidFiles() {
-		loadFidFiles();
+		if (fidFiles == null) {
+			return false;
+		}
+
 		for (FidFile fidFile : fidFiles) {
 			if (!fidFile.isInstalled()) {
 				return true;
@@ -130,8 +160,15 @@ public class FidFileManager {
 	}
 
 	/**
-	 * Returns a list of all the user added (non installation) Fid files.  This will
-	 * be files containing packed databases.
+	 * {@return true if the Fid db files have been loaded.}
+	 */
+	public boolean hasLoadedFidFiles() {
+		return fidFiles != null;
+	}
+
+	/**
+	 * {@return a list of all the user added (non installation) Fid files.  This will
+	 * be files containing packed databases.}
 	 */
 	public List<FidFile> getUserAddedFiles() {
 		loadFidFiles();
@@ -251,17 +288,20 @@ public class FidFileManager {
 		return list;
 	}
 
-	private void restoreFromPreferences() {
+	private void restoreFromPreferences(TaskMonitor monitor) throws CancelledException {
 		Set<File> userAddedFiles = getFilesFromPreference(USER_ADDED_FILES);
-		addUserFidFiles(userAddedFiles);
+		monitor.initialize(userAddedFiles.size(), "Adding user Fid files...");
+		doAddUserFidFiles(userAddedFiles, monitor);
 
 		Set<File> excludedFiles = getFilesFromPreference(INACTIVE_FID_FILES);
-		excludeFidFiles(excludedFiles);
+		monitor.initialize(excludedFiles.size(), "Removing inactive user Fid files...");
+		doExcludeFidFiles(excludedFiles, monitor);
 	}
 
-	private void addUserFidFiles(Set<File> userAddedFiles) {
-		loadFidFiles();
+	private void doAddUserFidFiles(Set<File> userAddedFiles, TaskMonitor monitor)
+			throws CancelledException {
 		for (File file : userAddedFiles) {
+			monitor.increment();
 			FidFile fidFile = new FidFile(this, file, false);
 			if (fidFile.isValidFile()) {
 				fidFiles.add(fidFile);
@@ -269,9 +309,10 @@ public class FidFileManager {
 		}
 	}
 
-	private void excludeFidFiles(Set<File> excludedFiles) {
-		loadFidFiles();
+	private void doExcludeFidFiles(Set<File> excludedFiles, TaskMonitor monitor)
+			throws CancelledException {
 		for (FidFile fidFile : fidFiles) {
+			monitor.increment();
 			if (excludedFiles.contains(fidFile.getFile())) {
 				fidFile.setActive(false);
 			}
@@ -296,11 +337,14 @@ public class FidFileManager {
 		return set;
 	}
 
-	private void findDeliveredFidFiles() {
-		fidFiles = new CopyOnWriteArraySet<>();
+	private void findDeliveredFidFiles(TaskMonitor monitor) throws CancelledException {
+
 		List<ResourceFile> foundFiles =
 			Application.findFilesByExtensionInApplication(FidFile.FID_RAW_DATABASE_FILE_EXTENSION);
+
+		monitor.initialize(foundFiles.size(), "Processing included Fid files...");
 		for (ResourceFile resourceFile : foundFiles) {
+			monitor.increment();
 			File file = resourceFile.getFile(true);
 			FidFile fidFile = new FidFile(this, file, true);
 			if (fidFile.isValidFile()) {

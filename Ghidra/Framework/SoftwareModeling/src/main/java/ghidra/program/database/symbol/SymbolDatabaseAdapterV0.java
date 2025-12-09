@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.EmptyRecordIterator;
@@ -78,7 +79,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	 * Stores local symbols information in a temporary database table because this version
 	 * is so old, we don't have enough information in the record to upgrade during the normal
 	 * upgrade time. So we store off the information and will complete this upgrade when
-	 * {@link SymbolManager#programReady(int, int, TaskMonitor)} is called
+	 * {@link SymbolManager#programReady(OpenMode, int, TaskMonitor)} is called
 	 * 
 	 * @param handle handle to temporary database
 	 * @param monitor the {@link TaskMonitor}

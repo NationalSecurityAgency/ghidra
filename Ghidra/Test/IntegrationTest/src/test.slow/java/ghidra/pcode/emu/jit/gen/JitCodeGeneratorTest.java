@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -68,11 +68,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 	private static final long LONG_CONST = 0xdeadbeefcafebabeL;
 
+	// NOTE: Limit logged output in nightly/batch test mode
+	private static boolean DEBUG_ENABLED = false; // !SystemUtilities.isInTestingBatchMode();
+
+	private PrintWriter debugWriter = DEBUG_ENABLED ? new PrintWriter(System.out) : null;
+
 	public static void dumpProgram(PcodeProgram program) {
+		if (!DEBUG_ENABLED) {
+			return;
+		}
 		System.out.println(program);
 	}
 
 	public static void dumpClass(byte[] classbytes) throws Exception {
+		if (!DEBUG_ENABLED) {
+			return;
+		}
 		File tmp = Files.createTempFile("gen", ".class").toFile();
 		try (FileOutputStream out = new FileOutputStream(tmp)) {
 			out.write(classbytes);
@@ -175,6 +186,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 	public Translation translateProgram(PcodeProgram program, JitPcodeThread thread)
 			throws Exception {
+
 		dumpProgram(program);
 
 		JitAnalysisContext context = makeContext(program, thread);
@@ -194,7 +206,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 		ClassNode cn = new ClassNode(Opcodes.ASM9);
 		ClassReader cr = new ClassReader(classbytes);
-		cr.accept(new TraceClassVisitor(cn, new PrintWriter(System.out)), 0);
+		cr.accept(new TraceClassVisitor(cn, debugWriter), 0);
 
 		// Have the JVM validate this thing
 		JitBytesPcodeExecutorState state = thread.getState();
@@ -202,8 +214,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 			JitCompiledPassageClass.load(MethodHandles.lookup(), classbytes);
 		JitCompiledPassage passage = passageCls.createInstance(thread);
 
-		assertEquals(Set.of(
-			"<clinit>", "<init>", "run", "thread"),
+		assertEquals(Set.of("<clinit>", "<init>", "run", "thread"),
 			cn.methods.stream().map(m -> m.name).collect(Collectors.toSet()));
 
 		MethodNode initMethod =
@@ -249,8 +260,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 		@PcodeUserop(canInline = true)
 		public void sleigh_userop(@OpExecutor PcodeExecutor<byte[]> executor,
-				@OpLibrary PcodeUseropLibrary<byte[]> library,
-				@OpOutput Varnode out, Varnode a, Varnode b) {
+				@OpLibrary PcodeUseropLibrary<byte[]> library, @OpOutput Varnode out, Varnode a,
+				Varnode b) {
 			gotSleighUseropCall = true;
 			PcodeProgram opProg = SleighProgramCompiler.compileUserop(executor.getLanguage(),
 				"sleigh_userop", List.of("__result", "a", "b"), """
@@ -288,7 +299,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		}
 	}
 
-	record Eval(String expr, BigInteger value) {}
+	record Eval(String expr, BigInteger value) {
+	}
 
 	static Eval ev(String name, BigInteger value) {
 		return new Eval(name, value);
@@ -318,7 +330,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		throw new AssertionError("Use the String or BigInteger one instead");
 	}
 
-	record Case(String name, String init, List<Eval> evals) {}
+	record Case(String name, String init, List<Eval> evals) {
+	}
 
 	static final int nNaNf = Float.floatToRawIntBits(Float.NaN) | Integer.MIN_VALUE;
 	static final long nNaNd = Double.doubleToRawLongBits(Double.NaN) | Long.MIN_VALUE;
@@ -360,8 +373,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 	}
 
 	public Translation translateSleigh(LanguageID langId, String source) throws Exception {
-		SleighLanguage language = (SleighLanguage) DefaultLanguageService.getLanguageService()
-				.getLanguage(langId);
+		SleighLanguage language =
+			(SleighLanguage) DefaultLanguageService.getLanguageService().getLanguage(langId);
 		List<String> lines = new ArrayList<>(Arrays.asList(source.split("\n")));
 		if (!lines.getLast().startsWith("goto ")) {
 			// Cannot end with fall-through
@@ -403,8 +416,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 	}
 
 	public Translation translateLang(LanguageID languageID, long offset, String source,
-			Map<Long, String> injects)
-			throws Exception {
+			Map<Long, String> injects) throws Exception {
 		AssemblyBuffer buf = createBuffer(languageID, offset);
 		for (String line : source.split("\n")) {
 			if (line.isBlank()) {
@@ -750,14 +762,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp[64,64] = r2;
 				temp2:14 = temp[8,112];
 				r0 = zext(temp2);
-				"""),
-			List.of(
-				new Case("only", """
-						r1 = 0x1122334455667788;
-						r2 = 0x99aabbccddeeff00;
-						""",
-					List.of(
-						ev("r0", "0x11223344556677")))));
+				"""), List.of(new Case("only", """
+				r1 = 0x1122334455667788;
+				r2 = 0x99aabbccddeeff00;
+				""", List.of(ev("r0", "0x11223344556677")))));
 	}
 
 	@Test
@@ -912,10 +920,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				goto <skip>;
 				r0 = 0xdead;
 				<skip>
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0xbeef")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0xbeef")))));
 	}
 
 	@Test
@@ -924,10 +929,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r0 = 0xbeef;
 				goto 0xdeadbeef;
 				r0 = 0xdead;
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0xbeef")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0xbeef")))));
 	}
 
 	@Test
@@ -937,12 +939,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				if (r1!=0) goto <skip>;
 				r0 = 0xdead;
 				<skip>
-				"""),
-			List.of(
-				new Case("take", "r1=1;", List.of(
-					ev("r0", "0xbeef"))),
-				new Case("fall", "r1=0;", List.of(
-					ev("r0", "0xdead")))));
+				"""), List.of(new Case("take", "r1=1;", List.of(ev("r0", "0xbeef"))),
+			new Case("fall", "r1=0;", List.of(ev("r0", "0xdead")))));
 	}
 
 	@Test
@@ -951,12 +949,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r0 = 0xbeef;
 				if (r1) goto 0xdeadbeef;
 				r0 = 0xdead;
-				"""),
-			List.of(
-				new Case("take", "r1=1;", List.of(
-					ev("r0", "0xbeef"))),
-				new Case("fall", "r1=0;", List.of(
-					ev("r0", "0xdead")))));
+				"""), List.of(new Case("take", "r1=1;", List.of(ev("r0", "0xbeef"))),
+			new Case("fall", "r1=0;", List.of(ev("r0", "0xdead")))));
 	}
 
 	@Test
@@ -967,13 +961,9 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				if (temp) goto 0xdeadbeef;
 				r0 = 0xdead;
 				"""),
-			List.of(
-				new Case("sm_take", "r1 = 1;", List.of(
-					ev("r0", "0xbeef"))),
-				new Case("sm_fall", "r1 = 0;", List.of(
-					ev("r0", "0xdead"))),
-				new Case("lg_take", "r1 = 0x8000000000000000;", List.of(
-					ev("r0", "0xbeef")))));
+			List.of(new Case("sm_take", "r1 = 1;", List.of(ev("r0", "0xbeef"))),
+				new Case("sm_fall", "r1 = 0;", List.of(ev("r0", "0xdead"))),
+				new Case("lg_take", "r1 = 0x8000000000000000;", List.of(ev("r0", "0xbeef")))));
 	}
 
 	@Test
@@ -981,22 +971,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = !r1;
 				r6l = !r7l;
-				"""),
-			List.of(
-				new Case("f", """
-						r1 = 0;
-						r7l = 0;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r6", "1"))),
-				new Case("t", """
-						r1 = 1;
-						r7l = 1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r6", "0")))));
+				"""), List.of(new Case("f", """
+				r1 = 0;
+				r7l = 0;
+				""", List.of(ev("r0", "1"), ev("r6", "1"))), new Case("t", """
+				r1 = 1;
+				r7l = 1;
+				""", List.of(ev("r0", "0"), ev("r6", "0")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1006,13 +987,9 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp:9 = zext(r1);
 				temp = !temp;
 				r0 = temp(1);
-				"""),
-			List.of(
-				new Case("f", """
-						r1 = 0;
-						""",
-					List.of(
-						ev("r0", "0")))));
+				"""), List.of(new Case("f", """
+				r1 = 0;
+				""", List.of(ev("r0", "0")))));
 	}
 
 	@Test
@@ -1023,51 +1000,30 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r6l = r7l && r8;
 				r9l = r10l && r11l;
 				"""),
-			List.of(
-				new Case("ff", """
-						r1  =0; r2  =0;
-						r4  =0; r5l =0;
-						r7l =0; r8  =0;
-						r10l=0; r11l=0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+			List.of(new Case("ff", """
+					r1  =0; r2  =0;
+					r4  =0; r5l =0;
+					r7l =0; r8  =0;
+					r10l=0; r11l=0;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("ft", """
 						r1  =0; r2  =1;
 						r4  =0; r5l =1;
 						r7l =0; r8  =1;
 						r10l=0; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+						""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("tf", """
 						r1  =1; r2  =0;
 						r4  =1; r5l =0;
 						r7l =1; r8  =0;
 						r10l=1; r11l=0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+						""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("tt", """
 						r1  =1; r2  =1;
 						r4  =1; r5l =1;
 						r7l =1; r8  =1;
 						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1")))));
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1079,32 +1035,15 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 && temp2;
 				r0 = temp0(0);
 				r3 = temp0(1);
-				"""),
-			List.of(
-				new Case("ff", """
-						r1 = 0; r2 = 0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("ft", """
-						r1  =0; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("tf", """
-						r1 = 1; r2 = 0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("tt", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0")))));
+				"""), List.of(new Case("ff", """
+				r1 = 0; r2 = 0;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("ft", """
+				r1  =0; r2 = 1;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("tf", """
+				r1 = 1; r2 = 0;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("tt", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "1"), ev("r3", "0")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1116,51 +1055,30 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r6l = r7l || r8;
 				r9l = r10l || r11l;
 				"""),
-			List.of(
-				new Case("ff", """
-						r1  =0; r2  =0;
-						r4  =0; r5l =0;
-						r7l =0; r8  =0;
-						r10l=0; r11l=0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+			List.of(new Case("ff", """
+					r1  =0; r2  =0;
+					r4  =0; r5l =0;
+					r7l =0; r8  =0;
+					r10l=0; r11l=0;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("ft", """
 						r1  =0; r2  =1;
 						r4  =0; r5l =1;
 						r7l =0; r8  =1;
 						r10l=0; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1"))),
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1"))),
 				new Case("tf", """
 						r1  =1; r2  =0;
 						r4  =1; r5l =0;
 						r7l =1; r8  =0;
 						r10l=1; r11l=0;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1"))),
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1"))),
 				new Case("tt", """
 						r1  =1; r2  =1;
 						r4  =1; r5l =1;
 						r7l =1; r8  =1;
 						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1")))));
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1172,32 +1090,15 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 || temp2;
 				r0 = temp0(0);
 				r3 = temp0(1);
-				"""),
-			List.of(
-				new Case("ff", """
-						r1  =0; r2  =0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("ft", """
-						r1  =0; r2  =1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0"))),
-				new Case("tf", """
-						r1  =1; r2  =0;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0"))),
-				new Case("tt", """
-						r1  =1; r2  =1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0")))));
+				"""), List.of(new Case("ff", """
+				r1  =0; r2  =0;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("ft", """
+				r1  =0; r2  =1;
+				""", List.of(ev("r0", "1"), ev("r3", "0"))), new Case("tf", """
+				r1  =1; r2  =0;
+				""", List.of(ev("r0", "1"), ev("r3", "0"))), new Case("tt", """
+				r1  =1; r2  =1;
+				""", List.of(ev("r0", "1"), ev("r3", "0")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1209,51 +1110,30 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r6l = r7l ^^ r8;
 				r9l = r10l ^^ r11l;
 				"""),
-			List.of(
-				new Case("ff", """
-						r1  =0; r2  =0;
-						r4  =0; r5l =0;
-						r7l =0; r8  =0;
-						r10l=0; r11l=0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+			List.of(new Case("ff", """
+					r1  =0; r2  =0;
+					r4  =0; r5l =0;
+					r7l =0; r8  =0;
+					r10l=0; r11l=0;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("ft", """
 						r1  =0; r2  =1;
 						r4  =0; r5l =1;
 						r7l =0; r8  =1;
 						r10l=0; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1"))),
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1"))),
 				new Case("tf", """
 						r1  =1; r2  =0;
 						r4  =1; r5l =0;
 						r7l =1; r8  =0;
 						r10l=1; r11l=0;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1"))),
+						""", List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1"))),
 				new Case("tt", """
 						r1  =1; r2  =1;
 						r4  =1; r5l =1;
 						r7l =1; r8  =1;
 						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0")))));
+						""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1265,32 +1145,15 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 ^^ temp2;
 				r0 = temp0(0);
 				r3 = temp0(1);
-				"""),
-			List.of(
-				new Case("ff", """
-						r1  =0; r2  =0;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("ft", """
-						r1  =0; r2  =1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0"))),
-				new Case("tf", """
-						r1  =1; r2  =0;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "0"))),
-				new Case("tt", """
-						r1  =1; r2  =1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0")))));
+				"""), List.of(new Case("ff", """
+				r1  =0; r2  =0;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("ft", """
+				r1  =0; r2  =1;
+				""", List.of(ev("r0", "1"), ev("r3", "0"))), new Case("tf", """
+				r1  =1; r2  =0;
+				""", List.of(ev("r0", "1"), ev("r3", "0"))), new Case("tt", """
+				r1  =1; r2  =1;
+				""", List.of(ev("r0", "0"), ev("r3", "0")))));
 		// NOTE: Not testing cases with other bits set
 	}
 
@@ -1303,22 +1166,14 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = abs(r1);
 				r6l = abs(r7l);
-				"""),
-			List.of(
-				new Case("p", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", 0.5d),
-						ev("r6", 0.5f))),
-				new Case("n", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", 0.5d),
-						ev("r6", 0.5f)))));
+				"""), List.of(new Case("p", """
+				r1  =0x%x;
+				r7l =0x%x;
+				""".formatted(d0dot5, f0dot5), List.of(ev("r0", 0.5d), ev("r6", 0.5f))),
+			new Case("n", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot5, fn0dot5), List.of(ev("r0", 0.5d), ev("r6", 0.5f)))));
 	}
 
 	/**
@@ -1346,16 +1201,12 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r1  =0x%x;
 						r7l =0x%x;
 						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", Math.sqrt(0.5)),
-						ev("r6", (float) Math.sqrt(0.5)))),
+					List.of(ev("r0", Math.sqrt(0.5)), ev("r6", (float) Math.sqrt(0.5)))),
 				new Case("n", """
 						r1  =0x%x;
 						r7l =0x%x;
 						""".formatted(dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", nNaN_D),
-						ev("r6l", nNaN_F)))));
+					List.of(ev("r0", nNaN_D), ev("r6l", nNaN_F)))));
 	}
 
 	@Test
@@ -1367,22 +1218,14 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = ceil(r1);
 				r6l = ceil(r7l);
-				"""),
-			List.of(
-				new Case("p", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", 1.0d),
-						ev("r6", 1.0f))),
-				new Case("n", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", -0.0d),
-						ev("r6", -0.0f)))));
+				"""), List.of(new Case("p", """
+				r1  =0x%x;
+				r7l =0x%x;
+				""".formatted(d0dot5, f0dot5), List.of(ev("r0", 1.0d), ev("r6", 1.0f))),
+			new Case("n", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot5, fn0dot5), List.of(ev("r0", -0.0d), ev("r6", -0.0f)))));
 	}
 
 	@Test
@@ -1394,22 +1237,14 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = floor(r1);
 				r6l = floor(r7l);
-				"""),
-			List.of(
-				new Case("p", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", 0.0d),
-						ev("r6", 0.0f))),
-				new Case("n", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", -1.0d),
-						ev("r6", -1.0f)))));
+				"""), List.of(new Case("p", """
+				r1  =0x%x;
+				r7l =0x%x;
+				""".formatted(d0dot5, f0dot5), List.of(ev("r0", 0.0d), ev("r6", 0.0f))),
+			new Case("n", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot5, fn0dot5), List.of(ev("r0", -1.0d), ev("r6", -1.0f)))));
 	}
 
 	@Test
@@ -1433,64 +1268,38 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = round(r1);
 				r6l = round(r7l);
-				"""),
-			List.of(
-				new Case("+0.25", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot25, f0dot25),
-					List.of(
-						ev("r0", 0.0d),
-						ev("r6", 0.0f))),
-				new Case("-0.25", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot25, fn0dot25),
-					List.of(
-						ev("r0", 0.0d),
-						ev("r6", 0.0f))),
-				new Case("+0.5", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", 1.0d),
-						ev("r6", 1.0f))),
-				new Case("-0.5", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", 0.0d),
-						ev("r6", 0.0f))),
-				new Case("+0.75", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d0dot75, f0dot75),
-					List.of(
-						ev("r0", 1.0d),
-						ev("r6", 1.0f))),
-				new Case("-0.75", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn0dot75, fn0dot75),
-					List.of(
-						ev("r0", -1.0d),
-						ev("r6", -1.0f))),
-				new Case("+1.0", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(d1dot0, f1dot0),
-					List.of(
-						ev("r0", 1.0d),
-						ev("r6", 1.0f))),
-				new Case("-1.0", """
-						r1  =0x%x;
-						r7l =0x%x;
-						""".formatted(dn1dot0, fn1dot0),
-					List.of(
-						ev("r0", -1.0d),
-						ev("r6", -1.0f)))));
+				"""), List.of(new Case("+0.25", """
+				r1  =0x%x;
+				r7l =0x%x;
+				""".formatted(d0dot25, f0dot25), List.of(ev("r0", 0.0d), ev("r6", 0.0f))),
+			new Case("-0.25", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot25, fn0dot25), List.of(ev("r0", 0.0d), ev("r6", 0.0f))),
+			new Case("+0.5", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(d0dot5, f0dot5), List.of(ev("r0", 1.0d), ev("r6", 1.0f))),
+			new Case("-0.5", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot5, fn0dot5), List.of(ev("r0", 0.0d), ev("r6", 0.0f))),
+			new Case("+0.75", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(d0dot75, f0dot75), List.of(ev("r0", 1.0d), ev("r6", 1.0f))),
+			new Case("-0.75", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn0dot75, fn0dot75), List.of(ev("r0", -1.0d), ev("r6", -1.0f))),
+			new Case("+1.0", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(d1dot0, f1dot0), List.of(ev("r0", 1.0d), ev("r6", 1.0f))),
+			new Case("-1.0", """
+					r1  =0x%x;
+					r7l =0x%x;
+					""".formatted(dn1dot0, fn1dot0), List.of(ev("r0", -1.0d), ev("r6", -1.0f)))));
 	}
 
 	@Test
@@ -1500,15 +1309,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = float2float(r1l);
 				r6l = float2float(r7);
-				"""),
-			List.of(
-				new Case("only", """
-						r1l =0x%x;
-						r7  =0x%x;
-						""".formatted(f0dot5, d0dot5),
-					List.of(
-						ev("r0", 0.5d),
-						ev("r6", 0.5f)))));
+				"""), List.of(new Case("only", """
+				r1l =0x%x;
+				r7  =0x%x;
+				""".formatted(f0dot5, d0dot5), List.of(ev("r0", 0.5d), ev("r6", 0.5f)))));
 	}
 
 	@Test
@@ -1519,15 +1323,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = int2float(r1l);
 				r6l = int2float(r7);
-				"""),
-			List.of(
-				new Case("only", """
-						r1l =1;
-						r7  =2;
-						""",
-					List.of(
-						ev("r0", 1.0d),
-						ev("r6", 2.0f)))));
+				"""), List.of(new Case("only", """
+				r1l =1;
+				r7  =2;
+				""", List.of(ev("r0", 1.0d), ev("r6", 2.0f)))));
 	}
 
 	@Test
@@ -1551,33 +1350,21 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r7  =0x%x;
 						r10l=0x%x;
 						""".formatted(d1dot0, f1dot0, d1dot0, f1dot0),
-					List.of(
-						ev("r0", "1"),
-						ev("r3", "1"),
-						ev("r6", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r3", "1"), ev("r6", "1"), ev("r9", "1"))),
 				new Case("+0.5", """
 						r1  =0x%x;
 						r4l =0x%x;
 						r7  =0x%x;
 						r10l=0x%x;
 						""".formatted(d0dot5, f0dot5, d0dot5, f0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0"))),
+					List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0"))),
 				new Case("-0.5", """
 						r1  =0x%x;
 						r4l =0x%x;
 						r7  =0x%x;
 						r10l=0x%x;
 						""".formatted(dn0dot5, dn0dot5, dn0dot5, fn0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6", "0"),
-						ev("r9", "0")))));
+					List.of(ev("r0", "0"), ev("r3", "0"), ev("r6", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -1592,22 +1379,14 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = nan(r1l);
 				r6l = nan(r7);
-				"""),
-			List.of(
-				new Case("num", """
-						r1l =0x%x;
-						r7  =0x%x;
-						""".formatted(f0dot5, d0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r6", "0"))),
-				new Case("nan", """
-						r1l =0x%x;
-						r7  =0x%x;
-						""".formatted(fNaN, dNaN),
-					List.of(
-						ev("r0", "1"),
-						ev("r6", "1")))));
+				"""), List.of(new Case("num", """
+				r1l =0x%x;
+				r7  =0x%x;
+				""".formatted(f0dot5, d0dot5), List.of(ev("r0", "0"), ev("r6", "0"))),
+			new Case("nan", """
+					r1l =0x%x;
+					r7  =0x%x;
+					""".formatted(fNaN, dNaN), List.of(ev("r0", "1"), ev("r6", "1")))));
 	}
 
 	@Test
@@ -1617,15 +1396,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = f-r1;
 				r6l = f-r7l;
-				"""),
-			List.of(
-				new Case("num", """
-						r1 =0x%x;
-						r7l  =0x%x;
-						""".formatted(d0dot5, f0dot5),
-					List.of(
-						ev("r0", -0.5d),
-						ev("r6l", -0.5f)))));
+				"""), List.of(new Case("num", """
+				r1 =0x%x;
+				r7l  =0x%x;
+				""".formatted(d0dot5, f0dot5), List.of(ev("r0", -0.5d), ev("r6l", -0.5f)))));
 	}
 
 	@Test
@@ -1637,15 +1411,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 f+ r2;
 				r9l = r10l f+ r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x%x; r2  =0x%x;
-						r10l=0x%x; r11l=0x%x;
-						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", 0.75d),
-						ev("r9", 0.75f)))));
+				"""), List.of(new Case("only", """
+				r1  =0x%x; r2  =0x%x;
+				r10l=0x%x; r11l=0x%x;
+				""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
+			List.of(ev("r0", 0.75d), ev("r9", 0.75f)))));
 	}
 
 	@Test
@@ -1657,15 +1427,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 f- r2;
 				r9l = r10l f- r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x%x; r2  =0x%x;
-						r10l=0x%x; r11l=0x%x;
-						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", 0.25d),
-						ev("r9", 0.25f)))));
+				"""), List.of(new Case("only", """
+				r1  =0x%x; r2  =0x%x;
+				r10l=0x%x; r11l=0x%x;
+				""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
+			List.of(ev("r0", 0.25d), ev("r9", 0.25f)))));
 	}
 
 	@Test
@@ -1677,15 +1443,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 f* r2;
 				r9l = r10l f* r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x%x; r2  =0x%x;
-						r10l=0x%x; r11l=0x%x;
-						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", 0.125d),
-						ev("r9", 0.125f)))));
+				"""), List.of(new Case("only", """
+				r1  =0x%x; r2  =0x%x;
+				r10l=0x%x; r11l=0x%x;
+				""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
+			List.of(ev("r0", 0.125d), ev("r9", 0.125f)))));
 	}
 
 	@Test
@@ -1697,15 +1459,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 f/ r2;
 				r9l = r10l f/ r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x%x; r2  =0x%x;
-						r10l=0x%x; r11l=0x%x;
-						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", 2.0d),
-						ev("r9", 2.0f)))));
+				"""), List.of(new Case("only", """
+				r1  =0x%x; r2  =0x%x;
+				r10l=0x%x; r11l=0x%x;
+				""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
+			List.of(ev("r0", 2.0d), ev("r9", 2.0f)))));
 	}
 
 	@Test
@@ -1723,23 +1481,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot25, d0dot5, f0dot25, f0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
+					List.of(ev("r0", "0"), ev("r9", "0"))),
 				new Case("eq", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot5, f0dot5, f0dot5),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r9", "1"))),
 				new Case("gt", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+					List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -1757,23 +1509,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot25, d0dot5, f0dot25, f0dot5),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r9", "1"))),
 				new Case("eq", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot5, f0dot5, f0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
+					List.of(ev("r0", "0"), ev("r9", "0"))),
 				new Case("gt", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+					List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -1791,23 +1537,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot25, d0dot5, f0dot25, f0dot5),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r9", "1"))),
 				new Case("eq", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot5, f0dot5, f0dot5),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r9", "1"))),
 				new Case("gt", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+					List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -1825,23 +1565,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot25, d0dot5, f0dot25, f0dot5),
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
+					List.of(ev("r0", "1"), ev("r9", "1"))),
 				new Case("eq", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot5, f0dot5, f0dot5),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
+					List.of(ev("r0", "0"), ev("r9", "0"))),
 				new Case("gt", """
 						r1  =0x%x; r2  =0x%x;
 						r10l=0x%x; r11l=0x%x;
 						""".formatted(d0dot5, d0dot25, f0dot5, f0dot25),
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+					List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -1849,22 +1583,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0  = -r1;
 				r6l = -r7l;
-				"""),
-			List.of(
-				new Case("pos", """
-						r1  =4;
-						r7l =4;
-						""",
-					List.of(
-						ev("r0", "-4"),
-						ev("r6l", "-4"))),
-				new Case("neg", """
-						r1  =-4;
-						r7l =-4;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r6l", "4")))));
+				"""), List.of(new Case("pos", """
+				r1  =4;
+				r7l =4;
+				""", List.of(ev("r0", "-4"), ev("r6l", "-4"))), new Case("neg", """
+				r1  =-4;
+				r7l =-4;
+				""", List.of(ev("r0", "4"), ev("r6l", "4")))));
 	}
 
 	@Test
@@ -1874,20 +1599,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = -temp1;
 				r0 = temp0(0);
 				r2 = temp0(1);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1 = 4;
-						""",
-					List.of(
-						ev("r0", "-4"),
-						ev("r2", "-1"))),
-				new Case("neg", """
-						r1 =-4;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r2", "0")))));
+				"""), List.of(new Case("pos", """
+				r1 = 4;
+				""", List.of(ev("r0", "-4"), ev("r2", "-1"))), new Case("neg", """
+				r1 =-4;
+				""", List.of(ev("r0", "4"), ev("r2", "0")))));
 	}
 
 	@Test
@@ -1895,22 +1611,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0  = ~r1;
 				r6l = ~r7l;
-				"""),
-			List.of(
-				new Case("pos", """
-						r1  =4;
-						r7l =4;
-						""",
-					List.of(
-						ev("r0", "-5"),
-						ev("r6l", "-5"))),
-				new Case("neg", """
-						r1  =-4;
-						r7l =-4;
-						""",
-					List.of(
-						ev("r0", "3"),
-						ev("r6l", "3")))));
+				"""), List.of(new Case("pos", """
+				r1  =4;
+				r7l =4;
+				""", List.of(ev("r0", "-5"), ev("r6l", "-5"))), new Case("neg", """
+				r1  =-4;
+				r7l =-4;
+				""", List.of(ev("r0", "3"), ev("r6l", "3")))));
 	}
 
 	@Test
@@ -1920,38 +1627,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = ~temp1;
 				r0 = temp0(0);
 				r2 = temp0(1);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1 = 4;
-						""",
-					List.of(
-						ev("r0", "-5"),
-						ev("r2", "-1"))),
-				new Case("neg", """
-						r1 = -4;
-						""",
-					List.of(
-						ev("r0", "3"),
-						ev("r2", "0")))));
+				"""), List.of(new Case("pos", """
+				r1 = 4;
+				""", List.of(ev("r0", "-5"), ev("r2", "-1"))), new Case("neg", """
+				r1 = -4;
+				""", List.of(ev("r0", "3"), ev("r2", "0")))));
 	}
 
 	@Test
 	public void testIntSExtOpGen() throws Exception {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = sext(r1l);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						""",
-					List.of(
-						ev("r0", "4"))),
-				new Case("neg", """
-						r1l =-4;
-						""",
-					List.of(
-						ev("r0", "-4")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				""", List.of(ev("r0", "4"))), new Case("neg", """
+				r1l =-4;
+				""", List.of(ev("r0", "-4")))));
 	}
 
 	@Test
@@ -1960,38 +1651,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = sext(r1l);
 				r0 = temp0(0);
 				r2 = temp0(1);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r2", "0"))),
-				new Case("neg", """
-						r1l =-4;
-						""",
-					List.of(
-						ev("r0", "-4"),
-						ev("r2", "-1")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				""", List.of(ev("r0", "4"), ev("r2", "0"))), new Case("neg", """
+				r1l =-4;
+				""", List.of(ev("r0", "-4"), ev("r2", "-1")))));
 	}
 
 	@Test
 	public void testIntZExtOpGen() throws Exception {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = zext(r1l);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						""",
-					List.of(
-						ev("r0", "4"))),
-				new Case("neg", """
-						r1l =-4;
-						""",
-					List.of(
-						ev("r0", "0xfffffffc")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				""", List.of(ev("r0", "4"))), new Case("neg", """
+				r1l =-4;
+				""", List.of(ev("r0", "0xfffffffc")))));
 	}
 
 	@Test
@@ -2000,20 +1675,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = zext(r1l);
 				r0 = temp0(0);
 				r2 = temp0(1);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r2", "0"))),
-				new Case("neg", """
-						r1l =-4;
-						""",
-					List.of(
-						ev("r0", "0xfffffffc"),
-						ev("r2", "0xffffff")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				""", List.of(ev("r0", "4"), ev("r2", "0"))), new Case("neg", """
+				r1l =-4;
+				""", List.of(ev("r0", "0xfffffffc"), ev("r2", "0xffffff")))));
 	}
 
 	@Test
@@ -2024,22 +1690,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 				temp:3 = r3(0);
 				r2 = lzcount(temp);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						r3  =4;
-						""",
-					List.of(
-						ev("r0", "29"),
-						ev("r2", "21"))),
-				new Case("neg", """
-						r1l =-4;
-						r3  =-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r2", "0")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				r3  =4;
+				""", List.of(ev("r0", "29"), ev("r2", "21"))), new Case("neg", """
+				r1l =-4;
+				r3  =-4;
+				""", List.of(ev("r0", "0"), ev("r2", "0")))));
 	}
 
 	@Test
@@ -2049,20 +1706,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1z:9 = zext(r1);
 				r0 = lzcount(temp1s);
 				r2 = lzcount(temp1z);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1 =4;
-						""",
-					List.of(
-						ev("r0", "69"),
-						ev("r2", "69"))),
-				new Case("neg", """
-						r1 =-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r2", "8")))));
+				"""), List.of(new Case("pos", """
+				r1 =4;
+				""", List.of(ev("r0", "69"), ev("r2", "69"))), new Case("neg", """
+				r1 =-4;
+				""", List.of(ev("r0", "0"), ev("r2", "8")))));
 	}
 
 	@Test
@@ -2070,18 +1718,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		// Test size change, even though not necessary here
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = popcount(r1l);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1l =4;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("neg", """
-						r1l =-4;
-						""",
-					List.of(
-						ev("r0", "30")))));
+				"""), List.of(new Case("pos", """
+				r1l =4;
+				""", List.of(ev("r0", "1"))), new Case("neg", """
+				r1l =-4;
+				""", List.of(ev("r0", "30")))));
 	}
 
 	@Test
@@ -2091,20 +1732,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1z:9 = zext(r1);
 				r0 = popcount(temp1s);
 				r2 = popcount(temp1z);
-				"""),
-			List.of(
-				new Case("pos", """
-						r1 =4;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r2", "1"))),
-				new Case("neg", """
-						r1 =-4;
-						""",
-					List.of(
-						ev("r0", "70"),
-						ev("r2", "62")))));
+				"""), List.of(new Case("pos", """
+				r1 =4;
+				""", List.of(ev("r0", "1"), ev("r2", "1"))), new Case("neg", """
+				r1 =-4;
+				""", List.of(ev("r0", "70"), ev("r2", "62")))));
 	}
 
 	@Test
@@ -2112,15 +1744,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0l = r1(3);
 				r3 = r4l(3);
-				"""),
-			List.of(
-				new Case("only", """
-						r1 =0x%x;
-						r4l=0x12345678;
-						""".formatted(LONG_CONST),
-					List.of(
-						ev("r0l", "0xadbeefca"),
-						ev("r3", "0x12")))));
+				"""), List.of(new Case("only", """
+				r1 =0x%x;
+				r4l=0x12345678;
+				""".formatted(LONG_CONST), List.of(ev("r0l", "0xadbeefca"), ev("r3", "0x12")))));
 	}
 
 	@Test
@@ -2128,10 +1755,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:9 = 0x1122334455667788;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455667788")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455667788")))));
 	}
 
 	@Test
@@ -2139,10 +1763,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:9 = 0x1122334455667788;
 				r0 = temp0(1);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x11223344556677")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x11223344556677")))));
 	}
 
 	@Test
@@ -2150,10 +1771,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:10 = 0x1122334455667788;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455667788")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455667788")))));
 	}
 
 	@Test
@@ -2161,10 +1779,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:10 = 0x1122334455667788;
 				r0 = temp0(1);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x11223344556677")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x11223344556677")))));
 	}
 
 	@Test
@@ -2172,10 +1787,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:10 = 0x1122334455667788;
 				r0 = temp0(2);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x112233445566")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x112233445566")))));
 	}
 
 	@Test
@@ -2183,10 +1795,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:11 = 0x1122334455667788;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455667788")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455667788")))));
 	}
 
 	@Test
@@ -2194,10 +1803,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:11 = 0x1122334455667788;
 				r0 = temp0(1);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x11223344556677")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x11223344556677")))));
 	}
 
 	@Test
@@ -2205,10 +1811,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:11 = 0x1122334455667788;
 				r0 = temp0(2);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x112233445566")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x112233445566")))));
 	}
 
 	@Test
@@ -2216,10 +1819,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:11 = 0x1122334455667788;
 				r0 = temp0(3);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455")))));
 	}
 
 	@Test
@@ -2227,10 +1827,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:12 = 0x1122334455667788;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455667788")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455667788")))));
 	}
 
 	@Test
@@ -2238,10 +1835,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:12 = 0x1122334455667788;
 				r0 = temp0(1);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x11223344556677")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x11223344556677")))));
 	}
 
 	@Test
@@ -2249,10 +1843,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:12 = 0x1122334455667788;
 				r0 = temp0(2);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x112233445566")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x112233445566")))));
 	}
 
 	@Test
@@ -2260,10 +1851,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:12 = 0x1122334455667788;
 				r0 = temp0(3);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x1122334455")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x1122334455")))));
 	}
 
 	@Test
@@ -2271,10 +1859,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp0:12 = 0x1122334455667788;
 				r0 = temp0(4);
-				"""),
-			List.of(
-				new Case("only", "", List.of(
-					ev("r0", "0x11223344")))));
+				"""), List.of(new Case("only", "", List.of(ev("r0", "0x11223344")))));
 	}
 
 	@Test
@@ -2282,15 +1867,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 + r2;
 				r9l = r10l + r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =2; r2  =2;
-						r10l=2; r11l=2;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r9", "4")))));
+				"""), List.of(new Case("only", """
+				r1  =2; r2  =2;
+				r10l=2; r11l=2;
+				""", List.of(ev("r0", "4"), ev("r9", "4")))));
 	}
 
 	@Test
@@ -2300,18 +1880,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = zext(r2);
 				temp0:9 = temp1 + temp2;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "4"))),
-				new Case("large", """
-						r1 = 0x8111111122222222; r2 = 0x8765432112345678;
-						""",
-					List.of(
-						ev("r0", "0x87654323456789a")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 2;
+				""", List.of(ev("r0", "4"))), new Case("large", """
+				r1 = 0x8111111122222222; r2 = 0x8765432112345678;
+				""", List.of(ev("r0", "0x87654323456789a")))));
 	}
 
 	@Test
@@ -2319,15 +1892,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 - r2;
 				r9l = r10l - r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =2; r2  =2;
-						r10l=2; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("only", """
+				r1  =2; r2  =2;
+				r10l=2; r11l=2;
+				""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -2338,20 +1906,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 - temp2;
 				r0 = temp0(0);
 				r3 = temp0(1);
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"))),
-				new Case("large", """
-						r1 = 0x8111111122222222; r2 = 0x8765432112345678;
-						""",
-					List.of(
-						ev("r0", "0xf9abcdf00fedcbaa"),
-						ev("r3", "0xfff9abcdf00fedcb")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 2;
+				""", List.of(ev("r0", "0"), ev("r3", "0"))), new Case("large", """
+				r1 = 0x8111111122222222; r2 = 0x8765432112345678;
+				""", List.of(ev("r0", "0xf9abcdf00fedcbaa"), ev("r3", "0xfff9abcdf00fedcb")))));
 	}
 
 	@Test
@@ -2359,15 +1918,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 * r2;
 				r9l = r10l * r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =2; r2  =2;
-						r10l=2; r11l=2;
-						""",
-					List.of(
-						ev("r0", "4"),
-						ev("r9", "4")))));
+				"""), List.of(new Case("only", """
+				r1  =2; r2  =2;
+				r10l=2; r11l=2;
+				""", List.of(ev("r0", "4"), ev("r9", "4")))));
 	}
 
 	@Test
@@ -2376,20 +1930,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:16 = zext(r1) * zext(r2);
 				r0 = temp0[0,64];
 				r3 = temp0[64,64];
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 7;
-						""",
-					List.of(
-						ev("r0", "14"),
-						ev("r3", "0"))),
-				new Case("large", """
-						r1 = 0xffeeddccbbaa9988; r2 = 0x8877665544332211;
-						""",
-					List.of(
-						ev("r0", "0x30fdc971d4d04208"),
-						ev("r3", "0x886e442c48bba72d")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 7;
+				""", List.of(ev("r0", "14"), ev("r3", "0"))), new Case("large", """
+				r1 = 0xffeeddccbbaa9988; r2 = 0x8877665544332211;
+				""", List.of(ev("r0", "0x30fdc971d4d04208"), ev("r3", "0x886e442c48bba72d")))));
 	}
 
 	@Test
@@ -2397,36 +1942,20 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 / r2;
 				r9l = r10l / r11l;
-				"""),
-			List.of(
-				new Case("pp", """
-						r1  =5; r2  =2;
-						r10l=5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "2"),
-						ev("r9", "2"))),
-				new Case("pn", """
-						r1  =5; r2  =-2;
-						r10l=5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("np", """
-						r1  =-5; r2  =2;
-						r10l=-5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0x7ffffffffffffffd"),
-						ev("r9", "0x7ffffffd"))),
-				new Case("nn", """
-						r1  =-5; r2  =-2;
-						r10l=-5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("pp", """
+				r1  =5; r2  =2;
+				r10l=5; r11l=2;
+				""", List.of(ev("r0", "2"), ev("r9", "2"))), new Case("pn", """
+				r1  =5; r2  =-2;
+				r10l=5; r11l=-2;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("np", """
+				r1  =-5; r2  =2;
+				r10l=-5; r11l=2;
+				""", List.of(ev("r0", "0x7ffffffffffffffd"), ev("r9", "0x7ffffffd"))),
+			new Case("nn", """
+					r1  =-5; r2  =-2;
+					r10l=-5; r11l=-2;
+					""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -2434,15 +1963,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp:3 = r1 + r2;
 				r0 = temp / r0;
-				"""),
-			List.of(
-				new Case("only", """
-						r1 = 0xdead;
-						r2 = 0xbeef;
-						r0 = 4;
-						""",
-					List.of(
-						ev("r0", "0x6767")))));
+				"""), List.of(new Case("only", """
+				r1 = 0xdead;
+				r2 = 0xbeef;
+				r0 = 4;
+				""", List.of(ev("r0", "0x6767")))));
 	}
 
 	@Test
@@ -2450,32 +1975,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				temp1:9 = sext(r1);
 				r0l = temp1 / r2;
-				"""),
-			List.of(
-				new Case("pp", """
-						r1 = 0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x2ee95b10"))),
-				new Case("pn", """
-						r1 = 0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x00000000"))),
-				new Case("np", """
-						r1 = -0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x0e658826"))),
-				new Case("nn", """
-						r1 = -0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x000000ff")))));
+				"""), List.of(new Case("pp", """
+				r1 = 0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0l", "0x2ee95b10"))), new Case("pn", """
+				r1 = 0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0l", "0x00000000"))), new Case("np", """
+				r1 = -0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0l", "0x0e658826"))), new Case("nn", """
+				r1 = -0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0l", "0x000000ff")))));
 	}
 
 	@Test
@@ -2485,33 +1997,21 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = sext(r2);
 				local quotient = temp1 / temp2;
 				r0l = quotient(0);
-				"""),
-			List.of(
-				new Case("pp", """
-						r1 = 0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x2ee95b10"))),
-				new Case("pn", """
-						r1 = 0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x00000000"))),
-				new Case("np", """
-						r1 = -0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x0e658826"))),
-				// NOTE: Result differs from NonUniform, because r2 is also sext()ed
-				new Case("nn", """
-						r1 = -0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0l", "0x00000000")))));
+				"""), List.of(new Case("pp", """
+				r1 = 0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0l", "0x2ee95b10"))), new Case("pn", """
+				r1 = 0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0l", "0x00000000"))), new Case("np", """
+				r1 = -0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0l", "0x0e658826"))),
+			// NOTE: Result differs from NonUniform, because r2 is also sext()ed
+			new Case("nn", """
+					r1 = -0x67452301efcdab89;
+					r2 = -0x1234;
+					""", List.of(ev("r0l", "0x00000000")))));
 	}
 
 	@Test
@@ -2519,36 +2019,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 s/ r2;
 				r9l = r10l s/ r11l;
-				"""),
-			List.of(
-				new Case("pp", """
-						r1  =5; r2  =2;
-						r10l=5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "2"),
-						ev("r9l", "2"))),
-				new Case("pn", """
-						r1  =5; r2  =-2;
-						r10l=5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "-2"),
-						ev("r9l", "-2"))),
-				new Case("np", """
-						r1  =-5; r2  =2;
-						r10l=-5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "-2"),
-						ev("r9l", "-2"))),
-				new Case("nn", """
-						r1  =-5; r2  =-2;
-						r10l=-5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "2"),
-						ev("r9l", "2")))));
+				"""), List.of(new Case("pp", """
+				r1  =5; r2  =2;
+				r10l=5; r11l=2;
+				""", List.of(ev("r0", "2"), ev("r9l", "2"))), new Case("pn", """
+				r1  =5; r2  =-2;
+				r10l=5; r11l=-2;
+				""", List.of(ev("r0", "-2"), ev("r9l", "-2"))), new Case("np", """
+				r1  =-5; r2  =2;
+				r10l=-5; r11l=2;
+				""", List.of(ev("r0", "-2"), ev("r9l", "-2"))), new Case("nn", """
+				r1  =-5; r2  =-2;
+				r10l=-5; r11l=-2;
+				""", List.of(ev("r0", "2"), ev("r9l", "2")))));
 	}
 
 	@Test
@@ -2558,32 +2041,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = sext(r2);
 				local quotient = temp1 s/ temp2;
 				r0l = quotient(0);
-				"""),
-			List.of(
-				new Case("pp", """
-						r1 = 0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0x2ee95b10"))),
-				new Case("pn", """
-						r1 = 0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0xd116a4f0"))),
-				new Case("np", """
-						r1 = -0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0xd116a4f0"))),
-				new Case("nn", """
-						r1 = -0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0x2ee95b10")))));
+				"""), List.of(new Case("pp", """
+				r1 = 0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0x2ee95b10"))), new Case("pn", """
+				r1 = 0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0xd116a4f0"))), new Case("np", """
+				r1 = -0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0xd116a4f0"))), new Case("nn", """
+				r1 = -0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0x2ee95b10")))));
 	}
 
 	@Test
@@ -2591,36 +2061,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 % r2;
 				r9l = r10l % r11l;
-				"""),
-			List.of(
-				new Case("pp", """
-						r1  =5; r2  =2;
-						r10l=5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9l", "1"))),
-				new Case("pn", """
-						r1  =5; r2  =-2;
-						r10l=5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "5"),
-						ev("r9l", "5"))),
-				new Case("np", """
-						r1  =-5; r2  =2;
-						r10l=-5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9l", "1"))),
-				new Case("nn", """
-						r1  =-5; r2  =-2;
-						r10l=-5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "-5"),
-						ev("r9l", "-5")))));
+				"""), List.of(new Case("pp", """
+				r1  =5; r2  =2;
+				r10l=5; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9l", "1"))), new Case("pn", """
+				r1  =5; r2  =-2;
+				r10l=5; r11l=-2;
+				""", List.of(ev("r0", "5"), ev("r9l", "5"))), new Case("np", """
+				r1  =-5; r2  =2;
+				r10l=-5; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9l", "1"))), new Case("nn", """
+				r1  =-5; r2  =-2;
+				r10l=-5; r11l=-2;
+				""", List.of(ev("r0", "-5"), ev("r9l", "-5")))));
 	}
 
 	@Test
@@ -2630,32 +2083,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = sext(r2);
 				local remainder = temp1 % temp2;
 				r0l = remainder(0);
-				"""),
-			List.of(
-				new Case("pp", """
-						r1 = 0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0x0c49"))),
-				new Case("pn", """
-						r1 = 0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0xefcdab89"))),
-				new Case("np", """
-						r1 = -0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0x00bf"))),
-				new Case("nn", """
-						r1 = -0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0x10325477")))));
+				"""), List.of(new Case("pp", """
+				r1 = 0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0x0c49"))), new Case("pn", """
+				r1 = 0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0xefcdab89"))), new Case("np", """
+				r1 = -0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0x00bf"))), new Case("nn", """
+				r1 = -0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0x10325477")))));
 	}
 
 	@Test
@@ -2663,36 +2103,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 s% r2;
 				r9l = r10l s% r11l;
-				"""),
-			List.of(
-				new Case("pp", """
-						r1  =5; r2  =2;
-						r10l=5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9l", "1"))),
-				new Case("pn", """
-						r1  =5; r2  =-2;
-						r10l=5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9l", "1"))),
-				new Case("np", """
-						r1  =-5; r2  =2;
-						r10l=-5; r11l=2;
-						""",
-					List.of(
-						ev("r0", "-1"),
-						ev("r9l", "-1"))),
-				new Case("nn", """
-						r1  =-5; r2  =-2;
-						r10l=-5; r11l=-2;
-						""",
-					List.of(
-						ev("r0", "-1"),
-						ev("r9l", "-1")))));
+				"""), List.of(new Case("pp", """
+				r1  =5; r2  =2;
+				r10l=5; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9l", "1"))), new Case("pn", """
+				r1  =5; r2  =-2;
+				r10l=5; r11l=-2;
+				""", List.of(ev("r0", "1"), ev("r9l", "1"))), new Case("np", """
+				r1  =-5; r2  =2;
+				r10l=-5; r11l=2;
+				""", List.of(ev("r0", "-1"), ev("r9l", "-1"))), new Case("nn", """
+				r1  =-5; r2  =-2;
+				r10l=-5; r11l=-2;
+				""", List.of(ev("r0", "-1"), ev("r9l", "-1")))));
 	}
 
 	@Test
@@ -2702,32 +2125,19 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = sext(r2);
 				local quotient = temp1 s% temp2;
 				r0l = quotient(0);
-				"""),
-			List.of(
-				new Case("pp", """
-						r1 = 0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0x0c49"))),
-				new Case("pn", """
-						r1 = 0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0x0c49"))),
-				new Case("np", """
-						r1 = -0x67452301efcdab89;
-						r2 = 0x1234;
-						""",
-					List.of(
-						ev("r0", "0xfffff3b7"))),
-				new Case("nn", """
-						r1 = -0x67452301efcdab89;
-						r2 = -0x1234;
-						""",
-					List.of(
-						ev("r0", "0xfffff3b7")))));
+				"""), List.of(new Case("pp", """
+				r1 = 0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0x0c49"))), new Case("pn", """
+				r1 = 0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0x0c49"))), new Case("np", """
+				r1 = -0x67452301efcdab89;
+				r2 = 0x1234;
+				""", List.of(ev("r0", "0xfffff3b7"))), new Case("nn", """
+				r1 = -0x67452301efcdab89;
+				r2 = -0x1234;
+				""", List.of(ev("r0", "0xfffff3b7")))));
 	}
 
 	@Test
@@ -2735,15 +2145,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 & r2;
 				r9l = r10l & r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x3; r2  =0x5;
-						r10l=0x3; r11l=0x5;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("only", """
+				r1  =0x3; r2  =0x5;
+				r10l=0x3; r11l=0x5;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -2753,18 +2158,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = zext(r2);
 				temp0:9 = temp1 & temp2;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "2"))),
-				new Case("large", """
-						r1 = 0x8111111122222222; r2 = 0x8765432112345678;
-						""",
-					List.of(
-						ev("r0", "0x8101010102200220")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 2;
+				""", List.of(ev("r0", "2"))), new Case("large", """
+				r1 = 0x8111111122222222; r2 = 0x8765432112345678;
+				""", List.of(ev("r0", "0x8101010102200220")))));
 	}
 
 	@Test
@@ -2772,15 +2170,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 | r2;
 				r9l = r10l | r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x3; r2  =0x5;
-						r10l=0x3; r11l=0x5;
-						""",
-					List.of(
-						ev("r0", "7"),
-						ev("r9", "7")))));
+				"""), List.of(new Case("only", """
+				r1  =0x3; r2  =0x5;
+				r10l=0x3; r11l=0x5;
+				""", List.of(ev("r0", "7"), ev("r9", "7")))));
 	}
 
 	@Test
@@ -2790,18 +2183,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = zext(r2);
 				temp0:9 = temp1 | temp2;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "2"))),
-				new Case("large", """
-						r1 = 0x8111111122222222; r2 = 0x8765432112345678;
-						""",
-					List.of(
-						ev("r0", "0x877553313236767a")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 2;
+				""", List.of(ev("r0", "2"))), new Case("large", """
+				r1 = 0x8111111122222222; r2 = 0x8765432112345678;
+				""", List.of(ev("r0", "0x877553313236767a")))));
 	}
 
 	@Test
@@ -2809,15 +2195,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 ^ r2;
 				r9l = r10l ^ r11l;
-				"""),
-			List.of(
-				new Case("only", """
-						r1  =0x3; r2  =0x5;
-						r10l=0x3; r11l=0x5;
-						""",
-					List.of(
-						ev("r0", "6"),
-						ev("r9", "6")))));
+				"""), List.of(new Case("only", """
+				r1  =0x3; r2  =0x5;
+				r10l=0x3; r11l=0x5;
+				""", List.of(ev("r0", "6"), ev("r9", "6")))));
 	}
 
 	@Test
@@ -2827,18 +2208,11 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp2:9 = zext(r2);
 				temp0:9 = temp1 ^ temp2;
 				r0 = temp0(0);
-				"""),
-			List.of(
-				new Case("small", """
-						r1 = 2; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("large", """
-						r1 = 0x8111111122222222; r2 = 0x8765432112345678;
-						""",
-					List.of(
-						ev("r0", "0x67452303016745a")))));
+				"""), List.of(new Case("small", """
+				r1 = 2; r2 = 2;
+				""", List.of(ev("r0", "0"))), new Case("large", """
+				r1 = 0x8111111122222222; r2 = 0x8765432112345678;
+				""", List.of(ev("r0", "0x67452303016745a")))));
 	}
 
 	@Test
@@ -2846,43 +2220,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 == r2;
 				r9l = r10l == r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -2891,33 +2244,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 == temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "0")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "0"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "0"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "1"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "0")))));
 	}
 
 	@Test
@@ -2925,43 +2262,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 != r2;
 				r9l = r10l != r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -2970,33 +2286,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 != temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "1")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "1"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "1"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "1"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "1")))));
 	}
 
 	@Test
@@ -3004,43 +2304,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 <= r2;
 				r9l = r10l <= r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -3049,33 +2328,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 <= temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "1")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "1"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "0"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "1"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "1")))));
 	}
 
 	@Test
@@ -3083,43 +2346,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 s<= r2;
 				r9l = r10l s<= r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -3128,33 +2370,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 s<= temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "0")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "1"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "1"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "1"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "0")))));
 	}
 
 	@Test
@@ -3162,43 +2388,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 < r2;
 				r9l = r10l < r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -3207,33 +2412,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 < temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "1")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "1"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "0"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "1")))));
 	}
 
 	@Test
@@ -3241,43 +2430,22 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = r1 s< r2;
 				r9l = r10l s< r11l;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1  =1; r2  =2;
-						r10l=1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("slt", """
-						r1  =-1; r2  =2;
-						r10l=-1; r11l=2;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("eq", """
-						r1  =1; r2  =1;
-						r10l=1; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("gt", """
-						r1  =2; r2  =1;
-						r10l=2; r11l=1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("sgt", """
-						r1  =2; r2  =-1;
-						r10l=2; r11l=-1;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("lt", """
+				r1  =1; r2  =2;
+				r10l=1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("slt", """
+				r1  =-1; r2  =2;
+				r10l=-1; r11l=2;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("eq", """
+				r1  =1; r2  =1;
+				r10l=1; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("gt", """
+				r1  =2; r2  =1;
+				r10l=2; r11l=1;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("sgt", """
+				r1  =2; r2  =-1;
+				r10l=2; r11l=-1;
+				""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -3286,33 +2454,17 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = sext(r1);
 				temp2:9 = sext(r2);
 				r0 = temp1 s< temp2;
-				"""),
-			List.of(
-				new Case("lt", """
-						r1 = 1; r2 = 2;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("slt", """
-						r1 = -1; r2 = 0x7fffffffffffffff;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("eq", """
-						r1 = 1; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("gt", """
-						r1 = 2; r2 = 1;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("sgt", """
-						r1 = 2; r2 = -1;
-						""",
-					List.of(
-						ev("r0", "0")))));
+				"""), List.of(new Case("lt", """
+				r1 = 1; r2 = 2;
+				""", List.of(ev("r0", "1"))), new Case("slt", """
+				r1 = -1; r2 = 0x7fffffffffffffff;
+				""", List.of(ev("r0", "1"))), new Case("eq", """
+				r1 = 1; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("gt", """
+				r1 = 2; r2 = 1;
+				""", List.of(ev("r0", "0"))), new Case("sgt", """
+				r1 = 2; r2 = -1;
+				""", List.of(ev("r0", "0")))));
 	}
 
 	@Test
@@ -3320,22 +2472,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = carry(r1, r2);
 				r9l = carry(r10l, r11l);
-				"""),
-			List.of(
-				new Case("f", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("t", """
-						r1  =0x8000000000000000; r2  =0x8000000000000000;
-						r10l=0x80000000;         r11l=0x80000000;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("f", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("t", """
+				r1  =0x8000000000000000; r2  =0x8000000000000000;
+				r10l=0x80000000;         r11l=0x80000000;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -3344,20 +2487,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = zext(r1) << 8;
 				temp2:9 = zext(r2) << 8;
 				r0 = carry(temp1, temp2);
-				"""),
-			List.of(
-				new Case("f", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("t", """
-						r1  =0x8000000000000000; r2  =0x8000000000000000;
-						r10l=0x80000000;         r11l=0x80000000;
-						""",
-					List.of(
-						ev("r0", "1")))));
+				"""), List.of(new Case("f", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0"))), new Case("t", """
+				r1  =0x8000000000000000; r2  =0x8000000000000000;
+				r10l=0x80000000;         r11l=0x80000000;
+				""", List.of(ev("r0", "1")))));
 	}
 
 	@Test
@@ -3365,22 +2501,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = scarry(r1, r2);
 				r9l = scarry(r10l, r11l);
-				"""),
-			List.of(
-				new Case("f", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0"))),
-				new Case("t", """
-						r1  =0x4000000000000000; r2  =0x4000000000000000;
-						r10l=0x40000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1")))));
+				"""), List.of(new Case("f", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0"), ev("r9", "0"))), new Case("t", """
+				r1  =0x4000000000000000; r2  =0x4000000000000000;
+				r10l=0x40000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "1"), ev("r9", "1")))));
 	}
 
 	@Test
@@ -3389,20 +2516,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = zext(r1) << 8;
 				temp2:9 = zext(r2) << 8;
 				r0 = scarry(temp1, temp2);
-				"""),
-			List.of(
-				new Case("f", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0"))),
-				new Case("t", """
-						r1  =0x4000000000000000; r2  =0x4000000000000000;
-						r10l=0x40000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "1")))));
+				"""), List.of(new Case("f", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0"))), new Case("t", """
+				r1  =0x4000000000000000; r2  =0x4000000000000000;
+				r10l=0x40000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "1")))));
 	}
 
 	@Test
@@ -3410,22 +2530,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		runEquivalenceTest(translateSleigh(ID_TOYBE64, """
 				r0 = sborrow(r1, r2);
 				r9l = sborrow(r10l, r11l);
-				"""),
-			List.of(
-				new Case("t", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "1"),
-						ev("r9", "1"))),
-				new Case("f", """
-						r1  =0xc000000000000000; r2  =0x4000000000000000;
-						r10l=0xc0000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r9", "0")))));
+				"""), List.of(new Case("t", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "1"), ev("r9", "1"))), new Case("f", """
+				r1  =0xc000000000000000; r2  =0x4000000000000000;
+				r10l=0xc0000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0"), ev("r9", "0")))));
 	}
 
 	@Test
@@ -3434,20 +2545,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:9 = zext(r1) << 8;
 				temp2:9 = zext(r2) << 8;
 				r0 = sborrow(temp1, temp2);
-				"""),
-			List.of(
-				new Case("t", """
-						r1  =0x8000000000000000; r2  =0x4000000000000000;
-						r10l=0x80000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "1"))),
-				new Case("f", """
-						r1  =0xc000000000000000; r2  =0x4000000000000000;
-						r10l=0xc0000000;         r11l=0x40000000;
-						""",
-					List.of(
-						ev("r0", "0")))));
+				"""), List.of(new Case("t", """
+				r1  =0x8000000000000000; r2  =0x4000000000000000;
+				r10l=0x80000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "1"))), new Case("f", """
+				r1  =0xc000000000000000; r2  =0x4000000000000000;
+				r10l=0xc0000000;         r11l=0x40000000;
+				""", List.of(ev("r0", "0")))));
 	}
 
 	@Test
@@ -3457,63 +2561,42 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r3 = r4 << r5l;
 				r6l = r7l << r8;
 				r9l = r10l << r11l;
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1  =100; r2  =4;
-						r4  =100; r5l =4;
-						r7l =100; r8  =4;
-						r10l=100; r11l=4;
-						""",
-					List.of(
-						ev("r0", "0x640"),
-						ev("r3", "0x640"),
-						ev("r6l", "0x640"),
-						ev("r9l", "0x640"))),
-				new Case("posLbigR", """
-						r1  =100; r2  =0x100000004;
-						r4  =100; r5l =0x100000004;
-						r7l =100; r8  =0x100000004;
-						r10l=100; r11l=0x100000004;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0x640"),
-						ev("r6l", "0"),
-						ev("r9l", "0x640"))),
-				new Case("posLnegR", """
-						r1  =100; r2  =-4;
-						r4  =100; r5l =-4;
-						r7l =100; r8  =-4;
-						r10l=100; r11l=-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6l", "0"),
-						ev("r9l", "0"))),
-				new Case("negLposR", """
-						r1  =-100; r2  =4;
-						r4  =-100; r5l =4;
-						r7l =-100; r8  =4;
-						r10l=-100; r11l=4;
-						""",
-					List.of(
-						ev("r0", "-0x640"),
-						ev("r3", "-0x640"),
-						ev("r6l", "-0x640"),
-						ev("r9l", "-0x640"))),
-				new Case("negLnegR", """
-						r1  =-100; r2  =-4;
-						r4  =-100; r5l =-4;
-						r7l =-100; r8  =-4;
-						r10l=-100; r11l=-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6l", "0"),
-						ev("r9l", "0")))));
+				"""), List.of(
+			new Case("posLposR", """
+					r1  =100; r2  =4;
+					r4  =100; r5l =4;
+					r7l =100; r8  =4;
+					r10l=100; r11l=4;
+					""",
+				List.of(ev("r0", "0x640"), ev("r3", "0x640"), ev("r6l", "0x640"),
+					ev("r9l", "0x640"))),
+			new Case("posLbigR", """
+					r1  =100; r2  =0x100000004;
+					r4  =100; r5l =0x100000004;
+					r7l =100; r8  =0x100000004;
+					r10l=100; r11l=0x100000004;
+					""",
+				List.of(ev("r0", "0"), ev("r3", "0x640"), ev("r6l", "0"), ev("r9l", "0x640"))),
+			new Case("posLnegR", """
+					r1  =100; r2  =-4;
+					r4  =100; r5l =-4;
+					r7l =100; r8  =-4;
+					r10l=100; r11l=-4;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6l", "0"), ev("r9l", "0"))),
+			new Case("negLposR", """
+					r1  =-100; r2  =4;
+					r4  =-100; r5l =4;
+					r7l =-100; r8  =4;
+					r10l=-100; r11l=4;
+					""",
+				List.of(ev("r0", "-0x640"), ev("r3", "-0x640"), ev("r6l", "-0x640"),
+					ev("r9l", "-0x640"))),
+			new Case("negLnegR", """
+					r1  =-100; r2  =-4;
+					r4  =-100; r5l =-4;
+					r7l =-100; r8  =-4;
+					r10l=-100; r11l=-4;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6l", "0"), ev("r9l", "0")))));
 	}
 
 	@Test
@@ -3524,56 +2607,34 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 << temp2;
 				r0 = temp0(0);
 				r4 = temp0(1);
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0xedcba98765432100"),
-						ev("r4", "0x07edcba987654321"))),
-				new Case("posLmedR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 36;
-						""",
-					List.of(
-						ev("r0", "0x6543210000000000"),
-						ev("r4", "0x8765432100000000"))),
-				new Case("posLbigR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0x40;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("posLnegR", """
-						r1 = 0x7edcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("negLposR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0xedcba98765432100"),
-						ev("r4", "0xffedcba987654321"))),
-				new Case("negLnegR", """
-						r1 = 0xfedcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0")))));
+				"""), List.of(new Case("posLposR", """
+				r1 = 0x7edcba9876543210;
+				r2 = 0;
+				r3 = 4;
+				""", List.of(ev("r0", "0xedcba98765432100"), ev("r4", "0x07edcba987654321"))),
+			new Case("posLmedR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0;
+					r3 = 36;
+					""", List.of(ev("r0", "0x6543210000000000"), ev("r4", "0x8765432100000000"))),
+			new Case("posLbigR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0x40;
+					r3 = 4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("posLnegR", """
+					r1 = 0x7edcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("negLposR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 4;
+					""", List.of(ev("r0", "0xedcba98765432100"), ev("r4", "0xffedcba987654321"))),
+			new Case("negLnegR", """
+					r1 = 0xfedcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "0"), ev("r4", "0")))));
 	}
 
 	@Test
@@ -3583,63 +2644,38 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r3 = r4 >> r5l;
 				r6l = r7l >> r8;
 				r9l = r10l >> r11l;
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1  =100; r2  =4;
-						r4  =100; r5l =4;
-						r7l =100; r8  =4;
-						r10l=100; r11l=4;
-						""",
-					List.of(
-						ev("r0", "6"),
-						ev("r3", "6"),
-						ev("r6l", "6"),
-						ev("r9l", "6"))),
-				new Case("posLbigR", """
-						r1  =100; r2  =0x100000004;
-						r4  =100; r5l =0x100000004;
-						r7l =100; r8  =0x100000004;
-						r10l=100; r11l=0x100000004;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "6"),
-						ev("r6l", "0"),
-						ev("r9l", "6"))),
-				new Case("posLnegR", """
-						r1  =100; r2  =-4;
-						r4  =100; r5l =-4;
-						r7l =100; r8  =-4;
-						r10l=100; r11l=-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6l", "0"),
-						ev("r9l", "0"))),
-				new Case("negLposR", """
-						r1  =-100; r2  =4;
-						r4  =-100; r5l =4;
-						r7l =-100; r8  =4;
-						r10l=-100; r11l=4;
-						""",
-					List.of(
-						ev("r0", "0x0ffffffffffffff9"),
-						ev("r3", "0x0ffffffffffffff9"),
-						ev("r6l", "0x0ffffff9"),
-						ev("r9l", "0x0ffffff9"))),
-				new Case("negLnegR", """
-						r1  =-100; r2  =-4;
-						r4  =-100; r5l =-4;
-						r7l =-100; r8  =-4;
-						r10l=-100; r11l=-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6l", "0"),
-						ev("r9l", "0")))));
+				"""), List.of(new Case("posLposR", """
+				r1  =100; r2  =4;
+				r4  =100; r5l =4;
+				r7l =100; r8  =4;
+				r10l=100; r11l=4;
+				""", List.of(ev("r0", "6"), ev("r3", "6"), ev("r6l", "6"), ev("r9l", "6"))),
+			new Case("posLbigR", """
+					r1  =100; r2  =0x100000004;
+					r4  =100; r5l =0x100000004;
+					r7l =100; r8  =0x100000004;
+					r10l=100; r11l=0x100000004;
+					""", List.of(ev("r0", "0"), ev("r3", "6"), ev("r6l", "0"), ev("r9l", "6"))),
+			new Case("posLnegR", """
+					r1  =100; r2  =-4;
+					r4  =100; r5l =-4;
+					r7l =100; r8  =-4;
+					r10l=100; r11l=-4;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6l", "0"), ev("r9l", "0"))),
+			new Case("negLposR", """
+					r1  =-100; r2  =4;
+					r4  =-100; r5l =4;
+					r7l =-100; r8  =4;
+					r10l=-100; r11l=4;
+					""",
+				List.of(ev("r0", "0x0ffffffffffffff9"), ev("r3", "0x0ffffffffffffff9"),
+					ev("r6l", "0x0ffffff9"), ev("r9l", "0x0ffffff9"))),
+			new Case("negLnegR", """
+					r1  =-100; r2  =-4;
+					r4  =-100; r5l =-4;
+					r7l =-100; r8  =-4;
+					r10l=-100; r11l=-4;
+					""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6l", "0"), ev("r9l", "0")))));
 	}
 
 	@Test
@@ -3650,64 +2686,39 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 >> temp2;
 				r0 = temp0(0);
 				r4 = temp0(1);
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0x07edcba987654321"),
-						ev("r4", "0x0007edcba9876543"))),
-				new Case("posLmedR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 36;
-						""",
-					List.of(
-						ev("r0", "0x0000000007edcba9"),
-						ev("r4", "0x000000000007edcb"))),
-				new Case("posLbigR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0x40;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("posLnegR", """
-						r1 = 0x7edcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("negLposR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0xffedcba987654321"),
-						ev("r4", "0x0fffedcba9876543"))),
-				new Case("negLmedR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 36;
-						""",
-					List.of(
-						ev("r0", "0x0000000fffedcba9"),
-						ev("r4", "0x000000000fffedcb"))),
-				new Case("negLnegR", """
-						r1 = 0xfedcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0")))));
+				"""), List.of(new Case("posLposR", """
+				r1 = 0x7edcba9876543210;
+				r2 = 0;
+				r3 = 4;
+				""", List.of(ev("r0", "0x07edcba987654321"), ev("r4", "0x0007edcba9876543"))),
+			new Case("posLmedR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0;
+					r3 = 36;
+					""", List.of(ev("r0", "0x0000000007edcba9"), ev("r4", "0x000000000007edcb"))),
+			new Case("posLbigR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0x40;
+					r3 = 4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("posLnegR", """
+					r1 = 0x7edcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("negLposR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 4;
+					""", List.of(ev("r0", "0xffedcba987654321"), ev("r4", "0x0fffedcba9876543"))),
+			new Case("negLmedR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 36;
+					""", List.of(ev("r0", "0x0000000fffedcba9"), ev("r4", "0x000000000fffedcb"))),
+			new Case("negLnegR", """
+					r1 = 0xfedcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "0"), ev("r4", "0")))));
 	}
 
 	@Test
@@ -3718,62 +2729,38 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				r6l = r7l s>> r8;
 				r9l = r10l s>> r11l;
 				"""),
-			List.of(
-				new Case("posLposR", """
-						r1  =100; r2  =4;
-						r4  =100; r5l =4;
-						r7l =100; r8  =4;
-						r10l=100; r11l=4;
-						""",
-					List.of(
-						ev("r0", "6"),
-						ev("r3", "6"),
-						ev("r6l", "6"),
-						ev("r9l", "6"))),
+			List.of(new Case("posLposR", """
+					r1  =100; r2  =4;
+					r4  =100; r5l =4;
+					r7l =100; r8  =4;
+					r10l=100; r11l=4;
+					""", List.of(ev("r0", "6"), ev("r3", "6"), ev("r6l", "6"), ev("r9l", "6"))),
 				new Case("posLbigR", """
 						r1  =100; r2  =0x100000004;
 						r4  =100; r5l =0x100000004;
 						r7l =100; r8  =0x100000004;
 						r10l=100; r11l=0x100000004;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "6"),
-						ev("r6l", "0"),
-						ev("r9l", "6"))),
+						""", List.of(ev("r0", "0"), ev("r3", "6"), ev("r6l", "0"), ev("r9l", "6"))),
 				new Case("posLnegR", """
 						r1  =100; r2  =-4;
 						r4  =100; r5l =-4;
 						r7l =100; r8  =-4;
 						r10l=100; r11l=-4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r3", "0"),
-						ev("r6l", "0"),
-						ev("r9l", "0"))),
+						""", List.of(ev("r0", "0"), ev("r3", "0"), ev("r6l", "0"), ev("r9l", "0"))),
 				new Case("negLposR", """
 						r1  =-100; r2  =4;
 						r4  =-100; r5l =4;
 						r7l =-100; r8  =4;
 						r10l=-100; r11l=4;
 						""",
-					List.of(
-						ev("r0", "-7"),
-						ev("r3", "-7"),
-						ev("r6l", "-7"),
-						ev("r9l", "-7"))),
+					List.of(ev("r0", "-7"), ev("r3", "-7"), ev("r6l", "-7"), ev("r9l", "-7"))),
 				new Case("negLnegR", """
 						r1  =-100; r2  =-4;
 						r4  =-100; r5l =-4;
 						r7l =-100; r8  =-4;
 						r10l=-100; r11l=-4;
 						""",
-					List.of(
-						ev("r0", "-1"),
-						ev("r3", "-1"),
-						ev("r6l", "-1"),
-						ev("r9l", "-1")))));
+					List.of(ev("r0", "-1"), ev("r3", "-1"), ev("r6l", "-1"), ev("r9l", "-1")))));
 	}
 
 	@Test
@@ -3782,14 +2769,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp1:3 = r1(0);
 				temp0:3 = temp1 s>> r2;
 				r0 = zext(temp0);
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1 = 0xfedcba;
-						r2 = 4;
-						""",
-					List.of(
-						ev("r0", "0xffedcb")))));
+				"""), List.of(new Case("posLposR", """
+				r1 = 0xfedcba;
+				r2 = 4;
+				""", List.of(ev("r0", "0xffedcb")))));
 	}
 
 	@Test
@@ -3800,72 +2783,44 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 				temp0:9 = temp1 s>> temp2;
 				r0 = temp0(0);
 				r4 = temp0(1);
-				"""),
-			List.of(
-				new Case("posLposR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0x07edcba987654321"),
-						ev("r4", "0x0007edcba9876543"))),
-				new Case("posLmedR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0;
-						r3 = 36;
-						""",
-					List.of(
-						ev("r0", "0x0000000007edcba9"),
-						ev("r4", "0x000000000007edcb"))),
-				new Case("posLbigR", """
-						r1 = 0x7edcba9876543210;
-						r2 = 0x40;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("posLnegR", """
-						r1 = 0x7edcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "0"),
-						ev("r4", "0"))),
-				new Case("negLposR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 4;
-						""",
-					List.of(
-						ev("r0", "0xffedcba987654321"),
-						ev("r4", "0xffffedcba9876543"))),
-				new Case("negLlegR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 32;
-						""",
-					List.of(
-						ev("r0", "0xfffffffffedcba98"),
-						ev("r4", "0xfffffffffffedcba"))),
-				new Case("negLmedR", """
-						r1 = 0xfedcba9876543210;
-						r2 = 0;
-						r3 = 36;
-						""",
-					List.of(
-						ev("r0", "0xffffffffffedcba9"),
-						ev("r4", "0xffffffffffffedcb"))),
-				new Case("negLnegR", """
-						r1 = 0xfedcba9876543210;
-						r2 = -1;
-						r3 = -4;
-						""",
-					List.of(
-						ev("r0", "-1"),
-						ev("r4", "-1")))));
+				"""), List.of(new Case("posLposR", """
+				r1 = 0x7edcba9876543210;
+				r2 = 0;
+				r3 = 4;
+				""", List.of(ev("r0", "0x07edcba987654321"), ev("r4", "0x0007edcba9876543"))),
+			new Case("posLmedR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0;
+					r3 = 36;
+					""", List.of(ev("r0", "0x0000000007edcba9"), ev("r4", "0x000000000007edcb"))),
+			new Case("posLbigR", """
+					r1 = 0x7edcba9876543210;
+					r2 = 0x40;
+					r3 = 4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("posLnegR", """
+					r1 = 0x7edcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "0"), ev("r4", "0"))), new Case("negLposR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 4;
+					""", List.of(ev("r0", "0xffedcba987654321"), ev("r4", "0xffffedcba9876543"))),
+			new Case("negLlegR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 32;
+					""", List.of(ev("r0", "0xfffffffffedcba98"), ev("r4", "0xfffffffffffedcba"))),
+			new Case("negLmedR", """
+					r1 = 0xfedcba9876543210;
+					r2 = 0;
+					r3 = 36;
+					""", List.of(ev("r0", "0xffffffffffedcba9"), ev("r4", "0xffffffffffffedcb"))),
+			new Case("negLnegR", """
+					r1 = 0xfedcba9876543210;
+					r2 = -1;
+					r3 = -4;
+					""", List.of(ev("r0", "-1"), ev("r4", "-1")))));
 	}
 
 	@Test
@@ -3925,10 +2880,8 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 
 		Translation tr = translateBuffer(asm, asm.getEntry(), Map.of());
 
-		assertEquals(Map.ofEntries(
-			tr.entryPrototype(asm.getEntry(), rvArm, 0),
-			tr.entryPrototype(addrThumb, rvThumb, 1)),
-			tr.passageCls.getBlockEntries());
+		assertEquals(Map.ofEntries(tr.entryPrototype(asm.getEntry(), rvArm, 0),
+			tr.entryPrototype(addrThumb, rvThumb, 1)), tr.passageCls.getBlockEntries());
 
 		/**
 		 * The blx will be a direct branch, so that will get executed in the bytecode. However, the
@@ -3990,9 +2943,7 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_TOYBE64, 0x00400000, """
 				imm r0,#123
 				add r0,#7
-				""",
-			Map.ofEntries(
-				Map.entry(0x00400002L, "emu_swi();")));
+				""", Map.ofEntries(Map.entry(0x00400002L, "emu_swi();")));
 
 		tr.runErr(InterruptPcodeExecutionException.class, "Execution hit breakpoint");
 
@@ -4008,11 +2959,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_TOYBE64, 0x00400000, """
 				imm r0,#123
 				add r0,#7
-				""", Map.ofEntries(
-			Map.entry(0x00400002L, """
-					r1 = sleigh_userop(r0, 4:8);
-					emu_exec_decoded();
-					""")));
+				""", Map.ofEntries(Map.entry(0x00400002L, """
+				r1 = sleigh_userop(r0, 4:8);
+				emu_exec_decoded();
+				""")));
 
 		tr.runDecodeErr(0x00400004);
 		assertEquals(123 + 7, tr.getLongRegVal("r0"));
@@ -4024,11 +2974,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_TOYBE64, 0x00400000, """
 				imm r0,#123
 				add r0,#7
-				""", Map.ofEntries(
-			Map.entry(0x00400002L, """
-					r1 = sleigh_userop(r0, 4:8);
-					emu_skip_decoded();
-					""")));
+				""", Map.ofEntries(Map.entry(0x00400002L, """
+				r1 = sleigh_userop(r0, 4:8);
+				emu_skip_decoded();
+				""")));
 
 		tr.runDecodeErr(0x00400004);
 		assertEquals(123, tr.getLongRegVal("r0"));
@@ -4059,11 +3008,10 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_ARMv8LE, 0x00400000, """
 				mov r0,#6
 				mov r1,#7
-				""", Map.ofEntries(
-			Map.entry(0x00400000L, """
-					setISAMode(1:1);
-					emu_exec_decoded();
-					""")));
+				""", Map.ofEntries(Map.entry(0x00400000L, """
+				setISAMode(1:1);
+				emu_exec_decoded();
+				""")));
 
 		tr.runClean();
 		assertEquals(6, tr.getLongRegVal("r0"));
@@ -4081,14 +3029,13 @@ public class JitCodeGeneratorTest extends AbstractJitTest {
 		Translation tr = translateLang(ID_ARMv8LE, 0x00400000, """
 				mov r0,#6
 				mov r1,#7
-				""", Map.ofEntries(
-			Map.entry(0x00400000L, """
-					if (!ZR) goto <skip>;
-					  ISAModeSwitch = 1;
-					  setISAMode(ISAModeSwitch);
-					<skip>
-					emu_exec_decoded();
-					""")));
+				""", Map.ofEntries(Map.entry(0x00400000L, """
+				if (!ZR) goto <skip>;
+				  ISAModeSwitch = 1;
+				  setISAMode(ISAModeSwitch);
+				<skip>
+				emu_exec_decoded();
+				""")));
 
 		tr.setLongRegVal("r1", 0); // Reset
 		tr.setLongRegVal("ZR", 0);

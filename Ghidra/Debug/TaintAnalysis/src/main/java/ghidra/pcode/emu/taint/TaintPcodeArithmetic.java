@@ -99,6 +99,11 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * so we union and broadcast.
 	 */
 	@Override
+	public TaintVec unaryOp(PcodeOp op, TaintVec in1) {
+		return PcodeArithmetic.super.unaryOp(op, in1).withOp(op);
+	}
+
+	@Override
 	public TaintVec unaryOp(int opcode, int sizeout, int sizein1, TaintVec in1) {
 		return switch (opcode) {
 			case PcodeOp.COPY, PcodeOp.BOOL_NEGATE, PcodeOp.INT_NEGATE -> in1;
@@ -124,31 +129,20 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 */
 	@Override
 	public TaintVec binaryOp(PcodeOp op, TaintVec in1, TaintVec in2) {
-		// TODO: Detect immediate operands and be more precise
-		switch (op.getOpcode()) {
-			case PcodeOp.INT_XOR, PcodeOp.INT_SUB, PcodeOp.BOOL_XOR -> {
-				if (Objects.equals(op.getInput(0), op.getInput(1))) {
-					return fromConst(0, op.getOutput().getSize());
-				}
-			}
-		}
-		return PcodeArithmetic.super.binaryOp(op, in1, in2);
+		return PcodeArithmetic.super.binaryOp(op, in1, in2).withOp(op);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * For bitwise operations, we pair-wise union corresponding elements of the two input taint
-	 * vectors. For integer add and subtract, we do the same, but account for the carry bits
-	 * possibly cascading into bytes of higher significance. For {@link PcodeOp#PIECE}, we perform
-	 * the analog as on concrete state, since the operand sizes are constant. For all others, we
-	 * must consider that every output byte is potentially affected by any or all bytes of both
-	 * input operands. Thus, we union and broadcast.
-	 */
 	@Override
 	public TaintVec binaryOp(int opcode, int sizeout, int sizein1, TaintVec in1,
 			int sizein2, TaintVec in2) {
+		// TODO: Detect immediate operands and be more precise
+		switch (opcode) {
+			case PcodeOp.INT_XOR, PcodeOp.INT_SUB, PcodeOp.BOOL_XOR -> {
+				if (Objects.equals(in1, in2)) {
+					return fromConst(0, sizeout);  // NB: withOp unneeded, as this essentially removes taint
+				}
+			}
+		}
 		return switch (opcode) {
 			case PcodeOp.BOOL_AND, PcodeOp.BOOL_OR, PcodeOp.BOOL_XOR, PcodeOp.INT_AND, //
 					PcodeOp.INT_OR, PcodeOp.INT_XOR -> {
@@ -172,7 +166,7 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 				yield temp.set(endian.isBigEndian() ? sizeout - sizein2 : 0, in2);
 			}
 			default -> {
-				TaintVec temp = in1.zipUnion(in2);
+				TaintVec temp = in1.zipUnion(in2).truncated(sizeout, endian.isBigEndian());
 				yield temp.setCopies(temp.union());
 			}
 		};
@@ -185,9 +179,15 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * Here we handle indirect taint for indirect writes
 	 */
 	@Override
+	public TaintVec modBeforeStore(PcodeOp op, AddressSpace space, TaintVec inOffset,
+			TaintVec inValue) {
+		return inValue.tagIndirectWrite(inOffset).withOp(op);
+	}
+
+	@Override
 	public TaintVec modBeforeStore(int sizeinOffset, AddressSpace space, TaintVec inOffset,
 			int sizeinValue, TaintVec inValue) {
-		return inValue.tagIndirectWrite(inOffset);
+		throw new RuntimeException("Not supported");
 	}
 
 	/**
@@ -197,9 +197,15 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * Here we handle indirect taint for indirect reads
 	 */
 	@Override
+	public TaintVec modAfterLoad(PcodeOp op, AddressSpace space, TaintVec inOffset,
+			TaintVec inValue) {
+		return inValue.tagIndirectRead(inOffset).withOp(op);
+	}
+
+	@Override
 	public TaintVec modAfterLoad(int sizeinOffset, AddressSpace space, TaintVec inOffset,
 			int sizeinValue, TaintVec inValue) {
-		return inValue.tagIndirectRead(inOffset);
+		throw new RuntimeException("Not supported");
 	}
 
 	/**

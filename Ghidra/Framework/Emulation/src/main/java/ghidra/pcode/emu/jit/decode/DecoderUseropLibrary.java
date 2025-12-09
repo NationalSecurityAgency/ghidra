@@ -79,7 +79,7 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 
 		@Override
 		public void execute(PcodeExecutor<Object> executor, PcodeUseropLibrary<Object> library,
-				Varnode outVar, List<Varnode> inVars) {
+				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
 			throw new AssertionError();
 		}
 

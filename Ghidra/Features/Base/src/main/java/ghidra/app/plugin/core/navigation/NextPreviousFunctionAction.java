@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import docking.DockingUtils;
 import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
@@ -48,7 +49,7 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 
 	@Override
 	protected KeyStroke getKeyStroke() {
-		return KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK |
+		return KeyStroke.getKeyStroke(KeyEvent.VK_F, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
 			InputEvent.ALT_DOWN_MASK);
 	}
 

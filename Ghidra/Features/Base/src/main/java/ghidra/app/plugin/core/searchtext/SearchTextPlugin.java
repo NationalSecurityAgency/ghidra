@@ -243,21 +243,20 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	}
 
 	void next() {
-		Program program = navigatable.getProgram();
-		ProgramLocation location = getStartLocation();
-		Searcher textSearcher = null;
-		SearchOptions searchOptions = searchDialog.getSearchOptions();
-		AddressSetView addressSet = getAddressSet(navigatable, searchOptions);
 
-		if (searchOptions.isProgramDatabaseSearch()) {
-			textSearcher = new ProgramDatabaseSearcher(tool, program, location, addressSet,
-				searchOptions,
-				searchDialog.showTaskMonitorComponent(AbstractSearchTableModel.TITLE, true, true));
+		ProgramLocation loc = getStartLocation();
+		Searcher textSearcher = null;
+		SearchOptions options = searchDialog.getSearchOptions();
+		AddressSetView addrs = getAddressSet(navigatable, options);
+
+		TaskMonitor monitor =
+			searchDialog.showTaskMonitorComponent(AbstractSearchTableModel.TITLE, true, true);
+		Program program = navigatable.getProgram();
+		if (options.isProgramDatabaseSearch()) {
+			textSearcher = new ProgramDatabaseSearcher(tool, program, loc, addrs, options, monitor);
 		}
 		else {
-			textSearcher = new ListingDisplaySearcher(tool, program, location, addressSet,
-				searchDialog.getSearchOptions(),
-				searchDialog.showTaskMonitorComponent(AbstractSearchTableModel.TITLE, true, true));
+			textSearcher = new ListingDisplaySearcher(tool, program, loc, addrs, options, monitor);
 		}
 		searchNext(navigatable.getProgram(), navigatable, textSearcher);
 	}
@@ -387,7 +386,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class, true)
-				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
+				.validWhen(c -> !(c instanceof RestrictedAddressSetContext))
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());

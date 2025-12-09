@@ -719,7 +719,8 @@ public class KeyBindingUtils {
 	// deprecated InputEvent mask types
 	@SuppressWarnings("deprecation")
 	private static boolean isControl(int mask) {
-		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0;
+		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0 ||
+			(mask & DockingUtils.CONTROL_KEY_MODIFIER_MASK) != 0;
 	}
 
 	// ignore the deprecated; remove when we are confident that all tool actions no longer use the

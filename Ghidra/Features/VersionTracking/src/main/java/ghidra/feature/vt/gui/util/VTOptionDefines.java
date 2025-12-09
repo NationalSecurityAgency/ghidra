@@ -68,6 +68,8 @@ public class VTOptionDefines {
 	public static CommentChoices DEFAULT_OPTION_FOR_POST_COMMENTS =
 		CommentChoices.APPEND_TO_EXISTING;
 
+	public static boolean DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS = false;
+
 	public static final String FUNCTION_NAME = APPLY_MARKUP_OPTIONS_NAME + ".Function Name";
 	public static final String FUNCTION_RETURN_TYPE = APPLY_MARKUP_OPTIONS_NAME +
 		".Function Return Type";
@@ -105,8 +107,14 @@ public class VTOptionDefines {
 	public static final String IGNORE_EXCLUDED_MARKUP_ITEMS = APPLY_MARKUP_OPTIONS_NAME +
 		".Set Excluded Markup Items To Ignored";
 
-	public final static String DISPLAY_APPLY_MARKUP_OPTIONS = APPLY_MARKUP_OPTIONS_NAME +
+	public static final String DISPLAY_APPLY_MARKUP_OPTIONS = APPLY_MARKUP_OPTIONS_NAME +
 		Options.DELIMITER + "Display Apply Markup Options";
+
+	public static final String USE_NAMESPACE_FUNCTIONS =
+		APPLY_MARKUP_OPTIONS_NAME + ".Replace Namespace";
+
+	public static final String USE_NAMESPACE_TOOLTIP =
+		"Apply the non-Global source namespace to the destination function.";
 
 	// Auto VT Options
 	public static final String AUTO_VT_OPTIONS_NAME = "Auto Version Tracking Options";

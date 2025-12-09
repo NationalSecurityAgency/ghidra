@@ -43,7 +43,6 @@ public class UnionEditorProvider extends CompositeEditorProvider<Union, UnionEdi
 		updateTitle();
 		plugin.getTool().addComponentProvider(this, true);
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
 		editorModel.selectionChanged();
 	}
 

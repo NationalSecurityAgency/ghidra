@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
-import ghidra.program.util.DiffUtility;
 import ghidra.program.util.ProgramDiffFilter;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -306,8 +306,8 @@ class EquateMerger extends AbstractListingMerger {
 	 */
 	@Override
 	public void mergeConflicts(ListingMergePanel listingPanel, Address addr,
-			int chosenConflictOption, TaskMonitor monitor) throws CancelledException,
-			MemoryAccessException {
+			int chosenConflictOption, TaskMonitor monitor)
+			throws CancelledException, MemoryAccessException {
 		if (!hasConflict(addr)) {
 			return;
 		}
@@ -332,8 +332,8 @@ class EquateMerger extends AbstractListingMerger {
 						monitor.checkCancelled();
 					}
 					else {
-						merge(equateConflict.address, equateConflict.opIndex,
-							equateConflict.scalar, chosenConflictOption);
+						merge(equateConflict.address, equateConflict.opIndex, equateConflict.scalar,
+							chosenConflictOption);
 					}
 				}
 			}
@@ -459,7 +459,7 @@ class EquateMerger extends AbstractListingMerger {
 		}
 		if (equate != null) {
 			info[1] = equate.getDisplayName();
-			info[2] = DiffUtility.toSignedHexString(equate.getValue());
+			info[2] = NumericUtilities.toSignedHexString(equate.getValue());
 		}
 		return info;
 	}

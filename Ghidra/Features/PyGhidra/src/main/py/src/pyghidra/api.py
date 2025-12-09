@@ -15,7 +15,7 @@
 ##
 import sys
 import contextlib
-from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Any, Optional
+from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Generator, Any, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
@@ -61,7 +61,7 @@ def open_project(
         path: Union[str, Path],
         name: str,
         create: bool = False
-) -> "Project": # type: ignore
+) -> "Project":
     """
     Opens the Ghidra project at the given location, optionally creating it if it doesn't exist.
 
@@ -97,7 +97,7 @@ def open_filesystem(
     
     service = FileSystemService.getInstance()
     fsrl = service.getLocalFS().getLocalFSRL(File(path))
-    fs = service.openFileSystemContainer(fsrl, monitor())
+    fs = service.openFileSystemContainer(fsrl, task_monitor())
     if fs is None:
         raise ValueError(f'"{fsrl}" is not a supported GFileSystem!')
     return fs
@@ -131,7 +131,7 @@ def consume_program(
     df = project_data.getFile(path)
     if df is None:
         raise FileNotFoundError(f'"{path}" does not exist in the Project')
-    dobj = df.getDomainObject(consumer, True, False, monitor())
+    dobj = df.getDomainObject(consumer, True, False, task_monitor())
     program_cls = Program.class_
     if not program_cls.isAssignableFrom(dobj.getClass()):
         dobj.release(consumer)
@@ -142,7 +142,7 @@ def consume_program(
 def program_context(
         project: "Project", 
         path: Union[str, Path],
-    ) -> "Program":
+    ) -> Generator["Program", None, None]:
     """
     Gets the Ghidra program from the given project with the given project path. The returned
     program's resource cleanup is performed by a context manager.
@@ -174,7 +174,7 @@ def analyze(
     from ghidra.app.plugin.core.analysis import AutoAnalysisManager
     
     if monitor is None:
-        monitor = monitor()
+        monitor = task_monitor()
         
     with transaction(program, "Analyze"):
         GhidraScriptUtil.acquireBundleHostReference()
@@ -236,7 +236,7 @@ def ghidra_script(
         controls = ScriptControls(
             PrintWriter(stdout_string_writer, True),
             PrintWriter(stderr_string_writer, True),
-            monitor()
+            task_monitor()
         )
         script.setScriptArgs(script_args)
         script.execute(state, controls)
@@ -256,7 +256,7 @@ def ghidra_script(
 def transaction(
         program: "Program",
         description: str = "Unnamed Transaction"
-    ):
+    ) -> Generator[int, None, None]:
     """
     Creates a context for running a Ghidra transaction.
 
@@ -300,7 +300,7 @@ def program_loader() -> "ProgramLoader.Builder":
     from ghidra.app.util.importer import ProgramLoader
     return ProgramLoader.builder()
 
-def monitor(
+def task_monitor(
         timeout: Optional[int] = None
     ) -> "PyGhidraTaskMonitor":
     """

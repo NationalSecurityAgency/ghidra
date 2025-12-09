@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +15,19 @@
  */
 package ghidra.feature.vt.api.markuptype;
 
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+
+import java.util.*;
+
 import ghidra.feature.vt.api.impl.MarkupItemImpl;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.stringable.FunctionSignatureStringable;
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
-import ghidra.feature.vt.gui.util.*;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
@@ -30,15 +35,11 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.SystemUtilities;
 
-import java.util.*;
-
 public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstractMarkupType {
 
 //==================================================================================================
 // Factory Methods
 //==================================================================================================
-
-	public static final VTMarkupType INSTANCE = new FunctionSignatureMarkupType();
 
 	@Override
 	public List<VTMarkupItem> createMarkupItems(VTAssociation association) {
@@ -66,6 +67,10 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 //==================================================================================================
 // End Factory Methods
 //==================================================================================================
+
+	public static final VTMarkupType INSTANCE = new FunctionSignatureMarkupType();
+
+	private ToolOptions unapplyOptions;
 
 	private FunctionSignatureMarkupType() {
 		super("Function Signature");
@@ -106,8 +111,42 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 			return;
 		}
 
-		destinationSignatureStringable.applyFunctionSignature(destinationFunction,
-			VT_UNAPPLY_MARKUP_OPTIONS, true);
+		ToolOptions options = getUnapplyOptions();
+		destinationSignatureStringable.applyFunctionSignature(destinationFunction, options, true);
+	}
+
+	private ToolOptions getUnapplyOptions() {
+
+		if (unapplyOptions != null) {
+			return unapplyOptions;
+		}
+
+		unapplyOptions = new ToolOptions(VTController.VERSION_TRACKING_OPTIONS_NAME);
+
+		unapplyOptions.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		unapplyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.NAME_MATCH);
+		unapplyOptions.setEnum(INLINE, ReplaceChoices.REPLACE);
+		unapplyOptions.setEnum(NO_RETURN, ReplaceChoices.REPLACE);
+		unapplyOptions.setEnum(VAR_ARGS, ReplaceChoices.REPLACE);
+		unapplyOptions.setEnum(CALL_FIXUP, ReplaceChoices.REPLACE);
+		unapplyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		unapplyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		unapplyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		unapplyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.OVERWRITE_EXISTING);
+
+		unapplyOptions.setEnum(FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
+		unapplyOptions.setEnum(LABELS, LabelChoices.REPLACE_ALL);
+
+		unapplyOptions.setEnum(PLATE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+		unapplyOptions.setEnum(PRE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+		unapplyOptions.setEnum(END_OF_LINE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+		unapplyOptions.setEnum(REPEATABLE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+		unapplyOptions.setEnum(POST_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+
+		unapplyOptions.setEnum(DATA_MATCH_DATA_TYPE,
+			ReplaceDataChoices.REPLACE_ALL_DATA);
+
+		return unapplyOptions;
 	}
 
 	@Override
@@ -122,24 +161,6 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 				markupItem.getMarkupType().getDisplayName() + " since it is excluded.");
 		}
 
-		ToolOptions adjustedOptions = markupOptions.copy();
-//		switch (functionSignatureChoice) {
-//			case REPLACE:
-//				adjustedOptions.putEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-//					FunctionSignatureChoices.REPLACE);
-//				break;
-//			case WHEN_SAME_PARAMETER_COUNT:
-//				adjustedOptions.putEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-//					FunctionSignatureChoices.WHEN_SAME_PARAMETER_COUNT);
-//				break;
-//			case WHEN_TAKING_SIGNATURE:
-//				// Don't apply the names. The function signature will do it if needed.
-//				return false;
-//			default:
-//				throw new IllegalArgumentException("Unsupported apply action: " + applyAction);
-//
-//		}
-
 		Address destinationAddress = markupItem.getDestinationAddress();
 
 		if (destinationAddress == null) {
@@ -147,7 +168,8 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 		}
 
 		if (destinationAddress == Address.NO_ADDRESS) {
-			throw new VersionTrackingApplyException("The destination address cannot be No Address!");
+			throw new VersionTrackingApplyException(
+				"The destination address cannot be No Address!");
 		}
 
 		Program destinationProgram = getDestinationProgram(markupItem.getAssociation());
@@ -166,11 +188,8 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 			throw new VersionTrackingApplyException(
 				"Couldn't find destination function to apply a name.");
 		}
-		if (sourceStringable.applyFunctionSignature(destinationFunction, adjustedOptions, false)) {
-//			// If the function signature was applied, apply the names if necessary.
-//			applyParameterNamesIfNeeded(markupItem, adjustedOptions);
-//			// If the function signature was applied, apply the no return flag if necessary.
-//			applyNoReturnIfNeeded(markupItem, adjustedOptions);
+
+		if (sourceStringable.applyFunctionSignature(destinationFunction, markupOptions, false)) {
 			return true;
 		}
 		return false;
@@ -223,8 +242,9 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 		}
 		Address entryAddress = function.getEntryPoint();
 		Stringable value =
-			isSource ? getSourceValue(association, address) : getCurrentDestinationValue(
-				association, address);
+			isSource ? getSourceValue(association, address)
+					: getCurrentDestinationValue(
+						association, address);
 		String displayString = (value != null) ? value.getDisplayString() : null;
 		return new FunctionReturnTypeFieldLocation(program, entryAddress, displayString);
 	}
@@ -283,6 +303,10 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 			case REPLACE:
 				options.setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
 					FunctionSignatureChoices.REPLACE);
+				break;
+			case REPLACE_FIRST_ONLY:
+				break;
+			default:
 				break;
 		}
 		return options;

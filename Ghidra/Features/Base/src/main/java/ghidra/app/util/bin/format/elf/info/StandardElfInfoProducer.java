@@ -52,12 +52,15 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 
 	public static final CategoryPath ELF_CATEGORYPATH = new CategoryPath("/ELF");
 
-	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS =
-		Map.of(GnuDebugLink.SECTION_NAME, GnuDebugLink::read, NoteAbiTag.SECTION_NAME,
-			(br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg), NoteGnuBuildId.SECTION_NAME,
-			(br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg), NoteGnuProperty.SECTION_NAME,
-			(br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg), ElfComment.SECTION_NAME,
-			ElfComment::read);
+	private static final Map<String, ReaderFunc<ElfInfoItem>> STANDARD_READERS = Map.of(
+	//@formatter:off		
+		GnuDebugLink.SECTION_NAME, GnuDebugLink::read,
+		NoteAbiTag.SECTION_NAME, (br, prg) -> NoteAbiTag.read(ElfNote.read(br), prg),
+		NoteGnuBuildId.SECTION_NAME, (br, prg) -> NoteGnuBuildId.read(ElfNote.read(br), prg),
+		NoteGnuProperty.SECTION_NAME, (br, prg) -> NoteGnuProperty.read(ElfNote.read(br), prg),
+		ElfComment.SECTION_NAME, ElfComment::read,
+		GnuBuildAttributes.SECTION_NAME, GnuBuildAttributes::read);
+	//@formatter:on
 
 	private ElfLoadHelper elfLoadHelper;
 

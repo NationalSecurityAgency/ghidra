@@ -88,7 +88,8 @@ public class DWARFImportOptions {
 		"Copy External Debug File Symbols";
 	private static final String OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC =
 		"Copies symbols (which will typically be mangled) from a found external debug file into " +
-			"the main program";
+			"the main program.  See Edit | DWARF External Debug Config to control how those " +
+			"external debug files are found.";
 
 	private static final String OPTION_CHARSET_NAME = "Debug Strings Charset";
 	private static final String OPTION_CHARSET_NAME_DESC = """
@@ -144,7 +145,7 @@ public class DWARFImportOptions {
 	/**
 	 * Used to control which macro info entries are used to create enums.
 	 */
-	public static enum MacroEnumSetting {
+	public enum MacroEnumSetting {
 		NONE,
 		IGNORE_COMMAND_LINE,
 		ALL;

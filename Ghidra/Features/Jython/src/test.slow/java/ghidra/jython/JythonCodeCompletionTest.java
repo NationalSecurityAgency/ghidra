@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import org.junit.rules.TemporaryFolder;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.console.CodeCompletion;
-import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
@@ -72,7 +71,7 @@ public class JythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Before
 	public void setUp() throws Exception {
-		GhidraScriptUtil.initialize(new BundleHost(), null);
+		GhidraScriptUtil.acquireBundleHostReference();
 		interpreter = GhidraJythonInterpreter.get();
 		executeJythonProgram(simpleTestProgram);
 	}
@@ -80,7 +79,7 @@ public class JythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 	@After
 	public void tearDown() throws Exception {
 		interpreter.cleanup();
-		GhidraScriptUtil.dispose();
+		GhidraScriptUtil.releaseBundleHostReference();
 	}
 
 	@Test

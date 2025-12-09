@@ -90,6 +90,7 @@ public class GTab<T> extends JPanel {
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 		initializeTabColors(false);
+		setBorder(selected ? SELECTED_TAB_BORDER : TAB_BORDER);
 	}
 
 	void refresh() {

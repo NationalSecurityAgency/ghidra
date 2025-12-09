@@ -355,7 +355,21 @@ public class XReferenceUtils {
 			if (tableModel.isBusy()) {
 				return false;
 			}
-			return table.getSelectedRowCount() > 0;
+			return hasNonThunkRefs(table);
+		}
+
+		private boolean hasNonThunkRefs(JTable table) {
+			int[] rows = table.getSelectedRows();
+			for (int row : rows) {
+				ReferenceEndpoint rowObject = tableModel.getRowObject(row);
+				Reference ref = rowObject.getReference();
+				RefType type = ref.getReferenceType();
+				if (type != RefType.THUNK) {
+					return true;
+				}
+
+			}
+			return false;
 		}
 
 		@Override
@@ -391,8 +405,13 @@ public class XReferenceUtils {
 		CompoundCmd<Program> compoundCmd = new CompoundCmd<>("Delete References");
 		for (int row : rows) {
 			ReferenceEndpoint endpoint = tableModel.getRowObject(row);
-			deletedRowObjects.add(endpoint);
 			Reference ref = endpoint.getReference();
+			RefType type = ref.getReferenceType();
+			if (type == RefType.THUNK) {
+				continue; // we cannot delete THUNK types, as they are not real references
+			}
+
+			deletedRowObjects.add(endpoint);
 			RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
 			compoundCmd.add(cmd);
 		}

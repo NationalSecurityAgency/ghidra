@@ -43,11 +43,11 @@ libraries and operating systems (e.g., CentOS 7.x) may also run into compatibili
 launching native executables such as the Decompiler and GNU Demangler which may necessitate a 
 rebuild of native components.
 
-**NOTE:** Ghidra Server: The Ghidra 12.0 server is compatible with Ghidra 9.2 and later Ghidra
+**NOTE:** Ghidra Server: The Ghidra 12.0 server is compatible with Ghidra 11.3.2 and later Ghidra
 clients, although the presence of any newer link-files within a repository may not be handled properly
 by client versions prior to 12.0 which lack support for the new storage format.  Ghidra 12.0 clients
 that introduce new link-files into a project will not be able to add such files into version 
-control if connected to older Ghidra Server versions.  
+control if connected to older Ghidra Server versions.
 
 **NOTE:** Ghidra Server: Due to potential Java version differences, it is 
 recommended that Ghidra Server installations older than 10.2 be upgraded. Those using 10.2 and newer
@@ -64,18 +64,19 @@ process that will provide better results than prior Ghidra versions.  You might 
 fresh import of any program you will continue to reverse engineer to see if the latest Ghidra 
 provides better results.
 
-## Project Link Files
+## Project Data Link Files
 Support for link-files within a Ghidra Project has been significantly expanded with this release and
 with it a new file storage type has been introduced which can create some incompatibilities if
 projects and repositories containing such files are used by older version of Ghidra or the Ghidra 
 Server.
 
-Previously only external folder and file links were supported through the use of a Ghidra URL. With
-12.0 the ability to establish internal folder and file links has been introduced.  The new storage 
-format avoids the use of a database and relies only on a light-weight property file. Internal 
-project links also allow for either absolute or relative links.  Due to the fact that Ghidra allows 
-a folder or file to have the same pathname, some ambiguities can result.  It is highly recommended 
-that the use of conflicting folder and file pathnames be avoided.
+Previously, only external folder and file links were supported through the use of a Ghidra URL. With
+12.0 the ability to establish internal folder and file links has been introduced.  A new storage 
+format was adopted for link-files which avoids the use of a database and relies only on a 
+light-weight property file only. Internal project links also allow for either absolute or relative 
+links.  Due to Ghidra allowing a folder and file to have the same pathname, some ambiguities can 
+result for Ghidra URL usage.  It is highly recommended that the use of conflicting folder and file 
+pathnames be avoided.
 
 The use of internally linked folders and files allows batch import processing to more accurately
 reflect the native file-system and its use of symbolic links which allow for the same content to
@@ -89,9 +90,7 @@ Additional Ghidra API methods have been provided or refined on the following cla
 link-files: `DomainFolder`, `DomainFile`, `LinkFile`, `LinkHandler`, `DomainFileFilter`, 
 `DomainFileIterator`, etc.
 
-...TO BE CONTINUED...
-
-## Filesystem Mirroring
+## Importer Filesystem Mirroring
 An option has been added to mirror the local filesystem when importing programs and their libraries.
 Programs and libraries that exist on the local filesystem as symbolic links will have both their 
 corresponding link file and resolved program file mirrored in the project. Filesystem mirroring
@@ -113,7 +112,7 @@ We've added an experimental Z3-based symbolic emulator, which runs as an "auxili
 concrete emulator, effectively constructing what is commonly called a "concolic" emulator. The 
 symbolic emulator creates Z3 expressions and branching constraints, but it only follows the path 
 determined by concrete emulation. This is most easily accessed by installing the "SymbolicSummaryZ3"
-extension (**File** -> **Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
+extension (**File -> Install Extensions**) and then enabling the `Z3SummaryPlugin` in the 
 Debugger or Emulator tool, which includes a GUI for viewing and sorting through the results. The Z3
 emulator requires z3-4.13.0, available from https://github.com/Z3Prover/z3. Other versions may work,
 but our current test configuration uses 4.13.0. Depending on the release and your platform, the
@@ -138,10 +137,37 @@ that merely integrate with emulation should consider the compositional/callback-
 Extensions that incorporate new domains (e.g. Z3) or novel behaviors (e.g. JIT) should continue 
 using inheritance.
 
-## Other Improvements
- + Added the ability to toggle the displaying of function variables (parameters and locals) that are 
-   normally displayed just below the function signature. The variables display can be turned on/off 
-   globally or individually per function.
+## Data Graph
+Added a new data graph showing data relationships defined by references from one in memory defined data item
+to another. The data graph can be displayed by clicking on a data item in the listing and
+invoking the data graph action (**ctrl-g** or from the popup menu **data -> display data graph**). This action
+will create a new data graph displaying the selected data item and its contents. From
+that node, the graph can be expanded by following from or to references to that data item.
+
+## Hide Function Variables
+Added the ability to toggle the display of function variables (parameters and locals) within
+the Code Browser Listing just below the function signature. The Variables display can be turned 
+on/off globally via the popup menu toggle action (**Function -> Show/Hide All Variables**) or for
+individual functions via an adjacent expand/collapse(+/-) icon.
+
+## GhidraGo URL
+Did you know Ghidra supports embedding URL links in web pages?  After setting up GhidraGo in
+your preferred web browser and adding the GhidraGo plugin into Ghidra, clicking on a Ghidra URL link
+will start Ghidra, open the program either locally or in a multi-user project, and then navigate
+to the specified address in the specified program.  A Ghidra remote URL looks something like
+(**ghidra://myrepo.org:13100/perf/9305e1d039/busybox_aarch64_fc0bdbc**).  You can provide
+just the project path or include a path all the way to an address/symbol in a program within the
+project.  See the Ghidra Help under GhidraGo for setup and more information.
+
+## Processors
+The NDS32, and RISCV variant AndeStar v5 processors have been added.  In addition the RISCV processor
+has been re-factored to better handle RISCV custom extensions and the csreg register definitions have been
+moved into a separate memory space.  The benefit of having an actual memory space for special function
+registers is they can be seen, named, references created to them, data types applied at the location,
+as well as default values supplied for a given binary sample.  We plan to do the same for other processors
+such as the PowerPC.  There have also been numerous extensions and fixes added to the
+AArch64, 8051, LoongArch, SuperH, Arm, Xtensa, x86, 68k, and many other processors.  Thanks for all
+the community contributions!
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 

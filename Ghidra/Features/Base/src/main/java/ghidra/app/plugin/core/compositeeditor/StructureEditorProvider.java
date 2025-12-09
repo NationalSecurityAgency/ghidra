@@ -50,7 +50,6 @@ public class StructureEditorProvider
 		plugin.getTool().addComponentProvider(this, true);
 		updateTitle();
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
 		editorModel.selectionChanged();
 	}
 

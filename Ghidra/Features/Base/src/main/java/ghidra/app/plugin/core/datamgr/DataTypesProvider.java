@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.datamgr;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -94,6 +93,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private boolean includeDataMembersInFilter;
 	private boolean filterOnNameOnly;
 	private DtFilterState filterState = new DtFilterState();
+
+	/**
+	 * Saves state of program nodes so the state can be restored as users tab between programs
+	 */
+	private Map<Long, TreePath> programTreeState = new HashMap<>();
 
 	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName) {
 		this(plugin, providerName, false);
@@ -189,12 +193,13 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// VeryLast group
 		addLocalAction(new FindDataTypesByNameAction(plugin, "1"));
 		addLocalAction(new FindDataTypesBySizeAction(plugin, "2"));
-		addLocalAction(new FindStructuresByOffsetAction(plugin, "3"));
-		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
-		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "5");
+		addLocalAction(new FindEnumsByValueAction(plugin, "3"));
+		addLocalAction(new FindStructuresByOffsetAction(plugin, "4"));
+		addLocalAction(new FindStructuresBySizeAction(plugin, "5"));
+		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "6");
 		addLocalAction(includeDataMembersInSearchAction);
 
-		filterOnNameOnlyAction = new FilterOnNameOnlyAction(plugin, this, "6");
+		filterOnNameOnlyAction = new FilterOnNameOnlyAction(plugin, this, "7");
 		addLocalAction(filterOnNameOnlyAction);
 
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree
@@ -361,6 +366,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
 		archiveGTree = new DataTypeArchiveGTree(plugin);
+
+		ArchiveRootNode rootNode = (ArchiveRootNode) archiveGTree.getModelRoot();
+		rootNode.setNodeListener(new ProgramNodeUpdateListener());
+
 		archiveGTree.addMouseListener(new GMouseListenerAdapter() {
 
 			private GTreeNode lastClickedNode;
@@ -673,11 +682,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		}
 		if (domainObject instanceof Program) {
 			Program program = (Program) domainObject;
-			Program programInTree = plugin.getProgram(); // May be null.
+			Program programInTree = plugin.getProgram(); // may be null
 			if (program == programInTree) {
 				DataTypeArchiveGTree gTree = getGTree();
 				ArchiveNode node = getProgramArchiveNode();
-				// don't know how this can be null, but a mysterious stack trace showed it.
 				if (node != null) {
 					GTreeState state = gTree.getTreeState(node);
 					node.structureChanged();
@@ -697,14 +705,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private ArchiveNode getProgramArchiveNode() {
+	private ProgramArchiveNode getProgramArchiveNode() {
 		GTreeNode rootNode = getGTree().getModelRoot();
 		List<GTreeNode> children = rootNode.getChildren();
 		for (GTreeNode node : children) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
-			Archive archive = archiveNode.getArchive();
-			if (archive instanceof ProgramArchive) {
-				return archiveNode;
+			if (node instanceof ProgramArchiveNode programNode) {
+				return programNode;
 			}
 		}
 		return null;
@@ -900,8 +906,64 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return previewPane.getText();
 	}
 
-	void programClosed() {
+	private void restoreProgramTreeState(ProgramArchiveNode programNode) {
+		ProgramArchive programArchive = (ProgramArchive) programNode.getArchive();
+		Program program = programArchive.getProgram();
+		long id = program.getUniqueProgramID();
+		TreePath selectedPath = programTreeState.get(id);
+		if (selectedPath == null) {
+			return;
+		}
+
+		TreePath[] selectionPaths = archiveGTree.getSelectionPaths();
+		List<TreePath> list = new ArrayList<>(Arrays.asList(selectionPaths));
+		list.add(selectedPath);
+		archiveGTree.setSelectionPaths(list);
+	}
+
+	private void saveProgramTreeState(ProgramArchiveNode programNode) {
+		//
+		// Save the program's selected path as a convenience to the user when we are about to switch
+		// to a new program.  The act of switching will replace the program node, throwing away all
+		// expansion and selection info.   It does not seem useful to save too many selected paths
+		// of the program node, so only save the path if there is a single selection.  This will 
+		// be helpful in the case that the user was working with a single data type in the program.
+		//
+		ProgramArchive programArchive = (ProgramArchive) programNode.getArchive();
+		Program program = programArchive.getProgram();
+		long id = program.getUniqueProgramID();
+		GTreeState state = archiveGTree.getTreeState();
+		List<TreePath> paths = state.getSelectedPaths();
+		programTreeState.remove(id);
+
+		TreePath treePath = getSingleProgramSelection(programNode, paths);
+		if (treePath != null) {
+			programTreeState.put(id, treePath);
+		}
+	}
+
+	private TreePath getSingleProgramSelection(ProgramArchiveNode programNode,
+			List<TreePath> paths) {
+
+		if (paths.size() != 1) {
+			return null;
+		}
+
+		TreePath treePath = paths.get(0);
+		Object[] path = treePath.getPath();
+		if (path.length > 2) {  // the program node is the second element in a selection path
+			if (path[1] == programNode) {
+				return treePath;
+			}
+		}
+		return null;
+	}
+
+	void programClosed(Program program) {
 		archiveGTree.cancelWork();
+
+		long id = program.getUniqueProgramID();
+		programTreeState.remove(id);
 	}
 
 	void archiveClosed(DataTypeManager dtm) {
@@ -997,4 +1059,24 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		contextChanged();
 	}
 
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class ProgramNodeUpdateListener implements ArchiveRootNodeListener {
+
+		@Override
+		public void archiveNodeAdded(ArchiveNode node) {
+			if (node instanceof ProgramArchiveNode programNode) {
+				restoreProgramTreeState(programNode);
+			}
+		}
+
+		@Override
+		public void archiveNodeRemoved(ArchiveNode node) {
+			if (node instanceof ProgramArchiveNode programNode) {
+				saveProgramTreeState(programNode);
+			}
+		}
+	}
 }

@@ -317,6 +317,7 @@ src/main/help/help/topics/ComputeChecksumsPlugin/images/Dialog_Blank.png||GHIDRA
 src/main/help/help/topics/ConsolePlugin/console.html||GHIDRA||||END|
 src/main/help/help/topics/ConsolePlugin/images/Console.png||GHIDRA||||END|
 src/main/help/help/topics/DWARFExternalDebugFilesPlugin/DWARFExternalDebugFilesPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DWARFExternalDebugFilesPlugin/images/ExternalDebugFilesConfigDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/Data.htm||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialogWithTableSelection.png||GHIDRA||||END|
@@ -365,6 +366,8 @@ src/main/help/help/topics/DataWindowPlugin/images/DataWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataWindowPlugin/images/DataWindowFilter.png||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/DbViewer.htm||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/images/DatabaseViewer.png||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/DefinedStringsPlugin.htm||GHIDRA||||END|
+src/main/help/help/topics/DefinedStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/DisassembledViewPlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/images/DisassembledViewPluginMain.png||GHIDRA||||END|
 src/main/help/help/topics/DisassemblerPlugin/Disassembly.htm||GHIDRA||||END|
@@ -517,6 +520,7 @@ src/main/help/help/topics/Intro/images/Simple_err_dialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/FieldNames.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/Labels.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/AddLabel.png||GHIDRA||||END|
+src/main/help/help/topics/LabelMgrPlugin/images/ChooseNamespace.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/EditFieldNameDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/LabelHistoryInputDialog.png||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/SetLabel.png||GHIDRA||||END|
@@ -757,8 +761,6 @@ src/main/help/help/topics/VersionControl/images/UndoHijack.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/VersionHistory.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/images/ViewCheckouts.png||GHIDRA||||END|
 src/main/help/help/topics/VersionControl/project_repository.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/ViewStringsPlugin.htm||GHIDRA||||END|
-src/main/help/help/topics/ViewStringsPlugin/images/Defined_String_Table.png||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/comments/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/app/cmd/data/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/cmd/disassemble/package.html||GHIDRA||||END|
@@ -822,6 +824,7 @@ src/main/resources/defaultTools/images/tar.png||Nuvola Icons - LGPL 2.1|||Nuvola
 src/main/resources/defaultTools/images/tools.png||Oxygen Icons - LGPL 3.0|||originally configure.png from tango|END|
 src/main/resources/defaultTools/images/video-x-generic.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/defaultTools/images/viewedCode.gif||GHIDRA||||END|
+src/main/resources/ghidra/app/plugin/core/analysis/rust/demangler/early-recursion-limit.txt||Apache License 2.0||||END|
 src/main/resources/ghidra/app/plugin/core/totd/tips.txt||GHIDRA||||END|
 src/main/resources/help/Dummy_HelpSet.hs||GHIDRA||reviewed||END|
 src/main/resources/help/empty.htm||GHIDRA||||END|
@@ -1053,7 +1056,6 @@ src/main/resources/images/small_minus.png||GHIDRA||||END|
 src/main/resources/images/small_plus.png||GHIDRA||||END|
 src/main/resources/images/stopNode.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/sync_enabled.png||GHIDRA||||END|
-src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_row_delete.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/tag_blue.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

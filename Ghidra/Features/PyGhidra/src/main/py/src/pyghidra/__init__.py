@@ -58,7 +58,7 @@ from pyghidra.core import run_script, open_program
 from pyghidra.api import start, started
 from pyghidra.api import open_project, open_filesystem, consume_program, program_context, analyze
 from pyghidra.api import ghidra_script, transaction, analysis_properties, program_info
-from pyghidra.api import program_loader, monitor, walk_project, walk_programs
+from pyghidra.api import program_loader, task_monitor, walk_project, walk_programs
 from pyghidra.launcher import DeferredPyGhidraLauncher, GuiPyGhidraLauncher, HeadlessPyGhidraLauncher
 from pyghidra.script import get_current_interpreter
 from pyghidra.version import ApplicationInfo, ExtensionDetails
@@ -69,6 +69,6 @@ __all__ = [
     "DeferredPyGhidraLauncher", "ExtensionDetails", "GuiPyGhidraLauncher", 
     "HeadlessPyGhidraLauncher", "start", "started", "open_project", "open_filesystem", 
     "consume_program", "program_conext", "analyze", "ghidra_script", "transaction", 
-    "analysis_properties", "program_info", "program_loader", "monitor", "walk_project", 
+    "analysis_properties", "program_info", "program_loader", "task_monitor", "walk_project", 
     "walk_programs"
 ]

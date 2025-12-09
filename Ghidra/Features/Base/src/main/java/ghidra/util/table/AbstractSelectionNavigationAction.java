@@ -24,8 +24,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DockingWindowManager;
-import docking.action.ToggleDockingAction;
-import docking.action.ToolBarData;
+import docking.action.*;
 import ghidra.framework.options.PreferenceState;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
@@ -51,14 +50,17 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 	protected final JTable table;
 
 	protected AbstractSelectionNavigationAction(String name, String owner, JTable table) {
-		super(name, owner, false);
+		super(name, owner, KeyBindingType.SHARED);
 		this.table = table;
 
 		selectionListener = new SelectionListener();
 
 		setToolBarData(new ToolBarData(ICON));
-		setDescription(HTMLUtilities.toHTML("Toggle <b>on</b> means to navigate to the location\n" +
-			"in the program that corresponds to the selected row,\n as the selection changes."));
+		setDescription(HTMLUtilities.toHTML("""
+				Toggle <b>on</b> means to navigate to the location
+				in the program that corresponds to the selected row,
+				as the selection changes.
+				"""));
 		setHelpLocation(new HelpLocation("Search", "Selection_Navigation"));
 		setSelected(true); // toggle button; enabled by default
 

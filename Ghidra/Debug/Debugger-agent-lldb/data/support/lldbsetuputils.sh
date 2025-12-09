@@ -43,6 +43,15 @@ add-lldb-image-and-args() {
 	fi
 }
 
+add-lldb-pid() {
+	target_pid=$1
+	shift
+
+	if [ -n "$target_pid" ]; then
+		args+=(-o "process attach --pid '$target_pid'")
+	fi
+}
+
 add-lldb-io-tty() {
 	if [ -n "$TTY_TARGET" ]; then
 		args+=(-o "settings set target.output-path '$TTY_TARGET'")
@@ -63,6 +72,12 @@ add-lldb-start-if-image() {
 
 	if [ -n "$target_image" ]; then
 		args+=(-o "$OPT_START_CMD")
+	fi
+}
+
+add-lldb-extra-cmds() {
+	if [ -n "$OPT_EXTRA_CMDS" ]; then
+		args+=(-o "$OPT_EXTRA_CMDS")
 	fi
 }
 
@@ -105,6 +120,26 @@ compute-lldb-platform-args() {
 	add-lldb-tail-args
 }
 
+compute-lldb-platform-args-attach() {
+	target_pid=$1
+	target_type=$2
+	target_url=$3
+	rmi_address=$4
+	shift
+	shift
+	shift
+	shift
+
+	args+=("$OPT_LLDB_PATH")
+	add-lldb-init-args
+	args+=(-o "platform select '$target_type'")
+	args+=(-o "platform connect '$target_url'")
+	add-lldb-pid "$target_pid"
+	add-lldb-connect-and-sync "$rmi_address"
+	add-lldb-extra-cmds
+	add-lldb-tail-args
+}
+
 compute-lldb-remote-args() {
 	target_image=$1
 	target_cx=$2
@@ -116,6 +151,21 @@ compute-lldb-remote-args() {
 	args+=(-o "$target_cx")
 	add-lldb-connect-and-sync "$rmi_address"
 	args+=(-o "ghidra trace sync-synth-stopped")
+	add-lldb-tail-args
+}
+
+compute-lldb-remote-args-attach() {
+	target_pid=$1
+	target_cx=$2
+	rmi_address=$3
+
+	args+=("$OPT_LLDB_PATH")
+	add-lldb-init-args
+	add-lldb-pid "$target_pid" ""
+	args+=(-o "$target_cx")
+	add-lldb-connect-and-sync "$rmi_address"
+	args+=(-o "ghidra trace sync-synth-stopped")
+	add-lldb-extra-cmds
 	add-lldb-tail-args
 }
 

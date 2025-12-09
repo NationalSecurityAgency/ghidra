@@ -19,12 +19,14 @@
 // Note that you can run this script on a program that has already been analyzed by the
 // DWARF analyzer.
 //@category DWARF
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.external.*;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileInfo;
@@ -76,6 +78,11 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 			popup("Unable to get reader for debug line info");
 			return;
 		}
+		ExternalDebugInfo extDebugInfo = ExternalDebugInfo.fromProgram(dprog.getGhidraProgram());
+		boolean hasBuildId = extDebugInfo != null && extDebugInfo.hasBuildId();
+		ExternalDebugFilesService edfs =
+			ExternalDebugFilesService.forProgram(dprog.getGhidraProgram());
+
 		int entryCount = 0;
 		List<DWARFCompilationUnit> compUnits = dprog.getCompilationUnits();
 		SourceFileManager sourceManager = currentProgram.getSourceFileManager();
@@ -103,6 +110,14 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 					SourceFile sFile = new SourceFile(path, type, sfi.md5());
 					sourceManager.addSourceFile(sFile);
 					sourceFileInfoToSourceFile.put(sfi, sFile);
+					if (hasBuildId) {
+						ExternalDebugInfo srcFileDebugInfo =
+							extDebugInfo.withType(ObjectType.SOURCE, path);
+						File srcFile = edfs.find(srcFileDebugInfo, monitor);
+						if (srcFile != null) {
+							println("Source file: " + srcFile);
+						}
+					}
 				}
 				catch (IllegalArgumentException e) {
 					if (numErrors++ < MAX_ERROR_MSGS_TO_DISPLAY) {

@@ -217,7 +217,7 @@ set CMD_ARGS=%FORCE_JAVA_VERSION% %JAVA_USER_HOME_DIR_OVERRIDE% %VMARG_LIST% -cp
 
 if "%BACKGROUND%"=="y" (
 	set JAVA_CMD=!JAVA_CMD!w
-	start "%APPNAME%" /I /B "!JAVA_CMD!" %CMD_ARGS%
+	start "%APPNAME%" /B "!JAVA_CMD!" %CMD_ARGS%
 	
 	REM If our process dies immediately, output something so the user knows to run in debug mode.
 	REM Otherwise they'll never see any error output from background mode.

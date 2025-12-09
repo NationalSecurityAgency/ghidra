@@ -44,6 +44,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.Msg;
 
 public class Z3SummaryProvider extends ComponentProviderAdapter {
 
@@ -156,6 +157,10 @@ public class Z3SummaryProvider extends ComponentProviderAdapter {
 	}
 
 	private void setFactoryToZ3() {
+		if (!this.isVisible()) {
+			return;
+		}
+		Msg.info(this, "Resetting emulator to Z3 (summary open)");
 		for (EmulatorFactory factory : emulationService.getEmulatorFactories()) {
 			if (factory instanceof SymZ3EmulatorFactory z3factory) {
 				emulationService.setEmulatorFactory(z3factory);

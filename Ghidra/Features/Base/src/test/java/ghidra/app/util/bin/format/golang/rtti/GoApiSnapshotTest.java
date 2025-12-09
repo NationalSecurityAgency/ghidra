@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.rtti.GoApiSnapshot.*;
 import ghidra.util.exception.CancelledException;
@@ -46,7 +47,19 @@ public class GoApiSnapshotTest extends AbstractGenericTest {
 			assertNotNull(runtimeType);
 			assertTrue(runtimeType instanceof GoStructDef || runtimeType instanceof GoAliasDef);
 		}
+	}
 
+	@Test
+	public void testSnapshotFallback() throws CancelledException, IOException {
+		// test to make sure that we can get an apisnapshot file for a patch version that has not
+		// been encountered before
+		for (GoVer goMinorVer : GoRttiMapper.SUPPORTED_VERSIONS.asList()) {
+			ByteProvider snapshot = GoApiSnapshot.getApiSnapshotJsonFile(
+				goMinorVer.withPatch(99 /* large patch number, unlikely to ever be encountered*/),
+				TaskMonitor.DUMMY);
+			assertNotNull(snapshot);
+			snapshot.close();
+		}
 	}
 
 }
