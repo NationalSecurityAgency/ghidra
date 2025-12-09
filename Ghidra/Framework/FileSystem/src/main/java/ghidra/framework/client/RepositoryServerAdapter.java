@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -486,7 +486,7 @@ public class RepositoryServerAdapter {
 	 * @throws IOException if user data can't be written to file
 	 * @throws NotConnectedException if server connection is down (user already informed)
 	 * @see ghidra.framework.remote.RemoteRepositoryServerHandle#setPassword(char[])
-	 * @see ghidra.util.HashUtilities#getSaltedHash(String, char[])  HashUtilities.getSaltedHash("SHA-256", char[])
+	 * @see generic.hash.HashUtilities#getSaltedHash(String, char[])  HashUtilities.getSaltedHash("SHA-256", char[])
 	 */
 	public synchronized boolean setPassword(char[] saltedSHA256PasswordHash)
 			throws IOException, NotConnectedException {

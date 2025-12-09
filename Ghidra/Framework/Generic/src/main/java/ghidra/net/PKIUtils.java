@@ -42,15 +42,13 @@ import org.bouncycastle.util.IPAddress;
 import generic.random.SecureRandomFactory;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 
 /**
- * <code>ApplicationKeyManagerUtils</code> provides public methods for utilizing
- * the application PKI key management, including access to trusted issuers
- * (i.e., CA certificates), token signing and validation, and the ability to
- * generate keystores for testing or when a self-signed certificate will
- * suffice.
+ * {@link PKIUtils} provides supporting utilities for creating and accessing X509 certificate
+ * keystore files.
  */
-public class ApplicationKeyManagerUtils {
+public class PKIUtils {
 
 	public static final String RSA_TYPE = "RSA";
 
@@ -69,193 +67,61 @@ public class ApplicationKeyManagerUtils {
 
 	static {
 		/**
-		 * Bouncy Castle uses its BCStyle for X500Names which reverses Distingushed Name ordering.
+		 * Bouncy Castle uses its BCStyle for X500Names which reverses Distinguished Name ordering.
 		 * This is resolved by setting the default to RFC4519 style to ensure compatibility with 
 		 * Java's internal implementation of X500Name.
 		 * <p>
 		 * Note that this could become an issue if this static default is adjusted elsewhere.
-		 * It may be neccessary to set this at the start of all methods which rely on any of the
+		 * It may be necessary to set this at the start of all methods which rely on any of the
 		 * BC code for X500 certificate processing.
 		 * 
 		 */
 		X500Name.setDefaultStyle(RFC4519Style.INSTANCE);
 	}
 
-	private ApplicationKeyManagerUtils() {
-		// no instantiation - static methods only
-	}
-
 	/**
-	 * Sign the supplied token byte array using an installed certificate from
-	 * one of the specified authorities
-	 * @param authorities trusted certificate authorities used to constrain client certificate
-	 *   (may be null or empty array if CA constraint does not matter).
-	 * @param token token byte array
-	 * @return signed token object
-	 * @throws NoSuchAlgorithmException algorithym associated within signing certificate not found
-	 * @throws SignatureException failed to generate SignedToken
-	 * @throws CertificateException error associated with signing certificate
+	 * Establish X509TrustManager for the specified CA certificate storage.
+	 * 
+	 * @param caCertsFile CA certificates storage file
+	 * @return X509TrustManager
+	 * @throws CancelledException if password entry was cancelled
+	 * @throws GeneralSecurityException if error occured during truststore initialization
+	 * @throws IOException if file read error occurs
 	 */
-	public static SignedToken getSignedToken(Principal[] authorities, byte[] token)
-			throws NoSuchAlgorithmException, SignatureException, CertificateException {
+	public static X509TrustManager getTrustManager(File caCertsFile)
+			throws CancelledException, GeneralSecurityException, IOException {
 
-		PrivateKey privateKey = null;
-		X509Certificate[] certificateChain = null;
-		try {
-			ApplicationKeyManagerFactory keyManagerFactory =
-				ApplicationKeyManagerFactory.getInstance();
-			for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
-				if (!(keyManager instanceof X509KeyManager)) {
-					continue;
-				}
-				X509KeyManager x509KeyManager = (X509KeyManager) keyManager;
-				String alias =
-					x509KeyManager.chooseClientAlias(new String[] { RSA_TYPE }, authorities, null);
-				if (alias != null) {
-					privateKey = x509KeyManager.getPrivateKey(alias);
-					certificateChain = x509KeyManager.getCertificateChain(alias);
-					break;
-				}
-			}
-
-			if (privateKey == null || certificateChain == null) {
-				CertificateException e =
-					new CertificateException("suitable PKI certificate not found");
-				e.printStackTrace();
-				throw e;
-			}
-
-			//
-			// See JAVA Examples in a Nutshell (p.358) for use of Signer and
-			// IdentityScope classes
-			//
-
-			String algorithm = certificateChain[0].getSigAlgName();
-			Signature sig = Signature.getInstance(algorithm);
-			try {
-				sig.initSign(privateKey);
-			}
-			catch (InvalidKeyException e) {
-				throw new CertificateException("suitable PKI certificate not found", e);
-			}
-			sig.update(token);
-
-			return new SignedToken(token, sig.sign(), certificateChain, algorithm);
-		}
-		finally {
-			if (privateKey != null) {
-				// Note: Keystore destroy only supported in Java 1.8
-				try {
-					privateKey.destroy();
-				}
-				catch (DestroyFailedException e) {
-					// ignore - may not be supported by all keystores
-				}
-			}
-		}
-	}
-
-	/**
-	 * Verify that the specified sigBytes reflect my signature of the specified token.
-	 * @param authorities trusted certificate authorities used to constrain client certificate
-	 *   (may be null or empty array if CA constraint does not matter).
-	 * @param token byte array token
-	 * @param signature token signature
-	 * @return true if signature is my signature
-	 * @throws NoSuchAlgorithmException algorithym associated within signing certificate not found
-	 * @throws SignatureException failed to generate SignedToken
-	 * @throws CertificateException error associated with signing certificate
-	 */
-	public static boolean isMySignature(Principal[] authorities, byte[] token, byte[] signature)
-			throws NoSuchAlgorithmException, SignatureException, CertificateException {
-		SignedToken signedToken = getSignedToken(authorities, token);
-		return Arrays.equals(signature, signedToken.signature);
-	}
-
-	/**
-	 * Returns a list of trusted issuers (i.e., CA certificates) as established
-	 * by the {@link ApplicationTrustManagerFactory}.
-	 * @return array of trusted Certificate Authorities
-	 * @throws CertificateException if failed to properly initialize trust manager
-	 * due to CA certificate error(s).
-	 */
-	public static X500Principal[] getTrustedIssuers() throws CertificateException {
-
-		TrustManager[] trustManagers = ApplicationTrustManagerFactory.getTrustManagers();
-		if (ApplicationTrustManagerFactory.hasCertError()) {
-			throw new CertificateException("failed to load CA certs",
-				ApplicationTrustManagerFactory.getCertError());
+		if (!caCertsFile.isFile()) {
+			throw new FileNotFoundException(
+				"CA Certificates file not found: " + caCertsFile.getAbsolutePath());
 		}
 
-		Set<X500Principal> set = new HashSet<>();
+		KeyStore keyStore = PKIUtils.loadCertificateStore(caCertsFile.getAbsolutePath());
+		TrustManagerFactory tmf =
+			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		tmf.init(keyStore);
 
-		boolean openTrust = true;
-		for (TrustManager trustManager : trustManagers) {
-			if (!(trustManager instanceof X509TrustManager)) {
-				Msg.warn(ApplicationKeyManagerUtils.class,
-					"Unexpected trust manager implementation: " +
-						trustManager.getClass().getName());
-				openTrust = false;
-				continue;
-			}
-			X509TrustManager x509TrustManager = (X509TrustManager) trustManager;
-			X509Certificate[] acceptedIssuers = x509TrustManager.getAcceptedIssuers();
-			if (acceptedIssuers != null && acceptedIssuers.length != 0) {
-				openTrust = false;
-				for (X509Certificate trustedCert : acceptedIssuers) {
-					set.add(trustedCert.getSubjectX500Principal());
-				}
-			}
-		}
-
-		if (openTrust) {
-			return null;// trust all authorities
-		}
-
-		X500Principal[] principals = new X500Principal[set.size()];
-		return set.toArray(principals);
-	}
-
-	/**
-	 * Validate a client certificate ensuring that it is not expired and is
-	 * trusted based upon the active trust managers.
-	 * @param certChain X509 certificate chain
-	 * @param authType authentication type (i.e., "RSA")
-	 * @throws CertificateException if certificate validation fails
-	 */
-	public static void validateClient(X509Certificate[] certChain, String authType)
-			throws CertificateException {
-
-		CertificateException checkFailure = null;
-
-		TrustManager[] trustManagers = ApplicationTrustManagerFactory.getTrustManagers();
-		if (ApplicationTrustManagerFactory.hasCertError()) {
-			throw new CertificateException("failed to load CA certs",
-				ApplicationTrustManagerFactory.getCertError());
-		}
-
-		for (TrustManager trustManager : trustManagers) {
-			if (!(trustManager instanceof X509TrustManager)) {
-				continue;
-			}
-			X509TrustManager x509TrustManager = (X509TrustManager) trustManager;
-
-			try {
-				x509TrustManager.checkClientTrusted(certChain, authType);
-				checkFailure = null;
+		X509TrustManager trustManager = null;
+		TrustManager[] trustManagers = tmf.getTrustManagers();
+		for (TrustManager trustManager2 : trustManagers) {
+			if (trustManager2 instanceof X509TrustManager mgr) {
+				//ApplicationKeyStore.logCerts(mgr.getAcceptedIssuers());
+				trustManager = mgr;
 				break;
 			}
-			catch (CertificateException e) {
-				checkFailure = e;
-			}
 		}
-		if (checkFailure != null) {
-			throw checkFailure;// check failed - throw last failure
+
+		if (trustManager == null) {
+			throw new CertStoreException(
+				"Failed to load X509 TrustManager from " + caCertsFile.getAbsolutePath());
 		}
+
+		return trustManager;
 	}
 
 	/**
 	 * Pack ordered list of certs to create a certificate chain array
+	 * 
 	 * @param cert primary certificate
 	 * @param caCerts CA certificate chain.
 	 * @return ordered certificate chain
@@ -269,6 +135,7 @@ public class ApplicationKeyManagerUtils {
 
 	/**
 	 * Export X.509 certificates to the specified outFile.
+	 * 
 	 * @param certificates certificates to be stored 
 	 * @param outFile output file
 	 * @throws IOException if error occurs writing to outFile
@@ -300,6 +167,7 @@ public class ApplicationKeyManagerUtils {
 	/**
 	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
 	 * optionally backed by a keyFile.  
+	 * 
 	 * @param alias entry alias with keystore
 	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
 	 * @param durationDays number of days which generated certificate should remain valid
@@ -407,7 +275,7 @@ public class ApplicationKeyManagerUtils {
 					keyStore.store(out, protectedPassphrase);
 					out.flush();
 					out.getFD().sync();
-					Msg.debug(ApplicationKeyManagerUtils.class,
+					Msg.debug(PKIUtils.class,
 						out.getChannel().size() + " bytes written to key/cert file: " + keyFile);
 				}
 				catch (SyncFailedException e) {
@@ -420,8 +288,7 @@ public class ApplicationKeyManagerUtils {
 				keyFile.setWritable(false);
 			}
 
-			Msg.debug(ApplicationKeyManagerUtils.class,
-				"Certificate Generated (" + alias + "): " + dn);
+			Msg.debug(PKIUtils.class, "Certificate Generated (" + alias + "): " + dn);
 
 			return keyStore;
 		}
@@ -441,6 +308,7 @@ public class ApplicationKeyManagerUtils {
 	/**
 	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
 	 * optionally backed by a keyFile.  
+	 * 
 	 * @param alias entry alias with keystore
 	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
 	 * @param durationDays number of days which generated certificate should remain valid
@@ -477,4 +345,224 @@ public class ApplicationKeyManagerUtils {
 		}
 	}
 
+	/**
+	 * Load the all certificates from the specified certificate store in a standard
+	 * X.509 form (e.g., concatenation of Base64 encoded certificates: *.pem, *.crt, *.cer, *.der) 
+	 * or Java JKS (*.jks) form.
+	 * 
+	 * @param certsPath certificate(s) storage file path
+	 * @return KeyStore containing certificates
+	 * @throws IOException if failure occurred reading and processing keystore file.
+	 * @throws NoSuchAlgorithmException if the algorithm used to check the integrity of the 
+	 * 			keystore cannot be found
+	 * @throws CertificateException if any of the certificates in the keystore could not be loaded 
+	 * @throws KeyStoreException if a general error occurred opening/processing keystore
+	 */
+	public static KeyStore loadCertificateStore(String certsPath)
+			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+
+		int certCount = 0;
+
+		KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
+		store.load(null);
+
+		// Attempt to read certificates in Base64 encoded form
+		InputStream fis = new FileInputStream(certsPath);
+		BufferedInputStream bis = new BufferedInputStream(fis);
+
+		try {
+			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			while (bis.available() > 0) {
+				try {
+					Certificate cert = cf.generateCertificate(bis);
+					if (cert instanceof X509Certificate) {
+						X509Certificate x509Cert = (X509Certificate) cert;
+						String name = getCommonName(x509Cert.getSubjectX500Principal());
+						store.setCertificateEntry(name, cert);
+						++certCount;
+					}
+				}
+				catch (CertificateException e) {
+					// Must handle blank lines at bottom of file
+					Throwable cause = e.getCause();
+					if (cause != null && "Empty input".equals(cause.getMessage())) {
+						break; // end of file
+					}
+					throw e;
+				}
+			}
+		}
+		finally {
+			bis.close();
+		}
+
+		if (certCount == 0) {
+			// Processing JKS files above produce "Empty input", if no certs read
+			// try reading as keystore without password 
+			return getKeyStoreInstance(certsPath, null);
+		}
+		return store;
+	}
+
+	/**
+	 * Attempt to load a client/server keystore in a PKCS12 form (*.p12, *.pks, *.pfx) or 
+	 * Java JKS (*.jks) form.
+	 * 
+	 * @param keystorePath JKS or PKCS12 keystore file path
+	 * @param password keystore password
+	 * @return keystore instance
+	 * @throws IOException if failure occurred reading and processing keystore file or if the 
+	 * 			given password was incorrect. If the error is due to a wrong password, the 
+	 * 			{@link Throwable#getCause cause} of the {@code IOException} should be an
+	 * 			{@code UnrecoverableKeyException}
+	 * @throws NoSuchAlgorithmException if the algorithm used to check the integrity of the 
+	 * 			keystore cannot be found
+	 * @throws CertificateException if any of the certificates in the keystore could not be loaded 
+	 * @throws KeyStoreException if a general error occurred opening/processing keystore
+	 */
+	public static synchronized KeyStore getKeyStoreInstance(String keystorePath, char[] password)
+			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+
+		String type = PKIUtils.detectKeyStoreType(keystorePath);
+		if (type == null) {
+			throw new KeyStoreException("Unsupported PKI key store file type: " + keystorePath);
+		}
+
+		KeyStore ks = KeyStore.getInstance(type);
+
+		InputStream fis = new FileInputStream(keystorePath);
+		BufferedInputStream bis = new BufferedInputStream(fis);
+		try {
+			ks.load(bis, password);
+		}
+		finally {
+			bis.close();
+		}
+		return ks;
+	}
+
+	/**
+	 * Attempt to detect PKI KeyStore type ("JKS" or "PKCS12") for the specified file.
+	 * 
+	 * @param keystorePath key store file path
+	 * @return "JKS", "PKCS12" or null
+	 * @throws IOException if file read error occurs
+	 */
+	public static String detectKeyStoreType(String keystorePath) throws IOException {
+		try (FileInputStream fis = new FileInputStream(keystorePath)) {
+			byte[] header = new byte[4];
+			int read = fis.read(header);
+			if (read < 4) {
+				return null;
+			}
+
+			// Check for JKS magic number: FEEDFEED
+			if ((header[0] & 0xFF) == 0xFE && (header[1] & 0xFF) == 0xED &&
+				(header[2] & 0xFF) == 0xFE && (header[3] & 0xFF) == 0xED) {
+				return "JKS";
+			}
+
+			// Check for PKCS12: starts with 0x30 0x82
+			if ((header[0] & 0xFF) == 0x30 && (header[1] & 0xFF) == 0x82) {
+				return "PKCS12";
+			}
+
+			return null;
+		}
+	}
+
+	/**
+	 * Extract Common Name (CN) from specified principal subject Distinguished Name (DN)
+	 * 
+	 * @param subject X.509 certificate subject
+	 * @return Common Name or full subject name if unable to extract CN from DN
+	 */
+	private static String getCommonName(Principal subject) {
+
+		// Subject name should be distinguished-name (DN) which starts with common-name (CN)
+		String name = subject.getName();
+		int commaIndex = name.indexOf(',');
+		String firstElement = commaIndex < 0 ? name : name.substring(0, commaIndex);
+
+		int equalsIndex = firstElement.indexOf('=');
+		if (equalsIndex <= 0) {
+			return name; // bad common name
+		}
+
+		String fieldName = firstElement.substring(0, equalsIndex).trim();
+		String fieldValue = firstElement.substring(equalsIndex + 1).trim();
+
+		if (!fieldName.equalsIgnoreCase("CN")) {
+			return name; // bad common name
+		}
+
+		return fieldValue;
+	}
+
+	/**
+	 * Log all X509 certificates contained within keystore
+	 * 
+	 * @param keyStore certificate keystore
+	 */
+	static void logCerts(KeyStore keyStore) {
+		try {
+			Enumeration<String> aliases = keyStore.aliases();
+			while (aliases.hasMoreElements()) {
+				String alias = aliases.nextElement();
+				Certificate certificate = keyStore.getCertificate(alias);
+				if (certificate == null) {
+					continue;
+				}
+				else if (certificate instanceof X509Certificate) {
+					logCert(alias, (X509Certificate) certificate);
+				}
+				else {
+					Msg.warn(PKIUtils.class, "Ignore unrecognized certificate: alias=" + alias +
+						", type=" + certificate.getType());
+				}
+			}
+		}
+		catch (KeyStoreException e) {
+			Msg.error(PKIUtils.class, "KeyStore failure", e);
+		}
+	}
+
+	/**
+	 * Log all X509 certificates contained within array
+	 * 
+	 * @param x509Certs array of certificates
+	 */
+	public static void logCerts(X509Certificate[] x509Certs) {
+		for (X509Certificate x509Cert : x509Certs) {
+			logCert(null, x509Cert);
+		}
+	}
+
+	/**
+	 * Log specified X509 certificate details
+	 * 
+	 * @param alias certificate alias or null if not applicable
+	 * @param x509Cert X509 certificate
+	 */
+	static void logCert(String alias, X509Certificate x509Cert) {
+
+		X500Principal subj = x509Cert.getSubjectX500Principal();
+		X500Principal issuer = x509Cert.getIssuerX500Principal();
+
+		Date now = new Date();
+
+		String label = alias != null ? (alias + ": ") : "";
+		if (now.compareTo(x509Cert.getNotAfter()) > 0) {
+			Msg.warn(PKIUtils.class,
+				"   " + label + getCommonName(subj) + ", issued by " + getCommonName(issuer) +
+					", S/N " + x509Cert.getSerialNumber().toString(16) + ", expired " +
+					x509Cert.getNotAfter() + " **EXPIRED**");
+		}
+		else {
+			Msg.info(PKIUtils.class,
+				"   " + label + getCommonName(subj) + ", issued by " + getCommonName(issuer) +
+					", S/N " + x509Cert.getSerialNumber().toString(16) + ", expires " +
+					x509Cert.getNotAfter());
+		}
+	}
 }
