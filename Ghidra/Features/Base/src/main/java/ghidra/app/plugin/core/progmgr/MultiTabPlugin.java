@@ -58,7 +58,9 @@ import help.Help;
 	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramVisibilityChangePluginEvent.class }
 )
 //@formatter:on
-public class MultiTabPlugin extends Plugin implements TransactionListener, OptionsChangeListener {
+public class MultiTabPlugin extends Plugin
+		implements TransactionListener, DomainObjectListener, OptionsChangeListener {
+
 	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
 	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
 	private static final String SHOW_TABS_ALWAYS = "Show Program Tabs Always";
@@ -307,6 +309,8 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 
 		if (progService.isVisible(prog)) {
 			tabPanel.addTab(prog);
+			prog.removeListener(this);
+			prog.addListener(this);
 			prog.removeTransactionListener(this);
 			prog.addTransactionListener(this);
 			updateActionEnablement();
@@ -314,6 +318,7 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	}
 
 	private void remove(Program prog) {
+		prog.removeListener(this);
 		prog.removeTransactionListener(this);
 		tabPanel.removeTab(prog);
 		updateActionEnablement();
@@ -380,6 +385,14 @@ public class MultiTabPlugin extends Plugin implements TransactionListener, Optio
 	@Override
 	public void transactionEnded(DomainObjectAdapterDB domainObj) {
 		tabPanel.refreshTab((Program) domainObj);
+	}
+
+	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+		if (ev.getSource() instanceof Program) {
+			Program program = (Program) ev.getSource();
+			tabPanel.refreshTab(program);
+		}
 	}
 
 	@Override
