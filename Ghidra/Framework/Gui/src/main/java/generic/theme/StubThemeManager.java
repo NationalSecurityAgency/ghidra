@@ -63,7 +63,9 @@ public class StubThemeManager extends ThemeManager {
 
 	@Override
 	public void restoreThemeValues() {
-		throw new UnsupportedOperationException();
+		// The test framework will call this to reset the theme between each test run.   Some tests
+		// use this stub theme manager by default.  It is easier to allow this method to just do
+		// nothing than to throw an exception.
 	}
 
 	@Override
