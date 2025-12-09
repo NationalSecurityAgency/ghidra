@@ -17,6 +17,7 @@ package ghidra.framework.options;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.jdom.Element;
 
@@ -119,11 +120,14 @@ public class SaveState extends XmlProperties {
 		String tag = element.getName();
 
 		if (tag.equals("SAVE_STATE")) {
-			Element child = (Element) element.getChildren().get(0);
-			if (child != null) {
-				String name = element.getAttributeValue(NAME);
-				map.put(name, new SaveState(child));
-				return;
+			List<?> children = element.getChildren();
+			if (!children.isEmpty()) {
+				Element child = (Element) children.get(0);
+				if (child != null) {
+					String name = element.getAttributeValue(NAME);
+					map.put(name, new SaveState(child));
+					return;
+				}
 			}
 		}
 		super.processElement(element);
