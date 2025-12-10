@@ -3715,13 +3715,11 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  Varnode *valueVn = op->getIn(2);
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
+    int4 i = spc->isBigEndian() ? numLanes -1 - count: count;	// little = least to most, big = most to least
     TransformOp *ropStore = newOpReplace(3, CPUI_STORE, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = valueVn->getSize() - (bytePos + sz);	// Convert position to address order
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3738,6 +3736,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
     opSetInput(ropStore,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropStore,ptrVn,1);
     opSetInput(ropStore,inVars+i,2);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }
@@ -3763,13 +3762,11 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
   }
   TransformVar *basePtr = getPreexistingVarnode(origPtr);
   int4 ptrSize = origPtr->getSize();
-  int4 outSize = op->getOut()->getSize();
-  for(int4 i=0;i<numLanes;++i) {
+  // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
+  int8 bytePos = 0;	// Smallest pointer offset
+  for(int4 count=0;count<numLanes;++count) {
     TransformOp *ropLoad = newOpReplace(2, CPUI_LOAD, op);
-    int4 bytePos = description.getPosition(skipLanes + i);
-    int4 sz = description.getSize(skipLanes + i);
-    if (spc->isBigEndian())
-      bytePos = outSize - (bytePos + sz);	// Convert position to address order
+    int4 i = spc->isBigEndian() ? numLanes - 1 - count : count;	// little = least to most, big = most to least
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3786,6 +3783,7 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
     opSetInput(ropLoad,newConstant(spaceConstSize,0,spaceConst),0);
     opSetInput(ropLoad,ptrVn,1);
     opSetOutput(ropLoad,outVars+i);
+    bytePos += description.getSize(skipLanes + i);
   }
   return true;
 }
