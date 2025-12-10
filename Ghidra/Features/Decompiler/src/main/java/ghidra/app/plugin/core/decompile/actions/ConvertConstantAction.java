@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import java.util.List;
-
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.util.List;
 
 import javax.swing.JMenuItem;
 
@@ -146,12 +145,9 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 * @param program is the Program
 	 * @param startAddress is the starting address to search backward from
 	 * @param constVn is the given constant Varnode
-	 * @param monitor is the TaskMonitor
 	 * @return a description of the scalar match, or null if there is no match
-	 * @throws CancelledException if the user cancels
 	 */
-	private ScalarMatch findScalarMatch(Program program, Address startAddress, Varnode constVn,
-			TaskMonitor monitor) throws CancelledException {
+	private ScalarMatch findScalarMatch(Program program, Address startAddress, Varnode constVn) {
 		long value = constVn.getOffset();
 		long mask = -1;
 		if (constVn.getSize() < 8) {
@@ -168,11 +164,19 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		if (curInst == null) {
 			return null;
 		}
+
 		SimpleBlockModel model = new SimpleBlockModel(program);
-		CodeBlock basicBlock = model.getFirstCodeBlockContaining(startAddress, monitor);
+		CodeBlock basicBlock = null;
+		try {
+			basicBlock = model.getFirstCodeBlockContaining(startAddress, TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			// can't happen; dummy monitor
+		}
 		if (basicBlock == null) {
 			return null;
 		}
+
 		while (count < MAX_INSTRUCTION_WINDOW) {
 			count += 1;
 			ScalarMatch newMatch = findScalarInInstruction(curInst, values);
@@ -207,6 +211,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 */
 	protected ConvertConstantTask establishTask(DecompilerActionContext context,
 			boolean setupFinal) {
+
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		if (!(tokenAtCursor instanceof ClangVariableToken)) {
 			return null;
@@ -215,6 +220,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		if (convertVn == null || !convertVn.isConstant() || convertVn.getSize() > MAX_SCALAR_SIZE) {
 			return null;
 		}
+
 		HighSymbol symbol = convertVn.getHigh().getSymbol();
 		EquateSymbol convertSymbol = null;
 		if (symbol != null) {
@@ -229,6 +235,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 				return null;		// Something already attached to constant
 			}
 		}
+
 		DataType convertDataType = convertVn.getHigh().getDataType();
 		boolean convertIsSigned = false;
 		if (convertDataType instanceof AbstractIntegerDataType) {
@@ -244,77 +251,83 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 			return new ConvertConstantTask(convertVn, convertIsSigned);
 		}
 
-		ConvertConstantTask task = null;
+		if (convertSymbol != null) {
+			return convertExistingSymbol(context, convertSymbol, convertVn, convertIsSigned);
+		}
+
+		PcodeOp op = convertVn.getLoneDescend();
+		Address convertAddr = op.getSeqnum().getTarget();
+		DynamicHash dynamicHash = new DynamicHash(convertVn, 0);
+		long convertHash = dynamicHash.getHash();
+		Program program = context.getProgram();
+		ScalarMatch scalarMatch = findScalarMatch(program, convertAddr, convertVn);
+		if (scalarMatch == null) {
+			String equateName = getEquateName(convertVn.getOffset(), convertVn.getSize(),
+				convertIsSigned, program);
+			if (equateName == null) {
+				return null; // A null is a user cancel
+			}
+			return new ConvertConstantTask(context, equateName, convertAddr, convertVn,
+				convertIsSigned, convertHash, -1);
+		}
+
+		long value = scalarMatch.scalar.getUnsignedValue();
+		int size = scalarMatch.scalar.bitLength() / 8;
+		if (size == 0) {
+			size = 1;
+		}
+		value = ConvertConstantTask.signExtendValue(convertIsSigned, value, size);
+		String equateName = getEquateName(value, size, convertIsSigned, program);
+		if (equateName == null) {
+			return null; // user cancelled
+		}
+
+		ConvertConstantTask task =
+			new ConvertConstantTask(context, equateName, convertAddr, convertVn,
+				convertIsSigned, convertHash, -1);
+
+		// Don't create a named equate if the varnode and the instruction operand differ
+		// as the name was selected specifically for the varnode
+		if (convertType != EquateSymbol.FORMAT_DEFAULT || value == task.getValue()) {
+			task.setAlternate(equateName, scalarMatch.refAddr, scalarMatch.opIndex, value);
+		}
+		return task;
+	}
+
+	private ConvertConstantTask convertExistingSymbol(DecompilerActionContext context,
+			EquateSymbol convertSymbol, Varnode convertVn, boolean convertIsSigned) {
+
+		Address convertAddr = convertSymbol.getPCAddress();
+		long convertHash = 0;
+		int convertIndex = -1;
+		boolean foundEquate = false;
+		Program program = context.getProgram();
+		EquateTable equateTable = program.getEquateTable();
+		List<Equate> equates = equateTable.getEquates(convertAddr);
+		for (Equate equate : equates) {
+			if (equate.getValue() != convertVn.getOffset()) {
+				continue;
+			}
+			for (EquateReference equateRef : equate.getReferences(convertAddr)) {
+				convertHash = equateRef.getDynamicHashValue();
+				convertIndex = equateRef.getOpIndex();
+				foundEquate = true;
+				break;
+			}
+			break;
+		}
+		if (!foundEquate) {
+			Msg.error(this, "Symbol does not have matching entry in equate table");
+			return null;
+		}
 
 		String equateName = getEquateName(convertVn.getOffset(), convertVn.getSize(),
 			convertIsSigned, context.getProgram());
 		if (equateName == null) {		// A null is a user cancel
 			return null;
 		}
-		Program program = context.getProgram();
-		Address convertAddr;
-		long convertHash;
-		if (convertSymbol != null) {
-			convertAddr = convertSymbol.getPCAddress();
-			convertHash = 0;
-			int convertIndex = -1;
-			boolean foundEquate = false;
-			EquateTable equateTable = program.getEquateTable();
-			List<Equate> equates = equateTable.getEquates(convertAddr);
-			for (Equate equate : equates) {
-				if (equate.getValue() != convertVn.getOffset()) {
-					continue;
-				}
-				for (EquateReference equateRef : equate.getReferences(convertAddr)) {
-					convertHash = equateRef.getDynamicHashValue();
-					convertIndex = equateRef.getOpIndex();
-					foundEquate = true;
-					break;
-				}
-				break;
-			}
-			if (!foundEquate) {
-				Msg.error(this, "Symbol does not have matching entry in equate table");
-				return null;
-			}
-			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn,
-				convertIsSigned, convertHash, convertIndex);
-		}
-		else {
-			PcodeOp op = convertVn.getLoneDescend();
-			convertAddr = op.getSeqnum().getTarget();
-
-			DynamicHash dynamicHash = new DynamicHash(convertVn, 0);
-			convertHash = dynamicHash.getHash();
-			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn,
-				convertIsSigned, convertHash, -1);
-			try {
-				ScalarMatch scalarMatch = findScalarMatch(context.getProgram(), convertAddr,
-					convertVn, TaskMonitor.DUMMY);
-				if (scalarMatch != null) {
-					long value = scalarMatch.scalar.getUnsignedValue();
-					int size = scalarMatch.scalar.bitLength() / 8;
-					if (size == 0) {
-						size = 1;
-					}
-					value = ConvertConstantTask.signExtendValue(convertIsSigned, value, size);
-					String altName =
-						getEquateName(value, size, convertIsSigned, context.getProgram());
-					if (altName == null) {
-						altName = equateName;
-					}
-					// Don't create a named equate if the varnode and the instruction operand differ
-					// as the name was selected specifically for the varnode
-					if (convertType != EquateSymbol.FORMAT_DEFAULT || value == task.getValue()) {
-						task.setAlternate(altName, scalarMatch.refAddr, scalarMatch.opIndex, value);
-					}
-				}
-			}
-			catch (CancelledException e) {
-				// scalar match is not added to task
-			}
-		}
-		return task;
+		return new ConvertConstantTask(context, equateName, convertAddr, convertVn,
+			convertIsSigned, convertHash, convertIndex);
 	}
 
 	@Override
