@@ -67,6 +67,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private static final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
 	private static final String DESCRIPTION_DIVIDER_LOCATION = "DESCRIPTION_DIVIDER_LOCATION";
 	private static final String FILTER_TEXT = "FILTER_TEXT";
+	private static final String RECENT_SCRIPTS = "RECENT_SCRIPTS";
+	private static final int MAX_RECENT_SCRIPTS = 10;
 
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
 	private final GhidraScriptMgrPlugin plugin;
@@ -88,6 +90,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private String[] previousCategory;
 
 	private ResourceFile lastRunScript;
+	private LinkedList<String> recentScripts = new LinkedList<>();
 	private WeakSet<RunScriptTask> runningScriptTaskSet =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
 	private TaskListener cleanupTaskSetListener = new TaskListener() {
@@ -311,6 +314,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		String filterText = saveState.getString(FILTER_TEXT, "");
 		tableFilterPanel.setFilterText(filterText);
+
+		String[] scripts = saveState.getStrings(RECENT_SCRIPTS, new String[0]);
+		recentScripts.clear();
+		for (String script : scripts) {
+			recentScripts.add(script);
+		}
 	}
 
 	/**
@@ -332,6 +341,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		String filterText = tableFilterPanel.getFilterText();
 		saveState.putString(FILTER_TEXT, filterText);
+
+		String[] scripts = recentScripts.toArray(new String[0]);
+		saveState.putStrings(RECENT_SCRIPTS, scripts);
 	}
 
 	void dispose() {
@@ -362,6 +374,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	Map<ResourceFile, GhidraScriptEditorComponentProvider> getEditorMap() {
 		return editorMap;
+	}
+
+	LinkedList<String> getRecentScripts() {
+		return recentScripts;
 	}
 
 	void assignKeyBinding() {
@@ -664,6 +680,17 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
 		lastRunScript = scriptFile;
+
+		// Update recent scripts list
+		String scriptName = scriptFile.getName();
+		recentScripts.remove(scriptName);  // Remove if already exists
+		recentScripts.addFirst(scriptName);  // Add to front (most recent)
+
+		// Trim to max size
+		while (recentScripts.size() > MAX_RECENT_SCRIPTS) {
+			recentScripts.removeLast();
+		}
+
 		GhidraScript script = doGetScriptInstance(scriptFile);
 		if (script != null) {
 			doRunScript(script, listener);
