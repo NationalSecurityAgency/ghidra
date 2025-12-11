@@ -20,6 +20,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.text.html.HTMLEditorKit;
 
 import docking.DialogComponentProvider;
 import docking.widgets.list.GListCellRenderer;
@@ -44,6 +47,7 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 	private String initialScript;
 	private ScriptInfo userChoice;
 	private SearchList<ScriptInfo> searchList;
+	private JTextPane detailPane;
 
 	ScriptSelectionDialog(GhidraScriptMgrPlugin plugin, List<ScriptInfo> scriptInfos,
 			LinkedList<String> recentScripts, String initialScript) {
@@ -61,12 +65,31 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildMainPanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-
 		ScriptsModel model = new ScriptsModel(scriptInfos, recentScripts);
 		searchList = new SearchList<>(model, (script, category) -> scriptChosen(script));
 		searchList.setItemRenderer(new ScriptRenderer());
 		searchList.setDisplayNameFunction((script, category) -> script.getName());
+
+		// Add selection listener to update detail pane
+		searchList.setSelectionCallback(this::updateDetailPane);
+
+		// Add model listener to reset selection when filter changes
+		model.addListDataListener(new ListDataListener() {
+			@Override
+			public void intervalAdded(ListDataEvent e) {
+				resetSelectionToFirst();
+			}
+
+			@Override
+			public void intervalRemoved(ListDataEvent e) {
+				resetSelectionToFirst();
+			}
+
+			@Override
+			public void contentsChanged(ListDataEvent e) {
+				resetSelectionToFirst();
+			}
+		});
 
 		// Pre-select the initial script if provided
 		if (initialScript != null && !initialScript.isEmpty()) {
@@ -80,10 +103,54 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 			});
 		}
 
-		panel.add(searchList, BorderLayout.CENTER);
-		panel.setPreferredSize(new Dimension(600, 400));
+		// Create detail pane
+		JComponent detailPaneComponent = buildDetailPane();
+
+		// Create split pane with list on left, detail on right
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		splitPane.setLeftComponent(searchList);
+		splitPane.setRightComponent(detailPaneComponent);
+		splitPane.setResizeWeight(0.67);  // 2/3 for list, 1/3 for detail pane
+		splitPane.setDividerLocation(533);  // Initial divider: 2/3 of 800px
+
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(splitPane, BorderLayout.CENTER);
+		panel.setPreferredSize(new Dimension(800, 500));
 
 		return panel;
+	}
+
+	private JComponent buildDetailPane() {
+		detailPane = new JTextPane();
+		detailPane.setEditable(false);
+		detailPane.setEditorKit(new HTMLEditorKit());
+		detailPane.setName("Script Details");
+
+		JScrollPane scrollPane = new JScrollPane(detailPane);
+		// Adjust scroll increments for better HTML rendering
+		scrollPane.getVerticalScrollBar().setUnitIncrement(5);
+		scrollPane.getHorizontalScrollBar().setUnitIncrement(5);
+
+		return scrollPane;
+	}
+
+	private void updateDetailPane(ScriptInfo script) {
+		String text = (script != null) ? script.getToolTipText() : "";
+		SwingUtilities.invokeLater(() -> {
+			detailPane.setText(text);
+			detailPane.setCaretPosition(0);
+		});
+	}
+
+	private void resetSelectionToFirst() {
+		SwingUtilities.invokeLater(() -> {
+			// Get the first item from the model if it exists
+			ScriptsModel model = (ScriptsModel) searchList.getModel();
+			if (model.getSize() > 0) {
+				ScriptInfo firstScript = model.getElementAt(0).value();
+				searchList.setSelectedItem(firstScript);
+			}
+		});
 	}
 
 	private void scriptChosen(ScriptInfo script) {
@@ -185,10 +252,13 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 		}
 
 		private String truncateDescription(String description) {
-			// Remove newlines and limit length for display
+			// Remove newlines and normalize whitespace
 			String clean = description.replaceAll("\\s+", " ").trim();
-			if (clean.length() > 100) {
-				return clean.substring(0, 97) + "...";
+
+			// Allow up to ~120 characters total (roughly 2 lines at ~60 chars per line)
+			int maxLength = 120;
+			if (clean.length() > maxLength) {
+				return clean.substring(0, maxLength - 3) + "...";
 			}
 			return clean;
 		}
