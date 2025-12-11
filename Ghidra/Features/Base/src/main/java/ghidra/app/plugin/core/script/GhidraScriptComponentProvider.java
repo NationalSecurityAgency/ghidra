@@ -683,10 +683,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		// Update recent scripts list
 		String scriptName = scriptFile.getName();
-		recentScripts.remove(scriptName);  // Remove if already exists
+		recentScripts.remove(scriptName);
 		recentScripts.addFirst(scriptName);  // Add to front (most recent)
 
-		// Trim to max size
 		while (recentScripts.size() > MAX_RECENT_SCRIPTS) {
 			recentScripts.removeLast();
 		}

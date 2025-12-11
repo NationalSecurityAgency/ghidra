@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.script;
 import java.awt.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -34,6 +36,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Swing;
+import ghidra.util.UserSearchUtils;
 
 /**
  * A dialog that prompts the user to select a script from a searchable list
@@ -66,7 +69,13 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 
 	private JComponent buildMainPanel() {
 		ScriptsModel model = new ScriptsModel(scriptInfos, recentScripts);
-		searchList = new SearchList<>(model, (script, category) -> scriptChosen(script));
+		searchList = new SearchList<ScriptInfo>(model, (script, category) -> scriptChosen(script)) {
+			@Override
+			protected BiPredicate<ScriptInfo, String> createFilter(String text) {
+				Pattern pattern = UserSearchUtils.createContainsPattern(text, true, Pattern.CASE_INSENSITIVE);
+				return (script, category) -> pattern.matcher(script.getName()).matches();
+			}
+		};
 		searchList.setItemRenderer(new ScriptRenderer());
 		searchList.setDisplayNameFunction((script, category) -> script.getName());
 
@@ -103,7 +112,6 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 			});
 		}
 
-		// Create detail pane
 		JComponent detailPaneComponent = buildDetailPane();
 
 		// Create split pane with list on left, detail on right
@@ -144,7 +152,6 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 
 	private void resetSelectionToFirst() {
 		SwingUtilities.invokeLater(() -> {
-			// Get the first item from the model if it exists
 			ScriptsModel model = (ScriptsModel) searchList.getModel();
 			if (model.getSize() > 0) {
 				ScriptInfo firstScript = model.getElementAt(0).value();
@@ -217,13 +224,9 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 
 			ScriptInfo script = entry.value();
 
-			// Build display text
 			StringBuilder html = new StringBuilder("<html>");
-
-			// Script name
 			html.append("<b>").append(HTMLUtilities.escapeHTML(script.getName())).append("</b>");
 
-			// Keybinding if available
 			KeyStroke keyBinding = script.getKeyBinding();
 			if (keyBinding != null) {
 				html.append(" <font color=\"")
@@ -233,7 +236,6 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 				    .append(")</i></font>");
 			}
 
-			// Description on next line
 			String description = script.getDescription();
 			if (description != null && !description.isEmpty()) {
 				html.append("<br><font color=\"")
