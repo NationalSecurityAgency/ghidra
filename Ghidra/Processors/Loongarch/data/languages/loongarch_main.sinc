@@ -510,7 +510,6 @@ define pcodeop rdtime.counter;
 define pcodeop rdtime.counterid;
 define pcodeop syscall;
 
-define pcodeop f_scaleb;
 define pcodeop f_logb;
 define pcodeop f_class;
 define pcodeop round_even;
