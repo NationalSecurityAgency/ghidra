@@ -18,10 +18,17 @@
 @echo off
 setlocal 
 
-:: Maximum heap memory size.  For headless, it is recommended to not use the default value
-:: because garbage collection could take too long on systems with a large amount of physical
-:: memory.
-set MAXMEM=2G
+:: Optionally override the default Java heap memory, which is typically 1/4 of system RAM.
+:: Supported values are of the regular expression form "\d+[gGmMkK]", allowing the value to be 
+:: specified in gigabytes, megabytes, or kilobytes (for example: 8G, 4096m, etc).
+:: We override the default for headless in case users spin up many headless instances in parallel.
+set MAXMEM_DEFAULT=2G
+
+:: Allow the above MAXMEM_DEFAULT to be overridden by externally set environment variables
+:: - GHIDRA_MAXMEM: Desired maximum heap memory for all Ghidra instances
+:: - GHIDRA_HEADLESS_MAXMEM: Desired maximum heap memory only for headless Ghidra instances
+if not defined GHIDRA_MAXMEM set "GHIDRA_MAXMEM=%MAXMEM_DEFAULT%"
+if not defined GHIDRA_HEADLESS_MAXMEM set "GHIDRA_HEADLESS_MAXMEM=%GHIDRA_MAXMEM%"
 
 :: Launch mode can be changed to one of the following:
 ::    fg, debug, debug-suspend
@@ -67,4 +74,4 @@ goto Loop
 
 setlocal DisableDelayedExpansion
 
-call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% jdk Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
+call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% jdk Ghidra-Headless "%GHIDRA_HEADLESS_MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
