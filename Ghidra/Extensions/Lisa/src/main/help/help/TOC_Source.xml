@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="Ghidra Functionality">
+		<tocdef id="Lisa Plugin" text="Lisa Plugin"
+			target="help/topics/LisaPlugin/LisaPlugin.html">
+
+			<tocdef id="add_cfgs" text="Add CFGs"
+				target="help/topics/LisaPlugin/LisaPlugin.html#add_cfgs" />
+				
+			<tocdef id="clear_cfgs" text="Clear CFGs"
+				target="help/topics/LisaPlugin/LisaPlugin.html#clear_cfgs" />
+				
+			<tocdef id="set_taint" text="Taint"
+				target="help/topics/LisaPlugin/LisaPlugin.html#set_taint" />
+
+		</tocdef>
+	</tocref>
+</tocroot>
