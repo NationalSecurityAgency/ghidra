@@ -46,6 +46,16 @@ public class LaunchProperties {
 	 */
 	public static String VMARGS_PLATFORM = "VMARGS_" + JavaFinder.getCurrentPlatform();
 
+	/**
+	 * The environment variables to use to launch (all platforms).
+	 */
+	public static String ENVVARS = "ENVVARS";
+
+	/**
+	 * The environment variables to use to launch (current platform only).
+	 */
+	public static String ENVVARS_PLATFORM = "ENVVARS_" + JavaFinder.getCurrentPlatform();
+
 	private Map<String, List<String>> propertyMap;
 	private File launchPropertiesFile;
 
@@ -128,6 +138,26 @@ public class LaunchProperties {
 		List<String> vmargPlatformList = propertyMap.get(VMARGS_PLATFORM);
 		if (vmargPlatformList != null) {
 			ret.addAll(vmargPlatformList);
+		}
+		return ret;
+	}
+
+	/**
+	 * Gets a {@link List} of environment variables to use for the launch for the current 
+	 * {@link Platform platform}.
+	 * 
+	 * @return A {@link List} of environment variables to use for the launch for the current
+	 *   {@link Platform}
+	 */
+	public List<String> getEnvVarList() {
+		List<String> ret = new ArrayList<>();
+		List<String> envVarList = propertyMap.get(ENVVARS);
+		if (envVarList != null) {
+			ret.addAll(envVarList);
+		}
+		List<String> envVarPlatformList = propertyMap.get(ENVVARS_PLATFORM);
+		if (envVarPlatformList != null) {
+			ret.addAll(envVarPlatformList);
 		}
 		return ret;
 	}
