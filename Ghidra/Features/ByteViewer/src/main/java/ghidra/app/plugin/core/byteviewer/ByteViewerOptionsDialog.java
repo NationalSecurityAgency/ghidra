@@ -83,8 +83,10 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 			if (program != null) {
 				Address alignment = getAlignmentAddress();
 				addressInputField = new AddressInput(program, a -> update());
-				addressInputField.setAddressSpaceFilter(s -> s == alignment.getAddressSpace());
-				addressInputField.setAddress(alignment);
+				if (alignment != null) {
+					addressInputField.setAddressSpaceFilter(s -> s == alignment.getAddressSpace());
+				    addressInputField.setAddress(alignment);
+				}
 				panel.add(addressInputField);
 				addressInputField.setAccessibleName("Alignment Address");
 			}
@@ -138,6 +140,11 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 
 		Address minAddr =
 			((ProgramByteViewerComponentProvider) provider).getProgram().getMinAddress();
+
+		if (minAddr == null) {
+			return null;
+		}
+
 		long addressOffset = minAddr.getOffset() + offset;
 
 		int alignment = (int) (addressOffset % bytesPerLine);
@@ -148,28 +155,33 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 	@Override
 	protected void okCallback() {
 		Address alignmentAddress = addressInputField.getAddress();
-		int bytesPerLine = bytesPerLineField.getValue().intValue();
-		int groupSize = groupSizeField.getValue().intValue();
-		int addrOffset = (int) (alignmentAddress.getOffset() % bytesPerLine);
-		// since we want the alignment address to begin a column, need to subtract addrOffset from bytesPerLine
-		int offset = addrOffset == 0 ? 0 : bytesPerLine - addrOffset;
+		Address minAddr =
+			((ProgramByteViewerComponentProvider) provider).getProgram().getMinAddress();
 
-		ByteBlockSelection blockSelection = provider.getBlockSelection();
+		if((alignmentAddress != null) && (minAddr != null)){
+			int bytesPerLine = bytesPerLineField.getValue().intValue();
+			int groupSize = groupSizeField.getValue().intValue();
+			int addrOffset = (int) (alignmentAddress.getOffset() % bytesPerLine);
+			// since we want the alignment address to begin a column, need to subtract addrOffset from bytesPerLine
+			int offset = addrOffset == 0 ? 0 : bytesPerLine - addrOffset;
 
-		// Setting these properties individually is problematic since it can temporarily put
-		// the system into a bad state.  As a hack, set the bytes per line to 256 since that
-		// can support all allowed group sizes.  Then set the group first since there
-		// will be a divide by zero exception if the group size is ever bigger than the bytes
-		// per line. Also, remove any deleted views before changing settings because the new settings
-		// may not be compatible with a deleted view.  Finally, after all setting have been updated,
-		// add in the newly added views. This has to happen last because the new views may not be
-		// compatible with the old settings.
-		removeDeletedViews();
-		provider.setBytesPerLine(256);
-		provider.setGroupSize(groupSize);
-		provider.setBytesPerLine(bytesPerLine);
-		provider.setBlockOffset(offset);
-		addNewViews();
+			ByteBlockSelection blockSelection = provider.getBlockSelection();
+
+			// Setting these properties individually is problematic since it can temporarily put
+			// the system into a bad state.  As a hack, set the bytes per line to 256 since that
+			// can support all allowed group sizes.  Then set the group first since there
+			// will be a divide by zero exception if the group size is ever bigger than the bytes
+			// per line. Also, remove any deleted views before changing settings because the new settings
+			// may not be compatible with a deleted view.  Finally, after all setting have been updated,
+			// add in the newly added views. This has to happen last because the new views may not be
+			// compatible with the old settings.
+			removeDeletedViews();
+			provider.setBytesPerLine(256);
+			provider.setGroupSize(groupSize);
+			provider.setBytesPerLine(bytesPerLine);
+			provider.setBlockOffset(offset);
+			addNewViews();
+		}
 
 		close();
 	}
