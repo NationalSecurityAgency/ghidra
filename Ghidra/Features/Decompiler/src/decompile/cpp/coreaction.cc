@@ -2485,8 +2485,9 @@ bool ActionSetCasts::isOpIdentical(Datatype *ct1,Datatype *ct2)
 /// \param op is the given PcodeOp
 /// \param slot is index of the input slot being read
 /// \param data is the containing function
+/// \param castStrategy is used to determine if the cast is still necessary after resolution
 /// \return 1 if a PTRSUB is inserted, 0 otherwise
-int4 ActionSetCasts::resolveUnion(PcodeOp *op,int4 slot,Funcdata &data)
+int4 ActionSetCasts::resolveUnion(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy *castStrategy)
 
 {
   Varnode *vn = op->getIn(slot);
@@ -2498,9 +2499,13 @@ int4 ActionSetCasts::resolveUnion(PcodeOp *op,int4 slot,Funcdata &data)
     dt->resolveInFlow(op, slot);	// Last chance to resolve data-type based on flow
   const ResolvedUnion *resUnion = data.getUnionField(dt, op,slot);
   if (resUnion != (ResolvedUnion*)0 && resUnion->getFieldNum() >= 0) {
-    // Insert specific placeholder indicating which field is accessed
     if (dt->getMetatype() == TYPE_PTR) {
-      PcodeOp *ptrsub = insertPtrsubZero(op,slot,resUnion->getDatatype(),data);
+      // Test if a cast is still needed even after resolution
+      Datatype *reqtype = vn->getTypeReadFacing(op);
+      if (castStrategy->castStandard(reqtype, resUnion->getDatatype(), true, true) != (Datatype *)0)
+	return 0;	// If cast still needed, don't do the resolve
+      // Insert specific placeholder indicating which field is accessed
+      PcodeOp *ptrsub = insertPtrsubZero(op,slot,reqtype,data);
       data.setUnionField(dt, ptrsub,-1,*resUnion);			// Attach the resolution to the PTRSUB
     }
     else if (vn->isImplied()) {
@@ -2751,7 +2756,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
       }
       // Do input casts first, as output may depend on input
       for(int4 i=0;i<op->numInput();++i) {
-	count += resolveUnion(op, i, data);
+	count += resolveUnion(op, i, data, castStrategy);
 	count += castInput(op,i,data,castStrategy);
       }
       if (opc == CPUI_LOAD) {
