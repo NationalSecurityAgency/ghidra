@@ -28,12 +28,13 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import ghidra.app.plugin.core.format.ByteBlockSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.bean.FixedBitSizeValueField;
@@ -78,17 +79,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(new GLabel("Alignment Address:"));
 
-		if (provider instanceof ProgramByteViewerComponentProvider) {
-			Program program = ((ProgramByteViewerComponentProvider) provider).getProgram();
-			if (program != null) {
-				Address alignment = getAlignmentAddress();
-				addressInputField = new AddressInput(program, a -> update());
-				addressInputField.setAddressSpaceFilter(s -> s == alignment.getAddressSpace());
-				addressInputField.setAddress(alignment);
-				panel.add(addressInputField);
-				addressInputField.setAccessibleName("Alignment Address");
-			}
-		}
+		buildAddressField(panel);
 
 		panel.add(new GLabel("Bytes Per Line:"));
 		bytesPerLineField = new FixedBitSizeValueField(8, false, true);
@@ -109,6 +100,38 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		groupSizeField.getAccessibleContext().setAccessibleName("Group Size");
 
 		return panel;
+	}
+
+	private void buildAddressField(JPanel parentPanel) {
+		if (!(provider instanceof ProgramByteViewerComponentProvider programProvider)) {
+			buildSimpleAddressInput(parentPanel);
+			return;
+		}
+
+		Program program = programProvider.getProgram();
+		if (program == null) {
+			buildSimpleAddressInput(parentPanel);
+			return;
+		}
+
+		Address alignment = getAlignmentAddress();
+		if (alignment == null) {
+			buildSimpleAddressInput(parentPanel);
+			return;
+		}
+
+		addressInputField = new AddressInput(program, a -> update());
+		addressInputField.setAccessibleName("Alignment Address");
+		addressInputField.setAddressSpaceFilter(s -> s == alignment.getAddressSpace());
+		addressInputField.setAddress(alignment);
+		parentPanel.add(addressInputField);
+	}
+
+	private void buildSimpleAddressInput(JPanel parentPanel) {
+		addressInputField = new AddressInput();
+		addressInputField.setAccessibleName("Alignment Address");
+		addressInputField.setEnabled(false);
+		parentPanel.add(addressInputField);
 	}
 
 	private Component buildViewOptionsPanel() {
@@ -136,39 +159,42 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		int bytesPerLine = provider.getBytesPerLine();
 		int offset = provider.getOffset();
 
-		Address minAddr =
-			((ProgramByteViewerComponentProvider) provider).getProgram().getMinAddress();
+		Program program = ((ProgramByteViewerComponentProvider) provider).getProgram();
+		Address minAddr = program.getMinAddress();
+		if (minAddr == null) {
+			return null;
+		}
+
 		long addressOffset = minAddr.getOffset() + offset;
-
 		int alignment = (int) (addressOffset % bytesPerLine);
-
 		return (alignment == 0) ? minAddr : minAddr.add(bytesPerLine - alignment);
 	}
 
 	@Override
 	protected void okCallback() {
-		Address alignmentAddress = addressInputField.getAddress();
 		int bytesPerLine = bytesPerLineField.getValue().intValue();
-		int groupSize = groupSizeField.getValue().intValue();
-		int addrOffset = (int) (alignmentAddress.getOffset() % bytesPerLine);
-		// since we want the alignment address to begin a column, need to subtract addrOffset from bytesPerLine
+		int addrOffset = 0;
+		Address alignmentAddress = addressInputField.getAddress();
+		if (alignmentAddress != null) {
+			addrOffset = (int) (alignmentAddress.getOffset() % bytesPerLine);
+		}
+
+		// We want the alignment address to begin a column, so subtract addrOffset from bytesPerLine
 		int offset = addrOffset == 0 ? 0 : bytesPerLine - addrOffset;
+		int groupSize = groupSizeField.getValue().intValue();
 
-		ByteBlockSelection blockSelection = provider.getBlockSelection();
-
-		// Setting these properties individually is problematic since it can temporarily put
-		// the system into a bad state.  As a hack, set the bytes per line to 256 since that
-		// can support all allowed group sizes.  Then set the group first since there
-		// will be a divide by zero exception if the group size is ever bigger than the bytes
-		// per line. Also, remove any deleted views before changing settings because the new settings
-		// may not be compatible with a deleted view.  Finally, after all setting have been updated,
-		// add in the newly added views. This has to happen last because the new views may not be
-		// compatible with the old settings.
 		removeDeletedViews();
+
+		// Setting these properties individually is problematic since it can temporarily put the 
+		// system into a bad state.  As a hack, set the bytes per line to 256 since that can support
+		// all allowed group sizes.  Then set the group first since there will be a divide by zero 
+		// exception if the group size is ever bigger than the bytes per line.  Finally, after all 
+		// setting have been updated, add in the newly added views. 
 		provider.setBytesPerLine(256);
 		provider.setGroupSize(groupSize);
 		provider.setBytesPerLine(bytesPerLine);
 		provider.setBlockOffset(offset);
+
 		addNewViews();
 
 		close();
@@ -213,15 +239,10 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 	}
 
 	private boolean hasValidFieldValues() {
-		if (addressInputField.getText().length() == 0) {
-			setStatusText("Enter an alignment address");
+		if (!validateAddress()) {
 			return false;
 		}
-		Address alignmentAddress = addressInputField.getAddress();
-		if (alignmentAddress == null) {
-			setStatusText("Invalid alignment address:" + addressInputField.getText());
-			return false;
-		}
+
 		BigInteger bytesPerLine = bytesPerLineField.getValue();
 		if (bytesPerLine == null) {
 			setStatusText("Enter a value for Bytes Per Line");
@@ -249,6 +270,25 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		}
 
 		setStatusText("");
+		return true;
+	}
+
+	private boolean validateAddress() {
+		if (!addressInputField.isEnabled()) {
+			return true; // nothing to validate
+		}
+
+		String addrText = addressInputField.getText();
+		if (StringUtils.isBlank(addrText)) {
+			setStatusText("Enter an alignment address");
+			return false;
+		}
+
+		Address alignmentAddress = addressInputField.getAddress();
+		if (alignmentAddress == null) {
+			setStatusText("Invalid alignment address:" + addrText);
+			return false;
+		}
 		return true;
 	}
 
