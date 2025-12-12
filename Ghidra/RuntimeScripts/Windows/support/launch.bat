@@ -168,6 +168,16 @@ if "%LS_JAVA_HOME%" == "" (
 )
 set "JAVA_CMD=%LS_JAVA_HOME%\bin\java"
 
+:: Get the configurable environment variables from the launch properties
+:: Only set them if they are currently undefined
+for /f "delims=*" %%i in ('call "%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -envvars') do (
+	for /f "tokens=1* delims==" %%a in ("%%i") do (
+		if not defined %%a (
+			set %%a=%%b
+		)
+	)
+)
+
 :: Get the configurable VM arguments from the launch properties
 for /f "delims=*" %%i in ('call "%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=!VMARG_LIST! %%i
 
