@@ -23,7 +23,7 @@ import javax.security.auth.callback.*;
 
 import ghidra.framework.remote.AnonymousCallback;
 import ghidra.framework.remote.SSHSignatureCallback;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 
 /**
  * <code>PasswordClientAuthenticator</code> provides a fixed username/password 
@@ -38,7 +38,7 @@ import ghidra.net.ApplicationKeyManagerFactory;
  * for accessing SSH keys or server password authentication.  In such headless situations,
  * the PKI certificate path/password should be specified via a property since it is unlikely
  * that the same password will apply.
- * @see ApplicationKeyManagerFactory 
+ * @see DefaultKeyManagerFactory 
  */
 public class PasswordClientAuthenticator implements ClientAuthenticator {
 

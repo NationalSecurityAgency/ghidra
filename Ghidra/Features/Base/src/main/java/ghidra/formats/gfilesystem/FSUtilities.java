@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import org.apache.commons.io.FilenameUtils;
 
 import docking.widgets.OptionDialog;
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileType;

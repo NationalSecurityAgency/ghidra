@@ -28,6 +28,7 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.PasswordChangeDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.hash.HashUtilities;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;

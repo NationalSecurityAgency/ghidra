@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,21 +26,17 @@ import ghidra.util.Msg;
 /**
  * Initialize the default SSLContext for use by all SSL connections (e.g., https).
  * It is the responsibility of the Application to properly invoke this initializer 
- * to ensure that the default SSLContext is properly established. While HTTPS URL connections
- * will make use of this default SSLContext, other SSL connections may need to 
- * specify the {@link ApplicationSSLSocketFactory} to leverage the applications
- * default SSLContext.
+ * to ensure that the default SSLContext is properly established.
  * <p>
  * The property <code>jdk.tls.client.protocols</code> should be set to restrict secure
  * client connections to a specific set of enabled TLS protocols (e.g., TLSv1.2,TLSv1.3).
  * See <A href="https://java.com/en/configure_crypto.html">JDK and JRE Cryptographic Algorithms</A> 
  * for details.
  * 
- * @see ApplicationTrustManagerFactory
- * @see ApplicationKeyManagerFactory
- * @see ApplicationKeyManagerUtils
+ * @see DefaultTrustManagerFactory
+ * @see DefaultKeyManagerFactory
  */
-public class SSLContextInitializer implements ModuleInitializer {
+public class DefaultSSLContextInitializer implements ModuleInitializer {
 
 	private static final String DEFAULT_SSL_PROTOCOL = "TLS";
 
@@ -56,8 +52,8 @@ public class SSLContextInitializer implements ModuleInitializer {
 	public static synchronized boolean initialize(boolean reset) {
 		if (reset) {
 			sslContext = null;
-			ApplicationTrustManagerFactory.invalidateTrustManagers();
-			ApplicationKeyManagerFactory.invalidateKeyManagers();
+			DefaultTrustManagerFactory.invalidateTrustManagers();
+			DefaultKeyManagerFactory.invalidateKeyManager();
 		}
 		return initialize();
 	}
@@ -73,15 +69,25 @@ public class SSLContextInitializer implements ModuleInitializer {
 			return true;
 		}
 
-		Msg.info(SSLContextInitializer.class, "Initializing SSL Context");
+		Msg.info(DefaultSSLContextInitializer.class, "Initializing SSL Context");
 
-		KeyManager[] keyManagers = ApplicationKeyManagerFactory.getInstance().getKeyManagers();
+		KeyManager keyManager = DefaultKeyManagerFactory.getKeyManager();
 
 		try {
 			// Use new instance of SSLContext to avoid adopting CA certs provided with Java
 			sslContext = SSLContext.getInstance(DEFAULT_SSL_PROTOCOL);
 			SecureRandom random = SecureRandomFactory.getSecureRandom();
-			sslContext.init(keyManagers, ApplicationTrustManagerFactory.getTrustManagers(), random);
+			sslContext.init(new KeyManager[] { keyManager },
+				DefaultTrustManagerFactory.getTrustManagers(), random);
+
+			//
+			// NOTE: The SslRMIClientSocketFactory and SslRMIServerSocketFactory both statically 
+			// cache their 'defaultSocketFactory' which prevents it from utilizing a new
+			// default SSLContext.  This requires us to employ a wrapped TrustManager and
+			// wrapped KeyManager to allow for them to possibly be revised after first use
+			// (e.g., JUnit testing, new user PKI Certificate, etc.).
+			//
+
 			SSLContext.setDefault(sslContext);
 
 			// Must install default HostnameVerifier - otherwise all traffic will fail
@@ -101,7 +107,7 @@ public class SSLContextInitializer implements ModuleInitializer {
 
 		}
 		catch (Exception e) {
-			Msg.error(SSLContextInitializer.class,
+			Msg.error(DefaultSSLContextInitializer.class,
 				"SSL Context initialization failed: " + e.getMessage(), e);
 		}
 		return false;
