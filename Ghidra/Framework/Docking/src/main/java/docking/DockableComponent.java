@@ -36,6 +36,21 @@ public class DockableComponent extends JPanel implements ContainerListener {
 
 	private static final Dimension MIN_DIM = new Dimension(100, 50);
 
+	private static final MouseAdapter VIEWPORT_FOCUS_HANDLER = new MouseAdapter() {
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if (e.isConsumed()) {
+				return;
+			}
+			if (e.getSource() instanceof JViewport viewport) {
+				Component view = viewport.getView();
+				if (view != null && view.isEnabled() && view.isShowing()) {
+					view.requestFocusInWindow();
+				}
+			}
+		}
+	};
+
 	public static DropCode DROP_CODE;
 	public static ComponentPlaceholder TARGET_INFO;
 	public static ComponentPlaceholder DRAGGED_OVER_INFO;
@@ -356,6 +371,15 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		if (comp.isFocusable()) {
 			installPopupListenerFirst(comp);
 		}
+
+		if (comp instanceof JViewport viewport) {
+			installPopupListenerFirst(viewport);
+			installViewportFocusHandler(viewport);
+		}
+	}
+
+	private void installViewportFocusHandler(JViewport viewport) {
+		viewport.addMouseListener(VIEWPORT_FOCUS_HANDLER);
 	}
 
 	/**
@@ -397,6 +421,9 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			comp.setDropTarget(newDropTarget);
 		}
 		comp.removeMouseListener(popupListener);
+		if (comp instanceof JViewport) {
+			comp.removeMouseListener(VIEWPORT_FOCUS_HANDLER);
+		}
 	}
 
 	/**
