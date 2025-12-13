@@ -1530,38 +1530,8 @@ public class GTable extends JTable {
 		);
 		activateFilterAction.setKeyBindingData(new KeyBindingData(ACTIVATE_FILTER_KEY_STROKE));
 		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
-		//@formatter:on
 
-		GTableAction toggleFilterAction = new GTableAction("Table/Tree Toggle Filter", owner) {
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (!super.isEnabledForContext(context)) {
-					return false;
-				}
-
-				GTable gTable = (GTable) context.getSourceComponent();
-				return gTable.getTableFilterPanel() != null;
-			}
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-
-				GTable gTable = (GTable) context.getSourceComponent();
-				GTableFilterPanel<?> filterPanel = gTable.getTableFilterPanel();
-				filterPanel.toggleVisibility();
-			}
-		};
-		//@formatter:off
-		toggleFilterAction.setPopupMenuData(new MenuData(
-				new String[] { "Toggle Filter" },
-				null /*icon*/,
-				actionMenuGroup,
-				NO_MNEMONIC,
-				Integer.toString(subGroupIndex++)
-			)
-		);		
-		toggleFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
+		// Removed Toggle Filter action - users can now use the Close Filter button or Escape key
 		//@formatter:on
 
 		toolActions.addGlobalAction(copyAction);
@@ -1571,7 +1541,6 @@ public class GTable extends JTable {
 		toolActions.addGlobalAction(exportColumnsAction);
 		toolActions.addGlobalAction(selectAllAction);
 		toolActions.addGlobalAction(activateFilterAction);
-		toolActions.addGlobalAction(toggleFilterAction);
 	}
 
 //==================================================================================================

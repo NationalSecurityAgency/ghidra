@@ -303,6 +303,21 @@ public class FilterTextField extends JPanel {
 		return textField.requestFocusInWindow();
 	}
 
+	@Override
+	public void addKeyListener(java.awt.event.KeyListener listener) {
+		textField.addKeyListener(listener);
+	}
+
+	@Override
+	public void removeKeyListener(java.awt.event.KeyListener listener) {
+		textField.removeKeyListener(listener);
+	}
+
+	@Override
+	public java.awt.event.KeyListener[] getKeyListeners() {
+		return textField.getKeyListeners();
+	}
+
 	private void fireFilterChanged(String text) {
 		for (FilterListener l : listeners) {
 			l.filterChanged(text);

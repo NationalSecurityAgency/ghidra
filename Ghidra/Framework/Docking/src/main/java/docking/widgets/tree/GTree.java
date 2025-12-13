@@ -1978,22 +1978,9 @@ public class GTree extends JPanel implements BusyListener {
 			)
 		);
 		activateFilterAction.setKeyBindingData(new KeyBindingData("Control F"));
-		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
-		
-		GTreeAction toggleFilterAction = new GTreeAction("Table/Tree Toggle Filter", owner) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				GTree gTree = getTree(context);
-				gTree.filterProvider.toggleVisibility();				
-			}
-		};
+		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
+
 		//@formatter:on
-		toggleFilterAction.setPopupMenuData(new MenuData(
-			new String[] { "Toggle Filter" },
-			null,
-			actionMenuGroup, NO_MNEMONIC,
-			Integer.toString(subGroupIndex++)));
-		toggleFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
 
 		// these actions are self-explanatory and do need help
 		collapseAction.markHelpUnnecessary();
@@ -2007,7 +1994,6 @@ public class GTree extends JPanel implements BusyListener {
 		toolActions.addGlobalAction(expandTreeAction);
 		toolActions.addGlobalAction(copyFormattedAction);
 		toolActions.addGlobalAction(activateFilterAction);
-		toolActions.addGlobalAction(toggleFilterAction);
 	}
 
 	private static String generateFilterPreferenceKey() {
