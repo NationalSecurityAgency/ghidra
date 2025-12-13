@@ -96,6 +96,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	public final static String PLUGIN_COUNT_PROPERTY_NAME = "PluginCount";
 
 	private static final String DOCKING_WINDOWS_ON_TOP = "Docking Windows On Top";
+	private static final String SHOW_TOOLBAR = "Show Toolbar";
 
 	private static final String SAVE_DIALOG_TITLE = "Save Tool - Possible Conflict";
 
@@ -270,6 +271,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		Options toolOptions = optionsMgr.getOptions(ToolConstants.TOOL_OPTIONS);
 		boolean windowsOnTop = toolOptions.getBoolean(DOCKING_WINDOWS_ON_TOP, false);
 		winMgr.setWindowsOnTop(windowsOnTop);
+		boolean showToolbar = toolOptions.getBoolean(SHOW_TOOLBAR, true);
+		winMgr.setToolbarVisible(showToolbar);
 	}
 
 	private void initOptions() {
@@ -277,6 +280,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		toolOptions.registerOption(DOCKING_WINDOWS_ON_TOP, false, null,
 			"Determines whether a docked window will always be shown on " +
 				"top of its parent window.");
+		toolOptions.registerOption(SHOW_TOOLBAR, true, null,
+			"Determines whether the main toolbar is visible.");
 
 		// we must call this before the init work below to make sure that the options object
 		// we use has been created
@@ -290,6 +295,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 	protected void optionsChanged(Options options, String name, Object oldValue, Object newValue) {
 		if (name.equals(DOCKING_WINDOWS_ON_TOP)) {
 			winMgr.setWindowsOnTop(((Boolean) newValue).booleanValue());
+		}
+		else if (name.equals(SHOW_TOOLBAR)) {
+			winMgr.setToolbarVisible(((Boolean) newValue).booleanValue());
 		}
 	}
 

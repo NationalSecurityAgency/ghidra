@@ -106,6 +106,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private boolean hasStatusBar;
 
 	private boolean windowsOnTop;
+	private boolean toolbarVisible = true;
 
 	private Window lastActiveWindow;
 
@@ -2292,6 +2293,25 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public boolean isWindowsOnTop() {
 		return windowsOnTop;
+	}
+
+	/**
+	 * Sets the visibility of the main toolbar.
+	 *
+	 * @param visible true to show the toolbar, false to hide it.
+	 */
+	public void setToolbarVisible(boolean visible) {
+		this.toolbarVisible = visible;
+		scheduleUpdate();
+	}
+
+	/**
+	 * Returns true if the toolbar is visible.
+	 *
+	 * @return true if the toolbar is visible.
+	 */
+	public boolean isToolbarVisible() {
+		return toolbarVisible;
 	}
 
 	/**
