@@ -17,6 +17,7 @@ package docking.widgets.table;
 
 import java.awt.Component;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
@@ -28,12 +29,15 @@ import javax.swing.table.TableColumnModel;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.filter.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterManager;
+import resources.Icons;
 import ghidra.framework.options.PreferenceState;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -119,6 +123,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	private RowFilterTransformer<ROW_OBJECT> transformer;
 	private TableFilter<ROW_OBJECT> secondaryTableFilter;
 	private EmptyBorderButton filterStateButton;
+	private EmptyBorderButton closeFilterButton;
 
 	// This tracks whether the filter has been configured to be part of the display, whether by the
 	// user or via the API.
@@ -212,6 +217,12 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		// tooltips which seem excessive to read to the user every time they get focus. We may need
 		// to revisit this decision.
 		filterStateButton.getAccessibleContext().setAccessibleDescription("");
+
+		// Do the same for the Hide Filter button
+		String hideFilterPrefix = namePrefix + " Hide Filter";
+		closeFilterButton.setName(hideFilterPrefix + " Button");
+		closeFilterButton.getAccessibleContext().setAccessibleName(hideFilterPrefix);
+		closeFilterButton.getAccessibleContext().setAccessibleDescription("");
 	}
 
 	public GTableFilterPanel(JTable table, RowObjectTableModel<ROW_OBJECT> tableModel,
@@ -445,6 +456,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		add(Box.createHorizontalStrut(5));
 		add(filterField);
 		add(buildFilterStateButton());
+		add(buildCloseFilterButton());
 		if (isTableColumnFilterableModel()) {
 			add(Box.createHorizontalStrut(5));
 			add(columnFilterManager.getConfigureButton());
@@ -452,9 +464,39 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		HelpLocation helpLocation = new HelpLocation("Trees", "Filters");
-		helpService.registerHelp(filterStateButton, helpLocation);
+		HelpLocation filterOptionsHelpLocation = new HelpLocation("Trees", "Filter_Options");
+		HelpLocation closeFilterHelpLocation = new HelpLocation("Trees", "Close_Filter");
+		helpService.registerHelp(filterStateButton, filterOptionsHelpLocation);
 		helpService.registerHelp(searchLabel, helpLocation);
 		helpService.registerHelp(filterField, helpLocation);
+		helpService.registerHelp(closeFilterButton, closeFilterHelpLocation);
+
+		KeyStroke ctrlF = KeyStroke.getKeyStroke(KeyEvent.VK_F,
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		Action activateFilterAction = new AbstractAction("Activate Filter") {
+			@Override
+			public void actionPerformed(java.awt.event.ActionEvent e) {
+				activate();
+			}
+		};
+		KeyBindingUtils.registerAction(this, ctrlF, activateFilterAction,
+			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+		filterField.addKeyListener(new java.awt.event.KeyAdapter() {
+			@Override
+			public void keyPressed(java.awt.event.KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					if (filterField.getText().isEmpty()) {
+						doToggleVisibility();
+						table.requestFocus();
+					}
+					else {
+						filterField.setText("");
+					}
+					e.consume();
+				}
+			}
+		});
 	}
 
 	private JComponent buildFilterStateButton() {
@@ -471,6 +513,17 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		filterStateButton.setToolTipText("Filter Options");
 		updateFilterFactory();
 		return filterStateButton;
+	}
+
+	private JComponent buildCloseFilterButton() {
+		closeFilterButton = new EmptyBorderButton(Icons.CLOSE_ICON);
+		closeFilterButton.addActionListener(e -> {
+			doToggleVisibility();
+			table.requestFocus();
+		});
+
+		closeFilterButton.setToolTipText("Close Filter");
+		return closeFilterButton;
 	}
 
 	private boolean isTableColumnFilterableModel() {

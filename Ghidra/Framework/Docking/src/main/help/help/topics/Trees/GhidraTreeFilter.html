@@ -42,11 +42,13 @@
       </BLOCKQUOTE>
 	  
 	  <BLOCKQUOTE>
-          <P><IMG alt="" src="help/shared/tip.png">While focus is in the filter you can press the 
-		  up and down arrow keys to change focus to the tree or table.  This allows you to enter 
+          <P><IMG alt="" src="help/shared/tip.png">While focus is in the filter you can press the
+		  up and down arrow keys to change focus to the tree or table.  This allows you to enter
 		  a filter and arrow through the results without using the mouse.   To get back to the
-		  filter easily, press the <A HREF="#Activate_Filter">activate filter</A> action (the 
-	      default key binding is <CODE>Ctrl-F</CODE>) to transfer focus back to the filter.</P>
+		  filter easily, press the <A HREF="#Activate_Filter">activate filter</A> action (the
+	      default key binding is <CODE>Ctrl-F</CODE>) to transfer focus back to the filter.
+		  Press <CODE>Escape</CODE> to clear the filter text; press <CODE>Escape</CODE> again
+		  (when the field is empty) to hide the filter.</P>
         </BLOCKQUOTE>
     </BLOCKQUOTE><BR>
      <BR>
@@ -61,16 +63,7 @@
 		  The default key binding for this action is <CODE>Ctrl-F</CODE>.
 		  </P>
 		</BLOCKQUOTE>
-	
-	
-	<H3><A name="Toggle_Filter"></A>Toggle Filter</H3>
-		<BLOCKQUOTE>
-	      <P>
-		  The <B>Toggle Filter</B> action will hide and show the filter field of the tree or table.
-		  To use this action you must first assign it a key binding from the tool options.
-		  </P>
-		</BLOCKQUOTE>
-		
+
 
     <H3>Clear Filter</H3>
 
@@ -96,6 +89,18 @@
           </TR>
         </TABLE>
       </CENTER>
+    </BLOCKQUOTE>
+
+    <H3><A name="Close_Filter"></A>Close Filter</H3>
+
+    <BLOCKQUOTE>
+      <P>The <B>Close Filter</B> button, located to the right of the Filter Options button,
+      will hide the filter panel when clicked. This can be useful to save screen space when
+      filtering is not needed. The filter can be shown again by pressing <CODE>Ctrl-F</CODE>.
+      You can also hide the filter by pressing <CODE>Escape</CODE> while the filter field has
+      focus and is empty (if the field contains text, the first <CODE>Escape</CODE> press will
+      clear the text, and the second press will hide the filter).
+      Ghidra will remember whether you prefer the filter shown or hidden.</P>
     </BLOCKQUOTE><BR>
      <BR>
 	</BLOCKQUOTE>		

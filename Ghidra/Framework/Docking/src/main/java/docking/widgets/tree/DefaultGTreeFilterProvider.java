@@ -16,6 +16,7 @@
 package docking.widgets.tree;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyEvent;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -24,10 +25,13 @@ import javax.swing.border.BevelBorder;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
+import docking.DockingUtils;
 import docking.DockingWindowManager;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.filter.*;
 import docking.widgets.label.GLabel;
+import resources.Icons;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeFilter;
 import ghidra.framework.options.PreferenceState;
@@ -40,6 +44,7 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 
 	private FilterTextField filterField;
 	private EmptyBorderButton filterStateButton;
+	private EmptyBorderButton closeFilterButton;
 	private GTreeFilterFactory filterFactory;
 	private FilterDocumentListener filterListener = new FilterDocumentListener();
 
@@ -116,6 +121,13 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 		// tooltips which seem excessive to read to the user every time they get focus. We may need
 		// to revisit this decision.
 		context.setAccessibleDescription("");
+
+		// Do the same for the Close button
+		String closeButtonNamePrefix = namePrefix + " Close Filter";
+		closeFilterButton.setName(closeButtonNamePrefix + " Button");
+		AccessibleContext closeContext = closeFilterButton.getAccessibleContext();
+		closeContext.setAccessibleName(closeButtonNamePrefix);
+		closeContext.setAccessibleDescription("");
 	}
 
 	private void updateModelFilter() {
@@ -294,15 +306,59 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 				updateModelFilter();
 			}
 		});
+		filterStateButton.setToolTipText("Filter Options");
+
+		closeFilterButton = new EmptyBorderButton(Icons.CLOSE_ICON);
+		closeFilterButton.addActionListener(e -> {
+			doToggleVisibility();
+			gTree.requestFocus();
+		});
+		closeFilterButton.setToolTipText("Close Filter");
+
+		// Create a panel to hold both buttons
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+		buttonPanel.add(filterStateButton);
+		buttonPanel.add(closeFilterButton);
 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		HelpLocation helpLocation = new HelpLocation("Trees", "Filters");
-		helpService.registerHelp(filterStateButton, helpLocation);
+		HelpLocation filterOptionsHelpLocation = new HelpLocation("Trees", "Filter_Options");
+		helpService.registerHelp(filterStateButton, filterOptionsHelpLocation);
 		helpService.registerHelp(filterLabel, helpLocation);
 		helpService.registerHelp(filterField, helpLocation);
+		HelpLocation closeFilterHelpLocation = new HelpLocation("Trees", "Close_Filter");
+		helpService.registerHelp(closeFilterButton, closeFilterHelpLocation);
 
-		filterStateButton.setToolTipText("Filter Options");
-		newFilterPanel.add(filterStateButton, BorderLayout.EAST);
+		newFilterPanel.add(buttonPanel, BorderLayout.EAST);
+
+		KeyStroke ctrlF = KeyStroke.getKeyStroke(KeyEvent.VK_F,
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		Action activateFilterAction = new AbstractAction("Activate Filter") {
+			@Override
+			public void actionPerformed(java.awt.event.ActionEvent e) {
+				activate();
+			}
+		};
+		KeyBindingUtils.registerAction(newFilterPanel, ctrlF, activateFilterAction,
+			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+		filterField.addKeyListener(new java.awt.event.KeyAdapter() {
+			@Override
+			public void keyPressed(java.awt.event.KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					if (filterField.getText().isEmpty()) {
+						doToggleVisibility();
+						gTree.requestFocus();
+					}
+					else {
+						filterField.setText("");
+					}
+					e.consume();
+				}
+			}
+		});
+
 		return newFilterPanel;
 	}
 
