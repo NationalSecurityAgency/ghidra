@@ -31,6 +31,7 @@ public class WindowActionManager {
 	private MenuBarManager menuBarMgr;
 	private ToolBarManager toolBarMgr;
 	private final WindowNode node;
+	private final DockingWindowManager winMgr;
 
 	private boolean disposed;
 
@@ -56,6 +57,7 @@ public class WindowActionManager {
 			DockingWindowManager winMgr, MenuGroupMap menuGroupMap) {
 
 		this.node = node;
+		this.winMgr = winMgr;
 		actionToProxyMap = new HashMap<>();
 		menuBarMgr = new MenuBarManager(menuBarHandler, menuGroupMap);
 		toolBarMgr = new ToolBarManager(winMgr);
@@ -100,7 +102,12 @@ public class WindowActionManager {
 			node.setMenuBar(menuBar);
 		}
 
-		node.setToolBar(toolBarMgr.getToolBar());
+		if (winMgr.isToolbarVisible()) {
+			node.setToolBar(toolBarMgr.getToolBar());
+		}
+		else {
+			node.setToolBar(null);
+		}
 		node.validate();
 	}
 
