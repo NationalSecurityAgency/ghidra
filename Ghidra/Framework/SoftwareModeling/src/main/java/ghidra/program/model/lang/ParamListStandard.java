@@ -182,7 +182,9 @@ public class ParamListStandard implements ParamList {
 			status[i] = 0;
 		}
 
-		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
+		boolean hiddenParam = (addAutoParams && res.size() == 2);
+		
+		if (hiddenParam && proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
 			ParameterPieces last = res.get(res.size() - 1);
 			if (last.hiddenReturnPtr) {
 				// Need to pull from registers marked as hiddenret 
@@ -208,6 +210,18 @@ public class ParamListStandard implements ParamList {
 				}
 				return;
 			}
+		}
+		if (hiddenParam && !proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
+			ParameterPieces last = res.get(1);
+			if (last.hiddenReturnPtr) {
+				// Need to pull from registers marked as hiddenret 
+				assignAddressFallback(StorageClass.HIDDENRET, last.type, false, status, last);
+			}
+			else {
+				// Assign as a regular first input pointer parameter
+				assignAddress(last.type, proto, 0, dtManager, status, last);
+			}
+			last.hiddenReturnPtr = true;
 		}
 	}
 
