@@ -744,6 +744,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		Element elem = root.getChild("TOOL");
 
 		restoreOptionsFromXml(elem);
+		setDefaultOptionValues(); // Apply loaded option values to window manager
 		try {
 			restorePluginsFromXml(elem);
 		}

@@ -267,7 +267,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		// placeholder
 	}
 
-	private void setDefaultOptionValues() {
+	protected void setDefaultOptionValues() {
 		Options toolOptions = optionsMgr.getOptions(ToolConstants.TOOL_OPTIONS);
 		boolean windowsOnTop = toolOptions.getBoolean(DOCKING_WINDOWS_ON_TOP, false);
 		winMgr.setWindowsOnTop(windowsOnTop);
