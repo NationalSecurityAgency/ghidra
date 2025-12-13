@@ -84,6 +84,9 @@ class ComponentNode extends Node {
 
 			long uniqueID = getUniqueID(e, 0);
 
+			String showHeaderStr = e.getAttributeValue("SHOW_HEADER");
+			boolean showHeader = showHeaderStr != null ? Boolean.parseBoolean(showHeaderStr) : true;
+
 			String mappedOwner = ComponentProvider.getMappedOwner(owner, name);
 			if (mappedOwner != null) {
 				name = ComponentProvider.getMappedName(owner, name);
@@ -92,6 +95,10 @@ class ComponentNode extends Node {
 
 			ComponentPlaceholder placeholder =
 				new ComponentPlaceholder(name, owner, group, title, isActive, this, uniqueID);
+
+			if (!showHeader) {
+				placeholder.showHeader(false);
+			}
 
 			if (!containsPlaceholder(placeholder)) {
 				windowPlaceholders.add(placeholder);
@@ -509,6 +516,7 @@ class ComponentNode extends Node {
 			elem.setAttribute("ACTIVE", "" + placeholder.isActive());
 			elem.setAttribute("GROUP", placeholder.getGroup());
 			elem.setAttribute("INSTANCE_ID", Long.toString(placeholder.getInstanceID()));
+			elem.setAttribute("SHOW_HEADER", Boolean.toString(placeholder.isHeaderShowing()));
 			root.addContent(elem);
 		}
 		return root;

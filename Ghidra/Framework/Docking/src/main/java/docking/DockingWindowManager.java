@@ -678,6 +678,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 	}
 
+	public void toggleActiveComponentHeader() {
+		ComponentProvider provider = getActiveComponentProvider();
+		if (provider != null) {
+			ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+			if (placeholder != null) {
+				boolean currentState = placeholder.isHeaderShowing();
+				placeholder.showHeader(!currentState);
+				setNextFocusPlaceholder(placeholder);
+				scheduleUpdate();
+			}
+		}
+	}
+
 	public void setIcon(ComponentProvider provider, Icon icon) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		placeholder.setIcon(icon);

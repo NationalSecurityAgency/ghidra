@@ -105,6 +105,7 @@ public class ComponentPlaceholder {
 	void showHeader(boolean b) {
 		this.showHeader = b;
 		invalidateComponentNode();
+		disposeComponent();
 	}
 
 	boolean isHeaderShowing() {

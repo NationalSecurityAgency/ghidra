@@ -103,6 +103,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		addSystemAction(new ShowActionChooserDialogAction());
 
+		addSystemAction(new ToggleActiveComponentHeaderAction(tool.getWindowManager()));
+
 		// helpful debugging actions
 		addSystemAction(new ShowFocusInfoAction());
 		addSystemAction(new ShowFocusCycleAction());
