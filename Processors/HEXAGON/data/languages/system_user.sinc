@@ -1,0 +1,181 @@
+#SYSTEM/USER:Load locked
+define pcodeop memw_locked;
+define pcodeop memd_locked;
+with slot: iclass=0b1001 {
+    :D5"=memw_locked("S5")" is imm_21_27=0b0010000 & S5 & S5i & imm_12_13=0b00 & imm_5_11=0 & D5 & OUTPUT_D5 {
+        D5 = memw_locked(S5i);
+    }
+    :D5_pair"=memd_locked("S5")" is imm_21_27=0b0010000 & S5 & S5i & imm_12_13=0b01 & imm_5_11=0 & D5_pair {
+        D5_pair = memd_locked(S5i);
+    }
+}
+
+#SYSTEM/USER:Store locked
+define pcodeop memw_locked_store;
+define pcodeop memd_locked_store;
+with slot: iclass=0b1010 {
+    :"memw_locked("S5","D2_pred")="T5 is imm_21_27=0b0000101 & S5 & S5i & imm_13=0 & T5 & T5i & imm_2_7=0 & D2_pred & D2_predi {
+        D2_pred = memw_locked_store(S5i, T5i);
+    }
+    :"memd_locked("S5","D2_pred")="T5_pair is imm_21_27=0b0000111 & S5 & S5i & imm_13=0 & T5_pair & T5_pairi & imm_2_7=0 & D2_pred & D2_predi {
+        D2_pred = memw_locked_store(S5i, T5_pairi);
+    }
+}
+
+#SYSTEM/USER:Zero cache line
+define pcodeop dcache_zero_addr;
+with slot: iclass=0b1010 {
+    :"dczeroa("S5")" is imm_21_27=0b0000110 & S5 & S5i & imm_13=0 & imm_0_12=0 {
+        dcache_zero_addr(S5i);
+    }
+    :"dczeroa("S5"):nt" is imm_21_27=0b0000110 & S5 & S5i & imm_13=1 & imm_0_12=0 {
+        dcache_zero_addr(S5i);
+    }
+}
+
+#SYSTEM/USER:barrier
+define pcodeop barrier;
+with slot: iclass=0b1010 {
+    :"barrier" is imm_21_27=0b1000000 & imm_16_20=0 & imm_0_13=0 {
+        barrier();
+    }
+}
+
+#SYSTEM/USER:Breakpoint
+define pcodeop brkpt;
+with slot: iclass=0b0110 {
+    :"brkpt" is imm_21_27=0b1100001 & imm_16_20=0 & imm_8_13=0 & imm_5_7=0b000 & imm_0_4=0 {
+        brkpt();
+    }
+}
+
+#SYSTEM/USER:Data cache prefetch
+define pcodeop dcache_fetch;
+with slot: iclass=0b1001 {
+    :"dcfetch("S5"+"u11")" is imm_21_27=0b0100000 & S5 & S5i & imm_13=0 & imm_11_12=0 & imm_0_10 [u11 = imm_0_10 << 3; ] {
+        local EA:4 = S5i + u11;
+        dcache_fetch(EA);
+    }
+    :"dcfetch("S5"+"u11"):nt" is imm_21_27=0b0100000 & S5 & S5i & imm_13=1 & imm_11_12=0 & imm_0_10 [u11 = imm_0_10 << 3; ] {
+        local EA:4 = S5i + u11;
+        dcache_fetch(EA);
+    }
+}
+
+#SYSTEM/USER:Data cache maintain
+define pcodeop dcache_clean_addr;
+define pcodeop dcache_cleaninv_addr;
+define pcodeop dcache_inv_addr;
+with slot: iclass=0b1010 {
+    :"dccleana("S5")" is imm_21_27=0b0000000 & S5 & S5i & imm_0_13=0  {
+        dcache_clean_addr(S5i);
+    }
+    :"dccleaninva("S5")" is imm_21_27=0b0000001 & S5 & S5i & imm_0_13=0  {
+        dcache_cleaninv_addr(S5i);
+    }
+    :"dcinva("S5")" is imm_21_27=0b0000010 & S5 & S5i & imm_0_13=0  {
+        dcache_inv_addr(S5i);
+    }
+}
+
+#SYSTEM/USER:diag
+define pcodeop diag;
+define pcodeop diag0;
+define pcodeop diag1;
+with slot: iclass=0b0110 {
+    :"diag("S5")" is imm_21_27=0b0010010 & S5 & S5i & imm_8_13=0 & imm_5_7=0b001 &  imm_0_4=0  {
+        diag(S5i);
+    }
+
+    :"diag0("S5_pair","T5_pair")" is imm_21_27=0b0010010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b010 & imm_0_4=0  {
+        diag0(S5_pairi, T5_pairi);
+    }
+    :"diag1("S5_pair","T5_pair")" is imm_21_27=0b0010010 & S5_pair & S5_pairi & imm_13=0 & T5_pair & T5_pairi & imm_5_7=0b011 & imm_0_4=0  {
+        diag1(S5_pairi, T5_pairi);
+    }
+}
+
+#SYSTEM/USER: Instruction cache maintenance user operations
+define pcodeop icache_inv_addr;
+with slot: iclass=0b0101 {
+    :"icinva("S5")" is imm_21_27=0b0110110 & S5 & S5i & imm_11_13=0b000 & imm_0_10=0  {
+        icache_inv_addr(S5i);
+    }
+}
+
+
+#SYSTEM/USER:Isync
+define pcodeop instruction_sync;
+with slot: iclass=0b0101 {
+    :"isync" is imm_16_27=0b0111110000000 & imm_13=0 & imm_10_12=0b000 & imm_0_9=0b0000000010  {
+        instruction_sync();
+    }
+}
+
+#SYSTEM/USER:L2 fetch
+define pcodeop l2fetch;
+with slot: iclass=0b1010 {
+    :"l2fetch("S5","T5")" is imm_21_27=0b0110000 & S5 & S5i & imm_13=0 & T5 & T5i & imm_0_7=0 {
+        l2fetch(S5i, T5i);
+    }
+    :"l2fetch("S5","T5_pair")" is imm_21_27=0b0110100 & S5 & S5i & imm_13=0 & T5_pair & T5_pairi & imm_0_7=0 {
+        l2fetch(S5i, T5_pairi);
+    }
+}
+
+
+#SYSTEM/USER:pause
+define pcodeop pause;
+with slot: iclass=0b0101 {
+    :"pause(" u10 ")" is imm_22_27=0b010001 & imm_18_21=0 & imm_16_17u & imm_13=0 & imm_8_12u & imm_5_7=0 & imm_2_4u & imm_0_1=0 [u10 = imm_2_4u | (imm_8_12u << 3) | (imm_16_17u << 8);] {
+        pause(u10:2);
+    }
+}
+
+#SYSTEM/USER:mem thread sync
+define pcodeop memory_synch;
+define pcodeop dmsyncht;
+# removed from v79 docs
+with slot: iclass=0b1010  {
+    :D5 "=dmsyncht" is imm_21_27=0b1000000 & imm_16_20=0 & imm_9_13=0 & imm_5_8=0b0111 & D5 & OUTPUT_D5 {
+        D5 = dmsyncht();
+    }
+
+    :"syncht" is imm_21_27=0b1000010 & imm_16_20=0 & imm_0_13=0 {
+        memory_synch();
+    }
+}
+
+#SYSTEM/USER:trace
+define pcodeop trace;
+with slot: iclass=0b0110 {
+    :"trace(" S5 ")" is imm_21_27=0b0010010 & S5 & S5i & imm_0_13=0 {
+        trace(S5i);
+    }
+}
+
+#SYSTEM/USER:Trap
+define pcodeop trap0;
+define pcodeop trap1;
+with slot: iclass=0b0101 {
+    :"trap0(" u8 ")" is imm_22_27=0b010000 & imm_16_21=0 & imm_13=0 & imm_8_12u & imm_5_7 & imm_2_4u & imm_0_1 [u8 = imm_2_4u | (imm_8_12u << 3);] {
+        trap0(u8:1);
+    }
+    :"trap1(" S5 "," u8 ")" is imm_22_27=0b010010 & imm_21=0 & S5 & S5i & imm_13=0 & imm_8_12u & imm_5_7 & imm_2_4u & imm_0_1 [u8 = imm_2_4u | (imm_8_12u << 3);] {
+        trap1(S5i, u8:1);
+    }
+}
+
+#SYSTEM/USER:unpause
+define pcodeop unpause;
+with slot: iclass=0b0101 {
+    :"unpause" is imm_21_27=0b0111111 & imm_16_20=0 & imm_12_13=0b01 & imm_8_11=0 & imm_5_7=0b000 & imm_0_4=0 {
+        unpause();
+    }
+}
+
+define pcodeop isync;
+slot:"isync" is iclass=0b0101 & imm_16_27=0b011111000000 & imm_13=0 & imm_10_12=0 & imm_0_9=0b0000000010  {
+    isync();
+}
+

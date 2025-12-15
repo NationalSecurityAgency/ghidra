@@ -1,0 +1,1829 @@
+# sleigh specification file for Qualcomm Hexagon Processor (QDSP 6)
+
+# V79 spec can be found here: https://docs.qualcomm.com/bundle/publicresource/topics/80-N2040-60/instruction-set.html
+
+# List of nice-to-haves in SELIGH
+# arbitrary bit-count sext, not just bytes
+# allow (a+b, a) in tokens, keep getting imm64s wrong
+# Allow setting size of local in constructor
+# Fix decompiler for PTRUE
+# Allow setting [a=b;] in imm ctor, have to use [a = b<<0;]
+
+#Status:
+# Disas everything up to v73, most common ops have pcode impl
+
+# ALU32/ALU       Decode + pcode up to v79                                 regcache ever0 nvi
+# ALU32/PERM:     Decode + pcode up to v79                                 regcache ever0 nvi
+# ALU32/PRED:     Decode + pcode up to v79                                 regcache ever0 nvi
+# CR:             Decode + pcode up to v79                                 regcache ever0 nvi
+# JR:             Decode + pcode up to v79                                 regcache ever0 nvi
+# J:              Decode + pcode up to v79                                 regcache ever0 nvi
+# LD:             Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/Dword:       Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/Byte:        Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/Halfword:    Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/ubyte:       Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/uHalfword:   Decode + pcode up to v79                                 regcache ever0 nvi
+# LD/word:        Decode + pcode up to v79                                 regcache ever0 nvi
+# MEMOP:          Decode + pcode up to v79                                 regcache ever0 nvi
+# NV:             Decode + pcode up to v79                                 regcache ever0 nvi
+# NV/HW:          Decode + pcode up to v79                                 regcache ever0 nvi nvst
+# NV/W:           Decode + pcode up to v79                                 regcache ever0 nvi nvst
+# NV/B:           Decode + pcode up to v79                                 regcache ever0 nvi nvst
+# ST:             Decode + pcode up to v79                                 regcache ever0 nvi
+# ST/byte:        Decode + pcode up to v79                                 regcache ever0 nvi
+# ST/Dword:       Decode + pcode up to v79                                 regcache ever0 nvi
+# ST/halfword:    Decode + pcode up to v79                                 regcache ever0 nvi
+# ST/word:        Decode + pcode up to v79                                 regcache ever0 nvi
+# SYSTEM/USER:    Decode + pcode up to v79                                 regcache ever0 nvi
+# SYSTEM/GUEST:   Decode + pcode up to v66 (latest for this section)       regcache ever0 nvi
+# SYSTEM/MONITOR: Decode + pcode up to v66 (latest for this section)       regcache ever0 nvi
+# XTYPE:          Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/ALU:      Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/BIT:      Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/COMPLEX:  Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/FP:       Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/MPY:      Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/PERM:     Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/PRED:     Decode + pcode up to v79                                 regcache ever0 nvi
+# XTYPE/SHIFT:    Decode + pcode up to v79                                 regcache ever0 nvi
+# duplex          Decode + pcode up to v79                                 regcache ever0 nvi
+
+
+# TODOs:
+# check all unsigned / signed imms
+# caching for GP / GD5 / SGP?
+# check shifts in ld / st
+# check everything in ld/st cond, exp. which value extends
+# HVX
+# HMX (is there a spec for this?)
+
+# Slices explained:
+# Hexagon has strange semantics where an instructions effect might not take place immediately
+# e.g. branches are grouped to the end of a packet, and ops with new-value inputs take place after
+# all new-value producing ops so that they can consume their output
+#
+# In order to handle this, we break each instruction up into "slices" and generate all ops in a slice before moving to the next slice
+# like this:
+# +--------+--------+
+# | normal | normal | # normal slice, mode=0, slot table (display and norma ops)
+# +--------+--------+
+# | nv     | nv     | # nv slice, mode=200, slotNV table   (ops with dotnew input, non branching)
+# +--------+--------+
+# | branch | branch | # branch slice, mode=1100, slotB table (branches)
+# +--------+--------+
+# 
+# The normal slice handles most common parts of ops and display
+# The NV slice handles parts of ops that consume dotnew inputs but produce new values e.g. alu32_pred if(p0.new) r0=add(r0,1)
+# TODO: the nvst slice handles parts of ops that consume dotnew inputs but don't produce any e.g. if(p0.new) memw(S5+1)=r0.new
+# The branch slice handles the part of an op that branches to a new address
+
+#
+# Input value caching:
+# Because a sub-instruction can overwrite a value that is later read by an earlier instruction
+# we need to cache the value of the inputs, e.g. in the following:
+# {{ r0 = r1; r1 = r0; }}
+# we must cache the value of r1 and r0 at packet start and write first:
+# r0 = (cached) r1;
+# then, r1 = (cached) r0;
+# The cached inputs are saved in the rXc registers, they are referenced by the <name>i tokens, they should only be used in the semantic section so that
+# in the listing view we still see the original register name for searching
+#
+# Handling of immediate extension
+# When an extender is reached it sets the hasext0 flag, when it consumes it it sets immext0used, immext0everused and immext0pos. If another extender is hit it will set hasext=1 and the consumer will set immext1used.
+# The *everused flags track if a consumer is missing and add a marker if so.
+# This only applies to normal slice parsing, if in a difference slice then instead consumers should check for pktid=ext0pos, this is because there are holes in other slices so re-parsing all this state requires pointless duplication. 
+# Splitting extenders into slices has a dramatic effect on sla compile times, so we only do this for extenders that are consumed in non-normal slices.
+#
+#
+# TODO: is this needed, dotnew's always reference their new register so have to come after the producer?
+# If a new value input is required then the instruction must run in the new-value-input slice, which is after all normal outputs are complete
+# Then using normal, uncached inputs will give the new value
+#
+#
+# TODO: change access of _pairs to a pair of 4 byte accesses, it seems the decompiler doesn't want to split registers
+#  if the full width version of the register is explicitly referenced in pcode. Also it would allow correct pair syntax
+#  and might help fix the overlapping varnode problem somewhat
+
+#############
+# REGISTERS #
+#############
+
+define endian=little;
+
+define alignment=4;
+
+define space ram     type=ram_space      size=4 wordsize=1 default;
+define space register type=register_space size=4;
+
+define token instr (32)
+    iclass            = (28,31)
+
+    imm_29_31         = (29,31)
+
+    imm_27            = (27,27)
+    imm_26            = (26,26)
+
+    imm_25_27         = (25,27)
+    imm_25_26         = (25,26) signed
+    imm_25_26u        = (25,26)
+
+    imm_24_27         = (24,27)
+
+    imm_23_27         = (23,27)
+    imm_23_24         = (23,24)
+    imm_23            = (23,23)
+    imm_23u           = (23,23)
+
+    imm_22_26         = (22,26)
+    imm_22_27         = (22,27)
+    imm_22_23         = (22,23) signed
+    imm_22_23u        = (22,23)
+    imm_22            = (22,22)
+
+    imm_21_27         = (21,27) signed
+    imm_21_24         = (21,24)
+    imm_21_23         = (21,23)
+    imm_21_23u        = (21,23)
+    imm_21_22         = (21,22) signed
+    imm_21_22u        = (21,22)
+    imm_21            = (21,21) signed
+    imm_21u           = (21,21)
+
+    imm_20_27         = (20,27)
+    imm_20_21         = (20,21) signed
+    imm_20_21u        = (20,21)
+    imm_20            = (20,20) signed
+
+    imm_19_20         = (19,20) signed
+    imm_19            = (19,19) signed
+
+    imm_18_21         = (18,21)
+    imm_18_20         = (18,20)
+    imm_18_19         = (18,19)
+
+    imm_17_27         = (17,27)
+
+    imm_16_27         = (16,27) signed
+    imm_16_25         = (16,25) signed
+    imm_16_24         = (16,24) signed
+    imm_16_24u        = (16,24)
+    imm_16_23         = (16,23)
+    imm_16_22         = (16,22)
+    imm_16_21         = (16,21)
+    imm_16_20         = (16,20)
+    imm_16_20u        = (16,20)
+    imm_16_19         = (16,19)
+    imm_16_18         = (16,18)
+    imm_16_17         = (16,17)
+    imm_16_17u        = (16,17)
+
+    imm_13            = (13,13) signed
+    imm_13u           = (13,13)
+
+    imm_12_13         = (12,13)
+    imm_12            = (12,12)
+
+    imm_11_13         = (11,13) signed
+    imm_11_12         = (11,12)
+    imm_11            = (11,11)
+
+    imm_10_13         = (10,13)
+    imm_10_12         = (10,12)
+    imm_10_11         = (10,11)
+    imm_10            = (10,10)
+
+    imm_9_13          = ( 9,13)
+    imm_9_11          = ( 9,11)
+    imm_9_10          = ( 9,10)
+    imm_9             = ( 9, 9)
+
+    imm_8_13          = ( 8,13)
+    imm_8_13u         = ( 8,13)
+    imm_8_12          = ( 8,12)
+    imm_8_12u         = ( 8,12)
+    imm_8_11          = ( 8,11)
+    imm_8_11u         = ( 8,11)
+    imm_8_10          = ( 8,10)
+    imm_8_9           = ( 8, 9)
+
+    imm_8             = ( 8, 8)
+    imm_8u            = ( 8, 8)
+
+    imm_7_13          = ( 7,13)
+    imm_7_12          = ( 7,12)
+    imm_7_12u         = ( 7,12)
+    imm_7             = ( 7, 7)
+    imm_7u            = ( 7, 7)
+
+    imm_6_7           = ( 6, 7)
+    imm_6_13          = ( 6,13)
+    imm_6             = ( 6, 6)
+    imm_6u            = ( 6, 6)
+
+    imm_5_13          = ( 5,13) signed
+    imm_5_13u         = ( 5,13)
+    imm_5_12          = ( 5,12) signed
+    imm_5_12u         = ( 5,12)
+    imm_5_11          = ( 5,11)
+    imm_5_11u         = ( 5,11)
+    imm_5_10          = ( 5,10)
+    imm_5_10u         = ( 5,10)
+    imm_5_9           = ( 5, 9)
+    imm_5_9u          = ( 5, 9)
+    imm_5_8           = ( 5, 8) signed
+    imm_5_8u          = ( 5, 8)
+    imm_5_7           = ( 5, 7) signed
+    imm_5_7u          = ( 5, 7)
+    imm_5_6           = ( 5, 6)
+    imm_5_6u          = ( 5, 6)
+    imm_5             = ( 5, 5)
+    imm_5u            = ( 5, 5)
+
+    imm_4             = ( 4, 4)
+
+    imm_3_12          = ( 3,12)
+    imm_3_7           = ( 3, 7)
+    imm_3_7u          = ( 3, 7)
+    imm_3_6           = ( 3, 6)
+    imm_3_6u          = ( 3, 6)
+    imm_3_4           = ( 3, 4)
+    imm_3_4u          = ( 3, 4)
+    imm_3             = ( 3, 3)
+    imm_3u            = ( 3, 3)
+
+    imm_2_13          = ( 2,13)
+    imm_2_12          = ( 2,12)
+    imm_2_7           = ( 2, 7)
+    imm_2_6           = ( 2, 6)
+    imm_2_5           = ( 2, 5)
+    imm_2_4           = ( 2, 4)
+    imm_2_4u          = ( 2, 4)
+    imm_2_3           = ( 2, 3)
+    imm_2             = ( 2, 2)
+
+    imm_1_13          = ( 1,13) signed
+    imm_1_13u         = ( 1,13)
+    imm_1_11          = ( 1,11) signed
+    imm_1_7           = ( 1, 7)
+    imm_1_7u          = ( 1, 7)
+    imm_1_6u          = ( 1, 6)
+    imm_1_2           = ( 1, 2)
+    imm_1             = ( 1, 1)
+
+    imm_0_13          = ( 0,13)
+    imm_0_13u         = ( 0,13)
+    imm_0_12          = ( 0,12)
+    imm_0_10          = ( 0,10)
+    imm_0_9           = ( 0, 9)
+    imm_0_7           = ( 0, 7) signed
+    imm_0_7u          = ( 0, 7)
+    imm_0_6           = ( 0, 6)
+    imm_0_6u          = ( 0, 6)
+    imm_0_5           = ( 0, 5)
+    imm_0_5u          = ( 0, 5)
+    imm_0_4           = ( 0, 4)
+    imm_0_4u          = ( 0, 4)
+    imm_0_2           = ( 0, 2)
+    imm_0_1           = ( 0, 1)
+    imm_0_1u          = ( 0, 1)
+    imm_0             = ( 0, 0)
+
+    D4_16_19          = (16,19)
+    D4_8_11           = ( 8,11)
+    S4                = (16,19)
+    S4i               = (16,19)
+    S2                = (16,17)
+    S2i               = (16,17)
+    T2                = ( 8, 9)
+    T2i               = ( 8, 9)
+    D2                = ( 0, 1)
+
+    S2_pred           = (16,17)
+    S2_predi          = (16,17)
+    T2_pred           = ( 8, 9)
+    T2_predi          = ( 8, 9)
+    D2_pred           = ( 0, 1)
+    D2_predi          = ( 0, 1)
+    D2_pred_new       = ( 0, 1)
+    U2_pred_21_22     = (21,22)
+    U2_pred_21_22i    = (21,22)
+    U2_pred_new_21_22 = (21,22)
+    U2_pred           = ( 8, 9)
+    U2_predi          = ( 8, 9)
+    U1_23_24_pred     = (23,24)
+    U1_23_24_predi    = (23,24)
+    U2_5_6            = ( 5, 6)
+    U2_5_6i           = ( 5, 6)
+    U2_5_6_pred_new   = ( 5, 6)
+    U2_5_6_pred_newi  = ( 5, 6)
+    T2_11_12_pred     = (11,12)
+    T2_11_12_predi    = (11,12)
+    T2_11_12_pred_new = (11,12)
+    T2_9_10_pred      = ( 9,10)
+    T2_9_10_predi     = ( 9,10)
+    T2_9_10_pred_new  = ( 9,10)
+
+    T5                = ( 8,12)
+    T5i               = ( 8,12)
+    T5_dup            = ( 8,12)
+    T5_pair           = ( 9,12)
+    T5_pairi          = ( 9,12)
+    T4_8_11           = ( 8,11)
+    T4_8_11i          = ( 8,11)
+
+    Rs                = (27,27)
+    MajOp             = (24,26)
+    MinOp             = (21,23)
+    D7                = ( 0, 7)
+    D6_svctrl         = ( 0, 5)
+
+    D5_pair           = ( 1, 4)
+    D5_pair_val           = ( 1, 4)
+    D5_pairi          = ( 1, 4)
+    D5                = ( 0, 4)
+    D5i               = ( 0, 4)
+    D5ref             = ( 0, 4)
+    D5_dup            = ( 0, 4)
+    D5_ctrl           = ( 0, 4)
+    D5_ctrl_pair      = ( 0, 4)
+    GD5               = ( 0, 4)
+    GD5_pair          = ( 0, 3)
+    S3_new_16_18      = (16,18)
+    S3_16_18i         = (16,18)
+
+    S6_svctrl         = (16,21)
+    S6_svctrl_pair    = (17,21)
+
+    S5                = (16,20)
+    S5_val            = (16,20)
+    S5i               = (16,20)
+    S5_dup            = (16,20)
+    S5_pair           = (17,20)
+    S5_pairi          = (17,20)
+    S5_pair_dup       = (17,20)
+    S5_ctrl           = (16,20)
+    S5_ctrl_pair      = (16,20)
+    alu_X5            = (16,20)
+    alu_X5i           = (16,20)
+    alu_X5_dup        = (16,20)
+    alu_X5_pair       = (17,20)
+    alu_X5_pairi      = (17,20)
+
+    U2                = ( 8, 9)
+    U2i               = ( 8, 9)
+    U2_pred_new       = ( 8, 9)
+
+    T3_0_2            = ( 0, 2)
+    T3_0_2_new        = ( 0, 2)
+    T3_new_8_10       = ( 8,10)
+
+    M1_13             = (13,13)
+
+    parse             = (14,15)
+    imm32             = ( 0,31)
+
+    immdup0_12        = (12,12)
+    immdup0_11_12     = (11,12)
+    immdup0_10_12     = (10,12)
+    immdup0_9         = ( 9, 9)
+    immdup0_8         = ( 8, 8)
+    immdup0_9_12      = ( 9,12)
+    immdup0_8_11      = ( 8,11)
+    immdup0_8_12      = ( 8,12)
+    immdup0_8_10      = ( 8,10)
+    immdup0_7_8       = ( 7, 8)
+    immdup0_7         = ( 7, 7)
+    immdup0_6_12      = ( 6,12)
+    immdup0_6         = ( 6, 6)
+    immdup0_5_8       = ( 5, 8)
+    immdup0_5_6       = ( 5, 6)
+    immdup0_4_10      = ( 4,10) signed
+    immdup0_4_9       = ( 4, 9)
+    immdup0_4_8       = ( 4, 8)
+    immdup0_4_7       = ( 4, 7)
+    immdup0_4_6       = ( 4, 6)
+    immdup0_4_5       = ( 4, 5)
+    immdup0_3_8       = ( 3, 8) signed
+    immdup0_3_7       = ( 3, 7)
+    immdup0_3_5       = ( 3, 5)
+    immdup0_3_4       = ( 3, 4)
+    immdup0_3         = ( 3, 3)
+
+    immdup0_2_3       = ( 2, 3)
+    immdup0_2         = ( 2, 2)
+    immdup0_1_2       = ( 1, 2)
+    immdup0_0_9       = ( 0, 9)
+    immdup0_0_4       = ( 0, 4)
+    immdup0_0_3       = ( 0, 3)
+    immdup0_0_2       = ( 0, 2)
+    immdup0_0_1       = ( 0, 1)
+
+    immdup0_S4        = ( 4, 7)
+    immdup0_S4i       = ( 4, 7)
+    immdup0_D4        = ( 0, 3)
+    immdup0_D4_dup        = ( 0, 3)
+    immdup0_D4i       = ( 0, 3)
+    immdup0_D4_pair   = ( 0, 3)
+    immdup0_D3_pair   = ( 0, 2)
+    immdup0_D3_pairi  = ( 0, 2)
+
+    immdup1_12        = (28,28)
+    immdup1_11_12     = (27,28)
+    immdup1_10_12     = (26,28)
+    immdup1_9_12      = (25,28)
+    immdup1_8_12      = (24,28)
+    immdup1_6_12      = (22,28)
+    immdup1_8_11      = (24,27)
+    immdup1_13        = (29,29)
+    immdup1_8_10      = (24,26)
+    immdup1_4_10      = (20,26) signed
+    immdup1_7_8       = (23,24)
+    immdup1_5_8       = (21,24)
+    immdup1_5_6       = (21,22)
+    immdup1_4_6       = (20,22)
+    immdup1_4_5       = (20,21)
+    immdup1_4_7       = (20,23)
+    immdup1_4_9       = (20,25)
+    immdup1_4_8       = (20,24)
+    immdup1_3_8       = (19,24) signed
+    immdup1_3_7       = (19,23)
+    immdup1_3_4       = (19,20)
+    immdup1_7         = (23,23)
+    immdup1_3_5       = (19,21)
+    immdup1_3         = (19,19)
+    immdup1_2         = (18,18)
+    immdup1_9         = (25,25)
+    immdup1_8         = (24,24)
+    immdup1_0_9       = (16,25)
+    immdup1_0_4       = (16,20)
+    immdup1_0_3       = (16,19)
+    immdup1_2_3       = (18,19)
+    immdup1_0_2       = (16,18)
+    immdup1_1_2       = (17,18)
+    immdup1_6         = (22,22)
+    immdup1_0_1       = (16,17)
+
+    immdup1_S4        = (20,23)
+    immdup1_S4i       = (20,23)
+    immdup1_D4        = (16,19)
+    immdup1_D4_dup        = (16,19)
+    immdup1_D4i       = (16,19)
+    immdup1_D4_pair   = (16,19)
+    immdup1_D3_pair   = (16,18)
+    immdup1_D3_pairi  = (16,18)
+
+        # HVX
+    Qv4               = (22,23)
+    Qt4               = (22,23)
+    Qs4               = ( 8, 9)
+    Qd4               = ( 0, 1)
+    Qx4               = ( 5, 6)
+
+    S2_5_6            = ( 5, 6)
+    VT5               = ( 8,12)
+    VT5_pair          = ( 9,12)
+    VS5               = (16,20)
+    VS5_pair          = (17,20)
+    VD5_pair          = ( 1, 4)
+    VD5               = ( 0, 4)
+;
+
+define register offset=0x300 size=64 [
+    testctx
+];
+
+define context testctx
+    immext0         = (  0, 31) noflow
+    immext1         = ( 32, 63) noflow
+    hasext0         = ( 64, 64) noflow
+    hasext1         = ( 65, 65) noflow
+    immext0used     = ( 66, 66) noflow
+    immext1used     = ( 67, 67) noflow
+    immext0everused = ( 68, 68) noflow
+
+    immext0pos      = ( 69, 71)
+    immext1pos      = ( 74, 76)
+
+    mode            = (128,143) noflow
+
+        # HACK: you can't have a name list on a context register, and get it via ProgramContext on a analyzer
+    or1test         = (160,166) noflow
+    or1test_overlap = (160,166) noflow
+
+    analysed        = (167,167) noflow
+
+    pktid           = (192,194) noflow
+
+    or2test         = (224,230) noflow
+    or2test_overlap = (224,230) noflow
+
+    or3test         = (256,262) noflow
+    or3test_overlap = (256,262) noflow
+;
+
+# high dword: Left
+# lo   dword: Right
+define register offset=0x00 size=8 [
+    r1r0
+    r3r2
+    r5r4
+    r7r6
+    r9r8
+    r11r10
+    r13r12
+    r15r14
+    r17r16
+    r19r18
+    r21r20
+    r23r22
+    r25r24
+    r27r26
+    SPr28
+    LRFP
+];
+
+attach variables [ D5_pair T5_pair S5_pair S5_pair_dup alu_X5_pair immdup0_D4_pair immdup1_D4_pair] [
+r1r0
+r3r2
+r5r4
+r7r6
+r9r8
+r11r10
+r13r12
+r15r14
+r17r16
+r19r18
+r21r20
+r23r22
+r25r24
+r27r26
+SPr28
+LRFP
+];
+
+
+attach variables [ immdup0_D3_pair immdup1_D3_pair ] [
+r1r0
+r3r2
+r5r4
+r7r6
+r17r16
+r19r18
+r21r20
+r23r22
+];
+
+define register offset=0x00 size=4 [
+    r0
+    r1
+    r2
+    r3
+    r4
+    r5
+    r6
+    r7
+    r8
+    r9
+    r10
+    r11
+    r12
+    r13
+    r14
+    r15
+    r16
+    r17
+    r18
+    r19
+    r20
+    r21
+    r22
+    r23
+    r24
+    r25
+    r26
+    r27
+    r28
+    SP
+    FP
+    LR
+];
+
+attach variables [ D5 D5_dup S5 S5_dup alu_X5 alu_X5_dup T5 T5_dup ] [
+r0
+r1
+r2
+r3
+r4
+r5
+r6
+r7
+r8
+r9
+r10
+r11
+r12
+r13
+r14
+r15
+r16
+r17
+r18
+r19
+r20
+r21
+r22
+r23
+r24
+r25
+r26
+r27
+r28
+SP
+FP
+LR
+];
+
+# caching registers
+define register offset=0x1000 size=4 [
+    r0c
+    r1c
+    r2c
+    r3c
+    r4c
+    r5c
+    r6c
+    r7c
+    r8c
+    r9c
+    r10c
+    r11c
+    r12c
+    r13c
+    r14c
+    r15c
+    r16c
+    r17c
+    r18c
+    r19c
+    r20c
+    r21c
+    r22c
+    r23c
+    r24c
+    r25c
+    r26c
+    r27c
+    r28c
+    SPc
+    FPc
+    LRc
+];
+
+define register offset=0x1000 size=8 [
+    r1r0c
+    r3r2c
+    r5r4c
+    r7r6c
+    r9r8c
+    r11r10c
+    r13r12c
+    r15r14c
+    r17r16c
+    r19r18c
+    r21r20c
+    r23r22c
+    r25r24c
+    r27r26c
+    SPr28c
+    LRFPc
+];
+
+attach variables [ D5_pairi S5_pairi T5_pairi alu_X5_pairi] [
+r1r0c
+r3r2c
+r5r4c
+r7r6c
+r9r8c
+r11r10c
+r13r12c
+r15r14c
+r17r16c
+r19r18c
+r21r20c
+r23r22c
+r25r24c
+r27r26c
+SPr28c
+LRFPc
+];
+
+attach variables [ immdup0_D3_pairi immdup1_D3_pairi] [
+r1r0c
+r3r2c
+r5r4c
+r7r6c
+r17r16c
+r19r18c
+r21r20c
+r23r22c
+];
+
+
+attach variables [ S4 T4_8_11 D4_16_19 D4_8_11] [
+r0
+r1
+r2
+r3
+r4
+r5
+r6
+r7
+r16
+r17
+r18
+r19
+r20
+r21
+r22
+r23
+];
+
+attach variables [ S4i T4_8_11i ] [
+r0c
+r1c
+r2c
+r3c
+r4c
+r5c
+r6c
+r7c
+r16c
+r17c
+r18c
+r19c
+r20c
+r21c
+r22c
+r23c
+];
+
+
+attach variables [ immdup0_D4 immdup0_D4_dup immdup1_D4 immdup1_D4_dup immdup0_S4 immdup1_S4 ] [
+r0
+r1
+r2
+r3
+r4
+r5
+r6
+r7
+r16
+r17
+r18
+r19
+r20
+r21
+r22
+r23
+];
+attach variables [ immdup0_S4i immdup1_S4i immdup0_D4i immdup1_D4i ] [
+r0c
+r1c
+r2c
+r3c
+r4c
+r5c
+r6c
+r7c
+r16c
+r17c
+r18c
+r19c
+r20c
+r21c
+r22c
+r23c
+];
+
+attach variables [ S5i T5i alu_X5i D5i ] [
+r0c
+r1c
+r2c
+r3c
+r4c
+r5c
+r6c
+r7c
+r8c
+r9c
+r10c
+r11c
+r12c
+r13c
+r14c
+r15c
+r16c
+r17c
+r18c
+r19c
+r20c
+r21c
+r22c
+r23c
+r24c
+r25c
+r26c
+r27c
+r28c
+SPc
+FPc
+LRc
+];
+
+define register offset=0x80 size=4 [
+    SA0   # 80
+    LC0   # 84
+    SA1   # 88
+    LC1   # 8c
+    P30   # 90
+    Reserve_5 # 94
+    M0    # 98
+    M1    # 9c
+    USR   # a0
+    PC    # a4
+    UGP   # a8
+    GP    # ac
+    CS0   # d0
+    CS1
+    UPCYCLELO
+    UPCYCLEHI
+    FRAMELIMIT
+    FRAMEKEY
+    PKTCOUNTLO
+    PKTCOUNTHI
+    Reserved_20
+    Reserved_21
+    Reserved_22
+    Reserved_23
+    Reserved_24
+    Reserved_25
+    Reserved_26
+    Reserved_27
+    Reserved_28
+    Reserved_29
+    UTIMERLO
+    UTIMERHI
+];
+
+attach variables [M1_13] [M0 M1];
+
+
+ attach variables [ D5_ctrl S5_ctrl ] [
+ SA0
+LC0
+SA1
+LC1
+P30
+Reserve_5
+M0
+M1
+USR
+PC
+UGP
+GP
+CS0
+CS1
+UPCYCLELO
+UPCYCLEHI
+
+FRAMELIMIT
+FRAMEKEY
+PKTCOUNTLO
+PKTCOUNTHI
+Reserved_20
+Reserved_21
+Reserved_22
+Reserved_23
+Reserved_24
+Reserved_25
+Reserved_26
+Reserved_27
+Reserved_28
+Reserved_29
+UTIMERLO
+UTIMERHI
+];
+
+define register offset=0x104 size=1 [
+    P0
+    P1
+    P2
+    P3
+    PTRUE
+];
+
+define register offset=0x2000 size=1 [
+    P0c
+    P1c
+    P2c
+    P3c
+];
+
+attach variables [ U2 D2_pred U2_pred_21_22  T2_pred S2_pred U2_pred U2_5_6 U1_23_24_pred T2_11_12_pred T2_9_10_pred D2 T2 S2] [
+P0
+P1
+P2
+P3
+];
+
+attach variables [D2_predi U2_pred_21_22i T2_predi S2_predi U2_predi U2_5_6i U2i U2_5_6_pred_newi U1_23_24_predi T2_9_10_predi T2_11_12_predi S2i T2i] [
+P0c
+P1c
+P2c
+P3c
+];
+
+
+#TODO: rm
+attach variables [ D2_pred_new U2_pred_new U2_pred_new_21_22 T2_9_10_pred_new T2_11_12_pred_new U2_5_6_pred_new ] [
+P0
+P1
+P2
+P3
+];
+
+define register offset=0x400 size=4 [
+    SGP0
+    SGP1
+    STID
+    ELR
+    BADVA0
+    BADVA1
+    SSR
+    CCR
+    HTID
+    BADVA
+    IMASK
+    RESERVED_11
+    RESERVED_12
+    RESERVED_13
+    RESERVED_14
+    RESERVED_15
+    EVB
+    MODECTL
+    SYSCFG
+    NULL_19
+    IPEND
+    VID
+    IAD
+    NULL_23
+    IEL
+    NULL_25
+    IAHL
+    CFGBASE
+    DIAG
+    REV
+    PCYCLELO
+    PCYCLEHI
+    ISDBST
+    ISDBCFG0
+    ISDBCFG1
+    NULL_35
+    BRKPTPC0
+    BRKPTCFG0
+    BRKPTPC1
+    BRKPTCFG1
+    ISDBMBXIN
+    ISDBMBXOUT
+    ISDBEN
+    ISDBGPR
+    RESERVED_44
+    RESERVED_45
+    RESERVED_46
+    RESERVED_47
+    PMUCNT0
+    PMUCNT1
+    PMUCNT2
+    PMUCNT3
+    PMUEVTCFG
+    PMUCFG
+    RESERVED_54
+    RESERVED_55
+    RESERVED_56
+    RESERVED_57
+    RESERVED_58
+    RESERVED_59
+    RESERVED_60
+    RESERVED_61
+    RESERVED_62
+    RESERVED_63
+];
+
+# TODO: might be wrong way around
+define register offset=0x400 size=8 [
+    SGP0_SGP1
+    ELR_STID
+    BADVA0_BADVA1
+    SSR_CCR
+    HTID_BADVA
+    IMASK_RESERVED_11
+    RESERVED_12_RESERVED_13
+    RESERVED_14_RESERVED_15
+    EVB_MODECTL
+    SYSCFG_NULL_19
+    IPEND_VID
+    IAD_NULL_23
+    IEL_NULL_25
+    IAHL_CFGBASE
+    DIAG_REV
+    PCYCLELO_PCYCLEHI
+    ISDBST_ISDBCFG0
+    ISDBCFG1_NULL_35
+    BRKPTPC0_BRKPTCFG0
+    BRKPTPC1_BRKPTCFG1
+    ISDBMBXIN_ISDBMBXOUT
+    ISDBEN_ISDBGPR
+    RESERVED_44_RESERVED_45
+    RESERVED_46_RESERVED_47
+    PMUCNT0_PMUCNT1
+    PMUCNT2_PMUCNT3
+    PMUEVTCFG_PMUCFG
+    RESERVED_54_RESERVED_55
+    RESERVED_56_RESERVED_57
+    RESERVED_58_RESERVED_59
+    RESERVED_60_RESERVED_61
+    RESERVED_62_RESERVED_63
+];
+
+attach variables [ S6_svctrl_pair ] [
+    SGP0_SGP1
+    ELR_STID
+    BADVA0_BADVA1
+    SSR_CCR
+    HTID_BADVA
+    IMASK_RESERVED_11
+    RESERVED_12_RESERVED_13
+    RESERVED_14_RESERVED_15
+    EVB_MODECTL
+    SYSCFG_NULL_19
+    IPEND_VID
+    IAD_NULL_23
+    IEL_NULL_25
+    IAHL_CFGBASE
+    DIAG_REV
+    PCYCLELO_PCYCLEHI
+    ISDBST_ISDBCFG0
+    ISDBCFG1_NULL_35
+    BRKPTPC0_BRKPTCFG0
+    BRKPTPC1_BRKPTCFG1
+    ISDBMBXIN_ISDBMBXOUT
+    ISDBEN_ISDBGPR
+    RESERVED_44_RESERVED_45
+    RESERVED_46_RESERVED_47
+    PMUCNT0_PMUCNT1
+    PMUCNT2_PMUCNT3
+    PMUEVTCFG_PMUCFG
+    RESERVED_54_RESERVED_55
+    RESERVED_56_RESERVED_57
+    RESERVED_58_RESERVED_59
+    RESERVED_60_RESERVED_61
+    RESERVED_62_RESERVED_63
+];
+
+attach variables [ S6_svctrl D6_svctrl ] [
+    SGP0
+    SGP1
+    STID
+    ELR
+    BADVA0
+    BADVA1
+    SSR
+    CCR
+    HTID
+    BADVA
+    IMASK
+    RESERVED_11
+    RESERVED_12
+    RESERVED_13
+    RESERVED_14
+    RESERVED_15
+    EVB
+    MODECTL
+    SYSCFG
+    NULL_19
+    IPEND
+    VID
+    IAD
+    NULL_23
+    IEL
+    NULL_25
+    IAHL
+    CFGBASE
+    DIAG
+    REV
+    PCYCLELO
+    PCYCLEHI
+    ISDBST
+    ISDBCFG0
+    ISDBCFG1
+    NULL_35
+    BRKPTPC0
+    BRKPTCFG0
+    BRKPTPC1
+    BRKPTCFG1
+    ISDBMBXIN
+    ISDBMBXOUT
+    ISDBEN
+    ISDBGPR
+    RESERVED_44
+    RESERVED_45
+    RESERVED_46
+    RESERVED_47
+    PMUCNT0
+    PMUCNT1
+    PMUCNT2
+    PMUCNT3
+    PMUEVTCFG
+    PMUCFG
+    RESERVED_54
+    RESERVED_55
+    RESERVED_56
+    RESERVED_57
+    RESERVED_58
+    RESERVED_59
+    RESERVED_60
+    RESERVED_61
+    RESERVED_62
+    RESERVED_63
+];
+
+define register offset=0x800 size=4 [
+    G0
+    G1
+    G2
+    G3
+    GUEST_RESERVED_04
+    GUEST_RESERVED_05
+    GUEST_RESERVED_06
+    GUEST_RESERVED_07
+    GUEST_RESERVED_08
+    GUEST_RESERVED_09
+    GUEST_RESERVED_10
+    GUEST_RESERVED_11
+    GUEST_RESERVED_12
+    GUEST_RESERVED_13
+    GUEST_RESERVED_14
+    GUEST_RESERVED_15
+    GUEST_ISDBMBXIN
+    GUEST_ISDBMBXOUT
+    GUEST_RESERVED_18
+    GUEST_RESERVED_19
+    GUEST_RESERVED_20
+    GUEST_RESERVED_21
+    GUEST_RESERVED_22
+    GUEST_RESERVED_23
+    GPCYCLELO
+    GPCYCLEHI
+    GPMUCNT0
+    GPMUCNT1
+    GPMUCNT2
+    GPMUCNT3
+    GUEST_RESERVED_30
+    GUEST_RESERVED_31
+];
+
+define register offset=0x800 size=8 [
+    G0G1
+    G2G3
+    GUEST_RESERVED_04GUEST_RESERVED_05
+    GUEST_RESERVED_06GUEST_RESERVED_07
+    GUEST_RESERVED_08GUEST_RESERVED_09
+    GUEST_RESERVED_10GUEST_RESERVED_11
+    GUEST_RESERVED_12GUEST_RESERVED_13
+    GUEST_RESERVED_14GUEST_RESERVED_15
+    GUEST_ISDBMBXINGUEST_ISDBMBXOUT
+    GUEST_RESERVED_18GUEST_RESERVED_19
+    GUEST_RESERVED_20GUEST_RESERVED_21
+    GUEST_RESERVED_22GUEST_RESERVED_23
+    GPCYCLELOGPCYCLEHI
+    GPMUCNT0GPMUCNT1
+    GPMUCNT2GPMUCNT3
+    GUEST_RESERVED_30GUEST_RESERVED_31
+];
+
+attach variables [GD5] [
+    G0
+    G1
+    G2
+    G3
+    GUEST_RESERVED_04
+    GUEST_RESERVED_05
+    GUEST_RESERVED_06
+    GUEST_RESERVED_07
+    GUEST_RESERVED_08
+    GUEST_RESERVED_09
+    GUEST_RESERVED_10
+    GUEST_RESERVED_11
+    GUEST_RESERVED_12
+    GUEST_RESERVED_13
+    GUEST_RESERVED_14
+    GUEST_RESERVED_15
+    GUEST_ISDBMBXIN
+    GUEST_ISDBMBXOUT
+    GUEST_RESERVED_18
+    GUEST_RESERVED_19
+    GUEST_RESERVED_20
+    GUEST_RESERVED_21
+    GUEST_RESERVED_22
+    GUEST_RESERVED_23
+    GPCYCLELO
+    GPCYCLEHI
+    GPMUCNT0
+    GPMUCNT1
+    GPMUCNT2
+    GPMUCNT3
+    GUEST_RESERVED_30
+    GUEST_RESERVED_31
+];
+
+attach variables [GD5_pair] [
+    G0G1
+    G2G3
+    GUEST_RESERVED_04GUEST_RESERVED_05
+    GUEST_RESERVED_06GUEST_RESERVED_07
+    GUEST_RESERVED_08GUEST_RESERVED_09
+    GUEST_RESERVED_10GUEST_RESERVED_11
+    GUEST_RESERVED_12GUEST_RESERVED_13
+    GUEST_RESERVED_14GUEST_RESERVED_15
+    GUEST_ISDBMBXINGUEST_ISDBMBXOUT
+    GUEST_RESERVED_18GUEST_RESERVED_19
+    GUEST_RESERVED_20GUEST_RESERVED_21
+    GUEST_RESERVED_22GUEST_RESERVED_23
+    GPCYCLELOGPCYCLEHI
+    GPMUCNT0GPMUCNT1
+    GPMUCNT2GPMUCNT3
+    GUEST_RESERVED_30GUEST_RESERVED_31
+];
+
+attach names [or1test_overlap or2test_overlap or3test_overlap] [
+"r0" _ _ _
+"r1" _ _ _
+"r2" _ _ _
+"r3" _ _ _
+"r4" _ _ _
+"r5" _ _ _
+"r6" _ _ _
+"r7" _ _ _
+"r8" _ _ _
+"r9" _ _ _
+"r10" _ _ _
+"r11" _ _ _
+"r12" _ _ _
+"r13" _ _ _
+"r14" _ _ _
+"r15" _ _ _
+"r16" _ _ _
+"r17" _ _ _
+"r18" _ _ _
+"r19" _ _ _
+"r20" _ _ _
+"r21" _ _ _
+"r22" _ _ _
+"r23" _ _ _
+"r24" _ _ _
+"r25" _ _ _
+"r26" _ _ _
+"r27" _ _ _
+"r28" _ _ _
+"FP" _ _ _
+"SP" _ _ _
+"LR" _ _ _
+];
+
+# This is special handling for output register referencing in .new instructions
+# We use an analyser to find the outputs of each sub inst and store in context
+# then map (offset, subins numb) to the correct one
+# TODO: consider doing this with a xbuild down the line
+OR1: or1test_overlap  is or1test & or1test_overlap {
+    local tmp:4 = or1test;
+    export *[register]:4 tmp;
+}
+OR2: or2test_overlap  is or2test & or2test_overlap {
+    local tmp:4 = or2test;
+    export *[register]:4 tmp;
+}
+OR3: or3test_overlap  is or3test & or3test_overlap {
+    local tmp:4 = or3test;
+    export *[register]:4 tmp;
+}
+
+define pcodeop _unimpl_nv;
+
+OUTPUT_D5: is pktid=1 & imm_0_4 [ or1test = imm_0_4 << 2; analysed=1; ] {}
+OUTPUT_D5: is pktid=2 & imm_0_4 [ or2test = imm_0_4 << 2; analysed=1; ] {}
+OUTPUT_D5: is pktid=3 & imm_0_4 [ or3test = imm_0_4 << 2; analysed=1; ] {}
+OUTPUT_D5: is pktid=4 {}
+
+OUTPUT_S5: is pktid=1 & imm_16_20 [ or1test = imm_16_20 << 2; analysed=1; ] {}
+OUTPUT_S5: is pktid=2 & imm_16_20 [ or2test = imm_16_20 << 2; analysed=1; ] {}
+OUTPUT_S5: is pktid=3 & imm_16_20 [ or3test = imm_16_20 << 2; analysed=1; ] {}
+OUTPUT_S5: is pktid=4 {}
+
+OUTPUT_T5: is pktid=1 & imm_8_12 [ or1test = imm_8_12 << 2; analysed=1; ] {}
+OUTPUT_T5: is pktid=2 & imm_8_12 [ or2test = imm_8_12 << 2; analysed=1; ] {}
+OUTPUT_T5: is pktid=3 & imm_8_12 [ or3test = imm_8_12 << 2; analysed=1; ] {}
+OUTPUT_T5: is pktid=4 {}
+
+OUTPUT_D4_16_19: is pktid=1 & imm_16_19 [ or1test = imm_16_19 << 2; analysed=1; ] {}
+OUTPUT_D4_16_19: is pktid=2 & imm_16_19 [ or2test = imm_16_19 << 2; analysed=1; ] {}
+OUTPUT_D4_16_19: is pktid=3 & imm_16_19 [ or3test = imm_16_19 << 2; analysed=1; ] {}
+OUTPUT_D4_16_19: is pktid=4 {}
+
+OUTPUT_D4_8_11: is pktid=1 & imm_8_11 [ or1test = imm_8_11 << 2; analysed=1; ] {}
+OUTPUT_D4_8_11: is pktid=2 & imm_8_11 [ or2test = imm_8_11 << 2; analysed=1; ] {}
+OUTPUT_D4_8_11: is pktid=3 & imm_8_11 [ or3test = imm_8_11 << 2; analysed=1; ] {}
+OUTPUT_D4_8_11: is pktid=4 {}
+
+
+# As per the spec, the (16,18) bits should  be a 2-bit packet reference with a reserved lower bit that should be 0
+# In practise "MPSS.DI.4.0.1.C1.3-86154" has values with a lsb of 1. Lets assume this is an ignored bit
+
+NV_S3_new_16_18: "NOT ANALYSED YET"  is OR1 & analysed=0 { _unimpl_nv(); export OR1; }
+
+NV_S3_new_16_18: "ILLEGAL 1618 pkt:" pktid ", S3:" S3_new_16_18  is OR1 & pktid & S3_new_16_18 & analysed=1 { _unimpl_nv(); export OR1; }
+
+NV_S3_new_16_18: OR1 ".new"  is (S3_new_16_18=0b010 | S3_new_16_18=0b011) & OR1 & pktid=2 & analysed=1 { export OR1; } # p2
+
+NV_S3_new_16_18: OR2 ".new"  is (S3_new_16_18=0b010 | S3_new_16_18=0b011) & OR2 & pktid=3 & analysed=1 { export OR2; } # p3
+NV_S3_new_16_18: OR1 ".new"  is (S3_new_16_18=0b100 | S3_new_16_18=0b101) & OR1 & pktid=3 & analysed=1 { export OR1; } # p3
+
+NV_S3_new_16_18: OR3 ".new"  is (S3_new_16_18=0b010 | S3_new_16_18=0b011) & OR3 & pktid=4 & analysed=1 { export OR3; } # p4
+NV_S3_new_16_18: OR2 ".new"  is (S3_new_16_18=0b100 | S3_new_16_18=0b101) & OR2 & pktid=4 & analysed=1 { export OR2; } # p4
+NV_S3_new_16_18: OR1 ".new"  is (S3_new_16_18=0b110 | S3_new_16_18=0b111) & OR1 & pktid=4 & analysed=1 { export OR1; } # p4
+
+NV_T3_new_8_10: "ILLEGAL 810 pkt:" pktid ", S3:" T3_new_8_10  is OR1 & pktid & T3_new_8_10 { _unimpl_nv(); export OR1; }
+
+NV_T3_new_8_10: OR1 ".new"  is (T3_new_8_10=0b010 | T3_new_8_10=0b011) & OR1 & pktid=2 & analysed=1 { export OR1; } # p2
+
+NV_T3_new_8_10: OR2 ".new"  is (T3_new_8_10=0b010 | T3_new_8_10=0b011) & OR2 & pktid=3 & analysed=1 { export OR2; } # p3
+NV_T3_new_8_10: OR1 ".new"  is (T3_new_8_10=0b100 | T3_new_8_10=0b101) & OR1 & pktid=3 & analysed=1 { export OR1; } # p3
+
+NV_T3_new_8_10: OR3 ".new"  is (T3_new_8_10=0b010 | T3_new_8_10=0b011) & OR3 & pktid=4 & analysed=1 { export OR3; } # p4
+NV_T3_new_8_10: OR2 ".new"  is (T3_new_8_10=0b100 | T3_new_8_10=0b101) & OR2 & pktid=4 & analysed=1 { export OR2; } # p4
+NV_T3_new_8_10: OR1 ".new"  is (T3_new_8_10=0b110 | T3_new_8_10=0b111) & OR1 & pktid=4 & analysed=1 { export OR1; } # p4
+
+NV_T3_0_2_new: "ILLEGAL 302 pkt:" pktid ", S3:" T3_0_2_new  is OR1 & pktid & T3_0_2_new { _unimpl_nv(); export OR1; }
+
+NV_T3_0_2_new: OR1 ".new"  is (T3_0_2_new=0b010 | T3_0_2_new=0b011) & OR1 & pktid=2 & analysed=1 { export OR1; } # p2
+
+NV_T3_0_2_new: OR2 ".new"  is (T3_0_2_new=0b010 | T3_0_2_new=0b011) & OR2 & pktid=3 & analysed=1 { export OR2; } # p3
+NV_T3_0_2_new: OR1 ".new"  is (T3_0_2_new=0b100 | T3_0_2_new=0b101) & OR1 & pktid=3 & analysed=1 { export OR1; } # p3
+
+NV_T3_0_2_new: OR3 ".new"  is (T3_0_2_new=0b010 | T3_0_2_new=0b011) & OR3 & pktid=4 & analysed=1 { export OR3; } # p4
+NV_T3_0_2_new: OR2 ".new"  is (T3_0_2_new=0b100 | T3_0_2_new=0b101) & OR2 & pktid=4 & analysed=1 { export OR2; } # p4
+NV_T3_0_2_new: OR1 ".new"  is (T3_0_2_new=0b110 | T3_0_2_new=0b111) & OR1 & pktid=4 & analysed=1 { export OR1; } # p4
+
+macro rotl32(out, a, b) {
+    local d:4 = b;
+    local n:4 = a;
+    local out1:4 = (n << d) | ( n >> (32 - d));
+    out = out1;
+}
+macro rotl64(out, a, b) {
+    local d:8 = b;
+    local n:8 = a;
+    local out1:8 = (n << d) | ( n >> (64 - d));
+    out = out1;
+}
+
+#TODO: use everywhere
+IS_NOT_EXT:"" is (hasext0=0 | immext0used=1) {}
+IS_EXT0:"" is hasext0=1 & immext0used=0 [immext0used=1; immext0everused=1;] {}
+IS_EXT1:"" is hasext0=1 & immext0used=1 & hasext1=1 [immext1used=1;] {}
+
+EXT_MEMOP_7_12u_0:imm_7_12u  is imm_7_12u & IS_NOT_EXT { export *[const]:4 imm_7_12u; }
+EXT_MEMOP_7_12u_0:u6  is imm_7_12u & IS_EXT0 & immext0 [ u6 = (immext0 | imm_7_12u); ] { export *[const]:4 u6; }
+EXT_MEMOP_7_12u_0:u6  is imm_7_12u & IS_EXT1 & immext1 [ u6 = (immext1 | imm_7_12u); ] { export *[const]:4 u6; }
+
+EXT_imm_7_12:imm_7_12  is imm_7_12 & IS_NOT_EXT { export *[const]:4 imm_7_12; }
+EXT_imm_7_12:u6  is imm_7_12 & IS_EXT0 & immext0 [ u6 = (immext0 | imm_7_12); ] { export *[const]:4 u6; }
+EXT_imm_7_12:u6  is imm_7_12 & IS_EXT1 & immext1 [ u6 = (immext1 | imm_7_12); ] { export *[const]:4 u6; }
+
+NR_EXT_imm_5_12u:imm_5_12u  is imm_5_12u & IS_NOT_EXT { export *[const]:4 imm_5_12u; }
+BR_EXT_imm_5_12u:imm_5_12u  is imm_5_12u { export *[const]:4 imm_5_12u; }
+
+NR_EXT_imm_5_12u:val       is imm_5_10u & IS_EXT0 & immext0 [ val = immext0 | imm_5_10u; immext0pos=pktid;  ] { export *[const]:4 val; }
+BR_EXT_imm_5_12u:v is immext0pos=pktid & immext0 & imm_5_10u [v = imm_5_10u | immext0; ]  { export *[const]:4 v; }
+
+NR_EXT_imm_5_12u:val       is imm_5_10u & IS_EXT1 & immext1 [ val = immext1 | imm_5_10u; immext1pos=pktid;  ] { export *[const]:4 val; }
+BR_EXT_imm_5_12u:v is immext1pos=pktid & immext1 & imm_5_10u [v = imm_5_10u | immext1; ]  { export *[const]:4 v; }
+
+# imm_5_12
+EXT_imm_5_12:imm_5_12 is imm_5_12 & IS_NOT_EXT { export *[const]:4 imm_5_12; }
+BR_EXT_imm_5_12:imm_5_12 is imm_5_12 { export *[const]:4 imm_5_12; }
+
+EXT_imm_5_12:v is IS_EXT0 & immext0 & imm_5_10u [v = imm_5_10u | immext0; immext0pos=pktid; ]  { export *[const]:4 v; }
+BR_EXT_imm_5_12:v is immext0pos=pktid & immext0 & imm_5_10u [v = imm_5_10u | immext0; ]  { export *[const]:4 v; }
+
+EXT_imm_5_12:v is IS_EXT1 & immext1 & imm_5_10u [v = imm_5_10u | immext1; immext1pos=pktid; ]  { export *[const]:4 v; }
+BR_EXT_imm_5_12:v is immext1pos=pktid & immext1 & imm_5_10u [v = imm_5_10u | immext1; ]  { export *[const]:4 v; }
+
+
+
+EXT_imm_5_11u:imm_5_11u  is imm_5_11u & (hasext0=0 | immext0used=1) { export *[const]:4 imm_5_11u; }
+EXT_imm_5_11u:val        is imm_5_11u & hasext0=1 & immext0used=0 & immext0 & imm_5_10u [ val = immext0 | imm_5_10u; immext0used=1;immext0everused=1;] { export *[const]:4 val; }
+EXT_imm_5_11u:val        is imm_5_11u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 & imm_5_10u [ val = immext1 | imm_5_10u; immext1used=1;] { export *[const]:4 val; }
+
+NR_EXT_imm_5_10u:imm_5_10u  is imm_5_10u & (hasext0=0 | immext0used=1) { export *[const]:4 imm_5_10u; }
+BR_EXT_imm_5_10u:imm_5_10u  is imm_5_10u                                                           { export *[const]:4 imm_5_10u; }
+
+NR_EXT_imm_5_10u:val        is imm_5_10u & hasext0=1 & immext0used=0 & immext0  [ val = immext0 | imm_5_10u; immext0used=1;immext0everused=1;immext0pos=pktid;] { export *[const]:4 val; }
+BR_EXT_imm_5_10u:val        is imm_5_10u & immext0pos=pktid & immext0  [ val = immext0 | imm_5_10u;] { export *[const]:4 val; }
+
+NR_EXT_imm_5_10u:val        is imm_5_10u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 [ val = immext1 | imm_5_10u; immext1used=1;immext1pos=pktid;] { export *[const]:4 val; }
+BR_EXT_imm_5_10u:val        is imm_5_10u & immext1pos=pktid & immext1 [ val = immext1 | imm_5_10u;] { export *[const]:4 val; }
+
+EXT_imm_0_5u:imm_0_5u  is imm_0_5u & IS_NOT_EXT { export *[const]:4 imm_0_5u; }
+EXT_imm_0_5u:val       is imm_0_5u & IS_EXT0 & immext0 [ val = immext0 | imm_0_5u; ] { export *[const]:4 val; }
+EXT_imm_0_5u:val       is imm_0_5u & IS_EXT1 & immext1 [ val = immext1 | imm_0_5u; ] { export *[const]:4 val; }
+
+NR_EXT_imm_0_5u:imm_0_5u  is imm_0_5u & (hasext0=0 | immext0used=1) { export *[const]:4 imm_0_5u; }
+BR_EXT_imm_0_5u:imm_0_5u  is imm_0_5u                                                           { export *[const]:4 imm_0_5u; }
+
+NR_EXT_imm_0_5u:val       is imm_0_5u & hasext0=1 & immext0used=0 & immext0 [ val = immext0 | imm_0_5u; immext0used=1;immext0everused=1; immext0pos=pktid;] { export *[const]:4 val; }
+BR_EXT_imm_0_5u:val       is imm_0_5u & immext0pos=pktid & immext0 [ val = immext0 | imm_0_5u; ] { export *[const]:4 val; }
+
+NR_EXT_imm_0_5u:val       is imm_0_5u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 [ val = immext1 | imm_0_5u; immext1used=1; immext1pos=pktid;] { export *[const]:4 val; }
+BR_EXT_imm_0_5u:val       is imm_0_5u & immext1pos=pktid & immext1 [ val = immext1 | imm_0_5u; ] { export *[const]:4 val; }
+
+EXT_LD_S11_dword:s11  is imm_25_26 & imm_5_13u & (hasext0=0 | immext0used=1) [ s11 = ((imm_5_13u | (imm_25_26 << 9))<<3);] { export *[const]:4 s11; }
+EXT_LD_S11_dword:s11  is imm_25_26 & imm_5_13u & hasext0=1 & immext0used=0 & immext0 & imm_5_10u [ s11 = immext0 | imm_5_10u; immext0used=1;immext0everused=1; ] { export *[const]:4 s11; }
+EXT_LD_S11_dword:s11  is imm_25_26 & imm_5_13u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 & imm_5_10u [ s11 = immext1 | imm_5_10u; immext1used=1; ] { export *[const]:4 s11; }
+
+EXT_LD_S11_hword:s11  is imm_25_26 & imm_5_13u & (hasext0=0 | immext0used=1) [ s11 = ((imm_5_13u | (imm_25_26 << 9))<<1);] { export *[const]:4 s11; }
+EXT_LD_S11_hword:s11  is imm_25_26 & imm_5_13u & hasext0=1 & immext0used=0 & immext0 & imm_5_10u [ s11 = immext0 | imm_5_10u; immext0used=1;immext0everused=1; ] { export *[const]:4 s11; }
+EXT_LD_S11_hword:s11  is imm_25_26 & imm_5_13u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 & imm_5_10u [ s11 = immext1 | imm_5_10u; immext1used=1; ] { export *[const]:4 s11; }
+
+EXT_LD_U6:val  is imm_25_26 & (hasext0=0 | immext0used=1) & imm_8_11u & imm_5_6u [ val = imm_5_6u | (imm_8_11u << 2);] { export *[const]:4 val; }
+EXT_LD_U6:val  is imm_25_26 & hasext0=1 & immext0used=0 & immext0 & imm_5_6u & imm_8_11u [val = (imm_5_6u | (imm_8_11u << 2)) | immext0; immext0used=1;immext0everused=1;] { export *[const]:4 val; }
+EXT_LD_U6:val  is imm_25_26 & imm_8_11u & hasext0=1 & hasext1=1 & immext0used=1 & immext1 & imm_5_6u [val = (imm_5_6u | (imm_8_11u << 2)) | immext1; immext1used=1;] { export *[const]:4 val; }
+
+@include "alu32_alu.sinc"
+@include "alu32_perm.sinc"
+@include "alu32_pred.sinc"
+@include "cr.sinc"
+@include "jr.sinc"
+@include "j.sinc"
+
+define pcodeop circ_add;
+define pcodeop brev;
+
+@include "ld.sinc"
+@include "memop.sinc"
+@include "nv.sinc"
+@include "st.sinc"
+@include "system_guest.sinc"
+@include "system_monitor.sinc"
+@include "system_user.sinc"
+
+
+# XTYPE - pain starts here
+@include "xtype_alu.sinc"
+@include "xtype_bit.sinc"
+@include "xtype_complex.sinc"
+@include "xtype_fp.sinc"
+@include "xtype_mpy.sinc"
+@include "xtype_perm.sinc"
+@include "xtype_pred.sinc" 
+@include "xtype_shift.sinc"
+### ---- end of normal ops ----
+@include "duplex.sinc"
+
+@include "hvx.sinc"
+
+
+
+macro prelude() {
+
+    # TODO: this is a readonly value
+    PC = inst_start;
+
+    #TODO: this is a HORRIFIC hack
+    # when a predicate is set to true it should be = 0xFF but ghidra can't recognise that a condition is constant if the true condition isn't either 1 or a power of 2?????
+    # When ghidra works, remove this and replace with constant FF everywhere
+    PTRUE = 1;
+
+    # Copy all gprs to cached registers
+    # No, we can't collapse this down to a single large register covering the space, or Ghidra will try and use that register in places
+    P0c = P0;
+    P1c = P1;
+    P2c = P2;
+    P3c = P3;
+
+    r0c = r0;
+    r1c = r1;
+    r2c = r2;
+    r3c = r3;
+    r4c = r4;
+    r5c = r5;
+    r6c = r6;
+    r7c = r7;
+    r8c = r8;
+    r9c = r9;
+    r10c = r10;
+    r11c = r11;
+    r12c = r12;
+    r13c = r13;
+    r14c = r14;
+    r15c = r15;
+    r16c = r16;
+    r17c = r17;
+    r18c = r18;
+    r19c = r19;
+    r20c = r20;
+    r21c = r21;
+    r22c = r22;
+    r23c = r23;
+    r24c = r24;
+    r25c = r25;
+    r26c = r26;
+    r27c = r27;
+    r28c = r28;
+    SPc = SP;
+    FPc = FP;
+    LRc = LR;
+}
+
+define pcodeop missing_ext0;
+define pcodeop missing_ext1;
+
+terminator:""  is epsilon                                                         { }
+terminator:""  is hasext0=1 & immext0used=1 & hasext1=1 & immext1used=0 { missing_ext1(); }
+terminator:""  is hasext0=1 & immext0everused=0                         { missing_ext0(); }
+terminator:""  is hasext0=1 & immext0used=1                             { }
+terminator:""  is hasext0=1 & immext0used=1 & hasext1=1 & immext1used=1 { }
+
+# Fallback for branch mode
+slotB:"" is epsilon {}
+
+# Note: don't set packet id, we hit the immediate ctors of the branches directly after the normal slice
+build_branches:""  is (parse=0b01 | parse=0b10 | parse=0b11) & slotB { build slotB; }
+build_branches:""  is parse=0b00 & duplex [mode=1100; ]                           { build duplex; }
+
+
+build_branches_1:""  is build_branches { build build_branches; }
+build_branches_2:""  is build_branches { build build_branches; }
+build_branches_3:""  is build_branches { build build_branches; }
+build_branches_4:""  is build_branches { build build_branches; }
+
+# fallback from nv input
+slotNV:                      is epsilon { }
+
+build_nv_input:  is parse=0b00 & duplex [mode=200;] { build duplex; }
+build_nv_input:  is (parse=0b01 | parse=0b10 | parse=0b11) & slotNV { build slotNV; }
+
+build_nv_input_1:  is build_nv_input { build build_nv_input; }
+build_nv_input_2:  is build_nv_input { build build_nv_input; }
+build_nv_input_3:  is build_nv_input { build build_nv_input; }
+build_nv_input_4:  is build_nv_input { build build_nv_input; }
+
+slot0: slot                   is slot &  (parse=0b01 | parse=0b10) & iclass [mode=0; pktid=1;] { build slot; }
+slot1: slot                   is slot &  (parse=0b01 | parse=0b10) & iclass [mode=0; pktid=pktid+1;] { build slot; }
+slot2: slot                   is slot &  (parse=0b01 | parse=0b10) & iclass [mode=0; pktid=pktid+1;] { build slot; }
+
+slotX: slot    is slot & parse=0b11 [mode=0; pktid=pktid+1;]   { build slot; }
+slotX: duplex  is duplex & parse=0b00 [mode=0; pktid=pktid+1;] { build duplex; }
+
+macro endloop0() {
+    if(LC0 <= 1) goto <endl0>;
+    LC0 = LC0 - 1;
+    goto [SA0];
+    <endl0>
+}
+macro endloop1() {
+    if(LC1 <= 1) goto <endl1>;
+    LC1 = LC1 - 1;
+    goto [SA1];
+    <endl1>
+}
+
+# 2 ins packets
+:{ slot0 slotX "}:endloop0"           is slot0 & parse=0b10 & build_branches_1 & build_nv_input_1; slotX & build_branches_2 & build_nv_input_2 & terminator [mode=0; pktid=0;] {
+    prelude();
+    build slot0;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+
+    build build_branches_1;
+    build build_branches_2;
+
+    endloop0();
+
+    build terminator;
+}
+   :{ slot0 slotX }                      is slot0 & parse=0b01 & build_branches_1 & build_nv_input_1; slotX & build_branches_2 & build_nv_input_2 & terminator [mode=0;pktid=0;] {
+
+    prelude();
+    build slot0;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+
+    build build_branches_1;
+    build build_branches_2;
+
+    build terminator;
+}
+
+
+# 3 ins packet
+
+
+   :{ slot0 slot1 slotX }                is slot0 & build_branches_1 & build_nv_input_1 & parse=0b01;slot1 & build_branches_2 & build_nv_input_2 & (parse=0b00 | parse=0b01 | parse=0b11);slotX & build_branches_3 & build_nv_input_3 & terminator[mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+
+    build terminator;
+}
+
+
+
+
+   :{ slot0 slot1 slotX "}:endloop0"     is slot0 & build_branches_1 & build_nv_input_1 & parse=0b10 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b01 ; slotX & build_branches_3 & build_nv_input_3 & terminator[mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+
+    endloop0();
+
+    build terminator;
+}
+
+
+
+   :{ slot0 slot1 slotX "}:endloop1"     is slot0 & build_branches_1 & build_nv_input_1 & parse=0b01 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b10 ; slotX & build_branches_3 & build_nv_input_3 & terminator[mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+
+    endloop1();
+
+    build terminator;
+}
+   :{ slot0 slot1 slotX "}:endloop0:endloop1"  is slot0 & build_branches_1 & build_nv_input_1 & parse=0b10 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b10 ; slotX & build_branches_3 & build_nv_input_3 & terminator[mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+
+    endloop0();
+    endloop1();
+
+    build terminator;
+}
+   # 4 ins packets
+
+
+   :{ slot0 slot1 slot2 slotX }          is slot0 & build_branches_1 & build_nv_input_1 & parse=0b01;slot1 & build_branches_2 & build_nv_input_2 & (parse=0b00 | parse=0b01 | parse=0b11);slot2 & build_branches_3 & build_nv_input_3 ; slotX &  build_branches_4 & build_nv_input_4 & terminator [mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slot2;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+    build build_nv_input_4;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+    build build_branches_4;
+
+    build terminator;
+}
+
+   :{ slot0 slot1 slot2 slotX "}:endloop0"  is slot0 & build_branches_1 & build_nv_input_1 & parse=0b10 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b01 ; slot2 & build_branches_3 & build_nv_input_3 ; slotX &  build_branches_4 & build_nv_input_4 & terminator[mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slot2;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+    build build_nv_input_4;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+    build build_branches_4;
+
+    endloop0();
+
+    build terminator;
+}
+   :{ slot0 slot1 slot2 slotX "}:endloop1"  is slot0 & build_branches_1 & build_nv_input_1 & parse=0b01 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b10;slot2 & build_branches_3 & build_nv_input_3 ; slotX &  build_branches_4 & build_nv_input_4 & terminator [mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slot2;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+    build build_nv_input_4;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+    build build_branches_4;
+
+    endloop1();
+
+    build terminator;
+}
+   :{ slot0 slot1 slot2 slotX "}:endloop0:endloop1"  is slot0 & build_branches_1 & build_nv_input_1 & parse=0b10 ; slot1 & build_branches_2 & build_nv_input_2 & parse=0b10;slot2 & build_branches_3 & build_nv_input_3 ; slotX &  build_branches_4 & build_nv_input_4 & terminator [mode=0;pktid=0;] {
+    prelude();
+    build slot0;
+    build slot1;
+    build slot2;
+    build slotX;
+
+    build build_nv_input_1;
+    build build_nv_input_2;
+    build build_nv_input_3;
+    build build_nv_input_4;
+
+    build build_branches_1;
+    build build_branches_2;
+    build build_branches_3;
+    build build_branches_4;
+
+    endloop0();
+    endloop1();
+
+    build terminator;
+}
+
+    # 1 instruction packet
+   :{ slotX }                            is slotX & mode=0 & build_branches & build_nv_input_1 & terminator [mode=0;pktid=0;] {
+    prelude();
+    build slotX;
+
+    build build_nv_input_1;
+
+    build build_branches;
+
+    build terminator;
+}
+
+# TODO: endloop lpcfg
+immext_marker0:""  is imm_0_13u & imm_16_27 [immext0 = ((imm_0_13u) | (imm_16_27 << 14)) << 6;] { }
+immext_marker1:""  is imm_0_13u & imm_16_27 [immext1 = ((imm_0_13u) | (imm_16_27 << 14)) << 6;] { }
+
+slot:"immext0(" immext0 ")"  is iclass=0b0000 & imm_16_27 & imm_0_13u & hasext0=0 & (parse=0b00 | parse=0b01 | parse=0b10) & immext_marker0 & immext0 [hasext0=1; pktid=pktid-1;] { build immext_marker0; }
+slot:"immext1(" immext1 ")"  is iclass=0b0000 & imm_16_27 & imm_0_13u & hasext0=1 & immext_marker1 & immext1 [ hasext1=1;pktid=pktid-1; ] { build immext_marker1; }
