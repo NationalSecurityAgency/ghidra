@@ -15,24 +15,28 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
+import java.util.ArrayList;
+import java.util.List;
 
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.opnd.MpIntLocalOpnd;
+import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntNegateOp;
 
 /**
  * The generator for a {@link JitIntNegateOp int_negate}.
- * 
  * <p>
  * There is no bitwise "not" operator in the JVM. We borrow the pattern we see output by the Java
  * compiler for <code>int negate(n) {return ~n;}</code>. It XORs the input with a register of 1s.
  * This uses the unary operator generator and emits the equivalent code.
  */
-public enum IntNegateOpGen implements IntUnOpGen<JitIntNegateOp> {
+public enum IntNegateOpGen implements IntOpUnOpGen<JitIntNegateOp> {
 	/** The generator singleton */
 	GEN;
 
@@ -41,38 +45,41 @@ public enum IntNegateOpGen implements IntUnOpGen<JitIntNegateOp> {
 		return false; // TODO: Is it? Test with 3-byte operands to figure it out.
 	}
 
-	private void generateMpIntNegate(JitCodeGenerator gen, MpIntJitType type, MethodVisitor mv) {
-		int legCount = type.legsAlloc();
-		try (JvmTempAlloc temp = gen.getAllocationModel().allocateTemp(mv, "temp", legCount)) {
-			for (int i = 0; i < legCount; i++) {
-				mv.visitVarInsn(ISTORE, temp.idx(i));
-				// NOTE: More significant legs have higher indices (reverse of stack)
-			}
-			// Compute and push back in reverse order
-			int i = legCount;
-			for (SimpleJitType t : type.legTypes()) {
-				mv.visitVarInsn(ILOAD, temp.idx(--i));
-				mv.visitLdcInsn(-1 >>> (Integer.SIZE - t.size() * Byte.SIZE));
-				mv.visitInsn(IXOR);
-			}
-		}
+	@Override
+	public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>>
+			opForInt(Emitter<N0> em) {
+		return em
+				.emit(Op::ldc__i, -1)
+				.emit(Op::ixor);
 	}
 
 	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitIntNegateOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		switch (uType) {
-			case IntJitType t -> {
-				rv.visitLdcInsn(-1 >>> (Integer.SIZE - t.size() * Byte.SIZE));
-				rv.visitInsn(IXOR);
-			}
-			case LongJitType t -> {
-				rv.visitLdcInsn(-1L >>> (Long.SIZE - t.size() * Byte.SIZE));
-				rv.visitInsn(LXOR);
-			}
-			case MpIntJitType t -> generateMpIntNegate(gen, t, rv);
-			default -> throw new AssertionError();
+	public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TLong>>
+			opForLong(Emitter<N0> em) {
+		return em
+				.emit(Op::ldc__l, -1L)
+				.emit(Op::lxor);
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage> Emitter<Bot> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntNegateOp op,
+			MpIntJitType type, Scope scope) {
+		var opnd = gen.genReadToOpnd(em, localThis, op.u(), type, ext(), scope);
+		em = opnd.em();
+		var legs = opnd.opnd().type().castLegsLE(opnd.opnd());
+
+		List<SimpleOpnd<TInt, IntJitType>> outLegs = new ArrayList<>();
+		int legCount = type.legsAlloc();
+		for (int i = 0; i < legCount; i++) {
+			var result = em
+					.emit(legs.get(i)::read)
+					.emit(this::opForInt)
+					.emit(legs.get(i)::write, scope);
+			em = result.em();
+			outLegs.add(result.opnd());
 		}
-		return uType;
+		var out = MpIntLocalOpnd.of(type, "out", outLegs);
+		return gen.genWriteFromOpnd(em, localThis, op.out(), out, ext(), scope);
 	}
 }

@@ -25,7 +25,7 @@ import ghidra.pcode.emu.jit.op.JitIntLeftOp;
  * This uses the integer shift operator generator and simply invokes
  * {@link JitCompiledPassage#intLeft(int, int)}, etc. depending on the types.
  */
-public enum IntLeftOpGen implements ShiftIntBinOpGen<JitIntLeftOp> {
+public enum IntLeftOpGen implements IntShiftBinOpGen<JitIntLeftOp> {
 	/** The generator singleton */
 	GEN;
 

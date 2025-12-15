@@ -15,11 +15,16 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitVarScopeModel;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitPhiOp;
 
 /**
@@ -28,7 +33,7 @@ import ghidra.pcode.emu.jit.op.JitPhiOp;
  * <p>
  * We emit nothing. This generator ought not to be invoked, anyway, but things may change. In the
  * meantime, the design is that we allocate a JVM local per varnode. Since phi nodes are meant to
- * track possible definitions of the <em>same</em> varnode, there is no need to a phi node to emit
+ * track possible definitions of the <em>same</em> varnode, there is no need for a phi node to emit
  * any code. The value, whichever option it happens to be, is already in its local variable.
  * 
  * @see JitVarScopeModel
@@ -38,7 +43,9 @@ public enum PhiOpGen implements OpGen<JitPhiOp> {
 	GEN;
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitPhiOp op, JitBlock block,
-			MethodVisitor rv) {
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitPhiOp op, JitBlock block, Scope scope) {
+		return new LiveOpResult(em);
 	}
 }

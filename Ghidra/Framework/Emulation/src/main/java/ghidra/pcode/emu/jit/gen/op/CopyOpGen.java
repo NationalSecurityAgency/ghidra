@@ -15,33 +15,21 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.op.JitCopyOp;
 
 /**
  * The generator for a {@link JitCopyOp copy}.
- * 
  * <p>
- * This uses the unary operator generator and emits nothing extra. The unary generator template will
- * emit code to load the input operand, this emits nothing, and then the template emits code to
- * write the output operand, effecting a simple copy.
+ * This is identical to {@link IntZExtOpGen}, except that we expect (require?) the output and input
+ * operand to agree in size, and so we don't actually expect any extension. In the event that is not
+ * the case, it seems agreeable that zero extension is applied.
  */
-public enum CopyOpGen implements UnOpGen<JitCopyOp> {
+public enum CopyOpGen implements IntExtUnOpGen<JitCopyOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
 	public boolean isSigned() {
 		return false;
-	}
-
-	@Override
-	public JitType generateUnOpRunCode(JitCodeGenerator gen, JitCopyOp op, JitBlock block,
-			JitType uType, MethodVisitor rv) {
-		return uType;
 	}
 }

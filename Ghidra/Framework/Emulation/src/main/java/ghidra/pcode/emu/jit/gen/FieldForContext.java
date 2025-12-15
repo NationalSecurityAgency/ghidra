@@ -19,16 +19,20 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
 
 /**
  * A field request for pre-constructed contextreg value
  */
-record FieldForContext(RegisterValue ctx) implements StaticFieldReq {
+record FieldForContext(RegisterValue ctx) implements StaticFieldReq<TRef<RegisterValue>> {
 	@Override
 	public String name() {
 		return "CTX_%s".formatted(ctx.getUnsignedValue().toString(16));
@@ -45,33 +49,28 @@ record FieldForContext(RegisterValue ctx) implements StaticFieldReq {
 	 * </pre>
 	 */
 	@Override
-	public void generateClinitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor sv) {
+	public <N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
+			ClassVisitor cv) {
 		if (ctx == null) {
-			return;
+			return em;
 		}
-		cv.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, name(), TDESC_REGISTER_VALUE, null,
-			null);
-
-		// []
-		sv.visitFieldInsn(GETSTATIC, gen.nameThis, "LANGUAGE", TDESC_LANGUAGE);
-		// [language]
-		sv.visitLdcInsn(ctx.getUnsignedValue().toString(16));
-		// [language,ctx:STR]
-		sv.visitMethodInsn(INVOKESTATIC, NAME_JIT_COMPILED_PASSAGE, "createContext",
-			MDESC_JIT_COMPILED_PASSAGE__CREATE_CONTEXT, true);
-		// [ctx:RV]
-		sv.visitFieldInsn(PUTSTATIC, gen.nameThis, name(), TDESC_REGISTER_VALUE);
+		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_REGISTER_VALUE, name());
+		return em
+				.emit(Op::getstatic, gen.typeThis, "LANGUAGE", T_LANGUAGE)
+				.emit(Op::ldc__a, ctx.getUnsignedValue().toString(16))
+				.emit(Op::invokestatic, T_JIT_COMPILED_PASSAGE, "createContext",
+					MDESC_JIT_COMPILED_PASSAGE__CREATE_CONTEXT, true)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret)
+				.emit(Op::putstatic, gen.typeThis, name(), T_REGISTER_VALUE);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// [...]
-		if (ctx == null) {
-			rv.visitInsn(ACONST_NULL);
-		}
-		else {
-			rv.visitFieldInsn(GETSTATIC, gen.nameThis, name(), TDESC_REGISTER_VALUE);
-		}
-		// [...,ctx]
+	public <N extends Next> Emitter<Ent<N, TRef<RegisterValue>>> genLoad(Emitter<N> em,
+			JitCodeGenerator<?> gen) {
+		return ctx == null
+				? em.emit(Op::aconst_null, T_REGISTER_VALUE)
+				: em.emit(Op::getstatic, gen.typeThis, name(), T_REGISTER_VALUE);
 	}
 }

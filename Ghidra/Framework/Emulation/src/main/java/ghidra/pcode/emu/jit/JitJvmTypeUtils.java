@@ -116,4 +116,39 @@ public enum JitJvmTypeUtils {
 			default -> throw new UnsupportedOperationException();
 		};
 	}
+
+	/**
+	 * Compute the erasure of a type variable with the given upper bounds
+	 * 
+	 * @param bounds the upper bounds
+	 * @return the erasure
+	 */
+	public static Class<?> eraseBounds(Type[] bounds) {
+		if (bounds.length == 0) {
+			return Object.class;
+		}
+		return erase(bounds[0]);
+	}
+
+	/**
+	 * Compute the erasure of the given type
+	 * <p>
+	 * For a class, this is just the same class. For an array, it is the array of the erasure of the
+	 * element type. For a parameterized type, we take the erasure of the raw type, which should in
+	 * turn be a class. For a wildcard, we take the erasure of its first upper bound.
+	 * 
+	 * @param type the type
+	 * @return the erasure
+	 */
+	public static Class<?> erase(Type type) {
+		return switch (type) {
+			case Class<?> cls -> cls;
+			case GenericArrayType arr -> Array.newInstance(erase(arr.getGenericComponentType()), 0)
+					.getClass();
+			case ParameterizedType pt -> erase(pt.getRawType());
+			case TypeVariable<?> tv -> eraseBounds(tv.getBounds());
+			case WildcardType wt -> eraseBounds(wt.getUpperBounds());
+			default -> throw new UnsupportedOperationException();
+		};
+	}
 }

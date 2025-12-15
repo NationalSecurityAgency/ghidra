@@ -1370,7 +1370,7 @@ public interface JitCompiledPassage {
 	 * @param amt the amt as in {@code val << amt}, in little-endian order
 	 * @return the value
 	 */
-	static long intLeft(int val, int[] amt) {
+	static int intLeft(int val, int[] amt) {
 		if (Integer.compareUnsigned(amt[0], Integer.SIZE) >= 0) {
 			return 0;
 		}
@@ -1831,7 +1831,9 @@ public interface JitCompiledPassage {
 			for (int j = sizeL - 1; j >= 0; j--) {
 				r <<= Integer.SIZE;
 				r += inL[j] & MASK_I2UL;
-				out[j] = (int) (r / inR);
+				if (out != null) {
+					out[j] = (int) (r / inR);
+				}
 				r %= inR;
 				inL[j] = 0; // So that the mp-int inL is truly the remainder
 			}
@@ -1953,7 +1955,9 @@ public interface JitCompiledPassage {
 						carry >>>= Integer.SIZE;
 					}
 				}
-				out[j] = (int) qHat; // Completion of D5
+				if (out != null) {
+					out[j] = (int) qHat; // Completion of D5
+				}
 
 				/**
 				 * D7 [Loop on j]
@@ -1987,7 +1991,7 @@ public interface JitCompiledPassage {
 				neg(inR, inR.length);
 			}
 			divide(out, inL, inR);
-			if (signL != signR) {
+			if (signL != signR && out != null) {
 				neg(out, out.length);
 			}
 			if (signL) {
