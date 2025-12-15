@@ -265,7 +265,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 1 input
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError(this.getClass().getName() + ": requires 2 inputs (op, size), got " + numArgs);
 			}
@@ -278,8 +278,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the simd variable to output, the value to copy, and the offset
 
-			Varnode simdVarnode = inputs[1];
-			int esize = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int esize = (int) memoryState.getValue(inputs[1]);
 
 			if (outputVarnode.getSize() < simdVarnode.getSize()) {
 				throw new LowlevelError(this.getClass().getName() + ": input size (" + simdVarnode.getSize()
@@ -309,8 +309,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			int esize = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int esize = (int) memoryState.getValue(inputs[1]);
 
 			byte[] simdBytes = memoryState.getBigInteger(simdVarnode, true).toByteArray();
 			byte[] outBytes = varnode_to_bytes(outputVarnode, null, esize);
@@ -345,8 +345,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			int esize = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int esize = (int) memoryState.getValue(inputs[1]);
 
 			byte[] simdBytes = memoryState.getBigInteger(simdVarnode, false).toByteArray();
 			byte[] outBytes = varnode_to_bytes(outputVarnode, null, esize);
@@ -405,7 +405,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 2 input
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) throw new LowlevelError(this.getClass().getName() + ": requires 2 inputs (op, size), got " + numArgs);
 
 			if (outputVarnode == null) throw new LowlevelError(this.getClass().getName() + ": missing required output");
@@ -414,8 +414,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the simd variable to output, the value to copy, and the offset
 
-			Varnode simdVarnode = inputs[1];
-			int s_size = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int s_size = (int) memoryState.getValue(inputs[1]);
 
 			if (outputVarnode.getSize() != 2 * simdVarnode.getSize())
 				throw new LowlevelError(this.getClass().getName() + ": input size (" + simdVarnode.getSize()
@@ -449,8 +449,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			int s_size = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int s_size = (int) memoryState.getValue(inputs[1]);
 			int d_size = (s_size * outputVarnode.getSize()) / simdVarnode.getSize();
 
 			byte[] simdBytes = memoryState.getBigInteger(simdVarnode, true).toByteArray();
@@ -486,8 +486,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			int s_size = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int s_size = (int) memoryState.getValue(inputs[1]);
 			int d_size = (s_size * outputVarnode.getSize()) / simdVarnode.getSize();
 
 			byte[] simdBytes = memoryState.getBigInteger(simdVarnode, false).toByteArray();
@@ -532,7 +532,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 2 or 3 inputs
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2 && numArgs != 3) {
 				throw new LowlevelError(this.getClass().getName() + ": requires 3 inputs (simd, op, esize), got " + numArgs);
 			}
@@ -545,13 +545,13 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the simd variable to output, the value to copy, and the offset
 
-			Varnode simdVarnode = inputs[1];
-			Varnode opVarnode = inputs[2];
+			Varnode simdVarnode = inputs[0];
+			Varnode opVarnode = inputs[1];
 
 			int esize = opVarnode.getSize();
 			boolean opConstant = (numArgs == 2);
 			if (! opConstant) {
-				esize = (int) memoryState.getValue(inputs[3]);
+				esize = (int) memoryState.getValue(inputs[2]);
 			}
 
 			if (outputVarnode.getSize() < simdVarnode.getSize()) {
@@ -587,12 +587,12 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			Varnode opVarnode = inputs[2];
-			boolean opConstant = (inputs.length == 3);
+			Varnode simdVarnode = inputs[0];
+			Varnode opVarnode = inputs[1];
+			boolean opConstant = (inputs.length == 2);
 			int esize = opVarnode.getSize();
 			if (! opConstant) {
-				esize = (int) memoryState.getValue(inputs[3]);
+				esize = (int) memoryState.getValue(inputs[2]);
 			}
 			int opstep = (opConstant ? 0 : esize);
 
@@ -631,12 +631,12 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			Varnode simdVarnode = inputs[1];
-			Varnode opVarnode = inputs[2];
-			boolean opConstant = (inputs.length == 3);
+			Varnode simdVarnode = inputs[0];
+			Varnode opVarnode = inputs[1];
+			boolean opConstant = (inputs.length == 2);
 			int esize = opVarnode.getSize();
 			if (! opConstant) {
-				esize = (int) memoryState.getValue(inputs[3]);
+				esize = (int) memoryState.getValue(inputs[2]);
 			}
 			int opstep = (opConstant ? 0 : esize);
 
@@ -682,7 +682,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 2 inputs
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2 && numArgs != 3) {
 				throw new LowlevelError(this.getClass().getName() + ": requires 2 or 3 inputs (pairData*, esize), got " + numArgs);
 			}
@@ -695,15 +695,16 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the paired variables and the offset
 
-			Varnode p1Varnode = inputs[1];
+			Varnode p1Varnode = inputs[0];
 			int isize = p1Varnode.getSize();
 			Varnode p2Varnode = null;
 			if (numArgs == 3) {
-				p2Varnode = inputs[2];
+				p2Varnode = inputs[1];
 				isize += p2Varnode.getSize();
 			}
 
-			int iesize = (int) memoryState.getValue(inputs[numArgs]);
+			// TODO: The 3-input case seems suspect and should be documented
+			int iesize = (int) memoryState.getValue(inputs[numArgs - 1]);
 			int osize = outputVarnode.getSize();
 			int oesize = (iesize * osize) / isize;
 
@@ -729,16 +730,16 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			int numArgs = inputs.length - 1;
-			Varnode p1Varnode = inputs[1];
+			int numArgs = inputs.length;
+			Varnode p1Varnode = inputs[0];
 			int isize = p1Varnode.getSize();
 			Varnode p2Varnode = null;
 			if (numArgs == 3) {
-				p2Varnode = inputs[2];
+				p2Varnode = inputs[1];
 				isize += p2Varnode.getSize();
 			}
 
-			int iesize = (int) memoryState.getValue(inputs[numArgs]);
+			int iesize = (int) memoryState.getValue(inputs[numArgs - 1]);
 			int osize = outputVarnode.getSize();
 			int oesize = (iesize * osize) / isize;
 
@@ -798,16 +799,16 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			MemoryState memoryState = emu.getMemoryState();
 
-			int numArgs = inputs.length - 1;
-			Varnode p1Varnode = inputs[1];
+			int numArgs = inputs.length;
+			Varnode p1Varnode = inputs[0];
 			int isize = p1Varnode.getSize();
 			Varnode p2Varnode = null;
 			if (numArgs == 3) {
-				p2Varnode = inputs[2];
+				p2Varnode = inputs[1];
 				isize += p2Varnode.getSize();
 			}
 
-			int iesize = (int) memoryState.getValue(inputs[numArgs]);
+			int iesize = (int) memoryState.getValue(inputs[numArgs - 1]);
 			int osize = outputVarnode.getSize();
 			int oesize = (iesize * osize) / isize;
 
@@ -875,7 +876,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 2 inputs
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2 && numArgs != 3) throw new LowlevelError("SIMD_COPY: requires 2 or 3 inputs, got " + numArgs);
 
 			if (outputVarnode == null) throw new LowlevelError("SIMD_COPY: missing required output");
@@ -884,10 +885,11 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the init variable to output, the value to copy, and the offset
 
-			Varnode initVarnode = inputs[1];
-			Varnode valueVarnode = inputs[2];
+			Varnode initVarnode = inputs[0];
+			Varnode valueVarnode = inputs[1];
 			int offset = -1;
-			if (numArgs == 3) offset = (int) memoryState.getValue(inputs[3]);
+			if (numArgs == 3)
+				offset = (int) memoryState.getValue(inputs[2]);
 
 			if (outputVarnode.getSize() < initVarnode.getSize())
 				throw new LowlevelError("SIMD_COPY: output size (" + outputVarnode.getSize()
@@ -956,7 +958,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("MP_INT_EQUAL: requires 2 (Vm, Vn), got " + numArgs);
 			}
@@ -966,8 +968,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			BigInteger cmp1 = memoryState.getBigInteger(inputs[1], false);
-			BigInteger cmp2 = memoryState.getBigInteger(inputs[2], false);
+			BigInteger cmp1 = memoryState.getBigInteger(inputs[0], false);
+			BigInteger cmp2 = memoryState.getBigInteger(inputs[1], false);
 
 			BigInteger result = (cmp1.compareTo(cmp2) == 0) ? BigInteger.ONE : BigInteger.ZERO;
 
@@ -997,7 +999,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 1) {
 				throw new LowlevelError("MP_INT_ABS: requires 1 (Vn), got " + numArgs);
 			}
@@ -1007,7 +1009,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			BigInteger op = memoryState.getBigInteger(inputs[1], true);
+			BigInteger op = memoryState.getBigInteger(inputs[0], true);
 
 			BigInteger result = op.abs();
 			// System.out.print(String.format("MP_INT_ABS %s to %s (%x)\n", op.toString(), result.toString(), result.longValue()));
@@ -1055,7 +1057,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 1) {
 				throw new LowlevelError("MP_INT_NEGATE: requires 1 (Vn), got " + numArgs);
 			}
@@ -1065,7 +1067,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			byte[] value = memoryState.getBigInteger(inputs[1], true).toByteArray();
+			byte[] value = memoryState.getBigInteger(inputs[0], true).toByteArray();
 
 			// Need to perform bitwise negation manually
 			// to get the right size
@@ -1102,7 +1104,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("MP_INT_AND: requires 2 (Vm, Vn), got " + numArgs);
 			}
@@ -1112,8 +1114,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			BigInteger value = memoryState.getBigInteger(inputs[1], false);
-			BigInteger mask = memoryState.getBigInteger(inputs[2], false);
+			BigInteger value = memoryState.getBigInteger(inputs[0], false);
+			BigInteger mask = memoryState.getBigInteger(inputs[1], false);
 
 			BigInteger result = value.and(mask);
 
@@ -1158,7 +1160,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("MP_INT_RIGHT: requires 2 (Vn, shift), got " + numArgs);
 			}
@@ -1171,8 +1173,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// By extracting an unsigned value, the right shift is logical and not sign extended
 
-			BigInteger value = memoryState.getBigInteger(inputs[1], false);
-			int shift = (int) memoryState.getValue(inputs[2]);
+			BigInteger value = memoryState.getBigInteger(inputs[0], false);
+			int shift = (int) memoryState.getValue(inputs[1]);
 
 			BigInteger result = value.shiftRight(shift);
 
@@ -1201,7 +1203,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("MP_INT_MULT: requires 2 (Vm, Vn), got " + numArgs);
 			}
@@ -1211,8 +1213,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			BigInteger value = memoryState.getBigInteger(inputs[1], true);
-			BigInteger mult = memoryState.getBigInteger(inputs[2], true);
+			BigInteger value = memoryState.getBigInteger(inputs[0], true);
+			BigInteger mult = memoryState.getBigInteger(inputs[1], true);
 
 			BigInteger result = value.multiply(mult);
 
@@ -1231,7 +1233,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("MP_INT_UMULT: requires 2 (Vm, Vn), got " + numArgs);
 			}
@@ -1241,8 +1243,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			BigInteger value = memoryState.getBigInteger(inputs[1], false);
-			BigInteger mult = memoryState.getBigInteger(inputs[2], false);
+			BigInteger value = memoryState.getBigInteger(inputs[0], false);
+			BigInteger mult = memoryState.getBigInteger(inputs[1], false);
 
 			BigInteger result = value.multiply(mult);
 
@@ -1505,7 +1507,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Requires 2 inputs
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs != 2) {
 				throw new LowlevelError("SIMD_PIECE: requires 2 inputs, got " + numArgs);
 			}
@@ -1518,8 +1520,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			// Get the init variable to output, the value to copy, and the offset
 
-			Varnode simdVarnode = inputs[1];
-			int offset = (int) memoryState.getValue(inputs[2]);
+			Varnode simdVarnode = inputs[0];
+			int offset = (int) memoryState.getValue(inputs[1]);
 
 			if (simdVarnode.getSize() < (offset + 1) * outputVarnode.getSize()) {
 				throw new LowlevelError("SIMD_PIECE: input size (" + simdVarnode.getSize()
@@ -1564,8 +1566,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
-			int numArgs = inputs.length - 1;
-			if (numArgs != 2) {
+			int numArgs = inputs.length;
+			if (inputs.length != 2) {
 				throw new LowlevelError(this.getClass().getName() + ": requires 2 inputs (Vn, Vm), got " + numArgs);
 			}
 			if (outputVarnode == null) {
@@ -1576,8 +1578,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 
 			int outSize = outputVarnode.getSize();
 
-			Varnode VnVarnode = inputs[1];
-			Varnode VmVarnode = inputs[2];
+			Varnode VnVarnode = inputs[0];
+			Varnode VmVarnode = inputs[1];
 
 			if (outSize != VnVarnode.getSize() + VmVarnode.getSize()) {
 				throw new LowlevelError(this.getClass().getName() + ": output size (" + outSize
@@ -1615,7 +1617,7 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 		@Override
 		public void evaluate(Emulate emu, Varnode outputVarnode, Varnode[] inputs) {
 
-			int numArgs = inputs.length - 1;
+			int numArgs = inputs.length;
 			if (numArgs < 3 || numArgs > 6) {
 				throw new LowlevelError("a64_TBL: requires 3 to 6 inputs (Vinit, Vn-Vn4, Vm), got " + numArgs);
 			}
@@ -1625,8 +1627,8 @@ public class AARCH64EmulateInstructionStateModifier extends EmulateInstructionSt
 			}
 
 			MemoryState memoryState = emu.getMemoryState();
-			Varnode updateVarnode = inputs[1];
-			Varnode indexVarnode = inputs[numArgs];
+			Varnode updateVarnode = inputs[0];
+			Varnode indexVarnode = inputs[numArgs - 1];
 
 			// The index size must match the output size
 			if (outputVarnode.getSize() != indexVarnode.getSize()) {

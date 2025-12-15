@@ -80,7 +80,12 @@ public abstract class EmulateInstructionStateModifier {
 		if (opBehaviorOther == null) {
 			return false;
 		}
-		opBehaviorOther.evaluate(emu, op.getOutput(), inputs);
+
+		// Strip-off first input before passing inputs to OpBehaviorOther
+		Varnode[] callOtherInputs = new Varnode[inputs.length - 1];
+		System.arraycopy(inputs, 1, callOtherInputs, 0, callOtherInputs.length);
+
+		opBehaviorOther.evaluate(emu, op.getOutput(), callOtherInputs);
 		return true;
 	}
 
