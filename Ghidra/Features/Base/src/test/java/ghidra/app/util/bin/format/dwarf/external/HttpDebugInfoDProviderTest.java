@@ -27,9 +27,9 @@ import org.junit.Test;
 
 import com.sun.net.httpserver.HttpServer;
 
+import generic.hash.HashUtilities;
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.bin.format.dwarf.external.DebugStreamProvider.StreamInfo;
-import ghidra.util.HashUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
