@@ -140,7 +140,7 @@ public class Varnode {
 		if (spaceID != addr.getAddressSpace().getSpaceID()) {
 			return false;
 		}
-		if (isConstant() || isUnique() || isHash()) {
+		if (isConstant() || isHash()) {
 			// this is not really a valid use case
 			return offset == addr.getOffset();
 		}

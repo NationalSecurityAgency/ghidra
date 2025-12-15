@@ -16,19 +16,22 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.ExtBranch;
 import ghidra.pcode.emu.jit.JitPcodeThread;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.InitFixedLocal;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.ExitSlot;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.lang.RegisterValue;
 
 /**
@@ -44,7 +47,7 @@ import ghidra.program.model.lang.RegisterValue;
  * 
  * @param target the target address-contextreg pair of the branch exiting via this slot
  */
-public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq {
+public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq<TRef<ExitSlot>> {
 	@Override
 	public String name() {
 		return "exit_%x_%s".formatted(target.address.getOffset(), target.biCtx.toString(16));
@@ -72,32 +75,29 @@ public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq {
 	 * as needed.
 	 */
 	@Override
-	public void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv) {
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
 		FieldForContext ctxField = gen.requestStaticFieldForContext(target.rvCtx);
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(), TDESC_EXIT_SLOT, null, null);
-
-		// []
-		InitFixedLocal.THIS.generateLoadCode(iv);
-		// [this]
-		iv.visitInsn(DUP);
-		// [this,this]
-		iv.visitLdcInsn(target.address.getOffset());
-		// [this,this,target:LONG]
-		ctxField.generateLoadCode(gen, iv);
-		// [this,this,target:LONG,ctx:RV]
-		iv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "createExitSlot",
-			MDESC_JIT_COMPILED_PASSAGE__CREATE_EXIT_SLOT, true);
-		// [this,slot]
-		iv.visitFieldInsn(PUTFIELD, gen.nameThis, name(), TDESC_EXIT_SLOT);
-		// []
+		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_EXIT_SLOT, name());
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::dup)
+				.emit(Op::ldc__l, target.address.getOffset())
+				.emit(ctxField::genLoad, gen)
+				.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "createExitSlot",
+					MDESC_JIT_COMPILED_PASSAGE__CREATE_EXIT_SLOT)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::putfield, gen.typeThis, name(), T_EXIT_SLOT);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// []
-		RunFixedLocal.THIS.generateLoadCode(rv);
-		// [this]
-		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(), TDESC_EXIT_SLOT);
-		// [slot]
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<ExitSlot>>>
+			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, gen.typeThis, name(), T_EXIT_SLOT);
 	}
 }

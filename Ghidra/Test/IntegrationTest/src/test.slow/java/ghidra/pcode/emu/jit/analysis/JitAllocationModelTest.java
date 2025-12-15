@@ -27,7 +27,7 @@ import generic.Unique;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageHelper;
 import ghidra.pcode.emu.jit.AbstractJitTest;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.MultiLocalVarHandler;
+import ghidra.pcode.emu.jit.alloc.AlignedMpIntHandler;
 import ghidra.pcode.emu.jit.analysis.JitType.DoubleJitType;
 import ghidra.pcode.emu.jit.var.JitVar;
 import ghidra.pcode.emu.jit.var.JitVarnodeVar;
@@ -66,7 +66,7 @@ public class JitAllocationModelTest extends AbstractJitTest {
 		JitVarnodeVar tempVar = Unique.assertOne(varnodeVars(dfm)
 				.filter(v -> v.varnode().isUnique()));
 
-		if (!(am.getHandler(tempVar) instanceof MultiLocalVarHandler handler)) {
+		if (!(am.getHandler(tempVar) instanceof AlignedMpIntHandler handler)) {
 			throw new AssertionFailedError();
 		}
 
@@ -74,7 +74,7 @@ public class JitAllocationModelTest extends AbstractJitTest {
 		 * TODO: Might like to assert more details, but this mp-int aspect of the JIT-based emulator
 		 * is still a work in progress.
 		 */
-		assertEquals(8, handler.parts().size());
+		assertEquals(8, handler.legs().size());
 	}
 
 	@Test

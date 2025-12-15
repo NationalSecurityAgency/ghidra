@@ -15,18 +15,22 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
 import ghidra.pcode.emu.jit.JitConfiguration;
-import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.OpndEm;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -49,7 +53,7 @@ import ghidra.program.model.pcode.Varnode;
  * <td>{@link Varnode#isConstant() constant}</td>
  * <td>{@link JitConstVal}</td>
  * <td>{@link ConstValGen}</td>
- * <td>{@link Opcodes#LDC ldc}</td>
+ * <td>{@link Op#ldc__i(Emitter, int) ldc}</td>
  * </tr>
  * <tr>
  * <td>{@link Varnode#isUnique() unique},<br/>
@@ -60,12 +64,10 @@ import ghidra.program.model.pcode.Varnode;
  * {@link JitMissingVar}</td>
  * <td>{@link InputVarGen},<br/>
  * {@link LocalOutVarGen}</td>
- * <td>See {@link SimpleJitType#opcodeLoad()}:<br/>
- * {@link Opcodes#ILOAD iload}, {@link Opcodes#LLOAD lload}, {@link Opcodes#FLOAD fload},
- * {@link Opcodes#DLOAD dload}</td>
- * <td>See {@link SimpleJitType#opcodeStore()}:<br/>
- * {@link Opcodes#ISTORE istore}, {@link Opcodes#LSTORE lstore}, {@link Opcodes#FSTORE fstore},
- * {@link Opcodes#DSTORE dstore}</td>
+ * <td>{@link Op#iload(Emitter, Local) iload}, {@link Op#lload(Emitter, Local) lload},
+ * {@link Op#fload(Emitter, Local) fload}, {@link Op#dload(Emitter, Local) dload}</td>
+ * <td>{@link Op#istore(Emitter, Local) istore}, {@link Op#lstore(Emitter, Local) lstore},
+ * {@link Op#fstore(Emitter, Local) fstore}, {@link Op#dstore(Emitter, Local) dstore}</td>
  * </tr>
  * <tr>
  * <td>{@link Varnode#isAddress() memory}</td>
@@ -89,15 +91,10 @@ import ghidra.program.model.pcode.Varnode;
  *           because they are shared by all threads. <b>TODO</b>: A {@link JitConfiguration} flag
  *           that says "the machine is single threaded!" so we can optimize memory accesses in the
  *           same manner we do registers and uniques.
- * @implNote There are remnants of experiments and fragments in anticipation of multi-precision
- *           integer variables. These are not supported yet, but some of the components for mp-int
- *           support are used in degenerate form to support normal ints. Many of these components
- *           have "{@code Mp}" in the name.
- * @implNote The memory variables are all generally handled as if ints, and then
- *           {@link TypeConversions type conversions} are applied if necessary to access them as
- *           floating point.
+ * @implNote The memory variables are all generally handled as if ints, and then {@link Opnd type
+ *           conversions} are applied if necessary to access them as floating point.
  * @implNote {@link JitMissingVar} is a special case of {@code unique} and {@code register} variable
- *           where the definition could not be found. It is used as an intermediate result the
+ *           where the definition could not be found. It is used as an intermediate result in the
  *           {@link JitDataFlowModel}, but should be converted to a {@link JitOutVar} defined by a
  *           {@link JitPhiOp} before it enters the use-def graph.
  * @implNote {@link JitIndirectMemoryVar} is a singleton dummy used in the {@link JitDataFlowModel}.
@@ -125,29 +122,131 @@ public interface ValGen<V extends JitVal> {
 		};
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	static <FT extends BPrim<?>, TT extends BPrim<?>, N1 extends Next, N0 extends Ent<N1, FT>>
+			Emitter<Ent<N1, TT>>
+			castBack(Emitter<N0> em, SimpleJitType<TT, ?> to, SimpleJitType<FT, ?> from) {
+		return (Emitter) em;
+	}
+
 	/**
-	 * Prepare any class-level items required to use this variable
-	 * 
+	 * Emit code to prepare any class-level items required to use this variable
 	 * <p>
 	 * For example, if this represents a direct memory variable, then this can prepare a reference
 	 * to the portion of the state involved, allowing it to access it readily.
+	 * <p>
+	 * This should be used to emit code into the constructor.
 	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
 	 * @param gen the code generator
 	 * @param v the value
-	 * @param iv the constructor visitor
+	 * @return the emitter with ...
 	 */
-	void generateValInitCode(JitCodeGenerator gen, V v, MethodVisitor iv);
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<N> genValInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v);
 
 	/**
-	 * Read the value onto the stack
+	 * Emit code to read the value onto the stack
 	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <T> the desired JVM type
+	 * @param <JT> the desired p-code type
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
 	 * @param gen the code generator
-	 * @param v the value to read
-	 * @param typeReq the required type of the value
-	 * @param ext the kind of extension to apply when adjusting from JVM size to varnode size
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-	 * @return the actual p-code type (which determines the JVM type) of the value on the stack
+	 * @param v the value
+	 * @param type the desired p-code type
+	 * @param ext the kind of extension to apply
+	 * @return the emitter with ..., result
 	 */
-	JitType generateValReadCode(JitCodeGenerator gen, V v, JitTypeBehavior typeReq, Ext ext,
-			MethodVisitor rv);
+	<THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N extends Next> Emitter<Ent<N, T>> genReadToStack(Emitter<N> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v, JT type, Ext ext);
+
+	/**
+	 * Emit code to read the value into local variables
+	 * <p>
+	 * NOTE: In some cases, this may not emit any code at all. It may simple compose the operand
+	 * from locals already allocated for a variable being "read."
+	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
+	 * @param gen the code generator
+	 * @param v the value
+	 * @param type the desired p-code type
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generated temporary variables
+	 * @return the operand and emitter with ...
+	 */
+	<THIS extends JitCompiledPassage, N extends Next> OpndEm<MpIntJitType, N> genReadToOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v,
+			MpIntJitType type, Ext ext, Scope scope);
+
+	/**
+	 * Emit code to read a leg of the value onto the stack
+	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
+	 * @param gen the code generator
+	 * @param v the value
+	 * @param type the desired p-code type
+	 * @param leg the leg index, 0 being the least significant
+	 * @param ext the kind of extension to apply
+	 * @return the emitter with ..., result
+	 */
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadLegToStack(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v,
+			MpIntJitType type, int leg, Ext ext);
+
+	/**
+	 * Emit code to read the value into an array
+	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
+	 * @param gen the code generator
+	 * @param v the value
+	 * @param type the desired p-code type
+	 * @param ext the kind of extension to apply
+	 * @param scope a scope for generated temporary variables
+	 * @param slack the number of extra (more significant) elements to allocate in the array
+	 * @return the operand and emitter with ..., arrayref
+	 */
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<int[]>>> genReadToArray(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v,
+			MpIntJitType type, Ext ext, Scope scope, int slack);
+
+	/**
+	 * Emit code to read the value onto the stack as a boolean
+	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param <N> the tail of the stack (...)
+	 * @param em the emitter
+	 * @param localThis a handle to {@code this}
+	 * @param gen the code generator
+	 * @param v the value
+	 * @return the emitter with ..., result
+	 */
+	<THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TInt>> genReadToBool(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, V v);
+
+	/**
+	 * Create a generator for a {@link PcodeOp#SUBPIECE} of a value.
+	 * 
+	 * @param byteOffset the number of least-significant bytes to remove
+	 * @param maxByteSize the maximum size of the resulting variable. In general, a subpiece should
+	 *            never exceed the size of the parent varnode, but if it does, this will truncate
+	 *            that excess.
+	 * @return the resulting subpiece generator
+	 */
+	ValGen<V> subpiece(int byteOffset, int maxByteSize);
 }

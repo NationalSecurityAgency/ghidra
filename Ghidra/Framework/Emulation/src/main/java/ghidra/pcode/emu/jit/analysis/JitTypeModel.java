@@ -69,9 +69,8 @@ import ghidra.program.model.pcode.PcodeOp;
  * 16-byte quadruple-precision, and 32-byte octuple-precision. Some p-code types map precisely to
  * JVM counterparts: The 4- and 8-byte integer types map precisely to the JVM's {@code int} and
  * {@code long} types. Similarly, the 4- and 8-byte float types map precisely to {@code float} and
- * {@code double}. <b>TODO</b>: The JIT translator does not currently support integral types greater
- * than 8 bytes (64 bits) in size nor floating-point types other than 4 and 8 bytes (single and
- * double precision) in size.
+ * {@code double}. <b>TODO</b>: The JIT translator does not currently support floating-point types
+ * other than 4 and 8 bytes (single and double precision) in size.
  * 
  * <h3>Signedness</h3>
  * <p>

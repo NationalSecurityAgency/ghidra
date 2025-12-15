@@ -19,31 +19,33 @@ import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.objectweb.asm.*;
-
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.analysis.*;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.JvmTempAlloc;
-import ghidra.pcode.emu.jit.analysis.JitAllocationModel.RunFixedLocal;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator.RetireMode;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitCallOtherDefOp;
 import ghidra.pcode.emu.jit.op.JitCallOtherOpIf;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
+import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -53,9 +55,9 @@ import ghidra.program.model.pcode.Varnode;
  * 
  * <p>
  * The checks if Direct invocation is possible. If so, it emits code using
- * {@link #generateRunCodeUsingDirectStrategy(JitCodeGenerator, JitCallOtherOpIf, JitBlock, MethodVisitor)}.
+ * {@link #genRunDirectStrategy(Emitter, Local, JitCodeGenerator, JitCallOtherOpIf, JitBlock, Scope)}.
  * If not, it emits code using
- * {@link #generateRunCodeUsingRetirementStrategy(JitCodeGenerator, PcodeOp, JitBlock, PcodeUseropDefinition, MethodVisitor)}.
+ * {@link #genRunRetirementStrategy(Emitter, Local, JitCodeGenerator, PcodeOp, JitBlock, PcodeUseropDefinition)}.
  * Direct invocation is possible when the userop is {@link PcodeUseropDefinition#isFunctional()
  * functional} and all of its parameters and return type have a supported primitive type.
  * ({@code char} is not supported.) Regarding the invocation strategies, see
@@ -83,82 +85,80 @@ import ghidra.program.model.pcode.Varnode;
  * stack. We then emit the invocation of the Java method, guarded by the exception handler. We then
  * have to consider whether the userop has an output operand and whether its definition returns a
  * value. If both are true, we emit code to write the result. If neither is true, we're done. If a
- * result is returned, but no output operand is provided, we <em>must</em> still emit a {@link #POP
- * pop}.
+ * result is returned, but no output operand is provided, we <em>must</em> still emit a
+ * {@link Op#pop(Emitter) pop}.
  */
 public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	/** The generator singleton */
 	GEN;
 
+	private static <THIS extends JitCompiledPassage, N extends Next> Emitter<Ent<N, TRef<Varnode>>>
+			genLoadVarnodeOrNull(Emitter<N> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, Varnode vn) {
+		if (vn == null) {
+			return em.emit(Op::aconst_null, T_VARNODE);
+		}
+		FieldForVarnode field = gen.requestStaticFieldForVarnode(vn);
+		return em.emit(field::genLoad, gen);
+	}
+
 	/**
 	 * Emit code to implement the Standard strategy (see the class documentation)
 	 * 
+	 * @param <THIS> the type of the generated passage
+	 * @param em the emitter typed with the empty stack
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param gen the code generator
 	 * @param op the p-code op
 	 * @param block the block containing the op
 	 * @param userop the userop definition, wrapped by the {@link JitDataFlowUseropLibrary}
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+	 * @return the result of emitting the userop's bytecode
 	 */
-	public static void generateRunCodeUsingRetirementStrategy(JitCodeGenerator gen, PcodeOp op,
-			JitBlock block, PcodeUseropDefinition<?> userop, MethodVisitor rv) {
+	public static <THIS extends JitCompiledPassage> OpResult genRunRetirementStrategy(
+			Emitter<Bot> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+			PcodeOp op, JitBlock block, PcodeUseropDefinition<?> userop) {
 		/**
-		 * This is about the simplest (laziest) approach we could take for the moment, but it should
-		 * suffice, depending on the frequency of CALLOTHER executions. We immediately retire all
-		 * variables, then invoke the userop as it would be by the p-code interpreter. It can access
-		 * its variables in the usual fashion. Although not ideal, it can also feed the executor
-		 * (interpreter) ops to execute --- they won't be jitted here. Then, we liven the variables
-		 * back.
-		 * 
+		 * This is about the simplest (laziest) approach we could take, but it should suffice when
+		 * we cannot invoke directly. We immediately retire all variables, then invoke the userop as
+		 * it would be by the p-code interpreter. It can access its variables in the usual fashion.
+		 * Although not ideal, it can also feed the executor (interpreter) ops to execute --- they
+		 * won't be jitted here. Then, we liven the variables back.
+		 * <p>
 		 * NOTE: The output variable should be "alive", so we need not store it into a local. It'll
 		 * be made alive in the return block transition.
-		 * 
-		 * TODO: Implement direct invocation for functional userops. NOTE: Cannot avoid block
-		 * retirement and re-birth unless I also do direct invocation. Otherwise, the parameters are
-		 * read from the state instead of from the local variables.
 		 */
-		BlockTransition transition = VarGen.computeBlockTransition(gen, block, null);
-		transition.generate(rv);
+		BlockTransition<THIS> transition =
+			VarGen.computeBlockTransition(localThis, gen, block, null);
 
-		gen.generateRetirePcCtx(() -> {
-			rv.visitLdcInsn(gen.getAddressForOp(op).getOffset());
-		}, gen.getExitContext(op), RetireMode.SET, rv);
+		PcGen pcGen = PcGen.loadOffset(gen.getAddressForOp(op));
 
-		// []
-		RunFixedLocal.THIS.generateLoadCode(rv);
-		// [this]
-		gen.requestFieldForUserop(userop).generateLoadCode(gen, rv);
-		// [this,userop]
+		var emArr = em
+				.emit(transition::genFwd)
+				.emit(gen::genRetirePcCtx, localThis, pcGen, gen.getExitContext(op),
+					RetireMode.SET)
+				.emit(Op::aload, localThis)
+				.emit(gen.requestFieldForUserop(userop)::genLoad, localThis, gen)
+				.emit(CallOtherOpGen::genLoadVarnodeOrNull, localThis, gen, op.getOutput())
+				.emit(Op::ldc__i, op.getNumInputs() - 1)
+				.emit(Op::anewarray, T_VARNODE);
 
-		if (op.getOutput() == null) {
-			rv.visitInsn(ACONST_NULL);
-		}
-		else {
-			gen.requestStaticFieldForVarnode(op.getOutput()).generateLoadCode(gen, rv);
-		}
-		// [this,userop,outVn]
-
-		rv.visitLdcInsn(op.getNumInputs() - 1);
-		rv.visitTypeInsn(ANEWARRAY, NAME_VARNODE);
-		// [this,userop,outVn,inVns:ARR]
 		for (int i = 1; i < op.getNumInputs(); i++) {
-			// [this,userop,outVn,inVns:ARR]
-			rv.visitInsn(DUP);
-			// [this,userop,outVn,inVns:ARR,inVns:ARR]
-			rv.visitLdcInsn(i - 1);
-			// [this,userop,outVn,inVns:ARR,inVns:ARR,index]
-			// Yes, including constants :/
-			Varnode input = op.getInput(i);
-			gen.requestStaticFieldForVarnode(input).generateLoadCode(gen, rv);
-			// [this,userop,outVn,inVns:ARR,inVns:ARR,index,inVn]
-			rv.visitInsn(AASTORE);
-			// [this,userop,outVn,inVns:ARR]
+			emArr = emArr
+					.emit(Op::dup)
+					.emit(Op::ldc__i, i - 1)
+					.emit(CallOtherOpGen::genLoadVarnodeOrNull, localThis, gen, op.getInput(i))
+					.emit(Op::aastore);
 		}
-		// [this,userop,outVn,inVns:ARR]
 
-		rv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "invokeUserop",
-			MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP, true);
-
-		transition.generateInv(rv);
+		return new LiveOpResult(emArr
+				.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "invokeUserop",
+					MDESC_JIT_COMPILED_PASSAGE__INVOKE_USEROP)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(transition::genInv));
 	}
 
 	static Parameter findOutputParameter(Parameter[] parameters, Method method) {
@@ -189,13 +189,19 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	/**
 	 * Emit code to implement the Direct strategy (see the class documentation)
 	 * 
+	 * @param <THIS> the type of the generated passage
+	 * @param em the emitter typed with the empty stack
+	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param gen the code generator
 	 * @param op the p-code op use-def node
 	 * @param block the block containing the op
-	 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
+	 * @param scope a scope for generating temporary local storage
+	 * @return the result of emitting the userop's bytecode
 	 */
-	public static void generateRunCodeUsingDirectStrategy(JitCodeGenerator gen,
-			JitCallOtherOpIf op, JitBlock block, MethodVisitor rv) {
+	public static <THIS extends JitCompiledPassage, LIB extends PcodeUseropLibrary<?>> OpResult
+			genRunDirectStrategy(Emitter<Bot> em,
+					Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitCallOtherOpIf op,
+					JitBlock block, Scope scope) {
 		FieldForUserop useropField = gen.requestFieldForUserop(op.userop());
 
 		// Set<Varnode> live = gen.vsm.getLiveVars(block);
@@ -203,23 +209,9 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		 * NOTE: It doesn't matter if there are live variables. We still have to "retire" the
 		 * program counter and contextreg if the userop throws an exception.
 		 */
-		final Label tryStart = new Label();
-		final Label tryEnd = new Label();
-		rv.visitTryCatchBlock(tryStart, tryEnd,
-			gen.requestExceptionHandler((DecodedPcodeOp) op.op(), block).label(), NAME_THROWABLE);
 
-		JitAllocationModel am = gen.getAllocationModel();
-
-		// []
-		useropField.generateLoadCode(gen, rv);
-		// [userop]
-		rv.visitMethodInsn(INVOKEINTERFACE, NAME_PCODE_USEROP_DEFINITION, "getDefiningLibrary",
-			MDESC_PCODE_USEROP_DEFINITION__GET_DEFINING_LIBRARY, true);
-		// [library:PcodeUseropLibrary]
 		Method method = op.userop().getJavaMethod();
-		String owningLibName = Type.getInternalName(method.getDeclaringClass());
-		rv.visitTypeInsn(CHECKCAST, owningLibName);
-		// [library:OWNING_TYPE]
+
 		Parameter[] parameters = method.getParameters();
 		Parameter outputParameter = findOutputParameter(parameters, method);
 		if (outputParameter != null && method.getReturnType() != void.class) {
@@ -228,100 +220,138 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 					It's applied to %s of %s""".formatted(
 				OpOutput.class.getSimpleName(), outputParameter, method.getName()));
 		}
-		try (JvmTempAlloc out =
-			am.allocateTemp(rv, "out", int[].class, outputParameter == null ? 0 : 1)) {
-			MpIntJitType outMpType;
-			if (outputParameter != null) {
-				if (!(op instanceof JitCallOtherDefOp defOp)) {
-					outMpType = null;
-					rv.visitInsn(ACONST_NULL);
-				}
-				else {
-					outMpType = MpIntJitType.forSize(defOp.out().size());
-					rv.visitLdcInsn(outMpType.legsAlloc());
-					rv.visitIntInsn(NEWARRAY, T_INT);
-				}
-				rv.visitVarInsn(ASTORE, out.idx(0));
+
+		Local<TRef<int[]>> localOut;
+		MpIntJitType outMpType;
+
+		if (outputParameter != null) {
+			localOut = scope.decl(Types.T_INT_ARR, "out");
+			if (op instanceof JitCallOtherDefOp defOp) {
+				outMpType = MpIntJitType.forSize(defOp.out().size());
+				em = em
+						.emit(Op::ldc__i, outMpType.legsAlloc())
+						.emit(Op::newarray, Types.T_INT)
+						.emit(Op::astore, localOut);
 			}
 			else {
 				outMpType = null;
-			}
-
-			int argIdx = 0;
-			for (int i = 0; i < parameters.length; i++) {
-				Parameter p = parameters[i];
-
-				if (p == outputParameter) {
-					rv.visitVarInsn(ALOAD, out.idx(0));
-					continue;
-				}
-
-				JitVal arg = op.args().get(argIdx++);
-
-				// TODO: Should this always be zero extension?
-				JitType type = gen.generateValReadCode(arg, JitTypeBehavior.ANY, Ext.ZERO);
-				if (p.getType() == boolean.class) {
-					TypeConversions.generateIntToBool(type, rv);
-					continue;
-				}
-
-				if (p.getType() == int[].class) {
-					MpIntJitType mpType = MpIntJitType.forSize(type.size());
-					// NOTE: Would be nice to have annotation specify signedness
-					TypeConversions.generate(gen, type, mpType, Ext.ZERO, rv);
-					int legCount = mpType.legsAlloc();
-					try (JvmTempAlloc temp = am.allocateTemp(rv, "temp", legCount)) {
-						OpGen.generateMpLegsIntoTemp(temp, legCount, rv);
-						OpGen.generateMpLegsIntoArray(temp, legCount, legCount, rv);
-					}
-					continue;
-				}
-
-				// Some primitive/simple type
-				// TODO: Should this always be zero extension? Can annotation specify?
-				TypeConversions.generate(gen, type, JitType.forJavaType(p.getType()), Ext.ZERO,
-					rv);
-			}
-			// [library,params...]
-			rv.visitLabel(tryStart);
-			rv.visitMethodInsn(INVOKEVIRTUAL, owningLibName, method.getName(),
-				Type.getMethodDescriptor(method), false);
-			// [return?]
-			rv.visitLabel(tryEnd);
-			if (outputParameter != null) {
-				if (outMpType != null && op instanceof JitCallOtherDefOp defOp) {
-					rv.visitVarInsn(ALOAD, out.idx(0));
-					OpGen.generateMpLegsFromArray(outMpType.legsAlloc(), rv);
-					// NOTE: Want annotation to specify signedness
-					gen.generateVarWriteCode(defOp.out(), outMpType, Ext.ZERO);
-				}
-				// Else there's either no @OpOutput or the output operand is absent
-			}
-			else if (op instanceof JitCallOtherDefOp defOp) {
-				// TODO: Can annotation specify signedness of return value?
-				gen.generateVarWriteCode(defOp.out(), JitType.forJavaType(method.getReturnType()),
-					Ext.ZERO);
-			}
-			else if (method.getReturnType() != void.class) {
-				TypeConversions.generatePop(JitType.forJavaType(method.getReturnType()), rv);
+				em = em
+						.emit(Op::aconst_null, Types.T_INT_ARR)
+						.emit(Op::astore, localOut);
 			}
 		}
-	}
+		else {
+			outMpType = null;
+			localOut = null;
+		}
 
-	static class ResourceGroup implements AutoCloseable {
-		private final List<AutoCloseable> resources = new ArrayList<>();
+		TRef<LIB> libType = Types.refExtends(T_PCODE_USEROP_LIBRARY, method.getDeclaringClass());
 
-		@Override
-		public void close() throws Exception {
-			for (AutoCloseable r : resources) {
-				r.close();
+		var rec = new Object() {
+			<N extends Next> Emitter<? extends Ent<N, ?>> doReadArg(Emitter<N> em, JitVal arg,
+					Parameter param) {
+				if (param.getType() == boolean.class) {
+					return gen.genReadToBool(em, localThis, arg);
+				}
+				if (param.getType() == int[].class) {
+					MpIntJitType t = MpIntJitType.forSize(arg.size());
+					// TODO: Annotation/attribute to specify slack?
+					return gen.genReadToArray(em, localThis, arg, t, Ext.ZERO, scope, 0);
+				}
+				return switch (JitType.forJavaType(param.getType())) {
+					case IntJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
+					case LongJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
+					case FloatJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
+					case DoubleJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
+					default -> throw new AssertionError();
+				};
 			}
-		}
 
-		public <T extends AutoCloseable> T add(T resource) {
-			resources.add(resource);
-			return resource;
+			<N extends Next> ObjInv<?, LIB, N, ?> doInv(Emitter<N> em, List<JitVal> args,
+					List<Parameter> params) {
+				if (params.isEmpty()) {
+					/**
+					 * NOTE: Can't put try-catch block here because the handler's all expect
+					 * Ent<Bot,Throwable>
+					 */
+					return Op.invokevirtual(em, libType, method.getName(), MthDesc.reflect(method),
+						false);
+				}
+				Parameter param = params.getFirst();
+				if (param == outputParameter) {
+					var emOut = em.emit(Op::aload, localOut);
+					var inv = doInv(emOut, args, params.subList(1, params.size()));
+					return Inv.takeQArg(inv);
+				}
+				JitVal arg = args.getFirst();
+				// TODO: Annotation/attribute to describe signedness?
+				// TODO: Or a way to receive the byte size
+				var emRead = doReadArg(em, arg, param);
+				var inv =
+					doInv(emRead, args.subList(1, args.size()), params.subList(1, params.size()));
+				return Inv.takeQArg(inv);
+			}
+		};
+
+		var tryCatchBlock = Misc.tryCatch(em, Lbl.create(),
+			gen.requestExceptionHandler((DecodedPcodeOp) op.op(), block).lbl(),
+			GenConsts.T_THROWABLE);
+		em = tryCatchBlock.em();
+
+		var emLib = em
+				.emit(useropField::genLoad, localThis, gen)
+				.emit(Op::invokeinterface, T_PCODE_USEROP_DEFINITION, "getDefiningLibrary",
+					MDESC_PCODE_USEROP_DEFINITION__GET_DEFINING_LIBRARY)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::checkcast, libType);
+		var inv = rec
+				.doInv(emLib, op.args(), Arrays.asList(parameters))
+				.step(Inv::takeQObjRef);
+
+		if (outputParameter != null) {
+			if (outMpType != null && op instanceof JitCallOtherDefOp defOp) {
+				em = inv
+						.step(Inv::retQVoid)
+						.emit(Op::aload, localOut)
+						.emit(gen::genWriteFromArray, localThis, defOp.out(), outMpType, Ext.ZERO,
+							scope);
+			}
+			// Else there's either no @OpOutput or the output operand is absent
 		}
+		else if (op instanceof JitCallOtherDefOp defOp) {
+			// TODO: Can annotation specify signedness of return value?
+			var write = new Object() {
+				public <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> Emitter<Bot> doWrite(
+						Inv<?, Bot, Bot> inv, Class<?> returnType) {
+					JT type = SimpleJitType.forJavaType(returnType);
+					return inv
+							.step(Inv::retQ, type.bType())
+							.emit(gen::genWriteFromStack, localThis, defOp.out(), type, Ext.ZERO,
+								scope);
+				}
+			};
+			em = inv.step(write::doWrite, method.getReturnType());
+		}
+		else if (method.getReturnType() != void.class) {
+			em = switch (JitType.forJavaType(method.getReturnType())) {
+				case IntJitType t -> inv
+						.step(Inv::retQ, t.bType())
+						.emit(Op::pop);
+				case LongJitType t -> inv
+						.step(Inv::retQ, t.bType())
+						.emit(Op::pop2__2);
+				case FloatJitType t -> inv
+						.step(Inv::retQ, t.bType())
+						.emit(Op::pop);
+				case DoubleJitType t -> inv
+						.step(Inv::retQ, t.bType())
+						.emit(Op::pop2__2);
+				default -> throw new AssertionError();
+			};
+		}
+		return new LiveOpResult(em
+				.emit(Lbl::place, tryCatchBlock.end()));
 	}
 
 	/**
@@ -350,17 +380,17 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	}
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitCallOtherOpIf op, JitBlock block,
-			MethodVisitor rv) {
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitCallOtherOpIf op, JitBlock block, Scope scope) {
 		if (op.userop().modifiesContext()) {
-			rv.visitLdcInsn(1);
-			RunFixedLocal.CTXMOD.generateStoreCode(rv);
+			em = em
+					.emit(Op::ldc__i, 1)
+					.emit(Op::istore, localCtxmod);
 		}
 		if (canDoDirectInvocation(op)) {
-			generateRunCodeUsingDirectStrategy(gen, op, block, rv);
+			return genRunDirectStrategy(em, localThis, gen, op, block, scope);
 		}
-		else {
-			generateRunCodeUsingRetirementStrategy(gen, op.op(), block, op.userop(), rv);
-		}
+		return genRunRetirementStrategy(em, localThis, gen, op.op(), block, op.userop());
 	}
 }

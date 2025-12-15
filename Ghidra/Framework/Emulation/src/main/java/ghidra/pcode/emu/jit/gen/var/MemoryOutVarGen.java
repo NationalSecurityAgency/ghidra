@@ -15,23 +15,48 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitType;
+import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
+import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions.Ext;
+import ghidra.pcode.emu.jit.gen.access.AccessGen;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.BPrim;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.var.JitMemoryOutVar;
 
 /**
  * The generator for a memory output variable.
  */
-public enum MemoryOutVarGen implements MemoryVarGen<JitMemoryOutVar> {
-	/** Singleton */
-	GEN;
+public interface MemoryOutVarGen extends MemoryVarGen<JitMemoryOutVar> {
 
 	@Override
-	public void generateVarWriteCode(JitCodeGenerator gen, JitMemoryOutVar v, JitType type, Ext ext,
-			MethodVisitor rv) {
-		VarGen.generateValWriteCodeDirect(gen, v, type, rv);
+	default <THIS extends JitCompiledPassage, T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
+		N1 extends Next, N0 extends Ent<N1, T>> Emitter<N1> genWriteFromStack(Emitter<N0> em,
+				Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitMemoryOutVar v, JT type,
+				Ext ext, Scope scope) {
+		return AccessGen.lookupSimple(gen.getAnalysisContext().getEndian(), type)
+				.genWriteFromStack(em, localThis, gen, getVarnode(gen, v));
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genWriteFromOpnd(
+			Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
+			JitMemoryOutVar v, Opnd<MpIntJitType> opnd, Ext ext, Scope scope) {
+		return AccessGen.lookupMp(gen.getAnalysisContext().getEndian())
+				.genWriteFromOpnd(em, localThis, gen, opnd, getVarnode(gen, v));
+	}
+
+	@Override
+	default <THIS extends JitCompiledPassage, N1 extends Next, N0 extends Ent<N1, TRef<int[]>>>
+			Emitter<N1> genWriteFromArray(Emitter<N0> em, Local<TRef<THIS>> localThis,
+					JitCodeGenerator<THIS> gen, JitMemoryOutVar v, MpIntJitType type, Ext ext,
+					Scope scope) {
+		return AccessGen.lookupMp(gen.getAnalysisContext().getEndian())
+				.genWriteFromArray(em, localThis, gen, getVarnode(gen, v), scope);
 	}
 }

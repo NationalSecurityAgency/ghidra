@@ -15,14 +15,14 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.Types.BNonVoid;
 
 /**
  * A field request for a pre-fetched or pre-constructed element
+ * 
+ * @param <T> the type of the field
  */
-public interface FieldReq {
+public interface FieldReq<T extends BNonVoid> {
 	/**
 	 * Derive a suitable name for the field
 	 * 
@@ -30,12 +30,4 @@ public interface FieldReq {
 	 */
 	String name();
 
-	/**
-	 * Emit code to load the field onto the JVM stack
-	 * 
-	 * @param gen the code generator
-	 * @param rv the visitor often for the {@link JitCompiledPassage#run(int) run} method, but could
-	 *            be the static initializer or constructor
-	 */
-	void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv);
 }

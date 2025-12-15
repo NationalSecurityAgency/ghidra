@@ -79,6 +79,13 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 		return endian;
 	}
 
+	/**
+	 * Remove the given number of bytes from the higher-offset end of the varnode
+	 * 
+	 * @param vn the varnode
+	 * @param amt the number of bytes to remove
+	 * @return the resulting varnode
+	 */
 	public Varnode truncVnFromRight(Varnode vn, int amt) {
 		return new Varnode(vn.getAddress(), vn.getSize() - amt);
 	}
@@ -102,6 +109,13 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 		return subpiece(outVn, endian.isBigEndian() ? amt : 0, in1);
 	}
 
+	/**
+	 * Remove the given number of bytes from the lower-offset end of the varnode
+	 * 
+	 * @param vn the varnode
+	 * @param amt the number of bytes to remove
+	 * @return the resulting varnode
+	 */
 	public Varnode truncVnFromLeft(Varnode vn, int amt) {
 		return new Varnode(vn.getAddress().add(amt), vn.getSize() - amt);
 	}
@@ -228,11 +242,25 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 		return dfm.notifyOp(new JitSynthSubPieceOp(out, offset, v)).out();
 	}
 
-	private Varnode subPieceVn(int size, int offset, Varnode whole) {
-		if (endian.isBigEndian()) {
-			return new Varnode(whole.getAddress().add(whole.getSize() - offset - size), size);
+	/**
+	 * Compute the varnode representing a {@link JitSubPieceOp subpiece} of the given varnode
+	 * 
+	 * @param endian the endianness of the emulation target
+	 * @param whole the whole varnode
+	 * @param offset the number of least-significant bytes to remove
+	 * @param size the size of the subpiece (maximum, since truncation may occur)
+	 * @return the resulting subpiece.
+	 */
+	public static Varnode subPieceVn(Endian endian, Varnode whole, int offset, int size) {
+		int minSize = Math.min(whole.getSize() - offset, size);
+		if (minSize < 1) {
+			throw new AssertionError("subpiece would have non-positive size");
 		}
-		return new Varnode(whole.getAddress().add(offset), size);
+		int addrOffset = switch (endian) {
+			case BIG -> whole.getSize() - offset - minSize;
+			case LITTLE -> offset;
+		};
+		return new Varnode(whole.getAddress().add(addrOffset), minSize);
 	}
 
 	/**
@@ -246,7 +274,7 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the output
 	 */
 	public JitVal shaveFromRight(int amt, JitVal in1) {
-		return subpiece(in1.size() - amt, amt, in1);
+		return subpiece(in1, amt, in1.size() - amt);
 	}
 
 	/**
@@ -260,7 +288,7 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the output
 	 */
 	public JitVal shaveFromLeft(int amt, JitVal in1) {
-		return subpiece(in1.size() - amt, 0, in1);
+		return subpiece(in1, 0, in1.size() - amt);
 	}
 
 	/**
@@ -286,14 +314,14 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @param v the input value
 	 * @return the output value
 	 */
-	public JitVal subpiece(int size, int offset, JitVal v) {
+	public JitVal subpiece(JitVal v, int offset, int size) {
 		if (v instanceof JitConstVal c) {
 			return new JitConstVal(size,
 				OB_SUBPIECE.evaluateBinary(size, v.size(), c.value(), BigInteger.valueOf(offset)));
 		}
 		if (v instanceof JitVarnodeVar vv) {
 			Varnode inVn = vv.varnode();
-			Varnode outVn = subPieceVn(size, offset, inVn);
+			Varnode outVn = subPieceVn(endian, inVn, offset, size);
 			return subpiece(outVn, offset, v);
 		}
 		throw new UnsupportedOperationException("unsupported subpiece of " + v);
