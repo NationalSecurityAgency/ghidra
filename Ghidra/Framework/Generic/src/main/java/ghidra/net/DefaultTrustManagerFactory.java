@@ -20,16 +20,20 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.net.ssl.*;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.security.auth.x500.X500Principal;
 
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 
 /**
- * <code>ApplicationTrustManagerFactory</code> provides the ability to establish
- * acceptable certificate authorities to be used with SSL connections and PKI 
- * authentication.  
+ * <code>DefaultTrustManagerFactory</code> provides the ability to establish
+ * acceptable certificate authorities to be used with the default SSLContext
+ * as established by {@link DefaultSSLContextInitializer}. 
  * <p>
  * The default behavior is for no trust authority to be established, in which case 
  * SSL peers will not be authenticated.  If CA certificates have been set, all SSL
@@ -47,8 +51,13 @@ import ghidra.util.Msg;
  * <p>
  * The application may choose to set the file path automatically based upon the presence of
  * a <i>cacerts</i> file at a predetermined location.
+ * <p>
+ * NOTE: Since {@link SslRMIClientSocketFactory} and {@link SSLServerSocketFactory} employ a
+ * static cache of a default {@link SSLSocketFactory}, with its default {@link SSLContext}, we
+ * must utilize a wrapped implementation of the associated {@link X509TrustManager} so that any
+ * changes are used by the existing default {@link SSLSocketFactory}.
  */
-public class ApplicationTrustManagerFactory {
+public class DefaultTrustManagerFactory {
 
 	/**
 	 * The X509 cacerts file to be used when authenticating remote 
@@ -57,22 +66,20 @@ public class ApplicationTrustManagerFactory {
 	 */
 	public static final String GHIDRA_CACERTS_PATH_PROPERTY = "ghidra.cacerts";
 
+	private static final X509Certificate[] NO_CERTS = new X509Certificate[0];
+
 	/**
 	 * Use a singleton wrappedTrustManager so we can alter the true trustManager
 	 * as needed.  Once the installed trust manager is consumed by the SSL Engine,
 	 * we are unable to get it to use a new one.  Use of a wrapper solves this
 	 * issue which occurs during testing.
 	 */
-	private static X509TrustManager trustManager;
-	private static TrustManager[] wrappedTrustManagers;
-
-	private static boolean hasCAs;
-	private static Exception caError;
+	private static final WrappedTrustManager wrappedTrustManager = new WrappedTrustManager();
 
 	/**
 	 * <code>ApplicationTrustManagerFactory</code> constructor
 	 */
-	private ApplicationTrustManagerFactory() {
+	private DefaultTrustManagerFactory() {
 		// no instantiation - static methods only
 	}
 
@@ -83,136 +90,167 @@ public class ApplicationTrustManagerFactory {
 	 */
 	private static void init() {
 
-		if (wrappedTrustManagers == null) {
-			wrappedTrustManagers = new WrappedTrustManager[] { new WrappedTrustManager() };
-		}
-
 		String cacertsPath = System.getProperty(GHIDRA_CACERTS_PATH_PROPERTY);
 		if (cacertsPath == null || cacertsPath.length() == 0) {
 			// check user preferences if cacerts not set via system property
 			cacertsPath = Preferences.getProperty(GHIDRA_CACERTS_PATH_PROPERTY);
 			if (cacertsPath == null || cacertsPath.length() == 0) {
-				Msg.info(ApplicationTrustManagerFactory.class,
+				Msg.info(DefaultTrustManagerFactory.class,
 					"Trust manager disabled, cacerts have not been set");
-				trustManager = new OpenTrustManager();
+				wrappedTrustManager.setTrustManager(new OpenTrustManager());
 				return;
 			}
 		}
 
 		try {
-			Msg.info(ApplicationTrustManagerFactory.class,
+			Msg.info(DefaultTrustManagerFactory.class,
 				"Trust manager initializing with cacerts: " + cacertsPath);
-			KeyStore keyStore = ApplicationKeyStore.getCertificateStoreInstance(cacertsPath);
+			KeyStore keyStore = PKIUtils.loadCertificateStore(cacertsPath);
 			TrustManagerFactory tmf =
 				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 			tmf.init(keyStore);
+			X509TrustManager x509TrustMgr = null;
 			TrustManager[] trustManagers = tmf.getTrustManagers();
-			for (TrustManager trustManager2 : trustManagers) {
-				if (trustManager2 instanceof X509TrustManager) {
-					X509TrustManager mgr = (X509TrustManager) trustManager2;
-					ApplicationKeyStore.logCerts(mgr.getAcceptedIssuers());
-					trustManager = mgr;
+			for (TrustManager trustMgr : trustManagers) {
+				if (trustMgr instanceof X509TrustManager) {
+					x509TrustMgr = (X509TrustManager) trustMgr;
+					wrappedTrustManager.setTrustManager(x509TrustMgr);
+					PKIUtils.logCerts(x509TrustMgr.getAcceptedIssuers());
 					break;
 				}
 			}
-			hasCAs = true;
+			if (x509TrustMgr == null) {
+				throw new CertificateException("Failed to load any X509 certificates");
+			}
 		}
 		catch (GeneralSecurityException | IOException e) {
-			caError = e;
+			wrappedTrustManager.setTrustManagerError(e);
 			String msg = e.getMessage();
 			if (msg == null) {
 				msg = e.toString();
 			}
-			Msg.error(ApplicationTrustManagerFactory.class,
+			Msg.error(DefaultTrustManagerFactory.class,
 				"Failed to process cacerts (" + cacertsPath + "): " + msg, e);
 		}
 	}
 
 	/**
-	 * Determine if certificate authorities are in place.  If no certificate authorities
-	 * have been specified via the "ghidra.cacerts" property, all certificates will be 
-	 * trusted. 
-	 * @return true if certificate authorities are in place, else false.
-	 */
-	public static boolean hasCertificateAuthorities() {
-		return hasCAs;
-	}
-
-	/**
-	 * Determine if a CA cert initialization error occurred
-	 * @return true if error occurred (see {@link #getCertError()})
-	 */
-	static boolean hasCertError() {
-		return caError != null;
-	}
-
-	/**
-	 * Get the CA cert initialization error which occurred
-	 * during initialization 
-	 * @return error object or null if not applicable
-	 */
-	static Exception getCertError() {
-		return caError;
-	}
-
-	/**
-	 * Get trust managers after performing any necessary initialization.
+	 * Get trust manager after performing any necessary initialization.
+	 * 
 	 * @return trust managers
 	 */
-	static synchronized TrustManager[] getTrustManagers() {
-		if (trustManager == null) {
+	public static synchronized TrustManager[] getTrustManagers() {
+		if (wrappedTrustManager.trustManager == null) {
 			init();
 		}
-		return wrappedTrustManagers.clone();
+		return new TrustManager[] { wrappedTrustManager };
 	}
-	
-	/**
-     * Get trust manager after performing any necessary initialization.
-     * @return trust managers
-     */
-    public static synchronized X509TrustManager getTrustManager() {
-        if (trustManager == null) {
-            init();
-        }
-        return trustManager;
-    }
 
 	/**
-	 * Invalidate the active keystore and key manager 
+	 * Invalidate the active keystore and key manager.
+	 * 
+	 * NOTE: This should only be invoked by {@link DefaultSSLContextInitializer}.
 	 */
 	static synchronized void invalidateTrustManagers() {
-		trustManager = null;
-		caError = null;
+		wrappedTrustManager.invalidate();
 	}
 
-	private static final X509Certificate[] NO_CERTS = new X509Certificate[0];
+	/**
+	 * Returns a list of trusted issuers (i.e., CA certificates) as established
+	 * by the {@link DefaultTrustManagerFactory}.
+	 * 
+	 * @return array of trusted Certificate Authorities
+	 * @throws CertificateException if failed to properly initialize trust manager
+	 * due to CA certificate error(s).
+	 */
+	public static X500Principal[] getTrustedIssuers() throws CertificateException {
+		return wrappedTrustManager.getTrustedIssuers();
+	}
+
+	/**
+	 * Validate a client certificate ensuring that it is not expired and is
+	 * trusted based upon the active trust managers.
+	 * @param certChain X509 certificate chain
+	 * @param authType authentication type (i.e., "RSA")
+	 * @throws CertificateException if certificate validation fails
+	 */
+	public static void validateClient(X509Certificate[] certChain, String authType)
+			throws CertificateException {
+		wrappedTrustManager.checkClientTrusted(certChain, authType);
+	}
 
 	private static class WrappedTrustManager implements X509TrustManager {
 
+		private X509TrustManager trustManager;
+		private Exception caError;
+
+		WrappedTrustManager() {
+			invalidate();
+		}
+
+		void invalidate() {
+			this.trustManager = null;
+			this.caError = null;
+		}
+
+		synchronized void setTrustManager(X509TrustManager trustManager) {
+			this.trustManager = trustManager;
+			this.caError = null;
+		}
+
+		synchronized void setTrustManagerError(Exception caError) {
+			this.trustManager = null;
+			this.caError = caError;
+		}
+
 		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType)
+		public synchronized void checkClientTrusted(X509Certificate[] chain, String authType)
 				throws CertificateException {
-			if (trustManager == null) {
-				throw new CertificateException("Trust manager not properly initialized");
-			}
+			checkTrustManager();
 			trustManager.checkClientTrusted(chain, authType);
 		}
 
 		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType)
+		public synchronized void checkServerTrusted(X509Certificate[] chain, String authType)
 				throws CertificateException {
-			if (trustManager == null) {
-				throw new CertificateException("Trust manager not properly initialized");
-			}
+			checkTrustManager();
 			trustManager.checkServerTrusted(chain, authType);
 		}
 
 		@Override
-		public X509Certificate[] getAcceptedIssuers() {
+		public synchronized X509Certificate[] getAcceptedIssuers() {
 			if (trustManager == null) {
 				return NO_CERTS;
 			}
 			return trustManager.getAcceptedIssuers();
+		}
+
+		synchronized X500Principal[] getTrustedIssuers() throws CertificateException {
+
+			WrappedTrustManager trustMgr = wrappedTrustManager;
+			trustMgr.checkTrustManager();
+
+			X509Certificate[] acceptedIssuers = trustMgr.getAcceptedIssuers();
+			if (acceptedIssuers == null || acceptedIssuers.length == 0) {
+				return null; // trust all authorities
+			}
+
+			Set<X500Principal> set = new HashSet<>();
+			for (X509Certificate trustedCert : acceptedIssuers) {
+				set.add(trustedCert.getSubjectX500Principal());
+			}
+			X500Principal[] principals = new X500Principal[set.size()];
+			return set.toArray(principals);
+		}
+
+		private void checkTrustManager() throws CertificateException {
+			if (trustManager != null) {
+				return;
+			}
+			if (caError != null) {
+				throw new CertificateException("Failed to load CA certs", caError);
+			}
+			throw new CertificateException("Trust manager not properly initialized");
 		}
 
 	}

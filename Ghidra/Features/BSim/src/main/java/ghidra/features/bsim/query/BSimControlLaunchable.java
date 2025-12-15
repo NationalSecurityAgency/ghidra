@@ -38,7 +38,7 @@ import ghidra.GhidraLaunchable;
 import ghidra.features.bsim.query.ingest.BSimLaunchable;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
-import ghidra.net.ApplicationKeyManagerUtils;
+import ghidra.net.PKIUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -390,7 +390,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				if (line == null) {
 					break;
 				}
-				if (line.startsWith(ApplicationKeyManagerUtils.BEGIN_CERT)) {
+				if (line.startsWith(PKIUtils.BEGIN_CERT)) {
 					return true;
 				}
 			}
@@ -557,11 +557,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		PasswordProtection pp = new PasswordProtection(password);
 		try {
 			// TODO: should subjectAlternativeNames be supported?
-			KeyStore keyStore = ApplicationKeyManagerUtils.createKeyStore(alias, "CN=BSimServer",
-				365 * 2, null, null, "JKS", null, password);
+			KeyStore keyStore = PKIUtils.createKeyStore(alias, "CN=BSimServer", 365 * 2, null,
+				null, "JKS", null, password);
 
-			ApplicationKeyManagerUtils.exportX509Certificates(keyStore.getCertificateChain(alias),
-				certFile);
+			PKIUtils.exportX509Certificates(keyStore.getCertificateChain(alias), certFile);
 			Key key = keyStore.getKey(alias, password);
 
 			try (FileOutputStream fout = new FileOutputStream(passFile);
