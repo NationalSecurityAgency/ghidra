@@ -61,6 +61,8 @@ import ghidra.util.task.SwingUpdateManager;
 //@formatter:on
 public class DecompilePlugin extends Plugin {
 
+	public static final String OPTIONS_TITLE = "Decompiler";
+
 	private PrimaryDecompilerProvider connectedProvider;
 	private List<DecompilerProvider> disconnectedProviders;
 

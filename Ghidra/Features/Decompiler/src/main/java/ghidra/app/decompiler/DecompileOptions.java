@@ -209,7 +209,7 @@ public class DecompileOptions {
 	private final static boolean CONVENTION_OPTIONDEFAULT = true;	// Must match PrintC::resetDefaultsPrintC
 	private boolean conventionPrint;
 
-	private final static String NOCAST_OPTIONSTRING = "Display.Disable printing of type casts";
+	public final static String NOCAST_OPTIONSTRING = "Display.Disable printing of type casts";
 	private final static String NOCAST_OPTIONDESCRIPTION =
 		"If set, any C style type cast recovered by the decompiler will not be displayed. " +
 			"The resulting C syntax may not parse correctly.";
