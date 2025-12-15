@@ -33,6 +33,7 @@ import ghidra.program.model.address.Address;
  * depending on the type of breakpoint they currently want to invoke
  */
 
+@Deprecated(since = "12.1", forRemoval = true)
 public interface BreakTable {
 
 	/**

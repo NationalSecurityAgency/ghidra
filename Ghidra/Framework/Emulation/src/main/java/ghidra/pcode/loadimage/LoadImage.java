@@ -19,6 +19,7 @@ import ghidra.program.model.address.Address;
 
 // API for accessing a binary load image
 // using 1 of possibly many different methods behind the scenes
+@Deprecated(since = "12.1", forRemoval = true)
 public interface LoadImage {
 
 // TODO this doesn't appear to be used.
