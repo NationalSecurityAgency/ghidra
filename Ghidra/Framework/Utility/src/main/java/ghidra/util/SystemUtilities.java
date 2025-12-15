@@ -123,6 +123,13 @@ public class SystemUtilities {
 		if (slashIndex >= 0) {
 			uname = uname.substring(slashIndex + 1);
 		}
+
+		// on Windows, the username can come back in various cases if you're
+		// using AD or similar, this creates issues in the project file so we
+		// normalize to lowercase as it shouldn't impact anything else
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			uname = uname.toLowerCase();
+		}
 		return uname;
 	}
 
