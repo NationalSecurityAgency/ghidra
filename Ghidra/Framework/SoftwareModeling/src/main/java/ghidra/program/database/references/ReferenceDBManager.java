@@ -2048,8 +2048,10 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 				LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
 
 			for (Symbol s : symbolMgr.getSymbols(cachedFunction.getID())) {
-				Variable v = (Variable) s.getObject();
-				map.get(address).add(v);
+				Object object = s.getObject();
+				if (object instanceof Variable v) {
+					map.get(address).add(v);
+				}
 			}
 
 			variablesByAddress = map;
