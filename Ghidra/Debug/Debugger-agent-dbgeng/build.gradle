@@ -81,8 +81,15 @@ task prebuildTlb(type: Copy) {
 	}
 }
 
-distributePyDep("Pybag-2.2.12-py3-none-any.whl")
-distributePyDep("capstone-5.0.1-py3-none-win_amd64.whl")
-distributePyDep("comtypes-1.4.1-py3-none-any.whl")
-distributePyDep("pywin32-306-cp312-cp312-win_amd64.whl")
-
+distributePyDep("pybag-2.2.16-py3-none-any.whl")
+distributePyDep("capstone-5.0.6-py3-none-win_amd64.whl")
+distributePyDep("comtypes-1.4.13-py3-none-any.whl")
+distributePyDep("pywin32-311-cp313-cp313-win_amd64.whl")
+distributePyDep("win32more-0.7.0-py3-none-any.whl")
+distributePyDep("win32more_appsdk-0.7.3-py2.py3-none-any.whl")
+distributePyDep("win32more_core-0.7.0-py2.py3-none-any.whl")
+distributePyDep("win32more_microsoft_graphics_win2d-0.7.1.3.2-py2.py3-none-any.whl")
+distributePyDep("win32more_microsoft_web_webview2-0.7.1.0.3650.58-py2.py3-none-any.whl")
+distributePyDep("win32more_microsoft_windows_sdk_contracts-0.7.10.0.26100.6901-py2.py3-none-any.whl")
+distributePyDep("win32more_microsoft_windows_sdk_win32metadata-0.7.68.0.4-py2.py3-none-any.whl")
+distributePyDep("win32more_microsoft_windowsappsdk-0.7.1.8.251106002-py2.py3-none-any.whl")

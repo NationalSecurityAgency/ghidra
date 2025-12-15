@@ -236,27 +236,75 @@ ext.deps = [
 		destination: [file("${DEPS_DIR}/Debugger-rmi-trace/"), file("${DEPS_DIR}/PyGhidra/")]
 	],
 	[
-		name: "Pybag-2.2.12-py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/ce/78/91db67e7fe1546dc8b02c38591b7732980373d2d252372f7358054031dd4/Pybag-2.2.12-py3-none-any.whl",
-		sha256: "eda5ee6c4e873902981b7f525b42a02428b87c7368df2c5bdfe1ded0e6884126",
+		name: "pybag-2.2.16-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/5e/a2/52084698c0a3c7e7a94ddfff26f83df09a50781b8436f6f203f5de0a457c/pybag-2.2.16-py3-none-any.whl",
+		sha256: "cef631e87d0bb12163c8cb11ca756ddfa8924a6eacdbd746683ed58948a2bfdf",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
-		name: "capstone-5.0.1-py3-none-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/d0/dd/b28df50316ca193dd1275a4c47115a720796d9e1501c1888c4bfa5dc2260/capstone-5.0.1-py3-none-win_amd64.whl",
-		sha256: "1bfa5c81e6880caf41a31946cd6d2d069c048bcc22edf121254b501a048de675",
+		name: "capstone-5.0.6-py3-none-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/da/72/ff7894c2fb5716d9a3ce9c27ba34b29d991a11d8442d2ef0fcdc5564ba7e/capstone-5.0.6-py3-none-win_amd64.whl",
+		sha256: "761c3deae00b22ac697081cdae1383bb90659dd0d79387a09cf5bdbb22b17064",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
-		name: "comtypes-1.4.1-py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/50/8f/518a37381e55a8857a638afa86143efa5508434613541402d20611a1b322/comtypes-1.4.1-py3-none-any.whl",
-		sha256: "a208a0e3ca1c0a5362735da0ff661822801dce87312b894d7d752add010a21b0",
+		name: "comtypes-1.4.13-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/66/95/f30c80615fda0d3c0ee6493ac9db61183313b43499b62dec136773b0e870/comtypes-1.4.13-py3-none-any.whl",
+		sha256: "21546210748ba52e839e52112124b16ffab7d7fb68096493165fbc249e9023ad",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
-		name: "pywin32-306-cp312-cp312-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/83/1c/25b79fc3ec99b19b0a0730cc47356f7e2959863bf9f3cd314332bddb4f68/pywin32-306-cp312-cp312-win_amd64.whl",
-		sha256: "37257794c1ad39ee9be652da0462dc2e394c8159dfd913a8a4e8eb6fd346da0e",
+		name: "pywin32-311-cp313-cp313-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/e3/28/e0a1909523c6890208295a29e05c2adb2126364e289826c0a8bc7297bd5c/pywin32-311-cp313-cp313-win_amd64.whl",
+		sha256: "718a38f7e5b058e76aee1c56ddd06908116d35147e133427e59a3983f703a20d",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more-0.7.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/92/3a/658eb3ba88f067662be280f8f1aec07a70c96bac77e9edc48b1be38e446b/win32more-0.7.0-py3-none-any.whl",
+		sha256: "ba586b8a5997d1410de5d934e34aefdce8d15ef8d766d6a6b1cda8762d46b05e",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_appsdk-0.7.3-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/f6/49/cff21fc3adcac1fe19f9f2e50278553fe13b9ac702be569c97f85292481d/win32more_appsdk-0.7.3-py2.py3-none-any.whl",
+		sha256: "707cdd2db3f07dfd7d22b5aa2adffd13dbd316a5eed779ca272feaa6ebc22f88",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_core-0.7.0-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/81/bc/7c1c5609f835d3e719c944714638a7a70bbfef6b990c251c32c1cd82d67a/win32more_core-0.7.0-py2.py3-none-any.whl",
+		sha256: "a501666b44bd36ceebbcff7656e7ec75f92813d23761d0f49f14c79b3a406bd9",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_microsoft_graphics_win2d-0.7.1.3.2-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/b5/6d/d58b223be7cff571527d91a3626089cb4da614dcba461811dcf18449f0f9/win32more_microsoft_graphics_win2d-0.7.1.3.2-py2.py3-none-any.whl",
+		sha256: "548f65fcebe72c19ae9c797dd9351c0d0bd20010856a4928f755f6d4ec01b16a",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_microsoft_web_webview2-0.7.1.0.3650.58-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/6c/8e/fdfc9f796aad6b622ff197b3e58c9689db95482dbf7817cd99d351b54719/win32more_microsoft_web_webview2-0.7.1.0.3650.58-py2.py3-none-any.whl",
+		sha256: "c11d2f04a0a50a64d0ee60d159ced1a5e16a739e43c578e2cb909f169a39458b",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_microsoft_windows_sdk_contracts-0.7.10.0.26100.6901-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/56/d7/0bb36964811a23f262cdddb1e5b91fdbd2f494990d48e657f15108f04855/win32more_microsoft_windows_sdk_contracts-0.7.10.0.26100.6901-py2.py3-none-any.whl",
+		sha256: "392a62a6ec7b0025f1e5d6f55dbfb55191f0088db8f6a2fc769413ab36b2bbcf",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_microsoft_windows_sdk_win32metadata-0.7.68.0.4-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/e5/37/8706eb126fc52e59526304aa89ee30771a894e489aa0ea835f101e499b17/win32more_microsoft_windows_sdk_win32metadata-0.7.68.0.4-py2.py3-none-any.whl",
+		sha256: "d9e8ab3a7c4efb1dabb18d1b988c32648f317468da8e89bb649fdb6e1a97aa3f",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "win32more_microsoft_windowsappsdk-0.7.1.8.251106002-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/ef/7c/9630708dd252e0c5c7c9975d52ba0deea996e9b0cf29784d521ac30f3a48/win32more_microsoft_windowsappsdk-0.7.1.8.251106002-py2.py3-none-any.whl",
+		sha256: "d37c42d0e6ac87f71a4a1209af8a6adadde19d4b6df44ab3375195f5f41c462c",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
